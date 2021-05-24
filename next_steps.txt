@@ -1,0 +1,23 @@
+
++ key input buffer
++ Riddle shows no reward dialog after you solve it!
++ Room.is_in_sight()
++ GameSimulator: choose file
+- create config files in install-script
+
+
+- use TextBox instead of BlockLabels?
++ overhaul Tutorial text (add new Highlighting, add Tutorials, ...)
+- add Training-Table to SpawnRoom (implement with flee rate)
++ adapt StateVector visualization?
+- create Rooms from file
+
+? ChallengeRooms: only use 3 gates, only 1 Hadamard, only 3 adaptions, ...
+
+
+1) Richtung Levels gehen
+2) Tipps, Hintergründe mittels Textfelder (für "Unwissende")
+3) Aufhübschen
+
+SMALL TWEAKS/FIXES:
++ remove self.__player from game.py

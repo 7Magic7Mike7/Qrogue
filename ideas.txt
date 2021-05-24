@@ -1,0 +1,21 @@
+- Treasure Rooms:
+    - new Gates
+    - new Qubits
+    - Kronecker Product to "combine" two Gate-slots into one
+    - bigger circuit-space
+    - bigger backpack
+    - Utility-Items? (like Tunneling, Error Correction, ...)
+    - Mapping of interactable Qubits
+
+- Pickups
+    - Qubit heals
+    - Consumables that make for example the next initial state of q_0 |1>
+
+- Random layout maps
+    - riddles to go to the next area (e.g. arrange certain circuits so the output is |001>)
+
+
+Feedback:
+Rechts den State Vector vom Boss, links der aktuelle Ist-Zustand der Schaltung, Zielbeschreibung
+am Weg zum Grover-Boss das Oracle-Gate zusammenbauen
+IBM Circuit Composer für Circuit-Erstellung
