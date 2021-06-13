@@ -5,3 +5,4 @@
 /.idea/vcs.xml
 powershell.txt
 script.ps1
+*.pyc
