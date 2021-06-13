@@ -1,28 +1,7 @@
 
 import py_cui
 from util.logger import Logger
-from widgets.circuit_widget import *
 from widgets.map_widget import Map
-
-"""
-def add_circ_widg(root, title, row, column, row_span = 1, column_span = 1, padx = 0, pady = 0):
-    id = 'Widget{}'.format(len(root._widgets.keys()))
-    circuit_widget = MyLabel(id,
-                                        title,
-                                        root._grid,
-                                        row,
-                                        column,
-                                        row_span,
-                                        column_span,
-                                        padx,
-                                        pady,
-                                        root._logger)
-    print(f"Renderer inside: {root._renderer}, type = {type(root._renderer)}")
-    circuit_widget._assign_renderer(root._renderer)
-    root._widgets[id]  = circuit_widget
-    root._logger.info('Adding widget {} w/ ID {} of type {}'.format(title, id, str(type(circuit_widget))))
-    return circuit_widget
-"""
 
 
 class QroguePyCUI(py_cui.PyCUI):
