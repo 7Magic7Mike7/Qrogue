@@ -1,11 +1,11 @@
 
 import py_cui
-
-import game.controls
 from util.logger import Logger
 from widgets.map_widget import MapWidget
 from game.map.map import Map
+from game.map.navigation import Direction
 from game.controls import Controls
+
 
 class QroguePyCUI(py_cui.PyCUI):
     __NUM_OF_ROWS = 9
@@ -34,6 +34,7 @@ class QroguePyCUI(py_cui.PyCUI):
         # manually set and loose focus because key strokes only work after a focus was set at least once?
         self.move_focus(firstRow)
         self.lose_focus()
+        self.__render()
 
     def __init_keys(self):
         self.__controls = Controls()
@@ -68,20 +69,16 @@ class QroguePyCUI(py_cui.PyCUI):
         self.__map_widget.render()
 
     def __move_up(self):
-        self.__logger.println("moving")
-        self.__map_widget.move('up')
+        self.__map_widget.move(Direction.Up)
 
     def __move_right(self):
-        self.__logger.println("moving")
-        self.__map_widget.move('right')
+        self.__map_widget.move(Direction.Right)
 
     def __move_down(self):
-        self.__logger.println("moving")
-        self.__map_widget.move('down')
+        self.__map_widget.move(Direction.Down)
 
     def __move_left(self):
-        self.__logger.println("moving")
-        self.__map_widget.move('left')
+        self.__map_widget.move(Direction.Left)
 
 """
     def add_circuit_widget(self, title, row, column, row_span = 1, column_span = 1, padx = 0, pady = 0):
