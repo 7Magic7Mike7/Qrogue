@@ -19,7 +19,7 @@ class Map:
         for y in range(height):
             row = []
             for x in range(width):
-                if y == 0 or y == height-1 or x == 0 or x == width-1:
+                if y == 0 or y == height - 1 or x == 0 or x == width - 1:
                     row.append('#')
                 else:
                     row.append(rand.randint(A, F))
@@ -42,16 +42,15 @@ class Map:
     def player_pos(self):
         return self.__player_pos
 
-    def move_down(self):
+    def move(self, dir: Direction):
         x, y = self.__player_pos.resolve()
-        self.__player_pos = Coordinate(x, y + 1)
-        self.__map[y][x] = E
-        self.__map[y + 1][x] = P
+        new_pos = Coordinate(x + dir.x, y + dir.y)
 
-    def move_right(self):
-        x, y = self.__player_pos.resolve()
-        self.__player_pos = Coordinate(x + 1, y)
-        self.__map[y][x] = E
-        self.__map[y][x + 1] = P
+        if new_pos.y < 0 or len(self.__map) <= new_pos.y or \
+                new_pos.x < 0 or len(self.__map[0]) <= new_pos.x:
+            return False
 
-    # todo check bounds and add other directions
+        self.__player_pos = new_pos
+        self.__map[y][x] = E
+        self.__map[new_pos.y][new_pos.x] = P
+        return True
