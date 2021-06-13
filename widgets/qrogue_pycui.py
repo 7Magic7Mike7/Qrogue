@@ -39,6 +39,9 @@ class QroguePyCUI(py_cui.PyCUI):
         self.__controls = Controls()
         # Add the key binding to the PyCUI object itself for overview mode.
         self.add_key_command(self.__controls.move_up(), self.__move_up)
+        self.add_key_command(self.__controls.move_right(), self.__move_right)
+        self.add_key_command(self.__controls.move_down(), self.__move_down)
+        self.add_key_command(self.__controls.move_left(), self.__move_left)
         self.add_key_command(self.__controls.render(), self.__render)
 
     def __init_widgets(self):
@@ -63,13 +66,22 @@ class QroguePyCUI(py_cui.PyCUI):
 
     def __render(self):
         self.__map_widget.render()
-        print("rend rend")
-        self.__logger.clear()
-        self.__logger.println("rendering")
 
     def __move_up(self):
         self.__logger.println("moving")
         self.__map_widget.move('up')
+
+    def __move_right(self):
+        self.__logger.println("moving")
+        self.__map_widget.move('right')
+
+    def __move_down(self):
+        self.__logger.println("moving")
+        self.__map_widget.move('down')
+
+    def __move_left(self):
+        self.__logger.println("moving")
+        self.__map_widget.move('left')
 
 """
     def add_circuit_widget(self, title, row, column, row_span = 1, column_span = 1, padx = 0, pady = 0):
