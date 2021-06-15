@@ -33,15 +33,6 @@ def map_to_string(map: Map):
     for y in range(map.height()):
         for x in range(map.width()):
             val = map.at(x, y)
-            if val == 0:
-                repr += 'P'
-            elif val == 1:
-                repr += "_"
-            elif val == 2:
-                repr += "#"
-            elif val == 3:
-                repr += "~"
-            else:
-                repr += " "
+            repr += val.img
         repr += '\n'    # todo change to new line from system?
     return repr
