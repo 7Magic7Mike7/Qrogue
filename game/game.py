@@ -1,3 +1,4 @@
+from game.actors.player import Player
 from widgets.qrogue_pycui import QroguePyCUI
 from game.controls import Controls
 from game.states import StateMachine, State
@@ -16,7 +17,10 @@ class GameHandler:
         self.__logger = self.__renderer.logger
         self.__state_machine = StateMachine(self.__logger)
         self.__map = Map(seed, self.__MAP_WIDTH, self.__MAP_HEIGHT)
-        self.__renderer.set_map(self.__map)
+        self.__renderer.map_widget.set_map(self.__map)
+
+        player = Player()
+        self.__renderer.circuit_widget.set_title(player.circuit.__str__())
 
         self.__init_keys()
 
