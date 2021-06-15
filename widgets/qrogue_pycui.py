@@ -3,47 +3,28 @@ import py_cui
 from util.logger import Logger
 from widgets.map_widget import MapWidget
 from game.map.map import Map
-from game.map.navigation import Direction
-from game.controls import Controls
+from game.actors.player import Player
 
 
 class QroguePyCUI(py_cui.PyCUI):
     __NUM_OF_ROWS = 9
     __NUM_OF_COLS = 9
-    __MAP_WIDTH = 50
-    __MAP_HEIGHT = 14
-    __MAP_SEED = 7
 
-    def __init__(self, seed: int = __MAP_SEED):
+    def __init__(self, seed):
         super().__init__(self.__NUM_OF_ROWS, self.__NUM_OF_COLS)
         self.__seed = seed
 
-        self.__init_keys()
+        first_row = self.add_block_label('first line (metadata like playtime, floor, ...?)', 0, 0, column_span=self.__NUM_OF_COLS)
+        first_row.toggle_border()
+        last_row = self.add_block_label('last line', 8, 0, column_span=self.__NUM_OF_COLS)
+        last_row.toggle_border()
 
-        firstRow = self.add_block_label('first line (metadata like playtime, floor, ...?)', 0, 0, column_span=self.__NUM_OF_COLS)
-        firstRow.toggle_border()
-        lastRow = self.add_block_label('last line', 8, 0, column_span=self.__NUM_OF_COLS)
-        lastRow.toggle_border()
-
-        self.__logger = Logger(lastRow)
+        self.__logger = Logger(last_row)
         self.__init_widgets()
 
-        self.__map = Map(seed, self.__MAP_WIDTH, self.__MAP_HEIGHT)
-        self.__map_widget.set_map(self.__map)
-
         # manually set and loose focus because key strokes only work after a focus was set at least once?
-        self.move_focus(firstRow)
+        self.move_focus(first_row)
         self.lose_focus()
-        self.__render()
-
-    def __init_keys(self):
-        self.__controls = Controls()
-        # Add the key binding to the PyCUI object itself for overview mode.
-        self.add_key_command(self.__controls.move_up(), self.__move_up)
-        self.add_key_command(self.__controls.move_right(), self.__move_right)
-        self.add_key_command(self.__controls.move_down(), self.__move_down)
-        self.add_key_command(self.__controls.move_left(), self.__move_left)
-        self.add_key_command(self.__controls.render(), self.__render)
 
     def __init_widgets(self):
         map_widget = self.add_block_label('MAP', 1, 2, row_span=5, column_span=5, center=True)
@@ -65,20 +46,36 @@ class QroguePyCUI(py_cui.PyCUI):
         self.__event_targets_widget = self.add_block_label('Event targets', 6, 7, row_span=2, column_span=2, center=True)
         self.__event_targets_widget.toggle_border()
 
-    def __render(self):
+    @property
+    def logger(self):
+        return self.__logger
+
+    @property
+    def map_widget(self):
+        return self.__map_widget
+
+    @property
+    def player_info_widget(self):
+        return self.__player_info_widget
+
+    @property
+    def qubits_widget(self):
+        return self.__qubits_widget
+
+    @property
+    def circuit_widget(self):
+        return self.__circuit_widget
+
+    @property
+    def event_info_widget(self):
+        return self.__event_info_widget
+
+    @property
+    def event_targets_widget(self):
+        return self.event_targets_widget
+
+    def render(self):   # I think this should only be called from the GameHandler
         self.__map_widget.render()
-
-    def __move_up(self):
-        self.__map_widget.move(Direction.Up)
-
-    def __move_right(self):
-        self.__map_widget.move(Direction.Right)
-
-    def __move_down(self):
-        self.__map_widget.move(Direction.Down)
-
-    def __move_left(self):
-        self.__map_widget.move(Direction.Left)
 
 """
     def add_circuit_widget(self, title, row, column, row_span = 1, column_span = 1, padx = 0, pady = 0):
