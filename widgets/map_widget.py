@@ -2,7 +2,6 @@
 from py_cui.widgets import BlockLabel
 from util.logger import Logger
 from game.map.map import Map
-from game.map.navigation import Direction
 
 
 class MapWidget:
@@ -10,15 +9,6 @@ class MapWidget:
         self.__map_widget = map_widget
         self.__logger = logger
         self.__map = None
-        logger.println("map created!")
-
-    def move(self, direction: Direction):
-        self.__logger.println(f"Moving in direction {direction}")
-        if self.__map is not None:
-            if self.__map.move(direction):
-                self.render()
-            else:
-                self.__logger.println(f"moving ({direction.name}) failed")
 
     def set_map(self, map: Map):
         self.__map = map
