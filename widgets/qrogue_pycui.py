@@ -10,8 +10,8 @@ from game.controls import Controls
 class QroguePyCUI(py_cui.PyCUI):
     __NUM_OF_ROWS = 9
     __NUM_OF_COLS = 9
-    __MAP_WIDTH = 10
-    __MAP_HEIGHT = 5
+    __MAP_WIDTH = 50
+    __MAP_HEIGHT = 14
     __MAP_SEED = 7
 
     def __init__(self, seed: int = __MAP_SEED):
