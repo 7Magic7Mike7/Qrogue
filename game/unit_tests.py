@@ -1,5 +1,5 @@
 
-from game.game import *
+from game.player import *
 from game.instruction import *
 
 def defend_unit_test(iterations: int = 1000):
