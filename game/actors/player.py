@@ -5,9 +5,8 @@ Author: Artner Michael
 
 from qiskit import QuantumCircuit, transpile
 from qiskit.providers.aer import AerSimulator
-from qiskit.circuit.library import *
-from game.qubit import Qubit
-from game.instruction import Instruction
+from game.logic.qubit import Qubit
+from game.logic.instruction import Instruction
 
 
 class PlayerAttributes:
