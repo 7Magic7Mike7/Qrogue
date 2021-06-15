@@ -1,6 +1,6 @@
 
-from game.player import *
-from game.instruction import *
+from game.actors.player import *
+from game.logic.instruction import *
 
 def defend_unit_test(iterations: int = 1000):
     attributes = PlayerAttributes()
