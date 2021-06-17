@@ -2,6 +2,7 @@
 import py_cui
 from util.logger import Logger
 from widgets.map_widget import MapWidget
+from widgets.circuit_widget import CircuitWidget
 from game.map.map import Map
 from game.actors.player import Player
 
@@ -37,8 +38,9 @@ class QroguePyCUI(py_cui.PyCUI):
         self.__qubits_widget = self.add_block_label('Qubits life & state', 6, 0, row_span=2, column_span=2, center=True)
         self.__qubits_widget.toggle_border()
 
-        self.__circuit_widget = self.add_block_label('Circuit', 6, 2, row_span=2, column_span=5, center=True)
-        self.__circuit_widget.toggle_border()
+        circuit_widget = self.add_block_label('Circuit', 6, 2, row_span=2, column_span=5, center=True)
+        circuit_widget.toggle_border()
+        self.__circuit_widget = CircuitWidget(circuit_widget, self.__logger)
 
         self.__event_info_widget = self.add_block_label('Enemy/Event', 1, 7, row_span=5, column_span=2, center=True)
         self.__event_info_widget.toggle_border()
@@ -76,6 +78,7 @@ class QroguePyCUI(py_cui.PyCUI):
 
     def render(self):   # I think this should only be called from the GameHandler
         self.__map_widget.render()
+        self.__circuit_widget.render()
 
 """
     def add_circuit_widget(self, title, row, column, row_span = 1, column_span = 1, padx = 0, pady = 0):
