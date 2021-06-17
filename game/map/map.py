@@ -39,6 +39,7 @@ class Map:
         rand.seed(seed)
 
         self.__player_pos = Coordinate(2, 2)
+        self.__enemy_pos = Coordinate(9, 9)
 
         self.__map = []
         for y in range(height):
@@ -54,6 +55,7 @@ class Map:
             self.__map.append(row)
 
         self.__map[self.__player_pos.y][self.__player_pos.x] = Tile.Player
+        self.__map[self.__enemy_pos.y][self.__enemy_pos.x] = Tile.Enemy
 
     def height(self):
         return len(self.__map)
@@ -85,3 +87,14 @@ class Map:
             return True
         else:
             return False
+
+    def in_enemy_range(self):
+        range_x = 2
+        range_y = 2
+        for x in range(self.__player_pos.x - range_x, self.__player_pos.x + range_x + 1):
+            for y in range(self.__player_pos.y - range_y, self.__player_pos.y + range_y + 1):
+                if 0 <= x < self.width() and 0 <= y < self.height():
+                    tile = self.at(x, y)
+                    if tile == Tile.Enemy:
+                        return tile
+        return None
