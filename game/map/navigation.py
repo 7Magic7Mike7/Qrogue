@@ -19,6 +19,16 @@ class Coordinate:
         return self.__x, self.__y
 
 
+def distance(p1: Coordinate, p2: Coordinate):
+    diff_x = p1.x - p2.x
+    diff_y = p1.y - p2.y
+    if diff_x < 0:
+        diff_x = -diff_x
+    if diff_y < 0:
+        diff_y = -diff_y
+    return diff_x + diff_y
+
+
 class Direction(Enum):
     North = (0, -1)
     East = (1, 0)
