@@ -8,3 +8,6 @@ class Instruction:
             self.cargs = []
         else:
             self.cargs = cargs
+
+    def __str__(self):
+        return "test"
