@@ -5,6 +5,7 @@ from widgets.map_widget import MapWidget
 from widgets.circuit_widget import CircuitWidget
 from game.map.map import Map
 from game.actors.player import Player
+from widgets.player_info_widget import PlayerInfoWidget
 
 
 class QroguePyCUI(py_cui.PyCUI):
@@ -32,8 +33,9 @@ class QroguePyCUI(py_cui.PyCUI):
         map_widget.toggle_border()
         self.__map_widget = MapWidget(map_widget, self.__logger)
 
-        self.__player_info_widget = self.add_block_label('Player', 1, 0, row_span=5, column_span=2, center=True)
-        self.__player_info_widget.toggle_border()
+        player_info_widget = self.add_block_label('Player', 1, 0, row_span=5, column_span=2, center=True)
+        player_info_widget.toggle_border()
+        self.__player_info_widget = PlayerInfoWidget(player_info_widget, self.__logger)
 
         self.__qubits_widget = self.add_block_label('Qubits life & state', 6, 0, row_span=2, column_span=2, center=True)
         self.__qubits_widget.toggle_border()
@@ -78,6 +80,7 @@ class QroguePyCUI(py_cui.PyCUI):
 
     def render(self):   # I think this should only be called from the GameHandler
         self.__map_widget.render()
+        self.__player_info_widget.render()
         self.__circuit_widget.render()
 
 """
