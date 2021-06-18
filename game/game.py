@@ -22,6 +22,7 @@ class GameHandler:
         self.__logger = self.__renderer.logger
         self.__renderer.map_widget.set_map(self.__map)
         self.__renderer.circuit_widget.set_player(self.__player)    # todo maybe only set player.circuit?
+        self.__renderer.player_info_widget.set_player(self.__player)
 
         self.__update()
 
@@ -31,13 +32,18 @@ class GameHandler:
         self.__renderer.add_key_command(self.__controls.move_right, self.__move_right)
         self.__renderer.add_key_command(self.__controls.move_down, self.__move_down)
         self.__renderer.add_key_command(self.__controls.move_left, self.__move_left)
+        self.__renderer.add_key_command(self.__controls.action, self.__dummy())
         # self.__renderer.add_key_command(self.__controls.render(), self.__renderer.render())
+
+    def __dummy(self):
+        print("dummy")  # todo remove when I figured out, how to remove a key command
 
     def init_fight_keys(self):
         self.__renderer.add_key_command(self.__controls.selection_up, self.__selection_up)
         self.__renderer.add_key_command(self.__controls.selection_right, self.__selection_right)
         self.__renderer.add_key_command(self.__controls.selection_down, self.__selection_down)
         self.__renderer.add_key_command(self.__controls.selection_left, self.__selection_left)
+        self.__renderer.add_key_command(self.__controls.action, self.__attack)
 
     def log(self, msg: str):
         self.__logger.println(msg)
@@ -73,20 +79,26 @@ class GameHandler:
             self.__update()
 
     def __selection_up(self):
-        self.__logger.clear()
-        self.__logger.println("selection up")
+        self.__renderer.player_info_widget.prev()
+        self.__update()
 
     def __selection_right(self):
         self.__logger.clear()
         self.__logger.println("selection right")
 
     def __selection_down(self):
-        self.__logger.clear()
-        self.__logger.println("selection down")
+        self.__renderer.player_info_widget.next()
+        self.__update()
 
     def __selection_left(self):
         self.__logger.clear()
         self.__logger.println("selection left")
+
+    def __attack(self):
+        self.__player.use_instruction(self.__renderer.player_info_widget.circuit)
+        result = self.__player.measure()
+        self.__logger.clear()
+        self.__logger.println(result.__str__())
 
 
 class State(Enum):
