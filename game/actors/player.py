@@ -4,6 +4,7 @@ Author: Artner Michael
 """
 
 from qiskit import QuantumCircuit, transpile
+from qiskit.circuit.library import HGate
 from qiskit.providers.aer import AerSimulator
 from game.logic.qubit import Qubit
 from game.logic.instruction import Instruction
@@ -16,7 +17,7 @@ class PlayerAttributes:
     ZERO_LIFE = 4
     ONE_LIFE = 4
 
-    def __init__(self):
+    def __init__(self):     # todo add qubits etc
         self.__num_of_qubits = self.NUM_OF_QUBITS
         self.__num_of_cols = self.NUM_OF_COLS
         self.__init_qubits()
@@ -56,10 +57,44 @@ class PlayerAttributes:
         self.__qubits[qubit] = Qubit(qubit, zero_life, one_life)
 
 
+class Backpack:
+    CAPACITY = 4
+
+    def __init__(self, capacity: int = CAPACITY):
+        self.__capacity = capacity
+        self.__storage = []
+
+    @property
+    def capacity(self):
+        return self.__capacity
+
+    @property
+    def size(self):
+        return len(self.__storage)
+
+    def get(self, index: int):
+        if 0 <= index < self.size:
+            return self.__storage[index]
+
+    def add(self, instruction: Instruction):
+        if len(self.__storage) < self.__capacity:
+            self.__storage.append(instruction)
+            return True
+        return False
+
+    def remove(self, instruction: Instruction):
+        for i in range(len(self.__storage)):
+            if self.__storage[i] == instruction:
+                self.__storage.remove(instruction)
+                return True
+        return False
+
+
 class Player:
-    def __init__(self, attributes: PlayerAttributes = PlayerAttributes()):
+    def __init__(self, attributes: PlayerAttributes = PlayerAttributes(), backpack: Backpack = Backpack()):
         # initialize qubit stuff (rows)
         self.__attributes = attributes
+        self.__backpack = backpack
         self.__qubit_indices = []
         for i in range(0, attributes.get_num_of_qubits()):
             self.__qubit_indices.append(i)
@@ -73,6 +108,16 @@ class Player:
         self.circuit = None
         self.instructions = []
         self.__apply_instructions()
+
+
+        # todo remove, just for testing now
+        self.backpack.add(Instruction(HGate(), qargs=[0]))
+        self.backpack.add(Instruction(HGate(), qargs=[1]))
+
+
+    @property
+    def backpack(self):
+        return self.__backpack
 
     def set_generator(self, instructions: "list of Instructions" = None):
         num = self.__attributes.get_num_of_qubits()
@@ -89,14 +134,17 @@ class Player:
         counts = result.get_counts(self.circuit)
         return self.__counts_to_bit_list(counts)
 
-    def use_instruction(self, instruction: Instruction):
-        if self.next_col < self.__attributes.get_num_of_cols():
-            self.instructions.append(instruction)
-            self.next_col += 1
-        else:
-            print("Error, no more space available")
-        self.__apply_instructions()
-        return True
+    def use_instruction(self, instruction_index: int):
+        if 0 <= instruction_index < self.__backpack.size:
+            instruction = self.__backpack.get(instruction_index)
+            if self.next_col < self.__attributes.get_num_of_cols():
+                self.instructions.append(instruction)
+                self.next_col += 1
+            else:
+                print("Error, no more space available")
+            self.__apply_instructions()
+            return True
+        return False
 
     def print(self):
         for qubit in self.__attributes.get_qubits():
