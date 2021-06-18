@@ -14,6 +14,8 @@ class Controls:
         self.__selection_down = KEY_DOWN_ARROW
         self.__selection_left = KEY_LEFT_ARROW
 
+        self.__action = KEY_SPACE
+
         self.__render = KEY_R_LOWER
 
     @property
@@ -48,6 +50,9 @@ class Controls:
     def selection_left(self):
         return self.__selection_left
 
+    @property
+    def action(self):
+        return self.__action
 
     def render(self):
         return self.__render
