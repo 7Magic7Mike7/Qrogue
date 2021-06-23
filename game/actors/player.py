@@ -8,6 +8,7 @@ from qiskit.circuit.library import HGate
 from qiskit.providers.aer import AerSimulator
 from game.logic.qubit import Qubit
 from game.logic.instruction import Instruction
+import game.logic.instruction as inst
 
 
 class PlayerAttributes:
@@ -104,6 +105,7 @@ class Player:
         self.next_col = 0
 
         # apply gates/instructions, create the circuit
+        self.generator = None
         self.set_generator()
         self.circuit = None
         self.instructions = []
@@ -111,8 +113,9 @@ class Player:
 
 
         # todo remove, just for testing now
-        self.backpack.add(Instruction(HGate(), qargs=[0]))
-        self.backpack.add(Instruction(HGate(), qargs=[1]))
+        self.backpack.add(inst.HGate(0))
+        self.backpack.add(inst.HGate(1))
+        self.backpack.add(inst.SwapGate(0, 1))
 
 
     @property
