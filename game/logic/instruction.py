@@ -29,6 +29,10 @@ class Instruction(ABC):
     def name(self):
         pass
 
+    @abstractmethod
+    def abbreviation(self, qubit: int = 0):
+        pass
+
     def __str__(self):
         return f"{self.name()} ({self.qargs}, {self.cargs})"
 
@@ -40,10 +44,21 @@ class HGate(Instruction):
     def name(self):
         return "HGate"
 
+    def abbreviation(self, qubit: int = 0):
+        return " H "
+
 
 class SwapGate(Instruction):
     def __init__(self, q0: int, q1: int):
         super().__init__(gates.SwapGate(), qargs=[q0, q1])
+        self.__q0 = q0
+        self.__q1 = q1
 
     def name(self):
         return "Swap"
+
+    def abbreviation(self, qubit: int = 0):
+        if qubit == self.__q0:
+            return " S0 "
+        else:
+            return " S1 "
