@@ -53,7 +53,7 @@ class GameHandler:
 
     def __update(self):
         self.__renderer.render()
-        self.__fight()
+        self.__fight()  # todo handle differently later
 
     def __fight(self):
         enemy = self.__map.in_enemy_range()
@@ -99,6 +99,7 @@ class GameHandler:
         result = self.__player.measure()
         self.__logger.clear()
         self.__logger.println(result.__str__())
+        self.__update()
 
 
 class State(Enum):
