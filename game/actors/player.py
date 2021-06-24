@@ -176,7 +176,8 @@ class Player:
             qubits[i].damage(bit_list[i])
         return bit_list
 
-    def get_num_of_qubits(self):
+    @property
+    def num_of_qubits(self):
         return self.__attributes.get_num_of_qubits()
 
     def __get_result(self, circuit: QuantumCircuit, shots: int = 1):
@@ -192,7 +193,8 @@ class Player:
         circuit.measure(self.__qubit_indices, self.__qubit_indices)
         self.circuit = circuit
 
-    def __counts_to_bit_list(self, counts):
+    @staticmethod
+    def __counts_to_bit_list(counts):
         counts = str(counts)
         counts = counts[1:len(counts)-1]
         arr = counts.split(':')
