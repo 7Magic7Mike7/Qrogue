@@ -23,6 +23,7 @@ class GameHandler:
         self.__renderer.map_widget.set_map(self.__map)
         self.__renderer.circuit_widget.set_player(self.__player)    # todo maybe only set player.circuit?
         self.__renderer.player_info_widget.set_player(self.__player)
+        self.__renderer.player_qubits_widget.set_player(self.__player)
 
         self.__update()
 
@@ -56,11 +57,13 @@ class GameHandler:
         self.__fight()  # todo handle differently later
 
     def __fight(self):
-        enemy = self.__map.in_enemy_range()
-        if enemy is not None:
+        self.__cur_enemy = self.__map.in_enemy_range()
+        if self.__cur_enemy is not None:
             self.__logger.clear()
-            self.__logger.println("ENCOUNTER!")
+            self.__logger.println(self.__cur_enemy.__str__())
             self.__state_machine.change_state(State.Fight)
+        self.__renderer.event_info_widget.set_enemy(self.__cur_enemy)  # is none if there is no enemy, and this is okay
+        self.__renderer.event_targets_widget.set_enemy(self.__cur_enemy)  # is none if there is no enemy, and this is okay
 
     def __move_up(self):
         if self.__map.move(Direction.Up):
@@ -95,8 +98,15 @@ class GameHandler:
         self.__logger.println("selection left")
 
     def __attack(self):
+        if self.__cur_enemy is None:
+            self.__logger.println("Error! Enemy is not set!")
+            return
+
         self.__player.use_instruction(self.__renderer.player_info_widget.circuit)
         result = self.__player.measure()
+        for r in result:
+            self.__cur_enemy.damage(r, 1)
+        result = self.__player.defend(input=[])
         self.__logger.clear()
         self.__logger.println(result.__str__())
         self.__update()
