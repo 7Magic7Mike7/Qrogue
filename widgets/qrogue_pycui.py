@@ -1,11 +1,14 @@
 
 import py_cui
 from util.logger import Logger
+from widgets.event_info_widget import EventInfoWidget
+from widgets.event_qubits_widget import EventQubitsWidget
 from widgets.map_widget import MapWidget
 from widgets.circuit_widget import CircuitWidget
 from game.map.map import Map
 from game.actors.player import Player
 from widgets.player_info_widget import PlayerInfoWidget
+from widgets.player_qubits_widget import PlayerQubitsWidget
 
 
 class QroguePyCUI(py_cui.PyCUI):
@@ -37,18 +40,21 @@ class QroguePyCUI(py_cui.PyCUI):
         player_info_widget.toggle_border()
         self.__player_info_widget = PlayerInfoWidget(player_info_widget, self.__logger)
 
-        self.__qubits_widget = self.add_block_label('Qubits life & state', 6, 0, row_span=2, column_span=2, center=True)
-        self.__qubits_widget.toggle_border()
+        qubits_widget = self.add_block_label('Qubits life & state', 6, 0, row_span=2, column_span=2, center=True)
+        qubits_widget.toggle_border()
+        self.__player_qubits_widget = PlayerQubitsWidget(qubits_widget, self.__logger)
 
         circuit_widget = self.add_block_label('Circuit', 6, 2, row_span=2, column_span=5, center=True)
         circuit_widget.toggle_border()
         self.__circuit_widget = CircuitWidget(circuit_widget, self.__logger)
 
-        self.__event_info_widget = self.add_block_label('Enemy/Event', 1, 7, row_span=5, column_span=2, center=True)
-        self.__event_info_widget.toggle_border()
+        event_info_widget = self.add_block_label('Enemy/Event', 1, 7, row_span=5, column_span=2, center=True)
+        event_info_widget.toggle_border()
+        self.__event_info_widget = EventInfoWidget(event_info_widget, self.__logger)
 
-        self.__event_targets_widget = self.add_block_label('Event targets', 6, 7, row_span=2, column_span=2, center=True)
-        self.__event_targets_widget.toggle_border()
+        event_targets_widget = self.add_block_label('Event targets', 6, 7, row_span=2, column_span=2, center=True)
+        event_targets_widget.toggle_border()
+        self.__event_qubits_widget = EventQubitsWidget(event_targets_widget, self.__logger)
 
     @property
     def logger(self):
@@ -63,8 +69,8 @@ class QroguePyCUI(py_cui.PyCUI):
         return self.__player_info_widget
 
     @property
-    def qubits_widget(self):
-        return self.__qubits_widget
+    def player_qubits_widget(self):
+        return self.__player_qubits_widget
 
     @property
     def circuit_widget(self):
@@ -76,12 +82,15 @@ class QroguePyCUI(py_cui.PyCUI):
 
     @property
     def event_targets_widget(self):
-        return self.event_targets_widget
+        return self.__event_qubits_widget
 
     def render(self):   # I think this should only be called from the GameHandler
         self.__map_widget.render()
         self.__player_info_widget.render()
+        self.__player_qubits_widget.render()
         self.__circuit_widget.render()
+        self.__event_info_widget.render()
+        self.__event_qubits_widget.render()
 
 """
     def add_circuit_widget(self, title, row, column, row_span = 1, column_span = 1, padx = 0, pady = 0):
