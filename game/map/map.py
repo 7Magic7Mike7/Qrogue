@@ -1,6 +1,9 @@
 
 import random
 from enum import Enum
+
+from game.actors.enemy import Enemy
+from game.logic.qubit import Qubit
 from game.map.navigation import Coordinate, Direction
 
 P = 0   # player
@@ -56,6 +59,7 @@ class Map:
 
         self.__map[self.__player_pos.y][self.__player_pos.x] = Tile.Player
         self.__map[self.__enemy_pos.y][self.__enemy_pos.x] = Tile.Enemy
+        self.__enemy = Enemy([Qubit(0, 3, 1), Qubit(1, 1, 3)])
 
     def height(self):
         return len(self.__map)
@@ -96,5 +100,5 @@ class Map:
                 if 0 <= x < self.width() and 0 <= y < self.height():
                     tile = self.at(x, y)
                     if tile == Tile.Enemy:
-                        return tile
+                        return self.__enemy
         return None
