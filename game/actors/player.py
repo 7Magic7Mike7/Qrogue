@@ -117,7 +117,6 @@ class Player:
         self.backpack.add(inst.HGate(1))
         self.backpack.add(inst.SwapGate(0, 1))
 
-
     @property
     def backpack(self):
         return self.__backpack
@@ -175,6 +174,12 @@ class Player:
         for i in range(len(bit_list)):
             qubits[i].damage(bit_list[i])
         return bit_list
+
+    def get_qubit_string(self, index: int):
+        if 0 <= index < self.num_of_qubits:
+            return self.__attributes.get_qubits()[index].__str__()
+        else:
+            return "ERROR"  # todo adapt?
 
     @property
     def num_of_qubits(self):
