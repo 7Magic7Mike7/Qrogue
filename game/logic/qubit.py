@@ -11,11 +11,11 @@ class Qubit:    # TODO introduce interface, for example for only zero_life and o
     def __str__(self):
         return f"q_{self.index} ({self.__cur_zlife}|{self.__cur_olife})"
 
-    def damage(self, value: int):
+    def damage(self, value: int, dmg: int = 1):
         if value == 0:
-            self.__cur_zlife -= 1
+            self.__cur_zlife -= dmg
         else:
-            self.__cur_olife -= 1
+            self.__cur_olife -= dmg
 
     def get_zero_life(self):
         return self.__zero_life
@@ -26,3 +26,5 @@ class Qubit:    # TODO introduce interface, for example for only zero_life and o
     def get_cur_life(self):
         return self.__cur_zlife, self.__cur_olife
 
+    def is_alive(self):
+        return self.__cur_zlife > 0 and self.__cur_olife > 0
