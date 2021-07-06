@@ -3,19 +3,19 @@ import random
 from enum import Enum
 
 from game.actors.enemy import Enemy
+from game.actors.item import Item
+from game.actors.player import Player
 from game.logic.qubit import Qubit
 from game.map.navigation import Coordinate, Direction
-
-P = 0   # player
-A = 1
-F = 7
-E = 100 # empty field
+from game.logic.instruction import SwapGate
 
 
 class Tile(Enum):
     Empty = (0, " ", True)
     Player = (1, "P")
     Enemy = (10, "E")
+    Boss = (16, "B")
+    Item = (7, "I", True)
     Wall = (100, "#")
     Obstacle = (110, "o")
 
@@ -36,26 +36,83 @@ class Tile(Enum):
         return self.__walkable
 
 
+RANDOM_MAP = False
+
+
+def _str_to_map(map: "list of str"):
+    new_map = []
+    for row in map:
+        if map is None:
+            continue
+        new_row = []
+        for i in range(len(row)):
+            tile = row[i]
+            if tile == Tile.Enemy.img:
+                tile = Tile.Enemy
+            elif tile == Tile.Player.img:
+                tile = Tile.Player
+            elif tile == Tile.Boss.img:
+                tile = Tile.Boss
+            elif tile == Tile.Item.img:
+                tile = Tile.Item
+            elif tile == Tile.Wall.img:
+                tile = Tile.Wall
+            elif tile == Tile.Obstacle.img:
+                tile = Tile.Obstacle
+            else:
+                tile = Tile.Empty
+            new_row.append(tile)
+        new_map.append(new_row)
+    return new_map
+
+
 class Map:
-    def __init__(self, seed: int, width: int, height: int):
+
+    def __init__(self, seed: int, width: int, height: int, player: Player):
         rand = random.Random()
         rand.seed(seed)
+        self.__player = player  # TODO save player_pos in player?
 
-        self.__player_pos = Coordinate(2, 2)
-        self.__enemy_pos = Coordinate(9, 9)
-
-        self.__map = []
-        for y in range(height):
-            row = []
-            for x in range(width):
-                if y == 0 or y == height - 1 or x == 0 or x == width - 1:
-                    row.append(Tile.Wall)
-                else:
-                    if rand.randint(0, 7) == 1:
-                        row.append(Tile.Obstacle)
+        if RANDOM_MAP:
+            self.__map = []
+            for y in range(height):
+                row = []
+                for x in range(width):
+                    if y == 0 or y == height - 1 or x == 0 or x == width - 1:
+                        row.append(Tile.Wall)
                     else:
-                        row.append(Tile.Empty)
-            self.__map.append(row)
+                        if rand.randint(0, 7) == 1:
+                            row.append(Tile.Obstacle)
+                        else:
+                            row.append(Tile.Empty)
+                self.__map.append(row)
+                self.__player_pos = Coordinate(2, 3)
+                self.__enemy_pos = Coordinate(9, 9)
+        else:
+            __map = [
+                "#####################################",
+                "#        oooo#                      #",
+                "#         ooo#         #            #",
+                "#          oo#         ######   #####",
+                "#           o#         #            #",
+                "#            #         #            #",
+                "#                      #            #",
+                "###   ###############################",
+                "#        ###############oo        oo#",
+                "#        ###############o          o#",
+                "#                                   #",
+                "#####################################",
+            ]
+            self.__map = _str_to_map(__map)
+            self.__player_pos = Coordinate(2, 1)
+            self.__enemy_pos = Coordinate(4, 9)
+            self.__boss_pos = Coordinate(30, 8)
+            self.__item_pos = Coordinate(30, 5)
+            self.__map[self.__item_pos.y][self.__item_pos.x] = Tile.Item
+            self.__map[self.__boss_pos.y][self.__boss_pos.x] = Tile.Boss
+
+            self.__boss = Enemy([Qubit(0, 4, 4), Qubit(1, 2, 2), Qubit(2, 3, 1)])
+            self.__item = Item()
 
         self.__map[self.__player_pos.y][self.__player_pos.x] = Tile.Player
         self.__map[self.__enemy_pos.y][self.__enemy_pos.x] = Tile.Enemy
@@ -85,6 +142,11 @@ class Map:
             return False
 
         if self.__map[new_pos.y][new_pos.x].is_walkable():
+
+            if self.__map[new_pos.y][new_pos.x] == Tile.Item:
+                self.__player.backpack.add(SwapGate(0, 1))
+                self.__map[new_pos.y][new_pos.x] = Tile.Empty
+
             self.__player_pos = new_pos
             self.__map[y][x] = Tile.Empty
             self.__map[new_pos.y][new_pos.x] = Tile.Player
@@ -101,4 +163,6 @@ class Map:
                     tile = self.at(x, y)
                     if tile == Tile.Enemy:
                         return self.__enemy
+                    elif tile == Tile.Boss:
+                        return self.__boss
         return None
