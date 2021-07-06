@@ -16,8 +16,8 @@ class GameHandler:
         self.__controls = Controls()
         self.__state_machine = StateMachine(self) # (self.__renderer, self.__controls)
 
-        self.__map = Map(seed, self.__MAP_WIDTH, self.__MAP_HEIGHT)
         self.__player = Player()
+        self.__map = Map(seed, self.__MAP_WIDTH, self.__MAP_HEIGHT, self.__player)
 
         self.__logger = self.__renderer.logger
         self.__renderer.map_widget.set_map(self.__map)
@@ -57,13 +57,14 @@ class GameHandler:
         self.__fight()  # todo handle differently later
 
     def __fight(self):
-        self.__cur_enemy = self.__map.in_enemy_range()
-        if self.__cur_enemy is not None:
+        if self.__state_machine.cur_state != State.Fight:
+            self.__cur_enemy = self.__map.in_enemy_range()
+        if self.__cur_enemy is not None and self.__state_machine.cur_state == State.Explore:
             self.__logger.clear()
             self.__logger.println(self.__cur_enemy.__str__())
             self.__state_machine.change_state(State.Fight)
-        self.__renderer.event_info_widget.set_enemy(self.__cur_enemy)  # is none if there is no enemy, and this is okay
-        self.__renderer.event_targets_widget.set_enemy(self.__cur_enemy)  # is none if there is no enemy, and this is okay
+            self.__renderer.event_info_widget.set_enemy(self.__cur_enemy)  # is none if there is no enemy, and this is okay
+            self.__renderer.event_targets_widget.set_enemy(self.__cur_enemy)  # is none if there is no enemy, and this is okay
 
     def __move_up(self):
         if self.__map.move(Direction.Up):
@@ -87,7 +88,6 @@ class GameHandler:
 
     def __selection_right(self):
         self.__logger.clear()
-        self.__logger.println("selection right")
 
     def __selection_down(self):
         self.__renderer.player_info_widget.next()
@@ -95,14 +95,17 @@ class GameHandler:
 
     def __selection_left(self):
         self.__logger.clear()
-        self.__logger.println("selection left")
 
     def __attack(self):
         if self.__cur_enemy is None:
             self.__logger.println("Error! Enemy is not set!")
             return
 
-        self.__player.use_instruction(self.__renderer.player_info_widget.circuit)
+        index = self.__renderer.player_info_widget.circuit
+        if index == -1:
+            self.__player.remove_instruction(0)
+        else:
+            self.__player.use_instruction(self.__renderer.player_info_widget.circuit)
         result = self.__player.measure()
         for r in result:
             self.__cur_enemy.damage(r, 1)
