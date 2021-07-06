@@ -166,3 +166,9 @@ class Map:
                     elif tile == Tile.Boss:
                         return self.__boss
         return None
+
+    def remove_enemy(self):     # prototype function, only works for prototype showcase
+        self.__map[self.__enemy_pos.y][self.__enemy_pos.x] = Tile.Empty
+
+    def remove_boss(self):      # prototype function, only works for prototype showcase
+        self.__map[self.__boss_pos.y][self.__boss_pos.x] = Tile.Empty
