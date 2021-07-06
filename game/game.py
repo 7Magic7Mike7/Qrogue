@@ -107,12 +107,18 @@ class GameHandler:
         else:
             self.__player.use_instruction(self.__renderer.player_info_widget.circuit)
         result = self.__player.measure()
-        for r in result:
-            self.__cur_enemy.damage(r, 1)
-        result = self.__player.defend(input=[])
         self.__logger.clear()
-        self.__logger.println(result.__str__())
-        self.__update()
+        self.__logger.print_list(result)
+        for i in range(len(result)):
+            self.__cur_enemy.damage(i, result[i])
+        if self.__cur_enemy.is_alive():
+            result = self.__player.defend(input=[])
+            self.__logger.println(result.__str__())
+            self.__update()
+        else:
+            self.__logger.println("You won the fight!")
+            self.__map.remove_enemy()
+            self.__state_machine.change_state(State.Explore)
 
 
 class State(Enum):
