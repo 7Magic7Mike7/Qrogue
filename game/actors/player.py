@@ -115,7 +115,7 @@ class Player:
         # todo remove, just for testing now
         self.backpack.add(inst.HGate(0))
         self.backpack.add(inst.HGate(1))
-        self.backpack.add(inst.SwapGate(0, 1))
+        #self.backpack.add(inst.SwapGate(0, 1))
 
     @property
     def backpack(self):
@@ -143,10 +143,17 @@ class Player:
                 self.instructions.append(instruction)
                 self.next_col += 1
             else:
-                print("Error, no more space available")
+                print("Error, no more space available") # TODO use logger or popup?
             self.__apply_instructions()
             return True
         return False
+
+    def remove_instruction(self, column: int):
+        if self.next_col == 0:
+            return
+        if 0 <= column < len(self.instructions):
+            self.instructions.remove(self.instructions[column])
+            self.next_col = self.next_col-1
 
     def print(self):
         for qubit in self.__attributes.get_qubits():
