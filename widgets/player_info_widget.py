@@ -21,17 +21,17 @@ class PlayerInfoWidget:
 
     def prev(self):
         self.__circuit_selection = self.__circuit_selection - 1
-        if self.__circuit_selection < 0:
-            self.__circuit_selection = self.__player.backpack.size - 1
+        if self.__circuit_selection < -1:   # -1 == Remove-action
+            self.__circuit_selection = self.__player.backpack.size
 
     def next(self):
         self.__circuit_selection = self.__circuit_selection + 1
         if self.__circuit_selection >= self.__player.backpack.size:
-            self.__circuit_selection = 0
+            self.__circuit_selection = -1
 
     def render(self):
         if self.__player is not None:
-            sb = ""
+            sb = "Remove\n"
             for i in range(self.__player.backpack.size):
                 if i == self.__circuit_selection:
                     sb += "x "  # todo: use color instead?
