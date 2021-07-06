@@ -20,7 +20,7 @@ class Logger:
             if elem is not None:
                 sb += elem.__str__()
             sb += delimiter
-        return sb
+        self.print(sb)
 
     def clear(self):
         self.__text = ""
