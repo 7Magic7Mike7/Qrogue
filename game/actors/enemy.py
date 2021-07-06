@@ -9,9 +9,15 @@ class Enemy:
     def num_of_qubits(self):
         return len(self.__qubits)
 
-    def damage(self, index: int, value: int):
+    def damage(self, index: int, value: int, dmg: int = 1):
         if 0 <= index < len(self.__qubits):
-            self.__qubits[index].damage(value)
+            self.__qubits[index].damage(value, dmg)
+
+    def is_alive(self): # at least one qubit must be still alive
+        for qubit in self.__qubits:
+            if qubit.is_alive():
+                return True
+        return False
 
     def get_qubit_string(self, index: int):
         if 0 <= index < len(self.__qubits):
