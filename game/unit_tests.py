@@ -5,7 +5,7 @@ from game.logic.instruction import *
 def defend_unit_test(iterations: int = 1000):
     attributes = PlayerAttributes()
     attributes.set_num_of_qubits(2)
-    attributes.set_num_of_cols(5)
+    attributes.set_space(5)
     player = Player(attributes)
     player.use_instruction(HGate(0))
     player.use_instruction(HGate(1))
@@ -31,7 +31,7 @@ def defend_unit_test(iterations: int = 1000):
     print("map1 = ", map1)
 
 
-def print_interface(input_pool_mapper: "list of strings"):
+def print_interface(input_pool_mapper: "list of str"):
     string = ""
     last = len(input_pool_mapper) - 1
     for i in range(last):

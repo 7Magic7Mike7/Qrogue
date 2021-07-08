@@ -1,0 +1,31 @@
+
++ test outside of the game how hard it would be to reach simple 0/1 state-sequences (e.g. 'q0 = 0, q1 = 0, q2 = 1')
+
++ adapt Enemy to the test findings (e.g. use
+    a real StateVector
+        +shows better functionality
+        -explodes
+        -harder to understand initially
+        -harder to implement enemies with less qubits than you use
+    a cbit-list
+        +shows real world better since we need to measure
+        +more scalable
+        +easier to auto-generate
+        +allows more qubits
+        -less possibilities
+        -hard to show the StateVector of the enemy in a meaningful way
+    multi-shots with probabilities for the qubits
+        +more possibilities
+        +shows real world usage
+        +a bit more scalable,
+        -how to show StateVector?
+    +-> a StateVector is stored and the multi-shot probabilities will be compared
++ create Enemy target at the beginning of the fight
+    - create a pool of possible targets beforehand and pull it at the beginning of the fight
+- add Fight screen
++ add Rooms as part of the Map
+- make Fight-actions independent from game and player_widget (they should only retrieve them for "executing"/visualization)
+
+
+SMALL TWEAKS/FIXES:
+- remove self.__player from game.py
