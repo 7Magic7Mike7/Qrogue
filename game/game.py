@@ -1,124 +1,77 @@
 from enum import Enum
-from widgets.qrogue_pycui import QroguePyCUI
-from game.actors.player import Player
+
+import game.actors.enemy as enemy
+import game.map.tiles as tiles
+from game.actors.player import DummyPlayer, Player
+from game.callbacks import OnWalkCallback
 from game.controls import Controls
 from game.map.map import Map
 from game.map.navigation import Direction
+from util.logger import Logger
+from util.my_random import RandomManager
+from widgets.qrogue_pycui import QrogueCUI
 
 
 class GameHandler:
     __MAP_WIDTH = 50
     __MAP_HEIGHT = 14
 
+    __FIGHT_CALLBACK = None
+
+    @staticmethod
+    def fight_callback() -> OnWalkCallback:
+        return GameHandler.__FIGHT_CALLBACK
+
     def __init__(self, seed: int):
+        self.__running = False
         self.__seed = seed
-        self.__renderer = QroguePyCUI(seed)
-        self.__controls = Controls()
-        self.__state_machine = StateMachine(self) # (self.__renderer, self.__controls)
+        self.__randMan = RandomManager(seed)
+        Logger()    # create the logger
 
-        self.__player = Player()
-        self.__map = Map(seed, self.__MAP_WIDTH, self.__MAP_HEIGHT, self.__player)
+        GameHandler.__FIGHT_CALLBACK = self.__fight_callback
 
-        self.__logger = self.__renderer.logger
-        self.__renderer.map_widget.set_map(self.__map)
-        self.__renderer.circuit_widget.set_player(self.__player)    # todo maybe only set player.circuit?
-        self.__renderer.player_info_widget.set_player(self.__player)
-        self.__renderer.player_qubits_widget.set_player(self.__player)
+        self.__renderer = QrogueCUI(seed, Controls(), self.__end_of_fight_callback)
+        self.__state_machine = StateMachine(self, None, None)
 
+        self.__player_tile = tiles.Player(DummyPlayer())
+        self.__map = Map(seed, self.__MAP_WIDTH, self.__MAP_HEIGHT, self.__player_tile, self.__fight_callback)
+
+        self.__state_machine.change_state(State.Explore)
         self.__update()
 
-    def init_move_keys(self):  # note: only 1 command per key is possible, overriding however is no problem
-        # Add the key binding to the PyCUI object itself for overview mode.
-        self.__renderer.add_key_command(self.__controls.move_up, self.__move_up)
-        self.__renderer.add_key_command(self.__controls.move_right, self.__move_right)
-        self.__renderer.add_key_command(self.__controls.move_down, self.__move_down)
-        self.__renderer.add_key_command(self.__controls.move_left, self.__move_left)
-        self.__renderer.add_key_command(self.__controls.action, self.__dummy())
-        # self.__renderer.add_key_command(self.__controls.render(), self.__renderer.render())
+    @property
+    def __player(self):
+        return self.__player_tile.player
 
-    def __dummy(self):
-        print("dummy")  # todo remove when I figured out, how to remove a key command
+    def __init_pause_screen(self):
+        Logger.instance().println("Pause", clear=True)
 
-    def init_fight_keys(self):
-        self.__renderer.add_key_command(self.__controls.selection_up, self.__selection_up)
-        self.__renderer.add_key_command(self.__controls.selection_right, self.__selection_right)
-        self.__renderer.add_key_command(self.__controls.selection_down, self.__selection_down)
-        self.__renderer.add_key_command(self.__controls.selection_left, self.__selection_left)
-        self.__renderer.add_key_command(self.__controls.action, self.__attack)
+    def init_explore_screen(self):
+        self.__renderer.switch_to_explore(self.__map, self.__player_tile)
+
+    def init_fight_screen(self):
+        self.__renderer.switch_to_fight(self.__player_tile, self.__cur_enemy)
+
+    def __init_riddle_screen(self):
+        Logger.instance().println("Riddle", clear=True)
+
+    def __fight_callback(self, player: Player, enemy: enemy.Enemy, direction: Direction):
+        self.__cur_enemy = enemy
+        self.__state_machine.change_state(State.Fight)
+
+    def __end_of_fight_callback(self):
+        Logger.instance().println("You won the fight!")
+        self.__state_machine.change_state(State.Explore)
 
     def log(self, msg: str):
-        self.__logger.println(msg)
+        Logger.instance().println(msg)
 
     def start(self):
+        self.__running = True
         self.__renderer.start()
 
     def __update(self):
         self.__renderer.render()
-        self.__fight()  # todo handle differently later
-
-    def __fight(self):
-        if self.__state_machine.cur_state != State.Fight:
-            self.__cur_enemy = self.__map.in_enemy_range()
-        if self.__cur_enemy is not None and self.__state_machine.cur_state == State.Explore:
-            self.__logger.clear()
-            self.__logger.println(self.__cur_enemy.__str__())
-            self.__state_machine.change_state(State.Fight)
-            self.__renderer.event_info_widget.set_enemy(self.__cur_enemy)  # is none if there is no enemy, and this is okay
-            self.__renderer.event_targets_widget.set_enemy(self.__cur_enemy)  # is none if there is no enemy, and this is okay
-
-    def __move_up(self):
-        if self.__map.move(Direction.Up):
-            self.__update()
-
-    def __move_right(self):
-        if self.__map.move(Direction.Right):
-            self.__update()
-
-    def __move_down(self):
-        if self.__map.move(Direction.Down):
-            self.__update()
-
-    def __move_left(self):
-        if self.__map.move(Direction.Left):
-            self.__update()
-
-    def __selection_up(self):
-        self.__renderer.player_info_widget.prev()
-        self.__update()
-
-    def __selection_right(self):
-        self.__logger.clear()
-
-    def __selection_down(self):
-        self.__renderer.player_info_widget.next()
-        self.__update()
-
-    def __selection_left(self):
-        self.__logger.clear()
-
-    def __attack(self):
-        if self.__cur_enemy is None:
-            self.__logger.println("Error! Enemy is not set!")
-            return
-
-        index = self.__renderer.player_info_widget.circuit
-        if index == -1:
-            self.__player.remove_instruction(0)
-        else:
-            self.__player.use_instruction(self.__renderer.player_info_widget.circuit)
-        result = self.__player.measure()
-        self.__logger.clear()
-        self.__logger.print_list(result)
-        for i in range(len(result)):
-            self.__cur_enemy.damage(i, result[i])
-        if self.__cur_enemy.is_alive():
-            result = self.__player.defend(input=[])
-            self.__logger.println(result.__str__())
-            self.__update()
-        else:
-            self.__logger.println("You won the fight!")
-            self.__map.remove_enemy()
-            self.__state_machine.change_state(State.Explore)
 
 
 class State(Enum):
@@ -129,13 +82,12 @@ class State(Enum):
 
 
 class StateMachine:
-    def __init__(self, game: GameHandler):
+    def __init__(self, game: GameHandler, explore_cui, fight_cui):
         self.__game = game
-        # self.__renderer = renderer
-        # self.__controls = controls
+        self.__explore_cui = explore_cui
+        self.__fight_cui = fight_cui
         self.__cur_state = None
         self.__prev_state = None
-        self.change_state(State.Explore)
 
     @property
     def cur_state(self):
@@ -150,6 +102,10 @@ class StateMachine:
         self.__cur_state = state
 
         if self.__cur_state == State.Explore:
-            self.__game.init_move_keys()
+            self.__game.init_explore_screen()
         elif self.__cur_state == State.Fight:
-            self.__game.init_fight_keys()
+            self.__game.init_fight_screen()
+        elif self.__cur_state == State.Pause:
+            self.__game.init_pause_screen()
+        elif self.__cur_state == State.Riddle:
+            self.__game.init_riddle_screen()

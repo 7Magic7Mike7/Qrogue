@@ -3,67 +3,47 @@ Author: Artner Michael
 13.06.2021
 """
 
+from abc import ABC, abstractmethod
 from qiskit import QuantumCircuit, transpile
-from qiskit.circuit.library import HGate
-from qiskit.providers.aer import AerSimulator
-from game.logic.qubit import Qubit
-from game.logic.instruction import Instruction
-import game.logic.instruction as inst
+from qiskit.providers.aer import StatevectorSimulator
+
+from game.logic.instruction import Instruction, HGate
+from game.logic.qubit import QubitSet, EmptyQubitSet, DummyQubitSet, StateVector
+# from jkq import ddsim
 
 
 class PlayerAttributes:
     # default values
-    NUM_OF_QUBITS = 2
-    NUM_OF_COLS = 3
-    ZERO_LIFE = 4
-    ONE_LIFE = 4
+    __CIRCUIT_SPACE = 3
 
-    def __init__(self):     # todo add qubits etc
-        self.__num_of_qubits = self.NUM_OF_QUBITS
-        self.__num_of_cols = self.NUM_OF_COLS
-        self.__init_qubits()
+    def __init__(self, qubits: QubitSet = EmptyQubitSet(), space: int = __CIRCUIT_SPACE):
+        self.__space = space
+        self.__qubits = qubits
 
-    def __init_qubits(self):
-        self.__qubits = []
-        for i in range(self.__num_of_qubits):
-            self.__qubits.append(Qubit(i, zero_life=self.ZERO_LIFE, one_life=self.ONE_LIFE))
+    @property
+    def num_of_qubits(self):
+        return self.__qubits.size()
 
-    def get_num_of_qubits(self):
-        return self.__num_of_qubits
+    @property
+    def space(self):
+        return self.__space
 
-    def set_num_of_qubits(self, value: int):
+    def set_space(self, value: int):
         if value < 1:
             raise ValueError("value must be >= 1!")
-        self.__num_of_qubits = value
-        self.__init_qubits()
+        self.__space = value
 
-    def get_num_of_cols(self):
-        return self.__num_of_cols
-
-    def set_num_of_cols(self, value: int):
-        if value < 1:
-            raise ValueError("value must be >= 1!")
-        self.__num_of_cols = value
-
-    def get_qubits(self):
+    @property
+    def qubits(self):
         return self.__qubits
-
-    def set_qubit_life(self, qubit: int, zero_life: int = 0, one_life: int = 0):
-        if qubit < 0 or self.__num_of_qubits <= qubit:
-            raise ValueError(f"Invalid qubit: 0 <= {qubit} < {self.__num_of_qubits} not given!")
-        if zero_life <= 0:
-            zero_life = self.__qubits[qubit].get_zero_life()
-        if one_life <= 0:
-            one_life = self.__qubits[qubit].get_one_life()
-        self.__qubits[qubit] = Qubit(qubit, zero_life, one_life)
 
 
 class Backpack:
     CAPACITY = 4
 
-    def __init__(self, capacity: int = CAPACITY):
+    def __init__(self, capacity: int = CAPACITY, content: "list of Instructions" = []):
         self.__capacity = capacity
-        self.__storage = []
+        self.__storage = content
 
     @property
     def capacity(self):
@@ -91,17 +71,18 @@ class Backpack:
         return False
 
 
-class Player:
+class Player(ABC):
     def __init__(self, attributes: PlayerAttributes = PlayerAttributes(), backpack: Backpack = Backpack()):
         # initialize qubit stuff (rows)
+        self.__simulator = StatevectorSimulator()#ddsim.JKQProvider().get_backend('statevector_simulator')
+        self.__stv = None
         self.__attributes = attributes
         self.__backpack = backpack
         self.__qubit_indices = []
-        for i in range(0, attributes.get_num_of_qubits()):
+        for i in range(0, attributes.num_of_qubits):
             self.__qubit_indices.append(i)
 
         # initialize gate stuff (columns)
-        #self.num_of_cols = num_of_cols
         self.next_col = 0
 
         # apply gates/instructions, create the circuit
@@ -111,41 +92,41 @@ class Player:
         self.instructions = []
         self.__apply_instructions()
 
-
-        # todo remove, just for testing now
-        self.backpack.add(inst.HGate(0))
-        self.backpack.add(inst.HGate(1))
-        #self.backpack.add(inst.SwapGate(0, 1))
-
     @property
     def backpack(self):
         return self.__backpack
 
-    def set_generator(self, instructions: "list of Instructions" = None):
-        num = self.__attributes.get_num_of_qubits()
-        self.generator = QuantumCircuit(num, num)
-        if instructions is None:        # default generator
-            for i in range(num):
-                self.generator.h(i)     # HGate on every qubit
-        else:
-            for inst in instructions:
-                self.generator.append(inst.instruction, qargs=inst.qargs, cargs=inst.cargs)
+    @property
+    def state_vector(self):
+        return self.__stv
 
-    def measure(self):
+    def set_generator(self, instructions: "list of Instructions" = None):
+        num = self.__attributes.num_of_qubits
+        if num > 0:
+            self.generator = QuantumCircuit(num, num)
+            if instructions is None:        # default generator
+                for i in range(num):
+                    self.generator.h(i)     # HGate on every qubit
+            else:
+                for inst in instructions:
+                    self.generator.append(inst.instruction, qargs=inst.qargs, cargs=inst.cargs)
+
+    def measure(self) -> StateVector:
         result = self.__get_result(self.circuit)
-        counts = result.get_counts(self.circuit)
-        return self.__counts_to_bit_list(counts)
+        self.__stv = StateVector(result.get_statevector(self.circuit))
+        return self.__stv
+        #counts = result.get_counts(self.circuit)
+        #return self.__counts_to_bit_list(counts)
 
     def use_instruction(self, instruction_index: int):
         if 0 <= instruction_index < self.__backpack.size:
             instruction = self.__backpack.get(instruction_index)
-            if self.next_col < self.__attributes.get_num_of_cols():
+            if self.next_col < self.__attributes.space:
                 self.instructions.append(instruction)
                 self.next_col += 1
             else:
                 print("Error, no more space available") # TODO use logger or popup?
-            self.__apply_instructions()
-            return True
+            return self.__apply_instructions()
         return False
 
     def remove_instruction(self, column: int):
@@ -156,14 +137,13 @@ class Player:
             self.next_col = self.next_col-1
 
     def print(self):
-        for qubit in self.__attributes.get_qubits():
-            print(qubit)
         print(self.circuit)
         #self.circuit.draw(output="mpl")
         #plt.show()
 
-    def defend(self, input):    # TODO input should be the generator output of the enemy
-        num = self.__attributes.get_num_of_qubits()
+    def defend(self, input):
+        """"
+        num = self.__attributes.num_of_qubits
         reversed_circuit = QuantumCircuit(num, num)
         for i in range(self.next_col):
             index = self.next_col-1 - i
@@ -177,33 +157,34 @@ class Player:
         result = self.__get_result(reversed_circuit)
         counts = result.get_counts(reversed_circuit)
         bit_list = self.__counts_to_bit_list(counts)
-        qubits = self.__attributes.get_qubits()
-        for i in range(len(bit_list)):
-            qubits[i].damage(bit_list[i])
+        self.__attributes.qubits.damage(bit_list.count(0), bit_list.count(1))
         return bit_list
+        """
+        raise DeprecationWarning(self.defend)
 
     def get_qubit_string(self, index: int):
         if 0 <= index < self.num_of_qubits:
-            return self.__attributes.get_qubits()[index].__str__()
+            return f"q_{index}"
         else:
             return "ERROR"  # todo adapt?
 
     @property
     def num_of_qubits(self):
-        return self.__attributes.get_num_of_qubits()
+        return self.__attributes.num_of_qubits
 
     def __get_result(self, circuit: QuantumCircuit, shots: int = 1):
-        simulator = AerSimulator()
-        compiled_circuit = transpile(circuit, simulator)
-        job = simulator.run(compiled_circuit, shots=shots)
+        compiled_circuit = transpile(circuit, self.__simulator)
+        job = self.__simulator.run(compiled_circuit, shots=shots)
         return job.result()
 
     def __apply_instructions(self):
+        if self.generator is None:
+            return False
         circuit = self.generator.copy(name="PlayerCircuit")
         for inst in self.instructions:
-            circuit.append(inst.instruction, qargs=inst.qargs, cargs=inst.cargs)
-        circuit.measure(self.__qubit_indices, self.__qubit_indices)
+            inst.append_to(circuit)
         self.circuit = circuit
+        return True
 
     @staticmethod
     def __counts_to_bit_list(counts):
@@ -221,3 +202,12 @@ class Player:
         return list
 
 
+class DummyPlayer(Player):
+    __ATTR = PlayerAttributes(DummyQubitSet())
+    __BACKPACK = Backpack(3, [HGate(0), HGate(1), HGate(2)])
+
+    def __init__(self):
+        super(DummyPlayer, self).__init__(attributes=self.__ATTR, backpack=self.__BACKPACK)
+
+    def get_img(self):
+        return "P"
