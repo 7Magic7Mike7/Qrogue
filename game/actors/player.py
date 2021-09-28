@@ -10,6 +10,7 @@ from qiskit.providers.aer import StatevectorSimulator
 from game.logic.instruction import Instruction, HGate
 from game.logic.qubit import QubitSet, EmptyQubitSet, DummyQubitSet, StateVector
 # from jkq import ddsim
+from util.logger import Logger
 
 
 class PlayerAttributes:
@@ -45,6 +46,9 @@ class Backpack:
         self.__capacity = capacity
         self.__storage = content
 
+    def __iter__(self):
+        return BackpackIterator(self)
+
     @property
     def capacity(self):
         return self.__capacity
@@ -71,6 +75,19 @@ class Backpack:
         return False
 
 
+class BackpackIterator:
+    def __init__(self, backpack: Backpack):
+        self.__index = 0
+        self.__backpack = backpack
+
+    def __next__(self):
+        if self.__index < self.__backpack.size:
+            item = self.__backpack.get(self.__index)
+            self.__index += 1
+            return item
+        raise StopIteration
+
+
 class Player(ABC):
     def __init__(self, attributes: PlayerAttributes = PlayerAttributes(), backpack: Backpack = Backpack()):
         # initialize qubit stuff (rows)
@@ -91,13 +108,14 @@ class Player(ABC):
         self.circuit = None
         self.instructions = []
         self.__apply_instructions()
+        self.measure()  # to initialize the statevector
 
     @property
     def backpack(self):
         return self.__backpack
 
     @property
-    def state_vector(self):
+    def state_vector(self) -> StateVector:
         return self.__stv
 
     def set_generator(self, instructions: "list of Instructions" = None):
@@ -121,20 +139,25 @@ class Player(ABC):
     def use_instruction(self, instruction_index: int):
         if 0 <= instruction_index < self.__backpack.size:
             instruction = self.__backpack.get(instruction_index)
-            if self.next_col < self.__attributes.space:
-                self.instructions.append(instruction)
-                self.next_col += 1
+            if instruction.is_used():
+                self.__remove_instruction(instruction)
             else:
-                print("Error, no more space available") # TODO use logger or popup?
+                if self.next_col < self.__attributes.space:
+                    self.__append_instruction(instruction)
+                else:
+                    Logger.instance().error("Error, no more space available")
             return self.__apply_instructions()
         return False
 
-    def remove_instruction(self, column: int):
-        if self.next_col == 0:
-            return
-        if 0 <= column < len(self.instructions):
-            self.instructions.remove(self.instructions[column])
-            self.next_col = self.next_col-1
+    def __append_instruction(self, instruction: Instruction):
+        self.instructions.append(instruction)
+        instruction.set_used(True)
+        self.next_col += 1
+
+    def __remove_instruction(self, instruction: Instruction):
+        self.instructions.remove(instruction)
+        instruction.set_used(False)
+        self.next_col -= 1
 
     def print(self):
         print(self.circuit)
@@ -172,6 +195,10 @@ class Player(ABC):
     def num_of_qubits(self):
         return self.__attributes.num_of_qubits
 
+    @property
+    def space(self):
+        return self.__attributes.space
+
     def __get_result(self, circuit: QuantumCircuit, shots: int = 1):
         compiled_circuit = transpile(circuit, self.__simulator)
         job = self.__simulator.run(compiled_circuit, shots=shots)
@@ -204,7 +231,7 @@ class Player(ABC):
 
 class DummyPlayer(Player):
     __ATTR = PlayerAttributes(DummyQubitSet())
-    __BACKPACK = Backpack(3, [HGate(0), HGate(1), HGate(2)])
+    __BACKPACK = Backpack(3, [HGate(0), HGate(0), HGate(1), HGate(2)])
 
     def __init__(self):
         super(DummyPlayer, self).__init__(attributes=self.__ATTR, backpack=self.__BACKPACK)

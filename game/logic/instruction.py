@@ -9,13 +9,22 @@ from qiskit import QuantumCircuit
 
 
 class Instruction(ABC):
+    MAX_ABBREVIATION_LEN = 5
+
     def __init__(self, instruction, qargs: "list of ints", cargs: "list of ints" = None):
         self.__instruction = instruction
         self.__qargs = qargs
+        self.__used = False
         if cargs is None:
             self.__cargs = []
         else:
             self.__cargs = cargs
+
+    def is_used(self) -> bool:
+        return self.__used
+
+    def set_used(self, used: bool):
+        self.__used = used
 
     def append_to(self, circuit: QuantumCircuit):
         circuit.append(self.__instruction, self.__qargs, self.__cargs)
@@ -41,7 +50,11 @@ class Instruction(ABC):
         pass
 
     def __str__(self):
-        return f"{self.name()} ({self.qargs}, {self.cargs})"
+        text = f"{self.name()} ({self.qargs}, {self.cargs})"
+        if self.is_used():
+            return f"({text})"
+        else:
+            return text
 
 
 class HGate(Instruction):
@@ -49,7 +62,7 @@ class HGate(Instruction):
         super().__init__(gates.HGate(), qargs=[qubit])
 
     def name(self):
-        return "HGate"
+        return "Hadamard"
 
     def abbreviation(self, qubit: int = 0):
         return " H "

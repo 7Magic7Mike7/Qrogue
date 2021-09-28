@@ -10,5 +10,4 @@ turn back time so we can "stop" the climate crisis and live on a healthy planet?
 """
 
 game = GameHandler(7)
-game.log(note)
 game.start()

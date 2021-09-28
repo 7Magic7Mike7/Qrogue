@@ -33,7 +33,7 @@ class Enemy(ABC):
         #    self.__target.extend(player.num_of_qubits - self.__target.num_of_qubits)
         self.__target = self.__difficulty.create_statevector(player.num_of_qubits)
 
-    def get_statevector(self):
+    def get_statevector(self) -> StateVector:
         return self.__target
 
     def damage(self, state_vec: StateVector):

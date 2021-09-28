@@ -23,6 +23,9 @@ class Logger:
         if self.__info_counter % 100 == 0:
             print(f"INFO[{self.__info_counter:03f}]: {message}")
 
+    def error(self, message):
+        self.println(f"ERROR! {message}", clear=False)
+
     def print(self, message: str, clear: bool = False):
         print(message)
         if clear:
