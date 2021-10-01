@@ -113,6 +113,14 @@ class StateVector:
         print("-----")
         return True
 
+    def get_diff(self, other: "StateVector") -> "StateVector":
+        if self.size == other.size:
+            diff = [self.__amplitudes[i] - other.__amplitudes[i] for i in range(self.size)]
+            return StateVector(diff)
+        else:
+            return None
+
+
     def __eq__(self, other):
         if type(other) is type(self):
             return self.__amplitudes == other.__amplitudes
@@ -133,7 +141,10 @@ class StateVector:
         return False
 
     def __str__(self):
-        return str(np.round(self.__amplitudes, 2))
+        text = ""
+        for val in self.__amplitudes:
+            text += f"{np.round(val, 2)}\n"
+        return text
 
 
 # interface for a set of qubits (e.g. Ion-traps, Super conducting, ...)

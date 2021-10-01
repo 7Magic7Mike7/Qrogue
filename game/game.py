@@ -23,7 +23,6 @@ class GameHandler:
         return GameHandler.__FIGHT_CALLBACK
 
     def __init__(self, seed: int):
-        self.__running = False
         self.__seed = seed
         self.__randMan = RandomManager(seed)
         Logger()    # create the logger
@@ -63,11 +62,7 @@ class GameHandler:
         Logger.instance().println("You won the fight!")
         self.__state_machine.change_state(State.Explore)
 
-    def log(self, msg: str):
-        Logger.instance().println(msg)
-
     def start(self):
-        self.__running = True
         self.__renderer.start()
 
     def __update(self):

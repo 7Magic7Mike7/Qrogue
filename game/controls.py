@@ -17,6 +17,7 @@ class Controls:
         self.__action = KEY_SPACE
 
         self.__render = KEY_R_LOWER
+        self.__print_screen = KEY_CTRL_P
 
     @property
     def move_up(self):
@@ -54,5 +55,10 @@ class Controls:
     def action(self):
         return self.__action
 
+    @property
     def render(self):
         return self.__render
+
+    @property
+    def print_screen(self):
+        return self.__print_screen
