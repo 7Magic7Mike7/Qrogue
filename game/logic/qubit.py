@@ -1,37 +1,5 @@
 import numpy as np
 
-from util.my_random import RandomManager
-
-
-class Qubit:    # TODO introduce interface, for example for only zero_life and one_life qubits
-    def __init__(self, index: int, zero_life: int, one_life: int):
-        self.index = index
-        self.__zero_life = zero_life
-        self.__one_life = one_life
-        self.__cur_zlife = zero_life
-        self.__cur_olife = one_life
-
-    def __str__(self):
-        return f"q_{self.index} ({self.__cur_zlife}|{self.__cur_olife})"
-
-    def damage(self, value: int, dmg: int = 1):
-        if value == 0:
-            self.__cur_zlife -= dmg
-        else:
-            self.__cur_olife -= dmg
-
-    def get_zero_life(self):
-        return self.__zero_life
-
-    def get_one_life(self):
-        return self.__one_life
-
-    def get_cur_life(self):
-        return self.__cur_zlife, self.__cur_olife
-
-    def is_alive(self):
-        return self.__cur_zlife > 0 and self.__cur_olife > 0
-
 
 class StateVector:
     __TOLERANCE = 0.1
@@ -49,49 +17,8 @@ class StateVector:
     def num_of_qubits(self) -> int:
         return int(np.log2(self.size))
 
-    def to_value(self, size: int = 0):
-        #raise NotImplementedError("Continue here!")
-        """
-        rand = RandomManager.instance().get()
-        probability = 0.0
-        for i in range(len(self.val)):
-            state_probability = self.val[i]**2
-            if probability <= rand < probability + state_probability:
-                return i
-            probability += state_probability
-        return len(self.val)-1
-        """
-        value = [np.round(val.real**2 + val.imag**2, decimals=StateVector.__DECIMALS) for val in self.__amplitudes]
-        if size <= 0:
-            return value
-        elif size <= self.size:
-            # todo
-            # e.g. [0 0 0.71 0.71] to [0 1] or [0.5 0.5 0.5 0.5] to [0.71 0.71] or [0.71 0 0 0.71] to [0.71 0.71]
-            raise NotImplementedError("Continue here!")
-        else:
-            raise ValueError(f"Unable to extend StateVector of size = {self.size} to {size}")
-
-    def extend(self, add_qubits: int):  # TODO remove? target-initialization at fight start might be a better idea
-        if add_qubits < 0:
-            raise ValueError(f"$add_qubits must not be negative: {add_qubits}")
-        amps = [0 for i in range(self.size)]
-        if RandomManager.instance().get() < 0.5:
-            self.__amplitudes = amps + self.__amplitudes
-        else:
-            self.__amplitudes = self.__amplitudes + amps
-        """
-        for i in range(add_qubits):
-            amps = []
-            for a in self.__amplitudes: # TODO loops can be optimized
-                val = a * self.__SQRT05
-                amps.append(val)
-                amps.append(val)
-            self.__amplitudes = amps
-            print("amps: ", self.__amplitudes)
-        """
-        """
-        [a b] -> [sqrt(a/2) sqrt(a/2) sqrt(b/2) sqrt(b/2)}
-        """
+    def to_value(self):
+        return [np.round(val.real**2 + val.imag**2, decimals=StateVector.__DECIMALS) for val in self.__amplitudes]
 
     def is_equal_to(self, other, tolerance: float = __TOLERANCE):
         if type(other) is not type(self):
@@ -102,15 +29,12 @@ class StateVector:
             return False
         self_value = self.to_value()
         other_value = other.to_value()
-        print("-----")
         for i in range(len(self_value)):
             p_min = self_value[i] - tolerance/2
             p = other_value[i]
             p_max = self_value[i] + tolerance/2
-            print(f"{i}: {p_min:.2} <= {p:.2} <= {p_max:.2}")
             if not (p_min <= p <= p_max):
                 return False
-        print("-----")
         return True
 
     def get_diff(self, other: "StateVector") -> "StateVector":
@@ -119,7 +43,6 @@ class StateVector:
             return StateVector(diff)
         else:
             return None
-
 
     def __eq__(self, other):
         if type(other) is type(self):
@@ -160,7 +83,6 @@ class QubitSet:
 
 
 class EmptyQubitSet(QubitSet):
-
     def is_alive(self):
         return False
 

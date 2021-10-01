@@ -20,8 +20,6 @@ class Logger:
 
     def info(self, message):
         self.__info_counter += 1
-        if self.__info_counter % 100 == 0:
-            print(f"INFO[{self.__info_counter:03f}]: {message}")
 
     def error(self, message):
         self.println(f"ERROR! {message}", clear=False)
@@ -42,7 +40,7 @@ class Logger:
         sb = "["
         for elem in list:
             if elem is not None:
-                sb += elem.__str__()
+                sb += str(elem)
             sb += delimiter
         sb += "]"
         self.print(sb)

@@ -6,40 +6,7 @@ from game.actors.boss import DummyBoss
 from game.map.navigation import Coordinate, Direction
 from game.map.rooms import Room, SpawnRoom, BossRoom, WildRoom
 from util.config import MapConfig
-
-
-def _code_from_str(tile: str):
-    for tc in tiles.TileCode:
-        if tile == "?":#TileRenderer.get_tile_str(tc):   # todo handle differently
-            return tc
-    return tiles.TileCode.Floor
-
-
-def _str_to_map(map: "list of str"):
-    new_map = []
-    for row in map:
-        if map is None:
-            continue
-        new_row = []
-        for i in range(len(row)):
-            tile_code = _code_from_str(row[i])
-            if tile_code == tiles.TileCode.Item:
-                tile = tiles.Item()
-            elif tile_code == tiles.TileCode.Player:
-                tile = tiles.Player()    # todo
-            elif tile_code == tiles.TileCode.Boss:
-                tile = tiles.Boss() # todo
-            elif tile_code == tiles.TileCode.Enemy:
-                tile = tiles.Enemy()    # todo
-            elif tile_code == tiles.TileCode.Wall:
-                tile = tiles.Wall()
-            elif tile_code == tiles.TileCode.Obstacle:
-                tile = tiles.Obstacle()
-            else:
-                tile = tiles.Floor()
-            new_row.append(tile)
-        new_map.append(new_row)
-    return new_map
+from util.logger import Logger
 
 
 class Map:
@@ -53,7 +20,6 @@ class Map:
         self.__fight_callback = fight_callback
 
         if MapConfig.create_random():
-            #self.__map = []
             for y in range(height):
                 row = []
                 for x in range(width):
@@ -117,14 +83,14 @@ class Map:
         if x == self.__player_pos.x and y == self.__player_pos.y:
             return self.__player
 
-        if 0 <= y < self.height and 0 <= x < self.width:
+        if 0 <= x < self.width and 0 <= y < self.height:
             room, pos = self.__get_room(x=x, y=y)
             if room is None:
                 return tiles.Void()
             else:
                 return room.at(x=pos.x, y=pos.y, force=force)
         else:
-            print("ERROR")
+            Logger.instance().error(f"Error! Invalid position: {x}|{y}")
             return tiles.Invalid()
 
     @property

@@ -3,7 +3,6 @@ from qiskit.providers.aer import StatevectorSimulator
 
 from game.logic.instruction import HGate
 from game.logic.qubit import StateVector
-from util.logger import Logger
 from util.my_random import RandomManager
 
 
@@ -34,7 +33,8 @@ class Difficulty:
             instruction.append_to(circuit)
         simulator = StatevectorSimulator()
         compiled_circuit = transpile(circuit, simulator)
-        job = simulator.run(compiled_circuit, shots=1)  # We only do 1 shot since we don't need any meassurement but the StateVector
+        # We only do 1 shot since we don't need any measurement but the StateVector
+        job = simulator.run(compiled_circuit, shots=1)
         stv = StateVector(job.result().get_statevector())
         return stv
 
@@ -42,5 +42,3 @@ class Difficulty:
 class DummyDifficulty(Difficulty):
     def __init__(self):
         super(DummyDifficulty, self).__init__([HGate(0), HGate(1)], 2)
-
-

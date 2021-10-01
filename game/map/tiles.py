@@ -18,7 +18,6 @@ class TileCode(Enum):
     Floor = 0       # simple floor tile without special meaning
     FogOfWar = 3    # tile of a place we cannot see yet
 
-
     Wall = 1
     Obstacle = 2
     Door = 4
@@ -48,7 +47,7 @@ class Tile(ABC):
 
 
 class WalkTriggerTile(Tile):
-    def __init__(self, code: TileCode, on_walk_callback: OnWalkCallback):   # todo check if this callback works
+    def __init__(self, code: TileCode, on_walk_callback: OnWalkCallback):
         super().__init__(code)
         self._on_walk_callback = on_walk_callback
     
@@ -173,7 +172,7 @@ class Player(Tile):
         return self.__player
 
 
-class EnemyState(Enum):
+class _EnemyState(Enum):
     UNDECIDED = 0
     FREE = 1
     FIGHT = 2
@@ -183,7 +182,7 @@ class Enemy(WalkTriggerTile):
     def __init__(self, enemy: EnemyActor, on_walk_callback: OnWalkCallback, get_entangled_tiles,
                  id: int = 0, amplitude: float = 0.5):
         super().__init__(TileCode.Enemy, on_walk_callback)
-        self.__state = EnemyState.UNDECIDED
+        self.__state = _EnemyState.UNDECIDED
         self.__enemy = enemy
         self.__get_entangled_tiles = get_entangled_tiles
         self.__id = id
@@ -191,22 +190,22 @@ class Enemy(WalkTriggerTile):
 
     def on_walk(self, direction: Direction, actor):
         if isinstance(actor, PlayerActor):
-            if self.__state == EnemyState.UNDECIDED:
+            if self.__state == _EnemyState.UNDECIDED:
                 if self.measure():
                     self._on_walk_callback(actor, self.enemy, direction)
-                    self.__state = EnemyState.DEAD
+                    self.__state = _EnemyState.DEAD
                 else:
-                    self.__state = EnemyState.FLED
-            elif self.__state == EnemyState.FIGHT:
+                    self.__state = _EnemyState.FLED
+            elif self.__state == _EnemyState.FIGHT:
                 self._on_walk_callback(actor, self.enemy, direction)
-                self.__state = EnemyState.DEAD
-            elif self.__state == EnemyState.FREE:
-                self.__state = EnemyState.FLED
+                self.__state = _EnemyState.DEAD
+            elif self.__state == _EnemyState.FREE:
+                self.__state = _EnemyState.FLED
 
     def get_img(self):
-        if self.__state == EnemyState.DEAD :
+        if self.__state == _EnemyState.DEAD :
             return "x"
-        elif self.__state == EnemyState.FLED:
+        elif self.__state == _EnemyState.FLED:
             return "."
         else:
             return str(self.__id)
@@ -222,8 +221,8 @@ class Enemy(WalkTriggerTile):
     def amplitude(self):
         return self.__amplitude
 
-    def set_state(self, val: EnemyState):
-        if self.__state == EnemyState.UNDECIDED:
+    def set_state(self, val: _EnemyState):
+        if self.__state == _EnemyState.UNDECIDED:
             self.__state = val
         else:
             raise RuntimeError("Illegal program state!")
@@ -234,17 +233,17 @@ class Enemy(WalkTriggerTile):
         else:
             entangled_tiles = [self]
 
-        state = EnemyState.FREE
+        state = _EnemyState.FREE
         if RandomManager.instance().get() < self.amplitude:
-            print(f"#{self.__id} collapsed to 1")
-            state = EnemyState.FIGHT
+            state = _EnemyState.FIGHT
         for enemy in entangled_tiles:
             enemy.set_state(state)
 
-        return state == EnemyState.FIGHT
+        return state == _EnemyState.FIGHT
+
 
 class Boss(WalkTriggerTile):
-    def __init__(self, boss: BossActor, on_walk_callback: OnWalkCallback):  # todo change to Boss(Actor) class
+    def __init__(self, boss: BossActor, on_walk_callback: OnWalkCallback):
         super().__init__(TileCode.Boss, on_walk_callback)
         self.__boss = boss
 
@@ -256,7 +255,7 @@ class Boss(WalkTriggerTile):
         return "B"
 
     def is_walkable(self, direction: Direction, actor):
-        return True    # TODO
+        return True
 
     @property
     def boss(self):

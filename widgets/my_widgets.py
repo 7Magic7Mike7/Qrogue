@@ -6,7 +6,6 @@ import game.map.tiles as tiles
 from game.logic.instruction import HGate, Instruction
 from game.logic.qubit import StateVector
 from game.map.map import Map
-from util.logger import Logger
 from widgets.renderer import TileRenderer
 
 
@@ -47,8 +46,6 @@ class CircuitWidget(Widget):
             for i in range(self.__player.num_of_qubits):
                 rows.append(row.copy())
 
-            Logger.instance().clear()
-
             instructions = self.__player.instructions
             for i in range(len(instructions)):
                 inst = instructions[i]
@@ -88,7 +85,7 @@ class EventInfoWidget(Widget):
 
     def render(self):
         if self.__enemy is not None:
-            self.widget.set_title(self.__enemy.__str__())
+            self.widget.set_title(str(self.__enemy))
 
     def render_reset(self):
         self.widget.set_title("")
@@ -149,7 +146,7 @@ class PlayerInfoWidget(Widget):
                     else:
                         sb += "Wait"
                 else:
-                    sb += self.__player.backpack.get(i).__str__()
+                    sb += str(self.__player.backpack.get(i))
                 sb += "\n"
             self.widget.set_title(sb)
 
@@ -193,7 +190,7 @@ class MapWidget(Widget):
             for y in range(self.__map.height):
                 for x in range(self.__map.width):
                     tile = self.__map.at(x, y)
-                    str_rep += TileRenderer.instance().render(tile)
+                    str_rep += TileRenderer.render(tile)
                 str_rep += "\n"
             self.widget.set_title(str_rep)
 

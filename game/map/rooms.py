@@ -66,7 +66,6 @@ class Room(ABC):
 
     def get_row(self, y: int):
         if 0 <= y < Room.OUTER_HEIGHT:
-            # return self.__tiles[y]
             row = []
             for x in range(len(self.__tiles[y])):
                 row.append(self.at(x = x, y = y))
@@ -86,12 +85,11 @@ class Room(ABC):
             return Invalid()
 
     def enter(self):
-        print("entered room")
         self.__is_visible = True
         self.__was_visited = True
 
     def leave(self, direction: Direction):
-        print("left room")
+        test = 0
 
 
 class SpawnRoom(Room):
@@ -100,7 +98,7 @@ class SpawnRoom(Room):
 
 
 class WildRoom(Room):
-    def __init__(self, tiles: "list of tiles", doors: "list of Doors"):  # todo implement Enemy(Tile)
+    def __init__(self, tiles: "list of tiles", doors: "list of Doors"):
         self.__dictionary = { 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [], 9: [] }
         if tiles is None or len(tiles) <= 0:
             tiles = []
@@ -144,6 +142,5 @@ class TreasureRoom(Room):
 
 class BossRoom(Room):
     def __init__(self, door: Door, boss: Boss, tiles: "list of tiles" = None):
-        #tiles = Room.INNER_HEIGHT * [Room.INNER_WIDTH * [Floor()]]
         super().__init__(tiles, [door])
         self._set_tile(boss, x=Room.MID_X, y=Room.MID_Y)
