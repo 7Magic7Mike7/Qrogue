@@ -2,11 +2,11 @@ from abc import ABC, abstractmethod
 
 from py_cui.widgets import BlockLabel
 
-import game.map.tiles as tiles
+from game.actors.player import Player as PlayerActor
 from game.logic.instruction import HGate, Instruction
 from game.logic.qubit import StateVector
 from game.map.map import Map
-from util.logger import Logger
+from game.map.navigation import Direction
 from widgets.renderer import TileRenderer
 
 
@@ -31,13 +31,28 @@ class Widget(ABC):
         pass
 
 
+class SimpleWidget(Widget):
+    def __init__(self, widget: BlockLabel):
+        super().__init__(widget)
+        self.__text = ""
+
+    def set_data(self, data):
+        self.__text = str(data)
+
+    def render(self):
+        self.widget.set_title(self.__text)
+
+    def render_reset(self):
+        self.widget.set_title("")
+
+
 class CircuitWidget(Widget):
     def __init__(self, widget: BlockLabel):
         super().__init__(widget)
         self.__player = None
 
-    def set_data(self, player: tiles.Player):
-        self.__player = player.player
+    def set_data(self, player: PlayerActor):
+        self.__player = player
 
     def render(self):
         if self.__player is not None:
@@ -46,8 +61,6 @@ class CircuitWidget(Widget):
             rows = []
             for i in range(self.__player.num_of_qubits):
                 rows.append(row.copy())
-
-            Logger.instance().clear()
 
             instructions = self.__player.instructions
             for i in range(len(instructions)):
@@ -78,106 +91,6 @@ class CircuitWidget(Widget):
         self.widget.set_title("")
 
 
-class EventInfoWidget(Widget):
-    def __init__(self, widget: BlockLabel):
-        super().__init__(widget)
-        self.__enemy = None
-
-    def set_data(self, enemy: tiles.Enemy):
-        self.__enemy = enemy
-
-    def render(self):
-        if self.__enemy is not None:
-            self.widget.set_title(self.__enemy.__str__())
-
-    def render_reset(self):
-        self.widget.set_title("")
-
-
-class EventQubitsWidget(Widget):
-    def __init__(self, widget: BlockLabel):
-        super().__init__(widget)
-        self.__enemy = None
-
-    def set_data(self, enemy: tiles.Enemy):  # todo change name from enemy to event?
-        self.__enemy = enemy
-
-    def render(self):
-        if self.__enemy is not None:
-            sb = ""
-            for q in self.__enemy.target:
-                sb += f"{q}\n"
-            self.widget.set_title(sb)
-
-    def render_reset(self):
-        self.widget.set_title("")
-
-
-class PlayerInfoWidget(Widget):
-    def __init__(self, widget: BlockLabel):
-        super().__init__(widget)
-        self.__player = None
-        self.__selection = 0
-
-    @property
-    def circuit(self):
-        return self.__selection
-
-    def set_data(self, player: tiles.Player):
-        self.__player = player.player
-
-    def prev(self):
-        self.__selection = self.__selection - 1
-        if self.__selection < 0:
-            self.__selection = self.__player.backpack.size
-
-    def next(self):
-        self.__selection = self.__selection + 1
-        if self.__selection >= self.__player.backpack.size + 2: # +0... Remove, +1... Wait
-            self.__selection = 0
-
-    def render(self):
-        if self.__player is not None:
-            sb = ""
-            for i in range(self.__player.backpack.size + 2):
-                if i == self.__selection:
-                    sb += "x "  # todo: use color instead?
-                if i >= self.__player.backpack.size:
-                    action = i - self.__player.backpack.size
-                    if action == 0:
-                        sb += "Remove"
-                    else:
-                        sb += "Wait"
-                else:
-                    sb += self.__player.backpack.get(i).__str__()
-                sb += "\n"
-            self.widget.set_title(sb)
-
-
-    def render_reset(self):
-        self.widget.set_title("")
-
-
-class PlayerQubitsWidget(Widget):
-    def __init__(self, widget: BlockLabel):
-        super().__init__(widget)
-        self.__player = None
-
-    def set_data(self, player: tiles.Player):
-        self.__player = player.player
-
-    def render(self):
-        if self.__player is not None:
-            sb = ""
-            for i in range(self.__player.num_of_qubits):
-                sb += self.__player.get_qubit_string(i)
-                sb += "\n"
-            self.widget.set_title(sb)
-
-    def render_reset(self):
-        self.widget.set_title("")
-
-
 class MapWidget(Widget):
     def __init__(self, widget: BlockLabel):
         super().__init__(widget)
@@ -193,13 +106,16 @@ class MapWidget(Widget):
             for y in range(self.__map.height):
                 for x in range(self.__map.width):
                     tile = self.__map.at(x, y)
-                    str_rep += TileRenderer.instance().render(tile)
+                    str_rep += TileRenderer.render(tile)
                 str_rep += "\n"
             self.widget.set_title(str_rep)
 
     def render_reset(self):
         self.__backup = self.widget.get_title().title()
         self.widget.set_title("")
+
+    def move(self, direction: Direction) -> bool:
+        return self.__map.move(direction)
 
 
 class StateVectorWidget(Widget):

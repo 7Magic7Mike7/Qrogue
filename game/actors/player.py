@@ -133,8 +133,6 @@ class Player(ABC):
         result = self.__get_result(self.circuit)
         self.__stv = StateVector(result.get_statevector(self.circuit))
         return self.__stv
-        #counts = result.get_counts(self.circuit)
-        #return self.__counts_to_bit_list(counts)
 
     def use_instruction(self, instruction_index: int):
         if 0 <= instruction_index < self.__backpack.size:
@@ -158,32 +156,6 @@ class Player(ABC):
         self.instructions.remove(instruction)
         instruction.set_used(False)
         self.next_col -= 1
-
-    def print(self):
-        print(self.circuit)
-        #self.circuit.draw(output="mpl")
-        #plt.show()
-
-    def defend(self, input):
-        """"
-        num = self.__attributes.num_of_qubits
-        reversed_circuit = QuantumCircuit(num, num)
-        for i in range(self.next_col):
-            index = self.next_col-1 - i
-            if self.instructions[index]: # check if the instruction at this column uses the qubit q
-                rev_inst = self.instructions[index]
-                reversed_circuit.append(rev_inst.instruction.reverse_ops(), qargs=rev_inst.qargs, cargs=rev_inst.cargs)
-
-        for q in range(num):
-            reversed_circuit.measure(self.__qubit_indices, self.__qubit_indices)
-
-        result = self.__get_result(reversed_circuit)
-        counts = result.get_counts(reversed_circuit)
-        bit_list = self.__counts_to_bit_list(counts)
-        self.__attributes.qubits.damage(bit_list.count(0), bit_list.count(1))
-        return bit_list
-        """
-        raise DeprecationWarning(self.defend)
 
     def get_qubit_string(self, index: int):
         if 0 <= index < self.num_of_qubits:

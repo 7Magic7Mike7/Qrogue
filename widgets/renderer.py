@@ -18,6 +18,7 @@ class TileRenderer:
         else:
             TileRenderer.__instance = self
 
-    def render(self, tile: Tile):
+    @staticmethod
+    def render(tile: Tile):
         return tile.get_img()
 

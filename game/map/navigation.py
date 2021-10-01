@@ -70,7 +70,7 @@ class Coordinate:
         elif isinstance(other, Coordinate):
             return Coordinate(self.x + other.x, self.y + other.y)
         else:
-            raise NotImplementedError("aksdjfks")
+            raise NotImplementedError(f"Adding \"{other}\" to a Coordinate is not supported!")
 
     def __sub__(self, other):
         if isinstance(other, Direction):
@@ -78,7 +78,7 @@ class Coordinate:
         elif isinstance(other, Coordinate):
             return Coordinate(self.x - other.x, self.y - other.y)
         else:
-            raise NotImplementedError("aksdjfks")
+            raise NotImplementedError(f"Subtracting \"{other}\" from a Coordinate is not supported!")
 
 
 def direction(c_from: Coordinate, c_to: Coordinate):

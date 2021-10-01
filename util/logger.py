@@ -1,30 +1,31 @@
 
-from py_cui.widgets import BlockLabel
-
-
 class Logger:
     __instance = None
+
+    @staticmethod
+    def instance() -> "Logger":
+        if Logger.__instance is None:
+            raise Exception("This singleton has not been initialized yet!")
+        return Logger.__instance
 
     def __init__(self):
         if Logger.__instance is not None:
             raise Exception("This class is a singleton!")
         else:
-            self.__label = None
-            self.__info_counter = 0
             self.__text = ""
+            self.__message_popup = None
+            self.__error_popup = None
             Logger.__instance = self
 
-    def set_label(self, label: BlockLabel):
-        self.__label = label
-        self.print("", clear=False)  # update the text of the newly set label
+    def set_popup(self, message_popup_function: "void(str, str)", error_popup_function: "void(str, str)"):
+        self.__message_popup = message_popup_function
+        self.__error_popup = error_popup_function
 
     def info(self, message):
-        self.__info_counter += 1
-        if self.__info_counter % 100 == 0:
-            print(f"INFO[{self.__info_counter:03f}]: {message}")
+        pass
 
     def error(self, message):
-        self.println(f"ERROR! {message}", clear=False)
+        self.__error_popup("ERROR", message)
 
     def print(self, message: str, clear: bool = False):
         print(message)
@@ -32,8 +33,7 @@ class Logger:
             self.__text = message
         else:
             self.__text += message
-        if self.__label is not None:
-            self.__label.set_title(self.__text)
+        self.__message_popup("Logger", self.__text)
 
     def println(self, message: str = "", clear: bool = False):
         self.print(f"{message}\n", clear)
@@ -42,17 +42,10 @@ class Logger:
         sb = "["
         for elem in list:
             if elem is not None:
-                sb += elem.__str__()
+                sb += str(elem)
             sb += delimiter
         sb += "]"
         self.print(sb)
 
     def clear(self):
         self.__text = ""
-        self.print("")
-
-    @staticmethod
-    def instance() -> "Logger":
-        if Logger.__instance is None:
-            raise Exception("This singleton has not been initialized yet!")
-        return Logger.__instance
