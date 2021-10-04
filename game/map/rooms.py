@@ -99,6 +99,7 @@ class SpawnRoom(Room):
 
 class WildRoom(Room):
     def __init__(self, factory: EnemyFactory, tiles: "list of tiles", doors: "list of Doors"):
+
         self.__dictionary = { 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [], 9: [] }
         if tiles is None or len(tiles) <= 0:
             tiles = []

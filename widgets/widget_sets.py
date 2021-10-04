@@ -116,7 +116,7 @@ class ExploreWidgetSet(MyWidgetSet):
         self.__map_widget = MapWidget(map_widget)
 
         ColorRules.apply_map_rules(self.__map_widget)
-
+    
     def get_main_widget(self) -> py_cui.widgets.Widget:
         return self.__map_widget.widget
 
@@ -146,7 +146,6 @@ class ExploreWidgetSet(MyWidgetSet):
     def move_left(self):
         if self.__map_widget.move(Direction.Left):
             self.render()
-
 
 class FightWidgetSet(MyWidgetSet):
     __NUM_OF_ROWS = 9
