@@ -8,7 +8,6 @@ from game.map.rooms import Room, Area
 from game.map.tutorial import Tutorial, TutorialPlayer
 from util.config import MapConfig
 from util.logger import Logger
-from util.my_random import RandomManager
 
 
 class Map:
@@ -37,24 +36,13 @@ class Map:
         if seed == MapConfig.tutorial_seed():
             self.__build_tutorial_map()
         else:
-            rand = RandomManager.instance()
-            for y in range(height):
-                row = []
-                for x in range(width):
-                    if y == 0 or y == height - 1 or x == 0 or x == width - 1:
-                        row.append(tiles.Wall())
-                    else:
-                        if rand.get_int(max=7) == 1:
-                            row.append(tiles.Obstacle())
-                        else:
-                            row.append(tiles.Floor())
-                self.__player_pos = Coordinate(2, 3)
+            self.__build_tutorial_map()
 
     def __build_tutorial_map(self):
         self.__player = tiles.Player(TutorialPlayer())
         self.__rooms, spawn_room = Tutorial().build_tutorial_map(self.__player, self.__cbp)
         self.__cur_area = self.__rooms[spawn_room.y][spawn_room.x]
-        self.__player_pos = Map.__calculate_pos(spawn_room, Coordinate(Room.MID_X, Room.MID_Y))
+        self.__player_pos = Map.__calculate_pos(spawn_room, Coordinate(Area.MID_X, Area.MID_Y))
         self.__cur_area.enter(Direction.North)
         self.__cur_area.make_visible()
 

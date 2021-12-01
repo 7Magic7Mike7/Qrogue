@@ -31,6 +31,10 @@ class Direction(Enum):
     def from_coordinates(c_from: "Coordinate", c_to: "Coordinate") -> "Direction":
         return direction(c_from, c_to)
 
+    @staticmethod
+    def values() -> "[Direction]":
+        return [Direction.North, Direction.East, Direction.South, Direction.West]
+
     @property
     def x(self) -> int:
         return self.__x
@@ -58,8 +62,20 @@ class Direction(Enum):
         else:
             return Direction.Center
 
+    def __add__(self, other) -> "Coordinate":
+        if isinstance(other, Direction):
+            return Coordinate(self.x + other.x, self.y + other.y)
+        elif isinstance(other, Coordinate):
+            return other + self
+        else:
+            raise NotImplementedError(f"Adding \"{other}\" to a Coordinate is not supported!")
+
 
 class Coordinate:
+    @staticmethod
+    def distance(a: "Coordinate", b: "Coordinate") -> int:
+        return abs(a.x - b.x) + abs(a.y - b.y)
+
     def __init__(self, x: int, y: int):
         self.__x = x
         self.__y = y
@@ -98,6 +114,9 @@ class Coordinate:
 
     def __hash__(self):
         return 61 * self.x + 51 * self.y
+
+    def __str__(self):
+        return f"({self.__x}|{self.__y})"
 
 
 def direction(c_from: Coordinate, c_to: Coordinate) -> Direction:
