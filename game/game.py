@@ -23,7 +23,7 @@ class GameHandler:
             # create the singletons
             RandomManager(seed)
             Logger(seed)
-            KeyLogger()
+            KeyLogger(seed)
             controls = Controls()   # todo load later from file!
 
             self.__renderer = QrogueCUI(seed, controls)

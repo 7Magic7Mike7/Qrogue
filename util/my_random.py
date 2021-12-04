@@ -41,20 +41,27 @@ class MyRandom:
 class RandomManager(MyRandom):
     __instance = None
 
-    def __init__(self, seed: int):
-        if RandomManager.__instance is not None:
-            Logger.instance().throw(Exception("This class is a singleton!"))
-        else:
-            super().__init__(seed)
-            RandomManager.__instance = self
-
     @staticmethod
     def create_new() -> MyRandom:
         seed = RandomManager.instance().get_int()
         return MyRandom(seed)
 
     @staticmethod
-    def instance() -> "RandomManager":
+    def instance() -> MyRandom:
         if RandomManager.__instance is None:
             Logger.instance().throw(Exception("This singleton has not been initialized yet!"))
         return RandomManager.__instance
+
+    @staticmethod
+    def force_seed(new_seed: int) -> None:
+        if RandomManager.__instance is None:
+            RandomManager(new_seed)
+        else:
+            RandomManager.__instance = MyRandom(new_seed)
+
+    def __init__(self, seed: int):
+        if RandomManager.__instance is not None:
+            Logger.instance().throw(Exception("This class is a singleton!"))
+        else:
+            super().__init__(seed)
+            RandomManager.__instance = self

@@ -44,9 +44,9 @@ class PathConfig:
         return os.path.join(PathConfig.__LOG_FOLDER, f"{now_str}_seed{seed}.qrlog")
 
     @staticmethod
-    def new_key_log_file() -> str:
+    def new_key_log_file(seed) -> (str, str):
         now_str = datetime.now().strftime("%d%m%Y_%H%M%S")
-        return os.path.join(PathConfig.__KEY_LOG_FOLDER, f"{now_str}.qrkl")
+        return os.path.join(PathConfig.__KEY_LOG_FOLDER, f"{now_str}_seed{seed}.qrkl"), now_str
 
     @staticmethod
     def new_screen_print(text: str):

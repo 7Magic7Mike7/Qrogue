@@ -22,7 +22,7 @@ if return_code == 0:
     game.start()
     # flush after the player stopped playing
     Logger.instance().flush()
-    KeyLogger.instance().flush(force=False)
+    KeyLogger.instance().flush_if_useful()
 else:
     print(f"[Qrogue] Error #{return_code}:")
     if return_code == 1:

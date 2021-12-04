@@ -72,6 +72,21 @@ class QrogueCUI(py_cui.PyCUI):
             super(QrogueCUI, self)._handle_key_presses(self.__controls.selection_left)
             #super(QrogueCUI, self)._handle_key_presses(self.__controls.selection_left)
             super(QrogueCUI, self)._handle_key_presses(self.__controls.action)
+            if self.__simulator.version == Config.version():
+                __space = "Space"
+                Popup.message("Starting Simulation", f"You started a run with \nseed = {self.__simulator.seed}\n"
+                                                     f"recorded at {self.__simulator.time}.\n"
+                                                     f"Press {ColorConfig.highlight_key(__space)} to execute the "
+                                                     "simulation step by step. Alternatively, if you keep it pressed "
+                                                     "the simulation will be executed automatically with short delays "
+                                                     "after each step until you let go of Space again.")
+            else:
+                Popup.message("Simulating other version", "You try to simulate the run of a different game version.\n"
+                                                          f"Your version: {Config.version()}\n"
+                                                          f"Version you try to simulate: {self.__simulator.version}\n"
+                                                          "This is not supported and can cause problems. Only "
+                                                          "continue if you know what you do! Else close this popup "
+                                                          "and press ESC to abort the simulation.")
         except FileNotFoundError:
             Logger.instance().error(f"File \"{path}\" could not be found!", only_popup=True)
 
@@ -91,12 +106,12 @@ class QrogueCUI(py_cui.PyCUI):
         return False
 
     def _handle_key_presses(self, key_pressed):
+        if key_pressed == py_cui.keys.KEY_CTRL_Q:
+            super(QrogueCUI, self)._handle_key_presses(py_cui.keys.KEY_ESCAPE)
         if self.__simulator is None:
             if self._ready_for_input(key_pressed, gameplay=True):
                 if key_pressed == py_cui.keys.KEY_ESCAPE:
                     pass    # ignore ESC because this makes you leave the CUI
-                elif key_pressed == py_cui.keys.KEY_CTRL_Q:
-                    super(QrogueCUI, self)._handle_key_presses(py_cui.keys.KEY_ESCAPE)
                 else:
                     if GameplayConfig.log_keys():
                         KeyLogger.instance().log(self.__controls, key_pressed)

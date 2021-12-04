@@ -370,7 +370,6 @@ class WildRoom(Room):
         return "WR"
 
     def get_tiles_by_id(self, id: int) -> "list of EnemyTiles":
-        Logger.instance().throw(ValueError("Testing"))
         return self.__dictionary[id]
 
 
