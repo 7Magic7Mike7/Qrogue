@@ -231,7 +231,8 @@ class Room(Area):
                 if 0 <= index < len(tile_list):
                     tile_list[index] = tile
                 else:
-                    raise IndexError(f"Invalid Index ({index} for tile_list of length {len(tile_list)}!")
+                    Logger.instance().throw(IndexError(f"Invalid Index ({index} for tile_list of length "
+                                                       f"{len(tile_list)}!"))
         return tile_list
 
     def __init__(self, tile_list: "list of Tiles", north_hallway: Hallway = None, east_hallway: Hallway = None,
@@ -369,6 +370,7 @@ class WildRoom(Room):
         return "WR"
 
     def get_tiles_by_id(self, id: int) -> "list of EnemyTiles":
+        Logger.instance().throw(ValueError("Testing"))
         return self.__dictionary[id]
 
 

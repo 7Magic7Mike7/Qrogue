@@ -1,6 +1,8 @@
 
 from enum import Enum
 
+from util.logger import Logger
+
 
 class Direction(Enum):
     Center = (0, 0)
@@ -68,7 +70,7 @@ class Direction(Enum):
         elif isinstance(other, Coordinate):
             return other + self
         else:
-            raise NotImplementedError(f"Adding \"{other}\" to a Coordinate is not supported!")
+            Logger.instance().throw(NotImplementedError(f"Adding \"{other}\" to a Coordinate is not supported!"))
 
 
 class Coordinate:
@@ -97,7 +99,7 @@ class Coordinate:
         elif isinstance(other, Coordinate):
             return Coordinate(self.x + other.x, self.y + other.y)
         else:
-            raise NotImplementedError(f"Adding \"{other}\" to a Coordinate is not supported!")
+            Logger.instance().throw(NotImplementedError(f"Adding \"{other}\" to a Coordinate is not supported!"))
 
     def __sub__(self, other) -> "Coordinate":
         if isinstance(other, Direction):
@@ -105,7 +107,7 @@ class Coordinate:
         elif isinstance(other, Coordinate):
             return Coordinate(self.x - other.x, self.y - other.y)
         else:
-            raise NotImplementedError(f"Subtracting \"{other}\" from a Coordinate is not supported!")
+            Logger.instance().throw(NotImplementedError(f"Subtracting \"{other}\" from a Coordinate is not supported!"))
 
     def __eq__(self, other) -> bool:
         if isinstance(other, Coordinate):

@@ -1,6 +1,5 @@
 # Must haves #
 - custom GameData location also for Linux!
-- raise Errors in Logger instead of arbitrary positions so we can actually log them!
 - implement normal Game Mode (playing without Tutorial Stuff on generated (?) Map)
 - GameSimulator: seeds need to be set correctly so random stuff like flee chance doesn't hinder execution
 - consider space in backpack when buying from shop
@@ -19,4 +18,5 @@
 # Ideas #
 - ChallengeRooms: only use 3 gates, only 1 Hadamard, only 3 adaptions, ...
 
-
+# Finished #
+- raise Errors in Logger instead of arbitrary positions so we can actually log them!

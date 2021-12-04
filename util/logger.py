@@ -19,7 +19,7 @@ class Logger(py_cui.debug.PyCUILogger):
     def __init__(self, seed: int):
         super().__init__("Qrogue-Logger")
         if Logger.__instance is not None:
-            raise Exception("This class is a singleton!")
+            self.throw(Exception("This class is a singleton!"))
         else:
             self.__text = ""
             self.__message_popup = None
@@ -54,8 +54,13 @@ class Logger(py_cui.debug.PyCUILogger):
         highlighting = "\n----------------------------------\n"
         time_str = datetime.now().strftime("%H-%M-%S")
         text = f"{highlighting}{time_str}, Error: {message}{highlighting}"
-        Logger.instance().__write(text)
+        self.__write(text)
         KeyLogger.instance().log_error(message)
+
+    def throw(self, error) -> None:
+        print(error)
+        self.__write(str(error))
+        raise error
 
     def print(self, message: str, clear: bool = False) -> None:
         print(message)

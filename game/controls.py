@@ -2,8 +2,6 @@ from enum import IntEnum
 
 from py_cui.keys import *
 
-from game.actors.player import Player
-
 
 class Keys(IntEnum):
     MoveUp = 0
@@ -181,10 +179,9 @@ class Pausing:
         if Pausing.__instance is not None:
             Pausing.__instance.__pause_now()
 
-    def __init__(self, player: Player, callback: "()"):
-        self.__player = player
+    def __init__(self, callback: "()"):
         self.__callback = callback
         Pausing.__instance = self
 
     def __pause_now(self):
-        self.__callback(self.__player)
+        self.__callback()

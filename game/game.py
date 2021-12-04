@@ -12,12 +12,12 @@ class GameHandler:
     @staticmethod
     def instance() -> "GameHandler":
         if GameHandler.__instance is None:
-            raise Exception("This singleton has not been initialized yet!")
+            Logger.instance().throw(Exception("This singleton has not been initialized yet!"))
         return GameHandler.__instance
 
     def __init__(self, seed: int):
         if GameHandler.__instance is not None:
-            raise Exception("This class is a singleton!")
+            Logger.instance().throw(Exception("This class is a singleton!"))
         else:
             GameHandler.__instance = self
             # create the singletons

@@ -359,7 +359,8 @@ class QrogueCUI(py_cui.PyCUI):
         self.apply_widget_set(self.__menu)
 
     def __start_gameplay(self, map: Map) -> None:
-        Pausing(map.player_tile.player, self.__pause_game)
+        Pausing(self.__pause_game)
+        self.__pause.set_data(map.player_tile.player)   # needed for the HUD
         self.__state_machine.change_state(State.Explore, map)
 
     def __end_of_gameplay(self) -> None:
@@ -376,14 +377,11 @@ class QrogueCUI(py_cui.PyCUI):
     def __start_boss_fight(self, player: PlayerActor, boss: Boss, direction: Direction):
         self.__state_machine.change_state(State.BossFight, (player, boss))
 
-    def switch_to_pause(self, data: PlayerActor) -> None:
-        if data is not None:
-            player = data
-            self.__pause.set_data(player)
+    def switch_to_pause(self, data=None) -> None:
         self.apply_widget_set(self.__pause)
 
-    def __pause_game(self, player: PlayerActor) -> None:
-        self.__state_machine.change_state(State.Pause, player)
+    def __pause_game(self) -> None:
+        self.__state_machine.change_state(State.Pause, None)
 
     def switch_to_explore(self, data) -> None:
         if data is not None:
@@ -538,4 +536,4 @@ class StateMachine:
         elif self.__cur_state == State.BossFight:
             self.__renderer.switch_to_boss_fight(data)
         elif self.__cur_state == State.Pause:
-            self.__renderer.switch_to_pause(data)
+            self.__renderer.switch_to_pause()

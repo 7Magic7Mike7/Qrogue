@@ -368,7 +368,7 @@ class Enemy(WalkTriggerTile):
         else:
             if CheatConfig.did_cheat():
                 return
-            raise RuntimeError("Illegal program state!")
+            Logger.instance().throw(RuntimeError("Illegal program state!"))
 
     def measure(self):
         if CheatConfig.is_scared_rabbit():

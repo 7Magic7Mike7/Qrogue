@@ -13,6 +13,7 @@ from game.logic.instruction import Instruction, HGate
 from game.logic.qubit import QubitSet, EmptyQubitSet, DummyQubitSet, StateVector
 # from jkq import ddsim
 from util.config import CheatConfig
+from util.logger import Logger
 
 
 class PlayerAttributes:
@@ -335,7 +336,7 @@ class Player(ABC):
         counts = counts[1:len(counts)-1]
         arr = counts.split(':')
         if int(arr[1][1:]) != 1:
-            raise ValueError(f"Function only works for counts with 1 shot but counts was: {counts}")
+            Logger.instance().throw(ValueError(f"Function only works for counts with 1 shot but counts was: {counts}"))
         bits = arr[0]
         bits = bits[1:len(bits)-1]
         list = []

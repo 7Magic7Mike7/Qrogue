@@ -6,6 +6,7 @@ from game.map.map import Map
 from game.map.navigation import Coordinate, Direction
 from game.map.rooms import Hallway, WildRoom, SpawnRoom, ShopRoom
 from game.map.tiles import Door, Player
+from util.logger import Logger
 from util.my_random import MyRandom
 
 
@@ -96,8 +97,8 @@ class LayoutGenerator:
     def __init__(self, seed: int, width: int, height: int):
         self.__seed = seed      # todo remove
         if width * height < LayoutGenerator.__MIN_AREA:
-            raise ValueError(f"width={width}, height={height} create a too small grid "
-                             f"(minimal grid area = {LayoutGenerator.__MIN_AREA}). Please use bigger values!")
+            Logger.instance().throw(ValueError(f"width={width}, height={height} create a too small grid "
+                             f"(minimal grid area = {LayoutGenerator.__MIN_AREA}). Please use bigger values!"))
         self.__rm = MyRandom(seed)
         self.__width = width
         self.__height = height

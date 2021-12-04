@@ -1,5 +1,7 @@
 import random
 
+from util.logger import Logger
+
 
 class MyRandom:
     _MAX_INT = 1000000000
@@ -41,7 +43,7 @@ class RandomManager(MyRandom):
 
     def __init__(self, seed: int):
         if RandomManager.__instance is not None:
-            raise Exception("This class is a singleton!")
+            Logger.instance().throw(Exception("This class is a singleton!"))
         else:
             super().__init__(seed)
             RandomManager.__instance = self
@@ -54,5 +56,5 @@ class RandomManager(MyRandom):
     @staticmethod
     def instance() -> "RandomManager":
         if RandomManager.__instance is None:
-            raise Exception("This singleton has not been initialized yet!")
+            Logger.instance().throw(Exception("This singleton has not been initialized yet!"))
         return RandomManager.__instance
