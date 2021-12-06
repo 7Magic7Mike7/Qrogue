@@ -47,8 +47,6 @@ class StateVector:
             return None
 
     def __eq__(self, other) -> bool: # TODO currently not even in use!
-        #from util.logger import Logger
-        #Logger.instance().error("Test")
         if type(other) is type(self):
             return self.__amplitudes == other.__amplitudes
         elif type(other) is type([True, False]):  # TODO how to check correctly for bool-list?
@@ -100,6 +98,10 @@ class QubitSet(ABC):
         """
         pass
 
+    @abstractmethod
+    def heal(self, amount: int) -> int:
+        pass
+
 
 class EmptyQubitSet(QubitSet):
     def hp(self):
@@ -114,30 +116,36 @@ class EmptyQubitSet(QubitSet):
     def damage(self, amount: int) -> int:
         pass
 
+    def heal(self, amount: int) -> int:
+        pass
+
 
 class DummyQubitSet(QubitSet):
     __SIZE = 2
-    __HP_0 = 10
-    __HP_1 = 4
+    __HP = 10
 
     def __init__(self):
-        self.__hp_0 = self.__HP_0
-        self.__hp_1 = self.__HP_1
+        self.__hp = DummyQubitSet.__HP
 
     def hp(self) -> int:
-        return self.__hp_0
+        return self.__hp
 
     def is_alive(self) -> bool:
-        return self.__hp_0 > 0# and self.__hp_1 > 0
+        return self.__hp > 0
 
     def size(self) -> int:
         return self.__SIZE
 
     def damage(self, amount: int) -> int:
-        #self.__hp_0 = max(self.__hp_0 - dmg_0, 0)
-        #self.__hp_1 = max(self.__hp_1 - dmg_1, 0)
-        self.__hp_0 = max(self.__hp_0 - amount, 0)
+        self.__hp = max(self.__hp - amount, 0)
         if self.is_alive():
             return amount
         else:
             return -amount
+
+    def heal(self, amount: int) -> int:
+        if self.__hp + amount > DummyQubitSet.__HP:
+            amount = DummyQubitSet.__HP - self.__hp
+        self.__hp += amount
+        return amount
+

@@ -8,7 +8,7 @@ from qiskit import QuantumCircuit, transpile
 from qiskit.providers.aer import StatevectorSimulator
 
 from game.collectibles.collectible import Collectible, CollectibleType
-from game.collectibles.pickup import Coin, Key
+from game.collectibles.pickup import Coin, Key, Heart
 from game.logic.instruction import Instruction, HGate
 from game.logic.qubit import QubitSet, EmptyQubitSet, DummyQubitSet, StateVector
 # from jkq import ddsim
@@ -303,6 +303,8 @@ class Player(ABC):
             self.__backpack.give_coin(collectible.amount)
         elif isinstance(collectible, Key):
             self.__backpack.give_key(collectible.amount)
+        elif isinstance(collectible, Heart):
+            self.__attributes.qubits.heal(collectible.amount)
         elif isinstance(collectible, Instruction):
             self.backpack.add(collectible)
 
