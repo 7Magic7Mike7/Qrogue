@@ -345,7 +345,7 @@ class GameplayConfig:
         __LOG_KEYS: ("True", "Stores all keys you pressed in a .qrkl-file so one can replay them (e.g. for analysing a "
                            "bug)"),
         __SIMULATION_KEY_PAUSE: ("0.2", "How long to wait before we process the next input during simulation."),
-        __GAMEPLAY_KEY_PAUSE: ("0.2", "How long to wait before we process the next input during gameplay."),
+        __GAMEPLAY_KEY_PAUSE: ("0.1", "How long to wait before we process the next input during gameplay."),
     }
 
     @staticmethod
