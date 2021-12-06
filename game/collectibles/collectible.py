@@ -36,13 +36,25 @@ class Collectible(ABC):
         pass
 
     @abstractmethod
+    def default_price(self) -> int:
+        pass
+
+    @abstractmethod
     def __str__(self):
         pass
 
 
 class ShopItem:
-    def __init__(self, collectible: Collectible, price: int):
+    __BASE_UNIT = 1
+
+    @staticmethod
+    def base_unit() -> int:
+        return ShopItem.__BASE_UNIT
+
+    def __init__(self, collectible: Collectible, price: int = -1):
         self.__collectible = collectible
+        if price < 0:
+            price = collectible.default_price()
         self.__price = price
 
     @property

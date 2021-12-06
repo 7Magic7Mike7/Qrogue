@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 import qiskit.circuit.library.standard_gates as gates
 from qiskit import QuantumCircuit
 
-from game.collectibles.collectible import Collectible, CollectibleType
+from game.collectibles.collectible import Collectible, CollectibleType, ShopItem
 
 
 class Instruction(Collectible, ABC):
@@ -12,6 +12,7 @@ class Instruction(Collectible, ABC):
     Wrapper class for gates from qiskit.circuit.library with their needed arguments (qubits/cbits to apply it on)
     """
     MAX_ABBREVIATION_LEN = 5
+    __DEFAULT_PRICE = 15 * ShopItem.base_unit()
 
     def __init__(self, instruction, needed_qubits: int):
         super().__init__(CollectibleType.Gate)
@@ -66,6 +67,9 @@ class Instruction(Collectible, ABC):
     @abstractmethod
     def copy(self) -> "Instruction":
         pass
+
+    def default_price(self) -> int:
+        return Instruction.__DEFAULT_PRICE
 
     def preview_str(self, next_qubit: int) -> str:
         self._qargs.append(next_qubit)

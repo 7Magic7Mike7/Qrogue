@@ -1,9 +1,11 @@
 from abc import ABC
 
-from game.collectibles.collectible import Collectible, CollectibleType
+from game.collectibles.collectible import Collectible, CollectibleType, ShopItem
 
 
 class Pickup(Collectible, ABC):
+    __DEFAULT_PRICE = 5 * ShopItem.base_unit()
+
     def __init__(self, type: CollectibleType, amount: int):
         super(Pickup, self).__init__(type)
         self._amount = amount
@@ -11,6 +13,10 @@ class Pickup(Collectible, ABC):
     @property
     def amount(self):
         return self._amount
+
+    def default_price(self) -> int:
+        # the higher the amount the less the additional price (based on harmonic numbers)
+        return sum([Pickup.__DEFAULT_PRICE / (i+1) for i in range(self._amount)])
 
 
 class Coin(Pickup):
@@ -42,6 +48,8 @@ class Key(Pickup):
 
 
 class Heart(Pickup):
+    __PRICE_MULTIPLIER = 0.65   # hearts are a bit cheaper
+
     def __init__(self, amount: int = 1):
         super().__init__(CollectibleType.Heart, amount)
 
@@ -50,6 +58,9 @@ class Heart(Pickup):
 
     def description(self) -> str:
         return "A Heart gives you back some of your HP."
+
+    def default_price(self) -> int:
+        return round(Heart.__PRICE_MULTIPLIER * super(Heart, self).default_price())
 
     def __str__(self) -> str:
         return f"Heart ({self.amount} HP)"
