@@ -1,3 +1,6 @@
+import math
+
+from game.map.navigation import Coordinate
 from game.map.tiles import *
 from game.collectibles.factory import GateFactories
 from game.map.tiles import Enemy as EnemyTile
@@ -219,6 +222,10 @@ class Room(Area):
     INNER_HEIGHT = Area.UNIT_HEIGHT - 2      # height inside the room, i.e. without walls and hallways
 
     @staticmethod
+    def coordinate_to_index(pos: Coordinate) -> int:
+        return pos.y * Room.INNER_WIDTH + pos.x
+
+    @staticmethod
     def get_empty_room_tile_list() -> "list of Tiles":
         return [Floor()] * (Room.INNER_WIDTH * Room.INNER_HEIGHT)
 
@@ -227,7 +234,7 @@ class Room(Area):
         tile_list = Room.get_empty_room_tile_list()
         if tile_dic is not None:
             for coordinate, tile in tile_dic.items():
-                index = coordinate.y * Room.INNER_WIDTH + coordinate.x
+                index = Room.coordinate_to_index(coordinate.x, coordinate.y)
                 if 0 <= index < len(tile_list):
                     tile_list[index] = tile
                 else:
@@ -340,29 +347,41 @@ class SpawnRoom(Room):
 
 
 class WildRoom(Room):
-    def __init__(self, factory: EnemyFactory, chance: float = 0.4, north_hallway: Hallway = None,
+    __NUM_OF_ENEMY_GROUPS = 4
+
+    def __init__(self, factory: EnemyFactory, chance: float = 0.6, north_hallway: Hallway = None,
                  east_hallway: Hallway = None, south_hallway: Hallway = None, west_hallway: Hallway = None):
         """
 
         :param factory:
-        :param chance:
+        :param chance: chance for every individual Tile of the room to be an EnemyTile
         :param east_door: the Door connecting to the Room to the East of this one
         :param south_door: the Door connecting to the Room to the South of this one
         :param west_door: whether the Room to the West is having an east_door or not
         :param north_door:  whether the Room to the North is having a south_door or not
         """
         self.__dictionary = { 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [], 9: [] }
-        tile_list = []
+        tile_list = Room.get_empty_room_tile_list()
         rm = RM.create_new()
-        for x in range(Room.INNER_WIDTH * Room.INNER_HEIGHT):
-            if rm.get() < chance:
-                id = rm.get_int(min=0, max=10)
-                enemy = EnemyTile(factory, self.get_tiles_by_id, id)
-                if id > 0:
-                    self.__dictionary[id].append(enemy)
-                tile_list.append(enemy)
-            else:
-                tile_list.append(Floor())
+
+        available_positions = []
+        for y in range(Room.INNER_HEIGHT):
+            available_positions += [Coordinate(x, y) for x in range(Room.INNER_WIDTH)]
+        num_of_enemies = len(available_positions) * chance
+        if rm.get() < 0.5:
+            num_of_enemies = math.floor(num_of_enemies)
+        else:
+            num_of_enemies = math.ceil(num_of_enemies)
+
+        # here we could add other stuff (pickups, buttons?, ...) to the room and adapt available_positions accordingly
+
+        for i in range(num_of_enemies):
+            id = rm.get_int(min=0, max=WildRoom.__NUM_OF_ENEMY_GROUPS + 1)
+            enemy = EnemyTile(factory, self.get_tiles_by_id, id)
+            if id > 0:
+                self.__dictionary[id].append(enemy)
+            pos = rm.get_element(available_positions, remove=True)
+            tile_list[Room.coordinate_to_index(pos)] = enemy
 
         super().__init__(tile_list, north_hallway, east_hallway, south_hallway, west_hallway)
 
