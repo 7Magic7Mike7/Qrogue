@@ -257,11 +257,13 @@ class CheatConfig:
     __GOD_MODE = "Qod-Mode"
     __SCARED_RABBIT = "Rabbit_Tunnel"
     __INF_RESOURCES = "Rich"
+    __MAP_REVEAL = "Illuminati"
     __NONE = "n0n3"
     __CHEATS = {
         __GOD_MODE: False,
         __SCARED_RABBIT: False,
         __INF_RESOURCES: False,
+        __MAP_REVEAL: False,
     }
     __cheated = False
     __popup = None
@@ -290,6 +292,10 @@ class CheatConfig:
     @staticmethod
     def got_inf_resources() -> bool:
         return CheatConfig.__CHEATS[CheatConfig.__INF_RESOURCES]
+
+    @staticmethod
+    def revealed_map() -> bool:
+        return CheatConfig.__CHEATS[CheatConfig.__MAP_REVEAL]
 
     @staticmethod
     def cheat_input():

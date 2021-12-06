@@ -36,6 +36,10 @@ class Area(ABC):
     def _id(self) -> int:
         return self.__id
 
+    @property
+    def _is_visible(self) -> bool:
+        return self.__is_visible or CheatConfig.revealed_map()
+
     def _set_tile(self, tile: Tile, x: int, y: int) -> bool:
         """
 
