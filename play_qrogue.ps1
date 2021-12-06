@@ -30,5 +30,5 @@ $config = Get-Content ${CONFIG_PATH}
 # start game
 $ENV_NAME = ${config} | Select-Object -First 1
 Enter-CondaEnvironment ${ENV_NAME}
-& python ${GAME_PATH}
+& python ${GAME_PATH} --from-console
 Exit-CondaEnvironment

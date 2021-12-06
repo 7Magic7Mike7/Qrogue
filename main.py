@@ -29,3 +29,7 @@ else:
         print("qrogue.config is invalid. Please check if the second line describes a valid path (the path "
           "to your save files). Using special characters in the path could also cause this error so if the path is "
           "valid please consider using another one without special characters.")
+
+if len(sys.argv) <= 1 or sys.argv[1] != "--from-console":
+    print()
+    input("[Qrogue] Press ENTER to close the application")
