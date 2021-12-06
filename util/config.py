@@ -401,6 +401,10 @@ class Config:
         return Config.__VERSION
 
     @staticmethod
+    def config_file() -> str:
+        return Config.__GAME_CONFIG
+
+    @staticmethod
     def create():
         text = ""
         text += Config.__GAMEPLAY_HEAD

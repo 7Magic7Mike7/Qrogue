@@ -251,15 +251,18 @@ class PauseMenuWidgetSet(MyWidgetSet):
 
     def __options(self) -> bool:
         self.__details.set_data(data=(
-            ["Background Color", "Font", "Font Size", "-Back-"],
+            ["Gameplay Config", "-Back-"],
             [self.__options_text]
         ))
         return True
 
     def __options_text(self, index: int = 0) -> bool:
-        if index < 3:
-            Popup.message(f"Option #{index}", "Todo: Implement")
-        return True
+        if index == 0:
+            path = PathConfig.base_path(Config.config_file())
+            Popup.message(f"Configuration located at {path}", GameplayConfig.to_file_text())
+            return False
+        else:
+            return True
 
     def __help(self) -> bool:
         self.__details.set_data(data=(
