@@ -60,6 +60,7 @@ class Logger(py_cui.debug.PyCUILogger):
     def throw(self, error) -> None:
         print(error)
         self.__write(str(error))
+        self.flush()
         raise error
 
     def print(self, message: str, clear: bool = False) -> None:
