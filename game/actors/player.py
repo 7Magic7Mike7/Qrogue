@@ -9,7 +9,8 @@ from qiskit.providers.aer import StatevectorSimulator
 
 from game.collectibles.collectible import Collectible, CollectibleType
 from game.collectibles.pickup import Coin, Key, Heart
-from game.logic.instruction import Instruction, HGate
+from game.logic.instruction import Instruction
+from game.logic import instruction as gates
 from game.logic.qubit import QubitSet, EmptyQubitSet, DummyQubitSet, StateVector
 # from jkq import ddsim
 from util.config import CheatConfig
@@ -352,7 +353,7 @@ class DummyPlayer(Player):
     def __init__(self):
         super(DummyPlayer, self).__init__(
             attributes=PlayerAttributes(DummyQubitSet()),
-            backpack=Backpack(5, [HGate(), HGate()])
+            backpack=Backpack(5, [gates.HGate(), gates.XGate()])
         )
 
     def get_img(self):

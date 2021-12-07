@@ -1,13 +1,16 @@
 from enum import IntEnum
 
-from game.actors.factory import EnemyFactory, DummyFightDifficulty
+from game.actors.boss import DummyBoss
+from game.actors.factory import EnemyFactory, DummyTargetDifficulty, RiddleFactory
 from game.callbacks import CallbackPack
+from game.collectibles.factory import GateFactories, ShopFactory
+from game.map import tiles
 from game.map.map import Map
 from game.map.navigation import Coordinate, Direction
-from game.map.rooms import Hallway, WildRoom, SpawnRoom, ShopRoom
-from game.map.tiles import Door, Player
+from game.map.rooms import Hallway, WildRoom, SpawnRoom, ShopRoom, RiddleRoom, GateRoom, BossRoom
+from game.actors.player import Player as PlayerActor
 from util.logger import Logger
-from util.my_random import MyRandom
+from util.my_random import MyRandom, RandomManager
 
 
 class _Code(IntEnum):
@@ -206,9 +209,9 @@ class LayoutGenerator:
                 cur_val += code / self.__prio_sum
                 if val < cur_val:
                     return pos
-        print(self)
-        #raise NotImplementedError("This line should no be reachable")
-        print(f"Failed to get a random coordinate (line 193) for seed = {self.seed}")
+        Logger.instance().throw(NotImplementedError(f"Failed to get a random coordinate (generator.py) for seed = "
+                                                    f"{self.seed}. Please do report this error as this should not be "
+                                                    "possible to occur! :("))
 
     def __random_free_wildroom_neighbors(self, num: int = 1) -> [Coordinate]:
         rooms = self.__normal_rooms
@@ -234,8 +237,9 @@ class LayoutGenerator:
                 room_prios[neighbor] = (prio, room)
 
         if prio_sum == 0:
-            #raise NotImplementedError("This line should not be reachable!")
-            print(f"Illegal prio_sum for seed = {self.seed}")
+            Logger.instance().error(f"Illegal prio_sum for seed = {self.seed} in generator.py\nThis should not be "
+                                    "possible to occur but aside from the randomness during layout generation this "
+                                    "doesn't break anything. Please consider reporting!")
             prio_sum = -1.0
 
         picked_rooms = []
@@ -251,17 +255,17 @@ class LayoutGenerator:
                     break
         return picked_rooms
 
-    def __add_hallway(self, room1: Coordinate, room2: Coordinate, door: Door):
+    def __add_hallway(self, room1: Coordinate, room2: Coordinate, door: tiles.Door):
         if room1 in self.__hallways:
-            self.__hallways[room1][room2] = Hallway(door)
+            self.__hallways[room1][room2] = door
         else:
-            self.__hallways[room1] = {room2: Hallway(door)}
+            self.__hallways[room1] = {room2: door}
         if room2 in self.__hallways:
-            self.__hallways[room2][room1] = Hallway(door)
+            self.__hallways[room2][room1] = door
         else:
-            self.__hallways[room2] = {room1: Hallway(door)}
+            self.__hallways[room2] = {room1: door}
 
-    def __place_wild(self, room: Coordinate, door: Door):
+    def __place_wild(self, room: Coordinate, door: tiles.Door):
         pos = room + door.direction
         self.__set(pos, _Code.Wild)
         self.__add_hallway(room, pos, door)
@@ -279,10 +283,10 @@ class LayoutGenerator:
                     if self.__is_corner(wild_room):
                         # if the connected WildRoom is in the corner, we swap position between it and the SpecialRoom
                         self.__set(wild_room, code)
-                        self.__place_wild(wild_room, Door(direction.opposite()))
+                        self.__place_wild(wild_room, tiles.Door(direction.opposite(), locked=True))
                         return wild_room
                     else:
-                        self.__place_wild(pos, Door(direction))
+                        self.__place_wild(pos, tiles.Door(direction, locked=True))
                         return pos
             except NotImplementedError:
                 print("ERROR!")
@@ -304,74 +308,73 @@ class LayoutGenerator:
         if len(relevant_neighbors) > 0:
             # there are neighbors we can connect to
             room = self.__rm.get_element(relevant_neighbors)
-            door = Door(room[0])
+            door = tiles.Door(room[0])
             self.__add_hallway(pos, room[2], door)
             return room[2], False
         else:
             if self.__get(pos) in _Code.special_rooms():
-                #raise NotImplementedError("This line should not be reachable!")
                 print(f"SpecialRoom marked as dead end for seed = {self.seed}")
             return pos, True  # we found a dead end
 
-    def __astar(self, visited: set, pos: Coordinate, target: Coordinate) -> [Coordinate]:
+    def __astar(self, visited: set, pos: Coordinate, target: Coordinate) -> ([Coordinate], bool):
         """
 
         :param visited: Coordinates of all cells we already visited
         :param pos: position/Coordinate of the cell we currently check
         :param target: the cell we try to find
-        :return: list of dead ends on the path or None if the target can be reached
+        :return: list of dead ends on the path and False if the target cannot be reached, otherwise True
         """
-        dead_ends = []
+        dead_ends = set()
         neighbors = list(self.__hallways[pos].keys())
 
         if target in neighbors:
-            return None     # we found the target
+            return None, True  # we found the target
 
         while neighbors:
             room = self.__rm.get_element(neighbors, remove=True)
             if room in visited:
                 continue
             visited.add(room)
-            ret = self.__astar(visited, pos=room, target=target)
+            ret, success = self.__astar(visited, pos=room, target=target)
             if ret:
-                dead_ends += ret
-            else:
-                return None
+                dead_ends.update(ret)
+            if success:
+                return dead_ends, True
 
-        ret = []
         cur_pos = pos
         while True:
             # we come back from a dead end, so we check if we can connect the current cell with a non-visited neighbor
             coordinate, dead_end = self.__astar_connect_neighbors(visited, cur_pos)
             if dead_end:
                 if len(self.__get_neighbors(coordinate, free_spots=True)) > 0:
-                    dead_ends.append(coordinate)
-                return dead_ends + ret
+                    dead_ends.add(coordinate)
+                return dead_ends, False
             else:
                 visited.add(coordinate)
-                ret = self.__astar(visited, pos=coordinate, target=target)
+                ret, success = self.__astar(visited, pos=coordinate, target=target)
                 if ret:
-                    dead_ends += ret
-                else:
-                    return None
+                    dead_ends.update(ret)
+                if success:
+                    return dead_ends, True
 
     def __call_astar(self, visited: set, start_pos: Coordinate, spawn_pos: Coordinate) -> bool:
-        dead_ends = self.__astar(visited, start_pos, target=spawn_pos)
-        if dead_ends is None:
+        dead_ends, success = self.__astar(visited, start_pos, target=spawn_pos)
+        if success:
             return True
+        dead_ends = list(dead_ends)
         while dead_ends:
             dead_end = self.__rm.get_element(dead_ends, remove=True)
             relevant_pos = self.__get_neighbors(dead_end, free_spots=True)
             # and try to place a new room to connect the dead end to the rest
             while relevant_pos:
                 direction, _, new_pos = self.__rm.get_element(relevant_pos, remove=True)
-                self.__place_wild(dead_end, Door(direction))
+                self.__place_wild(dead_end, tiles.Door(direction))
                 visited.add(new_pos)
                 if self.__call_astar(visited, start_pos=new_pos, spawn_pos=spawn_pos):
                     return True
         return False
 
-    def get_hallway(self, pos: Coordinate) -> "dict of Coordinate and Door":
+    def get_hallway(self, pos: Coordinate) -> "dict of Coordinate and tiles.Door":
         if pos in self.__hallways:
             return self.__hallways[pos]
         return None
@@ -401,9 +404,9 @@ class LayoutGenerator:
         corner = self.__is_corner(spawn_pos)
         if corner:
             if self.__get(spawn_pos + corner[0]) < _Code.Blocked:
-                self.__place_wild(spawn_pos, Door(corner[0]))
+                self.__place_wild(spawn_pos, tiles.Door(corner[0]))
             if self.__get(spawn_pos + corner[1]) < _Code.Blocked:
-                self.__place_wild(spawn_pos, Door(corner[1]))
+                self.__place_wild(spawn_pos, tiles.Door(corner[1]))
 
         # place the special rooms
         special_rooms = [
@@ -419,7 +422,7 @@ class LayoutGenerator:
         #    new_pos = spawn_pos + direction
         #    if self.__get(new_pos) == _Code.Wild:
         #        #wild_directions = self.__available_directions(spawn_pos, allow_wildrooms=True)
-        #        door = Door(direction, locked=True)
+        #        door = tiles.Door(direction, locked=True)
         #        self.__add_hallway(spawn_pos, new_pos, door)
 
         self.__new_prio()
@@ -438,14 +441,16 @@ class LayoutGenerator:
                 direction, code, new_pos = room[0]
                 pos = room[1]
                 self.__set(new_pos, _Code.Wild)
-                self.__add_hallway(pos, new_pos, Door(direction))
+                self.__add_hallway(pos, new_pos, tiles.Door(direction))
 
         # add a connection if the SpawnRoom is not connected to a WildRoom
         if spawn_pos not in self.__hallways:
             neighbors = self.__get_neighbors(spawn_pos)
             if len(neighbors) > 0:
                 direction, _, new_pos = self.__rm.get_element(neighbors)
-                self.__add_hallway(spawn_pos, new_pos, Door(direction))
+                self.__add_hallway(spawn_pos, new_pos, tiles.Door(direction))
+            else:
+                pass    # todo: add new WR?
 
         success = True
         # as last step, add missing Hallways and WildRooms to connect every SpecialRoom with the SpawnRoom
@@ -458,16 +463,14 @@ class LayoutGenerator:
             if not self.__call_astar(visited, start_pos, spawn_pos):
                 success = False
                 break
-            if debug:
-                print(self)
         if success:
             return True
         else:
             for room in rooms:
                 start_pos = list(self.__hallways[room].keys())[0]
                 visited = set(special_rooms)
-                ret = self.__astar(visited, start_pos, spawn_pos)
-                if ret:
+                dead_ends, success = self.__astar(visited, start_pos, spawn_pos)
+                if not success:
                     return False
             return True
 
@@ -515,16 +518,32 @@ class LayoutGenerator:
 
 
 class DungeonGenerator:
-    WIDTH = 7
-    HEIGHT = 3
+    WIDTH = Map.WIDTH
+    HEIGHT = Map.HEIGHT
+    __MIN_ENEMY_FACTORY_CHANCE = 0.45
+    __MAX_ENEMY_FACTORY_CHANCE = 0.7
 
     def __init__(self, seed: int):
         self.__width = DungeonGenerator.WIDTH
         self.__height = DungeonGenerator.HEIGHT
         self.__layout = LayoutGenerator(seed, self.__width, self.__height)
 
-    def generate(self, player: Player, cbp: CallbackPack) -> Map:
+    @property
+    def seed(self) -> int:
+        return self.__layout.seed
+
+    def generate(self, player: PlayerActor, cbp: CallbackPack) -> (Map, bool):
+        # Testing: seeds from 0 to 500_000 were successful
+
+        rm = RandomManager.create_new()
+        #enemy_factory, boss, riddle, shop items, gate
+        gate_factory = GateFactories.standard_factory()
+        riddle_factory = RiddleFactory.default(cbp.open_riddle)
+        shop_factory = ShopFactory.default()
+        enemy_factories = [EnemyFactory(cbp.start_fight, DummyTargetDifficulty())]
+
         rooms = [[None for x in range(self.__width)] for y in range(self.__height)]
+        spawn_room = None
         created_hallways = {}
         if self.__layout.generate():
             for y in range(DungeonGenerator.HEIGHT):
@@ -536,31 +555,75 @@ class DungeonGenerator:
                             Direction.North: None, Direction.East: None, Direction.South: None, Direction.West: None,
                         }
                         hallways = self.__layout.get_hallway(pos)
+                        if hallways is None:
+                            if code == _Code.Wild:
+                                # it is completely fine if it happens that an isolated WildRoom was generated
+                                continue
+                            else:
+                                Logger.instance().throw(NotImplementedError(
+                                    f"Found a SpecialRoom ({code}) without connecting Hallways for seed = "
+                                    f"{self.seed}. Please do report this error as this should not be "
+                                    "possible to occur! :("))
                         for neighbor in hallways:
-                            hallway = Hallway(hallways[neighbor])   # todo create door here and only check if it should be locked or not?
                             direction = Direction.from_coordinates(pos, neighbor)
-                            room_hallways[direction] = hallway
-                            if neighbor not in created_hallways:
-                                created_hallways[neighbor] = {}
-                            created_hallways[neighbor][direction.opposite()] = hallway
+                            opposite = direction.opposite()
+                            # get hallway from neighbor if it exists, otherwise create it
+                            if neighbor in created_hallways and opposite in created_hallways[neighbor]:
+                                hallway = created_hallways[neighbor][opposite]
+                            else:
+                                hallway = Hallway(hallways[neighbor])   # todo create door here and only check if it should be locked or not?
+                                if neighbor in created_hallways:
+                                    created_hallways[neighbor][opposite] = hallway
+                                else:
+                                    created_hallways[neighbor] = {opposite: hallway}
 
+                            # store the hallway so the neighbors can find it if necessary
+                            if pos not in created_hallways:
+                                created_hallways[pos] = {}
+                            created_hallways[pos][direction] = hallway
+                            room_hallways[direction] = hallway
+
+                        room = None
                         if code == _Code.Spawn:
-                            room = SpawnRoom(player,
-                                             north_hallway=room_hallways[Direction.North],
+                            spawn_room = pos
+                            room = SpawnRoom(north_hallway=room_hallways[Direction.North],
                                              east_hallway=room_hallways[Direction.East],
                                              south_hallway=room_hallways[Direction.South],
                                              west_hallway=room_hallways[Direction.West],
                                              )
                         elif code == _Code.Wild:
-                            room = WildRoom(EnemyFactory(cbp.start_fight, DummyFightDifficulty()),  # todo real factory and difficulty
-                                             north_hallway=room_hallways[Direction.North],
-                                             east_hallway=room_hallways[Direction.East],
-                                             south_hallway=room_hallways[Direction.South],
-                                             west_hallway=room_hallways[Direction.West],
-                                             )
+                            enemy_factory = rm.get_element(enemy_factories, remove=False)
+                            room = WildRoom(
+                                enemy_factory,
+                                chance=rm.get(DungeonGenerator.__MIN_ENEMY_FACTORY_CHANCE,
+                                              DungeonGenerator.__MAX_ENEMY_FACTORY_CHANCE),
+                                north_hallway=room_hallways[Direction.North],
+                                east_hallway=room_hallways[Direction.East],
+                                south_hallway=room_hallways[Direction.South],
+                                west_hallway=room_hallways[Direction.West],
+                            )
                         else:
-                            hallway = hallways[direction]
-                            #if code == _Code.Shop:
-                            #    room = ShopRoom(hallway, )
+                            hw = room_hallways[direction]   # special rooms have exactly 1 neighbor
+                            if code == _Code.Shop:
+                                shop_items = shop_factory.produce()
+                                room = ShopRoom(hw, direction, shop_items, cbp.visit_shop)
+                            elif code == _Code.Riddle:
+                                riddle = riddle_factory.produce(player)
+                                room = RiddleRoom(hw, direction, riddle, cbp.open_riddle)
+                            elif code == _Code.Gate:
+                                gate = gate_factory.produce()
+                                room = GateRoom(gate, hw, direction)
+                            elif code == _Code.Boss:
+                                room = BossRoom(hw, direction, tiles.Boss(DummyBoss(), cbp.start_boss_fight))
+                        if room:
+                            rooms[y][x] = room
+            if spawn_room:
+                my_map = Map(rooms, player, spawn_room, cbp)
+                return my_map, True
+            else:
+                return None, False
+        else:
+            return None, False
 
-                        #rooms[y][x] = room
+    def __str__(self) -> str:
+        return str(self.__layout)

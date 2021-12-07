@@ -12,12 +12,14 @@ from game.actors.riddle import Riddle
 from game.actors.target import Target
 from game.callbacks import CallbackPack
 from game.collectibles.collectible import ShopItem
+from game.map.generator import DungeonGenerator
 from game.map.map import Map
 from game.map.navigation import Direction
 from game.map.tiles import Player as PlayerTile
-from game.map.tutorial import Tutorial
-from util.config import MapConfig, GameplayConfig
+from game.map.tutorial import Tutorial, TutorialPlayer
+from util.config import MapConfig, GameplayConfig, PathConfig, Config
 from util.help_texts import HelpText, HelpTextType
+from util.logger import Logger
 from util.my_random import RandomManager
 from widgets.color_rules import ColorRules
 from widgets.my_popups import Popup, CommonPopups
@@ -176,14 +178,18 @@ class MenuWidgetSet(MyWidgetSet):
         return self.__selection
 
     def __play(self) -> None:
-        Popup.message("TODO", "The normal game mode is not implemented yet. Please wait for the next Release and "
-                              "play the Tutorial in the meanwhile!")
-        #player = DummyPlayer()   # todo use real player
-        #map = Map(self.__seed, self.__MAP_WIDTH, self.__MAP_HEIGHT, player, self.__cbp)
-        #self.__cbp.start_gameplay(map)
+        player = DummyPlayer()   # todo use real player
+        generator = DungeonGenerator(self.__seed)
+        map, success = generator.generate(player, self.__cbp)
+        if success:
+            self.__cbp.start_gameplay(map)
+        else:
+            Logger.instance().throw(ValueError(f"Illegal state! No map can be generated for seed = {self.__seed}!"))
 
     def __tutorial(self) -> None:
-        map = Map(MapConfig.tutorial_seed(), self.__MAP_WIDTH, self.__MAP_HEIGHT, DummyPlayer(), self.__cbp)
+        MapConfig.tutorial_seed()
+        rooms, spawn_room = Tutorial().build_tutorial_map(self.__cbp)
+        map = Map(rooms, TutorialPlayer(), spawn_room, self.__cbp)
         self.__cbp.start_gameplay(map)
         Popup.message("Welcome to Qrogue! (scroll with arrow keys)", HelpText.get(HelpTextType.Welcome))
 

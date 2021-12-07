@@ -1,4 +1,4 @@
-from game.actors.factory import EnemyFactory, FightDifficulty, DummyFightDifficulty
+from game.actors.factory import EnemyFactory, TargetDifficulty, DummyTargetDifficulty
 from game.actors.enemy import Enemy as EnemyActor
 from game.actors.boss import Boss as BossActor
 from game.actors.player import Player as PlayerActor, PlayerAttributes, Backpack
@@ -9,6 +9,7 @@ from game.collectibles.pickup import Coin, Key
 from game.logic.instruction import CXGate, HGate, XGate
 from game.logic.qubit import StateVector, DummyQubitSet
 from game.map import tiles
+from game.map.map import Map
 from game.map.navigation import Coordinate, Direction
 from game.map.rooms import Room, SpawnRoom, GateRoom, WildRoom, BossRoom, ShopRoom, RiddleRoom, Hallway
 from util.config import ColorConfig as CC
@@ -22,7 +23,7 @@ class TutorialPlayer(PlayerActor):
         super(TutorialPlayer, self).__init__(PlayerAttributes(DummyQubitSet()), Backpack(content=[HGate(), XGate()]))
 
 
-class TutorialDifficulty(FightDifficulty):
+class TutorialDifficulty(TargetDifficulty):
     def __init__(self):
         super().__init__(2, [Coin(3)])
 
@@ -66,7 +67,7 @@ class TutorialEnemyFactory(EnemyFactory):
             (StateVector([1, 0, 0, 0]), Coin(2)),
         ]
 
-    def get_enemy(self, player: PlayerActor, flee_chance: float) -> EnemyActor:
+    def produce(self, player: PlayerActor, flee_chance: float) -> EnemyActor:
         data = self.__enemy_data[self.__reward_index]
         enemy = TutorialEnemy(data[0], data[1])
         self.__reward_index = (self.__reward_index + 1) % len(self.__enemy_data)
@@ -168,7 +169,7 @@ class TutorialGateRoom(GateRoom):
         tile_dic = {
             Coordinate(Room.MID_X - 1, 0): tutorial_tile
         }
-        super().__init__(hallway, False, tile_dic)
+        super().__init__(HGate(), hallway, Direction.North, tile_dic)
 
 
 class TutorialBossRoom(BossRoom):
@@ -181,7 +182,7 @@ class TutorialBossRoom(BossRoom):
         hint = tiles.Message(Popup("Hint:", f"Solving the {riddle} or buying the {gate} from the {shop} might be pretty"
                                             f" {helpful} in defeating the {boss}. Of course you can try it nonetheless "
                                             "but if I were you I'd better use every help I can get.", show=False), -1)
-        super().__init__(hallway, True, tiles.Boss(TutorialBoss(), start_boss_fight),
+        super().__init__(hallway, Direction.South, tiles.Boss(TutorialBoss(), start_boss_fight),
                          tile_dic={Coordinate(1, Room.INNER_HEIGHT - 2): hint})
 
 
@@ -236,7 +237,7 @@ class Tutorial:
         self.__boss_fight(player, boss, direction)
         Popup("Tutorial: Boss Fight", HelpText.get(HelpTextType.BossFight))
 
-    def build_tutorial_map(self, player: tiles.Player, cbp: CallbackPack) -> "Room[][], Coordinate":
+    def build_tutorial_map(self, cbp: CallbackPack) -> ([[Room]], Coordinate):
         self.__fight = cbp.start_fight
         self.__boss_fight = cbp.start_boss_fight
         self.__riddle = cbp.open_riddle
@@ -268,7 +269,7 @@ class Tutorial:
             f"to survive!\n"
             f"To the South of it is the {w[15]} and "
             f"North a {w[16]} that gives you a nice reward if you can solve it. Going West takes you one step closer "
-            f"to the {w[14]}\n"
+            f"to the {w[14]}.\n"
             "Good Luck!",
         ]
         popups = [Popup(f"Tutorial #{i + 1}", messages[i], show=False)
@@ -294,12 +295,12 @@ class Tutorial:
             Coordinate(Room.INNER_WIDTH - 1, Room.MID_Y - 1): TutorialTile(popups[1], 1, self.is_active, self.progress,
                                                                            blocks=True)
         }
-        spawn = SpawnRoom(player, spawn_dic, east_hallway=spawn_hallway_east, south_hallway=spawn_hallway_south)
+        spawn = SpawnRoom(spawn_dic, east_hallway=spawn_hallway_east, south_hallway=spawn_hallway_south)
         spawn_x = 0
         spawn_y = 1
-        width = 5
-        height = 5
-        factory = EnemyFactory(cbp.start_fight, DummyFightDifficulty())
+        width = Map.WIDTH
+        height = Map.HEIGHT
+        factory = EnemyFactory(cbp.start_fight, DummyTargetDifficulty())
 
         rooms = [[None for x in range(width)] for y in range(height)]
         rooms[spawn_y][spawn_x] = spawn
@@ -309,9 +310,9 @@ class Tutorial:
         rooms[2][0] = TutorialGateRoom(spawn_hallway_south, TutorialTile(popups[3], 3, self.is_active, self.progress))
         rooms[1][2] = WildRoom(factory, chance=0.8, west_hallway=cwr_hallway_east, north_hallway=riddle_hallway,
                                south_hallway=shop_hallway, east_hallway=cwr2_hallway_west)
-        rooms[0][2] = RiddleRoom(riddle_hallway, True, TutorialRiddle(), self.riddle)
-        rooms[2][2] = ShopRoom(shop_hallway, False, [ShopItem(Key(2), 3), ShopItem(Key(1), 2), ShopItem(CXGate(), 15)],
-                               self.shop)
+        rooms[0][2] = RiddleRoom(riddle_hallway, Direction.South, TutorialRiddle(), self.riddle)
+        rooms[2][2] = ShopRoom(shop_hallway, Direction.North, [ShopItem(Key(2), 3), ShopItem(Key(1), 2),
+                                                               ShopItem(CXGate(), 15)], self.shop)
         rooms[1][3] = CustomWildRoom2(factory, chance=0.7, north_hallway=cwr2_hallway_north,
                                       east_hallway=cwr2_hallway_east, south_hallway=cwr2_hallway_south,
                                       west_hallway=cwr2_hallway_west)
