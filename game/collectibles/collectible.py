@@ -40,7 +40,7 @@ class Collectible(ABC):
         pass
 
     @abstractmethod
-    def __str__(self):
+    def to_string(self):
         pass
 
 
@@ -65,5 +65,8 @@ class ShopItem:
     def price(self) -> int:
         return self.__price
 
-    def __str__(self):
+    def to_string(self) -> str:
         return f"{self.collectible}, {self.price}$"
+
+    def __str__(self):
+        return self.to_string()

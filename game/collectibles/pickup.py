@@ -16,7 +16,7 @@ class Pickup(Collectible, ABC):
 
     def default_price(self) -> int:
         # the higher the amount the less the additional price (based on harmonic numbers)
-        return sum([Pickup.__DEFAULT_PRICE / (i+1) for i in range(self._amount)])
+        return int(sum([Pickup.__DEFAULT_PRICE / (i+1) for i in range(self._amount)]))
 
 
 class Coin(Pickup):
@@ -29,8 +29,11 @@ class Coin(Pickup):
     def description(self) -> str:
         return "Coins are used to buy Collectibles from the Shop"
 
-    def __str__(self):
+    def to_string(self):
         return f"{self.amount}$"
+
+    def __str__(self) -> str:
+        return self.to_string()
 
 
 class Key(Pickup):
@@ -43,8 +46,11 @@ class Key(Pickup):
     def description(self) -> str:
         return "A Key is useful for opening locked doors."
 
-    def __str__(self):
+    def to_string(self):
         return f"{self.amount} key(s)"
+
+    def __str__(self) -> str:
+        return self.to_string()
 
 
 class Heart(Pickup):
@@ -62,5 +68,8 @@ class Heart(Pickup):
     def default_price(self) -> int:
         return round(Heart.__PRICE_MULTIPLIER * super(Heart, self).default_price())
 
-    def __str__(self) -> str:
+    def to_string(self) -> str:
         return f"Heart ({self.amount} HP)"
+
+    def __str__(self) -> str:
+        return self.to_string()

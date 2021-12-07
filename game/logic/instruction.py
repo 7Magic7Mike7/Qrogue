@@ -71,25 +71,32 @@ class Instruction(Collectible, ABC):
     def default_price(self) -> int:
         return Instruction.__DEFAULT_PRICE
 
-    def preview_str(self, next_qubit: int) -> str:
-        self._qargs.append(next_qubit)
-        preview = str(self)
-        self._qargs.pop()
-        return preview
-
-    def __str__(self):
+    def selection_str(self) -> str:
         # Gate (qX, qY, ?, ...)
         text = f"{self.short_name()} ("
-        for i in range(self.num_of_qubits-1):
+        for i in range(self.num_of_qubits - 1):
             if i < len(self._qargs):
                 text += f"{self._qargs[i]}, "
             else:
                 text += "?, "
-        if self.num_of_qubits-1 < len(self._qargs):
-            text += f"{self._qargs[self.num_of_qubits-1]})"
+        if self.num_of_qubits - 1 < len(self._qargs):
+            text += f"{self._qargs[self.num_of_qubits - 1]})"
         else:
             text += "?)"
         return text
+
+    def preview_str(self, next_qubit: int) -> str:
+        # Gate (qX, qY, ?, ...)
+        self._qargs.append(next_qubit)  # pretend that we already set the next qubit
+        preview = self.selection_str()
+        self._qargs.pop()   # undo setting the next qubit because we only wanted to pretend that we did
+        return preview
+
+    def to_string(self):
+        return self.name()
+
+    def __str__(self) -> str:
+        return self.to_string()
 
 
 ####### Single Qubit Gates #######

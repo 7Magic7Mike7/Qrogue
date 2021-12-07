@@ -11,6 +11,7 @@ from game.actors.player import DummyPlayer
 from game.actors.riddle import Riddle
 from game.actors.target import Target
 from game.callbacks import CallbackPack
+from game.collectibles.collectible import ShopItem
 from game.map.map import Map
 from game.map.navigation import Direction
 from game.map.tiles import Player as PlayerTile
@@ -452,7 +453,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
     def __choices_adapt(self) -> bool:
         self._details.set_data(data=(
-            [str(instruction) for instruction in self._player.backpack] + ["-Back-"],
+            [instruction.selection_str() for instruction in self._player.backpack] + ["-Back-"],
             [self.__choose_instruction]
         ))
         return True
@@ -463,7 +464,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             if self.__cur_instruction is not None:
                 if self.__cur_instruction.is_used():
                     self._player.remove_instruction(index)
-                    self.details.update_text(str(self._player.backpack.get(index)), index)
+                    self.details.update_text(self._player.backpack.get(index).selection_str(), index)
                 else:
                     if self._player.is_space_left():
                         self.details.set_data(data=(
@@ -493,7 +494,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         else:
             self._player.use_instruction(self.__cur_instruction)
             self._details.set_data(data=(
-                [str(instruction) for instruction in self._player.backpack] + ["-Back-"],
+                [instruction.selection_str() for instruction in self._player.backpack] + ["-Back-"],
                 [self.__choose_instruction]
             ))
         self.render()
@@ -513,7 +514,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             reward = self._target.get_reward()
             self._player.give_collectible(reward)
             self._details.set_data(data=(
-                [f"Congratulations! Get reward: {reward}"],
+                [f"Congratulations! Get reward: {reward.to_string()}"],
                 [self._continue_exploration_callback]
             ))
             return True
@@ -544,7 +545,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
     def __choices_help(self) -> bool:
         self._details.set_data(data=(
-            [str(instruction) for instruction in self._player.backpack] + ["-Back-"],
+            [instruction.name() for instruction in self._player.backpack] + ["-Back-"],
             [self.__show_help_popup]
         ))
         return True
@@ -683,10 +684,10 @@ class ShopWidgetSet(MyWidgetSet):
         self.__hud.set_data(player)
         self.__update_inventory(items)
 
-    def __update_inventory(self, items):
+    def __update_inventory(self, items: [ShopItem]):
         self.__items = items
         self.__inventory.set_data(data=(
-            [str(si) for si in items] + ["-Leave-"],
+            [si.to_string() for si in items] + ["-Leave-"],
             [self.__select_item]
         ))
 
