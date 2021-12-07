@@ -188,7 +188,7 @@ class QrogueCUI(py_cui.PyCUI):
                 # Here we handle mouse click events globally, or pass them to the UI element to handle
                 elif key_pressed == curses.KEY_MOUSE:
                     self._logger.info('Detected mouse click')
-                    
+
                     valid_mouse_event = True
                     try:
                         id, x, y, _, mouse_event = curses.getmouse()
@@ -471,8 +471,10 @@ class QrogueCUI(py_cui.PyCUI):
     def __fight_details(self) -> None:
         if self.__fight.details.use() and self.__cur_widget_set is self.__fight:
             self.move_focus(self.__fight.choices.widget, auto_press_buttons=False)
+            self.__fight.choices.validate_index()   # somehow it can happen that the index is out of bounds after
+                                                    # coming back from details which is why we validate it now
             self.__fight.details.render_reset()
-            self.render()# render the whole widget_set for updating the StateVectors and the circuit
+            self.render()   # render the whole widget_set for updating the StateVectors and the circuit
 
     def __boss_fight_choices(self) -> None:
         if self.__boss_fight.choices.use() and self.__cur_widget_set is self.__boss_fight:
@@ -482,6 +484,8 @@ class QrogueCUI(py_cui.PyCUI):
     def __boss_fight_details(self) -> None:
         if self.__boss_fight.details.use() and self.__cur_widget_set is self.__boss_fight:
             self.move_focus(self.__boss_fight.choices.widget, auto_press_buttons=False)
+            self.__boss_fight.choices.validate_index()  # somehow it can happen that the index is out of bounds after
+                                                        # coming back from details which is why we validate it now
             self.__boss_fight.details.render_reset()
             self.render()   # render the whole widget_set for updating the StateVectors and the circuit
 
@@ -493,6 +497,8 @@ class QrogueCUI(py_cui.PyCUI):
     def __riddle_details(self) -> None:
         if self.__riddle.details.use() and self.__cur_widget_set is self.__riddle:
             self.move_focus(self.__riddle.choices.widget, auto_press_buttons=False)
+            self.__riddle.choices.validate_index()   # somehow it can happen that the index is out of bounds after
+                                                    # coming back from details which is why we validate it now
             self.__riddle.details.render_reset()
             self.render()   # render the whole widget_set for updating the StateVectors and the circuit
 
@@ -504,9 +510,11 @@ class QrogueCUI(py_cui.PyCUI):
     def __shop_buy(self) -> None:
         if self.__shop.buy.use() and self.__cur_widget_set is self.__shop:
             self.move_focus(self.__shop.inventory.widget, auto_press_buttons=False)
+            self.__shop.inventory.validate_index()   # somehow it can happen that the index is out of bounds after
+                                                     # coming back from details which is why we validate it now
             self.__shop.details.render_reset()
             self.__shop.buy.render_reset()
-            self.__shop.buy.clear_text()
+            #self.__shop.buy.clear_text() # not needed since render_reset does this for second SelectionWidgets
             self.render()
 
 
