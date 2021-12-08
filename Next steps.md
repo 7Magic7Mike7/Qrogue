@@ -7,9 +7,12 @@
 - GameSimulator: seeds need to be set correctly so random stuff like flee chance doesn't hinder execution
 - consider space in backpack when buying from shop
 - place collectible on the ground if you cannot pack a reward in your backpack?
+- access Backpack (Inventory)
+- start in debug mode (HUD logs, all error output, cheats, simulator)
 
 # Tweaks #
 - key input pauses?
+- remove no longer used generator
 
 # Optionals #
 
