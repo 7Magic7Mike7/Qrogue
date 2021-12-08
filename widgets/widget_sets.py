@@ -194,8 +194,9 @@ class MenuWidgetSet(MyWidgetSet):
 
     def __tutorial(self) -> None:
         MapConfig.tutorial_seed()
-        rooms, spawn_room = Tutorial().build_tutorial_map(self.__cbp)
-        map = Map(rooms, TutorialPlayer(), spawn_room, self.__cbp)
+        player = TutorialPlayer()
+        rooms, spawn_room = Tutorial().build_tutorial_map(player, self.__cbp)
+        map = Map(rooms, player, spawn_room, self.__cbp)
         self.__cbp.start_gameplay(map)
         Popup.message("Welcome to Qrogue! (scroll with arrow keys)", HelpText.get(HelpTextType.Welcome))
 

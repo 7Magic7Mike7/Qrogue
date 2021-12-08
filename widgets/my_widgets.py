@@ -93,7 +93,7 @@ class CircuitWidget(Widget):
     def render(self) -> None:
         if self.__player is not None:
             entry = "-" * (3 + Instruction.MAX_ABBREVIATION_LEN + 3)
-            row = [entry] * self.__player.space
+            row = [entry] * self.__player.circuit_space
             rows = []
             for i in range(self.__player.num_of_qubits):
                 rows.append(row.copy())

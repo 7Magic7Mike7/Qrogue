@@ -1,6 +1,10 @@
 from abc import ABC, abstractmethod
 
 import numpy as np
+from qiskit import transpile, QuantumCircuit
+from qiskit.providers.aer import StatevectorSimulator
+
+from game.logic.instruction import Instruction
 
 
 class StateVector:
@@ -10,6 +14,17 @@ class StateVector:
 
     def __init__(self, amplitudes: "list of complex numbers"):
         self.__amplitudes = amplitudes
+
+    @staticmethod
+    def from_gates(gates: [Instruction], num_of_qubits: int):
+        circuit = QuantumCircuit(num_of_qubits, num_of_qubits)
+        for instruction in gates:
+            instruction.append_to(circuit)
+        simulator = StatevectorSimulator()
+        compiled_circuit = transpile(circuit, simulator)
+        # We only do 1 shot since we don't need any measurement but the StateVector
+        job = simulator.run(compiled_circuit, shots=1)
+        return StateVector(job.result().get_statevector())
 
     @property
     def size(self):
@@ -126,11 +141,12 @@ class EmptyQubitSet(QubitSet):
 
 
 class DummyQubitSet(QubitSet):
-    __SIZE = 2
+    __SIZE = 3
     __HP = 10
 
-    def __init__(self):
+    def __init__(self, size: int = __SIZE):
         self.__hp = DummyQubitSet.__HP
+        self.__size = size
 
     def hp(self) -> int:
         return self.__hp
@@ -139,7 +155,7 @@ class DummyQubitSet(QubitSet):
         return self.__hp > 0
 
     def size(self) -> int:
-        return self.__SIZE
+        return self.__size
 
     def damage(self, amount: int) -> int:
         self.__hp = max(self.__hp - amount, 0)
@@ -153,4 +169,3 @@ class DummyQubitSet(QubitSet):
             amount = DummyQubitSet.__HP - self.__hp
         self.__hp += amount
         return amount
-

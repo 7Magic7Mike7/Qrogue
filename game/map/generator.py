@@ -1,9 +1,9 @@
 from enum import IntEnum
 
-from game.actors.boss import DummyBoss
-from game.actors.factory import EnemyFactory, DummyTargetDifficulty, RiddleFactory
+from game.actors.factory import EnemyFactory, RiddleFactory, TargetDifficulty, BossFactory
 from game.callbacks import CallbackPack
-from game.collectibles.factory import GateFactories, ShopFactory
+from game.collectibles import pickup, consumable
+from game.collectibles.factory import GateFactory, ShopFactory
 from game.map import tiles
 from game.map.map import Map
 from game.map.navigation import Coordinate, Direction
@@ -535,12 +535,32 @@ class DungeonGenerator:
     def generate(self, player: PlayerActor, cbp: CallbackPack) -> (Map, bool):
         # Testing: seeds from 0 to 500_000 were successful
 
-        rm = RandomManager.create_new()
-        #enemy_factory, boss, riddle, shop items, gate
-        gate_factory = GateFactories.standard_factory()
-        riddle_factory = RiddleFactory.default(cbp.open_riddle)
+        rm = RandomManager.create_new()     # needed for WildRooms
+        gate_factory = GateFactory.default()
         shop_factory = ShopFactory.default()
-        enemy_factories = [EnemyFactory(cbp.start_fight, DummyTargetDifficulty())]
+        riddle_factory = RiddleFactory.default(player)
+        boss_factory = BossFactory.default(player)
+
+        gate = gate_factory.produce()
+        riddle = riddle_factory.produce()
+        shop_items = shop_factory.produce()
+        dungeon_boss = boss_factory.produce([gate])    # todo based on chance also add gates from riddle or shop_items?
+
+        enemy_factories = [
+            EnemyFactory(player, cbp.start_fight, TargetDifficulty(
+                2, [pickup.Coin(2), pickup.Heart()]
+            )),
+            EnemyFactory(player, cbp.start_fight, TargetDifficulty(
+                2, [pickup.Coin(1), pickup.Coin(2), pickup.Coin(2), pickup.Coin(3), pickup.Key(), pickup.Heart()]
+            )),
+            EnemyFactory(player, cbp.start_fight, TargetDifficulty(
+                3, [pickup.Coin(1), pickup.Coin(5), pickup.Key(), pickup.Heart(), consumable.HealthPotion(2)]
+            )),
+            EnemyFactory(player, cbp.start_fight, TargetDifficulty(
+                3, [pickup.Coin(1), pickup.Coin(1), consumable.HealthPotion(3)]
+            )),
+        ]
+        enemy_factory_priorities = [0.25, 0.35, 0.3, 0.1]
 
         rooms = [[None for x in range(self.__width)] for y in range(self.__height)]
         spawn_room = None
@@ -592,7 +612,7 @@ class DungeonGenerator:
                                              west_hallway=room_hallways[Direction.West],
                                              )
                         elif code == _Code.Wild:
-                            enemy_factory = rm.get_element(enemy_factories, remove=False)
+                            enemy_factory = rm.get_element_prioritized(enemy_factories, enemy_factory_priorities)
                             room = WildRoom(
                                 enemy_factory,
                                 chance=rm.get(DungeonGenerator.__MIN_ENEMY_FACTORY_CHANCE,
@@ -605,16 +625,13 @@ class DungeonGenerator:
                         else:
                             hw = room_hallways[direction]   # special rooms have exactly 1 neighbor
                             if code == _Code.Shop:
-                                shop_items = shop_factory.produce()
                                 room = ShopRoom(hw, direction, shop_items, cbp.visit_shop)
                             elif code == _Code.Riddle:
-                                riddle = riddle_factory.produce(player)
                                 room = RiddleRoom(hw, direction, riddle, cbp.open_riddle)
                             elif code == _Code.Gate:
-                                gate = gate_factory.produce()
                                 room = GateRoom(gate, hw, direction)
                             elif code == _Code.Boss:
-                                room = BossRoom(hw, direction, tiles.Boss(DummyBoss(), cbp.start_boss_fight))
+                                room = BossRoom(hw, direction, tiles.Boss(dungeon_boss, cbp.start_boss_fight))
                         if room:
                             rooms[y][x] = room
             if spawn_room:

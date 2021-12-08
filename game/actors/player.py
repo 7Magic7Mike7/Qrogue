@@ -11,12 +11,13 @@ from game.collectibles.collectible import Collectible, CollectibleType
 from game.collectibles.consumable import Consumable
 from game.collectibles import consumable
 from game.collectibles import pickup
+from game.collectibles.factory import GateFactory
 from game.logic.instruction import Instruction
-from game.logic import instruction as gates
 from game.logic.qubit import QubitSet, EmptyQubitSet, DummyQubitSet, StateVector
 # from jkq import ddsim
 from util.config import CheatConfig, Config
 from util.logger import Logger
+from util.my_random import RandomManager
 
 
 class PlayerAttributes:
@@ -38,7 +39,7 @@ class PlayerAttributes:
         return self.__qubits.size()
 
     @property
-    def space(self) -> int:
+    def circuit_space(self) -> int:
         return self.__space
 
     @property
@@ -175,7 +176,7 @@ class Backpack:
         if 0 <= index < self.consumables_in_pouch:
             return self.__pouch[index]
 
-    def store_in_pouch(self, consumable: Consumable) -> bool:
+    def place_in_pouch(self, consumable: Consumable) -> bool:
         if self.consumables_in_pouch < self.__pouch_size:
             self.__pouch.append(consumable)
             return True
@@ -188,11 +189,11 @@ class Backpack:
         except ValueError:
             return False
 
-    def copy(self) -> "Backpack":
+    def copy_gates(self) -> [Instruction]:
         data = []
-        for instruction in self.__storage:
-            data.append(instruction.copy())
-        return Backpack(self.__capacity, data)
+        for gate in self.__storage:
+            data.append(gate.copy())
+        return data #[gate.copy() for gate in self.__storage]
 
 
 class BackpackIterator:
@@ -269,7 +270,7 @@ class Player(ABC):
         return self.__next_col == 0
 
     def is_space_left(self) -> bool:
-        return self.__next_col < self.__attributes.space
+        return self.__next_col < self.__attributes.circuit_space
 
     def use_instruction(self, instruction: Instruction) -> bool:
         """
@@ -311,16 +312,12 @@ class Player(ABC):
         instruction.reset()
         self.__next_col -= 1
 
-    def get_available_instructions(self) -> "list of Instructions":
+    def get_available_instructions(self) -> [Instruction]:
         """
 
         :return: a copy of all Instructions currently available to the player
         """
-        data = []
-        bp = self.backpack.copy()
-        for instruction in bp:
-            data.append(instruction)
-        return data
+        return self.backpack.copy_gates()
 
     def give_collectible(self, collectible: Collectible):
         if isinstance(collectible, pickup.Coin):
@@ -331,8 +328,9 @@ class Player(ABC):
             self.heal(collectible.amount)
         elif isinstance(collectible, Instruction):
             self.backpack.add(collectible)
-        elif collectible.type is CollectibleType.Consumable:
-            self.backpack.store_in_pouch(collectible)
+        elif collectible.type is CollectibleType.Consumable:    # todo cannot use isInstance here because currently
+                                                        # todo Consumable needs to access the Player (circular import)
+            self.backpack.place_in_pouch(collectible)
 
     def damage(self, target: StateVector = None, amount: int = 1) -> int:
         return self.__attributes.qubits.damage(amount)
@@ -354,8 +352,8 @@ class Player(ABC):
         return self.__attributes.num_of_qubits
 
     @property
-    def space(self) -> int:
-        return self.__attributes.space
+    def circuit_space(self) -> int:
+        return self.__attributes.circuit_space
 
     def __apply_instructions(self):
         circuit = QuantumCircuit(self.__attributes.num_of_qubits, self.__attributes.num_of_qubits)
@@ -383,8 +381,18 @@ class Player(ABC):
 class DummyPlayer(Player):
     def __init__(self):
         attributes = PlayerAttributes(DummyQubitSet())
-        backpack = Backpack(5, [gates.HGate(), gates.XGate()])
-        backpack.store_in_pouch(consumable.HealthPotion(3))
+        backpack = Backpack(capacity=5)
+
+        # add random gates and a HealthPotion
+        if RandomManager.instance().get() < 0.5:
+            num_of_gates = 3
+        else:
+            num_of_gates = 4
+        gate_factory = GateFactory.default()
+        for gate in gate_factory.produce_multiple(num_of_gates):
+            backpack.add(gate)
+        backpack.place_in_pouch(consumable.HealthPotion(3))
+
         super(DummyPlayer, self).__init__(attributes, backpack)
 
     def get_img(self):

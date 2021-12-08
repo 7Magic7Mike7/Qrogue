@@ -118,10 +118,45 @@ class XGate(SingleQubitGate):
         return " X "
 
     def description(self) -> str:
-        return "An X Gate swaps the amplitudes of |0> and |1> - in the classical world it is an Inverter."
+        return "An X Gate rotates the Qubit along the x-axis. This defines a swap of the amplitudes of |0> and |1> - " \
+               "in the classical world this would describe an Inverter."
 
     def copy(self) -> "Instruction":
         return XGate()
+
+
+class YGate(SingleQubitGate):
+    def __init__(self):
+        super(YGate, self).__init__(gates.YGate())
+
+    def short_name(self) -> str:
+        return "Y"
+
+    def abbreviation(self, qubit: int = 0):
+        return " Y "
+
+    def description(self) -> str:
+        return "A Y Gate rotates the Qubit along the y-axis by 180."
+
+    def copy(self) -> "Instruction":
+        return YGate()
+
+
+class ZGate(SingleQubitGate):
+    def __init__(self):
+        super(ZGate, self).__init__(gates.XGate())
+
+    def short_name(self) -> str:
+        return "Z"
+
+    def abbreviation(self, qubit: int = 0):
+        return " Z "
+
+    def description(self) -> str:
+        return "A Z Gate rotates the Qubit along the z-axis by 180°."
+
+    def copy(self) -> "Instruction":
+        return ZGate()
 
 
 class HGate(SingleQubitGate):

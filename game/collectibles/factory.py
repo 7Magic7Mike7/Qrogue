@@ -1,5 +1,5 @@
 from game.collectibles.collectible import Collectible, ShopItem
-from game.collectibles.pickup import Pickup, Key, Heart
+from game.collectibles import consumable, pickup
 from game.logic import instruction as gates
 from util.my_random import RandomManager
 
@@ -7,16 +7,25 @@ from util.my_random import RandomManager
 class CollectibleFactory:
     def __init__(self, pool: "list of Collectibles") -> None:
         self.__pool = pool
+        self.__rm = RandomManager.create_new()
 
     def produce(self) -> Collectible:
-        return RandomManager.instance().get_element(self.__pool)
+        return self.__rm.get_element(self.__pool)
+
+    def produce_multiple(self, num_of_elements: int, unique_elements: bool = True) -> [Collectible]:
+        if unique_elements:
+            pool = self.__pool.copy()
+            return [self.__rm.get_element(pool, remove=True) for i in range(num_of_elements)]
+        else:
+            return [self.__rm.get_element(self.__pool, remove=False) for i in range(num_of_elements)]
 
 
-class GateFactories:
+class GateFactory:
     @staticmethod
-    def standard_factory():
+    def default():
         return CollectibleFactory(pool=[
-            gates.HGate()
+            gates.HGate(), gates.XGate(), gates.YGate(), gates.ZGate(),
+            gates.CXGate(), gates.SwapGate(),
         ])
 
 
@@ -24,11 +33,11 @@ class ShopFactory:
     @staticmethod
     def default() -> "ShopFactory":
         special_pool = [gates.HGate(), gates.XGate(), gates.HGate()]
-        pickup_pool = [Key(1), Key(2), Heart(2), Heart(4)]
-        return ShopFactory(pickup_pool, special_pool, quality_level=1)
+        common_pool = [pickup.Key(1), pickup.Key(2), pickup.Heart(4), consumable.HealthPotion(2)]
+        return ShopFactory(common_pool, special_pool, quality_level=1)
 
-    def __init__(self, pickup_pool: [Pickup], special_pool: [Collectible], quality_level: int = 1, min_items: int = 2,
-                 max_items: int = 5, discount: bool = False):
+    def __init__(self, common_pool: [Collectible], special_pool: [Collectible], quality_level: int = 1,
+                 min_items: int = 2, max_items: int = 5, discount: bool = False):
         """
 
         :param quality_level: how good the Shop should be, i.e. higher quality = better ShopItems
@@ -38,7 +47,7 @@ class ShopFactory:
         :param max_items: maximum number of ShopItems available in the Shop
         :param discount: whether the ShopItems are 50% off or not
         """
-        self.__pickup_pool = pickup_pool
+        self.__common_pool = common_pool
         self.__special_pool = special_pool
         self.__quality_level = quality_level
         self.__min_items = min_items
@@ -58,7 +67,7 @@ class ShopFactory:
         """
         shop_items = []
         special_items = self.__special_pool.copy()
-        pickups = self.__pickup_pool.copy()
+        pickups = self.__common_pool.copy()
         if num_of_items <= 0:
             num_of_items = self.__rm.get_int(self.__min_items, self.__max_items)
         quality_level = self.__quality_level

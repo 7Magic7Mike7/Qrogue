@@ -321,20 +321,20 @@ class _EnemyState(Enum):
     DEAD = 3
     FLED = 4
 class Enemy(WalkTriggerTile):
-    def __init__(self, factory: EnemyFactory, get_entangled_tiles,
-                 id: int = 0, amplitude: float = 0.5):
+    def __init__(self, factory: EnemyFactory, get_entangled_tiles, id: int = 0, amplitude: float = 0.5):
         super().__init__(TileCode.Enemy)
         self.__factory = factory
         self.__state = _EnemyState.UNDECIDED
         self.__get_entangled_tiles = get_entangled_tiles
         self.__id = id
         self.__amplitude = amplitude
+        self.__rm = RandomManager.create_new()
 
     def on_walk(self, direction: Direction, player: PlayerActor) -> None:
         if isinstance(player, PlayerActor):
             if self.__state == _EnemyState.UNDECIDED:
                 if self.measure():
-                    enemy = self.__factory.produce(player, 1 - self.__amplitude)
+                    enemy = self.__factory.produce(player, self.__rm, self.__amplitude)
                     self.__factory.start(player, enemy, direction)
                     self.__state = _EnemyState.DEAD
                 else:
@@ -343,9 +343,9 @@ class Enemy(WalkTriggerTile):
                 if CheatConfig.is_scared_rabbit():
                     self.__state = _EnemyState.FLED
                 else:
-                    enemy = self.__factory.produce(player, 1 - self.__amplitude)
+                    enemy = self.__factory.produce(player, self.__rm, self.__amplitude)
                     self.__factory.start(player, enemy, direction)
-                    self.__state = _EnemyState.DEAD
+                    self.__state = _EnemyState.DEAD # todo check if this makes sense? couldn't it also be "player fled"?
             elif self.__state == _EnemyState.FREE:
                 self.__state = _EnemyState.FLED
 

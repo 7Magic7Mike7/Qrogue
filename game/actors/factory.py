@@ -1,16 +1,13 @@
-from abc import ABC, abstractmethod
-
+from game.actors.boss import Boss as BossActor
 from game.actors.player import Player as PlayerActor
 from game.actors.enemy import Enemy as EnemyActor, DummyEnemy
 from game.actors.riddle import Riddle
 from game.actors.target import Target
-from game.collectibles.pickup import Coin, Key
+from game.collectibles import pickup
+from game.collectibles.collectible import Collectible
 from game.logic import instruction as gates
+from game.logic.instruction import Instruction
 from game.logic.qubit import StateVector
-
-from qiskit import transpile, QuantumCircuit
-from qiskit.providers.aer import StatevectorSimulator
-
 from game.map.navigation import Direction
 from util.my_random import RandomManager, MyRandom
 
@@ -33,35 +30,31 @@ class TargetDifficulty:
     def reward_pool(self):
         return self.__reward_pool
 
-    def create_statevector(self, player: PlayerActor) -> StateVector:
+    def create_statevector(self, player: PlayerActor, rm: MyRandom) -> StateVector:
         """
         Creates a StateVector that is reachable for the player.
 
         :param player: defines the number of qubits and usable instructions for creating the statevector
+        :param rm:
         :return: the created StateVector
         """
         num_of_qubits = player.num_of_qubits
-        circuit = QuantumCircuit(num_of_qubits, num_of_qubits)
-        rand = RandomManager.instance()
-        qubits = list(range(num_of_qubits))
 
         # choose random circuits on random qubits and cbits
         instruction_pool = player.get_available_instructions()
-        for i in range(self.__num_of_instructions):
-            remove = len(instruction_pool) - (self.__num_of_instructions - i) >= 0
-            instruction = rand.get_element(instruction_pool, remove=remove)
-            if instruction.num_of_qubits > 1:
-                while instruction.use_qubit(rand.get_element(qubits, remove=True)):
-                    pass
-                qubits = list(range(num_of_qubits))
-            else:
-                instruction.use_qubit(rand.get_element(qubits))
-            instruction.append_to(circuit)
-        simulator = StatevectorSimulator()
-        compiled_circuit = transpile(circuit, simulator)
-        # We only do 1 shot since we don't need any measurement but the StateVector
-        job = simulator.run(compiled_circuit, shots=1)
-        return StateVector(job.result().get_statevector())
+        instructions = []
+        num_of_instructions = min(self.__num_of_instructions, player.circuit_space)
+        for i in range(num_of_instructions):
+            qubits = list(range(num_of_qubits))
+            #remove = len(instruction_pool) - (self.__num_of_instructions - i) >= 0
+            #if not remove:
+            #    Logger.instance().throw(Exception(
+            #        "this should always remove because else we would duplicate instructions"))
+            instruction = rm.get_element(instruction_pool, remove=True)
+            while instruction.use_qubit(rm.get_element(qubits, remove=True)):
+                pass
+            instructions.append(instruction)
+        return StateVector.from_gates(instructions, num_of_qubits)
 
 
 class RiddleDifficulty(TargetDifficulty):
@@ -81,70 +74,96 @@ class DummyTargetDifficulty(TargetDifficulty):
     """
 
     def __init__(self):
-        super(DummyTargetDifficulty, self).__init__(2, [Coin(1), Coin(3)])
+        super(DummyTargetDifficulty, self).__init__(2, [pickup.Coin(1), pickup.Coin(3)])
 
 
-class TargetFactory(ABC):
-    def __init__(self, start_callback: "(Player, Target, Direction)", difficulty: TargetDifficulty):
-        self.__start_callback = start_callback
-        self.__difficulty = difficulty
-        self.__rm = RandomManager.create_new()
-
-    @property
-    def _difficulty(self) -> TargetDifficulty:
-        return self.__difficulty
-
-    @property
-    def _rm(self) -> MyRandom:
-        return self.__rm
-
-    def start(self, player: PlayerActor, target: Target, direction: Direction):
-        self.__start_callback(player, target, direction)
-
-    @abstractmethod
-    def produce(self, player: PlayerActor, flee_chance: float) -> Target:
-        pass
-
-
-class EnemyFactory(TargetFactory):
+class EnemyFactory:
     """
     This class produces enemies (actors) with a certain difficulty.
     It is used by enemy tiles to trigger a fight.
     """
 
-    def __init__(self, start_fight_callback: "(Player, Target, Direction)", difficulty: TargetDifficulty):
+    def __init__(self, player: PlayerActor, start_fight_callback: "(Player, Target, Direction)",
+                 difficulty: TargetDifficulty):
         """
 
-        :param start_fight_callback: a method for starting a fight
         :param difficulty: difficulty of the enemy we produce
         """
-        super(EnemyFactory, self).__init__(start_fight_callback, difficulty)
+        #self.__player = player
+        self.__difficulty = difficulty
+        self.__start_fight = start_fight_callback
 
-    def produce(self, player: PlayerActor, flee_chance: float) -> EnemyActor:
+    def produce(self, player: PlayerActor, rm: MyRandom, flee_chance: float) -> EnemyActor:
         """
         Creates an enemy based on the number of qubits the provided player has.
 
+        :param player:
+        :param rm:
         :param flee_chance: chance of the player to flee from the fight
-        :param player: the player the enemy should fight against
         :return: a freshly created enemy
         """
-        stv = self._difficulty.create_statevector(player)
-        reward = self._rm.get_element(self._difficulty.reward_pool)
+        stv = self.__difficulty.create_statevector(player, rm)
+        reward = rm.get_element(self.__difficulty.reward_pool)
         return DummyEnemy(stv, reward, flee_chance)
 
+    def start(self, player: PlayerActor, target: Target, direction: Direction):
+        self.__start_fight(player, target, direction)
 
-class RiddleFactory(TargetFactory):
+
+class RiddleFactory:
     @staticmethod
-    def default(callback) -> "RiddleFactory":
-        reward_pool = [gates.CXGate(), gates.HGate, gates.XGate, gates.SwapGate, Coin(11), Key(5)]
+    def default(player: PlayerActor) -> "RiddleFactory":
+        reward_pool = [gates.CXGate(), gates.HGate, gates.XGate, gates.SwapGate, pickup.Coin(11), pickup.Key(5)]
         difficulty = RiddleDifficulty(num_of_instructions=4, reward_pool=reward_pool, min_attempts=4, max_attempts=9)
-        return RiddleFactory(callback, difficulty)
+        return RiddleFactory(player, difficulty)
 
-    def __init__(self, open_riddle_callback: "(Player, Target, Direction)", difficulty: RiddleDifficulty):
-        super().__init__(open_riddle_callback, difficulty)
+    def __init__(self, player: PlayerActor, difficulty: RiddleDifficulty):
+        self.__player = player
+        self.__difficulty = difficulty
+        self.__rm = RandomManager.create_new()
 
-    def produce(self, player: PlayerActor, flee_chance: float = 1.0) -> Riddle:
-        stv = self._difficulty.create_statevector(player)
-        reward = self._rm.get_element(self._difficulty.reward_pool)
-        attempts = self._difficulty.get_attempts(self._rm)
+    def produce(self) -> Riddle:
+        stv = self.__difficulty.create_statevector(self.__player, self.__rm)
+        reward = self.__rm.get_element(self.__difficulty.reward_pool)
+        attempts = self.__difficulty.get_attempts(self.__rm)
         return Riddle(stv, reward, attempts)
+
+
+class BossFactory:
+    @staticmethod
+    def default(player: PlayerActor) -> "BossFactory":
+        pool = [gates.CXGate(), gates.SwapGate(), pickup.Coin(30)]
+        return BossFactory(player, pool)
+
+    def __init__(self, player: PlayerActor, reward_pool: [Collectible]):
+        self.__player = player
+        self.__reward_pool = reward_pool
+        self.__rm = RandomManager.create_new()
+
+    def produce(self, include_gates: [Instruction]) -> BossActor:
+        used_gates = []
+        qubit_count = [0] * self.__player.num_of_qubits
+        qubits = list(range(self.__player.num_of_qubits))
+
+        for g in include_gates:
+            gate = g.copy()
+            self.__prepare_gate(gate, qubit_count, qubits)
+            used_gates.append(gate)
+
+        usable_gates = self.__player.get_available_instructions()
+        while len(usable_gates) > 0:
+            gate = self.__rm.get_element(usable_gates, remove=True)
+            self.__prepare_gate(gate, qubit_count, qubits)
+            used_gates.append(gate)
+
+        reward = self.__rm.get_element(self.__reward_pool)
+        return BossActor(StateVector.from_gates(used_gates, self.__player.num_of_qubits), reward)
+
+    def __prepare_gate(self, gate: Instruction, qubit_count, qubits):
+        while True:
+            qubit = self.__rm.get_element(qubits, remove=False)
+            qubit_count[qubit] += 1
+            if qubit_count[qubit] >= self.__player.circuit_space:
+                qubits.remove(qubit)
+            if not gate.use_qubit(qubit):
+                return
