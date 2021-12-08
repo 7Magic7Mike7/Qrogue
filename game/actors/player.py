@@ -226,8 +226,6 @@ class Player(ABC):
         self.__next_col = 0
 
         # apply gates/instructions, create the circuit
-        self.__generator = None
-        self.__set_generator()
         self.__circuit = None
         self.__instructions = []
         self.__apply_instructions()
@@ -250,17 +248,6 @@ class Player(ABC):
 
     def circuit_enumerator(self):
         return enumerate(self.__instructions)
-
-    def __set_generator(self, instructions: "list of Instructions" = None):
-        num = self.__attributes.num_of_qubits
-        if num > 0:
-            self.__generator = QuantumCircuit(num, num)
-            if instructions is None:        # default generator
-                for i in range(num):
-                    self.__generator.id(i)     # Identity on every qubit    # todo maybe remove later?
-            else:
-                for inst in instructions:
-                    inst.append_to(self.__generator)
 
     def update_statevector(self) -> StateVector:
         """
@@ -371,9 +358,7 @@ class Player(ABC):
         return self.__attributes.space
 
     def __apply_instructions(self):
-        if self.__generator is None:
-            return False
-        circuit = self.__generator.copy(name="PlayerCircuit")
+        circuit = QuantumCircuit(self.__attributes.num_of_qubits, self.__attributes.num_of_qubits)
         for inst in self.__instructions:
             inst.append_to(circuit)
         self.__circuit = circuit

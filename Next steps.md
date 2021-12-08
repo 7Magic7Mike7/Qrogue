@@ -12,7 +12,6 @@
 
 # Tweaks #
 - key input pauses?
-- remove no longer used generator
 
 # Optionals #
 
