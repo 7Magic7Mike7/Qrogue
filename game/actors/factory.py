@@ -160,8 +160,9 @@ class BossFactory:
         return BossActor(StateVector.from_gates(used_gates, self.__player.num_of_qubits), reward)
 
     def __prepare_gate(self, gate: Instruction, qubit_count, qubits):
+        gate_qubits = qubits.copy()
         while True:
-            qubit = self.__rm.get_element(qubits, remove=False)
+            qubit = self.__rm.get_element(gate_qubits, remove=True)
             qubit_count[qubit] += 1
             if qubit_count[qubit] >= self.__player.circuit_space:
                 qubits.remove(qubit)
