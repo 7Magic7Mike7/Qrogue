@@ -1,4 +1,8 @@
-﻿$QROGUE_PATH = Split-Path -Path $MyInvocation.MyCommand.Path -Parent
+﻿param(
+[Parameter(Mandatory=$false)] $DebugMode
+)
+
+$QROGUE_PATH = Split-Path -Path $MyInvocation.MyCommand.Path -Parent
 $CONFIG_PATH = Join-Path -Path ${QROGUE_PATH} -ChildPath "installer\qrogue.config"
 $GAME_PATH = Join-Path -Path ${QROGUE_PATH} -ChildPath "main.py"
 
@@ -30,5 +34,5 @@ $config = Get-Content ${CONFIG_PATH}
 # start game
 $ENV_NAME = ${config} | Select-Object -First 1
 Enter-CondaEnvironment ${ENV_NAME}
-& python ${GAME_PATH} --from-console
+& python ${GAME_PATH} --from-console $DebugMode
 Exit-CondaEnvironment

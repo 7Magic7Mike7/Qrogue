@@ -142,10 +142,16 @@ class MenuWidgetSet(MyWidgetSet):
         width = 3
         selection = self.add_block_label("", 2, 0, row_span=height, column_span=width, center=True)
         self.__selection = SelectionWidget(selection, 1)
-        self.__selection.set_data(data=(
-            ["PLAY\n", "TUTORIAL\n", "SIMULATOR\n", "OPTIONS\n", "EXIT\n"],
-            [self.__play, self.__tutorial, self.__simulate, self.__options, self.__exit]
-        ))
+        if Config.debugging():
+            self.__selection.set_data(data=(
+                ["PLAY\n", "TUTORIAL\n", "SIMULATOR\n", "OPTIONS\n", "EXIT\n"],
+                [self.__play, self.__tutorial, self.__simulate, self.__options, self.__exit]
+            ))
+        else:
+            self.__selection.set_data(data=(
+                ["PLAY\n", "TUTORIAL\n", "OPTIONS\n", "EXIT\n"],
+                [self.__play, self.__tutorial, self.__options, self.__exit]
+            ))
 
         seed = self.add_block_label("Seed", MyWidgetSet.NUM_OF_ROWS-1, 0, row_span=1, column_span=width, center=False)
         self.__seed_widget = SimpleWidget(seed)
@@ -194,9 +200,7 @@ class MenuWidgetSet(MyWidgetSet):
         Popup.message("Welcome to Qrogue! (scroll with arrow keys)", HelpText.get(HelpTextType.Welcome))
 
     def __simulate(self) -> None:
-        Popup.message("Developer Tools", "Simulation is currently only for debugging. Please play the Tutorial in the "
-                                         "meanwhile!")
-        #self.__start_simulation()
+        self.__start_simulation()
 
     def __options(self) -> None:
         Popup.message("TODO", "The options are not implemented yet!")

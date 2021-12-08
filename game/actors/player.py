@@ -15,7 +15,7 @@ from game.logic.instruction import Instruction
 from game.logic import instruction as gates
 from game.logic.qubit import QubitSet, EmptyQubitSet, DummyQubitSet, StateVector
 # from jkq import ddsim
-from util.config import CheatConfig
+from util.config import CheatConfig, Config
 from util.logger import Logger
 
 
@@ -159,6 +159,9 @@ class Backpack:
             if self.__storage[i] == instruction:
                 self.__storage.remove(instruction)
                 return True
+        if Config.debugging():
+            Logger.instance().error("Reached a line in Backpack.remove() that I think should not be reachable "
+                                    "(although it has no game-consequences if I'm wrong.")
         try:
             self.__storage.remove(instruction)
             return True

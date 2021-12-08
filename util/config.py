@@ -391,10 +391,11 @@ class GameplayConfig:
             return 0.4
 
 
-class Config:
+class Config:   # todo make singleton and handle access to other configs?
     __VERSION = "v0.0.1"
     __GAME_CONFIG = "qrogue_game.config"
     __GAMEPLAY_HEAD = "[Gameplay]\n"
+    __DEBUG = False
 
     @staticmethod
     def version() -> str:
@@ -403,6 +404,14 @@ class Config:
     @staticmethod
     def config_file() -> str:
         return Config.__GAME_CONFIG
+
+    @staticmethod
+    def debugging() -> bool:
+        return Config.__DEBUG
+
+    @staticmethod
+    def activate_debugging():
+        Config.__DEBUG = True
 
     @staticmethod
     def create():

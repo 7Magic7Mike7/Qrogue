@@ -88,7 +88,7 @@ class QrogueCUI(py_cui.PyCUI):
                                                           "continue if you know what you do! Else close this popup "
                                                           "and press ESC to abort the simulation.")
         except FileNotFoundError:
-            Logger.instance().error(f"File \"{path}\" could not be found!", only_popup=True)
+            Logger.instance().show_error(f"File \"{path}\" could not be found!")
 
     def _ready_for_input(self, key_pressed: int, gameplay: bool = True) -> bool:
         if self.__last_key != key_pressed:
