@@ -100,6 +100,11 @@ class QubitSet(ABC):
 
     @abstractmethod
     def heal(self, amount: int) -> int:
+        """
+
+        :param amount: how much hp to heal
+        :return: how much was actually healed (e.g. cannot exceed max health)
+        """
         pass
 
 

@@ -8,7 +8,9 @@ from qiskit import QuantumCircuit, transpile
 from qiskit.providers.aer import StatevectorSimulator
 
 from game.collectibles.collectible import Collectible, CollectibleType
-from game.collectibles.pickup import Coin, Key, Heart
+from game.collectibles.consumable import Consumable
+from game.collectibles import consumable
+from game.collectibles import pickup
 from game.logic.instruction import Instruction
 from game.logic import instruction as gates
 from game.logic.qubit import QubitSet, EmptyQubitSet, DummyQubitSet, StateVector
@@ -46,9 +48,10 @@ class PlayerAttributes:
 
 class Backpack:
     """
-    Stores the Instructions for the player to use.
+    Stores Instructions, Consumables and other Collectibles for the player to use.
     """
-    __CAPACITY = 5  # increased capacity for tutorial purposes
+    __CAPACITY = 5      # how many Instructions the Backpack can hold at once
+    __POUCH_SIZE = 5    # how many Consumables the Backpack can hold at once
 
     def __init__(self, capacity: int = __CAPACITY, content: "list of Instructions" = []):
         """
@@ -58,6 +61,8 @@ class Backpack:
         """
         self.__capacity = capacity
         self.__storage = content
+        self.__pouch_size = Backpack.__POUCH_SIZE
+        self.__pouch = []
         self.__coin_count = 0
         self.__key_count = 0
 
@@ -69,8 +74,16 @@ class Backpack:
         return self.__capacity
 
     @property
-    def size(self) -> int:
+    def used_capacity(self) -> int:
         return len(self.__storage)
+
+    @property
+    def consumables_in_pouch(self) -> int:
+        return len(self.__pouch)
+
+    @property
+    def num_of_available_items(self) -> int:
+        return self.consumables_in_pouch    # later we might add active item(s)?
 
     @property
     def coin_count(self) -> int:
@@ -78,6 +91,13 @@ class Backpack:
             return 999
 
         return self.__coin_count
+
+    @property
+    def key_count(self) -> int:
+        if CheatConfig.got_inf_resources():
+            return 999
+
+        return self.__key_count
 
     def can_afford(self, price: int) -> bool:
         return self.coin_count >= price
@@ -97,13 +117,6 @@ class Backpack:
             return True
         return False
 
-    @property
-    def key_count(self) -> int:
-        if CheatConfig.got_inf_resources():
-            return 999
-
-        return self.__key_count
-
     def give_key(self, amount: int) -> bool:
         if amount > 0:
             self.__key_count += amount
@@ -120,7 +133,7 @@ class Backpack:
         return False
 
     def get(self, index: int) -> Instruction:
-        if 0 <= index < self.size:
+        if 0 <= index < self.used_capacity:
             return self.__storage[index]
 
     def add(self, instruction: Instruction) -> bool:
@@ -130,7 +143,7 @@ class Backpack:
         :param instruction: the Instruction to add
         :return: True if there is enough capacity left to store the Instruction, False otherwise
         """
-        if len(self.__storage) < self.__capacity:
+        if self.used_capacity < self.__capacity:
             self.__storage.append(instruction)
             return True
         return False
@@ -152,6 +165,26 @@ class Backpack:
         except ValueError:
             return False
 
+    def pouch_iterator(self) -> __iter__:
+        return iter(self.__pouch)
+
+    def get_from_pouch(self, index: int) -> Consumable:
+        if 0 <= index < self.consumables_in_pouch:
+            return self.__pouch[index]
+
+    def store_in_pouch(self, consumable: Consumable) -> bool:
+        if self.consumables_in_pouch < self.__pouch_size:
+            self.__pouch.append(consumable)
+            return True
+        return False
+
+    def remove_from_pouch(self, consumable: Consumable) -> bool:
+        try:
+            self.__pouch.remove(consumable)
+            return True
+        except ValueError:
+            return False
+
     def copy(self) -> "Backpack":
         data = []
         for instruction in self.__storage:
@@ -168,7 +201,7 @@ class BackpackIterator:
         self.__backpack = backpack
 
     def __next__(self) -> Instruction:
-        if self.__index < self.__backpack.size:
+        if self.__index < self.__backpack.used_capacity:
             item = self.__backpack.get(self.__index)
             self.__index += 1
             return item
@@ -238,7 +271,7 @@ class Player(ABC):
         return self.__stv
 
     def get_instruction(self, instruction_index: int) -> Instruction:
-        if 0 <= instruction_index < self.backpack.size:
+        if 0 <= instruction_index < self.backpack.used_capacity:
             return self.backpack.get(instruction_index)
         return None
 
@@ -266,7 +299,7 @@ class Player(ABC):
         return self.__apply_instructions()
 
     def remove_instruction(self, instruction_index: int) -> bool:
-        if 0 <= instruction_index < self.backpack.size:
+        if 0 <= instruction_index < self.backpack.used_capacity:
             instruction = self.backpack.get(instruction_index)
             self.__remove_instruction(instruction)
         return self.__apply_instructions()
@@ -300,17 +333,27 @@ class Player(ABC):
         return data
 
     def give_collectible(self, collectible: Collectible):
-        if isinstance(collectible, Coin):
-            self.__backpack.give_coin(collectible.amount)
-        elif isinstance(collectible, Key):
-            self.__backpack.give_key(collectible.amount)
-        elif isinstance(collectible, Heart):
-            self.__attributes.qubits.heal(collectible.amount)
+        if isinstance(collectible, pickup.Coin):
+            self.backpack.give_coin(collectible.amount)
+        elif isinstance(collectible, pickup.Key):
+            self.backpack.give_key(collectible.amount)
+        elif isinstance(collectible, pickup.Heart):
+            self.heal(collectible.amount)
         elif isinstance(collectible, Instruction):
             self.backpack.add(collectible)
+        elif collectible.type is CollectibleType.Consumable:
+            self.backpack.store_in_pouch(collectible)
 
-    def damage(self, diff: StateVector = None, amount: int = 1):
-        return self.__attributes.qubits.damage(1)
+    def damage(self, target: StateVector = None, amount: int = 1) -> int:
+        return self.__attributes.qubits.damage(amount)
+
+    def heal(self, amount: int = 1) -> int:
+        """
+
+        :param amount: how much hp to heal
+        :return: how much was actually healed (e.g. cannot exceed max health)
+        """
+        return self.__attributes.qubits.heal(amount)
 
     @property
     def cur_hp(self) -> int:
@@ -351,10 +394,10 @@ class Player(ABC):
 
 class DummyPlayer(Player):
     def __init__(self):
-        super(DummyPlayer, self).__init__(
-            attributes=PlayerAttributes(DummyQubitSet()),
-            backpack=Backpack(5, [gates.HGate(), gates.XGate()])
-        )
+        attributes = PlayerAttributes(DummyQubitSet())
+        backpack = Backpack(5, [gates.HGate(), gates.XGate()])
+        backpack.store_in_pouch(consumable.HealthPotion(3))
+        super(DummyPlayer, self).__init__(attributes, backpack)
 
     def get_img(self):
         return "P"

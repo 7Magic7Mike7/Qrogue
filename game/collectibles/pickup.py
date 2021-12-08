@@ -6,8 +6,8 @@ from game.collectibles.collectible import Collectible, CollectibleType, ShopItem
 class Pickup(Collectible, ABC):
     __DEFAULT_PRICE = 5 * ShopItem.base_unit()
 
-    def __init__(self, type: CollectibleType, amount: int):
-        super(Pickup, self).__init__(type)
+    def __init__(self, amount: int):
+        super(Pickup, self).__init__(CollectibleType.Pickup)
         self._amount = amount
 
     @property
@@ -21,7 +21,7 @@ class Pickup(Collectible, ABC):
 
 class Coin(Pickup):
     def __init__(self, amount: int = 1):
-        super().__init__(CollectibleType.Coin, amount)
+        super().__init__(amount)
 
     def name(self) -> str:
         return "Coin"
@@ -38,7 +38,7 @@ class Coin(Pickup):
 
 class Key(Pickup):
     def __init__(self, amount: int = 1):
-        super().__init__(CollectibleType.Key, amount)
+        super().__init__(amount)
 
     def name(self) -> str:
         return "Key"
@@ -57,7 +57,7 @@ class Heart(Pickup):
     __PRICE_MULTIPLIER = 0.65   # hearts are a bit cheaper
 
     def __init__(self, amount: int = 1):
-        super().__init__(CollectibleType.Heart, amount)
+        super().__init__(amount)
 
     def name(self) -> str:
         return "Heart"

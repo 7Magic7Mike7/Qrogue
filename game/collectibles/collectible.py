@@ -7,9 +7,7 @@ class CollectibleType(Enum):
     Gate = 2
     ActiveItem = 3
     PassiveItem = 4
-    Coin = 5
-    Key = 6
-    Heart = 7
+    Pickup = 5
 
 
 def type_str(type: CollectibleType) -> str:
@@ -40,7 +38,7 @@ class Collectible(ABC):
         pass
 
     @abstractmethod
-    def to_string(self):
+    def to_string(self) -> str:
         pass
 
 

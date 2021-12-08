@@ -465,7 +465,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         return True
 
     def __choose_instruction(self, index: int):
-        if 0 <= index < self._player.backpack.size:
+        if 0 <= index < self._player.backpack.used_capacity:
             self.__cur_instruction = self._player.get_instruction(index)
             if self.__cur_instruction is not None:
                 if self.__cur_instruction.is_used():
@@ -543,10 +543,54 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             return False
 
     def __choices_items(self) -> bool:
-        self._details.set_data(data=(
-            ["You currently don't have any Items you could use!"],
-            [self._empty_callback]
-        ))
+        if self._player.backpack.num_of_available_items > 0:
+            self._details.set_data(data=(
+                [consumable.to_string() for consumable in self._player.backpack.pouch_iterator()] + ["-Back-"],
+                [self.__choose_item]
+            ))
+        else:
+            self._details.set_data(data=(
+                ["Currently you do not have any items you could use."],
+                [self._empty_callback]
+            ))
+        return True
+
+    def __continue_consuming(self) -> bool:
+        # leave if there are no more consumables left, stay if we could consume another one
+        if self._player.backpack.num_of_available_items > 0:
+            self._details.set_data(data=(
+                [consumable.to_string() for consumable in self._player.backpack.pouch_iterator()] + ["-Back-"],
+                [self.__choose_item]
+            ))
+            self._details.render()
+            return False
+        else:
+            return True
+
+    def __choose_item(self, index: int = 0) -> bool:
+        # todo adapt when implementing ActiveItems? maybe implement ActiveItem as Consumable with infinite charges?
+        if 0 <= index < self._player.backpack.consumables_in_pouch:
+            consumable = self._player.backpack.get_from_pouch(index)
+            if consumable is not None:
+                if consumable.consume(self._player):
+                    if consumable.charges_left() > 0:
+                        text = f"You partially consumed {consumable.name()} and there "
+                        if consumable.charges_left() > 1:
+                            text += f"are {consumable.charges_left()} portions "
+                        else:
+                            text += "is only 1 more portion "
+                        text += "left to consume. "
+                    else:
+                        self._player.backpack.remove_from_pouch(consumable)
+                        text = f"You fully consumed {consumable.name()}. "
+                    text += f"\nYou gained the following effect:\n{consumable.effect_description()}"
+                    self._details.set_data(data=([text], [self.__continue_consuming]))
+                else:
+                    Popup.message(consumable.name(), f"Failed to consume {consumable.name()}")
+                self.render()
+                return False
+            else:
+                Logger.instance().error("Error! The selected consumable/index is out of range!")
         return True
 
     def __choices_help(self) -> bool:
@@ -557,7 +601,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         return True
 
     def __show_help_popup(self, index: int = 0) -> bool:
-        if 0 <= index < self._player.backpack.size:
+        if 0 <= index < self._player.backpack.used_capacity:
             instruction = self._player.backpack.get(index)
             Popup.message(instruction.name(), instruction.description())
             return False
@@ -587,8 +631,8 @@ class FightWidgetSet(ReachTargetWidgetSet):
         self.__flee_chance = target.flee_chance
 
     def _on_commit_fail(self) -> bool:
-        diff = self._target.statevector.get_diff(self._player.state_vector)
-        damage_taken = self._player.damage(diff=diff)
+        # diff = self._target.statevector.get_diff(self._player.state_vector)
+        damage_taken = self._player.damage(target=self._target.statevector)
         if damage_taken < 0:
             self._details.set_data(data=(
                 [f"Oh no, you took {damage_taken} damage and died!"],
