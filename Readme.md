@@ -65,6 +65,20 @@ for the best experience (a corresponding profile will be provided
 in the future!). However, every other console should also be fine. 
 Simply execute `play_qrogue.ps1`
 
+If you have no experience with setting up Python or Anaconda you 
+can also use our provided build for Windows. However, there are 
+also problems that can occur:
+- It is very likely that your anti Virus program will think our 
+provided .exe-file is a Virus. In this case you have to find out 
+how to deal with it yourself since this depends on the software 
+you're using.
+- The game immediately crashes on execution. In this case an 
+error occurred that you do not see because the console immediately 
+closes. You can take a look at the log-File or start the .exe from 
+a console. In most cases the error will be due to the console size
+  (see Notes below) and can be fixed by changing your console's 
+default font or window size.
+
 ## Notes ##
 
 - `py_cui.errors.PyCUIOutOfBoundsError` 
@@ -74,7 +88,7 @@ when starting the game please try to maximize the console you
 use for playing. This is because currently there is no automatic 
 font size adaption so depending on your console settings a 
 minimum width and height is required. Alternatively or if 
-maximizing doesn't help you can lower the font size of the 
+maximizing doesn't help you can also lower the font size of the 
 console.
 
 - newer Python versions
