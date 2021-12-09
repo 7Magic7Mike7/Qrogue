@@ -1,8 +1,7 @@
 from game.controls import Controls
-from util.config import PathConfig, GameplayConfig
+from util.config import PathConfig, GameplayConfig, Config
 from util.key_logger import KeyLogger
 from util.logger import Logger
-from util.my_random import RandomManager
 
 
 class GameSimulator:
@@ -30,7 +29,6 @@ class GameSimulator:
                          + len(KeyLogger.SEED_HEAD)
             seed_end = self.__cur_chunk.index(bytes("\n", GameSimulator.__ENCODING), seed_start)
             self.__seed = int(self.__cur_chunk[seed_start:seed_end])
-            RandomManager.force_seed(self.__seed)
             time_start = self.__cur_chunk.index(bytes(KeyLogger.TIME_HEAD, GameSimulator.__ENCODING), seed_end) \
                          + len(KeyLogger.TIME_HEAD)
             time_end = self.__cur_chunk.index(bytes("\n", GameSimulator.__ENCODING), time_start)

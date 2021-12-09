@@ -1,5 +1,6 @@
 import random
 
+from util.config import Config
 from util.logger import Logger
 
 
@@ -7,13 +8,13 @@ class MyRandom:
     _MAX_INT = 1000000000
 
     def __init__(self, seed: int):
-        seed = seed % self._MAX_INT
+        seed = seed % Config.MAX_SEED
         self.__random = random.Random(seed)
 
     def get(self, min: float = 0.0, max: float = 1.0):
         return min + self.__random.random() * (max - min)
 
-    def get_int(self, min: int = 0, max: int = _MAX_INT) -> int:
+    def get_int(self, min: int, max: int) -> int:
         """
         Random integer in the interval [min, max[
         :param min: minimum possible int (inclusive)
@@ -69,7 +70,7 @@ class RandomManager(MyRandom):
 
     @staticmethod
     def create_new() -> MyRandom:
-        seed = RandomManager.instance().get_int()
+        seed = RandomManager.instance().get_int(min=0, max=Config.MAX_SEED)
         return MyRandom(seed)
 
     @staticmethod

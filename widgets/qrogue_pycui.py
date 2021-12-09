@@ -54,6 +54,11 @@ class QrogueCUI(py_cui.PyCUI):
         self.__init_keys()
 
         self.__state_machine.change_state(State.Menu, None)
+        self.__game_started = False
+
+    @property
+    def simulating(self) -> bool:
+        return self.__simulator is not None
 
     def start(self):
         self.render()
@@ -68,9 +73,10 @@ class QrogueCUI(py_cui.PyCUI):
             path += ".qrkl"
         try:
             self.__simulator = GameSimulator(self.__controls, path, in_keylog_folder=True)
+            self.__menu.simulate_with_seed(self.__simulator.seed)
             # go back to the original position of the cursor and start the game
-            super(QrogueCUI, self)._handle_key_presses(self.__controls.selection_left)
-            #super(QrogueCUI, self)._handle_key_presses(self.__controls.selection_left)
+            super(QrogueCUI, self)._handle_key_presses(self.__controls.selection_up)
+            super(QrogueCUI, self)._handle_key_presses(self.__controls.selection_up)
             super(QrogueCUI, self)._handle_key_presses(self.__controls.action)
             if self.__simulator.version == Config.version():
                 __space = "Space"
@@ -113,7 +119,7 @@ class QrogueCUI(py_cui.PyCUI):
                 if key_pressed == py_cui.keys.KEY_ESCAPE:
                     pass    # ignore ESC because this makes you leave the CUI
                 else:
-                    if GameplayConfig.log_keys():
+                    if GameplayConfig.log_keys() and self.__game_started and not self.simulating:
                         KeyLogger.instance().log(self.__controls, key_pressed)
                     super(QrogueCUI, self)._handle_key_presses(key_pressed)
         elif key_pressed == self.__controls.get(Keys.Escape):
@@ -377,6 +383,8 @@ class QrogueCUI(py_cui.PyCUI):
         Pausing(self.__pause_game)
         self.__pause.set_data(map.player_tile.player)   # needed for the HUD
         self.__state_machine.change_state(State.Explore, map)
+        self.__game_started = True
+        KeyLogger(map.seed)     # the seed used to build the Map
 
     def __end_of_gameplay(self) -> None:
         self.switch_to_menu(None)

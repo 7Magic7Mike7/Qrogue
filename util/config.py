@@ -99,12 +99,6 @@ class PathConfig:
             os.remove(path)
 
 
-class MapConfig:
-    @staticmethod
-    def tutorial_seed() -> int:
-        return 0
-
-
 class ColorConfig:
     SELECTION_HIGHLIGHT = py_cui.BLACK_ON_WHITE
     QUBIT_INFO_COLOR = py_cui.CYAN_ON_BLACK
@@ -274,8 +268,10 @@ class CheatConfig:
         CheatConfig.__cheated = False
         CheatConfig.__popup = popup_callback
         CheatConfig.__input_popup = input_popup_callback
-        for key in CheatConfig.__CHEATS:
-            CheatConfig.__CHEATS[key] = False
+        # deactivate cheats if we are not debugging
+        if not Config.debugging():
+            for key in CheatConfig.__CHEATS:
+                CheatConfig.__CHEATS[key] = False
 
     @staticmethod
     def did_cheat() -> bool:
@@ -299,7 +295,7 @@ class CheatConfig:
 
     @staticmethod
     def cheat_input():
-        if CheatConfig.__input_popup is not None:
+        if Config.debugging() and CheatConfig.__input_popup is not None:
             CheatConfig.__input_popup("Input your Cheat:", py_cui.BLACK_ON_RED, CheatConfig.__use_cheat)
 
     @staticmethod
@@ -392,6 +388,7 @@ class GameplayConfig:
 
 
 class Config:   # todo make singleton and handle access to other configs?
+    MAX_SEED = 1000000
     __VERSION = "v0.0.1"
     __GAME_CONFIG = "qrogue_game.config"
     __GAMEPLAY_HEAD = "[Gameplay]\n"

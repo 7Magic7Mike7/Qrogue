@@ -23,7 +23,8 @@ return_code = Config.load()     # NEEDS TO BE THE FIRST THING WE DO!
 if return_code == 0:
     if __DEBUG_ARGUMENT in sys.argv:
         Config.activate_debugging()
-    seed = random.randint(0, sys.maxsize)
+    seed = random.randint(0, Config.MAX_SEED)
+    print(f"[Qrogue] Starting game with seed = {seed}")
     game = GameHandler(seed)
     game.start()
 

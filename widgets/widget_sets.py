@@ -17,7 +17,7 @@ from game.map.map import Map
 from game.map.navigation import Direction
 from game.map.tiles import Player as PlayerTile
 from game.map.tutorial import Tutorial, TutorialPlayer
-from util.config import MapConfig, GameplayConfig, PathConfig, Config
+from util.config import GameplayConfig, PathConfig, Config
 from util.help_texts import HelpText, HelpTextType
 from util.logger import Logger
 from util.my_random import RandomManager
@@ -162,10 +162,12 @@ class MenuWidgetSet(MyWidgetSet):
         self.__title.set_data(_ascii_art)
 
     def new_seed(self) -> None:
-        self.__seed = RandomManager.instance().get_int()
-        print(self.__seed)
+        self.__seed = RandomManager.instance().get_int(min=0, max=Config.MAX_SEED)
         self.__seed_widget.set_data(f"Seed: {self.__seed}")
         self.__seed_widget.render()
+
+    def simulate_with_seed(self, simulation_seed: int):
+        self.__seed = simulation_seed
 
     def get_widget_list(self) -> "list of Widgets":
         return [
@@ -184,7 +186,9 @@ class MenuWidgetSet(MyWidgetSet):
         return self.__selection
 
     def __play(self) -> None:
-        player = DummyPlayer()   # todo use real player
+        RandomManager.force_seed(self.__seed)
+
+        player = DummyPlayer(self.__seed)   # todo use real player
         generator = DungeonGenerator(self.__seed)
         map, success = generator.generate(player, self.__cbp)
         if success:
@@ -193,10 +197,9 @@ class MenuWidgetSet(MyWidgetSet):
             Logger.instance().throw(ValueError(f"Illegal state! No map can be generated for seed = {self.__seed}!"))
 
     def __tutorial(self) -> None:
-        MapConfig.tutorial_seed()
         player = TutorialPlayer()
-        rooms, spawn_room = Tutorial().build_tutorial_map(player, self.__cbp)
-        map = Map(rooms, player, spawn_room, self.__cbp)
+        rooms, spawn_room_pos = Tutorial().build_tutorial_map(player, self.__cbp)
+        map = Map(Tutorial.seed(), rooms, player, spawn_room_pos, self.__cbp)
         self.__cbp.start_gameplay(map)
         Popup.message("Welcome to Qrogue! (scroll with arrow keys)", HelpText.get(HelpTextType.Welcome))
 

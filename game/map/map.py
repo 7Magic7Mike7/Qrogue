@@ -25,15 +25,36 @@ class Map:
         y = pos_of_room.y * (Area.UNIT_HEIGHT + 1) + pos_in_room.y
         return Coordinate(x, y)
 
-    def __init__(self, rooms: "[[Room]]", player: PlayerActor, spawn_room: Coordinate, cbp: CallbackPack):
+    def __init__(self, seed: int, rooms: "[[Room]]", player: PlayerActor, spawn_room: Coordinate, cbp: CallbackPack):
+        self.__seed = seed
+        self.__rooms = rooms
         self.__player = tiles.Player(player)
         self.__cbp = cbp
-        self.__rooms = rooms
 
         self.__player_pos = Map.__calculate_pos(spawn_room, Coordinate(Area.MID_X, Area.MID_Y))
         self.__cur_area = self.__rooms[spawn_room.y][spawn_room.x]
         self.__cur_area.enter(Direction.Center)
         self.__cur_area.make_visible()
+
+    @property
+    def seed(self) -> int:
+        return self.__seed
+
+    @property
+    def height(self) -> int:
+        return Map.HEIGHT * (Area.UNIT_HEIGHT + 1) - 1
+
+    @property
+    def width(self) -> int:
+        return Map.WIDTH * (Area.UNIT_WIDTH + 1) - 1
+
+    @property
+    def player_tile(self) -> tiles.Player:
+        return self.__player
+
+    @property
+    def player_pos(self) -> Coordinate:
+        return self.__player_pos
 
     def __get_area(self, x: int, y: int) -> (Area, tiles.Tile):
         """
@@ -78,22 +99,6 @@ class Map:
                 return hallway, hallway.at(0, y_mod)
         else:
             return room, room.at(x_mod, y_mod)
-
-    @property
-    def height(self) -> int:
-        return Map.HEIGHT * (Area.UNIT_HEIGHT + 1) - 1
-
-    @property
-    def width(self) -> int:
-        return Map.WIDTH * (Area.UNIT_WIDTH + 1) - 1
-
-    @property
-    def player_tile(self) -> tiles.Player:
-        return self.__player
-
-    @property
-    def player_pos(self) -> Coordinate:
-        return self.__player_pos
 
     def room_at(self, x: int, y: int) -> Room:
         if 0 <= x < Map.WIDTH and 0 <= y < Map.HEIGHT:

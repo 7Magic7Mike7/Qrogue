@@ -17,7 +17,7 @@ from game.logic.qubit import QubitSet, EmptyQubitSet, DummyQubitSet, StateVector
 # from jkq import ddsim
 from util.config import CheatConfig, Config
 from util.logger import Logger
-from util.my_random import RandomManager
+from util.my_random import MyRandom
 
 
 class PlayerAttributes:
@@ -379,12 +379,12 @@ class Player(ABC):
 
 
 class DummyPlayer(Player):
-    def __init__(self):
+    def __init__(self, seed: int):
         attributes = PlayerAttributes(DummyQubitSet())
         backpack = Backpack(capacity=5)
 
         # add random gates and a HealthPotion
-        if RandomManager.instance().get() < 0.5:
+        if MyRandom(seed).get() < 0.5:
             num_of_gates = 3
         else:
             num_of_gates = 4

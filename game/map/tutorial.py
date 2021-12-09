@@ -208,6 +208,10 @@ class Tutorial:
     __SHOW_PAUSE_TUTORIAL = False
 
     @staticmethod
+    def seed() -> int:
+        return 0
+
+    @staticmethod
     def show_pause_tutorial() -> bool:
         if Tutorial.__SHOW_PAUSE_TUTORIAL:
             Tutorial.__SHOW_PAUSE_TUTORIAL = False

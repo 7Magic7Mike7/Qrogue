@@ -635,7 +635,7 @@ class DungeonGenerator:
                         if room:
                             rooms[y][x] = room
             if spawn_room:
-                my_map = Map(rooms, player, spawn_room, cbp)
+                my_map = Map(self.seed, rooms, player, spawn_room, cbp)
                 return my_map, True
             else:
                 return None, False

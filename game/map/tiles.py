@@ -379,7 +379,7 @@ class Enemy(WalkTriggerTile):
             entangled_tiles = [self]
 
         state = _EnemyState.FREE
-        if RandomManager.instance().get() < self.amplitude:
+        if self.__rm.get() < self.amplitude:
             state = _EnemyState.FIGHT
         for enemy in entangled_tiles:
             enemy._set_state(state)
