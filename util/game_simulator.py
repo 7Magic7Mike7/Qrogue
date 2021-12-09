@@ -8,7 +8,7 @@ class GameSimulator:
     __ENCODING = "utf-8"
     __BUFFER_SIZE = 1024
 
-    def __init__(self, controls: Controls, path: str, in_keylog_folder: bool = True):
+    def __init__(self, controls: Controls, path: str, in_keylog_folder: bool = True, debug_print: bool = False):
         self.__controls = controls
 
         self.__reader = PathConfig.read_keylog_buffered(path, in_keylog_folder, buffer_size=GameSimulator.__BUFFER_SIZE)
@@ -40,7 +40,21 @@ class GameSimulator:
             config = str(self.__cur_chunk[start:end], GameSimulator.__ENCODING)
             GameplayConfig.from_log_text(config)
 
-            self.__cur_index = end  # continue at \n because for next key we start with going to the next position
+            # continue at the second \n because for next key we start with going to the next position
+            self.__cur_index = end + 1
+
+        if Config.debugging() and debug_print:
+            print(self.__version)
+            print(self.__seed)
+            print(self.__time)
+            print(GameplayConfig.to_file_text())
+            print()
+            print()
+            print("Keys:")
+            while self.next():
+                pass
+            print("finished")
+            print()
 
     @property
     def version(self) -> str:
