@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 import qiskit.circuit.library.standard_gates as gates
 from qiskit import QuantumCircuit
 
-from game.collectibles.collectible import Collectible, CollectibleType
+from game.collectibles.collectible import Collectible, CollectibleType, ShopItem
 
 
 class Instruction(Collectible, ABC):
@@ -12,6 +12,7 @@ class Instruction(Collectible, ABC):
     Wrapper class for gates from qiskit.circuit.library with their needed arguments (qubits/cbits to apply it on)
     """
     MAX_ABBREVIATION_LEN = 5
+    __DEFAULT_PRICE = 15 * ShopItem.base_unit()
 
     def __init__(self, instruction, needed_qubits: int):
         super().__init__(CollectibleType.Gate)
@@ -67,25 +68,35 @@ class Instruction(Collectible, ABC):
     def copy(self) -> "Instruction":
         pass
 
-    def preview_str(self, next_qubit: int) -> str:
-        self._qargs.append(next_qubit)
-        preview = str(self)
-        self._qargs.pop()
-        return preview
+    def default_price(self) -> int:
+        return Instruction.__DEFAULT_PRICE
 
-    def __str__(self):
+    def selection_str(self) -> str:
         # Gate (qX, qY, ?, ...)
         text = f"{self.short_name()} ("
-        for i in range(self.num_of_qubits-1):
+        for i in range(self.num_of_qubits - 1):
             if i < len(self._qargs):
-                text += f"{self._qargs[i]}, "
+                text += f"q{self._qargs[i]}, "
             else:
                 text += "?, "
-        if self.num_of_qubits-1 < len(self._qargs):
-            text += f"{self._qargs[self.num_of_qubits-1]})"
+        if self.num_of_qubits - 1 < len(self._qargs):
+            text += f"q{self._qargs[self.num_of_qubits - 1]})"
         else:
             text += "?)"
         return text
+
+    def preview_str(self, next_qubit: int) -> str:
+        # Gate (qX, qY, ?, ...)
+        self._qargs.append(next_qubit)  # pretend that we already set the next qubit
+        preview = self.selection_str()
+        self._qargs.pop()   # undo setting the next qubit because we only wanted to pretend that we did
+        return preview
+
+    def to_string(self):
+        return self.name()
+
+    def __str__(self) -> str:
+        return self.to_string()
 
 
 ####### Single Qubit Gates #######
@@ -107,10 +118,45 @@ class XGate(SingleQubitGate):
         return " X "
 
     def description(self) -> str:
-        return "An X Gate swaps the amplitudes of |0> and |1> - in the classical world it is an Inverter."
+        return "An X Gate rotates the Qubit along the x-axis. This defines a swap of the amplitudes of |0> and |1> - " \
+               "in the classical world this would describe an Inverter."
 
     def copy(self) -> "Instruction":
         return XGate()
+
+
+class YGate(SingleQubitGate):
+    def __init__(self):
+        super(YGate, self).__init__(gates.YGate())
+
+    def short_name(self) -> str:
+        return "Y"
+
+    def abbreviation(self, qubit: int = 0):
+        return " Y "
+
+    def description(self) -> str:
+        return "A Y Gate rotates the Qubit along the y-axis by 180."
+
+    def copy(self) -> "Instruction":
+        return YGate()
+
+
+class ZGate(SingleQubitGate):
+    def __init__(self):
+        super(ZGate, self).__init__(gates.XGate())
+
+    def short_name(self) -> str:
+        return "Z"
+
+    def abbreviation(self, qubit: int = 0):
+        return " Z "
+
+    def description(self) -> str:
+        return "A Z Gate rotates the Qubit along the z-axis by 180°."
+
+    def copy(self) -> "Instruction":
+        return ZGate()
 
 
 class HGate(SingleQubitGate):

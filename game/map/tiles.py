@@ -7,7 +7,7 @@ from game.actors.factory import EnemyFactory
 from game.actors.player import Player as PlayerActor
 from game.actors.riddle import Riddle
 from game.callbacks import OnWalkCallback
-from game.collectibles.factory import CollectibleFactory
+from game.collectibles.collectible import Collectible as LogicalCollectible
 from game.map.navigation import Direction
 from util.config import CheatConfig
 from util.logger import Logger
@@ -274,9 +274,9 @@ class EntangledDoor(Door):
 
 
 class Collectible(WalkTriggerTile):
-    def __init__(self, factory: CollectibleFactory):
+    def __init__(self, collectible: LogicalCollectible):
         super().__init__(TileCode.Collectible)
-        self.__factory = factory
+        self.__collectible = collectible
         self.__active = True
 
     def get_img(self):
@@ -291,11 +291,10 @@ class Collectible(WalkTriggerTile):
     def on_walk(self, direction: Direction, player: PlayerActor) -> None:
         if self.__active:
             player = player
-            collectible = self.__factory.produce()
-            name = collectible.name()
-            desc = collectible.description()
-            Popup.message(collectible.name(), f"You picked up a {name}.\n{desc}")
-            player.give_collectible(collectible)
+            name = self.__collectible.name()
+            desc = self.__collectible.description()
+            Popup.message(self.__collectible.name(), f"You picked up a {name}.\n{desc}")
+            player.give_collectible(self.__collectible)
             self.__active = False
 
 
@@ -322,21 +321,21 @@ class _EnemyState(Enum):
     DEAD = 3
     FLED = 4
 class Enemy(WalkTriggerTile):
-    def __init__(self, factory: EnemyFactory, get_entangled_tiles,
-                 id: int = 0, amplitude: float = 0.5):
+    def __init__(self, factory: EnemyFactory, get_entangled_tiles, id: int = 0, amplitude: float = 0.5):
         super().__init__(TileCode.Enemy)
         self.__factory = factory
         self.__state = _EnemyState.UNDECIDED
         self.__get_entangled_tiles = get_entangled_tiles
         self.__id = id
         self.__amplitude = amplitude
+        self.__rm = RandomManager.create_new()
 
     def on_walk(self, direction: Direction, player: PlayerActor) -> None:
         if isinstance(player, PlayerActor):
             if self.__state == _EnemyState.UNDECIDED:
                 if self.measure():
-                    enemy = self.__factory.get_enemy(player, 1 - self.__amplitude)
-                    self.__factory.callback(player, enemy, direction)
+                    enemy = self.__factory.produce(player, self.__rm, self.__amplitude)
+                    self.__factory.start(player, enemy, direction)
                     self.__state = _EnemyState.DEAD
                 else:
                     self.__state = _EnemyState.FLED
@@ -344,9 +343,9 @@ class Enemy(WalkTriggerTile):
                 if CheatConfig.is_scared_rabbit():
                     self.__state = _EnemyState.FLED
                 else:
-                    enemy = self.__factory.get_enemy(player, 1 - self.__amplitude)
-                    self.__factory.callback(player, enemy, direction)
-                    self.__state = _EnemyState.DEAD
+                    enemy = self.__factory.produce(player, self.__rm, self.__amplitude)
+                    self.__factory.start(player, enemy, direction)
+                    self.__state = _EnemyState.DEAD # todo check if this makes sense? couldn't it also be "player fled"?
             elif self.__state == _EnemyState.FREE:
                 self.__state = _EnemyState.FLED
 
@@ -368,7 +367,7 @@ class Enemy(WalkTriggerTile):
         else:
             if CheatConfig.did_cheat():
                 return
-            raise RuntimeError("Illegal program state!")
+            Logger.instance().throw(RuntimeError("Illegal program state!"))
 
     def measure(self):
         if CheatConfig.is_scared_rabbit():
@@ -380,7 +379,7 @@ class Enemy(WalkTriggerTile):
             entangled_tiles = [self]
 
         state = _EnemyState.FREE
-        if RandomManager.instance().get() < self.amplitude:
+        if self.__rm.get() < self.amplitude:
             state = _EnemyState.FIGHT
         for enemy in entangled_tiles:
             enemy._set_state(state)

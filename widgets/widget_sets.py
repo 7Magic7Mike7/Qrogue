@@ -11,12 +11,15 @@ from game.actors.player import DummyPlayer
 from game.actors.riddle import Riddle
 from game.actors.target import Target
 from game.callbacks import CallbackPack
+from game.collectibles.collectible import ShopItem
+from game.map.generator import DungeonGenerator
 from game.map.map import Map
 from game.map.navigation import Direction
 from game.map.tiles import Player as PlayerTile
-from game.map.tutorial import Tutorial
-from util.config import MapConfig, GameplayConfig
+from game.map.tutorial import Tutorial, TutorialPlayer
+from util.config import GameplayConfig, PathConfig, Config
 from util.help_texts import HelpText, HelpTextType
+from util.logger import Logger
 from util.my_random import RandomManager
 from widgets.color_rules import ColorRules
 from widgets.my_popups import Popup, CommonPopups
@@ -139,10 +142,16 @@ class MenuWidgetSet(MyWidgetSet):
         width = 3
         selection = self.add_block_label("", 2, 0, row_span=height, column_span=width, center=True)
         self.__selection = SelectionWidget(selection, 1)
-        self.__selection.set_data(data=(
-            ["PLAY\n", "TUTORIAL\n", "SIMULATOR\n", "OPTIONS\n", "EXIT\n"],
-            [self.__play, self.__tutorial, self.__simulate, self.__options, self.__exit]
-        ))
+        if Config.debugging():
+            self.__selection.set_data(data=(
+                ["PLAY\n", "TUTORIAL\n", "SIMULATOR\n", "OPTIONS\n", "EXIT\n"],
+                [self.__play, self.__tutorial, self.__simulate, self.__options, self.__exit]
+            ))
+        else:
+            self.__selection.set_data(data=(
+                ["PLAY\n", "TUTORIAL\n", "OPTIONS\n", "EXIT\n"],
+                [self.__play, self.__tutorial, self.__options, self.__exit]
+            ))
 
         seed = self.add_block_label("Seed", MyWidgetSet.NUM_OF_ROWS-1, 0, row_span=1, column_span=width, center=False)
         self.__seed_widget = SimpleWidget(seed)
@@ -153,10 +162,12 @@ class MenuWidgetSet(MyWidgetSet):
         self.__title.set_data(_ascii_art)
 
     def new_seed(self) -> None:
-        self.__seed = RandomManager.instance().get_int()
-        print(self.__seed)
+        self.__seed = RandomManager.instance().get_int(min=0, max=Config.MAX_SEED)
         self.__seed_widget.set_data(f"Seed: {self.__seed}")
         self.__seed_widget.render()
+
+    def simulate_with_seed(self, simulation_seed: int):
+        self.__seed = simulation_seed
 
     def get_widget_list(self) -> "list of Widgets":
         return [
@@ -175,24 +186,28 @@ class MenuWidgetSet(MyWidgetSet):
         return self.__selection
 
     def __play(self) -> None:
-        Popup.message("TODO", "The normal game mode is not implemented yet. Please wait for the next Release and "
-                              "play the Tutorial in the meanwhile!")
-        #player = DummyPlayer()   # todo use real player
-        #map = Map(self.__seed, self.__MAP_WIDTH, self.__MAP_HEIGHT, player, self.__cbp)
-        #self.__cbp.start_gameplay(map)
+        RandomManager.force_seed(self.__seed)
+
+        player = DummyPlayer(self.__seed)   # todo use real player
+        generator = DungeonGenerator(self.__seed)
+        map, success = generator.generate(player, self.__cbp)
+        if success:
+            self.__cbp.start_gameplay(map)
+        else:
+            Logger.instance().throw(ValueError(f"Illegal state! No map can be generated for seed = {self.__seed}!"))
 
     def __tutorial(self) -> None:
-        map = Map(MapConfig.tutorial_seed(), self.__MAP_WIDTH, self.__MAP_HEIGHT, DummyPlayer(), self.__cbp)
+        player = TutorialPlayer()
+        rooms, spawn_room_pos = Tutorial().build_tutorial_map(player, self.__cbp)
+        map = Map(Tutorial.seed(), rooms, player, spawn_room_pos, self.__cbp)
         self.__cbp.start_gameplay(map)
         Popup.message("Welcome to Qrogue! (scroll with arrow keys)", HelpText.get(HelpTextType.Welcome))
 
     def __simulate(self) -> None:
-        Popup.message("Developer Tools", "Simulation is currently only for debugging. Please play the Tutorial in the "
-                                         "meanwhile!")
-        #self.__start_simulation()
+        self.__start_simulation()
 
     def __options(self) -> None:
-        Popup.message("TODO", "The options are not implemented yet!")
+        Popup.message("Gameplay Config", GameplayConfig.to_file_text())
 
     def __exit(self) -> None:
         self.__stop()
@@ -251,15 +266,18 @@ class PauseMenuWidgetSet(MyWidgetSet):
 
     def __options(self) -> bool:
         self.__details.set_data(data=(
-            ["Background Color", "Font", "Font Size", "-Back-"],
+            ["Gameplay Config", "-Back-"],
             [self.__options_text]
         ))
         return True
 
     def __options_text(self, index: int = 0) -> bool:
-        if index < 3:
-            Popup.message(f"Option #{index}", "Todo: Implement")
-        return True
+        if index == 0:
+            path = PathConfig.base_path(Config.config_file())
+            Popup.message(f"Configuration located at {path}", GameplayConfig.to_file_text())
+            return False
+        else:
+            return True
 
     def __help(self) -> bool:
         self.__details.set_data(data=(
@@ -290,8 +308,6 @@ class PauseMenuWidgetSet(MyWidgetSet):
 
     def set_data(self, player: PlayerActor):
         self.__hud.set_data(player)
-        if Tutorial.show_pause_tutorial():
-            Popup.message("Pause", HelpText.get(HelpTextType.Pause))
 
     def reset(self) -> None:
         self.__choices.render_reset()
@@ -381,7 +397,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         stv = self.add_block_label('Target StV', stv_row, 6, row_span=row_span, column_span=2, center=True)
         self.__stv_target = StateVectorWidget(stv, "Target State")
         qi_target = self.add_block_label('Qubit Info', stv_row, 8, row_span=row_span, column_span=1, center=True)
-        self.__qi_target = QubitInfoWidget(qi_target, left_aligned=True)
+        self.__qi_target = QubitInfoWidget(qi_target, left_aligned=False)
 
         circuit = self.add_block_label('Circuit', 6, 0, row_span=1, column_span=MyWidgetSet.NUM_OF_COLS, center=True)
         self.__circuit = CircuitWidget(circuit)
@@ -449,18 +465,18 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
     def __choices_adapt(self) -> bool:
         self._details.set_data(data=(
-            [str(instruction) for instruction in self._player.backpack] + ["-Back-"],
+            [instruction.selection_str() for instruction in self._player.backpack] + ["-Back-"],
             [self.__choose_instruction]
         ))
         return True
 
     def __choose_instruction(self, index: int):
-        if 0 <= index < self._player.backpack.size:
+        if 0 <= index < self._player.backpack.used_capacity:
             self.__cur_instruction = self._player.get_instruction(index)
             if self.__cur_instruction is not None:
                 if self.__cur_instruction.is_used():
                     self._player.remove_instruction(index)
-                    self.details.update_text(str(self._player.backpack.get(index)), index)
+                    self.details.update_text(self._player.backpack.get(index).selection_str(), index)
                 else:
                     if self._player.is_space_left():
                         self.details.set_data(data=(
@@ -490,7 +506,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         else:
             self._player.use_instruction(self.__cur_instruction)
             self._details.set_data(data=(
-                [str(instruction) for instruction in self._player.backpack] + ["-Back-"],
+                [instruction.selection_str() for instruction in self._player.backpack] + ["-Back-"],
                 [self.__choose_instruction]
             ))
         self.render()
@@ -510,7 +526,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             reward = self._target.get_reward()
             self._player.give_collectible(reward)
             self._details.set_data(data=(
-                [f"Congratulations! Get reward: {reward}"],
+                [f"Congratulations! Get reward: {reward.to_string()}"],
                 [self._continue_exploration_callback]
             ))
             return True
@@ -533,21 +549,65 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             return False
 
     def __choices_items(self) -> bool:
-        self._details.set_data(data=(
-            ["You currently don't have any Items you could use!"],
-            [self._empty_callback]
-        ))
+        if self._player.backpack.num_of_available_items > 0:
+            self._details.set_data(data=(
+                [consumable.to_string() for consumable in self._player.backpack.pouch_iterator()] + ["-Back-"],
+                [self.__choose_item]
+            ))
+        else:
+            self._details.set_data(data=(
+                ["Currently you do not have any items you could use."],
+                [self._empty_callback]
+            ))
+        return True
+
+    def __continue_consuming(self) -> bool:
+        # leave if there are no more consumables left, stay if we could consume another one
+        if self._player.backpack.num_of_available_items > 0:
+            self._details.set_data(data=(
+                [consumable.to_string() for consumable in self._player.backpack.pouch_iterator()] + ["-Back-"],
+                [self.__choose_item]
+            ))
+            self._details.render()
+            return False
+        else:
+            return True
+
+    def __choose_item(self, index: int = 0) -> bool:
+        # todo adapt when implementing ActiveItems? maybe implement ActiveItem as Consumable with infinite charges?
+        if 0 <= index < self._player.backpack.consumables_in_pouch:
+            consumable = self._player.backpack.get_from_pouch(index)
+            if consumable is not None:
+                if consumable.consume(self._player):
+                    if consumable.charges_left() > 0:
+                        text = f"You partially consumed {consumable.name()} and there "
+                        if consumable.charges_left() > 1:
+                            text += f"are {consumable.charges_left()} portions "
+                        else:
+                            text += "is only 1 more portion "
+                        text += "left to consume. "
+                    else:
+                        self._player.backpack.remove_from_pouch(consumable)
+                        text = f"You fully consumed {consumable.name()}. "
+                    text += f"\nYou gained the following effect:\n{consumable.effect_description()}"
+                    self._details.set_data(data=([text], [self.__continue_consuming]))
+                else:
+                    Popup.message(consumable.name(), f"Failed to consume {consumable.name()}")
+                self.render()
+                return False
+            else:
+                Logger.instance().error("Error! The selected consumable/index is out of range!")
         return True
 
     def __choices_help(self) -> bool:
         self._details.set_data(data=(
-            [str(instruction) for instruction in self._player.backpack] + ["-Back-"],
+            [instruction.name() for instruction in self._player.backpack] + ["-Back-"],
             [self.__show_help_popup]
         ))
         return True
 
     def __show_help_popup(self, index: int = 0) -> bool:
-        if 0 <= index < self._player.backpack.size:
+        if 0 <= index < self._player.backpack.used_capacity:
             instruction = self._player.backpack.get(index)
             Popup.message(instruction.name(), instruction.description())
             return False
@@ -577,8 +637,8 @@ class FightWidgetSet(ReachTargetWidgetSet):
         self.__flee_chance = target.flee_chance
 
     def _on_commit_fail(self) -> bool:
-        diff = self._target.statevector.get_diff(self._player.state_vector)
-        damage_taken = self._player.damage(diff=diff)
+        # diff = self._target.statevector.get_diff(self._player.state_vector)
+        damage_taken = self._player.damage(target=self._target.statevector)
         if damage_taken < 0:
             self._details.set_data(data=(
                 [f"Oh no, you took {damage_taken} damage and died!"],
@@ -680,10 +740,10 @@ class ShopWidgetSet(MyWidgetSet):
         self.__hud.set_data(player)
         self.__update_inventory(items)
 
-    def __update_inventory(self, items):
+    def __update_inventory(self, items: [ShopItem]):
         self.__items = items
         self.__inventory.set_data(data=(
-            [str(si) for si in items] + ["-Leave-"],
+            [si.to_string() for si in items] + ["-Leave-"],
             [self.__select_item]
         ))
 

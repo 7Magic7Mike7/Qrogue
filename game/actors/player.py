@@ -8,11 +8,16 @@ from qiskit import QuantumCircuit, transpile
 from qiskit.providers.aer import StatevectorSimulator
 
 from game.collectibles.collectible import Collectible, CollectibleType
-from game.collectibles.pickup import Coin, Key
-from game.logic.instruction import Instruction, HGate
+from game.collectibles.consumable import Consumable
+from game.collectibles import consumable
+from game.collectibles import pickup
+from game.collectibles.factory import GateFactory
+from game.logic.instruction import Instruction
 from game.logic.qubit import QubitSet, EmptyQubitSet, DummyQubitSet, StateVector
 # from jkq import ddsim
-from util.config import CheatConfig
+from util.config import CheatConfig, Config
+from util.logger import Logger
+from util.my_random import MyRandom
 
 
 class PlayerAttributes:
@@ -34,7 +39,7 @@ class PlayerAttributes:
         return self.__qubits.size()
 
     @property
-    def space(self) -> int:
+    def circuit_space(self) -> int:
         return self.__space
 
     @property
@@ -44,9 +49,10 @@ class PlayerAttributes:
 
 class Backpack:
     """
-    Stores the Instructions for the player to use.
+    Stores Instructions, Consumables and other Collectibles for the player to use.
     """
-    __CAPACITY = 5  # increased capacity for tutorial purposes
+    __CAPACITY = 5      # how many Instructions the Backpack can hold at once
+    __POUCH_SIZE = 5    # how many Consumables the Backpack can hold at once
 
     def __init__(self, capacity: int = __CAPACITY, content: "list of Instructions" = []):
         """
@@ -56,6 +62,8 @@ class Backpack:
         """
         self.__capacity = capacity
         self.__storage = content
+        self.__pouch_size = Backpack.__POUCH_SIZE
+        self.__pouch = []
         self.__coin_count = 0
         self.__key_count = 0
 
@@ -67,8 +75,16 @@ class Backpack:
         return self.__capacity
 
     @property
-    def size(self) -> int:
+    def used_capacity(self) -> int:
         return len(self.__storage)
+
+    @property
+    def consumables_in_pouch(self) -> int:
+        return len(self.__pouch)
+
+    @property
+    def num_of_available_items(self) -> int:
+        return self.consumables_in_pouch    # later we might add active item(s)?
 
     @property
     def coin_count(self) -> int:
@@ -76,6 +92,13 @@ class Backpack:
             return 999
 
         return self.__coin_count
+
+    @property
+    def key_count(self) -> int:
+        if CheatConfig.got_inf_resources():
+            return 999
+
+        return self.__key_count
 
     def can_afford(self, price: int) -> bool:
         return self.coin_count >= price
@@ -95,13 +118,6 @@ class Backpack:
             return True
         return False
 
-    @property
-    def key_count(self) -> int:
-        if CheatConfig.got_inf_resources():
-            return 999
-
-        return self.__key_count
-
     def give_key(self, amount: int) -> bool:
         if amount > 0:
             self.__key_count += amount
@@ -118,7 +134,7 @@ class Backpack:
         return False
 
     def get(self, index: int) -> Instruction:
-        if 0 <= index < self.size:
+        if 0 <= index < self.used_capacity:
             return self.__storage[index]
 
     def add(self, instruction: Instruction) -> bool:
@@ -128,7 +144,7 @@ class Backpack:
         :param instruction: the Instruction to add
         :return: True if there is enough capacity left to store the Instruction, False otherwise
         """
-        if len(self.__storage) < self.__capacity:
+        if self.used_capacity < self.__capacity:
             self.__storage.append(instruction)
             return True
         return False
@@ -144,17 +160,40 @@ class Backpack:
             if self.__storage[i] == instruction:
                 self.__storage.remove(instruction)
                 return True
+        if Config.debugging():
+            Logger.instance().error("Reached a line in Backpack.remove() that I think should not be reachable "
+                                    "(although it has no game-consequences if I'm wrong.")
         try:
             self.__storage.remove(instruction)
             return True
         except ValueError:
             return False
 
-    def copy(self) -> "Backpack":
+    def pouch_iterator(self) -> __iter__:
+        return iter(self.__pouch)
+
+    def get_from_pouch(self, index: int) -> Consumable:
+        if 0 <= index < self.consumables_in_pouch:
+            return self.__pouch[index]
+
+    def place_in_pouch(self, consumable: Consumable) -> bool:
+        if self.consumables_in_pouch < self.__pouch_size:
+            self.__pouch.append(consumable)
+            return True
+        return False
+
+    def remove_from_pouch(self, consumable: Consumable) -> bool:
+        try:
+            self.__pouch.remove(consumable)
+            return True
+        except ValueError:
+            return False
+
+    def copy_gates(self) -> [Instruction]:
         data = []
-        for instruction in self.__storage:
-            data.append(instruction.copy())
-        return Backpack(self.__capacity, data)
+        for gate in self.__storage:
+            data.append(gate.copy())
+        return data #[gate.copy() for gate in self.__storage]
 
 
 class BackpackIterator:
@@ -166,7 +205,7 @@ class BackpackIterator:
         self.__backpack = backpack
 
     def __next__(self) -> Instruction:
-        if self.__index < self.__backpack.size:
+        if self.__index < self.__backpack.used_capacity:
             item = self.__backpack.get(self.__index)
             self.__index += 1
             return item
@@ -188,8 +227,6 @@ class Player(ABC):
         self.__next_col = 0
 
         # apply gates/instructions, create the circuit
-        self.__generator = None
-        self.__set_generator()
         self.__circuit = None
         self.__instructions = []
         self.__apply_instructions()
@@ -213,17 +250,6 @@ class Player(ABC):
     def circuit_enumerator(self):
         return enumerate(self.__instructions)
 
-    def __set_generator(self, instructions: "list of Instructions" = None):
-        num = self.__attributes.num_of_qubits
-        if num > 0:
-            self.__generator = QuantumCircuit(num, num)
-            if instructions is None:        # default generator
-                for i in range(num):
-                    self.__generator.id(i)     # Identity on every qubit    # todo maybe remove later?
-            else:
-                for inst in instructions:
-                    inst.append_to(self.__generator)
-
     def update_statevector(self) -> StateVector:
         """
         Compiles and simulates the current circuit and saves and returns the resulting StateVector
@@ -236,7 +262,7 @@ class Player(ABC):
         return self.__stv
 
     def get_instruction(self, instruction_index: int) -> Instruction:
-        if 0 <= instruction_index < self.backpack.size:
+        if 0 <= instruction_index < self.backpack.used_capacity:
             return self.backpack.get(instruction_index)
         return None
 
@@ -244,7 +270,7 @@ class Player(ABC):
         return self.__next_col == 0
 
     def is_space_left(self) -> bool:
-        return self.__next_col < self.__attributes.space
+        return self.__next_col < self.__attributes.circuit_space
 
     def use_instruction(self, instruction: Instruction) -> bool:
         """
@@ -264,7 +290,7 @@ class Player(ABC):
         return self.__apply_instructions()
 
     def remove_instruction(self, instruction_index: int) -> bool:
-        if 0 <= instruction_index < self.backpack.size:
+        if 0 <= instruction_index < self.backpack.used_capacity:
             instruction = self.backpack.get(instruction_index)
             self.__remove_instruction(instruction)
         return self.__apply_instructions()
@@ -286,27 +312,36 @@ class Player(ABC):
         instruction.reset()
         self.__next_col -= 1
 
-    def get_available_instructions(self) -> "list of Instructions":
+    def get_available_instructions(self) -> [Instruction]:
         """
 
         :return: a copy of all Instructions currently available to the player
         """
-        data = []
-        bp = self.backpack.copy()
-        for instruction in bp:
-            data.append(instruction)
-        return data
+        return self.backpack.copy_gates()
 
     def give_collectible(self, collectible: Collectible):
-        if isinstance(collectible, Coin):
-            self.__backpack.give_coin(collectible.amount)
-        elif isinstance(collectible, Key):
-            self.__backpack.give_key(collectible.amount)
+        if isinstance(collectible, pickup.Coin):
+            self.backpack.give_coin(collectible.amount)
+        elif isinstance(collectible, pickup.Key):
+            self.backpack.give_key(collectible.amount)
+        elif isinstance(collectible, pickup.Heart):
+            self.heal(collectible.amount)
         elif isinstance(collectible, Instruction):
             self.backpack.add(collectible)
+        elif collectible.type is CollectibleType.Consumable:    # todo cannot use isInstance here because currently
+                                                        # todo Consumable needs to access the Player (circular import)
+            self.backpack.place_in_pouch(collectible)
 
-    def damage(self, diff: StateVector = None, amount: int = 1):
-        return self.__attributes.qubits.damage(1)
+    def damage(self, target: StateVector = None, amount: int = 1) -> int:
+        return self.__attributes.qubits.damage(amount)
+
+    def heal(self, amount: int = 1) -> int:
+        """
+
+        :param amount: how much hp to heal
+        :return: how much was actually healed (e.g. cannot exceed max health)
+        """
+        return self.__attributes.qubits.heal(amount)
 
     @property
     def cur_hp(self) -> int:
@@ -317,13 +352,11 @@ class Player(ABC):
         return self.__attributes.num_of_qubits
 
     @property
-    def space(self) -> int:
-        return self.__attributes.space
+    def circuit_space(self) -> int:
+        return self.__attributes.circuit_space
 
     def __apply_instructions(self):
-        if self.__generator is None:
-            return False
-        circuit = self.__generator.copy(name="PlayerCircuit")
+        circuit = QuantumCircuit(self.__attributes.num_of_qubits, self.__attributes.num_of_qubits)
         for inst in self.__instructions:
             inst.append_to(circuit)
         self.__circuit = circuit
@@ -335,7 +368,7 @@ class Player(ABC):
         counts = counts[1:len(counts)-1]
         arr = counts.split(':')
         if int(arr[1][1:]) != 1:
-            raise ValueError(f"Function only works for counts with 1 shot but counts was: {counts}")
+            Logger.instance().throw(ValueError(f"Function only works for counts with 1 shot but counts was: {counts}"))
         bits = arr[0]
         bits = bits[1:len(bits)-1]
         list = []
@@ -346,11 +379,21 @@ class Player(ABC):
 
 
 class DummyPlayer(Player):
-    def __init__(self):
-        super(DummyPlayer, self).__init__(
-            attributes=PlayerAttributes(DummyQubitSet()),
-            backpack=Backpack(5, [HGate(), HGate()])
-        )
+    def __init__(self, seed: int):
+        attributes = PlayerAttributes(DummyQubitSet())
+        backpack = Backpack(capacity=5)
+
+        # add random gates and a HealthPotion
+        if MyRandom(seed).get() < 0.5:
+            num_of_gates = 3
+        else:
+            num_of_gates = 4
+        gate_factory = GateFactory.default()
+        for gate in gate_factory.produce_multiple(num_of_gates):
+            backpack.add(gate)
+        backpack.place_in_pouch(consumable.HealthPotion(3))
+
+        super(DummyPlayer, self).__init__(attributes, backpack)
 
     def get_img(self):
         return "P"

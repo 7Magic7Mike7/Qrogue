@@ -9,6 +9,7 @@ from game.map.map import Map
 from game.map.navigation import Direction
 from game.map.rooms import Area, Placeholder
 from util.config import ColorConfig
+from util.logger import Logger
 from widgets.renderable import Renderable
 
 
@@ -92,7 +93,7 @@ class CircuitWidget(Widget):
     def render(self) -> None:
         if self.__player is not None:
             entry = "-" * (3 + Instruction.MAX_ABBREVIATION_LEN + 3)
-            row = [entry] * self.__player.space
+            row = [entry] * self.__player.circuit_space
             rows = []
             for i in range(self.__player.num_of_qubits):
                 rows.append(row.copy())
@@ -199,14 +200,14 @@ class StateVectorWidget(Widget):
         self.__state_vector = None
         widget.add_text_color_rule("~.*~", ColorConfig.STV_HEADING_COLOR, 'contains', match_type='regex')
         if diff:
-            widget.add_text_color_rule("-?0j?", ColorConfig.CORRECT_AMPLITUDE_COLOR, "startswith", match_type="regex")
+            widget.add_text_color_rule("0", ColorConfig.CORRECT_AMPLITUDE_COLOR, "startswith", match_type="regex")
 
     def set_data(self, state_vector: StateVector) -> None:
         self.__state_vector = state_vector
 
     def render(self) -> None:
         if self.__state_vector is not None:
-            str_rep = f"~{self.__headline}~\n{self.__state_vector}"
+            str_rep = f"~{self.__headline}~\n{self.__state_vector.to_string()}"
             self.widget.set_title(str_rep)
 
     def render_reset(self) -> None:
@@ -311,6 +312,15 @@ class SelectionWidget(Widget):
         if self.__is_second:
             self.clear_text()
 
+    def validate_index(self) -> bool:
+        if self.__index < 0:
+            self.__index = 0
+            return False
+        if len(self.__choices) <= self.__index:
+            self.__index = len(self.__choices) - 1
+            return False
+        return True
+
     def __single_next(self) -> None:
         self.__index += 1
         if self.__index >= self.num_of_choices:
@@ -386,6 +396,9 @@ class SelectionWidget(Widget):
         if len(self.__callbacks) == 1 and self.num_of_choices > 1:
             ret = self.__callbacks[0](self.__index)
         else:
+            if self.__index >= len(self.__callbacks):
+                Logger.instance().throw(IndexError(f"Invalid index = {self.__index} for {self.__callbacks}. "
+                                                   f"Text of choices: {self.__choices}"))
             ret = self.__callbacks[self.__index]()
         if ret is None: # move focus if nothing is returned
             return True

@@ -44,9 +44,9 @@ class PathConfig:
         return os.path.join(PathConfig.__LOG_FOLDER, f"{now_str}_seed{seed}.qrlog")
 
     @staticmethod
-    def new_key_log_file() -> str:
+    def new_key_log_file(seed) -> (str, str):
         now_str = datetime.now().strftime("%d%m%Y_%H%M%S")
-        return os.path.join(PathConfig.__KEY_LOG_FOLDER, f"{now_str}.qrkl")
+        return os.path.join(PathConfig.__KEY_LOG_FOLDER, f"{now_str}_seed{seed}.qrkl"), now_str
 
     @staticmethod
     def new_screen_print(text: str):
@@ -78,7 +78,8 @@ class PathConfig:
                 while data:
                     yield data
                     data = file.read(buffer_size)
-        return None
+        else:
+            raise FileNotFoundError(f"There is no such key log file: {path}")
 
     @staticmethod
     def read(file_name: str, in_base_path: bool = True) -> str:
@@ -97,12 +98,6 @@ class PathConfig:
         path = PathConfig.base_path(file_name)
         if os.path.exists(path):
             os.remove(path)
-
-
-class MapConfig:
-    @staticmethod
-    def tutorial_seed() -> int:
-        return 0
 
 
 class ColorConfig:
@@ -257,11 +252,13 @@ class CheatConfig:
     __GOD_MODE = "Qod-Mode"
     __SCARED_RABBIT = "Rabbit_Tunnel"
     __INF_RESOURCES = "Rich"
+    __MAP_REVEAL = "Illuminati"
     __NONE = "n0n3"
     __CHEATS = {
         __GOD_MODE: False,
         __SCARED_RABBIT: False,
         __INF_RESOURCES: False,
+        __MAP_REVEAL: False,
     }
     __cheated = False
     __popup = None
@@ -272,8 +269,10 @@ class CheatConfig:
         CheatConfig.__cheated = False
         CheatConfig.__popup = popup_callback
         CheatConfig.__input_popup = input_popup_callback
-        for key in CheatConfig.__CHEATS:
-            CheatConfig.__CHEATS[key] = False
+        # deactivate cheats if we are not debugging
+        if not Config.debugging():
+            for key in CheatConfig.__CHEATS:
+                CheatConfig.__CHEATS[key] = False
 
     @staticmethod
     def did_cheat() -> bool:
@@ -292,8 +291,12 @@ class CheatConfig:
         return CheatConfig.__CHEATS[CheatConfig.__INF_RESOURCES]
 
     @staticmethod
+    def revealed_map() -> bool:
+        return CheatConfig.__CHEATS[CheatConfig.__MAP_REVEAL]
+
+    @staticmethod
     def cheat_input():
-        if CheatConfig.__input_popup is not None:
+        if Config.debugging() and CheatConfig.__input_popup is not None:
             CheatConfig.__input_popup("Input your Cheat:", py_cui.BLACK_ON_RED, CheatConfig.__use_cheat)
 
     @staticmethod
@@ -339,7 +342,7 @@ class GameplayConfig:
         __LOG_KEYS: ("True", "Stores all keys you pressed in a .qrkl-file so one can replay them (e.g. for analysing a "
                            "bug)"),
         __SIMULATION_KEY_PAUSE: ("0.2", "How long to wait before we process the next input during simulation."),
-        __GAMEPLAY_KEY_PAUSE: ("0.2", "How long to wait before we process the next input during gameplay."),
+        __GAMEPLAY_KEY_PAUSE: ("0.1", "How long to wait before we process the next input during gameplay."),
     }
 
     @staticmethod
@@ -385,14 +388,28 @@ class GameplayConfig:
             return 0.4
 
 
-class Config:
+class Config:   # todo make singleton and handle access to other configs?
+    MAX_SEED = 1000000
     __VERSION = "v0.0.1"
     __GAME_CONFIG = "qrogue_game.config"
     __GAMEPLAY_HEAD = "[Gameplay]\n"
+    __DEBUG = False
 
     @staticmethod
     def version() -> str:
         return Config.__VERSION
+
+    @staticmethod
+    def config_file() -> str:
+        return Config.__GAME_CONFIG
+
+    @staticmethod
+    def debugging() -> bool:
+        return Config.__DEBUG
+
+    @staticmethod
+    def activate_debugging():
+        Config.__DEBUG = True
 
     @staticmethod
     def create():

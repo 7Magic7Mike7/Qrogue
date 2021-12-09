@@ -7,9 +7,7 @@ class CollectibleType(Enum):
     Gate = 2
     ActiveItem = 3
     PassiveItem = 4
-    Coin = 5
-    Key = 6
-    Heart = 7
+    Pickup = 5
 
 
 def type_str(type: CollectibleType) -> str:
@@ -36,13 +34,25 @@ class Collectible(ABC):
         pass
 
     @abstractmethod
-    def __str__(self):
+    def default_price(self) -> int:
+        pass
+
+    @abstractmethod
+    def to_string(self) -> str:
         pass
 
 
 class ShopItem:
-    def __init__(self, collectible: Collectible, price: int):
+    __BASE_UNIT = 1
+
+    @staticmethod
+    def base_unit() -> int:
+        return ShopItem.__BASE_UNIT
+
+    def __init__(self, collectible: Collectible, price: int = -1):
         self.__collectible = collectible
+        if price < 0:
+            price = collectible.default_price()
         self.__price = price
 
     @property
@@ -53,5 +63,8 @@ class ShopItem:
     def price(self) -> int:
         return self.__price
 
-    def __str__(self):
+    def to_string(self) -> str:
         return f"{self.collectible}, {self.price}$"
+
+    def __str__(self):
+        return self.to_string()

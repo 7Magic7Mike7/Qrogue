@@ -1,18 +1,14 @@
 
 import game.map.tiles as tiles
-from game.actors.factory import EnemyFactory, DummyFightDifficulty
 from game.actors.player import Player as PlayerActor
 from game.callbacks import CallbackPack
 from game.map.navigation import Coordinate, Direction
 from game.map.rooms import Room, Area
-from game.map.tutorial import Tutorial, TutorialPlayer
-from util.config import MapConfig
 from util.logger import Logger
-from util.my_random import RandomManager
 
 
 class Map:
-    WIDTH = 5
+    WIDTH = 7
     HEIGHT = 3
 
     @staticmethod
@@ -25,38 +21,40 @@ class Map:
         :param pos_in_room: Coordinate in the Room
         :return: Coordinate on the Map
         """
-        x = pos_of_room.x * Area.UNIT_WIDTH + pos_in_room.x
-        y = pos_of_room.y * Area.UNIT_HEIGHT + pos_in_room.y
+        x = pos_of_room.x * (Area.UNIT_WIDTH + 1) + pos_in_room.x
+        y = pos_of_room.y * (Area.UNIT_HEIGHT + 1) + pos_in_room.y
         return Coordinate(x, y)
 
-    def __init__(self, seed: int, width: int, height: int, player: PlayerActor, cbp: CallbackPack):
+    def __init__(self, seed: int, rooms: "[[Room]]", player: PlayerActor, spawn_room: Coordinate, cbp: CallbackPack):
+        self.__seed = seed
+        self.__rooms = rooms
         self.__player = tiles.Player(player)
         self.__cbp = cbp
-        self.__enemy_factory = EnemyFactory(cbp.start_fight, DummyFightDifficulty())
 
-        if seed == MapConfig.tutorial_seed():
-            self.__build_tutorial_map()
-        else:
-            rand = RandomManager.instance()
-            for y in range(height):
-                row = []
-                for x in range(width):
-                    if y == 0 or y == height - 1 or x == 0 or x == width - 1:
-                        row.append(tiles.Wall())
-                    else:
-                        if rand.get_int(max=7) == 1:
-                            row.append(tiles.Obstacle())
-                        else:
-                            row.append(tiles.Floor())
-                self.__player_pos = Coordinate(2, 3)
-
-    def __build_tutorial_map(self):
-        self.__player = tiles.Player(TutorialPlayer())
-        self.__rooms, spawn_room = Tutorial().build_tutorial_map(self.__player, self.__cbp)
+        self.__player_pos = Map.__calculate_pos(spawn_room, Coordinate(Area.MID_X, Area.MID_Y))
         self.__cur_area = self.__rooms[spawn_room.y][spawn_room.x]
-        self.__player_pos = Map.__calculate_pos(spawn_room, Coordinate(Room.MID_X, Room.MID_Y))
-        self.__cur_area.enter(Direction.North)
+        self.__cur_area.enter(Direction.Center)
         self.__cur_area.make_visible()
+
+    @property
+    def seed(self) -> int:
+        return self.__seed
+
+    @property
+    def height(self) -> int:
+        return Map.HEIGHT * (Area.UNIT_HEIGHT + 1) - 1
+
+    @property
+    def width(self) -> int:
+        return Map.WIDTH * (Area.UNIT_WIDTH + 1) - 1
+
+    @property
+    def player_tile(self) -> tiles.Player:
+        return self.__player
+
+    @property
+    def player_pos(self) -> Coordinate:
+        return self.__player_pos
 
     def __get_area(self, x: int, y: int) -> (Area, tiles.Tile):
         """
@@ -101,22 +99,6 @@ class Map:
                 return hallway, hallway.at(0, y_mod)
         else:
             return room, room.at(x_mod, y_mod)
-
-    @property
-    def height(self) -> int:
-        return Map.HEIGHT * (Area.UNIT_HEIGHT + 1) - 1
-
-    @property
-    def width(self) -> int:
-        return Map.WIDTH * (Area.UNIT_WIDTH + 1) - 1
-
-    @property
-    def player_tile(self) -> tiles.Player:
-        return self.__player
-
-    @property
-    def player_pos(self) -> Coordinate:
-        return self.__player_pos
 
     def room_at(self, x: int, y: int) -> Room:
         if 0 <= x < Map.WIDTH and 0 <= y < Map.HEIGHT:

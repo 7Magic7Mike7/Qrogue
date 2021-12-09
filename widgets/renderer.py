@@ -1,5 +1,6 @@
 
 from game.map.tiles import Tile
+from util.logger import Logger
 
 
 class TileRenderer:
@@ -14,7 +15,7 @@ class TileRenderer:
     def __init__(self):
         """ Virtually private constructor. """
         if TileRenderer.__instance is not None:
-            raise Exception("This class is a singleton!")
+            Logger.instance().throw(Exception("This class is a singleton!"))
         else:
             TileRenderer.__instance = self
 

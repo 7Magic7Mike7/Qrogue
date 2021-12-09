@@ -1,30 +1,49 @@
-from game.actors.factory import EnemyFactory, FightDifficulty, DummyFightDifficulty
+from game.actors.factory import EnemyFactory, TargetDifficulty, DummyTargetDifficulty
 from game.actors.enemy import Enemy as EnemyActor
 from game.actors.boss import Boss as BossActor
 from game.actors.player import Player as PlayerActor, PlayerAttributes, Backpack
 from game.actors.riddle import Riddle
 from game.callbacks import OnWalkCallback, CallbackPack
+from game.collectibles import consumable
 from game.collectibles.collectible import ShopItem
-from game.collectibles.pickup import Coin, Key
+from game.collectibles import pickup
 from game.logic.instruction import CXGate, HGate, XGate
 from game.logic.qubit import StateVector, DummyQubitSet
 from game.map import tiles
+from game.map.map import Map
 from game.map.navigation import Coordinate, Direction
 from game.map.rooms import Room, SpawnRoom, GateRoom, WildRoom, BossRoom, ShopRoom, RiddleRoom, Hallway
 from util.config import ColorConfig as CC
 from util.help_texts import HelpText, HelpTextType
+from util.my_random import MyRandom
 
 from widgets.my_popups import Popup, CommonPopups
 
 
+class TutorialQubitSet(DummyQubitSet):
+    def __init__(self):
+        super(TutorialQubitSet, self).__init__(size=2)
+
+
+class TutorialAttributes(PlayerAttributes):
+    def __init__(self):
+        super(TutorialAttributes, self).__init__(TutorialQubitSet(), space=3)
+
+
 class TutorialPlayer(PlayerActor):
     def __init__(self):
-        super(TutorialPlayer, self).__init__(PlayerAttributes(DummyQubitSet()), Backpack(content=[HGate(), XGate()]))
+        super(TutorialPlayer, self).__init__(TutorialAttributes(), Backpack(content=[HGate(), XGate()]))
 
 
-class TutorialDifficulty(FightDifficulty):
+class TutorialDifficulty(TargetDifficulty):
     def __init__(self):
-        super().__init__(2, [Coin(3)])
+        super().__init__(2, [pickup.Coin(2), pickup.Coin(3)])
+
+
+class TutorialDifficulty2(TargetDifficulty):
+    def __init__(self):
+        super().__init__(3, [pickup.Coin(1), pickup.Coin(2), pickup.Coin(3), pickup.Key(1), pickup.Heart(3),
+                             consumable.HealthPotion(2)])
 
 
 class TutorialEnemy(EnemyActor):
@@ -45,28 +64,28 @@ class TutorialRiddle(Riddle):
 class TutorialBoss(BossActor):
     def __init__(self):
         target = StateVector([0.707 + 0j, 0, 0, 0.707 + 0j])
-        super().__init__(target, Coin(11))
+        super().__init__(target, pickup.Coin(11))
 
     def get_img(self):
         return "B"
 
 
 class TutorialEnemyFactory(EnemyFactory):
-    def __init__(self, start_fight_callback: OnWalkCallback):
+    def __init__(self, player: PlayerActor, start_fight_callback: OnWalkCallback):
         self.__difficulty = TutorialDifficulty()
-        super().__init__(start_fight_callback, self.__difficulty)
+        super().__init__(player, start_fight_callback, self.__difficulty)
 
         self.__reward_index = 0
         self.__enemy_data = [
-            (StateVector([0, 0, 1, 0]), Coin(2)),
-            (StateVector([0.707 + 0j, 0.707 + 0j, 0, 0]), Key()),
-            (StateVector([0, 0, 1, 0]), Coin(1)),
-            (StateVector([0.707 + 0j, 0, 0.707 + 0j, 0]), Coin(4)),
-            (StateVector([0, 1, 0, 0]), Coin(3)),
-            (StateVector([1, 0, 0, 0]), Coin(2)),
+            (StateVector([0, 0, 1, 0]), pickup.Coin(2)),
+            (StateVector([0.707 + 0j, 0.707 + 0j, 0, 0]), pickup.Key()),
+            (StateVector([0, 0, 1, 0]), pickup.Coin(1)),
+            (StateVector([0.707 + 0j, 0, 0.707 + 0j, 0]), pickup.Coin(4)),
+            (StateVector([0, 1, 0, 0]), pickup.Coin(3)),
+            (StateVector([1, 0, 0, 0]), pickup.Coin(2)),
         ]
 
-    def get_enemy(self, player: PlayerActor, flee_chance: float) -> EnemyActor:
+    def produce(self, player: PlayerActor, rm: MyRandom, flee_chance: float) -> EnemyActor:
         data = self.__enemy_data[self.__reward_index]
         enemy = TutorialEnemy(data[0], data[1])
         self.__reward_index = (self.__reward_index + 1) % len(self.__enemy_data)
@@ -112,10 +131,10 @@ class TutorialTile(tiles.Message):
 
 
 class CustomWildRoom(Room):
-    def __init__(self, east_hallway: Hallway, west_hallway: Hallway,
+    def __init__(self, player: PlayerActor, east_hallway: Hallway, west_hallway: Hallway,
                  start_fight_callback: "void(EnemyActor, Direction, PlayerActor)", tutorial_tile: TutorialTile,
                  blocking_tile: TutorialTile):
-        factory = TutorialEnemyFactory(start_fight_callback)
+        factory = TutorialEnemyFactory(player, start_fight_callback)
         self.__enemies = []
         for i in range(Room.INNER_WIDTH):
             self.__enemies.append(tiles.Enemy(factory, self.get_entangled_tiles, id=1, amplitude=1))
@@ -168,7 +187,7 @@ class TutorialGateRoom(GateRoom):
         tile_dic = {
             Coordinate(Room.MID_X - 1, 0): tutorial_tile
         }
-        super().__init__(hallway, False, tile_dic)
+        super().__init__(HGate(), hallway, Direction.North, tile_dic)
 
 
 class TutorialBossRoom(BossRoom):
@@ -181,7 +200,7 @@ class TutorialBossRoom(BossRoom):
         hint = tiles.Message(Popup("Hint:", f"Solving the {riddle} or buying the {gate} from the {shop} might be pretty"
                                             f" {helpful} in defeating the {boss}. Of course you can try it nonetheless "
                                             "but if I were you I'd better use every help I can get.", show=False), -1)
-        super().__init__(hallway, True, tiles.Boss(TutorialBoss(), start_boss_fight),
+        super().__init__(hallway, Direction.South, tiles.Boss(TutorialBoss(), start_boss_fight),
                          tile_dic={Coordinate(1, Room.INNER_HEIGHT - 2): hint})
 
 
@@ -189,8 +208,13 @@ class Tutorial:
     __SHOW_PAUSE_TUTORIAL = False
 
     @staticmethod
+    def seed() -> int:
+        return 0
+
+    @staticmethod
     def show_pause_tutorial() -> bool:
         if Tutorial.__SHOW_PAUSE_TUTORIAL:
+            Popup.message("Pause", HelpText.get(HelpTextType.Pause))
             Tutorial.__SHOW_PAUSE_TUTORIAL = False
             return True
         return False
@@ -236,7 +260,7 @@ class Tutorial:
         self.__boss_fight(player, boss, direction)
         Popup("Tutorial: Boss Fight", HelpText.get(HelpTextType.BossFight))
 
-    def build_tutorial_map(self, player: tiles.Player, cbp: CallbackPack) -> "Room[][], Coordinate":
+    def build_tutorial_map(self, player: PlayerActor, cbp: CallbackPack) -> ([[Room]], Coordinate):
         self.__fight = cbp.start_fight
         self.__boss_fight = cbp.start_boss_fight
         self.__riddle = cbp.open_riddle
@@ -268,7 +292,7 @@ class Tutorial:
             f"to survive!\n"
             f"To the South of it is the {w[15]} and "
             f"North a {w[16]} that gives you a nice reward if you can solve it. Going West takes you one step closer "
-            f"to the {w[14]}\n"
+            f"to the {w[14]}.\n"
             "Good Luck!",
         ]
         popups = [Popup(f"Tutorial #{i + 1}", messages[i], show=False)
@@ -294,24 +318,24 @@ class Tutorial:
             Coordinate(Room.INNER_WIDTH - 1, Room.MID_Y - 1): TutorialTile(popups[1], 1, self.is_active, self.progress,
                                                                            blocks=True)
         }
-        spawn = SpawnRoom(player, spawn_dic, east_hallway=spawn_hallway_east, south_hallway=spawn_hallway_south)
+        spawn = SpawnRoom(spawn_dic, east_hallway=spawn_hallway_east, south_hallway=spawn_hallway_south)
         spawn_x = 0
         spawn_y = 1
-        width = 5
-        height = 5
-        factory = EnemyFactory(cbp.start_fight, DummyFightDifficulty())
+        width = Map.WIDTH
+        height = Map.HEIGHT
+        factory = EnemyFactory(player, cbp.start_fight, TutorialDifficulty2())
 
         rooms = [[None for x in range(width)] for y in range(height)]
         rooms[spawn_y][spawn_x] = spawn
-        rooms[1][1] = CustomWildRoom(cwr_hallway_east, spawn_hallway_east, self.fight,
+        rooms[1][1] = CustomWildRoom(player, cwr_hallway_east, spawn_hallway_east, self.fight,
                                      TutorialTile(popups[2], 2, self.is_active, self.progress),
                                      TutorialTile(popups[4], 4, self.is_active, self.progress, blocks=True))
         rooms[2][0] = TutorialGateRoom(spawn_hallway_south, TutorialTile(popups[3], 3, self.is_active, self.progress))
         rooms[1][2] = WildRoom(factory, chance=0.8, west_hallway=cwr_hallway_east, north_hallway=riddle_hallway,
                                south_hallway=shop_hallway, east_hallway=cwr2_hallway_west)
-        rooms[0][2] = RiddleRoom(riddle_hallway, True, TutorialRiddle(), self.riddle)
-        rooms[2][2] = ShopRoom(shop_hallway, False, [ShopItem(Key(2), 3), ShopItem(Key(1), 2), ShopItem(CXGate(), 15)],
-                               self.shop)
+        rooms[0][2] = RiddleRoom(riddle_hallway, Direction.South, TutorialRiddle(), self.riddle)
+        rooms[2][2] = ShopRoom(shop_hallway, Direction.North, [ShopItem(pickup.Key(2), 3), ShopItem(pickup.Key(1), 2),
+                                                               ShopItem(CXGate(), 15)], self.shop)
         rooms[1][3] = CustomWildRoom2(factory, chance=0.7, north_hallway=cwr2_hallway_north,
                                       east_hallway=cwr2_hallway_east, south_hallway=cwr2_hallway_south,
                                       west_hallway=cwr2_hallway_west)

@@ -2,7 +2,7 @@ from datetime import datetime
 
 import py_cui.debug
 
-from util.config import PathConfig
+from util.config import PathConfig, Config
 from util.key_logger import KeyLogger
 
 
@@ -19,7 +19,7 @@ class Logger(py_cui.debug.PyCUILogger):
     def __init__(self, seed: int):
         super().__init__("Qrogue-Logger")
         if Logger.__instance is not None:
-            raise Exception("This class is a singleton!")
+            self.throw(Exception("This class is a singleton!"))
         else:
             self.__text = ""
             self.__message_popup = None
@@ -41,21 +41,26 @@ class Logger(py_cui.debug.PyCUILogger):
 
     def info(self, message, **kwargs) -> None:
         time_str = datetime.now().strftime("%H-%M-%S")
-        text = f"{time_str}: {message}"
-        self.__write(text)
+        self.__write(f"{time_str}: {message}")
+
+    def debug(self, msg: str, *args, **kwargs) -> None:
+        if Config.debugging():
+            self.info(f"{{DEBUG}} |{msg}")
+
+    def show_error(self, message) -> None:
+        self.__error_popup("ERROR", str(message))
 
     def error(self, message, **kwargs) -> None:
-        self.__error_popup("ERROR", message)
-        try:
-            if kwargs["only_popup"]:
-                return
-        except:
-            pass
+        self.__error_popup("ERROR", str(message))
         highlighting = "\n----------------------------------\n"
-        time_str = datetime.now().strftime("%H-%M-%S")
-        text = f"{highlighting}{time_str}, Error: {message}{highlighting}"
-        Logger.instance().__write(text)
+        self.info(f"{highlighting}ERROR |{message}{highlighting}")
         KeyLogger.instance().log_error(message)
+
+    def throw(self, error) -> None:
+        print(error)
+        self.__write(str(error))
+        self.flush()
+        raise error
 
     def print(self, message: str, clear: bool = False) -> None:
         print(message)

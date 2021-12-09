@@ -1,5 +1,8 @@
+import math
+
+from game.logic.instruction import Instruction
+from game.map.navigation import Coordinate
 from game.map.tiles import *
-from game.collectibles.factory import GateFactories
 from game.map.tiles import Enemy as EnemyTile
 from util.my_random import RandomManager as RM
 
@@ -33,6 +36,10 @@ class Area(ABC):
     def _id(self) -> int:
         return self.__id
 
+    @property
+    def _is_visible(self) -> bool:
+        return self.__is_visible or CheatConfig.revealed_map()
+
     def _set_tile(self, tile: Tile, x: int, y: int) -> bool:
         """
 
@@ -55,7 +62,7 @@ class Area(ABC):
         :return: the Tile at the requested position
         """
         if 0 <= x < self.__width and 0 <= y < self.__height:
-            if self.__is_visible or force:
+            if self._is_visible or force:
                 return self.__tiles[y][x]
             else:
                 if self.__is_in_sight:
@@ -69,7 +76,7 @@ class Area(ABC):
         if row >= len(self.__tiles):
             return "".join([Invalid().get_img()] * Area.UNIT_WIDTH)
 
-        if self.__is_visible:
+        if self._is_visible:
             tiles = [t.get_img() for t in self.__tiles[row]]
             return "".join(tiles)
         elif self.__is_in_sight:
@@ -146,6 +153,16 @@ class Placeholder:
 
 
 class Hallway(Area):
+    @staticmethod
+    def is_first(direction: Direction):
+        """
+        Determines whether a Hallway in the Direction direction from the perspective of a room is the first or second
+        Room of the Hallway
+        :param direction: Direction from Room to Hallway
+        :return: True if Hallway is to the East or South of Room, false otherwise
+        """
+        return direction in [Direction.East, Direction.South]
+
     def __init__(self, door: Door):
         self.__door = door
         self.__room1 = None
@@ -159,14 +176,14 @@ class Hallway(Area):
             tiles = [[Void()]] * missing_half + [[Wall()], [door], [Wall()]] + [[Void()]] * missing_half
             super(Hallway, self).__init__(tiles)
 
-    def set_room(self, room: "Room", first: bool):
+    def set_room(self, room: "Room", direction: Direction):
         """
 
         :param room:
-        :param first:  Rooms to the North or West are stored in room1 while the other is stored in room2
+        :param direction:  in which Direction the Hallways is from room's point of view
         :return:
         """
-        if first:
+        if Hallway.is_first(direction):
             self.__room1 = room
         else:
             self.__room2 = room
@@ -219,6 +236,10 @@ class Room(Area):
     INNER_HEIGHT = Area.UNIT_HEIGHT - 2      # height inside the room, i.e. without walls and hallways
 
     @staticmethod
+    def coordinate_to_index(pos: Coordinate) -> int:
+        return pos.y * Room.INNER_WIDTH + pos.x
+
+    @staticmethod
     def get_empty_room_tile_list() -> "list of Tiles":
         return [Floor()] * (Room.INNER_WIDTH * Room.INNER_HEIGHT)
 
@@ -227,11 +248,12 @@ class Room(Area):
         tile_list = Room.get_empty_room_tile_list()
         if tile_dic is not None:
             for coordinate, tile in tile_dic.items():
-                index = coordinate.y * Room.INNER_WIDTH + coordinate.x
+                index = Room.coordinate_to_index(coordinate)
                 if 0 <= index < len(tile_list):
                     tile_list[index] = tile
                 else:
-                    raise IndexError(f"Invalid Index ({index} for tile_list of length {len(tile_list)}!")
+                    Logger.instance().throw(IndexError(f"Invalid Index ({index} for tile_list of length "
+                                                       f"{len(tile_list)}!"))
         return tile_list
 
     def __init__(self, tile_list: "list of Tiles", north_hallway: Hallway = None, east_hallway: Hallway = None,
@@ -260,26 +282,22 @@ class Room(Area):
         if north_hallway is not None and not north_hallway.connects_horizontally():
             tiles[0][Area.MID_X] = Floor()
             self.__hallways[Direction.North] = north_hallway
-            # this room is to the south of north_hallway and therefore its second room
-            north_hallway.set_room(self, False)
+            north_hallway.set_room(self, Direction.North)
 
         if east_hallway is not None and east_hallway.connects_horizontally():
             tiles[Area.MID_Y][Area.UNIT_WIDTH-1] = Floor()
             self.__hallways[Direction.East] = east_hallway
-            # this room is to the west of east_hallway and therefore its first room
-            east_hallway.set_room(self, True)
+            east_hallway.set_room(self, Direction.East)
 
         if south_hallway is not None and not south_hallway.connects_horizontally():
             tiles[Area.UNIT_HEIGHT-1][Area.MID_X] = Floor()
             self.__hallways[Direction.South] = south_hallway
-            # this room is to the north of south_hallway and therefore its first room
-            south_hallway.set_room(self, True)
+            south_hallway.set_room(self, Direction.South)
 
         if west_hallway is not None and west_hallway.connects_horizontally():
             tiles[Area.MID_Y][0] = Floor()
             self.__hallways[Direction.West] = west_hallway
-            # this room is to the east of west_hallway and therefore its second room
-            west_hallway.set_room(self, False)
+            west_hallway.set_room(self, Direction.West)
 
         super(Room, self).__init__(tiles)
 
@@ -306,16 +324,15 @@ class Room(Area):
 
 
 class SpecialRoom(Room, ABC):
-    def __init__(self, hallway: Hallway, first: bool, tile_dic: "dic of Coordinate and Tile"):
+    def __init__(self, hallway: Hallway, direction: Direction, tile_dic: "dic of Coordinate and Tile"):
         """
 
         :param hallway:
-        :param first: whether the Hallway is to the East or South of this Room (and hence the Room is West or North of
-                        Hallway)
+        :param direction: the Direction to the Hallway based on the Room's perspective
         :param tile_dic:
         """
         tile_list = Room.dic_to_tile_list(tile_dic)
-        if first:
+        if Hallway.is_first(direction):
             if hallway.connects_horizontally():
                 super(SpecialRoom, self).__init__(tile_list, east_hallway=hallway)
             else:
@@ -328,8 +345,8 @@ class SpecialRoom(Room, ABC):
 
 
 class SpawnRoom(Room):
-    def __init__(self, player: Player, tile_dic: "dic of Coordinate and Tile" = None, east_hallway: Hallway = None,
-                 south_hallway: Hallway = None, west_hallway: Hallway = None, north_hallway: Hallway = None):
+    def __init__(self, tile_dic: "dic of Coordinate and Tile" = None, north_hallway: Hallway = None,
+                 east_hallway: Hallway = None, south_hallway: Hallway = None, west_hallway: Hallway = None):
         # todo add type to player; always spawn at center?
         tile_list = Room.dic_to_tile_list(tile_dic)
         super().__init__(tile_list, north_hallway, east_hallway, south_hallway, west_hallway)
@@ -339,29 +356,41 @@ class SpawnRoom(Room):
 
 
 class WildRoom(Room):
-    def __init__(self, factory: EnemyFactory, chance: float = 0.4, north_hallway: Hallway = None,
+    __NUM_OF_ENEMY_GROUPS = 4
+
+    def __init__(self, factory: EnemyFactory, chance: float = 0.6, north_hallway: Hallway = None,
                  east_hallway: Hallway = None, south_hallway: Hallway = None, west_hallway: Hallway = None):
         """
 
         :param factory:
-        :param chance:
+        :param chance: chance for every individual Tile of the room to be an EnemyTile
         :param east_door: the Door connecting to the Room to the East of this one
         :param south_door: the Door connecting to the Room to the South of this one
         :param west_door: whether the Room to the West is having an east_door or not
         :param north_door:  whether the Room to the North is having a south_door or not
         """
         self.__dictionary = { 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [], 9: [] }
-        tile_list = []
         rm = RM.create_new()
-        for x in range(Room.INNER_WIDTH * Room.INNER_HEIGHT):
-            if rm.get() < chance:
-                id = rm.get_int(min=0, max=10)
-                enemy = EnemyTile(factory, self.get_tiles_by_id, id)
-                if id > 0:
-                    self.__dictionary[id].append(enemy)
-                tile_list.append(enemy)
-            else:
-                tile_list.append(Floor())
+
+        available_positions = []
+        for y in range(Room.INNER_HEIGHT):
+            available_positions += [Coordinate(x, y) for x in range(Room.INNER_WIDTH)]
+        num_of_enemies = len(available_positions) * chance
+        if rm.get() < 0.5:
+            num_of_enemies = math.floor(num_of_enemies)
+        else:
+            num_of_enemies = math.ceil(num_of_enemies)
+
+        # here we could add other stuff (pickups, buttons?, ...) to the room and adapt available_positions accordingly
+
+        tile_list = Room.get_empty_room_tile_list()
+        for i in range(num_of_enemies):
+            id = rm.get_int(min=0, max=WildRoom.__NUM_OF_ENEMY_GROUPS + 1)
+            enemy = EnemyTile(factory, self.get_tiles_by_id, id)
+            if id > 0:
+                self.__dictionary[id].append(enemy)
+            pos = rm.get_element(available_positions, remove=True)
+            tile_list[Room.coordinate_to_index(pos)] = enemy
 
         super().__init__(tile_list, north_hallway, east_hallway, south_hallway, west_hallway)
 
@@ -373,19 +402,19 @@ class WildRoom(Room):
 
 
 class GateRoom(SpecialRoom):
-    def __init__(self, hallway: Hallway, first: bool, tile_dic: "dic of Coordinate and Tile" = None):
-        super().__init__(hallway, first, tile_dic)
-        factory = GateFactories.standard_factory()
-        self._set_tile(Collectible(factory), x=Area.MID_X, y=Area.MID_Y)
+    def __init__(self, gate: Instruction, hallway: Hallway, direction: Direction,
+                 tile_dic: "dic of Coordinate and Tile" = None):
+        super().__init__(hallway, direction, tile_dic)
+        self._set_tile(Collectible(gate), x=Area.MID_X, y=Area.MID_Y)
 
     def abbreviation(self) -> str:
         return "GR"
 
 
 class RiddleRoom(SpecialRoom):
-    def __init__(self, hallway: Hallway, first: bool, riddle: Riddle, open_riddle_callback: "void(Player, Riddle)",
+    def __init__(self, hallway: Hallway, direction: Direction, riddle: Riddle, open_riddle_callback: "void(Player, Riddle)",
                  tile_dic: "dic of Coordinate and Tile" = None):
-        super().__init__(hallway, first, tile_dic)
+        super().__init__(hallway, direction, tile_dic)
         self._set_tile(Riddler(open_riddle_callback, riddle), Area.MID_X, Area.MID_Y)
 
     def abbreviation(self):
@@ -393,9 +422,9 @@ class RiddleRoom(SpecialRoom):
 
 
 class ShopRoom(SpecialRoom):
-    def __init__(self, hallway: Hallway, first: bool, inventory: "list of ShopItems",
+    def __init__(self, hallway: Hallway, direction: Direction, inventory: "list of ShopItems",
                  visit_shop_callback: "void(Player, list of ShopItems)", tile_dic: "dic of Coordinate and Tile" = None):
-        super().__init__(hallway, first, tile_dic)
+        super().__init__(hallway, direction, tile_dic)
         self._set_tile(ShopKeeper(visit_shop_callback, inventory), Area.MID_X, Area.MID_Y)
 
     def abbreviation(self):
@@ -407,8 +436,8 @@ class TreasureRoom(SpecialRoom):
 
 
 class BossRoom(SpecialRoom):
-    def __init__(self, hallway: Hallway, first: bool, boss: Boss, tile_dic: "dic of Coordinate and Tile" = None):
-        super().__init__(hallway, first, tile_dic)
+    def __init__(self, hallway: Hallway, direction: Direction, boss: Boss, tile_dic: "dic of Coordinate and Tile" = None):
+        super().__init__(hallway, direction, tile_dic)
         self._set_tile(boss, x=Area.MID_X, y=Area.MID_Y)
 
     def abbreviation(self) -> str:

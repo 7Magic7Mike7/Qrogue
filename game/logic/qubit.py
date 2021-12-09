@@ -1,6 +1,10 @@
 from abc import ABC, abstractmethod
 
 import numpy as np
+from qiskit import transpile, QuantumCircuit
+from qiskit.providers.aer import StatevectorSimulator
+
+from game.logic.instruction import Instruction
 
 
 class StateVector:
@@ -10,6 +14,17 @@ class StateVector:
 
     def __init__(self, amplitudes: "list of complex numbers"):
         self.__amplitudes = amplitudes
+
+    @staticmethod
+    def from_gates(gates: [Instruction], num_of_qubits: int):
+        circuit = QuantumCircuit(num_of_qubits, num_of_qubits)
+        for instruction in gates:
+            instruction.append_to(circuit)
+        simulator = StatevectorSimulator()
+        compiled_circuit = transpile(circuit, simulator)
+        # We only do 1 shot since we don't need any measurement but the StateVector
+        job = simulator.run(compiled_circuit, shots=1)
+        return StateVector(job.result().get_statevector())
 
     @property
     def size(self):
@@ -47,8 +62,6 @@ class StateVector:
             return None
 
     def __eq__(self, other) -> bool: # TODO currently not even in use!
-        #from util.logger import Logger
-        #Logger.instance().error("Test")
         if type(other) is type(self):
             return self.__amplitudes == other.__amplitudes
         elif type(other) is type([True, False]):  # TODO how to check correctly for bool-list?
@@ -66,6 +79,16 @@ class StateVector:
                 return True
             return False
         return False
+
+    def to_string(self) -> str:
+        text = ""
+        for val in self.__amplitudes:
+            val = np.round(val, 2)
+            if val == 0:
+                text += "0\n"
+            else:
+                text += f"{val}\n"
+        return text
 
     def __str__(self) -> str:
         text = ""
@@ -100,6 +123,15 @@ class QubitSet(ABC):
         """
         pass
 
+    @abstractmethod
+    def heal(self, amount: int) -> int:
+        """
+
+        :param amount: how much hp to heal
+        :return: how much was actually healed (e.g. cannot exceed max health)
+        """
+        pass
+
 
 class EmptyQubitSet(QubitSet):
     def hp(self):
@@ -114,30 +146,36 @@ class EmptyQubitSet(QubitSet):
     def damage(self, amount: int) -> int:
         pass
 
+    def heal(self, amount: int) -> int:
+        pass
+
 
 class DummyQubitSet(QubitSet):
-    __SIZE = 2
-    __HP_0 = 10
-    __HP_1 = 4
+    __SIZE = 3
+    __HP = 10
 
-    def __init__(self):
-        self.__hp_0 = self.__HP_0
-        self.__hp_1 = self.__HP_1
+    def __init__(self, size: int = __SIZE):
+        self.__hp = DummyQubitSet.__HP
+        self.__size = size
 
     def hp(self) -> int:
-        return self.__hp_0
+        return self.__hp
 
     def is_alive(self) -> bool:
-        return self.__hp_0 > 0# and self.__hp_1 > 0
+        return self.__hp > 0
 
     def size(self) -> int:
-        return self.__SIZE
+        return self.__size
 
     def damage(self, amount: int) -> int:
-        #self.__hp_0 = max(self.__hp_0 - dmg_0, 0)
-        #self.__hp_1 = max(self.__hp_1 - dmg_1, 0)
-        self.__hp_0 = max(self.__hp_0 - amount, 0)
+        self.__hp = max(self.__hp - amount, 0)
         if self.is_alive():
             return amount
         else:
             return -amount
+
+    def heal(self, amount: int) -> int:
+        if self.__hp + amount > DummyQubitSet.__HP:
+            amount = DummyQubitSet.__HP - self.__hp
+        self.__hp += amount
+        return amount

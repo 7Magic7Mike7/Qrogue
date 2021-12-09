@@ -12,6 +12,7 @@ from game.callbacks import CallbackPack
 from game.controls import Controls, Pausing, Keys
 from game.map.map import Map
 from game.map.navigation import Direction
+from game.map.tutorial import Tutorial
 from util.config import PathConfig, ColorConfig, CheatConfig, GameplayConfig, Config
 from util.game_simulator import GameSimulator
 from util.key_logger import KeyLogger
@@ -54,6 +55,11 @@ class QrogueCUI(py_cui.PyCUI):
         self.__init_keys()
 
         self.__state_machine.change_state(State.Menu, None)
+        self.__game_started = False
+
+    @property
+    def simulating(self) -> bool:
+        return self.__simulator is not None
 
     def start(self):
         self.render()
@@ -68,12 +74,28 @@ class QrogueCUI(py_cui.PyCUI):
             path += ".qrkl"
         try:
             self.__simulator = GameSimulator(self.__controls, path, in_keylog_folder=True)
+            self.__menu.simulate_with_seed(self.__simulator.seed)
             # go back to the original position of the cursor and start the game
-            super(QrogueCUI, self)._handle_key_presses(self.__controls.selection_left)
-            #super(QrogueCUI, self)._handle_key_presses(self.__controls.selection_left)
+            super(QrogueCUI, self)._handle_key_presses(self.__controls.selection_up)
+            super(QrogueCUI, self)._handle_key_presses(self.__controls.selection_up)
             super(QrogueCUI, self)._handle_key_presses(self.__controls.action)
+            if self.__simulator.version == Config.version():
+                __space = "Space"
+                Popup.message("Starting Simulation", f"You started a run with \nseed = {self.__simulator.seed}\n"
+                                                     f"recorded at {self.__simulator.time}.\n"
+                                                     f"Press {ColorConfig.highlight_key(__space)} to execute the "
+                                                     "simulation step by step. Alternatively, if you keep it pressed "
+                                                     "the simulation will be executed automatically with short delays "
+                                                     "after each step until you let go of Space again.")
+            else:
+                Popup.message("Simulating other version", "You try to simulate the run of a different game version.\n"
+                                                          f"Your version: {Config.version()}\n"
+                                                          f"Version you try to simulate: {self.__simulator.version}\n"
+                                                          "This is not supported and can cause problems. Only "
+                                                          "continue if you know what you do! Else close this popup "
+                                                          "and press ESC to abort the simulation.")
         except FileNotFoundError:
-            Logger.instance().error(f"File \"{path}\" could not be found!", only_popup=True)
+            Logger.instance().show_error(f"File \"{path}\" could not be found!")
 
     def _ready_for_input(self, key_pressed: int, gameplay: bool = True) -> bool:
         if self.__last_key != key_pressed:
@@ -91,14 +113,14 @@ class QrogueCUI(py_cui.PyCUI):
         return False
 
     def _handle_key_presses(self, key_pressed):
+        if key_pressed == py_cui.keys.KEY_CTRL_Q:
+            super(QrogueCUI, self)._handle_key_presses(py_cui.keys.KEY_ESCAPE)
         if self.__simulator is None:
             if self._ready_for_input(key_pressed, gameplay=True):
                 if key_pressed == py_cui.keys.KEY_ESCAPE:
                     pass    # ignore ESC because this makes you leave the CUI
-                elif key_pressed == py_cui.keys.KEY_CTRL_Q:
-                    super(QrogueCUI, self)._handle_key_presses(py_cui.keys.KEY_ESCAPE)
                 else:
-                    if GameplayConfig.log_keys():
+                    if GameplayConfig.log_keys() and self.__game_started and not self.simulating:
                         KeyLogger.instance().log(self.__controls, key_pressed)
                     super(QrogueCUI, self)._handle_key_presses(key_pressed)
         elif key_pressed == self.__controls.get(Keys.Escape):
@@ -173,7 +195,7 @@ class QrogueCUI(py_cui.PyCUI):
                 # Here we handle mouse click events globally, or pass them to the UI element to handle
                 elif key_pressed == curses.KEY_MOUSE:
                     self._logger.info('Detected mouse click')
-                    
+
                     valid_mouse_event = True
                     try:
                         id, x, y, _, mouse_event = curses.getmouse()
@@ -359,8 +381,11 @@ class QrogueCUI(py_cui.PyCUI):
         self.apply_widget_set(self.__menu)
 
     def __start_gameplay(self, map: Map) -> None:
-        Pausing(map.player_tile.player, self.__pause_game)
+        Pausing(self.__pause_game)
+        self.__pause.set_data(map.player_tile.player)   # needed for the HUD
         self.__state_machine.change_state(State.Explore, map)
+        self.__game_started = True
+        KeyLogger(map.seed)     # the seed used to build the Map
 
     def __end_of_gameplay(self) -> None:
         self.switch_to_menu(None)
@@ -376,14 +401,12 @@ class QrogueCUI(py_cui.PyCUI):
     def __start_boss_fight(self, player: PlayerActor, boss: Boss, direction: Direction):
         self.__state_machine.change_state(State.BossFight, (player, boss))
 
-    def switch_to_pause(self, data: PlayerActor) -> None:
-        if data is not None:
-            player = data
-            self.__pause.set_data(player)
+    def switch_to_pause(self, data=None) -> None:
         self.apply_widget_set(self.__pause)
 
-    def __pause_game(self, player: PlayerActor) -> None:
-        self.__state_machine.change_state(State.Pause, player)
+    def __pause_game(self) -> None:
+        self.__state_machine.change_state(State.Pause, None)
+        Tutorial.show_pause_tutorial()
 
     def switch_to_explore(self, data) -> None:
         if data is not None:
@@ -458,8 +481,10 @@ class QrogueCUI(py_cui.PyCUI):
     def __fight_details(self) -> None:
         if self.__fight.details.use() and self.__cur_widget_set is self.__fight:
             self.move_focus(self.__fight.choices.widget, auto_press_buttons=False)
+            self.__fight.choices.validate_index()   # somehow it can happen that the index is out of bounds after
+                                                    # coming back from details which is why we validate it now
             self.__fight.details.render_reset()
-            self.render()# render the whole widget_set for updating the StateVectors and the circuit
+            self.render()   # render the whole widget_set for updating the StateVectors and the circuit
 
     def __boss_fight_choices(self) -> None:
         if self.__boss_fight.choices.use() and self.__cur_widget_set is self.__boss_fight:
@@ -469,6 +494,8 @@ class QrogueCUI(py_cui.PyCUI):
     def __boss_fight_details(self) -> None:
         if self.__boss_fight.details.use() and self.__cur_widget_set is self.__boss_fight:
             self.move_focus(self.__boss_fight.choices.widget, auto_press_buttons=False)
+            self.__boss_fight.choices.validate_index()  # somehow it can happen that the index is out of bounds after
+                                                        # coming back from details which is why we validate it now
             self.__boss_fight.details.render_reset()
             self.render()   # render the whole widget_set for updating the StateVectors and the circuit
 
@@ -480,6 +507,8 @@ class QrogueCUI(py_cui.PyCUI):
     def __riddle_details(self) -> None:
         if self.__riddle.details.use() and self.__cur_widget_set is self.__riddle:
             self.move_focus(self.__riddle.choices.widget, auto_press_buttons=False)
+            self.__riddle.choices.validate_index()   # somehow it can happen that the index is out of bounds after
+                                                    # coming back from details which is why we validate it now
             self.__riddle.details.render_reset()
             self.render()   # render the whole widget_set for updating the StateVectors and the circuit
 
@@ -491,9 +520,11 @@ class QrogueCUI(py_cui.PyCUI):
     def __shop_buy(self) -> None:
         if self.__shop.buy.use() and self.__cur_widget_set is self.__shop:
             self.move_focus(self.__shop.inventory.widget, auto_press_buttons=False)
+            self.__shop.inventory.validate_index()   # somehow it can happen that the index is out of bounds after
+                                                     # coming back from details which is why we validate it now
             self.__shop.details.render_reset()
             self.__shop.buy.render_reset()
-            self.__shop.buy.clear_text()
+            #self.__shop.buy.clear_text() # not needed since render_reset does this for second SelectionWidgets
             self.render()
 
 
@@ -538,4 +569,4 @@ class StateMachine:
         elif self.__cur_state == State.BossFight:
             self.__renderer.switch_to_boss_fight(data)
         elif self.__cur_state == State.Pause:
-            self.__renderer.switch_to_pause(data)
+            self.__renderer.switch_to_pause()
