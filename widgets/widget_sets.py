@@ -207,7 +207,7 @@ class MenuWidgetSet(MyWidgetSet):
         self.__start_simulation()
 
     def __options(self) -> None:
-        Popup.message("TODO", "The options are not implemented yet!")
+        Popup.message("Gameplay Config", GameplayConfig.to_file_text())
 
     def __exit(self) -> None:
         self.__stop()

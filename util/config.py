@@ -78,7 +78,8 @@ class PathConfig:
                 while data:
                     yield data
                     data = file.read(buffer_size)
-        return None
+        else:
+            raise FileNotFoundError(f"There is no such key log file: {path}")
 
     @staticmethod
     def read(file_name: str, in_base_path: bool = True) -> str:
