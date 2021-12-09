@@ -3,6 +3,7 @@
 - consider space in backpack when buying from shop
 - place collectible on the ground if you cannot pack a reward in your backpack?
 - access Backpack (Inventory)
+- new main menu
 
 # Tweaks #
 - key input pauses?
