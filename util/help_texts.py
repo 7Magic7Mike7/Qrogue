@@ -93,6 +93,8 @@ class _HL:
     arrow_keys = CC.highlight_key("Arrow Keys")
     space = CC.highlight_key("Space")
     p = CC.highlight_key("P")
+    ctrl_q = CC.highlight_key("CTRL+Q")
+    q = CC.highlight_key("Q")
 
     # tiles
     DOOR_TILE = CC.highlight_tile("-")
@@ -119,7 +121,9 @@ class HelpText:
         HelpTextType.Controls:
             f"Move with the {_HL.arrow_keys}\n"
             f"Close Popups and select with {_HL.space}\n"
-            f"Pause the game by pressing {_HL.p}",
+            f"Pause the game by pressing {_HL.p}\n\n"
+            f"Should you ever get stuck you can force-quit the game by pressing {_HL.ctrl_q} and then {_HL.q}. This "
+            "will still save the logs so it is the preferred option over simply closing the window!",
 
         HelpTextType.Fight:
             f"{_HL.one_parenthesis} In the middle of the screen you see 3 {_HL.state_vectors}. The left one (Current "
@@ -161,7 +165,7 @@ class HelpText:
             f"buy it.\n"
             f"{_HL.leave} obviously makes you leave the {_HL.shop}. You can always {_HL.reenter} it later if you want!",
 
-        HelpTextType.BossFight:
+        HelpTextType.BossFight: # todo make more generic
             f"Now it's getting {_HL.serious}! You are fighting against {_HL.bell}. For the {_HL.state} you need to reach to "
             f"defeat Bell your two {_HL.qubits} will always have to be the same: either {_HL.both0} or {_HL.both1}.\n"
             f"This is called {_HL.entanglement}.\n\n"

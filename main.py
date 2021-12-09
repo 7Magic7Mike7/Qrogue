@@ -31,6 +31,7 @@ if return_code == 0:
     # flush after the player stopped playing
     Logger.instance().flush()
     KeyLogger.instance().flush_if_useful()
+    print("[Qrogue] Successfully flushed all logs and shut down the game without any problems. See you next time!")
 else:
     print(f"[Qrogue] Error #{return_code}:")
     if return_code == 1:

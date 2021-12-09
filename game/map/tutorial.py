@@ -214,6 +214,7 @@ class Tutorial:
     @staticmethod
     def show_pause_tutorial() -> bool:
         if Tutorial.__SHOW_PAUSE_TUTORIAL:
+            Popup.message("Pause", HelpText.get(HelpTextType.Pause))
             Tutorial.__SHOW_PAUSE_TUTORIAL = False
             return True
         return False

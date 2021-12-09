@@ -308,8 +308,6 @@ class PauseMenuWidgetSet(MyWidgetSet):
 
     def set_data(self, player: PlayerActor):
         self.__hud.set_data(player)
-        if Tutorial.show_pause_tutorial():
-            Popup.message("Pause", HelpText.get(HelpTextType.Pause))
 
     def reset(self) -> None:
         self.__choices.render_reset()
@@ -399,7 +397,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         stv = self.add_block_label('Target StV', stv_row, 6, row_span=row_span, column_span=2, center=True)
         self.__stv_target = StateVectorWidget(stv, "Target State")
         qi_target = self.add_block_label('Qubit Info', stv_row, 8, row_span=row_span, column_span=1, center=True)
-        self.__qi_target = QubitInfoWidget(qi_target, left_aligned=True)
+        self.__qi_target = QubitInfoWidget(qi_target, left_aligned=False)
 
         circuit = self.add_block_label('Circuit', 6, 0, row_span=1, column_span=MyWidgetSet.NUM_OF_COLS, center=True)
         self.__circuit = CircuitWidget(circuit)

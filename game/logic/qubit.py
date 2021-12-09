@@ -80,6 +80,16 @@ class StateVector:
             return False
         return False
 
+    def to_string(self) -> str:
+        text = ""
+        for val in self.__amplitudes:
+            val = np.round(val, 2)
+            if val == 0:
+                text += "0\n"
+            else:
+                text += f"{val}\n"
+        return text
+
     def __str__(self) -> str:
         text = ""
         for val in self.__amplitudes:

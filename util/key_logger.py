@@ -14,7 +14,7 @@ class KeyLogger:
     __instance = None
 
     @staticmethod
-    def instance() -> "KeyLogger":
+    def instance() -> "KeyLogger":      # todo maybe choose a non-singelton pattern since it should be Run dependent?
         if KeyLogger.__instance is None:
             raise Exception("This singleton has not been initialized yet!")
         return KeyLogger.__instance

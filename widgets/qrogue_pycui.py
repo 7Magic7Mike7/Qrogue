@@ -12,6 +12,7 @@ from game.callbacks import CallbackPack
 from game.controls import Controls, Pausing, Keys
 from game.map.map import Map
 from game.map.navigation import Direction
+from game.map.tutorial import Tutorial
 from util.config import PathConfig, ColorConfig, CheatConfig, GameplayConfig, Config
 from util.game_simulator import GameSimulator
 from util.key_logger import KeyLogger
@@ -405,6 +406,7 @@ class QrogueCUI(py_cui.PyCUI):
 
     def __pause_game(self) -> None:
         self.__state_machine.change_state(State.Pause, None)
+        Tutorial.show_pause_tutorial()
 
     def switch_to_explore(self, data) -> None:
         if data is not None:

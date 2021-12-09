@@ -76,11 +76,11 @@ class Instruction(Collectible, ABC):
         text = f"{self.short_name()} ("
         for i in range(self.num_of_qubits - 1):
             if i < len(self._qargs):
-                text += f"{self._qargs[i]}, "
+                text += f"q{self._qargs[i]}, "
             else:
                 text += "?, "
         if self.num_of_qubits - 1 < len(self._qargs):
-            text += f"{self._qargs[self.num_of_qubits - 1]})"
+            text += f"q{self._qargs[self.num_of_qubits - 1]})"
         else:
             text += "?)"
         return text

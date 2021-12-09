@@ -200,14 +200,14 @@ class StateVectorWidget(Widget):
         self.__state_vector = None
         widget.add_text_color_rule("~.*~", ColorConfig.STV_HEADING_COLOR, 'contains', match_type='regex')
         if diff:
-            widget.add_text_color_rule("-?0j?", ColorConfig.CORRECT_AMPLITUDE_COLOR, "startswith", match_type="regex")
+            widget.add_text_color_rule("0", ColorConfig.CORRECT_AMPLITUDE_COLOR, "startswith", match_type="regex")
 
     def set_data(self, state_vector: StateVector) -> None:
         self.__state_vector = state_vector
 
     def render(self) -> None:
         if self.__state_vector is not None:
-            str_rep = f"~{self.__headline}~\n{self.__state_vector}"
+            str_rep = f"~{self.__headline}~\n{self.__state_vector.to_string()}"
             self.widget.set_title(str_rep)
 
     def render_reset(self) -> None:
