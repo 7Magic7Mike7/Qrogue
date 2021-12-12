@@ -5,10 +5,6 @@ from util.config import PathConfig, GameplayConfig, Config
 
 
 class KeyLogger:
-    HEADER = "Qrogue "
-    SEED_HEAD = "Seed="
-    TIME_HEAD = "Time="
-    CONFIG_HEAD = "[Config]"
     __BUFFER_SIZE = 1024
     __MIN_CONTENT_FOR_FLUSH = 167 + 20  # ~header size + minimum number of keystrokes to log
     __instance = None
@@ -28,11 +24,8 @@ class KeyLogger:
             # happens if there was already another run before the current one
             #raise Exception("This class is a singleton!")
             KeyLogger.__instance.flush(force=True)
-        self.__save_file, time = PathConfig.new_key_log_file(seed)
-        self.__buffer = f"{KeyLogger.HEADER}{Config.version()}\n"
-        self.__buffer += f"{KeyLogger.SEED_HEAD}{seed}\n"
-        self.__buffer += f"{KeyLogger.TIME_HEAD}{time}\n\n"
-        self.__buffer += f"{KeyLogger.CONFIG_HEAD}\n{GameplayConfig.to_file_text()}\n"
+        self.__save_file = PathConfig.new_key_log_file(seed)
+        self.__buffer = Config.get_log_head(seed)
 
         # self.flush(force=True) # don't immediately flush to avoid generating files without meaningful content
         KeyLogger.__instance = self

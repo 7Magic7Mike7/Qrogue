@@ -390,14 +390,28 @@ class GameplayConfig:
 
 class Config:   # todo make singleton and handle access to other configs?
     MAX_SEED = 1000000
-    __VERSION = "v0.1"
+    __VERSION = "v0.2"
     __GAME_CONFIG = "qrogue_game.config"
     __GAMEPLAY_HEAD = "[Gameplay]\n"
     __DEBUG = False
 
+    __HEADER = "Qrogue "
+    __SEED_HEAD = "Seed="
+    __TIME_HEAD = "Time="
+    __CONFIG_HEAD = "[Config]"
+
     @staticmethod
     def version() -> str:
         return Config.__VERSION
+
+    @staticmethod
+    def get_log_head(seed: int) -> str:
+        now_str = datetime.now().strftime("%d%m%Y_%H%M%S")
+        head = f"{Config.__HEADER}{Config.version()}\n"
+        head += f"{Config.__SEED_HEAD}{seed}\n"
+        head += f"{Config.__TIME_HEAD}{now_str}\n\n"
+        head += f"{Config.__CONFIG_HEAD}\n{GameplayConfig.to_file_text()}\n"
+        return head
 
     @staticmethod
     def config_file() -> str:

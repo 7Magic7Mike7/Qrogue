@@ -26,7 +26,7 @@ class Logger(py_cui.debug.PyCUILogger):
             self.__error_popup = None
             self.__save_file = PathConfig.new_log_file(seed)
             self.__buffer_size = 0
-            self.__buffer = []
+            self.__buffer = [Config.get_log_head(seed)]
             Logger.__instance = self
 
     def set_popup(self, message_popup_function: "void(str, str)", error_popup_function: "void(str, str)") -> None:
