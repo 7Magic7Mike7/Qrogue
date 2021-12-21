@@ -1,5 +1,5 @@
 from game.actors.enemy import Enemy
-from game.actors.player import Player
+from game.actors.robot import Robot
 from game.map.navigation import Direction
 
 
@@ -9,7 +9,7 @@ class SimpleCallback:
 
 
 class OnWalkCallback:
-    def __call__(self, *args: (Player, Enemy, Direction), **kwds: dict) -> None:
+    def __call__(self, *args: (Robot, Enemy, Direction), **kwds: dict) -> None:
         pass
 
 

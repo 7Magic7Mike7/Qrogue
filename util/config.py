@@ -1,3 +1,4 @@
+import enum
 import os
 from datetime import datetime
 
@@ -9,18 +10,28 @@ class PathConfig:
     __LOG_FOLDER = "logs"
     __KEY_LOG_FOLDER = "keylogs"
     __SCREEN_PRINTS_FOLDER = "screenprints"
+    __SAVE_DATA_FOLDER = "saves"
+
+    __SAVE_FILE_NUMERATION_SEPARATOR = "_"
+
+    @staticmethod
+    def __now_str() -> str:
+        return datetime.now().strftime("%d%m%Y_%H%M%S")
 
     @staticmethod
     def create_data_folder(base_path: str) -> None:
         log_path = os.path.join(base_path, PathConfig.__LOG_FOLDER)
         key_log_path = os.path.join(base_path, PathConfig.__KEY_LOG_FOLDER)
         screen_prints_path = os.path.join(base_path, PathConfig.__SCREEN_PRINTS_FOLDER)
+        save_data_path = os.path.join(base_path, PathConfig.__SAVE_DATA_FOLDER)
         if not os.path.exists(log_path):
             os.mkdir(log_path)
         if not os.path.exists(key_log_path):
             os.mkdir(key_log_path)
         if not os.path.exists(screen_prints_path):
             os.mkdir(screen_prints_path)
+        if not os.path.exists(save_data_path):
+            os.mkdir(save_data_path)
 
     @staticmethod
     def set_base_path() -> bool:
@@ -40,19 +51,40 @@ class PathConfig:
 
     @staticmethod
     def new_log_file(seed: int) -> str:
-        now_str = datetime.now().strftime("%d%m%Y_%H%M%S")
+        now_str = PathConfig.__now_str()
         return os.path.join(PathConfig.__LOG_FOLDER, f"{now_str}_seed{seed}.qrlog")
 
     @staticmethod
     def new_key_log_file(seed) -> (str, str):
-        now_str = datetime.now().strftime("%d%m%Y_%H%M%S")
-        return os.path.join(PathConfig.__KEY_LOG_FOLDER, f"{now_str}_seed{seed}.qrkl"), now_str
+        now_str = PathConfig.__now_str()
+        return os.path.join(PathConfig.__KEY_LOG_FOLDER, f"{now_str}_seed{seed}.qrkl")
 
     @staticmethod
     def new_screen_print(text: str):
-        now_str = datetime.now().strftime("%d%m%Y_%H%M%S")
+        now_str = PathConfig.__now_str()
         file_name = os.path.join(PathConfig.__SCREEN_PRINTS_FOLDER, f"{now_str}.qrsc")
         PathConfig.write(file_name, now_str + "\n" + text, True, True)
+
+    @staticmethod
+    def new_save_file(text: str):
+        now_str = PathConfig.__now_str()
+        num = 0
+        # todo list files of folder to find out the next number and if we delete a previous save
+        file_name = os.path.join(PathConfig.__SAVE_DATA_FOLDER,
+                                 f"qrogue-save{PathConfig.__SAVE_FILE_NUMERATION_SEPARATOR}{num}.qrsave")
+        PathConfig.write(file_name, now_str + "\n" + text, False, False)
+
+    @staticmethod
+    def find_latest_save_file() -> str:
+        folder = os.path.join(PathConfig.__BASE_PATH, PathConfig.__SAVE_DATA_FOLDER)
+        files = os.listdir(folder)
+        num = 0
+        for file in files:
+            file_ending_index = file.rindex(".qrsave")
+            cur_num = int(file[file.rindex(PathConfig.__SAVE_FILE_NUMERATION_SEPARATOR) + 1:file_ending_index])
+            if cur_num > num:
+                num = cur_num
+        return f"qrogue-save{PathConfig.__SAVE_FILE_NUMERATION_SEPARATOR}{num}.qrsave"
 
     @staticmethod
     def write(file_name: str, text: str, may_exist: bool = True, append: bool = False):
@@ -91,6 +123,8 @@ class PathConfig:
         if os.path.exists(path):
             with open(path, "r") as file:
                 content = file.read()
+        else:
+            raise FileNotFoundError(f"File \"{file_name}\" could not be found!")
         return content
 
     @staticmethod
@@ -100,8 +134,17 @@ class PathConfig:
             os.remove(path)
 
 
+class ColorCodes(enum.Enum):
+    TILE_HIGHLIGHT = "01"
+    OBJECT_HIGHLIGHT = "02"
+    WORD_HIGHLIGHT = "03"
+    KEY_HIGHLIGHT = "04"
+    SPACESHIP_FLOOR = "70"
+
+
 class ColorConfig:
-    SELECTION_HIGHLIGHT = py_cui.BLACK_ON_WHITE
+    CODE_WIDTH = 2
+    SELECTION_HIGHLIGHT = py_cui.BLACK_ON_WHITE # todo rename to fit the other names?
     QUBIT_INFO_COLOR = py_cui.CYAN_ON_BLACK
     STV_HEADING_COLOR = py_cui.CYAN_ON_BLACK
     CORRECT_AMPLITUDE_COLOR = py_cui.GREEN_ON_BLACK
@@ -432,7 +475,11 @@ class Config:   # todo make singleton and handle access to other configs?
         text += GameplayConfig.to_file_text()
 
         file_path = os.path.join(os.path.dirname(__file__), "..", "installer", "qrogue.config")
-        config_content = PathConfig.read(file_path, False).splitlines()
+        try:
+            config_content = PathConfig.read(file_path, False).splitlines()
+        except FileNotFoundError:
+            raise FileNotFoundError("Could not find the base config file qrogue.config\nPlease download the installer "
+                                    "folder again!")
         PathConfig.create_data_folder(config_content[1])
         path = os.path.join(config_content[1], Config.__GAME_CONFIG)
         with open(path, "x") as file:
@@ -446,7 +493,10 @@ class Config:   # todo make singleton and handle access to other configs?
         if not os.path.exists(os.path.join(PathConfig.base_path(), Config.__GAME_CONFIG)):
             Config.create()
 
-        config = PathConfig.read(Config.__GAME_CONFIG)
+        try:
+            config = PathConfig.read(Config.__GAME_CONFIG)
+        except FileNotFoundError:
+            raise FileNotFoundError("Could not load the game's config file!")
 
         gameplay_section = config.index(Config.__GAMEPLAY_HEAD) + len(Config.__GAMEPLAY_HEAD)
         gameplay_section = (gameplay_section, len(config))

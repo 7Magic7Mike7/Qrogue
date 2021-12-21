@@ -5,7 +5,6 @@ import sys
 
 from game.game import GameHandler
 from util.config import Config
-from util.key_logger import KeyLogger
 from util.logger import Logger
 
 
@@ -30,8 +29,6 @@ if return_code == 0:
 
     # flush after the player stopped playing
     Logger.instance().flush()
-    if KeyLogger.instance():
-        KeyLogger.instance().flush_if_useful()
     print("[Qrogue] Successfully flushed all logs and shut down the game without any problems. See you next time!")
 else:
     print(f"[Qrogue] Error #{return_code}:")

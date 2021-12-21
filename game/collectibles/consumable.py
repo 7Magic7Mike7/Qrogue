@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-#from game.actors.player import Player as PlayerActor
+#from game.actors.robot import Player as PlayerActor
 from game.collectibles.collectible import Collectible, CollectibleType
 
 

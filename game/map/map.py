@@ -1,6 +1,6 @@
 
 import game.map.tiles as tiles
-from game.actors.player import Player as PlayerActor
+from game.actors.robot import Robot
 from game.callbacks import CallbackPack
 from game.map.navigation import Coordinate, Direction
 from game.map.rooms import Room, Area
@@ -25,13 +25,13 @@ class Map:
         y = pos_of_room.y * (Area.UNIT_HEIGHT + 1) + pos_in_room.y
         return Coordinate(x, y)
 
-    def __init__(self, seed: int, rooms: "[[Room]]", player: PlayerActor, spawn_room: Coordinate, cbp: CallbackPack):
+    def __init__(self, seed: int, rooms: "[[Room]]", robot: Robot, spawn_room: Coordinate, cbp: CallbackPack):
         self.__seed = seed
         self.__rooms = rooms
-        self.__player = tiles.Player(player)
+        self.__robot = tiles.RobotTile(robot)
         self.__cbp = cbp
 
-        self.__player_pos = Map.__calculate_pos(spawn_room, Coordinate(Area.MID_X, Area.MID_Y))
+        self.__robot_pos = Map.__calculate_pos(spawn_room, Coordinate(Area.MID_X, Area.MID_Y))
         self.__cur_area = self.__rooms[spawn_room.y][spawn_room.x]
         self.__cur_area.enter(Direction.Center)
         self.__cur_area.make_visible()
@@ -49,12 +49,12 @@ class Map:
         return Map.WIDTH * (Area.UNIT_WIDTH + 1) - 1
 
     @property
-    def player_tile(self) -> tiles.Player:
-        return self.__player
+    def robot_tile(self) -> tiles.RobotTile:
+        return self.__robot
 
     @property
-    def player_pos(self) -> Coordinate:
-        return self.__player_pos
+    def robot_pos(self) -> Coordinate:
+        return self.__robot_pos
 
     def __get_area(self, x: int, y: int) -> (Area, tiles.Tile):
         """
@@ -107,26 +107,26 @@ class Map:
 
     def move(self, direction: Direction) -> bool:
         """
-        Tries to move the player into the given Direction.
-        :param direction: in which direction the player should move
-        :return: True if the player was able to move, False otherwise
+        Tries to move the robot into the given Direction.
+        :param direction: in which direction the robot should move
+        :return: True if the robot was able to move, False otherwise
         """
-        new_pos = self.__player_pos + direction
+        new_pos = self.__robot_pos + direction
         if new_pos.y < 0 or self.height <= new_pos.y or \
                 new_pos.x < 0 or self.width <= new_pos.x:
             return False
 
         area, tile = self.__get_area(new_pos.x, new_pos.y)
-        if tile.is_walkable(direction, self.__player.player):
+        if tile.is_walkable(direction, self.__robot.robot):
             if area != self.__cur_area:
                 self.__cur_area.leave(direction)
                 self.__cur_area = area
                 self.__cur_area.enter(direction)
 
             if isinstance(tile, tiles.WalkTriggerTile):
-                tile.on_walk(direction, self.player_tile.player)
+                tile.on_walk(direction, self.robot_tile.robot)
 
-            self.__player_pos = new_pos
+            self.__robot_pos = new_pos
             return True
         else:
             return False

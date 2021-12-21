@@ -20,7 +20,7 @@ from util.logger import Logger
 from util.my_random import MyRandom
 
 
-class PlayerAttributes:
+class _Attributes:
     """
     Is used as storage for a bunch of attributes of the player
     """
@@ -212,8 +212,8 @@ class BackpackIterator:
         raise StopIteration
 
 
-class Player(ABC):
-    def __init__(self, attributes: PlayerAttributes = PlayerAttributes(), backpack: Backpack = Backpack()):
+class Robot(ABC):
+    def __init__(self, attributes: _Attributes = _Attributes(), backpack: Backpack = Backpack()):
         # initialize qubit stuff (rows)
         self.__simulator = StatevectorSimulator()#ddsim.JKQProvider().get_backend('statevector_simulator')
         self.__stv = None
@@ -243,6 +243,10 @@ class Player(ABC):
     @property
     def key_count(self) -> int:
         return self.backpack.key_count
+
+    @abstractmethod
+    def get_img(self):
+        pass
 
     def use_key(self) -> bool:
         return self.backpack.use_key()
@@ -378,9 +382,9 @@ class Player(ABC):
         return list
 
 
-class DummyPlayer(Player):
+class Testbot(Robot):
     def __init__(self, seed: int):
-        attributes = PlayerAttributes(DummyQubitSet())
+        attributes = _Attributes(DummyQubitSet())
         backpack = Backpack(capacity=5)
 
         # add random gates and a HealthPotion
@@ -393,7 +397,7 @@ class DummyPlayer(Player):
             backpack.add(gate)
         backpack.place_in_pouch(consumable.HealthPotion(3))
 
-        super(DummyPlayer, self).__init__(attributes, backpack)
+        super(Testbot, self).__init__(attributes, backpack)
 
     def get_img(self):
-        return "P"
+        return "R"

@@ -1,8 +1,9 @@
 from abc import ABC, abstractmethod
 
+from py_cui import ColorRule
 from py_cui.widgets import BlockLabel
 
-from game.actors.player import Player as PlayerActor
+from game.actors.robot import Robot
 from game.logic.instruction import Instruction
 from game.logic.qubit import StateVector
 from game.map.map import Map
@@ -58,19 +59,19 @@ class SimpleWidget(Widget):
 class HudWidget(Widget):
     def __init__(self, widget: MyBaseWidget):
         super().__init__(widget)
-        self.__player = None
+        self.__robot = None
         self.__render_duration = None
 
-    def set_data(self, player:PlayerActor) -> None:
-        self.__player = player
+    def set_data(self, robot: Robot) -> None:
+        self.__robot = robot
 
     def update_render_duration(self, duration: float):
         self.__render_duration = duration * 1000
 
     def render(self) -> None:
-        if self.__player is not None:
-            text = f"{self.__player.cur_hp} HP   \t" \
-                   f"{self.__player.backpack.coin_count}$, {self.__player.backpack.key_count} keys"
+        if self.__robot is not None:
+            text = f"{self.__robot.cur_hp} HP   \t" \
+                   f"{self.__robot.backpack.coin_count}$, {self.__robot.backpack.key_count} keys"
             if self.__render_duration is not None:
                 text += f"\t\t{self.__render_duration:.2f} ms"
             self.widget.set_title(text)
@@ -82,23 +83,23 @@ class HudWidget(Widget):
 class CircuitWidget(Widget):
     def __init__(self, widget: MyBaseWidget):
         super().__init__(widget)
-        self.__player = None
+        self.__robot = None
         # highlight everything between {} (gates), |> (start) or <| (end)
         widget.add_text_color_rule("(\{.*?\}|\|.*?\>|\<.*?\|)", ColorConfig.CIRCUIT_COLOR, 'contains',
                                    match_type='regex')
 
-    def set_data(self, player: PlayerActor) -> None:
-        self.__player = player
+    def set_data(self, robot: Robot) -> None:
+        self.__robot = robot
 
     def render(self) -> None:
-        if self.__player is not None:
+        if self.__robot is not None:
             entry = "-" * (3 + Instruction.MAX_ABBREVIATION_LEN + 3)
-            row = [entry] * self.__player.circuit_space
+            row = [entry] * self.__robot.circuit_space
             rows = []
-            for i in range(self.__player.num_of_qubits):
+            for i in range(self.__robot.num_of_qubits):
                 rows.append(row.copy())
 
-            for i, inst in self.__player.circuit_enumerator():
+            for i, inst in self.__robot.circuit_enumerator():
                 for q in inst.qargs_iter():
                     inst_str = inst.abbreviation(q)
                     diff_len = Instruction.MAX_ABBREVIATION_LEN - len(inst_str)
@@ -178,10 +179,10 @@ class MapWidget(Widget):
                 rows.append(Area.void().get_img().join(south_hallways))
                 offset += Area.UNIT_HEIGHT + 1
 
-            # add player
-            x = self.__map.player_pos.x
-            y = self.__map.player_pos.y
-            rows[y] = rows[y][0:x] + self.__map.player_tile.get_img() + rows[y][x+1:]
+            # add robot
+            x = self.__map.robot_pos.x
+            y = self.__map.robot_pos.y
+            rows[y] = rows[y][0:x] + self.__map.robot_tile.get_img() + rows[y][x + 1:]
 
             self.widget.set_title("\n".join(rows))
 

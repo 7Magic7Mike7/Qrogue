@@ -8,7 +8,7 @@ from game.map import tiles
 from game.map.map import Map
 from game.map.navigation import Coordinate, Direction
 from game.map.rooms import Hallway, WildRoom, SpawnRoom, ShopRoom, RiddleRoom, GateRoom, BossRoom
-from game.actors.player import Player as PlayerActor
+from game.actors.robot import Robot
 from util.logger import Logger
 from util.my_random import MyRandom, RandomManager
 
@@ -532,14 +532,14 @@ class DungeonGenerator:
     def seed(self) -> int:
         return self.__layout.seed
 
-    def generate(self, player: PlayerActor, cbp: CallbackPack) -> (Map, bool):
+    def generate(self, robot: Robot, cbp: CallbackPack) -> (Map, bool):
         # Testing: seeds from 0 to 500_000 were successful
 
         rm = RandomManager.create_new()     # needed for WildRooms
         gate_factory = GateFactory.default()
         shop_factory = ShopFactory.default()
-        riddle_factory = RiddleFactory.default(player)
-        boss_factory = BossFactory.default(player)
+        riddle_factory = RiddleFactory.default(robot)
+        boss_factory = BossFactory.default(robot)
 
         gate = gate_factory.produce()
         riddle = riddle_factory.produce()
@@ -547,16 +547,16 @@ class DungeonGenerator:
         dungeon_boss = boss_factory.produce([gate])    # todo based on chance also add gates from riddle or shop_items?
 
         enemy_factories = [
-            EnemyFactory(player, cbp.start_fight, TargetDifficulty(
+            EnemyFactory(robot, cbp.start_fight, TargetDifficulty(
                 2, [pickup.Coin(2), pickup.Heart()]
             )),
-            EnemyFactory(player, cbp.start_fight, TargetDifficulty(
+            EnemyFactory(robot, cbp.start_fight, TargetDifficulty(
                 2, [pickup.Coin(1), pickup.Coin(2), pickup.Coin(2), pickup.Coin(3), pickup.Key(), pickup.Heart()]
             )),
-            EnemyFactory(player, cbp.start_fight, TargetDifficulty(
+            EnemyFactory(robot, cbp.start_fight, TargetDifficulty(
                 3, [pickup.Coin(1), pickup.Coin(5), pickup.Key(), pickup.Heart(), consumable.HealthPotion(2)]
             )),
-            EnemyFactory(player, cbp.start_fight, TargetDifficulty(
+            EnemyFactory(robot, cbp.start_fight, TargetDifficulty(
                 3, [pickup.Coin(1), pickup.Coin(1), consumable.HealthPotion(3)]
             )),
         ]
@@ -635,7 +635,7 @@ class DungeonGenerator:
                         if room:
                             rooms[y][x] = room
             if spawn_room:
-                my_map = Map(self.seed, rooms, player, spawn_room, cbp)
+                my_map = Map(self.seed, rooms, robot, spawn_room, cbp)
                 return my_map, True
             else:
                 return None, False

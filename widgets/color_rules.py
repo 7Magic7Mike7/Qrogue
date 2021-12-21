@@ -16,6 +16,7 @@ __color_manager = {
     TileCode.Player: py_cui.GREEN_ON_BLACK,
     TileCode.Enemy: py_cui.RED_ON_BLACK,
     TileCode.Boss: py_cui.BLACK_ON_RED,
+    TileCode.SpaceshipWalk: py_cui.BLACK_ON_WHITE,
 }
 def get_color(tile: TileCode) -> int:
     return __color_manager[tile]
@@ -108,7 +109,7 @@ class FragmentStorage:
 
 
 class MultiColorRenderer(py_cui.renderer.Renderer):
-    __FILE_NAME = "multi_color_debug.txt"
+    __FILE_NAME = "multi_color_debug.txt"       # todo remove?
 
     def __init__(self, root, stdscr, logger):
         super().__init__(root, stdscr, logger)

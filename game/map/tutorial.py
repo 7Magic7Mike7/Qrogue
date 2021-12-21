@@ -1,12 +1,13 @@
 from game.actors.factory import EnemyFactory, TargetDifficulty, DummyTargetDifficulty
 from game.actors.enemy import Enemy as EnemyActor
 from game.actors.boss import Boss as BossActor
-from game.actors.player import Player as PlayerActor, PlayerAttributes, Backpack
+from game.actors.robot import Robot as PlayerActor, Backpack, _Attributes
 from game.actors.riddle import Riddle
 from game.callbacks import OnWalkCallback, CallbackPack
 from game.collectibles import consumable
 from game.collectibles.collectible import ShopItem
 from game.collectibles import pickup
+from game.expedition import Expedition
 from game.logic.instruction import CXGate, HGate, XGate
 from game.logic.qubit import StateVector, DummyQubitSet
 from game.map import tiles
@@ -25,7 +26,7 @@ class TutorialQubitSet(DummyQubitSet):
         super(TutorialQubitSet, self).__init__(size=2)
 
 
-class TutorialAttributes(PlayerAttributes):
+class TutorialAttributes(_Attributes):  # todo remove later
     def __init__(self):
         super(TutorialAttributes, self).__init__(TutorialQubitSet(), space=3)
 
@@ -33,6 +34,9 @@ class TutorialAttributes(PlayerAttributes):
 class TutorialPlayer(PlayerActor):
     def __init__(self):
         super(TutorialPlayer, self).__init__(TutorialAttributes(), Backpack(content=[HGate(), XGate()]))
+
+    def get_img(self):
+        return "T"
 
 
 class TutorialDifficulty(TargetDifficulty):
@@ -204,7 +208,7 @@ class TutorialBossRoom(BossRoom):
                          tile_dic={Coordinate(1, Room.INNER_HEIGHT - 2): hint})
 
 
-class Tutorial:
+class Tutorial(Expedition):
     __SHOW_PAUSE_TUTORIAL = False
 
     @staticmethod
@@ -219,7 +223,8 @@ class Tutorial:
             return True
         return False
 
-    def __init__(self):
+    def __init__(self, cbp: CallbackPack):
+        super().__init__(cbp)
         Tutorial.__SHOW_PAUSE_TUTORIAL = True
         self.__cur_id = 0
         self.__fight = None
@@ -239,32 +244,28 @@ class Tutorial:
         self.__cur_id += 1
 
     def fight(self, player: PlayerActor, enemy: EnemyActor, direction: Direction):
-        self.__fight(player, enemy, direction)
+        self._cbp.start_fight(player, enemy, direction)
         if not self.__showed_fight_tutorial:
             Popup("Tutorial: Fight", HelpText.get(HelpTextType.Fight))
             self.__showed_fight_tutorial = True
 
     def riddle(self, player: PlayerActor, riddle: Riddle):
-        self.__riddle(player, riddle)
+        self._cbp.open_riddle(player, riddle)
         if not self.__showed_riddle_tutorial:
             Popup("Tutorial: Riddle", HelpText.get(HelpTextType.Riddle))
             self.__showed_riddle_tutorial = True
 
     def shop(self, player: PlayerActor, items: "list of ShopItems"):
-        self.__shop(player, items)
+        self._cbp.visit_shop(player, items)
         if not self.__showed_shop_tutorial:
             Popup("Tutorial: Shop", HelpText.get(HelpTextType.Shop))
             self.__showed_shop_tutorial = True
 
     def boss_fight(self, player: PlayerActor, boss: BossActor, direction: Direction):
-        self.__boss_fight(player, boss, direction)
+        self._cbp.start_boss_fight(player, boss, direction)
         Popup("Tutorial: Boss Fight", HelpText.get(HelpTextType.BossFight))
 
-    def build_tutorial_map(self, player: PlayerActor, cbp: CallbackPack) -> ([[Room]], Coordinate):
-        self.__fight = cbp.start_fight
-        self.__boss_fight = cbp.start_boss_fight
-        self.__riddle = cbp.open_riddle
-        self.__shop = cbp.visit_shop
+    def build_tutorial_map(self, player: PlayerActor) -> ([[Room]], Coordinate):
         w = [CC.highlight_object("Gate"), CC.highlight_object("Circuit"), CC.highlight_word("locked"),
              CC.highlight_object("Enemies"), CC.highlight_object("Key"), CC.highlight_word("number"),
              CC.highlight_word("group"), CC.highlight_word("entangled"), CC.highlight_word("all others will too"),
@@ -323,7 +324,7 @@ class Tutorial:
         spawn_y = 1
         width = Map.WIDTH
         height = Map.HEIGHT
-        factory = EnemyFactory(player, cbp.start_fight, TutorialDifficulty2())
+        factory = EnemyFactory(player, self._cbp.start_fight, TutorialDifficulty2())
 
         rooms = [[None for x in range(width)] for y in range(height)]
         rooms[spawn_y][spawn_x] = spawn
@@ -344,3 +345,10 @@ class Tutorial:
         rooms[2][3] = WildRoom(factory, chance=0.6, north_hallway=cwr2_hallway_south)
 
         return rooms, Coordinate(spawn_x, spawn_y)
+
+    def start(self) -> bool:
+        rooms, spawn_pos = self.build_tutorial_map(self._robot)
+        map = Map(self._seed, rooms, self._robot, spawn_pos, self._cbp)
+        self._cbp.start_gameplay(self._seed, self._robot, map)
+        Popup.message("Welcome to Qrogue! (scroll with arrow keys)", HelpText.get(HelpTextType.Welcome))
+        return True
