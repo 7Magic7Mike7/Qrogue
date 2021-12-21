@@ -8,17 +8,12 @@ from game.actors.robot import Testbot
 from game.callbacks import CallbackPack
 from game.expedition import Expedition
 from game.map import tiles
-from game.map.generator import DungeonGenerator
-from game.map.map import Map
 from game.map.navigation import Direction, Coordinate
 from game.map.tiles import WalkTriggerTile, TileCode
-from game.map.tutorial import Tutorial, TutorialPlayer
+from game.map.tutorial import Tutorial
 from game.save_data import SaveData
-from util.config import ColorCodes, ColorConfig
-from util.help_texts import HelpText, HelpTextType
+from util.config import ColorCode, ColorConfig
 from util.logger import Logger
-from util.my_random import RandomManager
-from widgets.my_popups import Popup
 from widgets.my_widgets import Widget, MyBaseWidget
 from widgets.widget_sets import MyWidgetSet
 
@@ -181,10 +176,12 @@ class SpaceshipWidget(Widget):
         self.__cur_expedition.set_seed(self.__seed)     # todo set in navigation field later
         self.__cur_expedition.set_robot(Testbot(self.__seed))   # todo set in workshop later
 
-
-        self.widget.add_text_color_rule('\.', ColorConfig.get(ColorCodes.SPACESHIP_FLOOR), 'contains', match_type='regex')
-        self.widget.add_text_color_rule('(P|R)', ColorConfig.get(ColorCodes.SPACESHIP_FLOOR), 'contains', match_type='regex')
-        self.widget.add_text_color_rule('(S|W|N)', ColorConfig.get(ColorCodes.SPACESHIP_FLOOR), 'contains', match_type='regex')
+        self.widget.add_text_color_rule('\.', ColorConfig.get_from_code(ColorCode.SPACESHIP_FLOOR), 'contains',
+                                        match_type='regex')
+        self.widget.add_text_color_rule('(P|R)', ColorConfig.get_from_code(ColorCode.SPACESHIP_FLOOR), 'contains',
+                                        match_type='regex')
+        self.widget.add_text_color_rule('(S|W|N)', ColorConfig.get_from_code(ColorCode.SPACESHIP_FLOOR), 'contains',
+                                        match_type='regex')
 
         #self.widget.activate_custom_draw()
 

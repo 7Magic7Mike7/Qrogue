@@ -266,7 +266,7 @@ class SelectionWidget(Widget):
         self.__index = 0
         self.__choices = []
         self.__callbacks = []
-        self.widget.add_text_color_rule(f"->", ColorConfig.SELECTION_HIGHLIGHT, 'contains', match_type='regex')
+        self.widget.add_text_color_rule(f"->", ColorConfig.SELECTION_COLOR, 'contains', match_type='regex')
 
     @property
     def num_of_choices(self) -> int:

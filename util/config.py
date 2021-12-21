@@ -134,17 +134,23 @@ class PathConfig:
             os.remove(path)
 
 
-class ColorCodes(enum.Enum):
+class ColorCode(enum.Enum):
     TILE_HIGHLIGHT = "01"
     OBJECT_HIGHLIGHT = "02"
     WORD_HIGHLIGHT = "03"
     KEY_HIGHLIGHT = "04"
     SPACESHIP_FLOOR = "70"
 
+    def __init__(self, code: str):
+        self.__code = code
+
+    def __str__(self):
+        return self.__code
+
 
 class ColorConfig:
     CODE_WIDTH = 2
-    SELECTION_HIGHLIGHT = py_cui.BLACK_ON_WHITE # todo rename to fit the other names?
+    SELECTION_COLOR = py_cui.BLACK_ON_WHITE
     QUBIT_INFO_COLOR = py_cui.CYAN_ON_BLACK
     STV_HEADING_COLOR = py_cui.CYAN_ON_BLACK
     CORRECT_AMPLITUDE_COLOR = py_cui.GREEN_ON_BLACK
@@ -152,18 +158,15 @@ class ColorConfig:
 
     ERROR_COLOR = py_cui.RED_ON_BLUE
     TEXT_HIGHLIGHT = "//"
-    REGEX_TEXT_HIGHLIGHT = "//"
+    REGEX_TEXT_HIGHLIGHT = "//"     # regex recognizable version of TEXT_HIGHLIGHT (some characters need escaping)
     HIGHLIGHT_WIDTH = len(TEXT_HIGHLIGHT)
-    CODE_WIDTH = 2
-    TILE_HIGHLIGHT = "01"
-    OBJECT_HIGHLIGHT = "02"
-    WORD_HIGHLIGHT = "03"
-    KEY_HIGHLIGHT = "04"
     __DIC = {
-        TILE_HIGHLIGHT: py_cui.WHITE_ON_BLACK,
-        OBJECT_HIGHLIGHT: py_cui.BLUE_ON_WHITE,
-        WORD_HIGHLIGHT: py_cui.RED_ON_WHITE,
-        KEY_HIGHLIGHT: py_cui.MAGENTA_ON_WHITE,
+        str(ColorCode.TILE_HIGHLIGHT): py_cui.WHITE_ON_BLACK,
+        str(ColorCode.OBJECT_HIGHLIGHT): py_cui.BLUE_ON_WHITE,
+        str(ColorCode.WORD_HIGHLIGHT): py_cui.RED_ON_WHITE,
+        str(ColorCode.KEY_HIGHLIGHT): py_cui.MAGENTA_ON_WHITE,
+
+        str(ColorCode.SPACESHIP_FLOOR): py_cui.BLACK_ON_WHITE,
     }
 
     @staticmethod
@@ -235,8 +238,8 @@ class ColorConfig:
         return character_removals
 
     @staticmethod
-    def __highlight(type: str, text) -> str:
-        return f"{ColorConfig.TEXT_HIGHLIGHT}{type}{text}{ColorConfig.TEXT_HIGHLIGHT}"
+    def colorize(color_code: ColorCode, text) -> str:
+        return f"{ColorConfig.TEXT_HIGHLIGHT}{color_code}{text}{ColorConfig.TEXT_HIGHLIGHT}"
 
     @staticmethod
     def highlight_tile(tile: str) -> str:
@@ -245,7 +248,7 @@ class ColorConfig:
         :param tile:
         :return:
         """
-        return ColorConfig.__highlight(ColorConfig.TILE_HIGHLIGHT, tile)
+        return ColorConfig.colorize(ColorCode.TILE_HIGHLIGHT, tile)
 
     @staticmethod
     def highlight_object(obj: str) -> str:
@@ -254,7 +257,7 @@ class ColorConfig:
         :param obj:
         :return:
         """
-        return ColorConfig.__highlight(ColorConfig.OBJECT_HIGHLIGHT, obj)
+        return ColorConfig.colorize(ColorCode.OBJECT_HIGHLIGHT, obj)
 
     @staticmethod
     def highlight_word(word: str) -> str:
@@ -263,7 +266,7 @@ class ColorConfig:
         :param word:
         :return:
         """
-        return ColorConfig.__highlight(ColorConfig.WORD_HIGHLIGHT, word)
+        return ColorConfig.colorize(ColorCode.WORD_HIGHLIGHT, word)
 
     @staticmethod
     def highlight_key(key: str) -> str:
@@ -272,14 +275,18 @@ class ColorConfig:
         :param key:
         :return:
         """
-        return ColorConfig.__highlight(ColorConfig.KEY_HIGHLIGHT, key)
+        return ColorConfig.colorize(ColorCode.KEY_HIGHLIGHT, key)
 
     @staticmethod
-    def get(char: str):
+    def get(char: str) -> int:
         try:
             return ColorConfig.__DIC[char]
         except KeyError:
             return ColorConfig.ERROR_COLOR
+
+    @staticmethod
+    def get_from_code(code: ColorCode) -> int:
+        return ColorConfig.get(str(code))
 
 
 class PopupConfig:
