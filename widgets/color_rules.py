@@ -13,7 +13,7 @@ __color_manager = {
     TileCode.FogOfWar: py_cui.CYAN_ON_BLACK,
     TileCode.Door: py_cui.CYAN_ON_BLACK,
     TileCode.Collectible: py_cui.CYAN_ON_BLACK,
-    TileCode.Player: py_cui.GREEN_ON_BLACK,
+    TileCode.Robot: py_cui.GREEN_ON_BLACK,
     TileCode.Enemy: py_cui.RED_ON_BLACK,
     TileCode.Boss: py_cui.BLACK_ON_RED,
     TileCode.SpaceshipWalk: py_cui.BLACK_ON_WHITE,
@@ -205,7 +205,7 @@ class ColorRules:
     @staticmethod
     def apply_map_rules(map_widget: MapWidget) -> None:
         w = map_widget.widget
-        w.add_text_color_rule('P', get_color(TileCode.Player), 'contains', match_type='regex')
+        w.add_text_color_rule('P', get_color(TileCode.Robot), 'contains', match_type='regex')
         w.add_text_color_rule('B', get_color(TileCode.Boss), 'contains', match_type='regex')
         w.add_text_color_rule('\d', get_color(TileCode.Enemy), 'contains', match_type='regex')
         w.add_text_color_rule('#', get_color(TileCode.Wall), 'contains', match_type='regex')

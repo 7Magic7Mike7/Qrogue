@@ -13,6 +13,7 @@ from game.collectibles.collectible import ShopItem
 from game.map.map import Map
 from game.map.navigation import Direction
 from game.map.tiles import RobotTile
+from game.save_data import SaveData
 from util.config import GameplayConfig, PathConfig, Config
 from util.help_texts import HelpText, HelpTextType
 from util.logger import Logger
@@ -31,6 +32,7 @@ class MyWidgetSet(WidgetSet, Renderable, ABC):
 
     NUM_OF_ROWS = 9
     NUM_OF_COLS = 9
+    BACK_STRING = "-Back-"
 
     def __init__(self, logger, root: py_cui.PyCUI, base_render_callback: "()"):
         super().__init__(MyWidgetSet.NUM_OF_ROWS, MyWidgetSet.NUM_OF_COLS, logger, root)
@@ -244,7 +246,7 @@ class PauseMenuWidgetSet(MyWidgetSet):
 
     def __options(self) -> bool:
         self.__details.set_data(data=(
-            ["Gameplay Config", "-Back-"],
+            ["Gameplay Config", MyWidgetSet.BACK_STRING],
             [self.__options_text]
         ))
         return True
@@ -259,7 +261,7 @@ class PauseMenuWidgetSet(MyWidgetSet):
 
     def __help(self) -> bool:
         self.__details.set_data(data=(
-            PauseMenuWidgetSet.__HELP_TEXTS[0] + ["-Back-"],
+            PauseMenuWidgetSet.__HELP_TEXTS[0] + [MyWidgetSet.BACK_STRING],
             [self.__help_text]
         ))
         return True
@@ -290,6 +292,67 @@ class PauseMenuWidgetSet(MyWidgetSet):
     def reset(self) -> None:
         self.__choices.render_reset()
         self.__details.render_reset()
+
+
+class WorkbenchWidgetSet(MyWidgetSet):
+    def __init__(self, logger, root: py_cui.PyCUI, base_render_callback: "()", continue_callback: ()):
+        super().__init__(logger, root, base_render_callback)
+        self.__save_data = None
+        self.__continue = continue_callback
+
+    def init_widgets(self) -> None:
+        robot_selection = self.add_block_label('Robot Selection', 0, 0, row_span=MyWidgetSet.NUM_OF_COLS, center=False)
+        self.__robot_selection = SelectionWidget(robot_selection, stay_selected=True)
+
+        robot_details = self.add_block_label('Robot Details', 0, 1, 3, 4, center=True)
+        self.__robot_info = SimpleWidget(robot_details)
+
+        available_upgrades = self.add_block_label('Upgrades', 4, 1, 2, 2, center=True)
+        self.__available_upgrades = SelectionWidget(available_upgrades, 4, is_second=True, stay_selected=False)
+
+    def set_data(self, save_data: SaveData):
+        self.__save_data = save_data
+        self.__robot_selection.set_data((
+            [robot.name for robot in save_data.available_robots()] + [MyWidgetSet.BACK_STRING],
+            [self.__details]
+        ))
+
+    def get_widget_list(self) -> "list of Widgets":
+        return [
+            self.__robot_selection,
+            self.__robot_info,
+            self.__available_upgrades,
+        ]
+
+    def get_main_widget(self) -> py_cui.widgets.Widget:
+        return self.__robot_selection.widget
+
+    def reset(self) -> None:
+        pass
+
+    @property
+    def selection(self) -> SelectionWidget:
+        return self.__robot_selection
+
+    @property
+    def upgrades(self) -> SelectionWidget:
+        return self.__available_upgrades
+
+    def __details(self, index: int) -> bool:
+        if self.__save_data:
+            robot = self.__save_data.get_robot(index)
+            if robot:
+                self.__robot_info.set_data(robot.description())
+                self.__available_upgrades.set_data(data=(
+                    ["Test", "Fuel"],
+                    [self.__upgrade],
+                ))
+            else:
+                self.__continue()
+        return True
+
+    def __upgrade(self, index: int) -> bool:
+        return True
 
 
 class ExploreWidgetSet(MyWidgetSet):
@@ -443,7 +506,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
     def __choices_adapt(self) -> bool:
         self._details.set_data(data=(
-            [instruction.selection_str() for instruction in self._robot.backpack] + ["-Back-"],
+            [instruction.selection_str() for instruction in self._robot.backpack] + [MyWidgetSet.BACK_STRING],
             [self.__choose_instruction]
         ))
         return True
@@ -484,7 +547,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         else:
             self._robot.use_instruction(self.__cur_instruction)
             self._details.set_data(data=(
-                [instruction.selection_str() for instruction in self._robot.backpack] + ["-Back-"],
+                [instruction.selection_str() for instruction in self._robot.backpack] + [MyWidgetSet.BACK_STRING],
                 [self.__choose_instruction]
             ))
         self.render()
@@ -529,7 +592,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
     def __choices_items(self) -> bool:
         if self._robot.backpack.num_of_available_items > 0:
             self._details.set_data(data=(
-                [consumable.to_string() for consumable in self._robot.backpack.pouch_iterator()] + ["-Back-"],
+                [consumable.to_string() for consumable in self._robot.backpack.pouch_iterator()] + [MyWidgetSet.BACK_STRING],
                 [self.__choose_item]
             ))
         else:
@@ -543,7 +606,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         # leave if there are no more consumables left, stay if we could consume another one
         if self._robot.backpack.num_of_available_items > 0:
             self._details.set_data(data=(
-                [consumable.to_string() for consumable in self._robot.backpack.pouch_iterator()] + ["-Back-"],
+                [consumable.to_string() for consumable in self._robot.backpack.pouch_iterator()] + [MyWidgetSet.BACK_STRING],
                 [self.__choose_item]
             ))
             self._details.render()
@@ -579,7 +642,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
     def __choices_help(self) -> bool:
         self._details.set_data(data=(
-            [instruction.name() for instruction in self._robot.backpack] + ["-Back-"],
+            [instruction.name() for instruction in self._robot.backpack] + [MyWidgetSet.BACK_STRING],
             [self.__show_help_popup]
         ))
         return True

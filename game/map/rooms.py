@@ -347,7 +347,7 @@ class SpecialRoom(Room, ABC):
 class SpawnRoom(Room):
     def __init__(self, tile_dic: "dic of Coordinate and Tile" = None, north_hallway: Hallway = None,
                  east_hallway: Hallway = None, south_hallway: Hallway = None, west_hallway: Hallway = None):
-        # todo add type to player; always spawn at center?
+        # todo add type to robot; always spawn at center?
         tile_list = Room.dic_to_tile_list(tile_dic)
         super().__init__(tile_list, north_hallway, east_hallway, south_hallway, west_hallway)
 
@@ -412,7 +412,7 @@ class GateRoom(SpecialRoom):
 
 
 class RiddleRoom(SpecialRoom):
-    def __init__(self, hallway: Hallway, direction: Direction, riddle: Riddle, open_riddle_callback: "void(Player, Riddle)",
+    def __init__(self, hallway: Hallway, direction: Direction, riddle: Riddle, open_riddle_callback: "void(Robot, Riddle)",
                  tile_dic: "dic of Coordinate and Tile" = None):
         super().__init__(hallway, direction, tile_dic)
         self._set_tile(Riddler(open_riddle_callback, riddle), Area.MID_X, Area.MID_Y)
@@ -423,7 +423,7 @@ class RiddleRoom(SpecialRoom):
 
 class ShopRoom(SpecialRoom):
     def __init__(self, hallway: Hallway, direction: Direction, inventory: "list of ShopItems",
-                 visit_shop_callback: "void(Player, list of ShopItems)", tile_dic: "dic of Coordinate and Tile" = None):
+                 visit_shop_callback: "void(Robot, list of ShopItems)", tile_dic: "dic of Coordinate and Tile" = None):
         super().__init__(hallway, direction, tile_dic)
         self._set_tile(ShopKeeper(visit_shop_callback, inventory), Area.MID_X, Area.MID_Y)
 

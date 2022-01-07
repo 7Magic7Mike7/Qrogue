@@ -1,7 +1,7 @@
-from game.actors.factory import EnemyFactory, TargetDifficulty, DummyTargetDifficulty
+from game.actors.factory import EnemyFactory, TargetDifficulty
 from game.actors.enemy import Enemy as EnemyActor
 from game.actors.boss import Boss as BossActor
-from game.actors.robot import Robot as PlayerActor, Backpack, _Attributes
+from game.actors.robot import Robot, LukeBot
 from game.actors.riddle import Riddle
 from game.callbacks import OnWalkCallback, CallbackPack
 from game.collectibles import consumable
@@ -9,7 +9,7 @@ from game.collectibles.collectible import ShopItem
 from game.collectibles import pickup
 from game.expedition import Expedition
 from game.logic.instruction import CXGate, HGate, XGate
-from game.logic.qubit import StateVector, DummyQubitSet
+from game.logic.qubit import StateVector
 from game.map import tiles
 from game.map.map import Map
 from game.map.navigation import Coordinate, Direction
@@ -19,24 +19,6 @@ from util.help_texts import HelpText, HelpTextType
 from util.my_random import MyRandom
 
 from widgets.my_popups import Popup, CommonPopups
-
-
-class TutorialQubitSet(DummyQubitSet):
-    def __init__(self):
-        super(TutorialQubitSet, self).__init__(size=2)
-
-
-class TutorialAttributes(_Attributes):  # todo remove later
-    def __init__(self):
-        super(TutorialAttributes, self).__init__(TutorialQubitSet(), space=3)
-
-
-class TutorialPlayer(PlayerActor):
-    def __init__(self):
-        super(TutorialPlayer, self).__init__(TutorialAttributes(), Backpack(content=[HGate(), XGate()]))
-
-    def get_img(self):
-        return "T"
 
 
 class TutorialDifficulty(TargetDifficulty):
@@ -75,9 +57,9 @@ class TutorialBoss(BossActor):
 
 
 class TutorialEnemyFactory(EnemyFactory):
-    def __init__(self, player: PlayerActor, start_fight_callback: OnWalkCallback):
+    def __init__(self, robot: Robot, start_fight_callback: OnWalkCallback):
         self.__difficulty = TutorialDifficulty()
-        super().__init__(player, start_fight_callback, self.__difficulty)
+        super().__init__(robot, start_fight_callback, self.__difficulty)
 
         self.__reward_index = 0
         self.__enemy_data = [
@@ -89,7 +71,7 @@ class TutorialEnemyFactory(EnemyFactory):
             (StateVector([1, 0, 0, 0]), pickup.Coin(2)),
         ]
 
-    def produce(self, player: PlayerActor, rm: MyRandom, flee_chance: float) -> EnemyActor:
+    def produce(self, robot: Robot, rm: MyRandom, flee_chance: float) -> EnemyActor:
         data = self.__enemy_data[self.__reward_index]
         enemy = TutorialEnemy(data[0], data[1])
         self.__reward_index = (self.__reward_index + 1) % len(self.__enemy_data)
@@ -114,18 +96,18 @@ class TutorialTile(tiles.Message):
             else:
                 return self._invisible
 
-    def is_walkable(self, direction: Direction, player: PlayerActor) -> bool:
+    def is_walkable(self, direction: Direction, robot: Robot) -> bool:
         if self.__blocks:
             if self.is_active():
-                return super(TutorialTile, self).is_walkable(direction, player)
+                return super(TutorialTile, self).is_walkable(direction, robot)
             else:
                 CommonPopups.TutorialBlocked.show()
                 return False
-        return super(TutorialTile, self).is_walkable(direction, player)
+        return super(TutorialTile, self).is_walkable(direction, robot)
 
-    def on_walk(self, direction: Direction, player: PlayerActor) -> None:
+    def on_walk(self, direction: Direction, robot: Robot) -> None:
         if self.is_active():
-            super(TutorialTile, self).on_walk(direction, player)
+            super(TutorialTile, self).on_walk(direction, robot)
             self.__blocks = False  # TutorialTiles should no longer affect the Player after they were activated
             if self.__progress is not None:
                 self.__progress()
@@ -135,10 +117,10 @@ class TutorialTile(tiles.Message):
 
 
 class CustomWildRoom(Room):
-    def __init__(self, player: PlayerActor, east_hallway: Hallway, west_hallway: Hallway,
-                 start_fight_callback: "void(EnemyActor, Direction, PlayerActor)", tutorial_tile: TutorialTile,
+    def __init__(self, robot: Robot, east_hallway: Hallway, west_hallway: Hallway,
+                 start_fight_callback: "void(EnemyActor, Direction, Robot)", tutorial_tile: TutorialTile,
                  blocking_tile: TutorialTile):
-        factory = TutorialEnemyFactory(player, start_fight_callback)
+        factory = TutorialEnemyFactory(robot, start_fight_callback)
         self.__enemies = []
         for i in range(Room.INNER_WIDTH):
             self.__enemies.append(tiles.Enemy(factory, self.get_entangled_tiles, id=1, amplitude=1))
@@ -243,29 +225,29 @@ class Tutorial(Expedition):
     def progress(self):
         self.__cur_id += 1
 
-    def fight(self, player: PlayerActor, enemy: EnemyActor, direction: Direction):
-        self._cbp.start_fight(player, enemy, direction)
+    def fight(self, robot: Robot, enemy: EnemyActor, direction: Direction):
+        self._cbp.start_fight(robot, enemy, direction)
         if not self.__showed_fight_tutorial:
             Popup("Tutorial: Fight", HelpText.get(HelpTextType.Fight))
             self.__showed_fight_tutorial = True
 
-    def riddle(self, player: PlayerActor, riddle: Riddle):
-        self._cbp.open_riddle(player, riddle)
+    def riddle(self, robot: Robot, riddle: Riddle):
+        self._cbp.open_riddle(robot, riddle)
         if not self.__showed_riddle_tutorial:
             Popup("Tutorial: Riddle", HelpText.get(HelpTextType.Riddle))
             self.__showed_riddle_tutorial = True
 
-    def shop(self, player: PlayerActor, items: "list of ShopItems"):
-        self._cbp.visit_shop(player, items)
+    def shop(self, robot: Robot, items: "list of ShopItems"):
+        self._cbp.visit_shop(robot, items)
         if not self.__showed_shop_tutorial:
             Popup("Tutorial: Shop", HelpText.get(HelpTextType.Shop))
             self.__showed_shop_tutorial = True
 
-    def boss_fight(self, player: PlayerActor, boss: BossActor, direction: Direction):
-        self._cbp.start_boss_fight(player, boss, direction)
+    def boss_fight(self, robot: Robot, boss: BossActor, direction: Direction):
+        self._cbp.start_boss_fight(robot, boss, direction)
         Popup("Tutorial: Boss Fight", HelpText.get(HelpTextType.BossFight))
 
-    def build_tutorial_map(self, player: PlayerActor) -> ([[Room]], Coordinate):
+    def build_tutorial_map(self, robot: Robot) -> ([[Room]], Coordinate):
         w = [CC.highlight_object("Gate"), CC.highlight_object("Circuit"), CC.highlight_word("locked"),
              CC.highlight_object("Enemies"), CC.highlight_object("Key"), CC.highlight_word("number"),
              CC.highlight_word("group"), CC.highlight_word("entangled"), CC.highlight_word("all others will too"),
@@ -324,11 +306,11 @@ class Tutorial(Expedition):
         spawn_y = 1
         width = Map.WIDTH
         height = Map.HEIGHT
-        factory = EnemyFactory(player, self._cbp.start_fight, TutorialDifficulty2())
+        factory = EnemyFactory(robot, self._cbp.start_fight, TutorialDifficulty2())
 
         rooms = [[None for x in range(width)] for y in range(height)]
         rooms[spawn_y][spawn_x] = spawn
-        rooms[1][1] = CustomWildRoom(player, cwr_hallway_east, spawn_hallway_east, self.fight,
+        rooms[1][1] = CustomWildRoom(robot, cwr_hallway_east, spawn_hallway_east, self.fight,
                                      TutorialTile(popups[2], 2, self.is_active, self.progress),
                                      TutorialTile(popups[4], 4, self.is_active, self.progress, blocks=True))
         rooms[2][0] = TutorialGateRoom(spawn_hallway_south, TutorialTile(popups[3], 3, self.is_active, self.progress))
@@ -347,6 +329,8 @@ class Tutorial(Expedition):
         return rooms, Coordinate(spawn_x, spawn_y)
 
     def start(self) -> bool:
+        self.set_robot(LukeBot())
+
         rooms, spawn_pos = self.build_tutorial_map(self._robot)
         map = Map(self._seed, rooms, self._robot, spawn_pos, self._cbp)
         self._cbp.start_gameplay(self._seed, self._robot, map)

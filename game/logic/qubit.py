@@ -41,13 +41,13 @@ class StateVector:
         if type(other) is not type(self):
             return False
         # other_value needs at least as many entries as self_value, more are allowed
-        #  (so the player can have more qubits than the enemy)
+        #  (so the robot can have more qubits than the enemy)
         if self.size > other.size:
             return False
         self_value = self.__amplitudes #self.to_value()
         other_value = other.__amplitudes #other.to_value()
         for i in range(len(self_value)):
-            p_min = self_value[i] - tolerance/2
+            p_min = self_value[i] - tolerance/2         # todo maybe tolerance doesn't work for imaginary numbers?
             p = other_value[i]
             p_max = self_value[i] + tolerance/2
             if not (p_min <= p <= p_max):
@@ -130,23 +130,6 @@ class QubitSet(ABC):
         :param amount: how much hp to heal
         :return: how much was actually healed (e.g. cannot exceed max health)
         """
-        pass
-
-
-class EmptyQubitSet(QubitSet):
-    def hp(self):
-        pass
-
-    def is_alive(self) -> bool:
-        return False
-
-    def size(self) -> int:
-        return 0
-
-    def damage(self, amount: int) -> int:
-        pass
-
-    def heal(self, amount: int) -> int:
         pass
 
 

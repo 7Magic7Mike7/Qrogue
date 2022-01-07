@@ -13,7 +13,7 @@ from game.collectibles import consumable
 from game.collectibles import pickup
 from game.collectibles.factory import GateFactory
 from game.logic.instruction import Instruction
-from game.logic.qubit import QubitSet, EmptyQubitSet, DummyQubitSet, StateVector
+from game.logic.qubit import QubitSet, DummyQubitSet, StateVector
 # from jkq import ddsim
 from util.config import CheatConfig, Config
 from util.logger import Logger
@@ -22,14 +22,14 @@ from util.my_random import MyRandom
 
 class _Attributes:
     """
-    Is used as storage for a bunch of attributes of the player
+    Is used as storage for a bunch of attributes of the robot
     """
 
-    def __init__(self, qubits: QubitSet = EmptyQubitSet(), space: int = 3):
+    def __init__(self, qubits: QubitSet = DummyQubitSet(), space: int = 3):
         """
 
-        :param qubits: the set of qubits the player is currently using
-        :param space: how many instructions the player can put on their circuit
+        :param qubits: the set of qubits the robot is currently using
+        :param space: how many instructions the robot can put on their circuit
         """
         self.__space = space
         self.__qubits = qubits
@@ -49,7 +49,7 @@ class _Attributes:
 
 class Backpack:
     """
-    Stores Instructions, Consumables and other Collectibles for the player to use.
+    Stores Instructions, Consumables and other Collectibles for the robot to use.
     """
     __CAPACITY = 5      # how many Instructions the Backpack can hold at once
     __POUCH_SIZE = 5    # how many Consumables the Backpack can hold at once
@@ -213,10 +213,11 @@ class BackpackIterator:
 
 
 class Robot(ABC):
-    def __init__(self, attributes: _Attributes = _Attributes(), backpack: Backpack = Backpack()):
+    def __init__(self, name: str, attributes: _Attributes = _Attributes(), backpack: Backpack = Backpack()):
         # initialize qubit stuff (rows)
         self.__simulator = StatevectorSimulator()#ddsim.JKQProvider().get_backend('statevector_simulator')
         self.__stv = None
+        self.__name = name
         self.__attributes = attributes
         self.__backpack = backpack
         self.__qubit_indices = []
@@ -233,6 +234,10 @@ class Robot(ABC):
         self.update_statevector()  # to initialize the statevector
 
     @property
+    def name(self) -> str:
+        return self.__name
+
+    @property
     def backpack(self) -> Backpack:
         return self.__backpack
 
@@ -246,6 +251,10 @@ class Robot(ABC):
 
     @abstractmethod
     def get_img(self):
+        pass
+
+    @abstractmethod
+    def description(self) -> str:
         pass
 
     def use_key(self) -> bool:
@@ -278,7 +287,7 @@ class Robot(ABC):
 
     def use_instruction(self, instruction: Instruction) -> bool:
         """
-        Tries to put the Instruction corresponding to the given index in the backpack into the player's circuit.
+        Tries to put the Instruction corresponding to the given index in the backpack into the robot's circuit.
         If the Instruction is already in-use (put onto the circuit) it is removed instead.
 
         :param instruction: the Instruction we want to use
@@ -319,7 +328,7 @@ class Robot(ABC):
     def get_available_instructions(self) -> [Instruction]:
         """
 
-        :return: a copy of all Instructions currently available to the player
+        :return: a copy of all Instructions currently available to the robot
         """
         return self.backpack.copy_gates()
 
@@ -333,7 +342,7 @@ class Robot(ABC):
         elif isinstance(collectible, Instruction):
             self.backpack.add(collectible)
         elif collectible.type is CollectibleType.Consumable:    # todo cannot use isInstance here because currently
-                                                        # todo Consumable needs to access the Player (circular import)
+                                                        # todo Consumable needs to access the Robot (circular import)
             self.backpack.place_in_pouch(collectible)
 
     def damage(self, target: StateVector = None, amount: int = 1) -> int:
@@ -397,7 +406,36 @@ class Testbot(Robot):
             backpack.add(gate)
         backpack.place_in_pouch(consumable.HealthPotion(3))
 
-        super(Testbot, self).__init__(attributes, backpack)
+        super(Testbot, self).__init__("Testbot", attributes, backpack)
 
     def get_img(self):
         return "R"
+
+    def description(self) -> str:
+        return "A Robot for testing, debugging etc."
+
+
+class LukeBot(Robot):
+    def __init__(self):
+        attributes = _Attributes()
+        backpack = Backpack()
+        super().__init__("Luke", attributes, backpack)
+
+    def get_img(self):
+        return "L"
+
+    def description(self) -> str:
+        return "The loyal Robot you start with. A true all-rounder - take good care of it!"
+
+
+class NilsBot(Robot):
+    def __init__(self):
+        attributes = _Attributes()
+        backpack = Backpack()
+        super().__init__("Nils", attributes, backpack)
+
+    def get_img(self):
+        return "N"
+
+    def description(self) -> str:
+        return "The second Robot for now."

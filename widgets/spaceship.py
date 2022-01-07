@@ -1,10 +1,8 @@
 import random
 
 import py_cui
-from py_cui import ColorRule
 
-from game.actors.robot import Robot as PlayerActor, Testbot
-from game.actors.robot import Testbot
+from game.actors.robot import Robot, Testbot
 from game.callbacks import CallbackPack
 from game.expedition import Expedition
 from game.map import tiles
@@ -32,7 +30,7 @@ ascii_spaceship = \
     r"              X-------------Xööööööööööööööööööö(                         /öööööööö|          " + "\n" \
     r"             /ööööööööööööööööööööööööööööööööööö\                       /ööööööööö|          " + "\n" \
     r"            /ööööööööööööööööööööööööööööööööööööö\                     /öööööööööö|          " + "\n" \
-    r"           /ööööööööööööööööööööööööööööööööööööööö--------------------Xööööööööööö|          " + "\n" \
+    r"           /ööööööööWöööööööööööööööööööööööööööööö--------------------Xööööööööööö|          " + "\n" \
     r"          |öööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööö|          " + "\n" \
     r"          |ööSööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööö|          " + "\n" \
     r"          |öööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööö|          " + "\n" \
@@ -48,7 +46,7 @@ ascii_spaceship = \
     r"                                |öööööööööööööööööööö)>                         \öö|          " + "\n" \
     r"                                 \ööööööööööööööööööö)>                          \ö|          " + "\n" \
     r"                                  \öööööööööööööööööö)>                           \)          " + "\n" \
-    r"                                   \ööööööööööööööööö)>                                       " + "\n" \
+    r"                                   \ööööööööGöööööööö)>                                       " + "\n" \
     r"                                    X---------------X                                         " + "\n" \
     r"                                                                                              " + "\n" \
 
@@ -69,7 +67,7 @@ class SpaceshipWallTile(tiles.Tile):
     def get_img(self):
         return self.__img
 
-    def is_walkable(self, direction: Direction, player: PlayerActor) -> bool:
+    def is_walkable(self, direction: Direction, robot: Robot) -> bool:
         return False
 
     def __str__(self):
@@ -86,7 +84,7 @@ class SpaceshipFreeWalkTile(tiles.Tile):
         #return ColorConfig.colorize(ColorCodes.SPACESHIP_FLOOR, self._invisible)
         return "."#self._invisible
 
-    def is_walkable(self, direction: Direction, player: PlayerActor) -> bool:
+    def is_walkable(self, direction: Direction, robot: Robot) -> bool:
         return True
 
     def __str__(self):
@@ -95,14 +93,16 @@ class SpaceshipFreeWalkTile(tiles.Tile):
 
 class SpaceshipTriggerTile(WalkTriggerTile):
     MAP_START_REPRESENTATION = "S"
+    MAP_WORKBENCH_REPRESENTATION = "W"
+    MAP_GATE_LIBRARY_REPRESENTATION = "G"
 
-    def __init__(self, character: str, callback: (Direction, PlayerActor)):
+    def __init__(self, character: str, callback: (Direction, Robot)):
         super().__init__(TileCode.SpaceshipTrigger)
         self.__img = character
         self.__callback = callback
 
-    def on_walk(self, direction: Direction, player: PlayerActor) -> None:
-        self.__callback(direction, player)
+    def on_walk(self, direction: Direction, robot: Robot) -> None:
+        self.__callback(direction, robot)
 
     def get_img(self):
         return self.__img
@@ -127,7 +127,7 @@ class OuterSpaceTile(tiles.Tile):
                 self.__is_star = True
             return self._invisible
 
-    def is_walkable(self, direction: Direction, player: PlayerActor) -> bool:
+    def is_walkable(self, direction: Direction, robot: Robot) -> bool:
         return False
 
     def __str__(self):
@@ -138,36 +138,26 @@ class SpaceshipWidget(Widget):
     WIDTH = ascii_spaceship.index("\n")
     HEIGHT = ascii_spaceship.count("\n")
 
-    def __init__(self, widget: MyBaseWidget, cbp: CallbackPack, seed: int):
+    def __init__(self, widget: MyBaseWidget, cbp: CallbackPack, seed: int, save_data: SaveData):
         super().__init__(widget)
 
-        self.__seed = seed
         self.__cbp = cbp
+        self.__seed = seed
+        self.__use_workbench = None
         self.__tiles = []
         row = []
-        for character in ascii_spaceship:               # todo later fix the gaps or add a blank WallTile
+        for character in ascii_spaceship:
             if character == "\n":
                 self.__tiles.append(row)
                 row = []
-                continue
-            elif character == SpaceshipFreeWalkTile.MAP_REPRESENTATION:
-                tile = SpaceshipFreeWalkTile()
-            elif character == OuterSpaceTile.MAP_REPRESENTATION:
-                tile = OuterSpaceTile()
-            elif character == SpaceshipWallTile.MAP_INVISIBLE_PRESENTATION:
-                tile = SpaceshipWallTile(" ")
-            elif character == SpaceshipTriggerTile.MAP_START_REPRESENTATION:
-                tile = SpaceshipTriggerTile("S", self.start_expedition)
             else:
-                tile = SpaceshipWallTile(character)
-            row.append(tile)
+                tile = self.__ascii_to_tile(character)
+                row.append(tile)
 
         self.__player_tile = None
         self.__player_pos = None
 
-        # todo load data
-        self.__save_data = SaveData()
-
+        self.__save_data = save_data
         if self.__save_data.played_tutorial():
             self.__cur_expedition = Expedition(self.__cbp)
         else:
@@ -185,6 +175,22 @@ class SpaceshipWidget(Widget):
 
         #self.widget.activate_custom_draw()
 
+    def __ascii_to_tile(self, character: str) -> tiles.Tile:
+        if character == SpaceshipFreeWalkTile.MAP_REPRESENTATION:
+            tile = SpaceshipFreeWalkTile()
+        elif character == OuterSpaceTile.MAP_REPRESENTATION:
+            tile = OuterSpaceTile()
+        elif character == SpaceshipWallTile.MAP_INVISIBLE_PRESENTATION:
+            tile = SpaceshipWallTile(" ")
+        elif character == SpaceshipTriggerTile.MAP_START_REPRESENTATION:
+            tile = SpaceshipTriggerTile(character, self.start_expedition)
+        elif character == SpaceshipTriggerTile.MAP_WORKBENCH_REPRESENTATION:
+            tile = SpaceshipTriggerTile(character, self.use_workbench)
+        #elif character == SpaceshipTriggerTile.MAP_GATE_LIBRARY_REPRESENTATION:
+        #    tile = SpaceshipTriggerTile(character, self.open_gate_library)
+        else:
+            tile = SpaceshipWallTile(character)
+        return tile
 
     @property
     def width(self) -> int:
@@ -194,9 +200,10 @@ class SpaceshipWidget(Widget):
     def height(self) -> int:
         return SpaceshipWidget.HEIGHT
 
-    def set_data(self, player: tiles.RobotTile) -> None:
-        self.__player_tile = player
+    def set_data(self, data: (tiles.RobotTile, ())) -> None:
+        self.__player_tile = data[0]
         self.__player_pos = Coordinate(x=25, y=16)
+        self.__use_workbench = data[1]
         self.render()
 
     def render(self) -> None:
@@ -236,21 +243,26 @@ class SpaceshipWidget(Widget):
         else:
             return False
 
-    def start_expedition(self, direction: Direction, player: PlayerActor):
+    def start_expedition(self, direction: Direction, robot: Robot):
         if not self.__cur_expedition.start():
             Logger.instance().throw(ValueError(f"Illegal state! No expedition can be started for seed = {self.__seed}!"))
 
+    def use_workbench(self, direction: Direction, robot: Robot):
+        self.__use_workbench(self.__save_data)
+
 
 class SpaceshipWidgetSet(MyWidgetSet):
-    def __init__(self, logger, root: py_cui.PyCUI, base_render_callback: "()", cbp: CallbackPack, seed: int):
+    def __init__(self, logger, root: py_cui.PyCUI, base_render_callback: "()", cbp: CallbackPack, seed: int,
+                 save_data: SaveData):
         self.__cbp = cbp
         self.__seed = seed
+        self.__save_data = save_data
         super().__init__(logger, root, base_render_callback)
 
     def init_widgets(self) -> None:
         spaceship = self.add_block_label("Dynamic Spaceship", 0, 0, MyWidgetSet.NUM_OF_ROWS, MyWidgetSet.NUM_OF_COLS,
                                           center=True)  # later it can be True, but not for testing
-        self.__spaceship = SpaceshipWidget(spaceship, self.__cbp, self.__seed)
+        self.__spaceship = SpaceshipWidget(spaceship, self.__cbp, self.__seed, self.__save_data)
 
     def get_widget_list(self) -> "list of Widgets":
         return [
@@ -263,8 +275,8 @@ class SpaceshipWidgetSet(MyWidgetSet):
     def reset(self) -> None:
         pass
 
-    def set_data(self, player: tiles.RobotTile):
-        self.__spaceship.set_data(player)
+    def set_data(self, data: (tiles.RobotTile, ())):
+        self.__spaceship.set_data(data)
 
     def move_up(self):
         if self.__spaceship.move(Direction.Up):

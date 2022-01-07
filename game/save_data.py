@@ -1,3 +1,4 @@
+from game.actors import robot
 from util.config import PathConfig, Config
 from util.logger import Logger
 
@@ -16,9 +17,21 @@ class SaveData:
         #                                                "files so we can fix the issue as soon as possible. Thank you!"))
         # todo parse content
         self.__expeditions_finished = 0
+        self.__available_robots = [
+            robot.LukeBot(),
+            robot.NilsBot(),
+        ]
 
     def played_tutorial(self) -> bool:
         return self.__expeditions_finished <= 0 and Config.debugging()
+
+    def available_robots(self) -> iter:
+        return iter(self.__available_robots)
+
+    def get_robot(self, index: int) -> robot.Robot:
+        if 0 <= index < len(self.__available_robots):
+            return self.__available_robots[index]
+        return None
 
     def save(self):
         data = ""

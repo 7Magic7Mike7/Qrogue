@@ -10,11 +10,11 @@ from game.actors.riddle import Riddle
 from game.actors.robot import Robot, Testbot
 from game.callbacks import CallbackPack
 from game.controls import Controls, Pausing, Keys
-from game.expedition import Expedition
 from game.map import tiles
 from game.map.map import Map
 from game.map.navigation import Direction
 from game.map.tutorial import Tutorial
+from game.save_data import SaveData
 from util.config import PathConfig, ColorConfig, CheatConfig, GameplayConfig, Config
 from util.game_simulator import GameSimulator
 from util.key_logger import KeyLogger
@@ -23,7 +23,7 @@ from widgets.color_rules import MultiColorRenderer
 from widgets.my_popups import Popup, MultilinePopup
 from widgets.spaceship import SpaceshipWidgetSet
 from widgets.widget_sets import ExploreWidgetSet, FightWidgetSet, MyWidgetSet, ShopWidgetSet, \
-    RiddleWidgetSet, BossFightWidgetSet, PauseMenuWidgetSet, MenuWidgetSet
+    RiddleWidgetSet, BossFightWidgetSet, PauseMenuWidgetSet, MenuWidgetSet, WorkbenchWidgetSet
 
 
 class QrogueCUI(py_cui.PyCUI):
@@ -43,13 +43,18 @@ class QrogueCUI(py_cui.PyCUI):
         self.__last_key = None
         self.__focused_widget = None
 
+        self.__save_data = SaveData() # todo load data
+
         cbp = CallbackPack(self.__start_expedition, self.__start_fight, self.__start_boss_fight, self.__open_riddle,
                            self.__visit_shop)
-        self.__spaceship = SpaceshipWidgetSet(Logger.instance(), self, self.__render, cbp, self.__seed)
         self.__menu = MenuWidgetSet(self.__render, Logger.instance(), self, self.__start_playing, self.stop,
                                     self.__choose_simulation)
         self.__pause = PauseMenuWidgetSet(self.__render, Logger.instance(), self, self.__general_continue,
                                           self.switch_to_menu)
+
+        self.__spaceship = SpaceshipWidgetSet(Logger.instance(), self, self.__render, cbp, self.__seed, self.__save_data)
+        self.__workbench = WorkbenchWidgetSet(Logger.instance(), self, self.__render, self.__continue_spaceship)
+
         self.__explore = ExploreWidgetSet(self.__render, Logger.instance(), self)
         self.__fight = FightWidgetSet(self.__render, Logger.instance(), self, self.__continue_explore, self.__end_of_gameplay)
         self.__boss_fight = BossFightWidgetSet(self.__render, Logger.instance(), self, self.__continue_explore,
@@ -309,6 +314,7 @@ class QrogueCUI(py_cui.PyCUI):
         # all selections
         selection_widgets = [
             self.__menu.selection,
+            self.__workbench.selection, self.__workbench.upgrades,
             self.__fight.choices, self.__fight.details,
             self.__boss_fight.choices, self.__boss_fight.details,
             self.__shop.inventory, self.__shop.buy,
@@ -322,6 +328,9 @@ class QrogueCUI(py_cui.PyCUI):
             widget.add_key_command(self.__controls.selection_down, my_widget.down)
             widget.add_key_command(self.__controls.selection_left, my_widget.left)
 
+        # menu
+        self.__menu.selection.widget.add_key_command(self.__controls.action, self.__use_menu_selection)
+
         # spaceship
         w = self.__spaceship.get_main_widget()
         w.add_key_command(self.__controls.move_up, self.__spaceship.move_up)
@@ -329,8 +338,9 @@ class QrogueCUI(py_cui.PyCUI):
         w.add_key_command(self.__controls.move_down, self.__spaceship.move_down)
         w.add_key_command(self.__controls.move_left, self.__spaceship.move_left)
 
-        # menu
-        self.__menu.selection.widget.add_key_command(self.__controls.action, self.__use_menu_selection)
+        # workbench
+        self.__workbench.selection.widget.add_key_command(self.__controls.action, self.__workbench_selection)
+        self.__workbench.upgrades.widget.add_key_command(self.__controls.action, self.__workbench_upgrades)
 
         # pause
         self.__pause.choices.widget.add_key_command(self.__controls.action, self.__pause_choices)
@@ -392,13 +402,25 @@ class QrogueCUI(py_cui.PyCUI):
 
     def __start_playing(self):
         Pausing(self.__pause_game)
-        self.switch_to_spaceship(None)
+        self.__state_machine.change_state(State.Spaceship, self.__save_data)
 
     def switch_to_spaceship(self, data=None):
         # todo maybe data is the save data?
         self.apply_widget_set(self.__spaceship)
-        player_tile = tiles.RobotTile(Testbot(0))  # todo take real values
-        self.__spaceship.set_data(player_tile)
+        if data:
+            player_tile = tiles.RobotTile(Testbot(0))  # todo take real values
+            self.__spaceship.set_data((player_tile, self.__use_workbench))
+
+    def __continue_spaceship(self) -> None:
+        self.__state_machine.change_state(State.Spaceship, None)
+        print("continue spaceship")
+
+    def __use_workbench(self, save_data: SaveData):
+        self.__state_machine.change_state(State.Workbench, save_data)
+
+    def switch_to_workbench(self, data=None):
+        self.__workbench.set_data(self.__save_data)
+        self.apply_widget_set(self.__workbench)
 
     def switch_to_menu(self, data=None) -> None:
         self.__menu.new_seed()
@@ -486,6 +508,16 @@ class QrogueCUI(py_cui.PyCUI):
         if self.__menu.selection.use() and self.__cur_widget_set is self.__menu:
             self.render()
 
+    def __workbench_selection(self) -> None:
+        if self.__workbench.selection.use() and self.__cur_widget_set is self.__workbench:
+            self.move_focus(self.__workbench.upgrades.widget, auto_press_buttons=False)
+            self.render()
+
+    def __workbench_upgrades(self) -> None:
+        if self.__workbench.upgrades.use() and self.__cur_widget_set is self.__workbench:
+            self.move_focus(self.__workbench.selection.widget, auto_press_buttons=False)
+            self.render()
+
     def __pause_choices(self) -> None:
         if self.__pause.choices.use() and self.__cur_widget_set is self.__pause:
             self.move_focus(self.__pause.details.widget, auto_press_buttons=False)
@@ -562,6 +594,7 @@ class State(Enum):
     BossFight = 6
 
     Spaceship = 7
+    Workbench = 8
 
 
 class StateMachine:
@@ -599,3 +632,6 @@ class StateMachine:
 
         elif self.__cur_state == State.Spaceship:
             self.__renderer.switch_to_spaceship(data)
+        elif self.__cur_state == State.Workbench:
+            self.__renderer.switch_to_workbench(data)
+            Logger.instance().debug("changing to Workbench")

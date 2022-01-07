@@ -19,9 +19,9 @@ class SelectionCallback:
 
 
 class CallbackPack:
-    def __init__(self, start_gameplay: "(Map)", start_fight: "(Player, Enemy, Direction)",
-                 start_boss_fight: "(Player, Boss, Direction)", open_riddle: "(Player, Riddle)",
-                 visit_shop: "(Player, list of ShopItems"):
+    def __init__(self, start_gameplay: "(Map)", start_fight: "(Robot, Enemy, Direction)",
+                 start_boss_fight: "(Robot, Boss, Direction)", open_riddle: "(Robot, Riddle)",
+                 visit_shop: "(Robot, list of ShopItems"):
         self.__start_gameplay = start_gameplay
         self.__start_fight = start_fight
         self.__start_boss_fight = start_boss_fight

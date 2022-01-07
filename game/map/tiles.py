@@ -27,7 +27,7 @@ class TileCode(Enum):
     Obstacle = 2
     Door = 4
 
-    Player = 20
+    Robot = 20
     Enemy = 30
     Boss = 40
 
@@ -305,7 +305,7 @@ class Collectible(WalkTriggerTile):
 
 class RobotTile(Tile):
     def __init__(self, robot: Robot):
-        super().__init__(TileCode.Player)
+        super().__init__(TileCode.Robot)
         self.__robot = robot
 
     def get_img(self):

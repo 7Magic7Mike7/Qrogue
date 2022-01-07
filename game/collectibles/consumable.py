@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-#from game.actors.robot import Player as PlayerActor
+#from game.actors.robot import Robot
 from game.collectibles.collectible import Collectible, CollectibleType
 
 
@@ -14,8 +14,8 @@ class Consumable(Collectible, ABC):
     def charges_left(self) -> int:
         return self._charges
 
-    def consume(self, player: "PlayerActor") -> bool:
-        if self.on_consumption(player):
+    def consume(self, robot: "Robot") -> bool:
+        if self.on_consumption(robot):
             self._charges -= 1
             return True
         return False
@@ -25,10 +25,10 @@ class Consumable(Collectible, ABC):
         return int(sum([Consumable.__DEFAULT_PRICE / (i+1) for i in range(self._charges)]))
 
     @abstractmethod
-    def on_consumption(self, player: "PlayerActor") -> bool:
+    def on_consumption(self, robot: "Robot") -> bool:
         """
 
-        :param player: the player that consumed this Consumable
+        :param robot: the robot that consumed this Consumable
         :return: whether we could successfully consume a charge or not
         """
         pass
@@ -43,15 +43,15 @@ class HealthPotion(Consumable):
         super(HealthPotion, self).__init__(charges=2)
         self.__amount = heal_amount
         self.__hp_gained = 0
-        self.__player = None
+        self.__robot = None
 
-    def on_consumption(self, player: "PlayerActor") -> bool:
-        self.__hp_gained = player.heal(self.__amount)
-        self.__player = player
+    def on_consumption(self, robot: "Robot") -> bool:
+        self.__hp_gained = robot.heal(self.__amount)
+        self.__robot = robot
         return True
 
     def effect_description(self) -> str:
-        return f"Healed {self.__player} by {self.__hp_gained} HP."  # todo change from player to player.qubit_set?
+        return f"Healed {self.__robot} by {self.__hp_gained} HP."  # todo change from robot to robot.qubit_set?
 
     def name(self) -> str:
         return "Health Potion"
