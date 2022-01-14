@@ -4,9 +4,9 @@ grammar QrogueDungeon;
 
 start  : HEADER layout rooms hallways stv_pools reward_pools ENDER;
 
-number : DIGIT | HALLWAY_ID | NUMBER ;
+integer : DIGIT | HALLWAY_ID | INTEGER ;
 imag_number : IMAG_NUMBER ;
-complex_number : SIGN? (imag_number | number (SIGN imag_number)?) ;
+complex_number : SIGN? (imag_number | (integer | FLOAT) (SIGN imag_number)?) ;
 
 // building the layout of the dungeon
 layout : LAYOUT HORIZONTAL_SEPARATOR* l_room_row (l_hallway_row l_room_row)* HORIZONTAL_SEPARATOR* ;
@@ -25,10 +25,10 @@ tile : DIGIT | 'c' | 't' | 'e' ;    // enemy, collectible, trigger, energy
 // further describing the tiles used in the room
 tile_descriptor : (enemy_descriptor | collectible_descriptor | trigger_descriptor | energy_descriptor) ;
 enemy_descriptor : DIGIT draw_strategy? POOL_ID (draw_strategy? POOL_ID)?;    // enemy, id of statevector pool, id of reward pool
-collectible_descriptor : 'c' draw_strategy? POOL_ID number? ; // id of reward pool to draw from, number of rewards to draw (note: template pools like *key provide "normal" collectibles)
-collectible : ('key' number | 'coin' number | 'health' number | 'gate' number) ;
-trigger_descriptor : 't' number ;   // id of the event to trigger
-energy_descriptor : 'e' number ;    // amount
+collectible_descriptor : 'c' draw_strategy? POOL_ID integer? ; // id of reward pool to draw from, number of rewards to draw (note: template pools like *key provide "normal" collectibles)
+collectible : ('key' integer | 'coin' integer | 'health' integer | 'gate' integer) ;
+trigger_descriptor : 't' integer ;   // id of the event to trigger
+energy_descriptor : 'e' integer ;    // amount
 
 // describing the hallways used in the layout (except for the default one '==')
 hallways : HALLWAYS hallway*;
@@ -40,7 +40,8 @@ draw_strategy : RANDOM_DRAW | ORDERED_DRAW ;    // default is random draw, becau
 
 stv_pools : STV_POOLS 'default' statevectors ('custom' stv_pool+)? ;    // default pools are for enemies without defined pools
 stv_pool : POOL_ID statevectors ('default_rewards' POOL_ID)?;     // id, pool of statevectors, id of default reward pool
-statevectors : ('random' | 'ordered') '[' stv (LIST_SEPARATOR stv)* ']' ;
+statevectors : draw_strategy (POOL_ID | stvs) ;
+stvs : '[' stv (LIST_SEPARATOR stv)* ']' ;
 stv :  '[' complex_number (LIST_SEPARATOR complex_number)* ']';
 
 reward_pools : REWARD_POOLS 'default' default_reward_pool ('custom' reward_pool+)? ;    // default pools are for enemies without defined pools
@@ -54,17 +55,19 @@ collectibles : '[' collectible (LIST_SEPARATOR collectible)* ']' ;
 // [ ]      for highlighting headlines and grouping lists
 // < >      to mark the beginning and the end of the dungeon
 // _        to mark the use of predefined template rooms or hallways, _0 is always the non-existing/empty one
-// .        .. is used for an empty field in the map layout
+// .        .. is used for an empty field in the map layout or as comma for floats
 // =        == is used for the non-existing hallway
 // ~ | #    separators for Layout and Rooms for visual indications
 // :        to mark the beginning of a room's content
 // + -      signs for numbers
 // ;        optical separation, e.g. can be use to separate things without a new line
+// *        marks the beginning of a pool id (inspired by pointers)
 
 // general token
 DIGIT : [0-9] ;
-NUMBER : DIGIT DIGIT DIGIT+ ;
-IMAG_NUMBER : DIGIT* 'j' ;
+INTEGER : DIGIT DIGIT DIGIT+ ;
+FLOAT : DIGIT? '.' DIGIT+ ;
+IMAG_NUMBER : (DIGIT* | FLOAT) 'j' ;
 SIGN : '-' | '+' ;
 CHARACTER_LOW : [a-z] ;
 CHARACTER_UP : [A-Z] ;
@@ -93,7 +96,7 @@ RANDOM_DRAW : 'random' ;
 
 // ids
 ROOM_ID : ('_' | CHARACTER) CHARACTER ;
-HALLWAY_ID :'==' | ('_' | DIGIT) DIGIT ;   // '==' default (closed, no entanglement), same as _1 but with better visuals
+HALLWAY_ID : '==' | ('_' | DIGIT) DIGIT ;   // '==' default (closed, no entanglement), same as _1 but with better visuals
 POOL_ID : '*' (CHARACTER | DIGIT)+ ;
 
 // ignored characters (whitespace and comments)
