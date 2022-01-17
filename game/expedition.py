@@ -1,6 +1,8 @@
+from dungeon_editor.parser.QrogueGrammarListener import TextBasedDungeonGenerator
 from game.actors.robot import Robot
 from game.callbacks import CallbackPack
-from game.map.generator import DungeonGenerator
+from game.map.generator import RandomDungeonGenerator
+from util.config import PathConfig
 
 
 class Expedition:
@@ -28,8 +30,11 @@ class Expedition:
         self.__robot = robot
 
     def start(self) -> bool:
-        generator = DungeonGenerator(self.__seed)
-        map, success = generator.generate(self.__robot, self.__cbp)
+        #generator = RandomDungeonGenerator(self.__seed)
+        #map, success = generator.generate(self.__robot, self.__cbp, None)
+        generator = TextBasedDungeonGenerator(self.__seed)
+        text = PathConfig.read_dungeon("example1")
+        map, success = generator.generate(self.__robot, self.__cbp, text)
         if success:
             self.__cbp.start_gameplay(self.__seed, self.__robot, map)
             return True

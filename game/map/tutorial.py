@@ -304,9 +304,9 @@ class Tutorial(Expedition):
         spawn = SpawnRoom(spawn_dic, east_hallway=spawn_hallway_east, south_hallway=spawn_hallway_south)
         spawn_x = 0
         spawn_y = 1
-        width = Map.WIDTH
-        height = Map.HEIGHT
-        factory = EnemyFactory(robot, self._cbp.start_fight, TutorialDifficulty2())
+        width = Map.MAX_WIDTH
+        height = Map.MAX_HEIGHT
+        factory = EnemyFactory(self._cbp.start_fight, TutorialDifficulty2())
 
         rooms = [[None for x in range(width)] for y in range(height)]
         rooms[spawn_y][spawn_x] = spawn

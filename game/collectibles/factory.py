@@ -1,23 +1,76 @@
 from game.collectibles.collectible import Collectible, ShopItem
 from game.collectibles import consumable, pickup
 from game.logic import instruction as gates
-from util.my_random import RandomManager
+from util.logger import Logger
+from util.my_random import RandomManager, MyRandom
 
 
 class CollectibleFactory:
     def __init__(self, pool: "list of Collectibles") -> None:
+        if pool is None or len(pool) < 1:
+            Logger.instance().throw(f"invalid pool for CollectibleFactory: {pool}")
         self.__pool = pool
         self.__rm = RandomManager.create_new()
+        self.__order_index = -1
 
-    def produce(self) -> Collectible:
-        return self.__rm.get_element(self.__pool)
+    @property
+    def pool_copy(self) -> [Collectible]:
+        return self.__pool.copy()
 
-    def produce_multiple(self, num_of_elements: int, unique_elements: bool = True) -> [Collectible]:
-        if unique_elements:
-            pool = self.__pool.copy()
-            return [self.__rm.get_element(pool, remove=True) for i in range(num_of_elements)]
+    def __produce(self, rm: MyRandom, remove: bool = False):
+        if rm:
+            return rm.get_element(self.__pool, remove=remove)
         else:
-            return [self.__rm.get_element(self.__pool, remove=False) for i in range(num_of_elements)]
+            self.__order_index += 1
+            if self.__order_index >= len(self.__pool):
+                self.__order_index = 0
+            elem = self.__pool[self.__order_index]
+            if remove:
+                self.__pool.remove(elem)
+            return elem
+
+    def produce(self, rm: MyRandom) -> Collectible:
+        return self.__produce(rm, remove=False)
+
+    def produce_multiple(self, rm: MyRandom, num_of_elements: int, unique_elements: bool = True) -> [Collectible]:
+        if unique_elements:
+            temp = self.pool_copy
+            elements = []
+            while len(elements) < num_of_elements:
+                elem = self.__produce(rm, remove=True)
+                if elem:
+                    elements.append(elem)
+                else:
+                    self.__pool = temp.copy()
+            self.__pool = temp
+            return elements
+        else:
+            return [self.__produce(rm, remove=False) for _ in range(num_of_elements)]
+
+
+class OrderedCollectibleFactory(CollectibleFactory):
+    """
+    Same as CollectibleFactory but instead of defaulting to random production this
+    class defaults to ordered production
+    """
+    @staticmethod
+    def from_factory(factory: CollectibleFactory):
+        return OrderedCollectibleFactory(factory.pool_copy)
+
+    def __init__(self, pool: "list of Collectibles"):
+        super().__init__(pool)
+
+    def produce(self, rm: MyRandom = None) -> Collectible:
+        if rm:
+            return super(OrderedCollectibleFactory, self).produce(rm)
+        else:
+            return super(OrderedCollectibleFactory, self).produce(None)
+
+    def produce_multiple(self, num_of_elements: int, unique_elements: bool = True, random: bool = False) -> [Collectible]:
+        if random:
+            return super(OrderedCollectibleFactory, self).produce_multiple(self.__rm, num_of_elements, unique_elements)
+        else:
+            return super(OrderedCollectibleFactory, self).produce_multiple(None, num_of_elements, unique_elements)
 
 
 class GateFactory:
@@ -54,14 +107,13 @@ class ShopFactory:
         self.__max_items = max_items
         self.__discount = discount
 
-        self.__rm = RandomManager.create_new()
-
-    def produce(self, num_of_items: int = 0) -> [ShopItem]:
+    def produce(self, rm: MyRandom, num_of_items: int = 0) -> [ShopItem]:
         """
         Produces a random list of ShopItems based on the factory's parameter. Said parameter are not changed allowing
         to produce multiple lists with the same factory. The only thing that obviously changes is the current seed of
         its random manager.
 
+        :param rm: decides about the randomness
         :param num_of_items: if set to 0 or less, takes a random number of items in the factory's [min, max[ range
         :return: a list of randomly picked ShopItems based on the factory's parameter
         """
@@ -69,26 +121,26 @@ class ShopFactory:
         special_items = self.__special_pool.copy()
         pickups = self.__common_pool.copy()
         if num_of_items <= 0:
-            num_of_items = self.__rm.get_int(self.__min_items, self.__max_items)
+            num_of_items = rm.get_int(self.__min_items, self.__max_items)
         quality_level = self.__quality_level
         while len(shop_items) <= num_of_items:
             if quality_level > 0:
                 # with a certain probability the next item will be a special one (1 is guaranteed at quality_level == 1)
-                gets_special = self.__rm.get() < 1.0 / quality_level
+                gets_special = rm.get() < 1.0 / quality_level
             else:
                 gets_special = False
 
             if gets_special and self.__special_pool is not None and len(special_items) > 0:
-                item = self.__rm.get_element(special_items, remove=True)
+                item = rm.get_element(special_items, remove=True)
             else:
-                item = self.__rm.get_element(pickups, remove=False)
+                item = rm.get_element(pickups, remove=False)
 
             # calculate the price with possibly a small variation
             if self.__discount:
                 price = round(item.default_price() / 2)
             else:
                 price_sigma = max(ShopItem.base_unit(), item.default_price() * 0.1)
-                price = item.default_price() + round(self.__rm.get(-price_sigma, +price_sigma))
+                price = item.default_price() + round(rm.get(-price_sigma, +price_sigma))
 
             shop_items.append(ShopItem(item, price))
             quality_level -= 1

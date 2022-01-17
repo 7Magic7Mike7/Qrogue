@@ -5,12 +5,27 @@ from datetime import datetime
 import py_cui
 
 
+class FileTypes(enum.Enum):
+    Log = ".qrlog"
+    KeyLog = ".qrkl"
+    ScreenPrint = ".qrsc"
+    Save = ".qrsave"
+    Dungeon = ".qrdg"
+    Templates = ".txt"
+
+
 class PathConfig:
     __BASE_PATH = ".."
     __LOG_FOLDER = "logs"
     __KEY_LOG_FOLDER = "keylogs"
     __SCREEN_PRINTS_FOLDER = "screenprints"
     __SAVE_DATA_FOLDER = "saves"
+    __DUNGEON_FOLDER = os.path.join("data", "dungeons")
+    __TEMPLATE_ROOMS = os.path.join("data", "rooms")
+    __TEMPLATE_HALLWAYS = os.path.join("data", "hallways")
+    __TEMPLATE_STV_POOLS = os.path.join("data", "stv_pools")
+    __TEMPLATE_REWARD_POOLS = os.path.join("data", "reward_pools")
+    __TEMPLATE_FILE = f"templates{FileTypes.Templates}"
 
     __SAVE_FILE_NUMERATION_SEPARATOR = "_"
 
@@ -52,17 +67,17 @@ class PathConfig:
     @staticmethod
     def new_log_file(seed: int) -> str:
         now_str = PathConfig.__now_str()
-        return os.path.join(PathConfig.__LOG_FOLDER, f"{now_str}_seed{seed}.qrlog")
+        return os.path.join(PathConfig.__LOG_FOLDER, f"{now_str}_seed{seed}{FileTypes.Log.value}")
 
     @staticmethod
     def new_key_log_file(seed) -> (str, str):
         now_str = PathConfig.__now_str()
-        return os.path.join(PathConfig.__KEY_LOG_FOLDER, f"{now_str}_seed{seed}.qrkl")
+        return os.path.join(PathConfig.__KEY_LOG_FOLDER, f"{now_str}_seed{seed}{FileTypes.KeyLog.value}")
 
     @staticmethod
     def new_screen_print(text: str):
         now_str = PathConfig.__now_str()
-        file_name = os.path.join(PathConfig.__SCREEN_PRINTS_FOLDER, f"{now_str}.qrsc")
+        file_name = os.path.join(PathConfig.__SCREEN_PRINTS_FOLDER, f"{now_str}{FileTypes.ScreenPrint.value}")
         PathConfig.write(file_name, now_str + "\n" + text, True, True)
 
     @staticmethod
@@ -71,7 +86,7 @@ class PathConfig:
         num = 0
         # todo list files of folder to find out the next number and if we delete a previous save
         file_name = os.path.join(PathConfig.__SAVE_DATA_FOLDER,
-                                 f"qrogue-save{PathConfig.__SAVE_FILE_NUMERATION_SEPARATOR}{num}.qrsave")
+                                 f"qrogue-save{PathConfig.__SAVE_FILE_NUMERATION_SEPARATOR}{num}{FileTypes.Save.value}")
         PathConfig.write(file_name, now_str + "\n" + text, False, False)
 
     @staticmethod
@@ -80,11 +95,11 @@ class PathConfig:
         files = os.listdir(folder)
         num = 0
         for file in files:
-            file_ending_index = file.rindex(".qrsave")
+            file_ending_index = file.rindex(FileTypes.Save.value)
             cur_num = int(file[file.rindex(PathConfig.__SAVE_FILE_NUMERATION_SEPARATOR) + 1:file_ending_index])
             if cur_num > num:
                 num = cur_num
-        return f"qrogue-save{PathConfig.__SAVE_FILE_NUMERATION_SEPARATOR}{num}.qrsave"
+        return f"qrogue-save{PathConfig.__SAVE_FILE_NUMERATION_SEPARATOR}{num}{FileTypes.Save.value}"
 
     @staticmethod
     def write(file_name: str, text: str, may_exist: bool = True, append: bool = False):
@@ -100,6 +115,8 @@ class PathConfig:
 
     @staticmethod
     def read_keylog_buffered(file_name: str, in_keylog_folder: bool = True, buffer_size: int = 1024) -> str:
+        if not file_name.endswith(FileTypes.KeyLog.value):
+            file_name += FileTypes.KeyLog.value
         if in_keylog_folder:
             path = PathConfig.base_path(os.path.join(PathConfig.__KEY_LOG_FOLDER, file_name))
         else:
@@ -112,6 +129,17 @@ class PathConfig:
                     data = file.read(buffer_size)
         else:
             raise FileNotFoundError(f"There is no such key log file: {path}")
+
+    @staticmethod
+    def read_dungeon(file_name: str, in_dungeon_folder: bool = True):
+        if not file_name.endswith(FileTypes.Dungeon.value):
+            file_name += FileTypes.Dungeon.value
+
+        if in_dungeon_folder:
+            path = PathConfig.base_path(os.path.join(PathConfig.__DUNGEON_FOLDER, file_name))
+        else:
+            path = file_name
+        return PathConfig.read(path, in_base_path=False)
 
     @staticmethod
     def read(file_name: str, in_base_path: bool = True) -> str:

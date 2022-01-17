@@ -397,12 +397,13 @@ class Testbot(Robot):
         backpack = Backpack(capacity=5)
 
         # add random gates and a HealthPotion
-        if MyRandom(seed).get() < 0.5:
+        rm = MyRandom(seed)
+        if rm.get() < 0.5:
             num_of_gates = 3
         else:
             num_of_gates = 4
         gate_factory = GateFactory.default()
-        for gate in gate_factory.produce_multiple(num_of_gates):
+        for gate in gate_factory.produce_multiple(rm, num_of_gates):
             backpack.add(gate)
         backpack.place_in_pouch(consumable.HealthPotion(3))
 
@@ -417,8 +418,19 @@ class Testbot(Robot):
 
 class LukeBot(Robot):
     def __init__(self):
-        attributes = _Attributes()
-        backpack = Backpack()
+        attributes = _Attributes(DummyQubitSet())
+        backpack = Backpack(capacity=5)
+
+        # add random gates and a HealthPotion
+        rm = MyRandom(1)
+        if rm.get() < 0.5:
+            num_of_gates = 3
+        else:
+            num_of_gates = 4
+        gate_factory = GateFactory.default()
+        for gate in gate_factory.produce_multiple(rm, num_of_gates):
+            backpack.add(gate)
+        backpack.place_in_pouch(consumable.HealthPotion(3))
         super().__init__("Luke", attributes, backpack)
 
     def get_img(self):
@@ -430,8 +442,19 @@ class LukeBot(Robot):
 
 class NilsBot(Robot):
     def __init__(self):
-        attributes = _Attributes()
-        backpack = Backpack()
+        attributes = _Attributes(DummyQubitSet())
+        backpack = Backpack(capacity=5)
+
+        # add random gates and a HealthPotion
+        rm = MyRandom(2)
+        if rm.get() < 0.5:
+            num_of_gates = 3
+        else:
+            num_of_gates = 4
+        gate_factory = GateFactory.default()
+        for gate in gate_factory.produce_multiple(rm, num_of_gates):
+            backpack.add(gate)
+        backpack.place_in_pouch(consumable.HealthPotion(3))
         super().__init__("Nils", attributes, backpack)
 
     def get_img(self):

@@ -1,3 +1,4 @@
+from typing import List
 
 import game.map.tiles as tiles
 from game.actors.robot import Robot
@@ -8,8 +9,8 @@ from util.logger import Logger
 
 
 class Map:
-    WIDTH = 7
-    HEIGHT = 3
+    MAX_WIDTH = 7
+    MAX_HEIGHT = 3
 
     @staticmethod
     def __calculate_pos(pos_of_room: Coordinate, pos_in_room: Coordinate) -> Coordinate:
@@ -25,11 +26,13 @@ class Map:
         y = pos_of_room.y * (Area.UNIT_HEIGHT + 1) + pos_in_room.y
         return Coordinate(x, y)
 
-    def __init__(self, seed: int, rooms: "[[Room]]", robot: Robot, spawn_room: Coordinate, cbp: CallbackPack):
+    def __init__(self, seed: int, rooms: List[List[Room]], robot: Robot, spawn_room: Coordinate, cbp: CallbackPack):
         self.__seed = seed
         self.__rooms = rooms
         self.__robot = tiles.RobotTile(robot)
         self.__cbp = cbp
+
+        self.__dimensions = Coordinate(len(rooms[0]), len(rooms))
 
         self.__robot_pos = Map.__calculate_pos(spawn_room, Coordinate(Area.MID_X, Area.MID_Y))
         self.__cur_area = self.__rooms[spawn_room.y][spawn_room.x]
@@ -41,12 +44,20 @@ class Map:
         return self.__seed
 
     @property
-    def height(self) -> int:
-        return Map.HEIGHT * (Area.UNIT_HEIGHT + 1) - 1
+    def width(self) -> int:
+        return self.__dimensions.x
 
     @property
-    def width(self) -> int:
-        return Map.WIDTH * (Area.UNIT_WIDTH + 1) - 1
+    def height(self) -> int:
+        return self.__dimensions.y
+
+    @property
+    def full_width(self) -> int:
+        return self.width * (Area.UNIT_WIDTH + 1) - 1
+
+    @property
+    def full_height(self) -> int:
+        return self.height * (Area.UNIT_HEIGHT + 1) - 1
 
     @property
     def robot_tile(self) -> tiles.RobotTile:
@@ -101,7 +112,7 @@ class Map:
             return room, room.at(x_mod, y_mod)
 
     def room_at(self, x: int, y: int) -> Room:
-        if 0 <= x < Map.WIDTH and 0 <= y < Map.HEIGHT:
+        if 0 <= x < self.width and 0 <= y < self.height:
             return self.__rooms[y][x]
         return None
 
@@ -112,8 +123,8 @@ class Map:
         :return: True if the robot was able to move, False otherwise
         """
         new_pos = self.__robot_pos + direction
-        if new_pos.y < 0 or self.height <= new_pos.y or \
-                new_pos.x < 0 or self.width <= new_pos.x:
+        if new_pos.y < 0 or self.full_height <= new_pos.y or \
+                new_pos.x < 0 or self.full_width <= new_pos.x:
             return False
 
         area, tile = self.__get_area(new_pos.x, new_pos.y)

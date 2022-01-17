@@ -1,10 +1,25 @@
 import math
+from typing import List, Dict
 
 from game.logic.instruction import Instruction
 from game.map.navigation import Coordinate
 from game.map.tiles import *
 from game.map.tiles import Enemy as EnemyTile
 from util.my_random import RandomManager as RM
+
+
+class AreaType(Enum):
+    Invalid = -1
+    Placeholder = 0
+    Hallway = 1
+    EmptyRoom = 2
+
+    SpawnRoom = 10
+    WildRoom = 11
+    ShopRoom = 12
+    RiddleRoom = 13
+    GateRoom = 14
+    BossRoom = 15
 
 
 class Area(ABC):
@@ -20,10 +35,11 @@ class Area(ABC):
     def void() -> Void:
         return Area.__VOID
 
-    def __init__(self, tile_matrix: "list[list[Tile]]"):
+    def __init__(self, type: AreaType, tile_matrix: "list[list[Tile]]"):
         self.__id = Area.__ID
         Area.__ID += 1
 
+        self.__type = type
         self.__tiles = tile_matrix
         self.__width = len(tile_matrix[0])
         self.__height = len(tile_matrix)
@@ -39,6 +55,18 @@ class Area(ABC):
     @property
     def _is_visible(self) -> bool:
         return self.__is_visible or CheatConfig.revealed_map()
+
+    @property
+    def _is_visible_value(self) -> bool:
+        return self.__is_visible
+
+    @property
+    def _is_in_sight(self) -> bool:
+        return self.__is_in_sight
+
+    @property
+    def type(self) -> AreaType:
+        return self.__type
 
     def _set_tile(self, tile: Tile, x: int, y: int) -> bool:
         """
@@ -115,7 +143,7 @@ class AreaPlaceholder(Area):
         else:
             # room
             self.__has_full_row = True
-        super(AreaPlaceholder, self).__init__([[Area.void()]])
+        super(AreaPlaceholder, self).__init__(AreaType.Placeholder, [[Area.void()]])
 
     def at(self, x: int, y: int, force: bool = False) -> Tile:
         return Area.void()
@@ -148,8 +176,12 @@ class Placeholder:
         return Placeholder.__VERTICAL
 
     @staticmethod
-    def room() -> AreaPlaceholder:
+    def pseudo_room() -> AreaPlaceholder:
         return Placeholder.__ROOM
+
+    @staticmethod
+    def empty_room() -> "Room":
+        return EmptyRoom()
 
 
 class Hallway(Area):
@@ -170,11 +202,11 @@ class Hallway(Area):
         if self.is_horizontal():
             missing_half = int((Area.UNIT_WIDTH - 3) / 2)
             row = [Void()] * missing_half + [Wall(), door, Wall()] + [Void()] * missing_half
-            super(Hallway, self).__init__([row])
+            super(Hallway, self).__init__(AreaType.Hallway, [row])
         else:
             missing_half = int((Area.UNIT_HEIGHT - 3) / 2)
             tiles = [[Void()]] * missing_half + [[Wall()], [door], [Wall()]] + [[Void()]] * missing_half
-            super(Hallway, self).__init__(tiles)
+            super(Hallway, self).__init__(AreaType.Hallway, tiles)
 
     def set_room(self, room: "Room", direction: Direction):
         """
@@ -223,6 +255,19 @@ class Hallway(Area):
         else:
             return self.__room2
 
+    def copy(self, new_direction: Direction = None):
+        if new_direction:
+            door = Door(new_direction, self.__door.locked, self.__door.opened)
+            # it doesn't make sense to copy room references for a new direction
+            return Hallway(door)
+        else:
+            door = Door(self.__door.direction, self.__door.locked, self.__door.opened)
+            hw = Hallway(door)
+            hw.__room1 = self.__room1
+            hw.__room2 = self.__room2
+            return hw
+
+
     def __str__(self) -> str:
         if self.is_horizontal():
             orientation = "-"
@@ -256,8 +301,8 @@ class Room(Area):
                                                        f"{len(tile_list)}!"))
         return tile_list
 
-    def __init__(self, tile_list: "list of Tiles", north_hallway: Hallway = None, east_hallway: Hallway = None,
-                 south_hallway: Hallway = None, west_hallway: Hallway = None):
+    def __init__(self, type: AreaType, tile_list: "list of Tiles", north_hallway: Hallway = None,
+                 east_hallway: Hallway = None, south_hallway: Hallway = None, west_hallway: Hallway = None):
         tiles = []
         room_top = [Wall()] * Area.UNIT_WIDTH
         tiles.append(room_top)
@@ -299,7 +344,7 @@ class Room(Area):
             self.__hallways[Direction.West] = west_hallway
             west_hallway.set_room(self, Direction.West)
 
-        super(Room, self).__init__(tiles)
+        super(Room, self).__init__(type, tiles)
 
     def get_hallway(self, direction: Direction, throw_error: bool = True) -> Hallway:
         if direction in self.__hallways:
@@ -323,8 +368,51 @@ class Room(Area):
         return self.abbreviation() + str(self._id)
 
 
+class CustomRoom(Room):
+    def __init__(self, type: AreaType, tile_matrix: List[List[Tile]], north_hallway: Hallway = None,
+                 east_hallway: Hallway = None, south_hallway: Hallway = None, west_hallway: Hallway = None):
+        self.__tile_matrix = tile_matrix
+        tile_list = []
+        for row in tile_matrix:
+            tile_list += row
+        super().__init__(type, tile_list, north_hallway, east_hallway, south_hallway, west_hallway)
+
+    def abbreviation(self) -> str:
+        return "CR"
+
+    def copy(self, hw_dic: Dict[Direction, Hallway]):
+        tile_matrix = []
+        for row in self.__tile_matrix:
+            row_copy = []
+            for tile in row:
+                if tile.code is TileCode.Enemy:
+                    row_copy.append(tile.copy())
+                else:
+                    row_copy.append(tile)
+            tile_matrix.append(row_copy)
+        new_room = CustomRoom(self.type, tile_matrix, hw_dic[Direction.North], hw_dic[Direction.East],
+                              hw_dic[Direction.South], hw_dic[Direction.West])
+        if self._is_visible_value:
+            new_room.make_visible()
+        elif self._is_in_sight:
+            new_room.in_sight()
+        return new_room
+
+    def make_visible(self):
+        # don't use Room's implementation but Area's
+        super(Room, self).make_visible()
+
+
+class EmptyRoom(CustomRoom):
+    def __init__(self):
+        super(EmptyRoom, self).__init__(AreaType.EmptyRoom, [[]])
+
+    def abbreviation(self) -> str:
+        return "ER"
+
+
 class SpecialRoom(Room, ABC):
-    def __init__(self, hallway: Hallway, direction: Direction, tile_dic: "dic of Coordinate and Tile"):
+    def __init__(self, type: AreaType, hallway: Hallway, direction: Direction, tile_dic: "dic of Coordinate and Tile"):
         """
 
         :param hallway:
@@ -334,14 +422,14 @@ class SpecialRoom(Room, ABC):
         tile_list = Room.dic_to_tile_list(tile_dic)
         if Hallway.is_first(direction):
             if hallway.connects_horizontally():
-                super(SpecialRoom, self).__init__(tile_list, east_hallway=hallway)
+                super(SpecialRoom, self).__init__(type, tile_list, east_hallway=hallway)
             else:
-                super(SpecialRoom, self).__init__(tile_list, south_hallway=hallway)
+                super(SpecialRoom, self).__init__(type, tile_list, south_hallway=hallway)
         else:
             if hallway.connects_horizontally():
-                super(SpecialRoom, self).__init__(tile_list, west_hallway=hallway)
+                super(SpecialRoom, self).__init__(type, tile_list, west_hallway=hallway)
             else:
-                super(SpecialRoom, self).__init__(tile_list, north_hallway=hallway)
+                super(SpecialRoom, self).__init__(type, tile_list, north_hallway=hallway)
 
 
 class SpawnRoom(Room):
@@ -349,13 +437,32 @@ class SpawnRoom(Room):
                  east_hallway: Hallway = None, south_hallway: Hallway = None, west_hallway: Hallway = None):
         # todo add type to robot; always spawn at center?
         tile_list = Room.dic_to_tile_list(tile_dic)
-        super().__init__(tile_list, north_hallway, east_hallway, south_hallway, west_hallway)
+        super().__init__(AreaType.SpawnRoom, tile_list, north_hallway, east_hallway, south_hallway, west_hallway)
 
     def abbreviation(self):
         return "SR"
 
 
-class WildRoom(Room):
+class BaseWildRoom(Room):
+    def __init__(self, tile_list: [Tile], get_tiles_by_id: "(int,)", north_hallway: Hallway = None,
+                 east_hallway: Hallway = None, south_hallway: Hallway = None, west_hallway: Hallway = None):
+        """
+
+        :param factory:
+        :param chance: chance for every individual Tile of the room to be an EnemyTile
+        :param east_door: the Door connecting to the Room to the East of this one
+        :param south_door: the Door connecting to the Room to the South of this one
+        :param west_door: whether the Room to the West is having an east_door or not
+        :param north_door:  whether the Room to the North is having a south_door or not
+        """
+        self.get_tiles_by_id = get_tiles_by_id
+        super().__init__(AreaType.WildRoom, tile_list, north_hallway, east_hallway, south_hallway, west_hallway)
+
+    def abbreviation(self):
+        return "WR"
+
+
+class WildRoom(BaseWildRoom):
     __NUM_OF_ENEMY_GROUPS = 4
 
     def __init__(self, factory: EnemyFactory, chance: float = 0.6, north_hallway: Hallway = None,
@@ -386,26 +493,41 @@ class WildRoom(Room):
         tile_list = Room.get_empty_room_tile_list()
         for i in range(num_of_enemies):
             id = rm.get_int(min=0, max=WildRoom.__NUM_OF_ENEMY_GROUPS + 1)
-            enemy = EnemyTile(factory, self.get_tiles_by_id, id)
+            enemy = EnemyTile(factory, self.__get_tiles_by_id, id)
             if id > 0:
                 self.__dictionary[id].append(enemy)
             pos = rm.get_element(available_positions, remove=True)
             tile_list[Room.coordinate_to_index(pos)] = enemy
 
-        super().__init__(tile_list, north_hallway, east_hallway, south_hallway, west_hallway)
+        super().__init__(tile_list, self.__get_tiles_by_id, north_hallway, east_hallway, south_hallway, west_hallway)
 
-    def abbreviation(self):
-        return "WR"
+    def __get_tiles_by_id(self, id: int) -> "list of EnemyTiles":
+        return self.__dictionary[id]
 
-    def get_tiles_by_id(self, id: int) -> "list of EnemyTiles":
+
+class DefinedWildRoom(BaseWildRoom):
+    def __init__(self, tile_list: [Tile], north_hallway: Hallway = None, east_hallway: Hallway = None,
+                 south_hallway: Hallway = None, west_hallway: Hallway = None):
+        self.__dictionary = {1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [], 9: []}
+        for tile in tile_list:
+            if isinstance(tile, EnemyTile):
+                self.__dictionary[tile.id].append(tile)
+        super().__init__(tile_list, self.__get_tiles_by_id, north_hallway=north_hallway, east_hallway=east_hallway,
+                         south_hallway=south_hallway, west_hallway=west_hallway)
+
+    def __get_tiles_by_id(self, id: int) -> "list of EnemyTiles":
         return self.__dictionary[id]
 
 
 class GateRoom(SpecialRoom):
     def __init__(self, gate: Instruction, hallway: Hallway, direction: Direction,
                  tile_dic: "dic of Coordinate and Tile" = None):
-        super().__init__(hallway, direction, tile_dic)
-        self._set_tile(Collectible(gate), x=Area.MID_X, y=Area.MID_Y)
+        coordinate = Coordinate(Area.MID_X, Area.MID_Y)
+        if not tile_dic:
+            tile_dic = {}
+        tile_dic[coordinate] = Collectible(gate)
+        super().__init__(AreaType.GateRoom, hallway, direction, tile_dic)
+        #self._set_tile(Collectible(gate), x=Area.MID_X, y=Area.MID_Y)
 
     def abbreviation(self) -> str:
         return "GR"
@@ -414,8 +536,8 @@ class GateRoom(SpecialRoom):
 class RiddleRoom(SpecialRoom):
     def __init__(self, hallway: Hallway, direction: Direction, riddle: Riddle, open_riddle_callback: "void(Robot, Riddle)",
                  tile_dic: "dic of Coordinate and Tile" = None):
-        super().__init__(hallway, direction, tile_dic)
-        self._set_tile(Riddler(open_riddle_callback, riddle), Area.MID_X, Area.MID_Y)
+        super().__init__(AreaType.RiddleRoom, hallway, direction, tile_dic)
+        self._set_tile(Riddler(open_riddle_callback, riddle), Area.MID_X, Area.MID_Y)   # todo place in SpecialRoom?
 
     def abbreviation(self):
         return "RR"
@@ -424,7 +546,7 @@ class RiddleRoom(SpecialRoom):
 class ShopRoom(SpecialRoom):
     def __init__(self, hallway: Hallway, direction: Direction, inventory: "list of ShopItems",
                  visit_shop_callback: "void(Robot, list of ShopItems)", tile_dic: "dic of Coordinate and Tile" = None):
-        super().__init__(hallway, direction, tile_dic)
+        super().__init__(AreaType.ShopRoom, hallway, direction, tile_dic)
         self._set_tile(ShopKeeper(visit_shop_callback, inventory), Area.MID_X, Area.MID_Y)
 
     def abbreviation(self):
@@ -437,7 +559,7 @@ class TreasureRoom(SpecialRoom):
 
 class BossRoom(SpecialRoom):
     def __init__(self, hallway: Hallway, direction: Direction, boss: Boss, tile_dic: "dic of Coordinate and Tile" = None):
-        super().__init__(hallway, direction, tile_dic)
+        super().__init__(AreaType.BossRoom, hallway, direction, tile_dic)
         self._set_tile(boss, x=Area.MID_X, y=Area.MID_Y)
 
     def abbreviation(self) -> str:

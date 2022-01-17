@@ -1,3 +1,5 @@
+from typing import List
+
 from game.actors.boss import Boss as BossActor
 from game.actors.robot import Robot
 from game.actors.enemy import Enemy as EnemyActor, DummyEnemy
@@ -5,10 +7,12 @@ from game.actors.riddle import Riddle
 from game.actors.target import Target
 from game.collectibles import pickup
 from game.collectibles.collectible import Collectible
+from game.collectibles.factory import CollectibleFactory
 from game.logic import instruction as gates
 from game.logic.instruction import Instruction
 from game.logic.qubit import StateVector
 from game.map.navigation import Direction
+from util.logger import Logger
 from util.my_random import RandomManager, MyRandom
 
 
@@ -17,18 +21,23 @@ class TargetDifficulty:
     A class that handles all parameters that define the difficulty of a fight.
     """
 
-    def __init__(self, num_of_instructions: int, reward_pool: "list of Collectibles"):
+    def __init__(self, num_of_instructions: int, rewards):
         """
 
         :param num_of_instructions: num of instructions used to create a statevector
         :param reward_pool: list of possible rewards for winning against an enemy of this difficulty
         """
         self.__num_of_instructions = num_of_instructions
-        self.__reward_pool = reward_pool
+        if isinstance(rewards, list):
+            self.__reward_factory = CollectibleFactory(rewards)
+        elif isinstance(rewards, CollectibleFactory):
+            self.__reward_factory = rewards
+        else:
+            Logger.instance().throw(ValueError(
+                "rewards must be either a list of Collectibles or a CollectibleFactory"))
 
-    @property
-    def reward_pool(self):
-        return self.__reward_pool
+    def produce_reward(self, rm: MyRandom):
+        return self.__reward_factory.produce(rm)
 
     def create_statevector(self, robot: Robot, rm: MyRandom) -> StateVector:
         """
@@ -57,6 +66,23 @@ class TargetDifficulty:
         return StateVector.from_gates(instructions, num_of_qubits)
 
 
+class ExplicitTargetDifficulty(TargetDifficulty):
+    def __init__(self, stv_pool: List[StateVector], reward_factory: CollectibleFactory, ordered: bool = False):
+        super().__init__(-1, reward_factory)
+        self.__pool = stv_pool
+        self.__ordered = ordered
+        self.__order_index = -1
+
+    def create_statevector(self, robot: Robot, rm: MyRandom) -> StateVector:
+        if self.__ordered or rm is None:
+            self.__order_index += 1
+            if self.__order_index >= len(self.__pool):
+                self.__order_index = 0
+            return self.__pool[self.__order_index]
+        else:
+            return rm.get_element(self.__pool)
+
+
 class RiddleDifficulty(TargetDifficulty):
     def __init__(self, num_of_instructions: int, reward_pool: "list of Collectibles", min_attempts: int = 1,
                  max_attempts: int = 10):
@@ -83,13 +109,12 @@ class EnemyFactory:
     It is used by enemy tiles to trigger a fight.
     """
 
-    def __init__(self, robot: Robot, start_fight_callback: "(Robot, Target, Direction)",
+    def __init__(self, start_fight_callback: "(Robot, Target, Direction)",
                  difficulty: TargetDifficulty):
         """
 
         :param difficulty: difficulty of the enemy we produce
         """
-        #self.__robot = robot
         self.__difficulty = difficulty
         self.__start_fight = start_fight_callback
 
@@ -103,11 +128,24 @@ class EnemyFactory:
         :return: a freshly created enemy
         """
         stv = self.__difficulty.create_statevector(robot, rm)
-        reward = rm.get_element(self.__difficulty.reward_pool)
+        reward = self.__difficulty.produce_reward(rm)
         return DummyEnemy(stv, reward, flee_chance)
 
     def start(self, robot: Robot, target: Target, direction: Direction):
         self.__start_fight(robot, target, direction)
+
+
+class ExplicitEnemyFactory(EnemyFactory):
+    def __init__(self, start_fight_callback: "(Robot, Target, Direction)", stv_pool: [StateVector],
+                 reward_pool: [Collectible]):
+        self.__stv_pool = stv_pool
+        self.__reward_pool = reward_pool
+        super().__init__(start_fight_callback, DummyTargetDifficulty())
+
+    def produce(self, robot: Robot, rm: MyRandom, flee_chance: float) -> EnemyActor:
+        stv = rm.get_element(self.__stv_pool)
+        reward = rm.get_element((self.__reward_pool))
+        return DummyEnemy(stv, reward, flee_chance)
 
 
 class RiddleFactory:
@@ -120,12 +158,11 @@ class RiddleFactory:
     def __init__(self, robot: Robot, difficulty: RiddleDifficulty):
         self.__robot = robot
         self.__difficulty = difficulty
-        self.__rm = RandomManager.create_new()
 
-    def produce(self) -> Riddle:
-        stv = self.__difficulty.create_statevector(self.__robot, self.__rm)
-        reward = self.__rm.get_element(self.__difficulty.reward_pool)
-        attempts = self.__difficulty.get_attempts(self.__rm)
+    def produce(self, rm: MyRandom) -> Riddle:
+        stv = self.__difficulty.create_statevector(self.__robot, rm)
+        reward = self.__difficulty.produce_reward(rm)
+        attempts = self.__difficulty.get_attempts(rm)
         return Riddle(stv, reward, attempts)
 
 

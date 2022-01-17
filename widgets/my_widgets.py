@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import List, Any, Callable
 
 from py_cui import ColorRule
 from py_cui.widgets import BlockLabel
@@ -142,16 +143,16 @@ class MapWidget(Widget):
             rows = []
             offset = 0
             # iterate through every row of Rooms
-            for y in range(Map.HEIGHT):
-                last_row = y == Map.HEIGHT - 1  # there are no more Hallways after the last row of Rooms
+            for y in range(self.__map.height):
+                last_row = y == self.__map.height - 1  # there are no more Hallways after the last row of Rooms
                 areas = []
                 south_hallways = []
 
-                for x in range(Map.WIDTH):
-                    last_col = x == Map.WIDTH - 1   # there are no more Hallways after the last Room in a row
+                for x in range(self.__map.width):
+                    last_col = x == self.__map.width - 1   # there are no more Hallways after the last Room in a row
                     room = self.__map.room_at(x, y)
                     if room is None:
-                        areas.append(Placeholder.room())
+                        areas.append(Placeholder.pseudo_room())
                         if not last_col:
                             areas.append(Placeholder.vertical())
                         if not last_row:

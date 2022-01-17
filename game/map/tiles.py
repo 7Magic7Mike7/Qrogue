@@ -21,7 +21,9 @@ class TileCode(Enum):
     Void = 7        # tile outside of the playable area
     Floor = 0       # simple floor tile without special meaning
     FogOfWar = 3    # tile of a place we cannot see yet
+
     Message = 6     # tile for displaying a popup message
+    Trigger = 9     # tile that calls a function on walk, i.e. event tile
 
     Wall = 1
     Obstacle = 2
@@ -60,6 +62,9 @@ class Tile(ABC):
     @abstractmethod
     def is_walkable(self, direction: Direction, robot: Robot) -> bool:
         pass
+
+    def __str__(self):
+        return self.get_img()
 
 
 class WalkTriggerTile(Tile):
@@ -156,6 +161,18 @@ class FogOfWar(Tile):
 
     def is_walkable(self, direction: Direction, robot: Robot) -> bool:
         return True
+
+
+class Trigger(WalkTriggerTile):
+    def __init__(self, callback: "(Direction, Robot)"):
+        super().__init__(TileCode.Trigger)
+        self.__callback = callback
+
+    def on_walk(self, direction: Direction, robot: Robot) -> None:
+        self.__callback(direction, robot)
+
+    def get_img(self):
+        return self._invisible
 
 
 class Message(WalkTriggerTile):
@@ -257,6 +274,10 @@ class Door(WalkTriggerTile):
     @property
     def opened(self) -> bool:
         return self.__opened
+
+    @property
+    def locked(self) -> bool:
+        return self.__locked
 
 
 class EntangledDoor(Door):
@@ -363,14 +384,24 @@ class Enemy(WalkTriggerTile):
             return str(self.__id)
 
     @property
+    def id(self) -> int:
+        return self.__id
+
+    @property
     def amplitude(self) -> float:
         return self.__amplitude
+
+    def set_entangled_tile_callback(self, callback: "(int, )") -> bool: # todo delete
+        if self.__get_entangled_tiles is None:
+            self.__get_entangled_tiles = callback
+            return True
+        return False
 
     def _set_state(self, val: _EnemyState) -> None:
         if self.__state == _EnemyState.UNDECIDED:
             self.__state = val
         else:
-            if CheatConfig.did_cheat():
+            if CheatConfig.did_cheat():     # this is a legal state if we used the "Scared Rabbit" cheat
                 return
             Logger.instance().throw(RuntimeError("Illegal program state!"))
 
@@ -389,7 +420,16 @@ class Enemy(WalkTriggerTile):
         for enemy in entangled_tiles:
             enemy._set_state(state)
 
+        # sometimes when there is no entanglement we have to explicitely set the state of self
+        if self.__state == _EnemyState.UNDECIDED:
+            self.__state = state
+
         return state == _EnemyState.FIGHT
+
+    def copy(self):
+        enemy = Enemy(self.__factory, self.__get_entangled_tiles, self.__id, self.__amplitude)
+        enemy._set_state(self.__state)
+        return enemy
 
     def __str__(self) -> str:
         return f"E({self.__id}|{self.__state})"
