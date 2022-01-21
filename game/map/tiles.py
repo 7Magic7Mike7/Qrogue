@@ -1,6 +1,7 @@
 
 from abc import ABC, abstractmethod
 from enum import Enum
+from typing import List
 
 from game.actors.boss import Boss as BossActor
 from game.actors.factory import EnemyFactory
@@ -216,7 +217,7 @@ class Riddler(WalkTriggerTile):
 
 
 class ShopKeeper(WalkTriggerTile):
-    def __init__(self, visit_shop_callback, inventory: "list of ShopItems"):
+    def __init__(self, visit_shop_callback, inventory: "List[ShopItem]"):
         super().__init__(TileCode.ShopKeeper)
         self.__visit_shop = visit_shop_callback
         self.__inventory = inventory
@@ -278,6 +279,11 @@ class Door(WalkTriggerTile):
     @property
     def locked(self) -> bool:
         return self.__locked
+
+    def copy(self, new_direction: Direction) -> "Door":
+        if new_direction is None:
+            Logger.instance().throw(ValueError("Tried to copy a door with new_direction being None!"))
+        return Door(new_direction, self.locked, self.opened)
 
 
 class EntangledDoor(Door):
@@ -403,7 +409,9 @@ class Enemy(WalkTriggerTile):
         else:
             if CheatConfig.did_cheat():     # this is a legal state if we used the "Scared Rabbit" cheat
                 return
-            Logger.instance().throw(RuntimeError("Illegal program state!"))
+            Logger.instance().throw(RuntimeError(
+                f"Illegal enemy state! Tried to set state to {val} although it is already at {self.__state}."
+            ))
 
     def measure(self):
         if CheatConfig.is_scared_rabbit():
@@ -425,11 +433,6 @@ class Enemy(WalkTriggerTile):
             self.__state = state
 
         return state == _EnemyState.FIGHT
-
-    def copy(self):
-        enemy = Enemy(self.__factory, self.__get_entangled_tiles, self.__id, self.__amplitude)
-        enemy._set_state(self.__state)
-        return enemy
 
     def __str__(self) -> str:
         return f"E({self.__id}|{self.__state})"

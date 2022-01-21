@@ -64,20 +64,19 @@ class StateVector:
     def __eq__(self, other) -> bool: # TODO currently not even in use!
         if type(other) is type(self):
             return self.__amplitudes == other.__amplitudes
-        elif type(other) is type([True, False]):  # TODO how to check correctly for bool-list?
-            if len(other) >= len(self.__amplitudes):
+        elif isinstance(other, list):
+            if len(other) <= 0 or len(other) >= len(self.__amplitudes):
+                return False
+            if isinstance(other[0], bool):
                 for i in range(len(self.__amplitudes)):
                     if self.__amplitudes[i] == 1 and not other[i] or self.__amplitudes[i] == 0 and other[i]:
                         return False
                 return True
-            return False
-        elif type(other) is type([1.0, 0.0]):  # TODO how to check correctly for float-list?
-            if len(other) >= len(self.__amplitudes):
+            elif isinstance(other[0], float):
                 for i in range(len(self.__amplitudes)):
                     if self.__amplitudes[i] != other[i]:
                         return False
                 return True
-            return False
         return False
 
     def to_string(self) -> str:

@@ -38,9 +38,8 @@ class CollectibleFactory:
             elements = []
             while len(elements) < num_of_elements:
                 elem = self.__produce(rm, remove=True)
-                if elem:
-                    elements.append(elem)
-                else:
+                elements.append(elem)
+                if len(self.__pool) <= 0:
                     self.__pool = temp.copy()
             self.__pool = temp
             return elements
@@ -61,16 +60,10 @@ class OrderedCollectibleFactory(CollectibleFactory):
         super().__init__(pool)
 
     def produce(self, rm: MyRandom = None) -> Collectible:
-        if rm:
-            return super(OrderedCollectibleFactory, self).produce(rm)
-        else:
-            return super(OrderedCollectibleFactory, self).produce(None)
+        return super(OrderedCollectibleFactory, self).produce(None)
 
-    def produce_multiple(self, num_of_elements: int, unique_elements: bool = True, random: bool = False) -> [Collectible]:
-        if random:
-            return super(OrderedCollectibleFactory, self).produce_multiple(self.__rm, num_of_elements, unique_elements)
-        else:
-            return super(OrderedCollectibleFactory, self).produce_multiple(None, num_of_elements, unique_elements)
+    def produce_multiple(self, rm: MyRandom, num_of_elements: int, unique_elements: bool = True) -> [Collectible]:
+        return super(OrderedCollectibleFactory, self).produce_multiple(None, num_of_elements, unique_elements)
 
 
 class GateFactory:

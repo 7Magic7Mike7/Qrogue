@@ -107,6 +107,20 @@ class SingleQubitGate(Instruction, ABC):
         super().__init__(instruction, needed_qubits=1)
 
 
+class IGate(SingleQubitGate):
+    def __init__(self):
+        super().__init__(gates.IGate())
+
+    def short_name(self) -> str:
+        return "I"
+
+    def abbreviation(self, qubit: int = 0):
+        return "I"
+
+    def description(self) -> str:
+        return "An I Gate or Identity Gate doesn't alter the Qubit in any way. It can be used as a placeholder."
+
+
 class XGate(SingleQubitGate):
     def __init__(self):
         super(XGate, self).__init__(gates.XGate())

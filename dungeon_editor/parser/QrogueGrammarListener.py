@@ -1,70 +1,95 @@
-from typing import List, Tuple
+from typing import Callable, List, Tuple, Dict
 
+from antlr4.tree.Tree import TerminalNodeImpl
 from antlr4 import InputStream, CommonTokenStream
 from antlr4.error.ErrorListener import ErrorListener
 
 from dungeon_editor.parser.QrogueDungeonLexer import QrogueDungeonLexer
-from dungeon_editor.parser.QrogueDungeonListener import QrogueDungeonListener
 from dungeon_editor.parser.QrogueDungeonParser import QrogueDungeonParser
 from dungeon_editor.parser.QrogueDungeonVisitor import QrogueDungeonVisitor
 from game.actors.factory import ExplicitTargetDifficulty, TargetDifficulty, EnemyFactory
-from game.collectibles.collectible import Collectible, MultiCollectible
+from game.actors.riddle import Riddle
 from game.actors.robot import Robot
 from game.callbacks import CallbackPack
-from game.collectibles import pickup
-from game.collectibles import factory
+from game.collectibles import pickup, factory
+from game.collectibles.collectible import Collectible, MultiCollectible, ShopItem
+from game.logic import instruction
 from game.logic.qubit import StateVector
+from game.map import rooms
 from game.map import tiles
-from game.map.generator import LayoutGenerator, DungeonGenerator
+from game.map.generator import DungeonGenerator
 from game.map.map import Map
 from game.map.navigation import Coordinate, Direction
-from game.map import rooms
 from util import util_functions
 from util.my_random import MyRandom
 from widgets.my_popups import Popup
 
 
 class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
+    __DEFAULT_NUM_OF_SHOP_ITEMS = 3
+    __DEFAULT_NUM_OF_RIDDLE_ATTEMPTS = 7
+    __DEFAULT_HALLWAY_STR = "=="
+    __TEMPLATE_PREFIX = "_"
+    __EMPTY_ROOM_CODE = "_a"
+    __EMPTY_HALLWAY_CODE = "_0"
+
     @staticmethod
     def warning(text: str):
         print("Warning: ", text)
+
+    @staticmethod
+    def __normalize_reference(reference: str) -> str:
+        if reference[0] == '*':
+            return reference[1:].lower()
+        else:
+            return reference.lower()
+
+    @staticmethod
+    def __check_for_overspecified_columns(x: int, symbol_type):
+        return x == Map.MAX_WIDTH and symbol_type != QrogueDungeonParser.VERTICAL_SEPARATOR or x > Map.MAX_WIDTH
 
     def __init__(self, seed: int):
         super().__init__(seed, 0, 0)
         self.__seed = seed
         self.__cbp = None
+        self.__robot = None
         self.__rm = MyRandom(seed)
 
         self.__reward_pools = {}
-        self.__default_reward_pool = None  # CollectibleFactory
+        self.__default_reward_factory = None  # CollectibleFactory
 
-        self.__stv_pools = {}
-        self.__default_stv_pool = None  # ExplicitTargetDifficulty
+        self.__stv_pools = {}           # str -> Tuple[List[StateVector], CollectibleFactory] (latter may be None)
+        self.__default_target_difficulty = None  # ExplicitTargetDifficulty
 
-        self.__default_enemy_factory = None
+        self.__default_enemy_factory = None     # needed to create default_tile enemies
 
         self.__hallways_by_id = {}      # hw_id -> Door
-        self._hallways = {}
+        self.__hallways = {}            # stores the
 
         self.__enemy_groups_by_room = {}    # room_id -> dic[1-9]
+        self.__cur_room_id = None   # needed for enemy groups
         self.__rooms = {}
         self.__spawn_pos = None
 
-        self.__created_hallways = {}    # todo check, idk why exactly we need this?
+        # holds references to already created hallways so that neighbors can use it instead of
+        # creating their own, redundant hallway
+        self.__created_hallways = {}
 
-    def _add_hallway(self, room1: Coordinate, room2: Coordinate, data: tiles.Door):
-        if room1 in self._hallways:
-            self._hallways[room1][room2] = data
-        else:
-            self._hallways[room1] = {room2: data}
-        if room2 in self._hallways:
-            self._hallways[room2][room1] = data
-        else:
-            self._hallways[room2] = {room1: data}
+    def _add_hallway(self, room1: Coordinate, room2: Coordinate, door: tiles.Door):
+        if door:    # for simplicity door could be null so we check it here
+            if room1 in self.__hallways:
+                self.__hallways[room1][room2] = door
+            else:
+                self.__hallways[room1] = {room2: door}
+            if room2 in self.__hallways:
+                self.__hallways[room2][room1] = door
+            else:
+                self.__hallways[room2] = {room1: door}
 
-    def get_hallways(self, pos: Coordinate, hallway_dictionary: {}) -> "dict of Direction and Hallway":
-        if pos in self._hallways:
-            hallways = self._hallways[pos]
+    def __get_hallways(self, pos: Coordinate) -> "dict of Direction and Hallway":
+        hallway_dictionary = self.__created_hallways
+        if pos in self.__hallways:
+            hallways = self.__hallways[pos]
             if hallways:
                 room_hallways = {
                     Direction.North: None, Direction.East: None, Direction.South: None, Direction.West: None,
@@ -76,7 +101,10 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
                     if neighbor in hallway_dictionary and opposite in hallway_dictionary[neighbor]:
                         hallway = hallway_dictionary[neighbor][opposite]
                     else:
-                        hallway = rooms.Hallway(hallways[neighbor])
+                        door = hallways[neighbor]
+                        if door.direction is not direction:
+                            door = door.copy(direction)
+                        hallway = rooms.Hallway(door)
                         if neighbor in hallway_dictionary:
                             hallway_dictionary[neighbor][opposite] = hallway
                         else:
@@ -90,6 +118,78 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
                 return room_hallways
         return None
 
+    def __get_default_tile(self, tile_str: str, enemy_dic: Dict[int, List[tiles.Enemy]],
+                           get_entangled_tiles: Callable[[int], List[tiles.Tile]]) -> tiles.Tile:
+        if tile_str.isdigit():
+            enemy_id = int(tile_str)
+            enemy = tiles.Enemy(self.__default_enemy_factory, get_entangled_tiles, enemy_id)
+            if enemy_id not in enemy_dic:
+                enemy_dic[enemy_id] = []
+            enemy_dic[enemy_id].append(enemy)
+            return enemy
+
+        elif tile_str == 'c':
+            return tiles.Collectible(self.__default_reward_factory.produce(self.__rm))
+
+        elif tile_str == 't':
+            return self.__load_trigger("*defaultTrigger")
+
+        elif tile_str == 'e':
+            return tiles.Floor()    # todo implement energy
+
+        elif tile_str == 'r':
+            stv = self.__default_target_difficulty.create_statevector(self.__robot, self.__rm)
+            reward = self.__default_reward_factory.produce(self.__rm)
+            riddle = Riddle(stv, reward, self.__DEFAULT_NUM_OF_RIDDLE_ATTEMPTS)
+            return tiles.Riddler(self.__cbp.open_riddle, riddle)
+
+        elif tile_str == '$':
+            items = self.__default_reward_factory.produce_multiple(self.__rm, self.__DEFAULT_NUM_OF_SHOP_ITEMS)
+            return tiles.ShopKeeper(self.__cbp.visit_shop, [ShopItem(item) for item in items])
+
+        elif tile_str == '_':
+            return tiles.Floor()
+
+        else:
+            self.warning(f"Unknown tile specified: {tile_str}. Using a Floor-Tile instead.")
+            return tiles.Floor()
+
+    def __remove_redundant_areas(self, room_matrix: List[List[rooms.Room]]):
+        """
+        Trims the map to its minimal size without removing or adding ways to
+        access any room. Is useful if a small map is specified that would otherwise
+        be displayed on the top left of the screen because of all the empty rooms
+        in the bottom right.
+        :return:
+        """
+        raise NotImplementedError() # todo not fully implemented yet and not even needed I think
+
+        redundant_rows = 0
+        redundant_cols = 0
+
+        for y in range(self.height):
+            for x in range(self.width):
+                room = room_matrix[y][x]
+                if not room:
+                    redundant_cols = x + 1
+            if redundant_cols > 0:
+                redundant_rows += 1
+            else:
+                break
+
+        new_height = self.height - redundant_rows
+        new_width = self.width - redundant_cols
+        new_map = [[self.__EMPTY_ROOM_CODE] * new_width for _ in range(new_height)]
+        new_y = 0
+        for y in range(self.height):
+            if not redundant_rows[y]:
+                new_x = 0
+                for x in range(self.width):
+                    if not redundant_cols[x]:
+                        new_map[new_y][new_x] = self._get(Coordinate(new_x, new_y))
+                        new_x += 1
+                new_y += 1
+
     def generate(self, robot: Robot, cbp: CallbackPack, data: str) -> (Map, bool):
         input_stream = InputStream(data)
         lexer = QrogueDungeonLexer(input_stream)
@@ -97,7 +197,8 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
         parser = QrogueDungeonParser(token_stream)
         parser.addErrorListener(MyErrorListener())
 
-        self.__cbp = cbp    # needs to be accessed during creation
+        self.__cbp = cbp        # needs to be accessed during creation
+        self.__robot = robot    # is handed over to a function during creation (but if everything works correctly not used)
         try:
             room_matrix = self.visit(parser.start())
         except SyntaxError as se:
@@ -116,7 +217,112 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
         map = Map(self.__seed, room_matrix, robot, self.__spawn_pos, cbp)
 
+        text = ""
+        for row in room_matrix:
+            for room in row:
+                if room:
+                    text += str(room)
+                else:
+                    text += "...."
+                text += "  "
+            text += "\n"
+        print(text)
+
         return map, True
+
+    ##### load from references #####
+
+    def __load_reward_pool(self, reference: str) -> List[Collectible]:
+        if reference in self.__reward_pools:
+            return self.__reward_pools[reference]
+
+        ref = self.__normalize_reference(reference)
+        if ref in ['coin', 'coins']:
+            return [pickup.Coin(1)]
+        elif ref in ['key', 'keys']:
+            return [pickup.Key(1)]
+        elif ref in ['hp', 'health', 'heart', 'hearts', 'healthPoints']:
+            return [pickup.Heart(1)]
+        else:
+            self.warning(f"Imports not yet supported: {reference}")
+            # todo load from somewhere else?
+            return [pickup.Key(0)]
+
+    def __load_stv_pool(self, reference: str, ordered: bool = False) -> TargetDifficulty:
+        if reference in self.__stv_pools:
+            stv_list, reward_factory = self.__stv_pools[reference]
+            if not reward_factory:
+                reward_factory = self.__default_reward_factory
+            return ExplicitTargetDifficulty(stv_list, reward_factory, ordered)
+        else:
+            # todo implement imports
+
+            return self.__default_target_difficulty
+
+    def __load_gate(self, reference: str) -> instruction.Instruction:
+        ref = self.__normalize_reference(reference)
+        if ref in ['x', 'xgate']:
+            return instruction.XGate()
+        elif ref in ['y', 'ygate']:
+            return instruction.YGate()
+        elif ref in ['z', 'zgate']:
+            return instruction.ZGate()
+        elif ref in ['h', 'hgate', 'hadamard', 'hadamarggate']:
+            return instruction.HGate()
+        elif ref in ['cx', 'cxgate']:
+            return instruction.CXGate()
+        elif ref in ['swap', 'swapgate']:
+            return instruction.SwapGate()
+
+        elif ref not in ['i', 'igate']:
+            self.warning(f"Unknown gate reference: {reference}. Returning I Gate instead.")
+        return instruction.IGate()
+
+    def __load_trigger(self, reference: str) -> tiles.Trigger:
+        # todo implement
+        def callback(direction: Direction, robot: Robot):
+            Popup.message("Trigger", str(reference))
+        return tiles.Trigger(callback)
+
+    def __load_hallway(self, reference: str) -> tiles.Door:
+        if reference in self.__hallways_by_id:
+            return self.__hallways_by_id[reference]
+        elif reference == self.__EMPTY_HALLWAY_CODE:
+            return None
+        elif reference == TextBasedDungeonGenerator.__DEFAULT_HALLWAY_STR:
+            return tiles.Door(Direction.North)
+        else:
+            # todo implement hallway imports
+            return tiles.Door(Direction.North)
+
+    def __load_room(self, reference: str, x: int, y: int) -> rooms.Room:
+        if reference in self.__rooms:
+            room = self.__rooms[reference]
+            if room.type is rooms.AreaType.SpawnRoom:
+                if self.__spawn_pos:
+                    self.warning("A second SpawnRoom was defined! Ignoring the first one "
+                                 "and using this one as SpawnRoom.")
+                self.__spawn_pos = Coordinate(x, y)
+            hw_dic = self.__get_hallways(Coordinate(x, y))
+            return room.copy(hw_dic)
+        elif self.__normalize_reference(reference) == 'sr':
+            hw_dic = self.__get_hallways(Coordinate(x, y))
+            room = rooms.SpawnRoom(None, hw_dic[Direction.North], hw_dic[Direction.East],
+                                   hw_dic[Direction.South], hw_dic[Direction.West])
+            if self.__spawn_pos:
+                self.warning("A second SpawnRoom was defined! Ignoring the first one and using this one as "
+                             "SpawnRoom.")
+            self.__spawn_pos = Coordinate(x, y)
+            return room
+        elif reference[0] == '_':
+            # todo handle templates
+            pass
+        else:
+            self.warning(f"room_id \"{reference}\" not specified and imports not yet supported! "
+                         "Placing an empty room instead.")
+            # row.append(rooms.Placeholder.empty_room())
+        return rooms.SpawnRoom()
+
 
     ##### General area
 
@@ -179,8 +385,8 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
             val = int(ctx.integer().getText())
             return pickup.Heart(val)
         elif ctx.GATE_LITERAL():
-            val = int(ctx.integer().getText())
-            # todo implement collectible gates
+            reference = ctx.REFERENCE().getText()
+            return self.__load_gate(reference)
         else:
             self.warning("No legal collectible specified!")
         return None
@@ -192,24 +398,20 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
         return collectible_list
 
     def visitReward_pool(self, ctx: QrogueDungeonParser.Reward_poolContext) -> (str, factory.CollectibleFactory):
-        pool_id = ctx.POOL_ID().getText()
+        pool_id = ctx.REFERENCE().getText()
         collectible_list = self.visit(ctx.collectibles())
         return pool_id, collectible_list
 
     def visitDefault_reward_pool(self, ctx: QrogueDungeonParser.Default_reward_poolContext) \
             -> factory.CollectibleFactory:
         ordered = self.visit(ctx.draw_strategy())
-        if ctx.POOL_ID():  # implicit definition
-            pool_id = ctx.POOL_ID().getText()
-            if pool_id in self.__reward_pools:
-                if ordered:
-                    return factory.OrderedCollectibleFactory(self.__reward_pools[pool_id])
-                else:
-                    return factory.CollectibleFactory(self.__reward_pools[pool_id])
+        if ctx.REFERENCE():  # implicit definition
+            pool_id = ctx.REFERENCE().getText()
+            reward_pool = self.__load_reward_pool(pool_id)
+            if ordered:
+                return factory.OrderedCollectibleFactory(reward_pool)
             else:
-                self.warning("imports not supported yet!")
-                # todo load from somewhere else?
-                return factory.CollectibleFactory([pickup.Key(999)])
+                return factory.CollectibleFactory(reward_pool)
 
         else:  # explicit definition
             collectible_list = self.visit(ctx.collectibles())
@@ -222,7 +424,7 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
         for reward_pool in ctx.reward_pool():
             pool_id, collectible_list = self.visit(reward_pool)
             self.__reward_pools[pool_id] = collectible_list
-        self.__default_reward_pool = self.visit(ctx.default_reward_pool())
+        self.__default_reward_factory = self.visit(ctx.default_reward_pool())
 
     ##### StateVector Pool area #####
 
@@ -245,47 +447,40 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
         return stvs
 
     def visitStv_pool(self, ctx: QrogueDungeonParser.Stv_poolContext) \
-            -> Tuple[List[StateVector], factory.CollectibleFactory]:
-        pool_id = ctx.POOL_ID(0).getText()
+            -> Tuple[str, List[StateVector], factory.CollectibleFactory]:
+        pool_id = ctx.REFERENCE(0).getText()
         stvs = self.visit(ctx.stvs())
 
         reward_factory = None
-        if ctx.POOL_ID(1):
-            reward_pool_id = ctx.POOL_ID(1).getText()
+        if ctx.REFERENCE(1):
+            reward_pool_id = ctx.REFERENCE(1).getText()
             if reward_pool_id in self.__reward_pools:
                 collectible_list = self.__reward_pools[reward_pool_id]
-                if self.visit(ctx.draw_strategy()):
-                    reward_factory = factory.OrderedCollectibleFactory(collectible_list)
-                else:
-                    reward_factory = factory.CollectibleFactory(collectible_list)
             else:
-                self.warning("imports not yet supported!")
+                collectible_list = self.__load_reward_pool(reward_pool_id)
+            if self.visit(ctx.draw_strategy()):
+                reward_factory = factory.OrderedCollectibleFactory(collectible_list)
+            else:
+                reward_factory = factory.CollectibleFactory(collectible_list)
 
         return pool_id, stvs, reward_factory
 
     def visitDefault_stv_pool(self, ctx: QrogueDungeonParser.Default_stv_poolContext) -> TargetDifficulty:
         ordered = self.visit(ctx.draw_strategy())
-        if ctx.POOL_ID():  # implicit definition
-            pool_id = ctx.POOL_ID().getText()
-            if pool_id in self.__stv_pools:
-                stvs, reward_factory = self.__stv_pools[pool_id]
-                return ExplicitTargetDifficulty(stvs, reward_factory, ordered)
-            else:
-                self.warning("imports not yet supported!")
-                # todo load from somewhere else?
-                temp = factory.CollectibleFactory([pickup.Key(999)])
-                return ExplicitTargetDifficulty([], temp, ordered)
+        if ctx.REFERENCE():  # implicit definition
+            pool_id = ctx.REFERENCE().getText()
+            return self.__load_stv_pool(pool_id, ordered)
 
         else:  # explicit definition
             stv_list = self.visit(ctx.stvs())
-            return ExplicitTargetDifficulty(stv_list, self.__default_reward_pool, ordered)
+            return ExplicitTargetDifficulty(stv_list, self.__default_reward_factory, ordered)
 
     def visitStv_pools(self, ctx: QrogueDungeonParser.Stv_poolsContext) -> None:
         for stv_pool in ctx.stv_pool():
-            pool_id, stvs, factory = self.visit(stv_pool)
-            self.__stv_pools[pool_id] = (stvs, factory)
-        self.__default_stv_pool = self.visit(ctx.default_stv_pool())
-        self.__default_enemy_factory = EnemyFactory(self.__cbp.start_fight, self.__default_stv_pool)
+            pool_id, stvs, reward_factory = self.visit(stv_pool)
+            self.__stv_pools[pool_id] = (stvs, reward_factory)
+        self.__default_target_difficulty = self.visit(ctx.default_stv_pool())
+        self.__default_enemy_factory = EnemyFactory(self.__cbp.start_fight, self.__default_target_difficulty)
 
     ##### Hallway area #####
 
@@ -323,34 +518,57 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
     ##### Room area #####
 
+    def visitShop_descriptor(self, ctx:QrogueDungeonParser.Shop_descriptorContext) -> tiles.ShopKeeper:
+        if ctx.REFERENCE():
+            pool_id = ctx.REFERENCE().getText()
+            item_pool = self.__load_reward_pool(pool_id)
+        else:
+            item_pool = self.visit(ctx.collectibles())
+
+        num_of_items = self.visit(ctx.integer())
+        shop_factory = factory.CollectibleFactory(item_pool)
+        items = shop_factory.produce_multiple(self.__rm, num_of_items)
+        return tiles.ShopKeeper(self.__cbp.visit_shop, [ShopItem(item) for item in items])
+
+    def visitRiddle_descriptor(self, ctx:QrogueDungeonParser.Riddle_descriptorContext) -> tiles.Riddler:
+        ref_index = 0
+        if ctx.stv():
+            stv = self.visit(ctx.stv())
+        else:
+            pool_id = ctx.REFERENCE(ref_index).getText()
+            ref_index = 1
+            difficulty = self.__load_stv_pool(pool_id, ordered=False)
+            stv = difficulty.create_statevector(self.__robot, self.__rm)
+
+        if ctx.collectible():
+            reward = self.visit(ctx.collectible())
+        else:
+            pool_id = ctx.REFERENCE(ref_index).getText()
+            reward_pool = self.__load_reward_pool(pool_id)
+            reward = self.__rm.get_element(reward_pool)     # todo check if we should wrap it in a factory?
+
+        riddle = Riddle(stv, reward)
+        return tiles.Riddler(self.__cbp.open_riddle, riddle)
+
     def visitEnergy_descriptor(self, ctx: QrogueDungeonParser.Energy_descriptorContext) -> tiles.Tile:
         # todo implement energy
         return tiles.Floor()
 
     def visitTrigger_descriptor(self, ctx: QrogueDungeonParser.Trigger_descriptorContext) -> tiles.Trigger:
-        number = self.visit(ctx.integer())
-
-        def callback():
-            Popup.message("Trigger", str(number))
-        return tiles.Trigger(callback)      # todo make more useful implementation
+        reference = ctx.REFERENCE().getText()
+        return self.__load_trigger(reference)
 
     def visitCollectible_descriptor(self, ctx:QrogueDungeonParser.Collectible_descriptorContext) -> tiles.Collectible:
-        if ctx.draw_strategy():
-            ordered = self.visit(ctx.draw_strategy())
-        else:
-            ordered = False
-        pool_id = ctx.POOL_ID().getText()
-        if pool_id in self.__reward_pools:
-            reward_pool = self.__reward_pools[pool_id]
-            reward_factory = factory.CollectibleFactory(reward_pool)
-        else:
-            self.warning("Imports not yet supported! Choosing from default_reward_pool")
-            reward_factory = self.__default_reward_pool
-
-        if ordered:
+        # only draw ordered if it is explicitly stated like this
+        if ctx.draw_strategy() and self.visit(ctx.draw_strategy()):
             rm = None
         else:
             rm = self.__rm
+
+        pool_id = ctx.REFERENCE().getText()
+        reward_pool = self.__load_reward_pool(pool_id)
+        reward_factory = factory.CollectibleFactory(reward_pool)
+
         if ctx.integer():
             times = self.visit(ctx.integer())
             collectible = MultiCollectible(reward_factory.produce_multiple(rm, times))
@@ -360,7 +578,10 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
     def visitEnemy_descriptor(self, ctx:QrogueDungeonParser.Enemy_descriptorContext) -> tiles.Enemy:
         enemy = None
-        room_id = "1"
+        if self.__cur_room_id:
+            room_id = self.__cur_room_id
+        else:
+            raise NotImplementedError()     # todo better check
 
         def get_entangled_tiles(id: int) -> [tiles.Enemy]:
             if room_id in self.__enemy_groups_by_room:
@@ -375,10 +596,10 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
         else:
             ordered = False
 
-        pool_id = ctx.POOL_ID(0).getText()
+        pool_id = ctx.REFERENCE(0).getText()
         if pool_id in self.__stv_pools:
-            stv_pool = self.__stv_pools[pool_id]
-            pool_id = ctx.POOL_ID(1)
+            stv_pool, reward_factory = self.__stv_pools[pool_id]
+            pool_id = ctx.REFERENCE(1)
             if pool_id and pool_id in self.__reward_pools:
                 reward_pool = self.__reward_pools[pool_id]
                 # todo rethink draw_strategy because right now 'ordered' only affects default pools correctly
@@ -386,8 +607,8 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
                     reward_factory = factory.OrderedCollectibleFactory(reward_pool)
                 else:
                     reward_factory = factory.CollectibleFactory(reward_pool)
-            else:
-                reward_factory = self.__default_reward_pool
+            elif not reward_factory:
+                reward_factory = self.__default_reward_factory
             difficulty = ExplicitTargetDifficulty(stv_pool, reward_factory, ordered)
             enemy_factory = EnemyFactory(self.__cbp.start_fight, difficulty)
         else:
@@ -395,6 +616,11 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
             enemy_factory = self.__default_enemy_factory
 
         enemy = tiles.Enemy(enemy_factory, get_entangled_tiles, id=enemy_id)
+        if room_id not in self.__enemy_groups_by_room:
+            self.__enemy_groups_by_room[room_id] = {}
+        if enemy_id not in self.__enemy_groups_by_room[room_id]:
+            self.__enemy_groups_by_room[room_id][enemy_id] = []
+        self.__enemy_groups_by_room[room_id][enemy_id].append(enemy)
         return enemy
 
     def visitTile_descriptor(self, ctx:QrogueDungeonParser.Tile_descriptorContext) -> tiles.Tile:
@@ -406,6 +632,10 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
             return self.visit(ctx.trigger_descriptor())
         elif ctx.energy_descriptor():
             return self.visit(ctx.energy_descriptor())
+        elif ctx.riddle_descriptor():
+            return self.visit(ctx.riddle_descriptor())
+        elif ctx.shop_descriptor():
+            return self.visit(ctx.shop_descriptor())
         else:
             self.warning("Invalid tile_descriptor! It is neither enemy, collectible, trigger or energy. "
                          "Returning tiles.Invalid() as consequence.")
@@ -453,7 +683,7 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
         return visibility, type
 
     def visitRoom(self, ctx:QrogueDungeonParser.RoomContext) -> Tuple[str, rooms.CustomRoom]:
-        room_id = ctx.ROOM_ID().getText()
+        self.__cur_room_id = ctx.ROOM_ID().getText()
         visibility, room_type = self.visit(ctx.r_attributes())
 
         # place the tiles correctly in the room
@@ -475,10 +705,12 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
                 else:
                     tile_dic[tile.code] = [tile]
 
-        def get_entangled_tiles(id: int) -> [tiles.Enemy]:
-            if room_id in self.__enemy_groups_by_room:
-                room_dic = self.__enemy_groups_by_room[room_id]
-                return room_dic[id]
+        # this local method is needed here for not explicitely defined enemies
+        # but since we are already in a room we don't have to reference to global data
+        enemy_dic = {}
+        def get_entangled_tiles(id: int) -> List[tiles.Enemy]:
+            if id in enemy_dic:
+                return enemy_dic[id]
             else:
                 return []
 
@@ -496,12 +728,7 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
                     if index + 1 < len(tile_dic[tile_str]):
                         descriptor_indices[tile_str] = index + 1
                 else:
-                    if tile_str.isdigit():
-                        tile = tiles.Enemy(self.__default_enemy_factory, get_entangled_tiles, int(tile_str))
-                    elif tile_str == 'c':
-                        tile = tiles.Collectible(self.__default_reward_pool.produce())
-                    else:
-                        tile = tiles.Floor()    # todo implement the other possibilities?
+                    tile = self.__get_default_tile(tile_str, enemy_dic, get_entangled_tiles)
                 matrix_row.append(tile)
             # extended to the needed width with floors
             matrix_row += [tiles.Floor()] * (rooms.Room.INNER_WIDTH - len(matrix_row))
@@ -517,7 +744,7 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
             room.make_visible()
         elif foggy:
             room.in_sight()
-        return room_id, room
+        return self.__cur_room_id, room
 
     def visitRooms(self, ctx:QrogueDungeonParser.RoomsContext):
         for room_ctx in ctx.room():
@@ -544,56 +771,43 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
         return room_matrix
 
-    def __visitL_hallway_row(self, ctx:QrogueDungeonParser.L_hallway_rowContext, y: int) -> None:
-        for x, hallway_id in enumerate(ctx.HALLWAY_ID()):
-            if x >= Map.MAX_WIDTH:
-                self.warning(f"Too much room columns specified. Only maps of size ({Map.MAX_WIDTH}, {Map.MAX_HEIGHT}) supported. "
-                             f"Ignoring over-specified columns.")
+    def __hallway_handling(self, ctx_children: List[TerminalNodeImpl], y: int, direction: Direction):
+        x = 0
+        for child in ctx_children:
+            if self.__check_for_overspecified_columns(x, child.symbol.type):
+                self.warning(
+                    f"Too much room columns specified. Only maps of size ({Map.MAX_WIDTH}, {Map.MAX_HEIGHT}) supported. "
+                    f"Ignoring over-specified columns.")
                 break
-            hw_id = hallway_id.getText()
-            if hw_id == '==':
-                self._add_hallway(Coordinate(x, y), Coordinate(x, y + 1), tiles.Door(Direction.North))
-            elif hw_id != LayoutGenerator.EMPTY_HALLWAY_CODE:
-                self._add_hallway(Coordinate(x, y), Coordinate(x, y + 1), self.__hallways_by_id[hw_id])
+            if child.symbol.type == QrogueDungeonParser.HALLWAY_ID:
+                hw_id = child.symbol.text
+                origin = Coordinate(x, y)
+                self._add_hallway(origin, origin + direction, self.__load_hallway(hw_id))
+                x += 1
+            elif child.symbol.type == QrogueDungeonParser.EMPTY_HALLWAY:
+                x += 1
+
+    def __visitL_hallway_row(self, ctx:QrogueDungeonParser.L_hallway_rowContext, y: int) -> None:
+        self.__hallway_handling(ctx.children, y, Direction.South)    # connect downwards to the next room row
 
     def __visitL_room_row(self, ctx:QrogueDungeonParser.L_room_rowContext, y: int) -> List[rooms.Room]:
-        for x, hallway_id in enumerate(ctx.HALLWAY_ID()):
-            if x >= Map.MAX_WIDTH:
-                self.warning(f"Too much room columns specified. Only maps of size ({Map.MAX_WIDTH}, {Map.MAX_HEIGHT}) supported. "
-                             f"Ignoring over-specified columns.")
-                break
-            hw_id = hallway_id.getText()
-            if hw_id == '==':
-                self._add_hallway(Coordinate(x, y), Coordinate(x + 1, y), tiles.Door(Direction.West))
-            elif hw_id != LayoutGenerator.EMPTY_HALLWAY_CODE:
-                self._add_hallway(Coordinate(x, y), Coordinate(x + 1, y), self.__hallways_by_id[hw_id])
+        self.__hallway_handling(ctx.children, y, Direction.East)     # connect to the right to the next room
 
         row = []
-        for x, room_id in enumerate(ctx.ROOM_ID()):
-            room_id = room_id.getText()
-            if room_id in self.__rooms:
-                room = self.__rooms[room_id]
-                hw_dic = self.get_hallways(Coordinate(x, y), self.__created_hallways)
-                row.append(room.copy(hw_dic))
-                if room.type is rooms.AreaType.SpawnRoom:
-                    if self.__spawn_pos:
-                        self.warning("A second SpawnRoom was defined! Ignoring the first one "
-                                     "and using this one as SpawnRoom.")
-                    self.__spawn_pos = Coordinate(x, y)
-            elif room_id == 'SR':
-                hw_dic = self.get_hallways(Coordinate(x, y), self.__created_hallways)
-                room = rooms.SpawnRoom(None, hw_dic[Direction.North], hw_dic[Direction.East], hw_dic[Direction.South],
-                                       hw_dic[Direction.West])
-                row.append(room)
-                if self.__spawn_pos:
-                    self.warning("A second SpawnRoom was defined! Ignoring the first one "
-                                 "and using this one as SpawnRoom.")
-                self.__spawn_pos = Coordinate(x, y)
-            else:
-                self.warning("room_id not specified and imports not yet supported! "
-                             "Placing an empty room instead.")
-                #row.append(rooms.Placeholder.empty_room())
-                row.append(rooms.SpawnRoom())
+        x = 0
+        for child in ctx.children:
+            if self.__check_for_overspecified_columns(x, child.symbol.type):
+                self.warning( f"Too much room columns specified. Only maps of size ({Map.MAX_WIDTH}, {Map.MAX_HEIGHT}) "
+                              "supported. Ignoring over-specified columns.")
+                break
+
+            if child.symbol.type == QrogueDungeonParser.ROOM_ID:
+                room_id = child.symbol.text     # todo make it illegal to have the same room_id twice?
+                row.append(self.__load_room(room_id, x, y))
+                x += 1
+            elif child.symbol.type == QrogueDungeonParser.EMPTY_ROOM:
+                row.append(None)
+                x += 1
         return row
 
     ##### Start area #####
@@ -627,49 +841,3 @@ class MyErrorListener(ErrorListener):
     def reportContextSensitivity(self, recognizer, dfa, startIndex, stopIndex, prediction, configs):
         print("Context sensitivity")
 
-
-class GrammarLayoutGenerator(QrogueDungeonListener):
-    def exitRoom(self, ctx:QrogueDungeonParser.RoomContext):
-        print("test")
-
-
-    def remove_redundant_areas(self):
-        """
-        Trims the map to its minimal size without removing or adding ways to
-        access any room. Is useful if a small map is specified that would otherwise
-        be displayed on the top left of the screen because of all the empty rooms
-        in the bottom right.
-        :return:
-        """
-        redundant_rows = [True] * self.height
-        redundant_cols = [True] * self.width
-
-        for y in range(self.height):
-            for x in range(self.width):
-                room = self._get(Coordinate(x, y))
-                if str(room) != LayoutGenerator.EMPTY_ROOM_CODE:
-                    redundant_rows[y] = False
-                    redundant_cols[x] = False
-
-        new_height = redundant_rows.count(False)
-        new_width = redundant_cols.count(False)
-        new_map = [[LayoutGenerator.EMPTY_ROOM_CODE] * new_width for _ in range(new_height)]
-        new_y = 0
-        for y in range(self.height):
-            if not redundant_rows[y]:
-                new_x = 0
-                for x in range(self.width):
-                    if not redundant_cols[x]:
-                        new_map[new_y][new_x] = self._get(Coordinate(new_x, new_y))
-                        new_x += 1
-                new_y += 1
-        self._reset_map(new_map)
-
-    def layout_string(self) -> str:
-        text = ""
-        for y in range(self.height):
-            for x in range(self.width):
-                val = self._get(Coordinate(x, y))
-                text += f"{val} "
-            text += "\n"
-        return text

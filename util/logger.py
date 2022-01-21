@@ -55,11 +55,9 @@ class Logger(py_cui.debug.PyCUILogger):
         highlighting = "\n----------------------------------\n"
         self.info(f"{highlighting}ERROR |{message}{highlighting}")
 
-        #KeyLogger.instance().log_error(message)    # todo reactivate when KeyLogger is no longer a singleton/handled better
-
     def throw(self, error) -> None:
         print(error)
-        self.__write(str(error))
+        self.__write(f"[ERROR] {error}")
         self.flush()
         raise error
 

@@ -9,8 +9,12 @@ complex_number : SIGN? (IMAG_NUMBER | (integer | FLOAT) (SIGN IMAG_NUMBER)?) ;
 
 // building the layout of the dungeon
 layout : LAYOUT HORIZONTAL_SEPARATOR* l_room_row (l_hallway_row l_room_row)* HORIZONTAL_SEPARATOR* ;
-l_room_row : VERTICAL_SEPARATOR ROOM_ID (HALLWAY_ID ROOM_ID)* VERTICAL_SEPARATOR ;
-l_hallway_row : VERTICAL_SEPARATOR (HALLWAY_ID (EMPTY_FIELD HALLWAY_ID)*)? VERTICAL_SEPARATOR ;
+l_room_row :    VERTICAL_SEPARATOR
+                (ROOM_ID | EMPTY_ROOM)  ((HALLWAY_ID | EMPTY_HALLWAY)   (ROOM_ID | EMPTY_ROOM))*
+                VERTICAL_SEPARATOR ;
+l_hallway_row : VERTICAL_SEPARATOR
+                (HALLWAY_ID | EMPTY_HALLWAY)+
+                VERTICAL_SEPARATOR ;
 
 // building the non-template rooms used in the layout (note: template rooms are pre-defined rooms)
 rooms : ROOMS room* ;
@@ -19,15 +23,17 @@ r_attributes : '(' r_visibility r_type ')' ;  // visibile/in sight, type
 r_visibility : (VISIBLE_LITERAL | FOGGY_LITERAL)? ;
 r_type :  (SPAWN_LITERAL | BOSS_LITERAL | WILD_LITERAL | SHOP_LITERAL | RIDDLE_LITERAL | GATE_ROOM_LITERAL) ;
 r_row : WALL tile+ WALL ;
-tile : DIGIT | 'c' | 't' | 'e' ;    // enemy, collectible, trigger, energy  # todo empty tile/floor? + riddle, shop
+tile :  DIGIT | 'c' | 't' | 'e' | 'r' | '$' | '_' ;    // enemy, collectible, trigger, energy, riddle, shop, floor
 
 // further describing the tiles used in the room
-tile_descriptor : (enemy_descriptor | collectible_descriptor | trigger_descriptor | energy_descriptor) ;
-enemy_descriptor : DIGIT draw_strategy? POOL_ID (draw_strategy? POOL_ID)?;    // enemy, id of statevector pool, id of reward pool
-collectible_descriptor : 'c' draw_strategy? POOL_ID integer? ; // id of reward pool to draw from, number of rewards to draw (note: template pools like *key provide "normal" collectibles)
-trigger_descriptor : 't' integer ;   // id of the event to trigger
+tile_descriptor : (enemy_descriptor | collectible_descriptor | trigger_descriptor | energy_descriptor | riddle_descriptor | shop_descriptor) ;
+enemy_descriptor : DIGIT draw_strategy? REFERENCE (draw_strategy? REFERENCE)?;    // enemy, id of statevector pool, id of reward pool
+collectible_descriptor : 'c' draw_strategy? REFERENCE integer? ; // id of reward pool to draw from, number of rewards to draw (note: template pools like *key provide "normal" collectibles)
+trigger_descriptor : 't' REFERENCE ;   // reference to the event to trigger
 energy_descriptor : 'e' integer ;    // amount
-// TODO: riddle & shop descriptor!
+riddle_descriptor : 'r' (REFERENCE | stv) (REFERENCE | collectible) ;   // stv pool id, reward pool id
+shop_descriptor : '$' (REFERENCE | collectibles) integer ;   // reward pool id or collectible list, num of items to draw
+
 
 // describing the hallways used in the layout (except for the default one '==')
 hallways : HALLWAYS hallway*;
@@ -40,25 +46,25 @@ h_attributes : '(' (OPEN_LITERAL | CLOSED_LITERAL | LOCKED_LITERAL)
 draw_strategy : RANDOM_DRAW | ORDERED_DRAW ;    // default is random draw, because mostly we don't want to have to explicitely define it
 
 stv_pools : STV_POOLS ('custom' stv_pool+)? 'default' default_stv_pool ;    // default pools are for enemies without defined pools
-default_stv_pool : draw_strategy (POOL_ID | stvs) ;
-stv_pool : POOL_ID stvs ('default_rewards' draw_strategy POOL_ID)?;     // id, pool of statevectors, id of default reward pool
+default_stv_pool : draw_strategy (REFERENCE | stvs) ;
+stv_pool : REFERENCE stvs ('default' 'rewards' ':' draw_strategy REFERENCE)?;     // id of pool, list of statevectors, id of default reward pool
 stvs : '[' stv (LIST_SEPARATOR stv)* ']' ;
 stv :  '[' complex_number (LIST_SEPARATOR complex_number)* ']';
 
 reward_pools : REWARD_POOLS ('custom' reward_pool+)? 'default' default_reward_pool ;    // default pools are for enemies without defined pools
-default_reward_pool : draw_strategy (POOL_ID | collectibles) ;      // the default pool can either be an ID or a list of collectibles
-reward_pool : POOL_ID collectibles ;     // id, pool of collectibles
+default_reward_pool : draw_strategy (REFERENCE | collectibles) ;      // the default pool can either be an ID or a list of collectibles
+reward_pool : REFERENCE collectibles ;     // id, pool of collectibles
 collectibles : '[' collectible (LIST_SEPARATOR collectible)* ']' ;
-collectible : (KEY_LITERAL integer | COIN_LITERAL integer | HEALTH_LITERAL integer | GATE_LITERAL integer) ;
+collectible : (KEY_LITERAL integer | COIN_LITERAL integer | HEALTH_LITERAL integer | GATE_LITERAL REFERENCE) ;
 
 // TOKEN
 
 // Characters implicitely used for special purposes:
 // [ ]      for highlighting headlines and grouping lists
 // < >      to mark the beginning and the end of the dungeon
-// _        to mark the use of predefined template rooms or hallways, _0 is always the non-existing/empty one
-// .        .. is used for an empty field in the map layout or as comma for floats
-// =        == is used for the non-existing hallway
+// _        single: Floor-tile | double: to mark the use of predefined template rooms or hallways
+// .        double: is used for an empty field in the map layout, in combination with digits or characters as comma for floats or tile descriptor
+// =        double: is used for the non-existing hallway
 // ~ | #    separators for Layout and Rooms for visual indications
 // :        to mark the beginning of a room's content
 // + -      signs for numbers
@@ -112,7 +118,8 @@ HORIZONTAL_SEPARATOR : '~' ;
 VERTICAL_SEPARATOR : '|' ;
 LIST_SEPARATOR : ',' ;
 WALL : '#' ;
-EMPTY_FIELD : '..' ;
+EMPTY_HALLWAY : '..' ;
+EMPTY_ROOM : '__' ;
 
 // keywords
 DIRECTION : 'North' | 'East' | 'South' | 'West' ;
@@ -122,7 +129,7 @@ RANDOM_DRAW : 'random' ;
 // ids
 ROOM_ID : ('_' | CHARACTER) CHARACTER ;
 HALLWAY_ID : '==' | ('_' | DIGIT) DIGIT ;   // '==' default (closed, no entanglement), same as _1 but with better visuals
-POOL_ID : '*' (CHARACTER | DIGIT)+ ;
+REFERENCE : '*' (CHARACTER | DIGIT)+ ;
 
 // ignored characters (whitespace and comments)
 WS : [ \t\r\n]+ -> skip ;

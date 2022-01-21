@@ -255,19 +255,6 @@ class Hallway(Area):
         else:
             return self.__room2
 
-    def copy(self, new_direction: Direction = None):
-        if new_direction:
-            door = Door(new_direction, self.__door.locked, self.__door.opened)
-            # it doesn't make sense to copy room references for a new direction
-            return Hallway(door)
-        else:
-            door = Door(self.__door.direction, self.__door.locked, self.__door.opened)
-            hw = Hallway(door)
-            hw.__room1 = self.__room1
-            hw.__room2 = self.__room2
-            return hw
-
-
     def __str__(self) -> str:
         if self.is_horizontal():
             orientation = "-"
@@ -346,6 +333,28 @@ class Room(Area):
 
         super(Room, self).__init__(type, tiles)
 
+    def _set_hallway(self, north_hallway: Hallway = None, east_hallway: Hallway = None, south_hallway: Hallway = None,
+                     west_hallway: Hallway = None):
+        if north_hallway is not None and not north_hallway.connects_horizontally():
+            self._set_tile(Floor(), Area.MID_X, 0)
+            self.__hallways[Direction.North] = north_hallway
+            north_hallway.set_room(self, Direction.North)
+
+        if east_hallway is not None and east_hallway.connects_horizontally():
+            self._set_tile(Floor(), Area.UNIT_WIDTH - 1, Area.MID_Y)
+            self.__hallways[Direction.East] = east_hallway
+            east_hallway.set_room(self, Direction.East)
+
+        if south_hallway is not None and not south_hallway.connects_horizontally():
+            self._set_tile(Floor(), Area.MID_X, Area.UNIT_HEIGHT - 1)
+            self.__hallways[Direction.South] = south_hallway
+            south_hallway.set_room(self, Direction.South)
+
+        if west_hallway is not None and west_hallway.connects_horizontally():
+            self._set_tile(Floor(), 0, Area.MID_Y)
+            self.__hallways[Direction.West] = west_hallway
+            west_hallway.set_room(self, Direction.West)
+
     def get_hallway(self, direction: Direction, throw_error: bool = True) -> Hallway:
         if direction in self.__hallways:
             return self.__hallways[direction]
@@ -380,27 +389,22 @@ class CustomRoom(Room):
     def abbreviation(self) -> str:
         return "CR"
 
-    def copy(self, hw_dic: Dict[Direction, Hallway]):
-        tile_matrix = []
-        for row in self.__tile_matrix:
-            row_copy = []
-            for tile in row:
-                if tile.code is TileCode.Enemy:
-                    row_copy.append(tile.copy())
-                else:
-                    row_copy.append(tile)
-            tile_matrix.append(row_copy)
-        new_room = CustomRoom(self.type, tile_matrix, hw_dic[Direction.North], hw_dic[Direction.East],
-                              hw_dic[Direction.South], hw_dic[Direction.West])
+    def copy(self, hw_dic: Dict[Direction, Hallway]) -> Room:
+        # if we wouldn't copy it we could very easily get errors because the hallways
+        # will be set for all the layout positions that reference this room and hence
+        # can ultimately lead to non-existing rooms
+        if hw_dic:
+            new_room = CustomRoom(self.type, self.__tile_matrix, hw_dic[Direction.North], hw_dic[Direction.East],
+                                  hw_dic[Direction.South], hw_dic[Direction.West])
+        else:
+            new_room = CustomRoom(self.type, self.__tile_matrix)   # todo not sure if rooms without hallways should be legal
+
         if self._is_visible_value:
-            new_room.make_visible()
+            # don't use Room's implementation but Area's
+            super(Room, new_room).make_visible()
         elif self._is_in_sight:
             new_room.in_sight()
         return new_room
-
-    def make_visible(self):
-        # don't use Room's implementation but Area's
-        super(Room, self).make_visible()
 
 
 class EmptyRoom(CustomRoom):
@@ -435,7 +439,6 @@ class SpecialRoom(Room, ABC):
 class SpawnRoom(Room):
     def __init__(self, tile_dic: "dic of Coordinate and Tile" = None, north_hallway: Hallway = None,
                  east_hallway: Hallway = None, south_hallway: Hallway = None, west_hallway: Hallway = None):
-        # todo add type to robot; always spawn at center?
         tile_list = Room.dic_to_tile_list(tile_dic)
         super().__init__(AreaType.SpawnRoom, tile_list, north_hallway, east_hallway, south_hallway, west_hallway)
 
