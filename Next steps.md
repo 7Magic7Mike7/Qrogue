@@ -1,9 +1,16 @@
 # Must haves #
-- custom GameData location also for Linux!
+- custom GameData location also for Unix!
+- new Hub area
+- automatic font size adaption
+- new Tutorial based on Narrative update
+
+# Should haves #
+- PyPI upload:
+https://medium.com/@joel.barmettler/how-to-upload-your-python-package-to-pypi-65edc5fe9c56
+- implement all changes proposed via Feedback
 - consider space in backpack when buying from shop
 - place collectible on the ground if you cannot pack a reward in your backpack?
 - access Backpack (Inventory)
-- new main menu
 
 # Tweaks #
 - key input pauses?
@@ -12,7 +19,7 @@
 
 - use higher numbers for more difficult Enemies?
 - use TextBox instead of BlockLabels?
-- add Training-Table to SpawnRoom (implement with flee rate)
+- add Training-Table to Spaceship (implement with flee rate)
 - create Rooms from file
 
 
