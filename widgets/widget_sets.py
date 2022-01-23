@@ -615,7 +615,6 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             return True
 
     def __choose_item(self, index: int = 0) -> bool:
-        # todo adapt when implementing ActiveItems? maybe implement ActiveItem as Consumable with infinite charges?
         if 0 <= index < self._robot.backpack.consumables_in_pouch:
             consumable = self._robot.backpack.get_from_pouch(index)
             if consumable is not None:

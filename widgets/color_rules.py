@@ -109,11 +109,8 @@ class FragmentStorage:
 
 
 class MultiColorRenderer(py_cui.renderer.Renderer):
-    __FILE_NAME = "multi_color_debug.txt"       # todo remove?
-
     def __init__(self, root, stdscr, logger):
         super().__init__(root, stdscr, logger)
-        PathConfig.delete(self.__FILE_NAME)
 
     def _get_render_text(self, ui_element, line, centered, bordered, selected, start_pos):
         """Internal function that computes the scope of the text that should be drawn
