@@ -87,9 +87,9 @@ class QrogueCUI(py_cui.PyCUI):
             self.__simulator = GameSimulator(self.__controls, path, in_keylog_folder=True)
             self.__menu.simulate_with_seed(self.__simulator.seed)
             # go back to the original position of the cursor and start the game
-            super(QrogueCUI, self)._handle_key_presses(self.__controls.selection_up)
-            super(QrogueCUI, self)._handle_key_presses(self.__controls.selection_up)
-            super(QrogueCUI, self)._handle_key_presses(self.__controls.action)
+            super(QrogueCUI, self)._handle_key_presses(self.__controls.get_key(Keys.SelectionUp))
+            super(QrogueCUI, self)._handle_key_presses(self.__controls.get_key(Keys.SelectionUp))
+            super(QrogueCUI, self)._handle_key_presses(self.__controls.get_key(Keys.Action))
             if self.__simulator.version == Config.version():
                 __space = "Space"
                 Popup.message("Starting Simulation", f"You started a run with \nseed = {self.__simulator.seed}\n"
@@ -134,7 +134,7 @@ class QrogueCUI(py_cui.PyCUI):
                     if GameplayConfig.log_keys() and self.__game_started and not self.simulating:
                         self.__key_logger.log(self.__controls, key_pressed)
                     super(QrogueCUI, self)._handle_key_presses(key_pressed)
-        elif key_pressed == self.__controls.get(Keys.Escape):
+        elif key_pressed in self.__controls.get_keys(Keys.StopSimulator):
             Popup.message("Simulator", "stopped Simulator")
             self.__simulator = None
         else:
@@ -297,19 +297,21 @@ class QrogueCUI(py_cui.PyCUI):
 
     def __init_keys(self) -> None:
         # debugging stuff
-        self.add_key_command(self.__controls.print_screen, self.print_screen)
-        self.__menu.get_main_widget().add_key_command(self.__controls.print_screen, self.print_screen)
-        self.__explore.get_main_widget().add_key_command(self.__controls.print_screen, self.print_screen)
-        self.__fight.get_main_widget().add_key_command(self.__controls.print_screen, self.print_screen)
-        self.__boss_fight.get_main_widget().add_key_command(self.__controls.print_screen, self.print_screen)
+        self.add_key_command(self.__controls.get_key(Keys.PrintScreen), self.print_screen)
+        self.__menu.get_main_widget().add_key_command(self.__controls.get_keys(Keys.PrintScreen), self.print_screen)
+        self.__explore.get_main_widget().add_key_command(self.__controls.get_keys(Keys.PrintScreen), self.print_screen)
+        self.__fight.get_main_widget().add_key_command(self.__controls.get_keys(Keys.PrintScreen), self.print_screen)
+        self.__boss_fight.get_main_widget().add_key_command(self.__controls.get_keys(Keys.PrintScreen),
+                                                            self.print_screen)
 
-        self.__pause.get_main_widget().add_key_command(CheatConfig.INPUT_CHEAT_KEY, CheatConfig.cheat_input)
-        self.__pause.get_main_widget().add_key_command(CheatConfig.CHEAT_LIST_KEY, CheatConfig.cheat_list)
+        self.__pause.get_main_widget().add_key_command(self.__controls.get_keys(Keys.CheatInput),
+                                                       CheatConfig.cheat_input)
+        self.__pause.get_main_widget().add_key_command(self.__controls.get_keys(Keys.CheatList), CheatConfig.cheat_list)
         # don't add the pause key to Menu and Pause itself!
         for widget_set in [self.__spaceship, self.__explore, self.__fight, self.__boss_fight, self.__shop,
                            self.__riddle]:
             for widget in widget_set.get_widget_list():
-                widget.widget.add_key_command(self.__controls.pause, Pausing.pause)
+                widget.widget.add_key_command(self.__controls.get_keys(Keys.Pause), Pausing.pause)
 
         # all selections
         selection_widgets = [
@@ -323,20 +325,20 @@ class QrogueCUI(py_cui.PyCUI):
         ]
         for my_widget in selection_widgets:
             widget = my_widget.widget
-            widget.add_key_command(self.__controls.selection_up, my_widget.up)
-            widget.add_key_command(self.__controls.selection_right, my_widget.right)
-            widget.add_key_command(self.__controls.selection_down, my_widget.down)
-            widget.add_key_command(self.__controls.selection_left, my_widget.left)
+            widget.add_key_command(self.__controls.get_keys(Keys.SelectionUp), my_widget.up)
+            widget.add_key_command(self.__controls.get_keys(Keys.SelectionRight), my_widget.right)
+            widget.add_key_command(self.__controls.get_keys(Keys.SelectionDown), my_widget.down)
+            widget.add_key_command(self.__controls.get_keys(Keys.SelectionLeft), my_widget.left)
 
         # menu
         self.__menu.selection.widget.add_key_command(self.__controls.action, self.__use_menu_selection)
 
         # spaceship
         w = self.__spaceship.get_main_widget()
-        w.add_key_command(self.__controls.move_up, self.__spaceship.move_up)
-        w.add_key_command(self.__controls.move_right, self.__spaceship.move_right)
-        w.add_key_command(self.__controls.move_down, self.__spaceship.move_down)
-        w.add_key_command(self.__controls.move_left, self.__spaceship.move_left)
+        w.add_key_command(self.__controls.get_keys(Keys.MoveUp), self.__spaceship.move_up)
+        w.add_key_command(self.__controls.get_keys(Keys.MoveRight), self.__spaceship.move_right)
+        w.add_key_command(self.__controls.get_keys(Keys.MoveDown), self.__spaceship.move_down)
+        w.add_key_command(self.__controls.get_keys(Keys.MoveLeft), self.__spaceship.move_left)
 
         # workbench
         self.__workbench.selection.widget.add_key_command(self.__controls.action, self.__workbench_selection)
@@ -348,10 +350,10 @@ class QrogueCUI(py_cui.PyCUI):
 
         # explore
         w = self.__explore.get_main_widget()
-        w.add_key_command(self.__controls.move_up, self.__explore.move_up)
-        w.add_key_command(self.__controls.move_right, self.__explore.move_right)
-        w.add_key_command(self.__controls.move_down, self.__explore.move_down)
-        w.add_key_command(self.__controls.move_left, self.__explore.move_left)
+        w.add_key_command(self.__controls.get_keys(Keys.MoveUp), self.__explore.move_up)
+        w.add_key_command(self.__controls.get_keys(Keys.MoveRight), self.__explore.move_right)
+        w.add_key_command(self.__controls.get_keys(Keys.MoveDown), self.__explore.move_down)
+        w.add_key_command(self.__controls.get_keys(Keys.MoveLeft), self.__explore.move_left)
 
         # fight
         self.__fight.choices.widget.add_key_command(self.__controls.action, self.__fight_choices)

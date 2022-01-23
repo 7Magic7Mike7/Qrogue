@@ -1,5 +1,6 @@
 import time
 from abc import abstractmethod, ABC
+from typing import List
 
 import py_cui
 from py_cui.widget_set import WidgetSet
@@ -21,7 +22,7 @@ from util.my_random import RandomManager
 from widgets.color_rules import ColorRules
 from widgets.my_popups import Popup, CommonPopups
 from widgets.my_widgets import SelectionWidget, StateVectorWidget, CircuitWidget, MapWidget, SimpleWidget, HudWidget, \
-    QubitInfoWidget, MyBaseWidget
+    QubitInfoWidget, MyBaseWidget, Widget
 from widgets.renderable import Renderable
 
 
@@ -39,7 +40,8 @@ class MyWidgetSet(WidgetSet, Renderable, ABC):
         self.init_widgets()
         self.__base_render = base_render_callback
 
-    def add_block_label(self, title, row, column, row_span = 1, column_span = 1, padx = 1, pady = 0, center=True):
+    def add_block_label(self, title, row, column, row_span = 1, column_span = 1, padx = 1, pady = 0, center=True)\
+            -> MyBaseWidget:
         """Function that adds a new block label to the CUI grid
 
                 Parameters
@@ -90,11 +92,11 @@ class MyWidgetSet(WidgetSet, Renderable, ABC):
         pass
 
     @abstractmethod
-    def get_widget_list(self) -> "list of Widgets":
+    def get_widget_list(self) -> List[MyBaseWidget]:
         pass
 
     @abstractmethod
-    def get_main_widget(self) -> py_cui.widgets.Widget:
+    def get_main_widget(self) -> MyBaseWidget:
         pass
 
     @abstractmethod
@@ -167,13 +169,13 @@ class MenuWidgetSet(MyWidgetSet):
     def simulate_with_seed(self, simulation_seed: int):
         self.__seed = simulation_seed
 
-    def get_widget_list(self) -> "list of Widgets":
+    def get_widget_list(self) -> List[Widget]:
         return [
             self.__title,
             self.__selection
         ]
 
-    def get_main_widget(self) -> py_cui.widgets.Widget:
+    def get_main_widget(self) -> MyBaseWidget:
         return self.__selection.widget
 
     def reset(self) -> None:
@@ -276,14 +278,14 @@ class PauseMenuWidgetSet(MyWidgetSet):
         self.__exit_run()
         return True
 
-    def get_widget_list(self) -> "list of Widgets":
+    def get_widget_list(self) -> List[Widget]:
         return [
             self.__hud,
             self.__choices,
             self.__details,
         ]
 
-    def get_main_widget(self) -> py_cui.widgets.Widget:
+    def get_main_widget(self) -> MyBaseWidget:
         return self.__choices.widget
 
     def set_data(self, robot: Robot):
@@ -317,14 +319,14 @@ class WorkbenchWidgetSet(MyWidgetSet):
             [self.__details]
         ))
 
-    def get_widget_list(self) -> "list of Widgets":
+    def get_widget_list(self) -> List[Widget]:
         return [
             self.__robot_selection,
             self.__robot_info,
             self.__available_upgrades,
         ]
 
-    def get_main_widget(self) -> py_cui.widgets.Widget:
+    def get_main_widget(self) -> MyBaseWidget:
         return self.__robot_selection.widget
 
     def reset(self) -> None:
@@ -369,14 +371,14 @@ class ExploreWidgetSet(MyWidgetSet):
         self.__map_widget = MapWidget(map_widget)
         ColorRules.apply_map_rules(self.__map_widget)
 
-    def get_main_widget(self) -> py_cui.widgets.Widget:
+    def get_main_widget(self) -> MyBaseWidget:
         return self.__map_widget.widget
 
     def set_data(self, map: Map, robot_tile: RobotTile) -> None:
         self.__hud.set_data(robot_tile.robot)
         self.__map_widget.set_data(map)
 
-    def get_widget_list(self) -> "list of Widgets":
+    def get_widget_list(self) -> List[Widget]:
         return [
             self.__hud,
             self.__map_widget
@@ -456,7 +458,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         details.toggle_border()
         self._details = SelectionWidget(details, columns=self.__DETAILS_COLUMNS, is_second=True)
 
-    def get_main_widget(self) -> py_cui.widgets.Widget:
+    def get_main_widget(self) -> MyBaseWidget:
         return self._choices.widget
 
     def set_data(self, robot: Robot, target: Target) -> None:
@@ -479,7 +481,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self.__stv_target.set_data(t_stv)
         self.__qi_target.set_data(p_stv.num_of_qubits)
 
-    def get_widget_list(self) -> "list of Widgets":
+    def get_widget_list(self) -> List[Widget]:
         return [
             self.__hud,
             self.__qi_robot,
@@ -761,7 +763,7 @@ class ShopWidgetSet(MyWidgetSet):
     def details(self) -> SimpleWidget:
         return self.__details
 
-    def get_widget_list(self) -> "list of Widgets":
+    def get_widget_list(self) -> List[Widget]:
         return [
             self.__hud,
             self.__inventory,
@@ -769,18 +771,18 @@ class ShopWidgetSet(MyWidgetSet):
             self.__buy,
         ]
 
-    def get_main_widget(self) -> py_cui.widgets.Widget:
+    def get_main_widget(self) -> MyBaseWidget:
         return self.__inventory.widget
 
     def reset(self) -> None:
         self.__inventory.render_reset()
 
-    def set_data(self, robot: Robot, items: "list of ShopItems") -> None:
+    def set_data(self, robot: Robot, items: List[ShopItem]) -> None:
         self.__robot = robot
         self.__hud.set_data(robot)
         self.__update_inventory(items)
 
-    def __update_inventory(self, items: [ShopItem]):
+    def __update_inventory(self, items: List[ShopItem]):
         self.__items = items
         self.__inventory.set_data(data=(
             [si.to_string() for si in items] + ["-Leave-"],

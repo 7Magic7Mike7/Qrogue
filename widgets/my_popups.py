@@ -4,6 +4,7 @@ import py_cui
 import py_cui.ui
 from py_cui import ColorRule
 
+from game.controls import Keys
 from util.config import PopupConfig, ColorConfig as CC
 from util.logger import Logger
 
@@ -123,11 +124,11 @@ class MultilinePopup(py_cui.popups.Popup, py_cui.ui.MenuImplementation):
     def _handle_key_press(self, key_pressed):
         """Overrides base class handle_key_press function
         """
-        if key_pressed in self.__controls.popup_close:
+        if key_pressed in self.__controls.get_keys(Keys.PopupClose):
             self._root.close_popup()
-        elif key_pressed == self.__controls.popup_scroll_up:
+        elif key_pressed in self.__controls.get_keys(Keys.PopupScrollUp):
             self.up()
-        elif key_pressed == self.__controls.popup_scroll_down:
+        elif key_pressed in self.__controls.get_keys(Keys.PopupScrollDown):
             self.down()
 
     def _draw(self):

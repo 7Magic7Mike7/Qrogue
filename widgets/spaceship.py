@@ -269,7 +269,7 @@ class SpaceshipWidgetSet(MyWidgetSet):
             self.__spaceship,
         ]
 
-    def get_main_widget(self) -> py_cui.widgets.Widget:
+    def get_main_widget(self) -> MyBaseWidget:
         return self.__spaceship.widget
 
     def reset(self) -> None:

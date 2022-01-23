@@ -28,8 +28,9 @@ class MyBaseWidget(BlockLabel):
     def add_text_color_rule(self, regex: str, color: int, rule_type: str, match_type: str='line', region: List[int]=[0,1], include_whitespace: bool=False, selected_color=None) -> None:
         super(MyBaseWidget, self).add_text_color_rule(regex, color, rule_type, match_type, region, include_whitespace, selected_color)
 
-    def add_key_command(self, key: int, command: Callable[[],Any]) -> Any:
-        return super(MyBaseWidget, self).add_key_command(key, command)
+    def add_key_command(self, keys: List[int], command: Callable[[],Any]) -> Any:
+        for key in keys:
+            super(MyBaseWidget, self).add_key_command(key, command)
 
 
 class Widget(Renderable, ABC):

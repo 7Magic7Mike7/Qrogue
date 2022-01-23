@@ -324,8 +324,6 @@ class PopupConfig:
 
 
 class CheatConfig:
-    INPUT_CHEAT_KEY = py_cui.keys.KEY_CTRL_I
-    CHEAT_LIST_KEY = py_cui.keys.KEY_CTRL_L
     __ALL = "aLL"
     __GOD_MODE = "Qod-Mode"
     __SCARED_RABBIT = "Rabbit_Tunnel"
