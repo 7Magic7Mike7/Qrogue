@@ -135,7 +135,7 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
             return self.__load_trigger("*defaultTrigger")
 
         elif tile_str == 'e':
-            return tiles.Floor()    # todo implement energy
+            return tiles.Collectible(pickup.Energy())
 
         elif tile_str == 'r':
             stv = self.__default_target_difficulty.create_statevector(self.__robot, self.__rm)
@@ -153,42 +153,6 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
         else:
             self.warning(f"Unknown tile specified: {tile_str}. Using a Floor-Tile instead.")
             return tiles.Floor()
-
-    def __remove_redundant_areas(self, room_matrix: List[List[rooms.Room]]):
-        """
-        Trims the map to its minimal size without removing or adding ways to
-        access any room. Is useful if a small map is specified that would otherwise
-        be displayed on the top left of the screen because of all the empty rooms
-        in the bottom right.
-        :return:
-        """
-        raise NotImplementedError() # todo not fully implemented yet and not even needed I think
-
-        redundant_rows = 0
-        redundant_cols = 0
-
-        for y in range(self.height):
-            for x in range(self.width):
-                room = room_matrix[y][x]
-                if not room:
-                    redundant_cols = x + 1
-            if redundant_cols > 0:
-                redundant_rows += 1
-            else:
-                break
-
-        new_height = self.height - redundant_rows
-        new_width = self.width - redundant_cols
-        new_map = [[self.__EMPTY_ROOM_CODE] * new_width for _ in range(new_height)]
-        new_y = 0
-        for y in range(self.height):
-            if not redundant_rows[y]:
-                new_x = 0
-                for x in range(self.width):
-                    if not redundant_cols[x]:
-                        new_map[new_y][new_x] = self._get(Coordinate(new_x, new_y))
-                        new_x += 1
-                new_y += 1
 
     def generate(self, robot: Robot, cbp: CallbackPack, data: str) -> (Map, bool):
         input_stream = InputStream(data)
@@ -551,8 +515,8 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
         return tiles.Riddler(self.__cbp.open_riddle, riddle)
 
     def visitEnergy_descriptor(self, ctx: QrogueDungeonParser.Energy_descriptorContext) -> tiles.Tile:
-        # todo implement energy
-        return tiles.Floor()
+        amount = self.visit(ctx.integer())
+        return tiles.Energy(amount)
 
     def visitTrigger_descriptor(self, ctx: QrogueDungeonParser.Trigger_descriptorContext) -> tiles.Trigger:
         reference = ctx.REFERENCE().getText()

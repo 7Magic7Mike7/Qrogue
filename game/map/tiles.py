@@ -9,6 +9,7 @@ from game.actors.robot import Robot
 from game.actors.riddle import Riddle
 from game.callbacks import OnWalkCallback
 from game.collectibles.collectible import Collectible as LogicalCollectible
+from game.collectibles.pickup import Energy as LogicalEnergy
 from game.map.navigation import Direction
 from util.config import CheatConfig
 from util.logger import Logger
@@ -37,6 +38,7 @@ class TileCode(Enum):
     Collectible = 50
     Riddler = 51
     ShopKeeper = 52
+    Energy = 53
 
     SpaceshipBlock = 70
     SpaceshipWalk = 71
@@ -327,6 +329,27 @@ class Collectible(WalkTriggerTile):
             desc = self.__collectible.description()
             Popup.message(self.__collectible.name(), f"You picked up a {name}.\n{desc}")
             robot.give_collectible(self.__collectible)
+            self.__active = False
+
+
+class Energy(WalkTriggerTile):
+    def __init__(self, amount: int):
+        super().__init__(TileCode.Energy)
+        self.__amount = amount
+        self.__active = True
+
+    def get_img(self):
+        if self.__active:
+            return "e"
+        else:
+            return self._invisible
+
+    def is_walkable(self, direction: Direction, robot: Robot) -> bool:
+        return True
+
+    def on_walk(self, direction: Direction, robot: Robot) -> None:
+        if self.__active:
+            robot.give_collectible(LogicalEnergy(self.__amount))
             self.__active = False
 
 

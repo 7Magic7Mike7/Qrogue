@@ -73,3 +73,20 @@ class Heart(Pickup):
 
     def __str__(self) -> str:
         return self.to_string()
+
+
+class Energy(Pickup):
+    def __init__(self, amount: int = 10):
+        super().__init__(amount)
+
+    def name(self) -> str:
+        return "Energy"
+
+    def description(self) -> str:
+        return "Gives back some energy to the robot so it can stay longer in a dungeon."
+
+    def to_string(self) -> str:
+        return f"Energy ({self.amount})"
+
+    def __str__(self) -> str:
+        return self.to_string()
