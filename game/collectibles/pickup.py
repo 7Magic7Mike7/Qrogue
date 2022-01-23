@@ -8,6 +8,8 @@ class Pickup(Collectible, ABC):
 
     def __init__(self, amount: int):
         super(Pickup, self).__init__(CollectibleType.Pickup)
+        if amount <= 0:
+            amount = 1
         self._amount = amount
 
     @property
