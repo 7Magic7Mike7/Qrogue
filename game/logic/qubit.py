@@ -27,6 +27,21 @@ class StateVector:
         job = simulator.run(compiled_circuit, shots=1)
         return StateVector(job.result().get_statevector())
 
+    @staticmethod
+    def complex_to_string(val: complex) -> str:
+        val = np.round(val, StateVector.__DECIMALS)
+        if val.imag == 0:
+            return f"{val.real:g}"
+        elif val.real == 0:
+            return f"{val.imag:g}j"
+        else:
+            if val.imag == 1:
+                return f"{val.real:g}+j"
+            elif val.imag == -1:
+                return f"{val.real:g}-j"
+            else:
+                return str(val)[1:-1]    # remove the parentheses
+
     @property
     def size(self) -> int:
         return len(self.__amplitudes)
@@ -62,6 +77,13 @@ class StateVector:
         else:
             return None
 
+    def to_string(self) -> str:
+        text = ""
+        for val in self.__amplitudes:
+            text += StateVector.complex_to_string(val)
+            text += "\n"
+        return text
+
     def __eq__(self, other) -> bool: # TODO currently not even in use!
         if type(other) is type(self):
             return self.__amplitudes == other.__amplitudes
@@ -80,20 +102,11 @@ class StateVector:
                 return True
         return False
 
-    def to_string(self) -> str:
-        text = ""
-        for val in self.__amplitudes:
-            val = np.round(val, StateVector.__DECIMALS)
-            if val == 0:
-                text += "0\n"
-            else:
-                text += f"{val}\n"
-        return text
-
     def __str__(self) -> str:
-        text = ""
+        text = "StateVector("
         for val in self.__amplitudes:
-            text += f"{np.round(val, StateVector.__DECIMALS)}\n"
+            text += f"{np.round(val, StateVector.__DECIMALS)}, "
+        text = text[:-2] + ")"
         return text
 
     def __iter__(self) -> collections.Iterator:

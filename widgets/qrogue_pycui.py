@@ -358,8 +358,11 @@ class QrogueCUI(py_cui.PyCUI):
         # fight
         self.__fight.choices.widget.add_key_command(self.__controls.action, self.__fight_choices)
         self.__fight.details.widget.add_key_command(self.__controls.action, self.__fight_details)
+        self.__fight.details.widget.add_key_command(self.__controls.get_keys(Keys.Cancel), self.__fight_details_back)
         self.__boss_fight.choices.widget.add_key_command(self.__controls.action, self.__boss_fight_choices)
         self.__boss_fight.details.widget.add_key_command(self.__controls.action, self.__boss_fight_details)
+        self.__boss_fight.details.widget.add_key_command(self.__controls.get_keys(Keys.Cancel),
+                                                         self.__boss_fight_details_back)
 
         # shop
         self.__shop.inventory.widget.add_key_command(self.__controls.action, self.__shop_inventory)
@@ -368,6 +371,7 @@ class QrogueCUI(py_cui.PyCUI):
         # riddle
         self.__riddle.choices.widget.add_key_command(self.__controls.action, self.__riddle_choices)
         self.__riddle.details.widget.add_key_command(self.__controls.action, self.__riddle_details)
+        self.__riddle.details.widget.add_key_command(self.__controls.get_keys(Keys.Cancel), self.__riddle_details_back)
 
     def print_screen(self) -> None:
         text = ""
@@ -537,7 +541,11 @@ class QrogueCUI(py_cui.PyCUI):
             self.__render([self.__fight.choices, self.__fight.details])
 
     def __fight_details(self) -> None:
-        if self.__fight.details.use() and self.__cur_widget_set is self.__fight:
+        if self.__fight.details.use():
+            self.__fight_details_back()
+
+    def __fight_details_back(self) -> None:
+        if self.__cur_widget_set is self.__fight:
             self.move_focus(self.__fight.choices.widget, auto_press_buttons=False)
             self.__fight.choices.validate_index()   # somehow it can happen that the index is out of bounds after
                                                     # coming back from details which is why we validate it now
@@ -549,26 +557,34 @@ class QrogueCUI(py_cui.PyCUI):
             self.move_focus(self.__boss_fight.details.widget, auto_press_buttons=False)
             self.__render([self.__boss_fight.choices, self.__boss_fight.details])
 
-    def __boss_fight_details(self) -> None:
-        if self.__boss_fight.details.use() and self.__cur_widget_set is self.__boss_fight:
+    def __boss_fight_details_back(self) -> None:
+        if self.__cur_widget_set is self.__boss_fight:
             self.move_focus(self.__boss_fight.choices.widget, auto_press_buttons=False)
             self.__boss_fight.choices.validate_index()  # somehow it can happen that the index is out of bounds after
-                                                        # coming back from details which is why we validate it now
+            # coming back from details which is why we validate it now
             self.__boss_fight.details.render_reset()
-            self.render()   # render the whole widget_set for updating the StateVectors and the circuit
+            self.render()  # render the whole widget_set for updating the StateVectors and the circuit
+
+    def __boss_fight_details(self) -> None:
+        if self.__boss_fight.details.use():
+            self.__boss_fight_details_back()
 
     def __riddle_choices(self):
         if self.__riddle.choices.use() and self.__cur_widget_set is self.__riddle:
             self.move_focus(self.__riddle.details.widget, auto_press_buttons=False)
             self.__render([self.__riddle.choices, self.__riddle.details])
 
-    def __riddle_details(self) -> None:
-        if self.__riddle.details.use() and self.__cur_widget_set is self.__riddle:
+    def __riddle_details_back(self) -> None:
+        if self.__cur_widget_set is self.__riddle:
             self.move_focus(self.__riddle.choices.widget, auto_press_buttons=False)
             self.__riddle.choices.validate_index()   # somehow it can happen that the index is out of bounds after
                                                     # coming back from details which is why we validate it now
             self.__riddle.details.render_reset()
             self.render()   # render the whole widget_set for updating the StateVectors and the circuit
+
+    def __riddle_details(self) -> None:
+        if self.__riddle.details.use():
+            self.__riddle_details_back()
 
     def __shop_inventory(self) -> None:
         if self.__shop.inventory.use() and self.__cur_widget_set is self.__shop:

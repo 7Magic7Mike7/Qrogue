@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import List, Any, Callable
+from typing import List, Any, Callable, Tuple
 
-from py_cui import ColorRule
 from py_cui.widgets import BlockLabel
 
 from game.actors.robot import Robot
@@ -12,12 +11,13 @@ from game.map.navigation import Direction
 from game.map.rooms import Area, Placeholder
 from util.config import ColorConfig
 from util.logger import Logger
+from util import util_functions as uf
 from widgets.renderable import Renderable
 
 
 class MyBaseWidget(BlockLabel):
-    def __init__(self, id, title, grid, row, column, row_span, column_span, padx, pady, center, logger):
-        super().__init__(id, title, grid, row, column, row_span, column_span, padx, pady, center, logger)
+    def __init__(self, wid, title, grid, row, column, row_span, column_span, padx, pady, center, logger):
+        super().__init__(wid, title, grid, row, column, row_span, column_span, padx, pady, center, logger)
 
     def set_title(self, title: str) -> None:
         super(MyBaseWidget, self).set_title(title)
@@ -25,8 +25,10 @@ class MyBaseWidget(BlockLabel):
     def get_title(self) -> str:
         return super(MyBaseWidget, self).get_title()
 
-    def add_text_color_rule(self, regex: str, color: int, rule_type: str, match_type: str='line', region: List[int]=[0,1], include_whitespace: bool=False, selected_color=None) -> None:
-        super(MyBaseWidget, self).add_text_color_rule(regex, color, rule_type, match_type, region, include_whitespace, selected_color)
+    def add_text_color_rule(self, regex: str, color: int, rule_type: str, match_type: str = 'line',
+                            region: List[int] = [0,1], include_whitespace: bool=False, selected_color=None) -> None:
+        super(MyBaseWidget, self).add_text_color_rule(regex, color, rule_type, match_type, region, include_whitespace,
+                                                      selected_color)
 
     def add_key_command(self, keys: List[int], command: Callable[[],Any]) -> Any:
         for key in keys:
@@ -127,10 +129,11 @@ class CircuitWidget(Widget):
                             inst_str = inst_str.rjust(len(inst_str) + half_diff + 1, "-")
                     rows[q][i] = inst_str
             circ_str = ""
-            q = 0
+            # place qubits from top to bottom, high to low index
+            q = len(rows) - 1
             for row in rows:
-                circ_str += f"| q{q} >---" # add qubit
-                q += 1
+                circ_str += f"| q{q} >---"
+                q -= 1
                 for i in range(len(row)):
                     circ_str += row[i]
                     if i < len(row) - 1:
@@ -208,14 +211,12 @@ class MapWidget(Widget):
         return self.__map.move(direction)
 
 
-class StateVectorWidget(Widget):
-    def __init__(self, widget: MyBaseWidget, headline: str, diff: bool = False):
+class TargetStateVectorWidget(Widget):
+    def __init__(self, widget: MyBaseWidget, headline: str):
         super().__init__(widget)
         self.__headline = headline
         self.__state_vector = None
         widget.add_text_color_rule("~.*~", ColorConfig.STV_HEADING_COLOR, 'contains', match_type='regex')
-        if diff:
-            widget.add_text_color_rule("0", ColorConfig.CORRECT_AMPLITUDE_COLOR, "startswith", match_type="regex")
 
     def set_data(self, state_vector: StateVector) -> None:
         self.__state_vector = state_vector
@@ -229,8 +230,44 @@ class StateVectorWidget(Widget):
         self.widget.set_title("")
 
 
+class CurrentStateVectorWidget(Widget):
+    def __init__(self, widget: MyBaseWidget, headline: str):
+        super().__init__(widget)
+        self.__headline = headline
+        self.__state_vector = None
+        self.__diff_vector = None
+        widget.add_text_color_rule("~.*~", ColorConfig.STV_HEADING_COLOR, 'contains', match_type='regex')
+        widget.add_text_color_rule("\(0\)", ColorConfig.CORRECT_AMPLITUDE_COLOR, "contains", match_type="regex")
+        #widget.add_text_color_rule("\(\d\)", ColorConfig.CORRECT_AMPLITUDE_COLOR, "contains", match_type="regex")
+        widget.add_text_color_rule("\([^0].*\)", ColorConfig.WRONG_AMPLITUDE_COLOR, "contains", match_type="regex")
+
+    def set_data(self, state_vectors: Tuple[StateVector, StateVector]) -> None:
+        self.__state_vector, target = state_vectors
+        self.__diff_vector = target.get_diff(self.__state_vector)
+
+    def render(self) -> None:
+        if self.__state_vector is not None:
+            str_rep = f"~{self.__headline}~\n"
+            stv_rows = self.__state_vector.to_string().split('\n')
+            diff_rows = ["(" + val + ")" for val in self.__diff_vector.to_string().split('\n')]
+
+            max_stv_width = max([len(val) for val in stv_rows])
+            max_diff_width = max([len(val) for val in diff_rows])
+
+            # last row is empty due to the trailing \n and therefore uninteresting to us
+            for i in range(len(stv_rows) - 1):
+                str_rep += uf.center_string(stv_rows[i], max_stv_width, uneven_left=True)
+                str_rep += "  "
+                str_rep += uf.center_string(diff_rows[i], max_diff_width, uneven_left=False)
+                str_rep += "\n"
+            self.widget.set_title(str_rep)
+
+    def render_reset(self) -> None:
+        self.widget.set_title("")
+
+
 class QubitInfoWidget(Widget):
-    def __init__(self, widget: MyBaseWidget, left_aligned: bool):
+    def __init__(self, widget: MyBaseWidget, left_aligned: bool = True):
         super(QubitInfoWidget, self).__init__(widget)
         self.__left_aligned = left_aligned
         self.__text = ""
@@ -296,8 +333,7 @@ class SelectionWidget(Widget):
 
     def set_data(self, data: "tuple of list of str and list of SelectionCallbacks") -> None:
         self.render_reset()
-        self.__choices = data[0]
-        self.__callbacks = data[1]
+        self.__choices, self.__callbacks = data
         choice_length = 0
         for choice in self.__choices:
             if len(choice) > choice_length:

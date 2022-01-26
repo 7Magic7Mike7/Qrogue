@@ -21,8 +21,8 @@ from util.logger import Logger
 from util.my_random import RandomManager
 from widgets.color_rules import ColorRules
 from widgets.my_popups import Popup, CommonPopups
-from widgets.my_widgets import SelectionWidget, StateVectorWidget, CircuitWidget, MapWidget, SimpleWidget, HudWidget, \
-    QubitInfoWidget, MyBaseWidget, Widget
+from widgets.my_widgets import SelectionWidget, CircuitWidget, MapWidget, SimpleWidget, HudWidget, \
+    QubitInfoWidget, MyBaseWidget, Widget, CurrentStateVectorWidget, TargetStateVectorWidget
 from widgets.renderable import Renderable
 
 
@@ -429,18 +429,12 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
         stv_row = 1
         row_span = 3
-        qi_robot = self.add_block_label('Qubit Info', stv_row, 0, row_span=row_span, column_span=1, center=True)
-        self.__qi_robot = QubitInfoWidget(qi_robot, left_aligned=False)
-        stv = self.add_block_label('Player StV', stv_row, 1, row_span=row_span, column_span=2, center=True)
-        self.__stv_robot = StateVectorWidget(stv, "Current State")
-
-        stv = self.add_block_label('Diff StV', stv_row, 3, row_span=row_span, column_span=3, center=True)
-        self.__stv_diff = StateVectorWidget(stv, "Difference", diff=True)
-
-        stv = self.add_block_label('Target StV', stv_row, 6, row_span=row_span, column_span=2, center=True)
-        self.__stv_target = StateVectorWidget(stv, "Target State")
-        qi_target = self.add_block_label('Qubit Info', stv_row, 8, row_span=row_span, column_span=1, center=True)
-        self.__qi_target = QubitInfoWidget(qi_target, left_aligned=False)
+        stv = self.add_block_label('Player StV', stv_row, 0, row_span=row_span, column_span=3, center=True)
+        self.__stv_robot = CurrentStateVectorWidget(stv, "Current State")
+        truth_table = self.add_block_label('Truth table', stv_row, 3, row_span=row_span, column_span=3, center=True)
+        self.__truth_table = QubitInfoWidget(truth_table)
+        stv = self.add_block_label('Target StV', stv_row, 6, row_span=row_span, column_span=3, center=True)
+        self.__stv_target = TargetStateVectorWidget(stv, "Target State")
 
         circuit = self.add_block_label('Circuit', 6, 0, row_span=1, column_span=MyWidgetSet.NUM_OF_COLS, center=True)
         self.__circuit = CircuitWidget(circuit)
@@ -475,20 +469,16 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
         p_stv = robot.state_vector
         t_stv = target.statevector
-        self.__qi_robot.set_data(p_stv.num_of_qubits)
-        self.__stv_robot.set_data(p_stv)
-        self.__stv_diff.set_data(p_stv.get_diff(t_stv))
+        self.__stv_robot.set_data((p_stv, t_stv))
+        self.__truth_table.set_data(p_stv.num_of_qubits)
         self.__stv_target.set_data(t_stv)
-        self.__qi_target.set_data(p_stv.num_of_qubits)
 
     def get_widget_list(self) -> List[Widget]:
         return [
             self.__hud,
-            self.__qi_robot,
             self.__stv_robot,
-            self.__stv_diff,
+            self.__truth_table,
             self.__stv_target,
-            self.__qi_target,
             self.__circuit,
             self._choices,
             self._details
@@ -561,8 +551,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             Logger.instance().error("Error! Target is not set!")
             return False
         result = self._robot.update_statevector()
-        self.__stv_robot.set_data(result)
-        self.__stv_diff.set_data(result.get_diff(self._target.statevector))
+        self.__stv_robot.set_data((result, self._target.statevector))
         self.render()
 
         if self._target.is_reached(result):
@@ -585,9 +574,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             return True
         else:
             self._robot.reset_circuit()
-            pstv = self._robot.state_vector
-            self.__stv_robot.set_data(pstv)
-            self.__stv_diff.set_data(pstv.get_diff(self._target.statevector))
+            self.__stv_robot.set_data((self._robot.state_vector, self._target.state_vector))
             self.render()
             return False
 
