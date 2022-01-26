@@ -1,3 +1,5 @@
+from typing import List
+
 from game.actors.factory import EnemyFactory, TargetDifficulty
 from game.actors.enemy import Enemy as EnemyActor
 from game.actors.boss import Boss as BossActor
@@ -8,12 +10,12 @@ from game.collectibles import consumable
 from game.collectibles.collectible import ShopItem
 from game.collectibles import pickup
 from game.expedition import Expedition
-from game.logic.instruction import CXGate, HGate, XGate
+from game.logic.instruction import CXGate, HGate
 from game.logic.qubit import StateVector
 from game.map import tiles
 from game.map.map import Map
 from game.map.navigation import Coordinate, Direction
-from game.map.rooms import Room, SpawnRoom, GateRoom, WildRoom, BossRoom, ShopRoom, RiddleRoom, Hallway
+from game.map.rooms import Room, SpawnRoom, GateRoom, WildRoom, BossRoom, ShopRoom, RiddleRoom, Hallway, AreaType
 from util.config import ColorConfig as CC
 from util.help_texts import HelpText, HelpTextType
 from util.my_random import MyRandom
@@ -57,9 +59,9 @@ class TutorialBoss(BossActor):
 
 
 class TutorialEnemyFactory(EnemyFactory):
-    def __init__(self, robot: Robot, start_fight_callback: OnWalkCallback):
+    def __init__(self, start_fight_callback: OnWalkCallback):
         self.__difficulty = TutorialDifficulty()
-        super().__init__(robot, start_fight_callback, self.__difficulty)
+        super().__init__(start_fight_callback, self.__difficulty)
 
         self.__reward_index = 0
         self.__enemy_data = [
@@ -72,17 +74,17 @@ class TutorialEnemyFactory(EnemyFactory):
         ]
 
     def produce(self, robot: Robot, rm: MyRandom, flee_chance: float) -> EnemyActor:
-        data = self.__enemy_data[self.__reward_index]
-        enemy = TutorialEnemy(data[0], data[1])
+        stv, reward = self.__enemy_data[self.__reward_index]
+        enemy = TutorialEnemy(stv, reward)
         self.__reward_index = (self.__reward_index + 1) % len(self.__enemy_data)
         return enemy
 
 
 class TutorialTile(tiles.Message):
-    def __init__(self, popup: Popup, id: int, is_active_callback: "bool(int)", progress_callback: "()" = None,
+    def __init__(self, popup: Popup, tid: int, is_active_callback: "bool(int)", progress_callback: "()" = None,
                  blocks: bool = False):
         super().__init__(popup, popup_times=1)
-        self.__id = id
+        self.__id = tid
         self.__is_active = is_active_callback
         self.__progress = progress_callback
         self.__blocks = blocks
@@ -117,10 +119,10 @@ class TutorialTile(tiles.Message):
 
 
 class CustomWildRoom(Room):
-    def __init__(self, robot: Robot, east_hallway: Hallway, west_hallway: Hallway,
+    def __init__(self, east_hallway: Hallway, west_hallway: Hallway,
                  start_fight_callback: "void(EnemyActor, Direction, Robot)", tutorial_tile: TutorialTile,
                  blocking_tile: TutorialTile):
-        factory = TutorialEnemyFactory(robot, start_fight_callback)
+        factory = TutorialEnemyFactory(start_fight_callback)
         self.__enemies = []
         for i in range(Room.INNER_WIDTH):
             self.__enemies.append(tiles.Enemy(factory, self.get_entangled_tiles, id=1, amplitude=1))
@@ -133,10 +135,10 @@ class CustomWildRoom(Room):
         for i in range(len(self.__enemies)):
             tile_dic[Coordinate(1, i)] = self.__enemies[i]
         tile_list = Room.dic_to_tile_list(tile_dic)
-        super().__init__(tile_list, east_hallway=east_hallway, west_hallway=west_hallway)
+        super().__init__(AreaType.WildRoom, tile_list, east_hallway=east_hallway, west_hallway=west_hallway)
 
-    def get_entangled_tiles(self, id: int) -> "list of EnemyTiles":
-        if id == 0:
+    def get_entangled_tiles(self, eid: int) -> List[tiles.Enemy]:
+        if eid == 0:
             return []
         return self.__enemies
 
@@ -154,12 +156,12 @@ class CustomWildRoom2(WildRoom):
         enemy = CC.highlight_object("Enemy")
         groups = CC.highlight_word("groups")
         opposite = CC.highlight_word("opposite")
-        open = CC.highlight_word("open")
+        open_ = CC.highlight_word("open")
         closed = CC.highlight_word("closed forever")
         boss = CC.highlight_object("Boss")
         text = f"In this Room are two {doors} with a {special} property: they are {entangled}. You already heard " \
                f"about this phenomenon when you were introduced to {enemy} {groups}. But instead of behaving equally " \
-               f"the {doors} behave the exact {opposite} - if you {open} one of them the other will be {closed}. " \
+               f"the {doors} behave the exact {opposite} - if you {open_} one of them the other will be {closed}. " \
                f"But in this Dungeon it is not obligatory to go into one of the rooms behind these {doors}...\n" \
                f"...because the {boss} is already waiting for you in the North."
         self._set_tile(tiles.Message(Popup("Tutorial: Entangled Doors", text, show=False)), 0, Room.MID_Y)
@@ -216,11 +218,11 @@ class Tutorial(Expedition):
         self.__shop = None
         self.__showed_shop_tutorial = False
 
-    def is_active(self, id: int) -> bool:
-        return self.__cur_id == id
+    def is_active(self, tid: int) -> bool:
+        return self.__cur_id == tid
 
-    def should_block(self, id: int) -> bool:
-        return self.__cur_id > id
+    def should_block(self, tid: int) -> bool:
+        return self.__cur_id > tid
 
     def progress(self):
         self.__cur_id += 1
@@ -247,7 +249,7 @@ class Tutorial(Expedition):
         self._cbp.start_boss_fight(robot, boss, direction)
         Popup("Tutorial: Boss Fight", HelpText.get(HelpTextType.BossFight))
 
-    def build_tutorial_map(self, robot: Robot) -> ([[Room]], Coordinate):
+    def build_tutorial_map(self) -> (List[List[Room]], Coordinate):
         w = [CC.highlight_object("Gate"), CC.highlight_object("Circuit"), CC.highlight_word("locked"),
              CC.highlight_object("Enemies"), CC.highlight_object("Key"), CC.highlight_word("number"),
              CC.highlight_word("group"), CC.highlight_word("entangled"), CC.highlight_word("all others will too"),
@@ -308,9 +310,9 @@ class Tutorial(Expedition):
         height = Map.MAX_HEIGHT
         factory = EnemyFactory(self._cbp.start_fight, TutorialDifficulty2())
 
-        rooms = [[None for x in range(width)] for y in range(height)]
+        rooms = [[None for _ in range(width)] for _ in range(height)]
         rooms[spawn_y][spawn_x] = spawn
-        rooms[1][1] = CustomWildRoom(robot, cwr_hallway_east, spawn_hallway_east, self.fight,
+        rooms[1][1] = CustomWildRoom(cwr_hallway_east, spawn_hallway_east, self.fight,
                                      TutorialTile(popups[2], 2, self.is_active, self.progress),
                                      TutorialTile(popups[4], 4, self.is_active, self.progress, blocks=True))
         rooms[2][0] = TutorialGateRoom(spawn_hallway_south, TutorialTile(popups[3], 3, self.is_active, self.progress))
@@ -331,7 +333,7 @@ class Tutorial(Expedition):
     def start(self) -> bool:
         self.set_robot(LukeBot())
 
-        rooms, spawn_pos = self.build_tutorial_map(self._robot)
+        rooms, spawn_pos = self.build_tutorial_map()
         map = Map(self._seed, rooms, self._robot, spawn_pos, self._cbp)
         self._cbp.start_gameplay(self._seed, self._robot, map)
         Popup.message("Welcome to Qrogue! (scroll with arrow keys)", HelpText.get(HelpTextType.Welcome))
