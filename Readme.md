@@ -19,6 +19,15 @@ Quantum Gates. During your search you will inevitably encounter
 Enemies you can only defeat by reaching a certain Quantum State - 
 to do that you will need to use the Gates you collected!
 
+## Table of Contents ##
+- Installation
+  - Dependencies
+  - Linux
+  - Windows
+- Notes
+- How to play - Controls
+- Outlook
+
 ## Installation ##
 
 
@@ -98,6 +107,20 @@ playing Qrogue but testing is currently done for Python 3.8 so
 there is no official support yet for other versions. The same 
 is true if you decide to manually install the dependencies; newer 
 version will likely work but are not recommended.
+
+## How to play - Controls ##
+- Navigate in menus: Arrow Keys, WASD
+- Move in game world: Arrow Keys, WASD
+- Scroll in popup: Arrow Up/Arrow Down, W/S
+- Close popup: Space, Enter, Escape
+- Confirm selection: Space, Enter
+- Cancel/back: Shift, Backspace
+- Pause: P, Tab
+- Situational shortcut keys:
+  - Puzzle:
+- Debug Keys (not for use in normal play through!)
+  - Print screen: CTRL+P
+  - Force re-render: CTRL+R 
 
 ## Outlook ##
 

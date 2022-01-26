@@ -6,28 +6,29 @@ from py_cui.keys import *
 
 class Keys(IntEnum):
     MoveUp = 0
-    MoveRight = 1
-    MoveDown = 2
-    MoveLeft = 3
+    MoveRight = MoveUp + 1
+    MoveDown = MoveUp + 2
+    MoveLeft = MoveUp + 3
 
-    SelectionUp = 4
-    SelectionRight = 5
-    SelectionDown = 6
-    SelectionLeft = 7
+    SelectionUp = MoveLeft + 1
+    SelectionRight = SelectionUp + 1
+    SelectionDown = SelectionUp + 2
+    SelectionLeft = SelectionUp + 3
 
-    PopupClose = 8
-    PopupScrollUp = 9
-    PopupScrollDown = 10
+    PopupClose = SelectionLeft + 1
+    PopupScrollUp = PopupClose + 1
+    PopupScrollDown = PopupClose + 2
 
-    Action = 11
-    Pause = 12
+    Action = PopupScrollDown + 1
+    Cancel = Action + 1
+    Pause = Cancel + 1
 
-    Render = 13
-    PrintScreen = 14
-    StopSimulator = 15
+    Render = Pause + 1
+    PrintScreen = Render + 1
+    StopSimulator = PrintScreen + 1
 
-    CheatInput = 16
-    CheatList = 17
+    CheatInput = StopSimulator + 1
+    CheatList = CheatInput + 1
 
     Invalid = 126
 
@@ -67,24 +68,25 @@ class Controls:
     def __init__(self):
         self.__pycui_keys = [
             # move
-            [KEY_UP_ARROW],
-            [KEY_RIGHT_ARROW],
-            [KEY_DOWN_ARROW],
-            [KEY_LEFT_ARROW],
+            [KEY_UP_ARROW, KEY_W_LOWER],
+            [KEY_RIGHT_ARROW, KEY_D_LOWER],
+            [KEY_DOWN_ARROW, KEY_S_LOWER],
+            [KEY_LEFT_ARROW, KEY_A_LOWER],
             # select
-            [KEY_UP_ARROW],
-            [KEY_RIGHT_ARROW],
-            [KEY_DOWN_ARROW],
-            [KEY_LEFT_ARROW],
+            [KEY_UP_ARROW, KEY_W_LOWER],
+            [KEY_RIGHT_ARROW, KEY_D_LOWER],
+            [KEY_DOWN_ARROW, KEY_S_LOWER],
+            [KEY_LEFT_ARROW, KEY_A_LOWER],
             # popups
             [KEY_ESCAPE, KEY_SPACE, KEY_ENTER],
-            [KEY_UP_ARROW],
-            [KEY_DOWN_ARROW],
+            [KEY_UP_ARROW, KEY_W_LOWER],
+            [KEY_DOWN_ARROW, KEY_S_LOWER],
 
             [KEY_SPACE, KEY_ENTER],     # action
-            [KEY_P_LOWER, KEY_ESCAPE],  # pause
+            [KEY_BACKSPACE, KEY_SHIFT_LEFT, KEY_SHIFT_RIGHT],  # cancel/back
+            [KEY_P_LOWER, KEY_TAB],  # pause    (Escape doesn't work here due to its special purpose for the engine)
 
-            [KEY_R_LOWER],  # render screen
+            [KEY_CTRL_R],  # render screen
             [KEY_CTRL_P],   # print screen
             [KEY_ESCAPE],   # stop simulator
             [KEY_CTRL_I],   # cheat input
