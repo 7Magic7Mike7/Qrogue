@@ -109,12 +109,12 @@ is true if you decide to manually install the dependencies; newer
 version will likely work but are not recommended.
 
 ## How to play - Controls ##
-- Navigate in menus: Arrow Keys, WASD
-- Move in game world: Arrow Keys, WASD
+- Navigate in menus: Arrow Keys, wasd
+- Move in game world: Arrow Keys, wasd
 - Scroll in popup: Arrow Up/Arrow Down, W/S
 - Close popup: Space, Enter, Escape
 - Confirm selection: Space, Enter
-- Cancel/back: Shift, Backspace
+- Cancel/back: Shift+A, Shift+Left, Backspace
 - Pause: P, Tab
 - Situational shortcut keys:
   - Puzzle:

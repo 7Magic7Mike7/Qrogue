@@ -83,7 +83,7 @@ class Controls:
             [KEY_DOWN_ARROW, KEY_S_LOWER],
 
             [KEY_SPACE, KEY_ENTER],     # action
-            [KEY_BACKSPACE, KEY_SHIFT_LEFT, KEY_SHIFT_RIGHT],  # cancel/back
+            [KEY_BACKSPACE, KEY_A_UPPER, KEY_SHIFT_LEFT],  # cancel/back
             [KEY_P_LOWER, KEY_TAB],  # pause    (Escape doesn't work here due to its special purpose for the engine)
 
             [KEY_CTRL_R],  # render screen
