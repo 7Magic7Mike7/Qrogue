@@ -1,4 +1,6 @@
+import collections
 from abc import ABC, abstractmethod
+from typing import List
 
 import numpy as np
 from qiskit import transpile, QuantumCircuit
@@ -10,13 +12,12 @@ from game.logic.instruction import Instruction
 class StateVector:
     __TOLERANCE = 0.1
     __DECIMALS = 3
-    __SQRT05 = np.sqrt(0.5)
 
-    def __init__(self, amplitudes: "list of complex numbers"):
+    def __init__(self, amplitudes: List[complex]):
         self.__amplitudes = amplitudes
 
     @staticmethod
-    def from_gates(gates: [Instruction], num_of_qubits: int):
+    def from_gates(gates: List[Instruction], num_of_qubits: int) -> "StateVector":
         circuit = QuantumCircuit(num_of_qubits, num_of_qubits)
         for instruction in gates:
             instruction.append_to(circuit)
@@ -27,14 +28,14 @@ class StateVector:
         return StateVector(job.result().get_statevector())
 
     @property
-    def size(self):
+    def size(self) -> int:
         return len(self.__amplitudes)
 
     @property
     def num_of_qubits(self) -> int:
         return int(np.log2(self.size))
 
-    def to_value(self) -> "list of floats":
+    def to_value(self) -> List[float]:
         return [np.round(val.real**2 + val.imag**2, decimals=StateVector.__DECIMALS) for val in self.__amplitudes]
 
     def is_equal_to(self, other, tolerance: float = __TOLERANCE) -> bool:
@@ -44,8 +45,8 @@ class StateVector:
         #  (so the robot can have more qubits than the enemy)
         if self.size > other.size:
             return False
-        self_value = self.__amplitudes #self.to_value()
-        other_value = other.__amplitudes #other.to_value()
+        self_value = self.__amplitudes  #self.to_value()
+        other_value = other.__amplitudes    #other.to_value()
         for i in range(len(self_value)):
             p_min = self_value[i] - tolerance/2         # todo maybe tolerance doesn't work for imaginary numbers?
             p = other_value[i]
@@ -82,7 +83,7 @@ class StateVector:
     def to_string(self) -> str:
         text = ""
         for val in self.__amplitudes:
-            val = np.round(val, 2)
+            val = np.round(val, StateVector.__DECIMALS)
             if val == 0:
                 text += "0\n"
             else:
@@ -92,10 +93,10 @@ class StateVector:
     def __str__(self) -> str:
         text = ""
         for val in self.__amplitudes:
-            text += f"{np.round(val, 2)}\n"
+            text += f"{np.round(val, StateVector.__DECIMALS)}\n"
         return text
 
-    def __iter__(self) -> "iterator":
+    def __iter__(self) -> collections.Iterator:
         return iter(self.__amplitudes)
 
 
