@@ -158,7 +158,7 @@ class YGate(SingleQubitGate):
 
 class ZGate(SingleQubitGate):
     def __init__(self):
-        super(ZGate, self).__init__(gates.XGate())
+        super(ZGate, self).__init__(gates.ZGate())
 
     def short_name(self) -> str:
         return "Z"
