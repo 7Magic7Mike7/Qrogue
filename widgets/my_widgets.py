@@ -110,10 +110,7 @@ class CircuitWidget(Widget):
     def render(self) -> None:
         if self.__robot is not None:
             entry = "-" * (3 + Instruction.MAX_ABBREVIATION_LEN + 3)
-            row = [entry] * self.__robot.circuit_space
-            rows = []
-            for i in range(self.__robot.num_of_qubits):
-                rows.append(row.copy())
+            rows = [[entry] * self.__robot.circuit_space for _ in range(self.__robot.num_of_qubits)]
 
             for i, inst in self.__robot.circuit_enumerator():
                 for q in inst.qargs_iter():
@@ -130,10 +127,9 @@ class CircuitWidget(Widget):
                     rows[q][i] = inst_str
             circ_str = ""
             # place qubits from top to bottom, high to low index
-            q = len(rows) - 1
-            for row in rows:
+            for q in range(len(rows) - 1, -1, -1):
                 circ_str += f"| q{q} >---"
-                q -= 1
+                row = rows[q]
                 for i in range(len(row)):
                     circ_str += row[i]
                     if i < len(row) - 1:
