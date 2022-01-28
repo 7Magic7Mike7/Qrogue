@@ -4,6 +4,7 @@ from typing import List, Any, Callable, Tuple
 from py_cui.widgets import BlockLabel
 
 from game.actors.robot import Robot
+from game.controls import Controls, Keys
 from game.logic.instruction import Instruction
 from game.logic.qubit import StateVector
 from game.map.map import Map
@@ -305,7 +306,8 @@ class QubitInfoWidget(Widget):
 class SelectionWidget(Widget):
     __COLUMN_SEPARATOR = "   "
 
-    def __init__(self, widget: MyBaseWidget, columns: int = 1, is_second: bool = False, stay_selected: bool = False):
+    def __init__(self, widget: MyBaseWidget, controls: Controls, columns: int = 1, is_second: bool = False,
+                 stay_selected: bool = False):
         super(SelectionWidget, self).__init__(widget)
         self.__columns = columns
         self.__is_second = is_second
@@ -314,6 +316,18 @@ class SelectionWidget(Widget):
         self.__choices = []
         self.__callbacks = []
         self.widget.add_text_color_rule(f"->", ColorConfig.SELECTION_COLOR, 'contains', match_type='regex')
+
+        # sadly cannot use a loop here because how lambda expressions work the index would be the same for all calls
+        self.widget.add_key_command(controls.get_keys(Keys.HotKey1), lambda: self.__jump_to_index(0))
+        self.widget.add_key_command(controls.get_keys(Keys.HotKey2), lambda: self.__jump_to_index(1))
+        self.widget.add_key_command(controls.get_keys(Keys.HotKey3), lambda: self.__jump_to_index(2))
+        self.widget.add_key_command(controls.get_keys(Keys.HotKey4), lambda: self.__jump_to_index(3))
+        self.widget.add_key_command(controls.get_keys(Keys.HotKey5), lambda: self.__jump_to_index(4))
+        self.widget.add_key_command(controls.get_keys(Keys.HotKey6), lambda: self.__jump_to_index(5))
+        self.widget.add_key_command(controls.get_keys(Keys.HotKey7), lambda: self.__jump_to_index(6))
+        self.widget.add_key_command(controls.get_keys(Keys.HotKey8), lambda: self.__jump_to_index(7))
+        self.widget.add_key_command(controls.get_keys(Keys.HotKey9), lambda: self.__jump_to_index(8))
+        self.widget.add_key_command(controls.get_keys(Keys.HotKey0), lambda: self.__jump_to_index(9))
 
     @property
     def num_of_choices(self) -> int:
@@ -433,6 +447,15 @@ class SelectionWidget(Widget):
                 self.__index -= 1
                 if self.__index < 0:
                     self.__index += self.__columns
+        self.render()
+
+    def __jump_to_index(self, index: int):
+        if index < 0:
+            self.__index = 0
+        elif self.num_of_choices <= index:
+            self.__index = self.num_of_choices - 1
+        else:
+            self.__index = index
         self.render()
 
     def use(self) -> bool:

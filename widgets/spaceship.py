@@ -4,6 +4,7 @@ import py_cui
 
 from game.actors.robot import Robot, Testbot
 from game.callbacks import CallbackPack
+from game.controls import Controls
 from game.expedition import Expedition
 from game.map import tiles
 from game.map.navigation import Direction, Coordinate
@@ -252,16 +253,16 @@ class SpaceshipWidget(Widget):
 
 
 class SpaceshipWidgetSet(MyWidgetSet):
-    def __init__(self, logger, root: py_cui.PyCUI, base_render_callback: "()", cbp: CallbackPack, seed: int,
-                 save_data: SaveData):
+    def __init__(self, controls: Controls, logger, root: py_cui.PyCUI, base_render_callback: "()", cbp: CallbackPack,
+                 seed: int, save_data: SaveData):
         self.__cbp = cbp
         self.__seed = seed
         self.__save_data = save_data
-        super().__init__(logger, root, base_render_callback)
+        super().__init__(controls, logger, root, base_render_callback)
 
-    def init_widgets(self) -> None:
+    def init_widgets(self, controls: Controls) -> None:
         spaceship = self.add_block_label("Dynamic Spaceship", 0, 0, MyWidgetSet.NUM_OF_ROWS, MyWidgetSet.NUM_OF_COLS,
-                                          center=True)  # later it can be True, but not for testing
+                                         center=True)
         self.__spaceship = SpaceshipWidget(spaceship, self.__cbp, self.__seed, self.__save_data)
 
     def get_widget_list(self) -> "list of Widgets":

@@ -23,7 +23,18 @@ class Keys(IntEnum):
     Cancel = Action + 1
     Pause = Cancel + 1
 
-    Render = Pause + 1
+    HotKey1 = Pause + 1
+    HotKey2 = Pause + 2
+    HotKey3 = Pause + 3
+    HotKey4 = Pause + 4
+    HotKey5 = Pause + 5
+    HotKey6 = Pause + 6
+    HotKey7 = Pause + 7
+    HotKey8 = Pause + 8
+    HotKey9 = Pause + 9
+    HotKey0 = Pause + 10
+
+    Render = HotKey0 + 1
     PrintScreen = Render + 1
     StopSimulator = PrintScreen + 1
 
@@ -85,6 +96,18 @@ class Controls:
             [KEY_SPACE, KEY_ENTER],     # action
             [KEY_BACKSPACE, KEY_A_UPPER, KEY_SHIFT_LEFT],  # cancel/back
             [KEY_P_LOWER, KEY_TAB],  # pause    (Escape doesn't work here due to its special purpose for the engine)
+
+            # special purpose hotkeys
+            [KEY_1],  # Fight: Adapt (Add/Remove)
+            [KEY_2],  # Fight: Commit
+            [KEY_3],  # Fight: Reset
+            [KEY_4],  # Fight: Items
+            [KEY_5],  # Fight: Help
+            [KEY_6],  # Fight: Flee
+            [KEY_7],
+            [KEY_8],
+            [KEY_9],
+            [KEY_0],
 
             [KEY_CTRL_R],  # render screen
             [KEY_CTRL_P],   # print screen

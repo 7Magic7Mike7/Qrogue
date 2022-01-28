@@ -1,6 +1,7 @@
 import curses
 import time
 from enum import Enum
+from typing import List
 
 import py_cui
 
@@ -21,6 +22,7 @@ from util.key_logger import KeyLogger
 from util.logger import Logger
 from widgets.color_rules import MultiColorRenderer
 from widgets.my_popups import Popup, MultilinePopup
+from widgets.renderable import Renderable
 from widgets.spaceship import SpaceshipWidgetSet
 from widgets.widget_sets import ExploreWidgetSet, FightWidgetSet, MyWidgetSet, ShopWidgetSet, \
     RiddleWidgetSet, BossFightWidgetSet, PauseMenuWidgetSet, MenuWidgetSet, WorkbenchWidgetSet
@@ -34,7 +36,7 @@ class QrogueCUI(py_cui.PyCUI):
         Popup.update_popup_functions(self.__show_popup)
         CheatConfig.init(self.__show_popup, self.__show_input_popup)
 
-        self.__key_logger = None #KeyLogger(seed)
+        self.__key_logger = None  #KeyLogger(seed)
         self.__simulator = None
         self.__state_machine = StateMachine(self)
         self.__seed = seed
@@ -47,20 +49,23 @@ class QrogueCUI(py_cui.PyCUI):
 
         cbp = CallbackPack(self.__start_expedition, self.__start_fight, self.__start_boss_fight, self.__open_riddle,
                            self.__visit_shop)
-        self.__menu = MenuWidgetSet(self.__render, Logger.instance(), self, self.__start_playing, self.stop,
+        self.__menu = MenuWidgetSet(controls, self.__render, Logger.instance(), self, self.__start_playing, self.stop,
                                     self.__choose_simulation)
-        self.__pause = PauseMenuWidgetSet(self.__render, Logger.instance(), self, self.__general_continue,
+        self.__pause = PauseMenuWidgetSet(controls, self.__render, Logger.instance(), self, self.__general_continue,
                                           self.switch_to_menu)
 
-        self.__spaceship = SpaceshipWidgetSet(Logger.instance(), self, self.__render, cbp, self.__seed, self.__save_data)
-        self.__workbench = WorkbenchWidgetSet(Logger.instance(), self, self.__render, self.__continue_spaceship)
+        self.__spaceship = SpaceshipWidgetSet(controls, Logger.instance(), self, self.__render, cbp, self.__seed,
+                                              self.__save_data)
+        self.__workbench = WorkbenchWidgetSet(controls, Logger.instance(), self, self.__render,
+                                              self.__continue_spaceship)
 
-        self.__explore = ExploreWidgetSet(self.__render, Logger.instance(), self)
-        self.__fight = FightWidgetSet(self.__render, Logger.instance(), self, self.__continue_explore, self.__end_of_gameplay)
-        self.__boss_fight = BossFightWidgetSet(self.__render, Logger.instance(), self, self.__continue_explore,
-                                               self.__end_of_gameplay, self.__won_tutorial)
-        self.__riddle = RiddleWidgetSet(self.__render, Logger.instance(), self, self.__continue_explore)
-        self.__shop = ShopWidgetSet(self.__render, Logger.instance(), self, self.__continue_explore)
+        self.__explore = ExploreWidgetSet(controls, self.__render, Logger.instance(), self)
+        self.__fight = FightWidgetSet(controls, self.__render, Logger.instance(), self, self.__continue_explore,
+                                      self.__end_of_gameplay)
+        self.__boss_fight = BossFightWidgetSet(controls, self.__render, Logger.instance(), self,
+                                               self.__continue_explore, self.__end_of_gameplay, self.__won_tutorial)
+        self.__riddle = RiddleWidgetSet(controls, self.__render, Logger.instance(), self, self.__continue_explore)
+        self.__shop = ShopWidgetSet(controls, self.__render, Logger.instance(), self, self.__continue_explore)
 
         self.__cur_widget_set = None
         self.__init_keys()
@@ -506,7 +511,7 @@ class QrogueCUI(py_cui.PyCUI):
     def render(self) -> None:
         self.__render([self.__cur_widget_set])
 
-    def __render(self, renderables: "list of Renderable"):
+    def __render(self, renderables: List[Renderable]):
         for r in renderables:
             r.render()
 

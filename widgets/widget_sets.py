@@ -1,6 +1,6 @@
 import time
 from abc import abstractmethod, ABC
-from typing import List
+from typing import List, Callable
 
 import py_cui
 from py_cui.widget_set import WidgetSet
@@ -11,6 +11,7 @@ from game.actors.robot import Robot
 from game.actors.riddle import Riddle
 from game.actors.target import Target
 from game.collectibles.collectible import ShopItem
+from game.controls import Controls
 from game.map.map import Map
 from game.map.navigation import Direction
 from game.map.tiles import RobotTile
@@ -35,9 +36,10 @@ class MyWidgetSet(WidgetSet, Renderable, ABC):
     NUM_OF_COLS = 9
     BACK_STRING = "-Back-"
 
-    def __init__(self, logger, root: py_cui.PyCUI, base_render_callback: "()"):
+    def __init__(self, controls: Controls, logger, root: py_cui.PyCUI,
+                 base_render_callback: Callable[[List[Renderable]], None]):
         super().__init__(MyWidgetSet.NUM_OF_ROWS, MyWidgetSet.NUM_OF_COLS, logger, root)
-        self.init_widgets()
+        self.init_widgets(controls)
         self.__base_render = base_render_callback
 
     def add_block_label(self, title, row, column, row_span = 1, column_span = 1, padx = 1, pady = 0, center=True)\
@@ -68,8 +70,8 @@ class MyWidgetSet(WidgetSet, Renderable, ABC):
                 new_widget : MyBaseWidget
                     A reference to the created widget object.
                 """
-        id = 'Widget{}'.format(len(self._widgets.keys()))
-        new_widget = MyBaseWidget(id,
+        wid = 'Widget{}'.format(len(self._widgets.keys()))
+        new_widget = MyBaseWidget(wid,
                                        title,
                                        self._grid,
                                        row,
@@ -80,7 +82,7 @@ class MyWidgetSet(WidgetSet, Renderable, ABC):
                                        pady,
                                        center,
                                        self._logger)
-        self._widgets[id] = new_widget
+        self._widgets[wid] = new_widget
         self._logger.info('Adding widget {} w/ ID {} of type {}'.format(title, id, str(type(new_widget))))
         return new_widget
 
@@ -88,11 +90,11 @@ class MyWidgetSet(WidgetSet, Renderable, ABC):
         self.__base_render(self.get_widget_list())
 
     @abstractmethod
-    def init_widgets(self) -> None:
+    def init_widgets(self, controls: Controls) -> None:
         pass
 
     @abstractmethod
-    def get_widget_list(self) -> List[MyBaseWidget]:
+    def get_widget_list(self) -> List[Widget]:
         pass
 
     @abstractmethod
@@ -129,19 +131,20 @@ class MenuWidgetSet(MyWidgetSet):
     __MAP_WIDTH = 50
     __MAP_HEIGHT = 14
 
-    def __init__(self, render: "()", logger, root: py_cui.PyCUI, start_playing_callback: "()", stop_callback: "()",
-                 start_simulation_callback: "(str,)"):
+    def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
+                 start_playing_callback: "()",
+                 stop_callback: "()", start_simulation_callback: "(str,)"):
         self.__seed = 0
         self.__start_playing = start_playing_callback
         self.__stop = stop_callback
         self.__start_simulation = start_simulation_callback
-        super().__init__(logger, root, render)
+        super().__init__(controls, logger, root, render)
 
-    def init_widgets(self) -> None:
+    def init_widgets(self, controls: Controls) -> None:
         height = 5
         width = 3
         selection = self.add_block_label("", 2, 0, row_span=height, column_span=width, center=True)
-        self.__selection = SelectionWidget(selection, 1)
+        self.__selection = SelectionWidget(selection, controls, 1)
         if Config.debugging():
             self.__selection.set_data(data=(
                 ["PLAY\n", "SIMULATOR\n", "OPTIONS\n", "EXIT\n"],
@@ -213,18 +216,19 @@ class PauseMenuWidgetSet(MyWidgetSet):
          ]
     )
 
-    def __init__(self, render: "()", logger, root: py_cui.PyCUI, continue_callback: "()", exit_run_callback: "()"):
-        super().__init__(logger, root, render)
+    def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
+                 continue_callback: "()", exit_run_callback: "()"):
+        super().__init__(controls, logger, root, render)
         self.__continue_callback = continue_callback
         self.__exit_run = exit_run_callback
 
-    def init_widgets(self) -> None:
+    def init_widgets(self, controls: Controls) -> None:
         hud = self.add_block_label('HUD', 0, 0, row_span=1, column_span=MyWidgetSet.NUM_OF_COLS, center=False)
         hud.toggle_border()
         self.__hud = HudWidget(hud)
 
         choices = self.add_block_label('Choices', 1, 0, row_span= MyWidgetSet.NUM_OF_ROWS-1, column_span=3, center=True)
-        self.__choices = SelectionWidget(choices, stay_selected=True)
+        self.__choices = SelectionWidget(choices, controls, stay_selected=True)
         self.__choices.set_data(data=(
             ["Continue", "Options", "Help", "Exit"],
             [self.__continue, self.__options, self.__help, self.__exit]
@@ -232,7 +236,7 @@ class PauseMenuWidgetSet(MyWidgetSet):
 
         details = self.add_block_label('Details', 1, 3, row_span=MyWidgetSet.NUM_OF_ROWS-1,
                                        column_span=MyWidgetSet.NUM_OF_COLS-3, center=True)
-        self.__details = SelectionWidget(details, is_second=True)
+        self.__details = SelectionWidget(details, controls, is_second=True)
 
     @property
     def choices(self) -> SelectionWidget:
@@ -297,20 +301,21 @@ class PauseMenuWidgetSet(MyWidgetSet):
 
 
 class WorkbenchWidgetSet(MyWidgetSet):
-    def __init__(self, logger, root: py_cui.PyCUI, base_render_callback: "()", continue_callback: ()):
-        super().__init__(logger, root, base_render_callback)
+    def __init__(self, controls: Controls, logger, root: py_cui.PyCUI, render: Callable[[List[Renderable]], None],
+                 continue_callback: ()):
+        super().__init__(controls, logger, root, render)
         self.__save_data = None
         self.__continue = continue_callback
 
-    def init_widgets(self) -> None:
+    def init_widgets(self, controls: Controls) -> None:
         robot_selection = self.add_block_label('Robot Selection', 0, 0, row_span=MyWidgetSet.NUM_OF_COLS, center=False)
-        self.__robot_selection = SelectionWidget(robot_selection, stay_selected=True)
+        self.__robot_selection = SelectionWidget(robot_selection, controls, stay_selected=True)
 
         robot_details = self.add_block_label('Robot Details', 0, 1, 3, 4, center=True)
         self.__robot_info = SimpleWidget(robot_details)
 
         available_upgrades = self.add_block_label('Upgrades', 4, 1, 2, 2, center=True)
-        self.__available_upgrades = SelectionWidget(available_upgrades, 4, is_second=True, stay_selected=False)
+        self.__available_upgrades = SelectionWidget(available_upgrades, controls, 4, is_second=True, stay_selected=False)
 
     def set_data(self, save_data: SaveData):
         self.__save_data = save_data
@@ -358,10 +363,10 @@ class WorkbenchWidgetSet(MyWidgetSet):
 
 
 class ExploreWidgetSet(MyWidgetSet):
-    def __init__(self, render: "()", logger, root: py_cui.PyCUI):
-        super().__init__(logger, root, render)
+    def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI):
+        super().__init__(controls, logger, root, render)
 
-    def init_widgets(self) -> None:
+    def init_widgets(self, controls: Controls) -> None:
         hud = self.add_block_label('HUD', 0, 0, row_span=1, column_span=MyWidgetSet.NUM_OF_COLS, center=False)
         hud.toggle_border()
         self.__hud = HudWidget(hud)
@@ -415,14 +420,15 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
     __CHOICE_COLUMNS = 2
     __DETAILS_COLUMNS = 2
 
-    def __init__(self, render: "()", logger, root: py_cui.PyCUI, continue_exploration_callback: "()", flee_choice: str = "Flee"):
-        self.__choice_strings = ["Add/Remove", "Commit", "Reset", "Items", "Help", flee_choice]
-        super().__init__(logger, root, render)
+    def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
+                 continue_exploration_callback: "()", flee_choice: str = "Flee"):
+        self.__choice_strings = ["[1] Add/Remove", "[2] Commit", "[3] Reset", "[4] Items", "[5] Help", flee_choice]
+        super().__init__(controls, logger, root, render)
         self._continue_exploration_callback = continue_exploration_callback
         self._robot = None
         self._target = None
 
-    def init_widgets(self) -> None:
+    def init_widgets(self, controls: Controls) -> None:
         hud = self.add_block_label('HUD', 0, 0, row_span=1, column_span=MyWidgetSet.NUM_OF_COLS, center=False)
         hud.toggle_border()
         self.__hud = HudWidget(hud)
@@ -441,7 +447,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
         choices = self.add_block_label('Choices', 7, 0, row_span=2, column_span=3, center=True)
         choices.toggle_border()
-        self._choices = SelectionWidget(choices, columns=self.__CHOICE_COLUMNS)
+        self._choices = SelectionWidget(choices, controls, columns=self.__CHOICE_COLUMNS)
         self._choices.set_data(data=(
             self.__choice_strings,
             [self.__choices_adapt, self.__choices_commit, self.__choices_reset, self.__choices_items,
@@ -450,7 +456,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
         details = self.add_block_label('Details', 7, 3, row_span=2, column_span=6, center=True)
         details.toggle_border()
-        self._details = SelectionWidget(details, columns=self.__DETAILS_COLUMNS, is_second=True)
+        self._details = SelectionWidget(details, controls, columns=self.__DETAILS_COLUMNS, is_second=True)
 
     def get_main_widget(self) -> MyBaseWidget:
         return self._choices.widget
@@ -655,8 +661,9 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
 
 class FightWidgetSet(ReachTargetWidgetSet):
-    def __init__(self, render: "()", logger, root: py_cui.PyCUI, continue_exploration_callback: "()", game_over_callback: "()"):
-        super(FightWidgetSet, self).__init__(render, logger, root, continue_exploration_callback)
+    def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
+                 continue_exploration_callback: "()", game_over_callback: "()"):
+        super(FightWidgetSet, self).__init__(controls, render, logger, root, continue_exploration_callback)
         self.__random = RandomManager.create_new()
         self.__game_over_callback = game_over_callback
         self.__flee_chance = 0
@@ -702,11 +709,11 @@ class FightWidgetSet(ReachTargetWidgetSet):
 
 
 class BossFightWidgetSet(FightWidgetSet):
-    def __init__(self, render: "()", logger, root: py_cui.PyCUI, continue_exploration_callback: "()", game_over_callback: "()",
-                 tutorial_won_callback: "()"):
+    def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
+                 continue_exploration_callback: "()", game_over_callback: "()", tutorial_won_callback: "()"):
         self.__continue_exploration_callback = continue_exploration_callback
         self.__tutorial_won = tutorial_won_callback
-        super().__init__(render, logger, root, self.__continue_exploration, game_over_callback)
+        super().__init__(controls, render, logger, root, self.__continue_exploration, game_over_callback)
 
     def set_data(self, robot: Robot, target: Boss):
         super(BossFightWidgetSet, self).set_data(robot, target)
@@ -719,24 +726,25 @@ class BossFightWidgetSet(FightWidgetSet):
 
 
 class ShopWidgetSet(MyWidgetSet):
-    def __init__(self, render: "()", logger, root: py_cui.PyCUI, continue_exploration_callback: "()"):
-        super().__init__(logger, root, render)
+    def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
+                 continue_exploration_callback: "()"):
+        super().__init__(controls, logger, root, render)
         self.__continue_exploration = continue_exploration_callback
         self.__robot = None
         self.__items = None
 
-    def init_widgets(self) -> None:
+    def init_widgets(self, controls: Controls) -> None:
         hud = self.add_block_label("HUD", 0, 0, row_span=1, column_span=MyWidgetSet.NUM_OF_COLS, center=False)
         self.__hud = HudWidget(hud)
 
         inv_width = 4
         inventory = self.add_block_label("Inventory", 1, 0, row_span=7, column_span=inv_width)
-        self.__inventory = SelectionWidget(inventory, stay_selected=True)
+        self.__inventory = SelectionWidget(inventory, controls, stay_selected=True)
 
         details = self.add_block_label("Details", 1, inv_width, row_span=4, column_span=MyWidgetSet.NUM_OF_COLS - inv_width)
         self.__details = SimpleWidget(details)
         buy = self.add_block_label("Buy", 4, inv_width, row_span=1, column_span=MyWidgetSet.NUM_OF_COLS - inv_width)
-        self.__buy = SelectionWidget(buy, is_second=True)
+        self.__buy = SelectionWidget(buy, controls, is_second=True)
 
     @property
     def inventory(self) -> SelectionWidget:
@@ -812,8 +820,9 @@ class ShopWidgetSet(MyWidgetSet):
 
 
 class RiddleWidgetSet(ReachTargetWidgetSet):
-    def __init__(self, render: "()", logger, root: py_cui.PyCUI, continue_exploration_callback: "()"):
-        super().__init__(render, logger, root, continue_exploration_callback, "Give Up")
+    def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
+                 continue_exploration_callback: Callable[[None], None]):
+        super().__init__(controls, render, logger, root, continue_exploration_callback, "Give Up")
 
     def set_data(self, robot: Robot, target: Riddle) -> None:
         super(RiddleWidgetSet, self).set_data(robot, target)
