@@ -87,7 +87,7 @@ class HudWidget(Widget):
 
     def render(self) -> None:
         if self.__robot is not None:
-            text = f"{self.__robot.cur_hp} HP   \t" \
+            text = f"{self.__robot.cur_hp} / {self.__robot.max_hp} HP   \t" \
                    f"{self.__robot.backpack.coin_count}$, {self.__robot.backpack.key_count} keys"
             if self.__render_duration is not None:
                 text += f"\t\t{self.__render_duration:.2f} ms"

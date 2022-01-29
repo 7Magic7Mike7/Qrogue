@@ -673,9 +673,8 @@ class FightWidgetSet(ReachTargetWidgetSet):
         self.__flee_chance = target.flee_chance
 
     def _on_commit_fail(self) -> bool:
-        # diff = self._target.statevector.get_diff(self._robot.state_vector)
-        damage_taken = self._robot.damage(target=self._target.statevector)
-        if damage_taken < 0:
+        damage_taken, deadly = self._robot.damage(target=self._target.statevector)
+        if deadly:
             self._details.set_data(data=(
                 [f"Oh no, you took {damage_taken} damage and died!"],
                 [self.__game_over_callback]
@@ -694,16 +693,16 @@ class FightWidgetSet(ReachTargetWidgetSet):
                 [self._continue_exploration_callback]
             ))
         else:
-            self._robot.damage(amount=1)
-            if self._robot.cur_hp > 0:
-                self._details.set_data(data=(
-                    ["Failed to flee. You lost 1 HP."],
-                    [self._empty_callback]
-                ))
-            else:
+            damage_taken, deadly = self._robot.damage(amount=1)
+            if deadly:
                 self._details.set_data(data=(
                     ["Failed to flee. You have no more HP left and die."],
                     [self.__game_over_callback]
+                ))
+            else:
+                self._details.set_data(data=(
+                    ["Failed to flee. You lost 1 HP."],
+                    [self._empty_callback]
                 ))
         return True
 

@@ -1,6 +1,6 @@
 import collections
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Tuple
 
 import numpy as np
 from qiskit import transpile, QuantumCircuit
@@ -115,24 +115,33 @@ class StateVector:
 
 # interface for a set of qubits (e.g. Ion-traps, Super conducting, ...)
 class QubitSet(ABC):
-    @abstractmethod
-    def hp(self):
-        pass
 
-    @abstractmethod
-    def is_alive(self) -> bool:
-        pass
+    def __init__(self, max_hp: int, size: int):
+        self._max_hp = max_hp
+        self._cur_hp = max_hp
+        self._size = size
 
-    @abstractmethod
+    @property
+    def max_hp(self) -> int:
+        return self._max_hp
+
+    @property
+    def hp(self) -> int:
+        return self._cur_hp
+
+    @property
     def size(self) -> int:
-        pass
+        return self._size
+
+    def is_alive(self) -> bool:
+        return self.hp > 0
 
     @abstractmethod
-    def damage(self, amount: int) -> int:
+    def damage(self, amount: int) -> Tuple[int, bool]:
         """
 
         :param amount: the amount of damage that should be received
-        :return: the amount of damage actually received, negative if the damage was lethal
+        :return: the amount of damage actually received, whether the damage was deadly or not
         """
         pass
 
@@ -147,31 +156,18 @@ class QubitSet(ABC):
 
 
 class DummyQubitSet(QubitSet):
-    __SIZE = 3
+    __SIZE = 2
     __HP = 10
 
     def __init__(self, size: int = __SIZE):
-        self.__hp = DummyQubitSet.__HP
-        self.__size = size
+        super(DummyQubitSet, self).__init__(DummyQubitSet.__HP, size)
 
-    def hp(self) -> int:
-        return self.__hp
-
-    def is_alive(self) -> bool:
-        return self.__hp > 0
-
-    def size(self) -> int:
-        return self.__size
-
-    def damage(self, amount: int) -> int:
-        self.__hp = max(self.__hp - amount, 0)
-        if self.is_alive():
-            return amount
-        else:
-            return -amount
+    def damage(self, amount: int) -> Tuple[int, bool]:
+        self._cur_hp = max(self.hp - amount, 0)
+        return amount, not self.is_alive()
 
     def heal(self, amount: int) -> int:
-        if self.__hp + amount > DummyQubitSet.__HP:
-            amount = DummyQubitSet.__HP - self.__hp
-        self.__hp += amount
+        if self.hp + amount > self.max_hp:
+            amount = self.max_hp - self.hp
+        self._cur_hp += amount
         return amount

@@ -4,6 +4,8 @@ Author: Artner Michael
 """
 
 from abc import ABC, abstractmethod
+from typing import Tuple
+
 from qiskit import QuantumCircuit, transpile
 from qiskit.providers.aer import StatevectorSimulator
 
@@ -36,7 +38,7 @@ class _Attributes:
 
     @property
     def num_of_qubits(self) -> int:
-        return self.__qubits.size()
+        return self.__qubits.size
 
     @property
     def circuit_space(self) -> int:
@@ -345,7 +347,7 @@ class Robot(ABC):
                                                         # todo Consumable needs to access the Robot (circular import)
             self.backpack.place_in_pouch(collectible)
 
-    def damage(self, target: StateVector = None, amount: int = 1) -> int:
+    def damage(self, target: StateVector = None, amount: int = 1) -> Tuple[int, bool]:
         return self.__attributes.qubits.damage(amount)
 
     def heal(self, amount: int = 1) -> int:
@@ -358,7 +360,11 @@ class Robot(ABC):
 
     @property
     def cur_hp(self) -> int:
-        return self.__attributes.qubits.hp()
+        return self.__attributes.qubits.hp
+
+    @property
+    def max_hp(self) -> int:
+        return self.__attributes.qubits.max_hp
 
     @property
     def num_of_qubits(self) -> int:
