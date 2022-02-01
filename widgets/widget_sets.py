@@ -673,7 +673,7 @@ class FightWidgetSet(ReachTargetWidgetSet):
         self.__flee_chance = target.flee_chance
 
     def _on_commit_fail(self) -> bool:
-        damage_taken, deadly = self._robot.damage(target=self._target.statevector)
+        damage_taken, deadly = self._robot.damage()
         if deadly:
             self._details.set_data(data=(
                 [f"Oh no, you took {damage_taken} damage and died!"],

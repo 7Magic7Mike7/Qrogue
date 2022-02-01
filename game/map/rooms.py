@@ -255,6 +255,9 @@ class Hallway(Area):
         else:
             return self.__room2
 
+    def set_check_event_callback(self, check_event: Callable[[str], bool]):
+        self.__door.set_check_event_callback(check_event)
+
     def __str__(self) -> str:
         if self.is_horizontal():
             orientation = "-"
@@ -361,7 +364,7 @@ class Room(Area):
         elif throw_error:
             dic = [(str(self.__hallways[k]) + "\n") for k in self.__hallways]
             Logger.instance().error(f"Invalid hallway access for {self}:\n{direction} not in {dic}")
-            return None
+        return None
 
     def make_visible(self):
         super(Room, self).make_visible()

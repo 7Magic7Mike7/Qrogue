@@ -107,9 +107,9 @@ class TutorialTile(tiles.Message):
                 return False
         return super(TutorialTile, self).is_walkable(direction, robot)
 
-    def on_walk(self, direction: Direction, robot: Robot) -> None:
+    def _on_walk(self, direction: Direction, robot: Robot) -> None:
         if self.is_active():
-            super(TutorialTile, self).on_walk(direction, robot)
+            super(TutorialTile, self)._on_walk(direction, robot)
             self.__blocks = False  # TutorialTiles should no longer affect the Player after they were activated
             if self.__progress is not None:
                 self.__progress()

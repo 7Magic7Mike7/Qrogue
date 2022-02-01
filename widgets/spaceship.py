@@ -102,7 +102,7 @@ class SpaceshipTriggerTile(WalkTriggerTile):
         self.__img = character
         self.__callback = callback
 
-    def on_walk(self, direction: Direction, robot: Robot) -> None:
+    def _on_walk(self, direction: Direction, robot: Robot) -> None:
         self.__callback(direction, robot)
 
     def get_img(self):
@@ -238,11 +238,14 @@ class SpaceshipWidget(Widget):
         tile = self.__tiles[new_pos.y][new_pos.x]
         if tile.is_walkable(direction, self.__player_tile.robot):
             if isinstance(tile, tiles.WalkTriggerTile):
-                tile.on_walk(direction, self.__player_tile.robot)
+                tile.trigger(direction, self.__player_tile.robot, self.__trigger_event)
             self.__player_pos = new_pos
             return True
         else:
             return False
+
+    def __trigger_event(self, event_id: str):
+        pass
 
     def start_expedition(self, direction: Direction, robot: Robot):
         if not self.__cur_expedition.start():

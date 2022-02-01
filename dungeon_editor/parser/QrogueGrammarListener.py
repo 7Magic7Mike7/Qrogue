@@ -32,6 +32,13 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
     __TEMPLATE_PREFIX = "_"
     __EMPTY_ROOM_CODE = "_a"
     __EMPTY_HALLWAY_CODE = "_0"
+    __PLACE_HOLDER_TILE = "_"
+    __COLLECTIBLE_TILE = "c"
+    __TRIGGER_TILE = "t"
+    __ENERGY_TILE = "e"
+    __RIDDLER_TILE = "r"
+    __SHOP_KEEPER_TILE = "$"
+    __FLOOR_TILE = " "
 
     @staticmethod
     def warning(text: str):
@@ -43,6 +50,47 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
             return reference[1:].lower()
         else:
             return reference.lower()
+
+    @staticmethod
+    def __tile_str_to_code(tile_str: str) -> tiles.TileCode:
+        if tile_str.isdigit():
+            return tiles.TileCode.Enemy
+
+        elif tile_str == TextBasedDungeonGenerator.__COLLECTIBLE_TILE:
+            return tiles.TileCode.Collectible
+        elif tile_str == TextBasedDungeonGenerator.__TRIGGER_TILE:
+            return tiles.TileCode.Trigger
+        elif tile_str == TextBasedDungeonGenerator.__ENERGY_TILE:
+            return tiles.TileCode.Energy
+        elif tile_str == TextBasedDungeonGenerator.__RIDDLER_TILE:
+            return tiles.TileCode.Riddler
+        elif tile_str == TextBasedDungeonGenerator.__SHOP_KEEPER_TILE:
+            return tiles.TileCode.ShopKeeper
+        elif tile_str == TextBasedDungeonGenerator.__FLOOR_TILE:
+            return tiles.TileCode.Floor
+        else:
+            return tiles.TileCode.Invalid
+
+    @staticmethod
+    def __tile_code_to_str(tile_code: tiles.TileCode) -> str:
+        if tile_code is tiles.TileCode.Enemy:
+            # todo print warning?
+            return "0"
+        elif tile_code is tiles.TileCode.Collectible:
+            return TextBasedDungeonGenerator.__COLLECTIBLE_TILE
+        elif tile_code is tiles.TileCode.Trigger:
+            return TextBasedDungeonGenerator.__TRIGGER_TILE
+        elif tile_code is tiles.TileCode.Energy:
+            return TextBasedDungeonGenerator.__ENERGY_TILE
+        elif tile_code is tiles.TileCode.Riddler:
+            return TextBasedDungeonGenerator.__RIDDLER_TILE
+        elif tile_code is tiles.TileCode.ShopKeeper:
+            return TextBasedDungeonGenerator.__SHOP_KEEPER_TILE
+        elif tile_code is tiles.TileCode.Floor:
+            return TextBasedDungeonGenerator.__FLOOR_TILE
+        else:
+            # todo print warning?
+            return None
 
     @staticmethod
     def __check_for_overspecified_columns(x: int, symbol_type):
@@ -65,6 +113,9 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
         self.__hallways_by_id = {}      # hw_id -> Door
         self.__hallways = {}            # stores the
+
+        #self.__template_events = PathConfig.read()
+        self.__events = []
 
         self.__enemy_groups_by_room = {}    # room_id -> dic[1-9]
         self.__cur_room_id = None   # needed for enemy groups
@@ -102,8 +153,14 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
                         hallway = hallway_dictionary[neighbor][opposite]
                     else:
                         door = hallways[neighbor]
-                        if door.direction is not direction:
-                            door = door.copy(direction)
+                        if door.direction not in [direction, direction.opposite()]:
+                            if door.is_one_way:
+                                self.warning("Found one way door with invalid direction! Horizontal hallways can only "
+                                             "have East or West doors and vertical ones only North and South doors! "
+                                             "Removing the one way aspect and setting the direction to a valid one.")
+                                door = door.copy(direction)
+                            else:
+                                door = door.copy(direction)
                         hallway = rooms.Hallway(door)
                         if neighbor in hallway_dictionary:
                             hallway_dictionary[neighbor][opposite] = hallway
@@ -120,7 +177,11 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
     def __get_default_tile(self, tile_str: str, enemy_dic: Dict[int, List[tiles.Enemy]],
                            get_entangled_tiles: Callable[[int], List[tiles.Tile]]) -> tiles.Tile:
-        if tile_str.isdigit():
+        if tile_str == TextBasedDungeonGenerator.__PLACE_HOLDER_TILE:
+            return tiles.Floor()
+
+        tile_code = TextBasedDungeonGenerator.__tile_str_to_code(tile_str)
+        if tile_code is tiles.TileCode.Enemy:
             enemy_id = int(tile_str)
             enemy = tiles.Enemy(self.__default_enemy_factory, get_entangled_tiles, enemy_id)
             if enemy_id not in enemy_dic:
@@ -128,26 +189,26 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
             enemy_dic[enemy_id].append(enemy)
             return enemy
 
-        elif tile_str == 'c':
+        elif tile_code is tiles.TileCode.Collectible:
             return tiles.Collectible(self.__default_reward_factory.produce(self.__rm))
 
-        elif tile_str == 't':
+        elif tile_code is tiles.TileCode.Trigger:
             return self.__load_trigger("*defaultTrigger")
 
-        elif tile_str == 'e':
+        elif tile_code is tiles.TileCode.Energy:
             return tiles.Collectible(pickup.Energy())
 
-        elif tile_str == 'r':
+        elif tile_code is tiles.TileCode.Riddler:
             stv = self.__default_target_difficulty.create_statevector(self.__robot, self.__rm)
             reward = self.__default_reward_factory.produce(self.__rm)
             riddle = Riddle(stv, reward, self.__DEFAULT_NUM_OF_RIDDLE_ATTEMPTS)
             return tiles.Riddler(self.__cbp.open_riddle, riddle)
 
-        elif tile_str == '$':
+        elif tile_code is tiles.TileCode.ShopKeeper:
             items = self.__default_reward_factory.produce_multiple(self.__rm, self.__DEFAULT_NUM_OF_SHOP_ITEMS)
             return tiles.ShopKeeper(self.__cbp.visit_shop, [ShopItem(item) for item in items])
 
-        elif tile_str == '_':
+        elif tile_code is tiles.TileCode.Floor:
             return tiles.Floor()
 
         else:
@@ -169,7 +230,6 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
             print(se)
             return None, False
 
-
         # add empty rooms if rows don't have the same width
         max_len = 0
         for row in room_matrix:
@@ -181,6 +241,7 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
         map = Map(self.__seed, room_matrix, robot, self.__spawn_pos, cbp)
 
+        """
         text = ""
         for row in room_matrix:
             for room in row:
@@ -191,6 +252,7 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
                 text += "  "
             text += "\n"
         print(text)
+        """
 
         return map, True
 
@@ -402,7 +464,7 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
             return StateVector(amplitudes)
         else:
             # todo adapt?
-            return StateVector([1, 0, 0, 0])
+            return StateVector([1, 0, 0, 0, 0, 0, 0, 0])
 
     def visitStvs(self, ctx: QrogueDungeonParser.StvsContext) -> List[StateVector]:
         stvs = []
@@ -449,25 +511,45 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
     ##### Hallway area #####
 
     def visitH_attributes(self, ctx: QrogueDungeonParser.H_attributesContext) -> tiles.Door:
+        direction = Direction.North  # todo adapt
+        one_way_state = tiles.DoorOneWayState.NoOneWay
         if ctx.DIRECTION():
-            pass  # todo implement
+            dir_str = ctx.DIRECTION().getText()
+            if dir_str == "North":
+                direction = Direction.North
+            elif dir_str == "East":
+                direction = Direction.East
+            elif dir_str == "South":
+                direction = Direction.South
+            elif dir_str == "West":
+                direction = Direction.West
+            if ctx.PERMANENT_LITERAL():
+                one_way_state = tiles.DoorOneWayState.Permanent
+            else:
+                one_way_state = tiles.DoorOneWayState.Temporary
+
+        event_id = None
         if ctx.OPEN_LITERAL():
-            locked = False
-            opened = True
+            open_state = tiles.DoorOpenState.Open
         elif ctx.CLOSED_LITERAL():
-            locked = False
-            opened = False
+            open_state = tiles.DoorOpenState.Closed
         elif ctx.LOCKED_LITERAL():
-            locked = True
-            opened = False
+            open_state = tiles.DoorOpenState.KeyLocked
+        elif ctx.EVENT_LITERAL():
+            # todo implement
+            if ctx.REFERENCE():
+                event_id = TextBasedDungeonGenerator.__normalize_reference(ctx.REFERENCE().getText())
+                open_state = tiles.DoorOpenState.EventLocked
+            else:
+                open_state = tiles.DoorOpenState.Closed
+                self.warning("Event lock specified without an event id! Ignoring the lock and placing a closed door "
+                             "instead.")
         else:
-            locked = False
-            opened = False
+            open_state = tiles.DoorOpenState.Closed
             self.warning("Invalid hallway attribute: it is neither locked nor opened nor closed!")
 
-        direction = Direction.North  # todo adapt
         # door = tiles.EntangledDoor(direction) # todo implement
-        return tiles.Door(direction, locked, opened)
+        return tiles.Door(direction, open_state, one_way_state, event_id)
 
     def visitHallway(self, ctx: QrogueDungeonParser.HallwayContext) -> Tuple[str, rooms.Hallway]:
         hw_id = ctx.HALLWAY_ID().getText()
@@ -533,8 +615,10 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
         reward_pool = self.__load_reward_pool(pool_id)
         reward_factory = factory.CollectibleFactory(reward_pool)
 
+        times = 1
         if ctx.integer():
             times = self.visit(ctx.integer())
+        if times > 1:
             collectible = MultiCollectible(reward_factory.produce_multiple(rm, times))
         else:
             collectible = reward_factory.produce(rm)
@@ -588,22 +672,28 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
         return enemy
 
     def visitTile_descriptor(self, ctx:QrogueDungeonParser.Tile_descriptorContext) -> tiles.Tile:
-        if ctx.enemy_descriptor():
-            return self.visit(ctx.enemy_descriptor())
-        elif ctx.collectible_descriptor():
-            return self.visit(ctx.collectible_descriptor())
-        elif ctx.trigger_descriptor():
+        if ctx.trigger_descriptor():
             return self.visit(ctx.trigger_descriptor())
+
+        if ctx.enemy_descriptor():
+            tile = self.visit(ctx.enemy_descriptor())
+        elif ctx.collectible_descriptor():
+            tile = self.visit(ctx.collectible_descriptor())
         elif ctx.energy_descriptor():
-            return self.visit(ctx.energy_descriptor())
+            tile = self.visit(ctx.energy_descriptor())
         elif ctx.riddle_descriptor():
-            return self.visit(ctx.riddle_descriptor())
+            tile = self.visit(ctx.riddle_descriptor())
         elif ctx.shop_descriptor():
-            return self.visit(ctx.shop_descriptor())
+            tile = self.visit(ctx.shop_descriptor())
         else:
             self.warning("Invalid tile_descriptor! It is neither enemy, collectible, trigger or energy. "
                          "Returning tiles.Invalid() as consequence.")
             return tiles.Invalid()
+
+        if ctx.REFERENCE() and isinstance(tile, tiles.WalkTriggerTile):
+            event_id = TextBasedDungeonGenerator.__normalize_reference(ctx.REFERENCE().getText())
+            tile.set_event(event_id)
+        return tile
 
     def visitTile(self, ctx:QrogueDungeonParser.TileContext) -> str:
         return ctx.getText()
@@ -658,16 +748,13 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
         for descriptor in ctx.tile_descriptor():
             tile = self.visit(descriptor)
             if tile.code is tiles.TileCode.Enemy:
-                e_id = str(tile.id)
-                if e_id in tile_dic:
-                    tile_dic[e_id].append(tile)
-                else:
-                    tile_dic[e_id] = [tile]
+                tile_str = str(tile.id)
             else:
-                if tile.code in tile_dic:
-                    tile_dic[tile.code].append(tile)
-                else:
-                    tile_dic[tile.code] = [tile]
+                tile_str = TextBasedDungeonGenerator.__tile_code_to_str(tile.code)
+            if tile_str in tile_dic:
+                tile_dic[tile_str].append(tile)
+            else:
+                tile_dic[tile_str] = [tile]
 
         # this local method is needed here for not explicitely defined enemies
         # but since we are already in a room we don't have to reference to global data

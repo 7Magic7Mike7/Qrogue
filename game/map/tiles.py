@@ -1,7 +1,7 @@
 
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import List
+from typing import List, Callable, Any
 
 from game.actors.boss import Boss as BossActor
 from game.actors.factory import EnemyFactory
@@ -73,12 +73,22 @@ class Tile(ABC):
 class WalkTriggerTile(Tile):
     def __init__(self, code: TileCode):
         super().__init__(code)
+        self.__event_id = None
 
     def is_walkable(self, direction: Direction, robot: Robot) -> bool:
         return True
+
+    def set_event(self, event_id: str):
+        self.__event_id = event_id
+
+    def trigger(self, direction: Direction, robot: Robot, trigger_event_callback: Callable[[str], Any]) -> Any:
+        self._on_walk(direction, robot)
+        if self.__event_id:
+            return trigger_event_callback(self.__event_id)
+        return None
     
     @abstractmethod
-    def on_walk(self, direction: Direction, robot: Robot) -> None:
+    def _on_walk(self, direction: Direction, robot: Robot) -> None:
         """
         Event that is triggered when an actor moves onto this Tile
         :param direction: the Direction from which the actor moves onto this Tile
@@ -167,11 +177,11 @@ class FogOfWar(Tile):
 
 
 class Trigger(WalkTriggerTile):
-    def __init__(self, callback: "(Direction, Robot)"):
+    def __init__(self, callback: Callable[[Direction, Robot], None]):
         super().__init__(TileCode.Trigger)
         self.__callback = callback
 
-    def on_walk(self, direction: Direction, robot: Robot) -> None:
+    def _on_walk(self, direction: Direction, robot: Robot) -> None:
         self.__callback(direction, robot)
 
     def get_img(self):
@@ -195,7 +205,7 @@ class Message(WalkTriggerTile):
     def is_walkable(self, direction: Direction, robot: Robot) -> bool:
         return True
 
-    def on_walk(self, direction: Direction, robot: Robot) -> None:
+    def _on_walk(self, direction: Direction, robot: Robot) -> None:
         if self.__times > 0:
             self.__popup.show()
         self.__times -= 1
@@ -207,7 +217,7 @@ class Riddler(WalkTriggerTile):
         self.__open_riddle = open_riddle_callback
         self.__riddle = riddle
 
-    def on_walk(self, direction: Direction, robot: Robot) -> None:
+    def _on_walk(self, direction: Direction, robot: Robot) -> None:
         if self.__riddle.is_active:
             self.__open_riddle(robot, self.__riddle)
 
@@ -224,87 +234,155 @@ class ShopKeeper(WalkTriggerTile):
         self.__visit_shop = visit_shop_callback
         self.__inventory = inventory
 
-    def on_walk(self, direction: Direction, robot: Robot) -> None:
+    def _on_walk(self, direction: Direction, robot: Robot) -> None:
         self.__visit_shop(robot, self.__inventory)
 
     def get_img(self):
         return "$"
 
 
+class DoorOpenState(Enum):
+    Open = 0
+    Closed = 1
+    KeyLocked = 2
+    EventLocked = 3
+class DoorOneWayState(Enum):
+    NoOneWay = 0
+    Temporary = 1
+    Permanent = 2
 class Door(WalkTriggerTile):
-    def __init__(self, direction: Direction, locked: bool = False, opened: bool = False):   # todo entangled door as extra class?
+    def __init__(self, direction: Direction, open_state: DoorOpenState = DoorOpenState.Closed,
+                 one_way_state: DoorOneWayState = DoorOneWayState.NoOneWay, event_id: str = None):
         super().__init__(TileCode.Door)
         self.__direction = direction
-        self.__locked = locked
-        self.__opened = opened
+        self.__open_state = open_state
+        self.__one_way_state = one_way_state
+        self.__event_id = event_id
+        self.__check_event = None
 
     def get_img(self):
-        if self.__opened:
+        if self.is_open and self.__one_way_state is not DoorOneWayState.Permanent:
             return self._invisible
-        if self.__direction is Direction.East or self.__direction is Direction.West:
-            return "|"
+
+        if self.is_one_way:
+            if self.__direction is Direction.North:
+                return "^"
+            elif self.__direction is Direction.East:
+                return ">"
+            elif self.__direction is Direction.South:
+                return "v"
+            elif self.__direction is Direction.West:
+                return "<"
+            else:
+                return Invalid().get_img()  # todo use something else?
         else:
-            return "-"
+            if self.__direction is Direction.East or self.__direction is Direction.West:
+                return "|"
+            else:
+                return "-"
 
     def is_walkable(self, direction: Direction, robot: Robot) -> bool:
-        if direction == self.__direction or direction == self.__direction.opposite():
-            if self.__locked:
+        if self.__one_way_state is DoorOneWayState.Permanent or \
+                self.__one_way_state is DoorOneWayState.Temporary and not self.is_open:
+            correct_direction = direction is self.__direction
+        else:
+            # opposite direction is also fine for non one-way doors or opened temporary one-way doors
+            correct_direction = direction in [self.__direction, self.__direction.opposite()]
+        if correct_direction:
+            if self.is_key_locked:
                 if robot.key_count > 0:
                     return True
                 else:
                     CommonPopups.LockedDoor.show()
                     return False
+            elif self.is_event_locked:
+                if self.__check_event is None or self.__event_id is None:
+                    Logger.instance().throw(RuntimeError("Tried to enter event-locked door with event-callback or "
+                                                         "event-id still uninitialized!"))
+                    return True
+                if self.__check_event(self.__event_id):
+                    self.__open_state = DoorOpenState.Open
+                    return True
+                else:
+                    CommonPopups.EventDoor.show()
+                    return False
             else:
                 return True
         else:
+            CommonPopups.WrongDirectionDoor.show()
             return False
 
-    def on_walk(self, direction: Direction, robot: Robot) -> None:
-        if self.__locked:
-            if robot.use_key():
-                self.__locked = False
-                self.__opened = True
-            else:
-                Logger.instance().error(f"Error! walked on a door without having enough keys!\n#keys={robot.key_count}"
-                                        f", dir={direction}")
-        else:
-            self.__opened = True
+    def _on_walk(self, direction: Direction, robot: Robot) -> None:
+        if self.is_key_locked and not robot.use_key():
+            Logger.instance().error(f"Error! walked on a door without having enough keys!\n#keys={robot.key_count}"
+                                    f", dir={direction}")
+        self.__open_state = DoorOpenState.Open
 
     @property
     def direction(self) -> Direction:
         return self.__direction
 
     @property
-    def opened(self) -> bool:
-        return self.__opened
+    def is_open(self) -> bool:
+        return self.__open_state is DoorOpenState.Open
 
     @property
-    def locked(self) -> bool:
-        return self.__locked
+    def is_key_locked(self) -> bool:
+        return self.__open_state is DoorOpenState.KeyLocked
 
-    def copy(self, new_direction: Direction) -> "Door":
+    @property
+    def is_event_locked(self) -> bool:
+        return self.__open_state is DoorOpenState.EventLocked
+
+    @property
+    def is_one_way(self) -> bool:
+        return self.__one_way_state is not DoorOneWayState.NoOneWay
+
+    def set_check_event_callback(self, check_event: Callable[[str], bool]):
+        self.__check_event = check_event
+
+    def copy(self, new_direction: Direction, reset_one_way: bool = True) -> "Door":
+        """
+        Copies a door and assigns a new direction to it. Needed to create Hallways in the text based dungeon creator.
+        Since one-way doors already have their direction set normally it doesn't make sense to give them a new one.
+        Hence a copy of a one-way door will by default no longer be a one-way door.
+        :param new_direction: new direction for the copied door
+        :param reset_one_way: whether the door is forced to be one-way or if it should keep its one-way flag unchanged
+        :return: a new door with the same attributes except for a new direction
+        """
         if new_direction is None:
             Logger.instance().throw(ValueError("Tried to copy a door with new_direction being None!"))
-        return Door(new_direction, self.locked, self.opened)
+        if reset_one_way:
+            one_way_state = DoorOneWayState.NoOneWay
+        else:
+            one_way_state = self.__one_way_state
+        return Door(new_direction, self.__open_state, one_way_state, self.__event_id)
 
 
 class EntangledDoor(Door):
     @staticmethod
     def entangle(door1: "EntangledDoor", door2: "EntangledDoor"):
-        door1.__entangled_door = door2
-        door2.__entangled_door = door1
+        door1.__entangled_doors.append(door2)
+        door2.__entangled_doors.append(door1)
 
     def __init__(self, direction: Direction):
         super().__init__(direction)
-        self.__entangled_door = None
-        self.__closed = False
+        self.__entangled_doors = []
+        self.__entanglement_locked = False
 
     def is_walkable(self, direction: Direction, robot: Robot) -> bool:
-        # if the entangled door is open, this one can no longer we opened/walked on
-        if self.__entangled_door.opened:
+        # if an entangled door was opened, this one can no longer be opened/walked on
+        if self.__entanglement_locked:
             CommonPopups.EntangledDoor.show()
             return False
         return super(EntangledDoor, self).is_walkable(direction, robot)
+
+    def _on_walk(self, direction: Direction, robot: Robot) -> None:
+        for door in self.__entangled_doors:
+            door.__activate_entanglement_lock()
+
+    def __activate_entanglement_lock(self):
+        self.__entanglement_locked = True
 
 
 class Collectible(WalkTriggerTile):
@@ -322,12 +400,11 @@ class Collectible(WalkTriggerTile):
     def is_walkable(self, direction: Direction, robot: Robot) -> bool:
         return True
 
-    def on_walk(self, direction: Direction, robot: Robot) -> None:
+    def _on_walk(self, direction: Direction, robot: Robot) -> None:
         if self.__active:
-            #robot = robot
             name = self.__collectible.name()
             desc = self.__collectible.description()
-            Popup.message(self.__collectible.name(), f"You picked up a {name}.\n{desc}")
+            Popup.message(self.__collectible.name(), f"You picked up: {name}\n{desc}")
             robot.give_collectible(self.__collectible)
             self.__active = False
 
@@ -347,7 +424,7 @@ class Energy(WalkTriggerTile):
     def is_walkable(self, direction: Direction, robot: Robot) -> bool:
         return True
 
-    def on_walk(self, direction: Direction, robot: Robot) -> None:
+    def _on_walk(self, direction: Direction, robot: Robot) -> None:
         if self.__active:
             robot.give_collectible(LogicalEnergy(self.__amount))
             self.__active = False
@@ -385,24 +462,27 @@ class Enemy(WalkTriggerTile):
         self.__amplitude = amplitude
         self.__rm = RandomManager.create_new()
 
-    def on_walk(self, direction: Direction, robot: Robot) -> None:
+    def _on_walk(self, direction: Direction, robot: Robot) -> None:
         if isinstance(robot, Robot):
-            if self.__state == _EnemyState.UNDECIDED:
-                if self.measure():
-                    enemy = self.__factory.produce(robot, self.__rm, self.__amplitude)
-                    self.__factory.start(robot, enemy, direction)
-                    self.__state = _EnemyState.DEAD
-                else:
+            if robot.backpack.used_capacity > 0:
+                if self.__state == _EnemyState.UNDECIDED:
+                    if self.measure():
+                        enemy = self.__factory.produce(robot, self.__rm, self.__amplitude)
+                        self.__factory.start(robot, enemy, direction)
+                        self.__state = _EnemyState.DEAD
+                    else:
+                        self.__state = _EnemyState.FLED
+                elif self.__state == _EnemyState.FIGHT:
+                    if CheatConfig.is_scared_rabbit():
+                        self.__state = _EnemyState.FLED
+                    else:
+                        enemy = self.__factory.produce(robot, self.__rm, self.__amplitude)
+                        self.__factory.start(robot, enemy, direction)
+                        self.__state = _EnemyState.DEAD # todo check if this makes sense? couldn't it also be "robot fled"?
+                elif self.__state == _EnemyState.FREE:
                     self.__state = _EnemyState.FLED
-            elif self.__state == _EnemyState.FIGHT:
-                if CheatConfig.is_scared_rabbit():
-                    self.__state = _EnemyState.FLED
-                else:
-                    enemy = self.__factory.produce(robot, self.__rm, self.__amplitude)
-                    self.__factory.start(robot, enemy, direction)
-                    self.__state = _EnemyState.DEAD # todo check if this makes sense? couldn't it also be "robot fled"?
-            elif self.__state == _EnemyState.FREE:
-                self.__state = _EnemyState.FLED
+            else:
+                robot.damage(amount=1)
 
     def get_img(self):
         if self.__state == _EnemyState.DEAD :
@@ -467,7 +547,7 @@ class Boss(WalkTriggerTile):
         self.__boss = boss
         self.__on_walk_callback = on_walk_callback
 
-    def on_walk(self, direction: Direction, robot: Robot) -> None:
+    def _on_walk(self, direction: Direction, robot: Robot) -> None:
         if not self.__boss.is_defeated:
             self.__on_walk_callback(robot, self.__boss, direction)
 

@@ -5,6 +5,7 @@ from game.actors.robot import Robot
 from game.callbacks import CallbackPack
 from game.map.navigation import Coordinate, Direction
 from game.map.rooms import Room, Area
+from util.config import Config
 from util.logger import Logger
 
 
@@ -38,6 +39,19 @@ class Map:
         self.__cur_area = self.__rooms[spawn_room.y][spawn_room.x]
         self.__cur_area.enter(Direction.Center)
         self.__cur_area.make_visible()
+
+        # todo better solution would be nice, but since our sizes are fixed it doesn't make sense performance-wise
+        # e.g. maximal WIDTH * HEIGHT * 4 = 7 * 3 * 4 = 84 iterations
+        # set the check event callback for all doors
+        for room_row in rooms:
+            for room in room_row:
+                if room:
+                    for direction in Direction.values():
+                        hw = room.get_hallway(direction, throw_error=False)
+                        if hw:
+                            hw.set_check_event_callback(self.check_event)
+
+        self.__events = {}
 
     @property
     def seed(self) -> int:
@@ -135,9 +149,18 @@ class Map:
                 self.__cur_area.enter(direction)
 
             if isinstance(tile, tiles.WalkTriggerTile):
-                tile.on_walk(direction, self.robot_tile.robot)
+                tile.trigger(direction, self.robot_tile.robot, self.__trigger_event)
 
             self.__robot_pos = new_pos
             return True
         else:
             return False
+
+    def check_event(self, event_id: str) -> bool:
+        return event_id in self.__events
+
+    def __trigger_event(self, event_id: str):
+        if Config.debugging():
+            print("triggered event: " + event_id)
+        self.__events[event_id] = True
+

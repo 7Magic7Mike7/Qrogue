@@ -5,7 +5,7 @@ import py_cui.ui
 from py_cui import ColorRule
 
 from game.controls import Keys
-from util.config import PopupConfig, ColorConfig as CC
+from util.config import Config, PopupConfig, ColorConfig as CC
 from util.logger import Logger
 
 
@@ -153,6 +153,10 @@ def _locked_door() -> str:
     key = CC.highlight_object("Key")
     door = CC.highlight_object("Door")
     return f"Come back with a {key} to open the {door}."
+def _one_way_door() -> str:
+    one_way = CC.highlight_object("one way")
+    door = CC.highlight_object("Door")
+    return f"This is a {one_way} {door} that can only be opened from the other side!"
 def _entangled_door() -> str:
     door = CC.highlight_object("Door")
     entangled = CC.highlight_word("entangled")
@@ -170,6 +174,8 @@ def _no_space() -> str:
     return f"Your {circ} has {space} left. Remove a {gate} to place another one."
 class CommonPopups(Enum):
     LockedDoor = ("Door is locked!", _locked_door())
+    EventDoor = (Config.scientist_name(), "Hmm, I think we should complete the current task first.")
+    WrongDirectionDoor = (Config.scientist_name(), "We sadly cannot access the door from this direction.")
     EntangledDoor = ("Door is entangled!", _entangled_door())
     TutorialBlocked = ("Halt!", _tutorial_blocked())
     NotEnoughMoney = ("$$$", _not_enough_money())

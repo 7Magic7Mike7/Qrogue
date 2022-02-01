@@ -1,6 +1,7 @@
 import math
 from abc import ABC, abstractmethod
 from enum import Enum
+from typing import Iterator
 
 
 class CollectibleType(Enum):
@@ -72,6 +73,9 @@ class MultiCollectible(Collectible):
         for collectible in self.__content:
             text += collectible.to_string() + ", "
         return text + "]"
+
+    def iterator(self) -> Iterator[Collectible]:
+        return iter(self.__content)
 
 
 class ShopItem:

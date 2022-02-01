@@ -26,7 +26,9 @@ r_row : WALL tile+ WALL ;
 tile :  DIGIT | 'c' | 't' | 'e' | 'r' | '$' | '_' ;    // enemy, collectible, trigger, energy, riddle, shop, floor
 
 // further describing the tiles used in the room
-tile_descriptor : (enemy_descriptor | collectible_descriptor | trigger_descriptor | energy_descriptor | riddle_descriptor | shop_descriptor) ;
+tile_descriptor : trigger_descriptor |
+                  (enemy_descriptor | collectible_descriptor | energy_descriptor | riddle_descriptor | shop_descriptor)
+                  ('trigger' REFERENCE)? ;  // winning a fight or picking up a collectible can also trigger an event
 enemy_descriptor : DIGIT draw_strategy? REFERENCE (draw_strategy? REFERENCE)?;    // enemy, id of statevector pool, id of reward pool
 collectible_descriptor : 'c' draw_strategy? REFERENCE integer? ; // id of reward pool to draw from, number of rewards to draw (note: template pools like *key provide "normal" collectibles)
 trigger_descriptor : 't' REFERENCE ;   // reference to the event to trigger
@@ -38,8 +40,8 @@ shop_descriptor : '$' (REFERENCE | collectibles) integer ;   // reward pool id o
 // describing the hallways used in the layout (except for the default one '==')
 hallways : HALLWAYS hallway*;
 hallway : HALLWAY_ID h_attributes ;
-h_attributes : '(' (OPEN_LITERAL | CLOSED_LITERAL | LOCKED_LITERAL)
-                ('one way' DIRECTION)?
+h_attributes : '(' (OPEN_LITERAL | CLOSED_LITERAL | LOCKED_LITERAL | EVENT_LITERAL REFERENCE)
+                ('one way' DIRECTION PERMANENT_LITERAL?)?
                 ('entangled' '[' HALLWAY_ID (LIST_SEPARATOR HALLWAY_ID)* ']')? ')' ;
 
 // how to draw an element from a pool
@@ -88,6 +90,8 @@ FOGGY_LITERAL : 'foggy' ;
 OPEN_LITERAL : 'open' ;
 CLOSED_LITERAL : 'closed' ;
 LOCKED_LITERAL : 'locked' ;
+EVENT_LITERAL : 'event' ;
+PERMANENT_LITERAL: 'permanent' ;
 
 SPAWN_LITERAL : 'Spawn' ;
 WILD_LITERAL : 'Wild' ;

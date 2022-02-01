@@ -4,12 +4,12 @@ Author: Artner Michael
 """
 
 from abc import ABC, abstractmethod
-from typing import Tuple
+from typing import Tuple, List
 
 from qiskit import QuantumCircuit, transpile
 from qiskit.providers.aer import StatevectorSimulator
 
-from game.collectibles.collectible import Collectible, CollectibleType
+from game.collectibles.collectible import Collectible, MultiCollectible
 from game.collectibles.consumable import Consumable
 from game.collectibles import consumable
 from game.collectibles import pickup
@@ -56,14 +56,17 @@ class Backpack:
     __CAPACITY = 5      # how many Instructions the Backpack can hold at once
     __POUCH_SIZE = 5    # how many Consumables the Backpack can hold at once
 
-    def __init__(self, capacity: int = __CAPACITY, content: "list of Instructions" = []):
+    def __init__(self, capacity: int = __CAPACITY, content: List[Instruction] = None):
         """
 
         :param capacity: how many Instructions can be stored in this Backpack
         :param content: initially stored Instructions
         """
         self.__capacity = capacity
-        self.__storage = content
+        if content:
+            self.__storage = content
+        else:
+            self.__storage = []
         self.__pouch_size = Backpack.__POUCH_SIZE
         self.__pouch = []
         self.__coin_count = 0
@@ -92,14 +95,12 @@ class Backpack:
     def coin_count(self) -> int:
         if CheatConfig.got_inf_resources():
             return 999
-
         return self.__coin_count
 
     @property
     def key_count(self) -> int:
         if CheatConfig.got_inf_resources():
             return 999
-
         return self.__key_count
 
     def can_afford(self, price: int) -> bool:
@@ -215,7 +216,7 @@ class BackpackIterator:
 
 
 class Robot(ABC):
-    def __init__(self, name: str, attributes: _Attributes = _Attributes(), backpack: Backpack = Backpack()):
+    def __init__(self, name: str, attributes: _Attributes, backpack: Backpack):
         # initialize qubit stuff (rows)
         self.__simulator = StatevectorSimulator()#ddsim.JKQProvider().get_backend('statevector_simulator')
         self.__stv = None
@@ -343,11 +344,15 @@ class Robot(ABC):
             self.heal(collectible.amount)
         elif isinstance(collectible, Instruction):
             self.backpack.add(collectible)
-        elif collectible.type is CollectibleType.Consumable:    # todo cannot use isInstance here because currently
-                                                        # todo Consumable needs to access the Robot (circular import)
+        elif isinstance(collectible, Consumable):
             self.backpack.place_in_pouch(collectible)
+        elif isinstance(collectible, MultiCollectible):
+            for c in collectible.iterator():
+                self.give_collectible(c)
+        else:
+            Logger.instance().error(f"Received uncovered collectible: {collectible}")
 
-    def damage(self, target: StateVector = None, amount: int = 1) -> Tuple[int, bool]:
+    def damage(self, amount: int = 1) -> Tuple[int, bool]:
         return self.__attributes.qubits.damage(amount)
 
     def heal(self, amount: int = 1) -> int:
@@ -409,14 +414,17 @@ class Testbot(Robot):
         else:
             num_of_gates = 4
         gate_factory = GateFactory.default()
-        for gate in gate_factory.produce_multiple(rm, num_of_gates):
-            backpack.add(gate)
+        #for gate in gate_factory.produce_multiple(rm, num_of_gates):
+        #    backpack.add(gate)
         backpack.place_in_pouch(consumable.HealthPotion(3))
 
         super(Testbot, self).__init__("Testbot", attributes, backpack)
+    
+    def give_collectible(self, collectible: Collectible):
+        super(Testbot, self).give_collectible(collectible)
 
     def get_img(self):
-        return "R"
+        return "T"
 
     def description(self) -> str:
         return "A Robot for testing, debugging etc."

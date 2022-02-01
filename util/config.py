@@ -478,6 +478,14 @@ class Config:   # todo make singleton and handle access to other configs?
     __CONFIG_HEAD = "[Config]"
 
     @staticmethod
+    def scientist_name() -> str:
+        return "Robb"
+
+    @staticmethod
+    def player_name() -> str:
+        return "Mike"
+
+    @staticmethod
     def version() -> str:
         return Config.__VERSION
 
