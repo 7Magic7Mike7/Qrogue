@@ -499,27 +499,31 @@ class Enemy(WalkTriggerTile):
         self.__amplitude = amplitude
         self.__rm = RandomManager.create_new()
 
+    def is_walkable(self, direction: Direction, robot: Robot) -> bool:
+        if robot.backpack.used_capacity > 0:
+            return super(Enemy, self).is_walkable(direction, robot)
+        else:
+            robot.damage(1)
+            return False
+
     def _on_walk(self, direction: Direction, robot: Robot) -> None:
         if isinstance(robot, Robot):
-            if robot.backpack.used_capacity > 0:
-                if self.__state == _EnemyState.UNDECIDED:
-                    if self.measure():
-                        enemy = self.__factory.produce(robot, self.__rm, self.__amplitude)
-                        self.__factory.start(robot, enemy, direction)
-                        self.__state = _EnemyState.DEAD
-                    else:
-                        self.__state = _EnemyState.FLED
-                elif self.__state == _EnemyState.FIGHT:
-                    if CheatConfig.is_scared_rabbit():
-                        self.__state = _EnemyState.FLED
-                    else:
-                        enemy = self.__factory.produce(robot, self.__rm, self.__amplitude)
-                        self.__factory.start(robot, enemy, direction)
-                        self.__state = _EnemyState.DEAD # todo check if this makes sense? couldn't it also be "robot fled"?
-                elif self.__state == _EnemyState.FREE:
+            if self.__state == _EnemyState.UNDECIDED:
+                if self.measure():
+                    enemy = self.__factory.produce(robot, self.__rm, self.__amplitude)
+                    self.__factory.start(robot, enemy, direction)
+                    self.__state = _EnemyState.DEAD
+                else:
                     self.__state = _EnemyState.FLED
-            else:
-                robot.damage(amount=1)
+            elif self.__state == _EnemyState.FIGHT:
+                if CheatConfig.is_scared_rabbit():
+                    self.__state = _EnemyState.FLED
+                else:
+                    enemy = self.__factory.produce(robot, self.__rm, self.__amplitude)
+                    self.__factory.start(robot, enemy, direction)
+                    self.__state = _EnemyState.DEAD # todo check if this makes sense? couldn't it also be "robot fled"?
+            elif self.__state == _EnemyState.FREE:
+                self.__state = _EnemyState.FLED
 
     def get_img(self):
         if self.__state == _EnemyState.DEAD :
