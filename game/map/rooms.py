@@ -93,7 +93,7 @@ class Area(ABC):
             if self._is_visible or force:
                 return self.__tiles[y][x]
             else:
-                if self.__is_in_sight:
+                if self._is_in_sight:
                     return Area.__FOG
                 else:
                     return Area.void()
@@ -107,7 +107,7 @@ class Area(ABC):
         if self._is_visible:
             tiles = [t.get_img() for t in self.__tiles[row]]
             return "".join(tiles)
-        elif self.__is_in_sight:
+        elif self._is_in_sight:
             fog_str = Area.__FOG.get_img()
             return fog_str * self.__width
         else:
@@ -197,6 +197,7 @@ class Hallway(Area):
 
     def __init__(self, door: Door):
         self.__door = door
+        self.__hide = door.is_event_locked
         self.__room1 = None
         self.__room2 = None
         if self.is_horizontal():
@@ -207,6 +208,10 @@ class Hallway(Area):
             missing_half = int((Area.UNIT_HEIGHT - 3) / 2)
             tiles = [[Void()]] * missing_half + [[Wall()], [door], [Wall()]] + [[Void()]] * missing_half
             super(Hallway, self).__init__(AreaType.Hallway, tiles)
+
+    @property
+    def door(self) -> Door:
+        return self.__door
 
     def set_room(self, room: "Room", direction: Direction):
         """
@@ -234,8 +239,8 @@ class Hallway(Area):
         """
         return not self.connects_horizontally()
 
-    def in_sight(self):
-        self.make_visible()
+    def make_visible(self):
+        super(Hallway, self).make_visible()
         if self.__room1:
             self.__room1.in_sight()
         else:
@@ -244,6 +249,17 @@ class Hallway(Area):
             self.__room2.in_sight()
         else:
             Popup.message("Debug", "room2 is None!")
+
+    def get_row_str(self, row: int) -> str:
+        if self.__hide:
+            if self.__door.check_event():
+                self.make_visible()
+                self.__hide = False
+        return super(Hallway, self).get_row_str(row)
+
+    def in_sight(self):
+        if not self.__hide:
+            self.make_visible()
 
     def enter(self, direction: Direction):
         self.__room1.make_visible()
@@ -291,7 +307,7 @@ class Room(Area):
                                                        f"{len(tile_list)}!"))
         return tile_list
 
-    def __init__(self, type: AreaType, tile_list: "list of Tiles", north_hallway: Hallway = None,
+    def __init__(self, type: AreaType, tile_list: List[Tile], north_hallway: Hallway = None,
                  east_hallway: Hallway = None, south_hallway: Hallway = None, west_hallway: Hallway = None):
         tiles = []
         room_top = [Wall()] * Area.UNIT_WIDTH
@@ -315,22 +331,22 @@ class Room(Area):
 
         self.__hallways = {}
         if north_hallway is not None and not north_hallway.connects_horizontally():
-            tiles[0][Area.MID_X] = Floor()
+            tiles[0][Area.MID_X] = HallwayEntrance(north_hallway.door)
             self.__hallways[Direction.North] = north_hallway
             north_hallway.set_room(self, Direction.North)
 
         if east_hallway is not None and east_hallway.connects_horizontally():
-            tiles[Area.MID_Y][Area.UNIT_WIDTH-1] = Floor()
+            tiles[Area.MID_Y][Area.UNIT_WIDTH-1] = HallwayEntrance(east_hallway.door)
             self.__hallways[Direction.East] = east_hallway
             east_hallway.set_room(self, Direction.East)
 
         if south_hallway is not None and not south_hallway.connects_horizontally():
-            tiles[Area.UNIT_HEIGHT-1][Area.MID_X] = Floor()
+            tiles[Area.UNIT_HEIGHT-1][Area.MID_X] = HallwayEntrance(south_hallway.door)
             self.__hallways[Direction.South] = south_hallway
             south_hallway.set_room(self, Direction.South)
 
         if west_hallway is not None and west_hallway.connects_horizontally():
-            tiles[Area.MID_Y][0] = Floor()
+            tiles[Area.MID_Y][0] = HallwayEntrance(west_hallway.door)
             self.__hallways[Direction.West] = west_hallway
             west_hallway.set_room(self, Direction.West)
 

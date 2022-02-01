@@ -22,6 +22,7 @@ class TileCode(Enum):
     Debug = -2      # displays a digit for debugging
     Void = 7        # tile outside of the playable area
     Floor = 0       # simple floor tile without special meaning
+    HallwayEntrance = 5     # depending on the hallway it refers to is either a Floor or Wall
     FogOfWar = 3    # tile of a place we cannot see yet
 
     Message = 6     # tile for displaying a popup message
@@ -47,6 +48,10 @@ class TileCode(Enum):
 
 
 class Tile(ABC):
+    @staticmethod
+    def _invisible_tile():
+        return " "
+
     def __init__(self, code: TileCode):
         self.__code = code
 
@@ -55,8 +60,8 @@ class Tile(ABC):
         return self.__code
 
     @property
-    def _invisible(self) -> str:
-        return " "
+    def _invisible(self):
+        return Tile._invisible_tile()
 
     @abstractmethod
     def get_img(self):
@@ -133,22 +138,30 @@ class Void(Tile):
 
 
 class Floor(Tile):
+    @staticmethod
+    def img():
+        return Tile._invisible_tile()
+
     def __init__(self):
         super().__init__(TileCode.Floor)
 
     def get_img(self):
-        return self._invisible
+        return Floor.img()
 
     def is_walkable(self, direction: Direction, robot: Robot) -> bool:
         return True
 
 
 class Wall(Tile):
+    @staticmethod
+    def img():
+        return "#"
+
     def __init__(self):
         super().__init__(TileCode.Wall)
 
     def get_img(self):
-        return "#"
+        return Wall.img()
 
     def is_walkable(self, direction: Direction, robot: Robot) -> bool:
         return False
@@ -296,12 +309,7 @@ class Door(WalkTriggerTile):
                     CommonPopups.LockedDoor.show()
                     return False
             elif self.is_event_locked:
-                if self.__check_event is None or self.__event_id is None:
-                    Logger.instance().throw(RuntimeError("Tried to enter event-locked door with event-callback or "
-                                                         "event-id still uninitialized!"))
-                    return True
-                if self.__check_event(self.__event_id):
-                    self.__open_state = DoorOpenState.Open
+                if self.check_event():
                     return True
                 else:
                     CommonPopups.EventDoor.show()
@@ -340,6 +348,21 @@ class Door(WalkTriggerTile):
 
     def set_check_event_callback(self, check_event: Callable[[str], bool]):
         self.__check_event = check_event
+
+    def check_event(self) -> bool:
+        # don't check again if the door is already open
+        if self.is_open:
+            return True
+
+        if self.__check_event is None or self.__event_id is None:
+            Logger.instance().error("Tried to enter event-locked door with event-callback or event-id still "
+                                    "uninitialized!")
+            self.__open_state = DoorOpenState.Open
+            return True
+        if self.__check_event(self.__event_id):
+            self.__open_state = DoorOpenState.Open
+            return True
+        return False
 
     def copy(self, new_direction: Direction, reset_one_way: bool = True) -> "Door":
         """
@@ -383,6 +406,20 @@ class EntangledDoor(Door):
 
     def __activate_entanglement_lock(self):
         self.__entanglement_locked = True
+
+
+class HallwayEntrance(Tile):
+    def __init__(self, door_ref: Door):
+        super().__init__(TileCode.HallwayEntrance)
+        self.__door_ref = door_ref
+
+    def get_img(self):
+        if self.__door_ref.is_event_locked and not self.__door_ref.check_event():
+            return Wall.img()
+        return Floor.img()
+
+    def is_walkable(self, direction: Direction, robot: Robot) -> bool:
+        return not self.__door_ref.is_event_locked
 
 
 class Collectible(WalkTriggerTile):
