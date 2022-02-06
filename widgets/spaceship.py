@@ -2,7 +2,7 @@ import random
 
 import py_cui
 
-from game.actors.robot import Robot, Testbot
+from game.actors.robot import Robot, TestBot
 from game.callbacks import CallbackPack
 from game.controls import Controls
 from game.expedition import Expedition
@@ -165,7 +165,7 @@ class SpaceshipWidget(Widget):
             self.__cur_expedition = Tutorial(self.__cbp)
 
         self.__cur_expedition.set_seed(self.__seed)     # todo set in navigation field later
-        self.__cur_expedition.set_robot(Testbot(self.__seed))   # todo set in workshop later
+        self.__cur_expedition.set_robot(TestBot(self.__seed))   # todo set in workshop later
 
         self.widget.add_text_color_rule('\.', ColorConfig.get_from_code(ColorCode.SPACESHIP_FLOOR), 'contains',
                                         match_type='regex')
@@ -245,6 +245,9 @@ class SpaceshipWidget(Widget):
             return False
 
     def __trigger_event(self, event_id: str):
+        pass
+
+    def start_level(self, level: str):
         pass
 
     def start_expedition(self, direction: Direction, robot: Robot):

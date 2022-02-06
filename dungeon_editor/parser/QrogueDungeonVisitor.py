@@ -24,6 +24,11 @@ class QrogueDungeonVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by QrogueDungeonParser#robot.
+    def visitRobot(self, ctx:QrogueDungeonParser.RobotContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by QrogueDungeonParser#layout.
     def visitLayout(self, ctx:QrogueDungeonParser.LayoutContext):
         return self.visitChildren(ctx)
@@ -79,6 +84,16 @@ class QrogueDungeonVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by QrogueDungeonParser#trigger_descriptor.
+    def visitTrigger_descriptor(self, ctx:QrogueDungeonParser.Trigger_descriptorContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueDungeonParser#message_descriptor.
+    def visitMessage_descriptor(self, ctx:QrogueDungeonParser.Message_descriptorContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by QrogueDungeonParser#enemy_descriptor.
     def visitEnemy_descriptor(self, ctx:QrogueDungeonParser.Enemy_descriptorContext):
         return self.visitChildren(ctx)
@@ -86,11 +101,6 @@ class QrogueDungeonVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by QrogueDungeonParser#collectible_descriptor.
     def visitCollectible_descriptor(self, ctx:QrogueDungeonParser.Collectible_descriptorContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by QrogueDungeonParser#trigger_descriptor.
-    def visitTrigger_descriptor(self, ctx:QrogueDungeonParser.Trigger_descriptorContext):
         return self.visitChildren(ctx)
 
 
@@ -176,6 +186,11 @@ class QrogueDungeonVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by QrogueDungeonParser#collectible.
     def visitCollectible(self, ctx:QrogueDungeonParser.CollectibleContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueDungeonParser#messages.
+    def visitMessages(self, ctx:QrogueDungeonParser.MessagesContext):
         return self.visitChildren(ctx)
 
 

@@ -9,7 +9,7 @@ from dungeon_editor.parser.QrogueDungeonParser import QrogueDungeonParser
 from dungeon_editor.parser.QrogueDungeonVisitor import QrogueDungeonVisitor
 from game.actors.factory import ExplicitTargetDifficulty, TargetDifficulty, EnemyFactory
 from game.actors.riddle import Riddle
-from game.actors.robot import Robot
+from game.actors.robot import Robot, TestBot
 from game.callbacks import CallbackPack
 from game.collectibles import pickup, factory
 from game.collectibles.collectible import Collectible, MultiCollectible, ShopItem
@@ -21,6 +21,7 @@ from game.map.generator import DungeonGenerator
 from game.map.map import Map
 from game.map.navigation import Coordinate, Direction
 from util import util_functions
+from util.config import Config
 from util.my_random import MyRandom
 from widgets.my_popups import Popup
 
@@ -35,6 +36,7 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
     __PLACE_HOLDER_TILE = "_"
     __COLLECTIBLE_TILE = "c"
     __TRIGGER_TILE = "t"
+    __MESSAGE_TILE = "m"
     __ENERGY_TILE = "e"
     __RIDDLER_TILE = "r"
     __SHOP_KEEPER_TILE = "$"
@@ -60,6 +62,8 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
             return tiles.TileCode.Collectible
         elif tile_str == TextBasedDungeonGenerator.__TRIGGER_TILE:
             return tiles.TileCode.Trigger
+        elif tile_str == TextBasedDungeonGenerator.__MESSAGE_TILE:
+            return tiles.TileCode.Message
         elif tile_str == TextBasedDungeonGenerator.__ENERGY_TILE:
             return tiles.TileCode.Energy
         elif tile_str == TextBasedDungeonGenerator.__RIDDLER_TILE:
@@ -80,6 +84,8 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
             return TextBasedDungeonGenerator.__COLLECTIBLE_TILE
         elif tile_code is tiles.TileCode.Trigger:
             return TextBasedDungeonGenerator.__TRIGGER_TILE
+        elif tile_code is tiles.TileCode.Message:
+            return TextBasedDungeonGenerator.__MESSAGE_TILE
         elif tile_code is tiles.TileCode.Energy:
             return TextBasedDungeonGenerator.__ENERGY_TILE
         elif tile_code is tiles.TileCode.Riddler:
@@ -102,6 +108,8 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
         self.__cbp = None
         self.__robot = None
         self.__rm = MyRandom(seed)
+
+        self.__messages = {}        # str -> str
 
         self.__reward_pools = {}
         self.__default_reward_factory = None  # CollectibleFactory
@@ -195,6 +203,10 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
         elif tile_code is tiles.TileCode.Trigger:
             return self.__load_trigger("*defaultTrigger")
 
+        elif tile_code is tiles.TileCode.Message:
+            # todo is it okay to print this?
+            return tiles.Message(Popup(Config.scientist_name(), "Hmm, I don't know what to say.", show=False))
+
         elif tile_code is tiles.TileCode.Energy:
             return tiles.Collectible(pickup.Energy())
 
@@ -215,7 +227,7 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
             self.warning(f"Unknown tile specified: {tile_str}. Using a Floor-Tile instead.")
             return tiles.Floor()
 
-    def generate(self, robot: Robot, cbp: CallbackPack, data: str) -> (Map, bool):
+    def generate(self, robot: Robot, cbp: CallbackPack, data: str) -> Tuple[Map, bool]:
         input_stream = InputStream(data)
         lexer = QrogueDungeonLexer(input_stream)
         token_stream = CommonTokenStream(lexer)
@@ -305,10 +317,30 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
         return instruction.IGate()
 
     def __load_trigger(self, reference: str) -> tiles.Trigger:
+        if reference.startswith("tp"):
+            # teleport trigger
+            ref = reference[2:]
+            if ref.startswith("l"):
+                level = ref[1:]
+            elif ref.startswith("w"):
+                world = ref[1:]
+
         # todo implement
         def callback(direction: Direction, robot: Robot):
             Popup.message("Trigger", str(reference))
+
+
         return tiles.Trigger(callback)
+
+    def __load_message(self, reference: str) -> str:
+        if reference in self.__messages:
+            return self.__messages[reference]
+        norm_ref = self.__normalize_reference(reference)
+        if norm_ref in self.__messages:
+            return self.__messages[norm_ref]
+        else:
+            self.warning(f"Unknown text reference: {reference}. Returning \"Message not found!\"")
+            return "Message not found!"
 
     def __load_hallway(self, reference: str) -> tiles.Door:
         if reference in self.__hallways_by_id:
@@ -397,6 +429,15 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
         :return: True if strategy is 'ordered', False if it is 'random'
         """
         return ctx.ORDERED_DRAW() is not None
+
+    ##### Message area ######
+
+    def visitMessages(self, ctx:QrogueDungeonParser.MessagesContext):
+        self.__messages.clear()
+        for i, ref in enumerate(ctx.REFERENCE()):
+            ref = self.__normalize_reference(ref.getText())
+            text = ctx.TEXT(i).getText()[1:-1]  # skip the encapsulating \"
+            self.__messages[ref] = text
 
     ##### Reward Pool area #####
 
@@ -604,6 +645,13 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
         reference = ctx.REFERENCE().getText()
         return self.__load_trigger(reference)
 
+    def visitMessage_descriptor(self, ctx: QrogueDungeonParser.Message_descriptorContext) -> tiles.Message:
+        times = self.visit(ctx.integer())
+        reference = ctx.REFERENCE().getText()
+        text = self.__load_message(reference)
+        popup = Popup(Config.scientist_name(), text, show=False)
+        return tiles.Message(popup, times)
+
     def visitCollectible_descriptor(self, ctx:QrogueDungeonParser.Collectible_descriptorContext) -> tiles.Collectible:
         # only draw ordered if it is explicitly stated like this
         if ctx.draw_strategy() and self.visit(ctx.draw_strategy()):
@@ -685,6 +733,8 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
             tile = self.visit(ctx.riddle_descriptor())
         elif ctx.shop_descriptor():
             tile = self.visit(ctx.shop_descriptor())
+        elif ctx.message_descriptor():
+            tile = self.visit(ctx.message_descriptor())
         else:
             self.warning("Invalid tile_descriptor! It is neither enemy, collectible, trigger or energy. "
                          "Returning tiles.Invalid() as consequence.")
@@ -861,9 +911,26 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
                 x += 1
         return row
 
+    ##### Robot area #####
+
+    def visitRobot(self, ctx:QrogueDungeonParser.RobotContext) -> None:
+        num_of_qubits = int(ctx.DIGIT().getText())
+        collectibles = []
+        for ref in ctx.REFERENCE():
+            collectibles.append(self.__load_gate(ref.getText()))  # todo what about pickups?
+
+        #self.__robot = TestBot()
+        #temp = True
+
     ##### Start area #####
 
     def visitStart(self, ctx:QrogueDungeonParser.StartContext) -> List[List[rooms.Room]]:
+        # prepare the robot
+        self.visit(ctx.robot())
+
+        # prepare messages
+        self.visit(ctx.messages())
+
         # prepare reward pools first because they are standalone
         self.visit(ctx.reward_pools())
         # prepare state vector pools next because they can only reference reward pools

@@ -35,6 +35,15 @@ class QrogueDungeonListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by QrogueDungeonParser#robot.
+    def enterRobot(self, ctx:QrogueDungeonParser.RobotContext):
+        pass
+
+    # Exit a parse tree produced by QrogueDungeonParser#robot.
+    def exitRobot(self, ctx:QrogueDungeonParser.RobotContext):
+        pass
+
+
     # Enter a parse tree produced by QrogueDungeonParser#layout.
     def enterLayout(self, ctx:QrogueDungeonParser.LayoutContext):
         pass
@@ -134,6 +143,24 @@ class QrogueDungeonListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by QrogueDungeonParser#trigger_descriptor.
+    def enterTrigger_descriptor(self, ctx:QrogueDungeonParser.Trigger_descriptorContext):
+        pass
+
+    # Exit a parse tree produced by QrogueDungeonParser#trigger_descriptor.
+    def exitTrigger_descriptor(self, ctx:QrogueDungeonParser.Trigger_descriptorContext):
+        pass
+
+
+    # Enter a parse tree produced by QrogueDungeonParser#message_descriptor.
+    def enterMessage_descriptor(self, ctx:QrogueDungeonParser.Message_descriptorContext):
+        pass
+
+    # Exit a parse tree produced by QrogueDungeonParser#message_descriptor.
+    def exitMessage_descriptor(self, ctx:QrogueDungeonParser.Message_descriptorContext):
+        pass
+
+
     # Enter a parse tree produced by QrogueDungeonParser#enemy_descriptor.
     def enterEnemy_descriptor(self, ctx:QrogueDungeonParser.Enemy_descriptorContext):
         pass
@@ -149,15 +176,6 @@ class QrogueDungeonListener(ParseTreeListener):
 
     # Exit a parse tree produced by QrogueDungeonParser#collectible_descriptor.
     def exitCollectible_descriptor(self, ctx:QrogueDungeonParser.Collectible_descriptorContext):
-        pass
-
-
-    # Enter a parse tree produced by QrogueDungeonParser#trigger_descriptor.
-    def enterTrigger_descriptor(self, ctx:QrogueDungeonParser.Trigger_descriptorContext):
-        pass
-
-    # Exit a parse tree produced by QrogueDungeonParser#trigger_descriptor.
-    def exitTrigger_descriptor(self, ctx:QrogueDungeonParser.Trigger_descriptorContext):
         pass
 
 
@@ -311,6 +329,15 @@ class QrogueDungeonListener(ParseTreeListener):
 
     # Exit a parse tree produced by QrogueDungeonParser#collectible.
     def exitCollectible(self, ctx:QrogueDungeonParser.CollectibleContext):
+        pass
+
+
+    # Enter a parse tree produced by QrogueDungeonParser#messages.
+    def enterMessages(self, ctx:QrogueDungeonParser.MessagesContext):
+        pass
+
+    # Exit a parse tree produced by QrogueDungeonParser#messages.
+    def exitMessages(self, ctx:QrogueDungeonParser.MessagesContext):
         pass
 
 

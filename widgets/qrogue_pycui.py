@@ -8,7 +8,7 @@ import py_cui
 from game.actors.boss import Boss
 from game.actors.enemy import Enemy
 from game.actors.riddle import Riddle
-from game.actors.robot import Robot, Testbot
+from game.actors.robot import Robot, TestBot
 from game.callbacks import CallbackPack
 from game.controls import Controls, Pausing, Keys
 from game.map import tiles
@@ -419,7 +419,7 @@ class QrogueCUI(py_cui.PyCUI):
         # todo maybe data is the save data?
         self.apply_widget_set(self.__spaceship)
         if data:
-            player_tile = tiles.RobotTile(Testbot(0))  # todo take real values
+            player_tile = tiles.RobotTile(TestBot(0))  # todo take real values
             self.__spaceship.set_data((player_tile, self.__use_workbench))
 
     def __continue_spaceship(self) -> None:

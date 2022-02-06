@@ -64,8 +64,10 @@ class Backpack:
         """
         self.__capacity = capacity
         if content:
+            #self.__capacity = max(len(content), capacity)
             self.__storage = content
         else:
+            self.__capacity = capacity
             self.__storage = []
         self.__pouch_size = Backpack.__POUCH_SIZE
         self.__pouch = []
@@ -402,26 +404,15 @@ class Robot(ABC):
         return list
 
 
-class Testbot(Robot):
-    def __init__(self, seed: int):
-        attributes = _Attributes(DummyQubitSet())
-        backpack = Backpack(capacity=5)
+class TestBot(Robot):
+    def __init__(self, num_of_qubits: int = 2, gates: List[Instruction] = None):
+        attributes = _Attributes(DummyQubitSet(num_of_qubits))
+        backpack = Backpack(5, gates)
 
-        # add random gates and a HealthPotion
-        rm = MyRandom(seed)
-        if rm.get() < 0.5:
-            num_of_gates = 3
-        else:
-            num_of_gates = 4
-        gate_factory = GateFactory.default()
-        #for gate in gate_factory.produce_multiple(rm, num_of_gates):
-        #    backpack.add(gate)
-        backpack.place_in_pouch(consumable.HealthPotion(3))
-
-        super(Testbot, self).__init__("Testbot", attributes, backpack)
+        super(TestBot, self).__init__("Testbot", attributes, backpack)
     
     def give_collectible(self, collectible: Collectible):
-        super(Testbot, self).give_collectible(collectible)
+        super(TestBot, self).give_collectible(collectible)
 
     def get_img(self):
         return "T"
@@ -431,8 +422,8 @@ class Testbot(Robot):
 
 
 class LukeBot(Robot):
-    def __init__(self):
-        attributes = _Attributes(DummyQubitSet())
+    def __init__(self, size: int = 2):
+        attributes = _Attributes(DummyQubitSet(size))
         backpack = Backpack(capacity=5)
 
         # add random gates and a HealthPotion

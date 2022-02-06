@@ -1,6 +1,6 @@
 import time
 
-from game.actors.robot import Testbot
+from game.actors.robot import TestBot
 from game.callbacks import CallbackPack
 from game.map.generator import RandomLayoutGenerator, RandomDungeonGenerator
 from game.map.tiles import *
@@ -107,7 +107,7 @@ if return_code != 0:
     print(f"Error #{return_code}")
 
 RandomManager(7)    # initialize RandomManager
-p = RobotTile(Testbot(7))
+p = RobotTile(TestBot(7))
 c = CallbackPack(start_gp, start_fight, start_fight, start_fight, start_fight)
 
 layout_test()

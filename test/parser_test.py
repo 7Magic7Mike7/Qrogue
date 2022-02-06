@@ -1,7 +1,7 @@
 import os
 
 from dungeon_editor.parser.QrogueGrammarListener import TextBasedDungeonGenerator
-from game.actors.robot import Testbot, Robot
+from game.actors.robot import TestBot, Robot
 from game.callbacks import CallbackPack
 from util.config import FileTypes
 from util.my_random import RandomManager, MyRandom
@@ -32,11 +32,12 @@ def generation_test(rm: MyRandom, robot: Robot, text: str):
     cbp = CallbackPack(start_gp, start_fight, start_fight, start_fight, start_fight)
 
     generator = TextBasedDungeonGenerator(7)
-    generator.generate(robot, cbp, text)
+    map, success = generator.generate(robot, cbp, text)
+    debugging = True
 
 
 
 rm = RandomManager(11)
-t = Testbot(7)
+t = TestBot(7)
 data = read_dungeon("tutorial")
 generation_test(rm, t, data)

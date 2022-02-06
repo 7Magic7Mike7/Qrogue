@@ -2,10 +2,12 @@ grammar QrogueDungeon;
 
 // RULES
 
-start  : HEADER layout rooms hallways stv_pools reward_pools ENDER;
+start  : HEADER robot layout rooms hallways stv_pools reward_pools messages ENDER;
 
 integer : DIGIT | HALLWAY_ID | INTEGER ;
 complex_number : SIGN? (IMAG_NUMBER | (integer | FLOAT) (SIGN IMAG_NUMBER)?) ;
+
+robot: ROBOT DIGIT 'qubits' '[' REFERENCE (LIST_SEPARATOR REFERENCE)* ']' ;
 
 // building the layout of the dungeon
 layout : LAYOUT HORIZONTAL_SEPARATOR* l_room_row (l_hallway_row l_room_row)* HORIZONTAL_SEPARATOR* ;
@@ -23,15 +25,16 @@ r_attributes : '(' r_visibility r_type ')' ;  // visibile/in sight, type
 r_visibility : (VISIBLE_LITERAL | FOGGY_LITERAL)? ;
 r_type :  (SPAWN_LITERAL | BOSS_LITERAL | WILD_LITERAL | SHOP_LITERAL | RIDDLE_LITERAL | GATE_ROOM_LITERAL) ;
 r_row : WALL tile+ WALL ;
-tile :  DIGIT | 'c' | 't' | 'e' | 'r' | '$' | '_' ;    // enemy, collectible, trigger, energy, riddle, shop, floor
+tile :  't' | 'm' | DIGIT | 'c' | 'e' | 'r' | '$' | '_' ;    // enemy, collectible, trigger, energy, riddle, shop, floor
 
 // further describing the tiles used in the room
-tile_descriptor : trigger_descriptor |
+tile_descriptor : trigger_descriptor | message_descriptor |
                   (enemy_descriptor | collectible_descriptor | energy_descriptor | riddle_descriptor | shop_descriptor)
                   ('trigger' REFERENCE)? ;  // winning a fight or picking up a collectible can also trigger an event
+trigger_descriptor : 't' REFERENCE ;   // reference to the event to trigger
+message_descriptor : 'm' integer REFERENCE ;    // #times displayed, reference to the text that should be shown
 enemy_descriptor : DIGIT draw_strategy? REFERENCE (draw_strategy? REFERENCE)?;    // enemy, id of statevector pool, id of reward pool
 collectible_descriptor : 'c' draw_strategy? REFERENCE integer? ; // id of reward pool to draw from, number of rewards to draw (note: template pools like *key provide "normal" collectibles)
-trigger_descriptor : 't' REFERENCE ;   // reference to the event to trigger
 energy_descriptor : 'e' integer ;    // amount
 riddle_descriptor : 'r' (REFERENCE | stv) (REFERENCE | collectible) ;   // stv pool id, reward pool id
 shop_descriptor : '$' (REFERENCE | collectibles) integer ;   // reward pool id or collectible list, num of items to draw
@@ -59,6 +62,8 @@ reward_pool : REFERENCE collectibles ;     // id, pool of collectibles
 collectibles : '[' collectible (LIST_SEPARATOR collectible)* ']' ;
 collectible : (KEY_LITERAL integer | COIN_LITERAL integer | HEALTH_LITERAL integer | GATE_LITERAL REFERENCE) ;
 
+messages : MESSAGES (REFERENCE TEXT)* ;
+
 // TOKEN
 
 // Characters implicitely used for special purposes:
@@ -82,6 +87,7 @@ SIGN : PLUS_SIGN | MINUS_SIGN ;
 CHARACTER_LOW : [a-z] ;
 CHARACTER_UP : [A-Z] ;
 CHARACTER : CHARACTER_LOW | CHARACTER_UP ;
+TEXT : '"' .*? '"' ;
 
 // literals
 VISIBLE_LITERAL : 'visible' ;
@@ -111,11 +117,13 @@ MINUS_SIGN : '-' ;
 // headline token
 HEADER : 'Qrogue<' ;
 ENDER : '>Qrogue' ;
+ROBOT : '[Robot]' ;
 LAYOUT : '[Layout]' ;
 ROOMS : '[Custom Rooms]' ;
 HALLWAYS : '[Hallways]' ;
 STV_POOLS : '[StateVector Pools]' ;
 REWARD_POOLS : '[Reward Pools]' ;
+MESSAGES : '[Messages]' ;
 
 // optical separators
 HORIZONTAL_SEPARATOR : '~' ;
