@@ -4,9 +4,10 @@ from antlr4.tree.Tree import TerminalNodeImpl
 from antlr4 import InputStream, CommonTokenStream
 from antlr4.error.ErrorListener import ErrorListener
 
-from dungeon_editor.parser.QrogueDungeonLexer import QrogueDungeonLexer
-from dungeon_editor.parser.QrogueDungeonParser import QrogueDungeonParser
-from dungeon_editor.parser.QrogueDungeonVisitor import QrogueDungeonVisitor
+from dungeon_editor import parser_util
+from dungeon_editor.dungeon_parser.QrogueDungeonLexer import QrogueDungeonLexer
+from dungeon_editor.dungeon_parser.QrogueDungeonParser import QrogueDungeonParser
+from dungeon_editor.dungeon_parser.QrogueDungeonVisitor import QrogueDungeonVisitor
 from game.actors.factory import ExplicitTargetDifficulty, TargetDifficulty, EnemyFactory
 from game.actors.riddle import Riddle
 from game.actors.robot import Robot, TestBot
@@ -48,10 +49,7 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
     @staticmethod
     def __normalize_reference(reference: str) -> str:
-        if reference[0] == '*':
-            return reference[1:].lower()
-        else:
-            return reference.lower()
+        return parser_util.normalize_reference(reference)
 
     @staticmethod
     def __tile_str_to_code(tile_str: str) -> tiles.TileCode:
