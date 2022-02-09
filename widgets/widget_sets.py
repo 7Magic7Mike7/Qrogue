@@ -473,11 +473,9 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self.__hud.set_data(robot)
         self.__circuit.set_data(robot)
 
-        p_stv = robot.state_vector
-        t_stv = target.statevector
-        self.__stv_robot.set_data((p_stv, t_stv))
-        self.__truth_table.set_data(p_stv.num_of_qubits)
-        self.__stv_target.set_data(t_stv)
+        self.__stv_robot.set_data((robot.state_vector, target.state_vector))
+        self.__truth_table.set_data(robot.state_vector.num_of_qubits)
+        self.__stv_target.set_data(target.state_vector)
 
     def get_widget_list(self) -> List[Widget]:
         return [
@@ -557,11 +555,11 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             Logger.instance().error("Error! Target is not set!")
             return False
         result = self._robot.update_statevector()
-        self.__stv_robot.set_data((result, self._target.statevector))
+        self.__stv_robot.set_data((result, self._target.state_vector))
         self.render()
 
-        if self._target.is_reached(result):
-            reward = self._target.get_reward()
+        success, reward = self._target.is_reached(result)
+        if success:
             self._robot.give_collectible(reward)
             self._details.set_data(data=(
                 [f"Congratulations! Get reward: {reward.to_string()}"],

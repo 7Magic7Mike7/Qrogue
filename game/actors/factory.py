@@ -24,8 +24,9 @@ class TargetDifficulty:
     def __init__(self, num_of_instructions: int, rewards):
         """
 
-        :param num_of_instructions: num of instructions used to create a statevector
-        :param reward_pool: list of possible rewards for winning against an enemy of this difficulty
+        :param num_of_instructions: number of Instructions used to create a target StateVector
+        :param rewards: either a list of Collectibles or a CollectibleFactory for creating a reward when reaching
+        a Target
         """
         self.__num_of_instructions = num_of_instructions
         if isinstance(rewards, list):
@@ -41,11 +42,12 @@ class TargetDifficulty:
 
     def create_statevector(self, robot: Robot, rm: MyRandom) -> StateVector:
         """
-        Creates a StateVector that is reachable for the robot.
+        Creates a random StateVector that is reachable for the given Robot.
 
-        :param robot: defines the number of qubits and usable instructions for creating the statevector
-        :param rm:
-        :return: the created StateVector
+        :param robot: provides the needed information regarding the number of qubits and usable Instructions for
+        creating a StateVector
+        :param rm: seeded randomness for choosing Instructions and the Qubit(s) to use them on
+        :return: a StateVector reachable for the provided Robot
         """
         num_of_qubits = robot.num_of_qubits
 
@@ -67,7 +69,18 @@ class TargetDifficulty:
 
 
 class ExplicitTargetDifficulty(TargetDifficulty):
+    """
+    A TargetDifficulty that doesn't create StateVectors based on a Robot's possibilities but by choosing from a pool
+    of explicitely provided StateVectors
+    """
+
     def __init__(self, stv_pool: List[StateVector], reward_factory: CollectibleFactory, ordered: bool = False):
+        """
+
+        :param stv_pool: list of StateVectors to choose from
+        :param reward_factory: factory for creating a reward
+        :param ordered: whether StateVectors should be chosen in order or randomly from the given stv_pool
+        """
         super().__init__(-1, reward_factory)
         self.__pool = stv_pool
         self.__ordered = ordered
