@@ -31,6 +31,7 @@ from widgets.my_popups import Popup
 class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
     __DEFAULT_NUM_OF_SHOP_ITEMS = 3
     __DEFAULT_NUM_OF_RIDDLE_ATTEMPTS = 7
+    __ROBOT_NO_GATES = "none"
 
     @staticmethod
     def warning(text: str):
@@ -855,6 +856,8 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
         num_of_qubits = int(ctx.DIGIT().getText())
         gates = []
         for ref in ctx.REFERENCE():
+            if parser_util.normalize_reference(ref.getText()) == self.__ROBOT_NO_GATES:
+                continue
             gates.append(self.__load_gate(ref.getText()))  # todo what about pickups?
 
         self.__robot = TestBot(num_of_qubits, gates)

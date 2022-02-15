@@ -256,10 +256,9 @@ class SpaceshipWidget(Widget):
 
     def __load_map(self, map_name: str, room: Coordinate):
         if map_name[0].lower() == "w" and map_name[1].isdigit():
-            # todo: using the same generator again can mess up randomness because now results depend on the order you
-            # visit the maps (but since this is for worlds and not levels themselves it should not matter)
+            generator = QrogueWorldGenerator(self.__rm.get_seed(), self.__save_data, self.__load_map)
             try:
-                world, success = self.__generator.generate(map_name)
+                world, success = generator.generate(map_name)
                 if success:
                     self.__cur_world = world
                     self.__show_world(self.__save_data, world)
