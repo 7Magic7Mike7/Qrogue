@@ -50,8 +50,9 @@ class Logger(py_cui.debug.PyCUILogger):
     def show_error(self, message) -> None:
         self.__error_popup("ERROR", str(message))
 
-    def error(self, message, **kwargs) -> None:
-        self.__error_popup("ERROR", str(message))
+    def error(self, message, show: bool = True, **kwargs) -> None:
+        if show:
+            self.__error_popup("ERROR", str(message))
         highlighting = "\n----------------------------------\n"
         self.info(f"{highlighting}ERROR |{message}{highlighting}")
 

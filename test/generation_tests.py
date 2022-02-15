@@ -1,5 +1,6 @@
 import time
 
+from game.achievements import AchievementManager
 from game.actors.robot import TestBot
 from game.callbacks import CallbackPack
 from game.map.generator import RandomLayoutGenerator, RandomDungeonGenerator
@@ -7,12 +8,20 @@ from game.map.tiles import *
 from util.config import Config
 
 
-def start_gp(map):
+def start_gp(args):
     print("started game")
 
 
-def start_fight(**kwargs):
+def start_fight(robot: Robot, enemy: Enemy, direction: Direction):
     pass
+
+
+def start_boss_fight(robot: Robot, boss: Boss, direction: Direction):
+    pass
+
+
+def load_map(map_name: str):
+    print(f"Load map: {map_name}")
 
 
 def layout_test():
@@ -63,7 +72,7 @@ def layout_test():
         mapgen.generate(debug=True)
 
 
-def dungeon_test(robot_tile: RobotTile, cbp: CallbackPack):
+def dungeon_test(robot: Robot, cbp: CallbackPack):
     min_duration = (1, -1)
     duration_sum = 0
     max_duration = (0, -1)
@@ -77,9 +86,9 @@ def dungeon_test(robot_tile: RobotTile, cbp: CallbackPack):
         i += 1
         if i % 5000 == 0:
             print(f"Run {i + 1}): seed = {seed}")
-        generator = RandomDungeonGenerator(seed)
+        generator = RandomDungeonGenerator(seed, load_map, AchievementManager())
         start_time = time.time()
-        map, success = generator.generate(robot_tile.robot, cbp)
+        map, success = generator.generate(cbp, robot)
         if not success:
             failing_seeds.append((generator, seed))
             print(f"Failed for seed = {seed}")
@@ -107,8 +116,8 @@ if return_code != 0:
     print(f"Error #{return_code}")
 
 RandomManager(7)    # initialize RandomManager
-p = RobotTile(TestBot(7))
-c = CallbackPack(start_gp, start_fight, start_fight, start_fight, start_fight)
+p = TestBot()
+c = CallbackPack(start_gp, start_fight, start_boss_fight, start_fight, start_fight)
 
 layout_test()
 dungeon_test(p, c)

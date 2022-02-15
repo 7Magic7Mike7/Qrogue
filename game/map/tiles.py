@@ -4,13 +4,13 @@ from enum import Enum
 from typing import List, Callable, Any
 
 from game.actors.boss import Boss as BossActor
+from game.actors.controllable import Controllable
 from game.actors.factory import EnemyFactory
 from game.actors.robot import Robot
 from game.actors.riddle import Riddle
-from game.callbacks import OnWalkCallback
 from game.collectibles.collectible import Collectible as LogicalCollectible
 from game.collectibles.pickup import Energy as LogicalEnergy
-from game.map.navigation import Direction
+from game.map.navigation import Direction, Coordinate
 from util.config import CheatConfig
 from util.logger import Logger
 from util.my_random import RandomManager
@@ -25,14 +25,16 @@ class TileCode(Enum):
     HallwayEntrance = 5     # depending on the hallway it refers to is either a Floor or Wall
     FogOfWar = 3    # tile of a place we cannot see yet
 
-    Message = 6     # tile for displaying a popup message
-    Trigger = 9     # tile that calls a function on walk, i.e. event tile
+    Message = 6         # tile for displaying a popup message
+    Trigger = 9         # tile that calls a function on walk, i.e. event tile
+    Teleport = 91       # special trigger for teleporting between maps
+    Decoration = 11     # simply displays a specified character
 
     Wall = 1
     Obstacle = 2
     Door = 4
 
-    Robot = 20
+    Controllable = 20
     Enemy = 30
     Boss = 40
 
@@ -68,7 +70,7 @@ class Tile(ABC):
         pass
 
     @abstractmethod
-    def is_walkable(self, direction: Direction, robot: Robot) -> bool:
+    def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
         pass
 
     def __str__(self):
@@ -80,24 +82,25 @@ class WalkTriggerTile(Tile):
         super().__init__(code)
         self.__event_id = None
 
-    def is_walkable(self, direction: Direction, robot: Robot) -> bool:
+    def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
         return True
 
     def set_event(self, event_id: str):
         self.__event_id = event_id
 
-    def trigger(self, direction: Direction, robot: Robot, trigger_event_callback: Callable[[str], Any]) -> Any:
-        self._on_walk(direction, robot)
+    def trigger(self, direction: Direction, controllable: Controllable, trigger_event_callback: Callable[[str], Any]) \
+            -> Any:
+        self._on_walk(direction, controllable)
         if self.__event_id:
             return trigger_event_callback(self.__event_id)
         return None
     
     @abstractmethod
-    def _on_walk(self, direction: Direction, robot: Robot) -> None:
+    def _on_walk(self, direction: Direction, controllable: Controllable) -> None:
         """
         Event that is triggered when an actor moves onto this Tile
         :param direction: the Direction from which the actor moves onto this Tile
-        :param robot: the actor (e.g. Player) that is moving onto this Tile
+        :param controllable: the actor (e.g. Player) that is moving onto this Tile
         :return: None
         """
         pass
@@ -110,7 +113,7 @@ class Invalid(Tile):
     def get_img(self):
         return "§"
 
-    def is_walkable(self, direction: Direction, robot: Robot) -> bool:
+    def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
         return False
 
 
@@ -122,7 +125,7 @@ class Debug(Tile):
     def get_img(self) -> str:
         return self.__num
 
-    def is_walkable(self, direction: Direction, robot: Robot) -> bool:
+    def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
         return False
 
 
@@ -133,7 +136,7 @@ class Void(Tile):
     def get_img(self):
         return self._invisible
 
-    def is_walkable(self, direction: Direction, robot: Robot) -> bool:
+    def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
         return False
 
 
@@ -148,7 +151,7 @@ class Floor(Tile):
     def get_img(self):
         return Floor.img()
 
-    def is_walkable(self, direction: Direction, robot: Robot) -> bool:
+    def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
         return True
 
 
@@ -163,7 +166,7 @@ class Wall(Tile):
     def get_img(self):
         return Wall.img()
 
-    def is_walkable(self, direction: Direction, robot: Robot) -> bool:
+    def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
         return False
 
 
@@ -174,7 +177,7 @@ class Obstacle(Tile):
     def get_img(self):
         return "o"
 
-    def is_walkable(self, direction: Direction, robot: Robot) -> bool:
+    def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
         return False
 
 
@@ -185,28 +188,60 @@ class FogOfWar(Tile):
     def get_img(self):
         return "~"
 
-    def is_walkable(self, direction: Direction, robot: Robot) -> bool:
+    def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
         return True
 
 
+class Decoration(Tile):
+    def __init__(self, decoration: str, blocking: bool = False):
+        super(Decoration, self).__init__(TileCode.Decoration)
+        self.__decoration = decoration
+        self.__blocking = blocking
+
+    def get_img(self):
+        return self.__decoration
+
+    def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
+        return not self.__blocking
+
+
 class Trigger(WalkTriggerTile):
-    def __init__(self, callback: Callable[[Direction, Robot], None]):
+    def __init__(self, callback: Callable[[Direction, Controllable], None]):
         super().__init__(TileCode.Trigger)
         self.__callback = callback
 
-    def _on_walk(self, direction: Direction, robot: Robot) -> None:
-        self.__callback(direction, robot)
+    def _on_walk(self, direction: Direction, controllable: Controllable) -> None:
+        self.__callback(direction, controllable)
 
     def get_img(self):
         return self._invisible
 
 
+class Teleport(WalkTriggerTile):
+    def __init__(self, callback: Callable[[str, Coordinate], None], target_map: str, room: Coordinate):
+        super().__init__(TileCode.Teleport)
+        self.__callback = callback
+        self.__target_map = target_map
+        self.__room = room
+
+    def _on_walk(self, direction: Direction, controllable: Controllable) -> None:
+        self.__callback(self.__target_map, self.__room)
+
+    def get_img(self):
+        return "t"
+
+
 class Message(WalkTriggerTile):
+    @staticmethod
+    def create(msg: str, title: str = "Message", popup_times: int = 1) -> "Message":
+        popup = Popup(title, msg, show=False)
+        return Message(popup, popup_times)
+
     def __init__(self, popup: Popup, popup_times: int = 1):
         super().__init__(TileCode.Message)
         self.__popup = popup
         if popup_times < 0:
-            popup_times = 99999     # display "everytime" the robot steps on it
+            popup_times = 99999     # display "everytime" the controllable steps on it
         self.__times = popup_times
 
     def get_img(self):
@@ -215,10 +250,10 @@ class Message(WalkTriggerTile):
         else:
             return self._invisible
 
-    def is_walkable(self, direction: Direction, robot: Robot) -> bool:
+    def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
         return True
 
-    def _on_walk(self, direction: Direction, robot: Robot) -> None:
+    def _on_walk(self, direction: Direction, controllable: Controllable) -> None:
         if self.__times > 0:
             self.__popup.show()
         self.__times -= 1
@@ -230,9 +265,9 @@ class Riddler(WalkTriggerTile):
         self.__open_riddle = open_riddle_callback
         self.__riddle = riddle
 
-    def _on_walk(self, direction: Direction, robot: Robot) -> None:
+    def _on_walk(self, direction: Direction, controllable: Controllable) -> None:
         if self.__riddle.is_active:
-            self.__open_riddle(robot, self.__riddle)
+            self.__open_riddle(controllable, self.__riddle)
 
     def get_img(self):
         if self.__riddle.is_active:
@@ -247,8 +282,8 @@ class ShopKeeper(WalkTriggerTile):
         self.__visit_shop = visit_shop_callback
         self.__inventory = inventory
 
-    def _on_walk(self, direction: Direction, robot: Robot) -> None:
-        self.__visit_shop(robot, self.__inventory)
+    def _on_walk(self, direction: Direction, controllable: Controllable) -> None:
+        self.__visit_shop(controllable, self.__inventory)
 
     def get_img(self):
         return "$"
@@ -294,7 +329,7 @@ class Door(WalkTriggerTile):
             else:
                 return "-"
 
-    def is_walkable(self, direction: Direction, robot: Robot) -> bool:
+    def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
         if self.__one_way_state is DoorOneWayState.Permanent or \
                 self.__one_way_state is DoorOneWayState.Temporary and not self.is_open:
             correct_direction = direction is self.__direction
@@ -303,7 +338,7 @@ class Door(WalkTriggerTile):
             correct_direction = direction in [self.__direction, self.__direction.opposite()]
         if correct_direction:
             if self.is_key_locked:
-                if robot.key_count > 0:
+                if controllable.key_count() > 0:
                     return True
                 else:
                     CommonPopups.LockedDoor.show()
@@ -320,10 +355,14 @@ class Door(WalkTriggerTile):
             CommonPopups.WrongDirectionDoor.show()
             return False
 
-    def _on_walk(self, direction: Direction, robot: Robot) -> None:
-        if self.is_key_locked and not robot.use_key():
-            Logger.instance().error(f"Error! walked on a door without having enough keys!\n#keys={robot.key_count}"
-                                    f", dir={direction}")
+    def _on_walk(self, direction: Direction, controllable: Controllable) -> None:
+        if self.is_key_locked:
+            if isinstance(controllable, Robot):
+                if not controllable.use_key():
+                    Logger.instance().error(f"Error! Walked on a door without having enough keys!\n#keys="
+                                            f"{controllable.key_count()}, dir={direction}")
+            else:
+                Logger.instance().error(f"Error! Non-Robot walked through a locked door: {controllable}")
         self.__open_state = DoorOpenState.Open
 
     @property
@@ -393,14 +432,14 @@ class EntangledDoor(Door):
         self.__entangled_doors = []
         self.__entanglement_locked = False
 
-    def is_walkable(self, direction: Direction, robot: Robot) -> bool:
+    def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
         # if an entangled door was opened, this one can no longer be opened/walked on
         if self.__entanglement_locked:
             CommonPopups.EntangledDoor.show()
             return False
-        return super(EntangledDoor, self).is_walkable(direction, robot)
+        return super(EntangledDoor, self).is_walkable(direction, controllable)
 
-    def _on_walk(self, direction: Direction, robot: Robot) -> None:
+    def _on_walk(self, direction: Direction, controllable: Controllable) -> None:
         for door in self.__entangled_doors:
             door.__activate_entanglement_lock()
 
@@ -418,7 +457,7 @@ class HallwayEntrance(Tile):
             return Wall.img()
         return Floor.img()
 
-    def is_walkable(self, direction: Direction, robot: Robot) -> bool:
+    def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
         return not self.__door_ref.is_event_locked
 
 
@@ -434,15 +473,15 @@ class Collectible(WalkTriggerTile):
         else:
             return self._invisible
 
-    def is_walkable(self, direction: Direction, robot: Robot) -> bool:
+    def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
         return True
 
-    def _on_walk(self, direction: Direction, robot: Robot) -> None:
+    def _on_walk(self, direction: Direction, controllable: Controllable) -> None:
         if self.__active:
             name = self.__collectible.name()
             desc = self.__collectible.description()
             Popup.message(self.__collectible.name(), f"You picked up: {name}\n{desc}")
-            robot.give_collectible(self.__collectible)
+            controllable.give_collectible(self.__collectible)
             self.__active = False
 
 
@@ -458,29 +497,29 @@ class Energy(WalkTriggerTile):
         else:
             return self._invisible
 
-    def is_walkable(self, direction: Direction, robot: Robot) -> bool:
+    def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
         return True
 
-    def _on_walk(self, direction: Direction, robot: Robot) -> None:
+    def _on_walk(self, direction: Direction, controllable: Controllable) -> None:
         if self.__active:
-            robot.give_collectible(LogicalEnergy(self.__amount))
+            controllable.give_collectible(LogicalEnergy(self.__amount))
             self.__active = False
 
 
-class RobotTile(Tile):
-    def __init__(self, robot: Robot):
-        super().__init__(TileCode.Robot)
-        self.__robot = robot
+class ControllableTile(Tile):
+    def __init__(self, controllable: Controllable):
+        super().__init__(TileCode.Controllable)
+        self.__controllable = controllable
 
     def get_img(self):
-        return self.__robot.get_img()
+        return self.__controllable.get_img()
 
-    def is_walkable(self, direction: Direction, robot: Robot) -> bool:
+    def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
         return True # todo check
 
     @property
-    def robot(self) -> Robot:
-        return self.__robot
+    def controllable(self) -> Controllable:
+        return self.__controllable
 
 
 class _EnemyState(Enum):
@@ -499,15 +538,19 @@ class Enemy(WalkTriggerTile):
         self.__amplitude = amplitude
         self.__rm = RandomManager.create_new()
 
-    def is_walkable(self, direction: Direction, robot: Robot) -> bool:
-        if robot.backpack.used_capacity > 0:
-            return super(Enemy, self).is_walkable(direction, robot)
+    def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
+        if isinstance(controllable, Robot):
+            if controllable.backpack.used_capacity > 0:
+                return super(Enemy, self).is_walkable(direction, controllable)
+            else:
+                controllable.damage(1)
+                return False
         else:
-            robot.damage(1)
-            return False
+            Logger.instance().error(f"Error! Non-Robot walked over Enemy: {controllable}")
 
-    def _on_walk(self, direction: Direction, robot: Robot) -> None:
-        if isinstance(robot, Robot):
+    def _on_walk(self, direction: Direction, controllable: Controllable) -> None:
+        if isinstance(controllable, Robot):
+            robot = controllable
             if self.__state == _EnemyState.UNDECIDED:
                 if self.measure():
                     enemy = self.__factory.produce(robot, self.__rm, self.__amplitude)
@@ -583,14 +626,17 @@ class Enemy(WalkTriggerTile):
 
 
 class Boss(WalkTriggerTile):
-    def __init__(self, boss: BossActor, on_walk_callback: OnWalkCallback):
+    def __init__(self, boss: BossActor, on_walk_callback: Callable[[Robot, BossActor, Direction], None]):
         super().__init__(TileCode.Boss)
         self.__boss = boss
         self.__on_walk_callback = on_walk_callback
 
-    def _on_walk(self, direction: Direction, robot: Robot) -> None:
-        if not self.__boss.is_defeated:
-            self.__on_walk_callback(robot, self.__boss, direction)
+    def _on_walk(self, direction: Direction, controllable: Controllable) -> None:
+        if isinstance(controllable, Robot):
+            if not self.__boss.is_defeated:
+                self.__on_walk_callback(controllable, self.__boss, direction)
+        else:
+            Logger.instance().error(f"Non-Robot walked on Boss! controllable = {controllable}")
 
     def get_img(self):
         if self.__boss.is_defeated:

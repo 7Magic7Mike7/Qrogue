@@ -82,13 +82,16 @@ class HudWidget(Widget):
     def set_data(self, robot: Robot) -> None:
         self.__robot = robot
 
+    def reset_data(self) -> None:
+        self.__robot = None
+
     def update_render_duration(self, duration: float):
         self.__render_duration = duration * 1000
 
     def render(self) -> None:
         if self.__robot is not None:
             text = f"{self.__robot.cur_hp} / {self.__robot.max_hp} HP   \t" \
-                   f"{self.__robot.backpack.coin_count}$, {self.__robot.backpack.key_count} keys"
+                   f"{self.__robot.backpack.coin_count}$, {self.__robot.key_count()} keys"
             if self.__render_duration is not None:
                 text += f"\t\t{self.__render_duration:.2f} ms"
             self.widget.set_title(text)
@@ -153,50 +156,11 @@ class MapWidget(Widget):
 
     def render(self) -> None:
         if self.__map is not None:
-            rows = []
-            offset = 0
-            # iterate through every row of Rooms
-            for y in range(self.__map.height):
-                last_row = y == self.__map.height - 1  # there are no more Hallways after the last row of Rooms
-                areas = []
-                south_hallways = []
-
-                for x in range(self.__map.width):
-                    last_col = x == self.__map.width - 1   # there are no more Hallways after the last Room in a row
-                    room = self.__map.room_at(x, y)
-                    if room is None:
-                        areas.append(Placeholder.pseudo_room())
-                        if not last_col:
-                            areas.append(Placeholder.vertical())
-                        if not last_row:
-                            south_hallways.append(Placeholder.horizontal().get_row_str(0))
-
-                    else:
-                        areas.append(room)
-                        if not last_col:
-                            hallway = room.get_hallway(Direction.East, throw_error=False)
-                            if hallway is None:
-                                areas.append(Placeholder.vertical())
-                            else:
-                                areas.append(hallway)
-                        if not last_row:
-                            hallway = room.get_hallway(Direction.South, throw_error=False)
-                            if hallway is None:
-                                south_hallways.append(Placeholder.horizontal().get_row_str(0))
-                            else:
-                                south_hallways.append(hallway.get_row_str(0))
-
-                rows += ([""] * Area.UNIT_HEIGHT)   # initialize the new "block" of rows with empty strings
-                for area in areas:
-                    for ry in range(Area.UNIT_HEIGHT):
-                        rows[offset + ry] += area.get_row_str(ry)
-                rows.append(Area.void().get_img().join(south_hallways))
-                offset += Area.UNIT_HEIGHT + 1
-
+            rows = self.__map.row_strings()
             # add robot
-            x = self.__map.robot_pos.x
-            y = self.__map.robot_pos.y
-            rows[y] = rows[y][0:x] + self.__map.robot_tile.get_img() + rows[y][x + 1:]
+            x = self.__map.controllable_pos.x
+            y = self.__map.controllable_pos.y
+            rows[y] = rows[y][0:x] + self.__map.controllable_tile.get_img() + rows[y][x + 1:]
 
             self.widget.set_title("\n".join(rows))
 

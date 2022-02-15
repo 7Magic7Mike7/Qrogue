@@ -2,12 +2,12 @@ from typing import Callable, List, Tuple, Dict
 
 from antlr4.tree.Tree import TerminalNodeImpl
 from antlr4 import InputStream, CommonTokenStream
-from antlr4.error.ErrorListener import ErrorListener
 
 from dungeon_editor import parser_util
 from dungeon_editor.dungeon_parser.QrogueDungeonLexer import QrogueDungeonLexer
 from dungeon_editor.dungeon_parser.QrogueDungeonParser import QrogueDungeonParser
 from dungeon_editor.dungeon_parser.QrogueDungeonVisitor import QrogueDungeonVisitor
+from game.achievements import AchievementManager
 from game.actors.factory import ExplicitTargetDifficulty, TargetDifficulty, EnemyFactory
 from game.actors.riddle import Riddle
 from game.actors.robot import Robot, TestBot
@@ -19,10 +19,11 @@ from game.logic.qubit import StateVector
 from game.map import rooms
 from game.map import tiles
 from game.map.generator import DungeonGenerator
+from game.map.level_map import LevelMap
 from game.map.map import Map
 from game.map.navigation import Coordinate, Direction
 from util import util_functions
-from util.config import Config
+from util.config import Config, PathConfig
 from util.my_random import MyRandom
 from widgets.my_popups import Popup
 
@@ -30,22 +31,10 @@ from widgets.my_popups import Popup
 class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
     __DEFAULT_NUM_OF_SHOP_ITEMS = 3
     __DEFAULT_NUM_OF_RIDDLE_ATTEMPTS = 7
-    __DEFAULT_HALLWAY_STR = "=="
-    __TEMPLATE_PREFIX = "_"
-    __EMPTY_ROOM_CODE = "_a"
-    __EMPTY_HALLWAY_CODE = "_0"
-    __PLACE_HOLDER_TILE = "_"
-    __COLLECTIBLE_TILE = "c"
-    __TRIGGER_TILE = "t"
-    __MESSAGE_TILE = "m"
-    __ENERGY_TILE = "e"
-    __RIDDLER_TILE = "r"
-    __SHOP_KEEPER_TILE = "$"
-    __FLOOR_TILE = " "
 
     @staticmethod
     def warning(text: str):
-        print("Warning: ", text)
+        parser_util.warning(text)
 
     @staticmethod
     def __normalize_reference(reference: str) -> str:
@@ -56,19 +45,19 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
         if tile_str.isdigit():
             return tiles.TileCode.Enemy
 
-        elif tile_str == TextBasedDungeonGenerator.__COLLECTIBLE_TILE:
+        elif tile_str == parser_util.COLLECTIBLE_TILE:
             return tiles.TileCode.Collectible
-        elif tile_str == TextBasedDungeonGenerator.__TRIGGER_TILE:
+        elif tile_str == parser_util.TRIGGER_TILE:
             return tiles.TileCode.Trigger
-        elif tile_str == TextBasedDungeonGenerator.__MESSAGE_TILE:
+        elif tile_str == parser_util.MESSAGE_TILE:
             return tiles.TileCode.Message
-        elif tile_str == TextBasedDungeonGenerator.__ENERGY_TILE:
+        elif tile_str == parser_util.ENERGY_TILE:
             return tiles.TileCode.Energy
-        elif tile_str == TextBasedDungeonGenerator.__RIDDLER_TILE:
+        elif tile_str == parser_util.RIDDLER_TILE:
             return tiles.TileCode.Riddler
-        elif tile_str == TextBasedDungeonGenerator.__SHOP_KEEPER_TILE:
+        elif tile_str == parser_util.SHOP_KEEPER_TILE:
             return tiles.TileCode.ShopKeeper
-        elif tile_str == TextBasedDungeonGenerator.__FLOOR_TILE:
+        elif tile_str == parser_util.FLOOR_TILE:
             return tiles.TileCode.Floor
         else:
             return tiles.TileCode.Invalid
@@ -79,30 +68,30 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
             # todo print warning?
             return "0"
         elif tile_code is tiles.TileCode.Collectible:
-            return TextBasedDungeonGenerator.__COLLECTIBLE_TILE
+            return parser_util.COLLECTIBLE_TILE
         elif tile_code is tiles.TileCode.Trigger:
-            return TextBasedDungeonGenerator.__TRIGGER_TILE
+            return parser_util.TRIGGER_TILE
         elif tile_code is tiles.TileCode.Message:
-            return TextBasedDungeonGenerator.__MESSAGE_TILE
+            return parser_util.MESSAGE_TILE
         elif tile_code is tiles.TileCode.Energy:
-            return TextBasedDungeonGenerator.__ENERGY_TILE
+            return parser_util.ENERGY_TILE
         elif tile_code is tiles.TileCode.Riddler:
-            return TextBasedDungeonGenerator.__RIDDLER_TILE
+            return parser_util.RIDDLER_TILE
         elif tile_code is tiles.TileCode.ShopKeeper:
-            return TextBasedDungeonGenerator.__SHOP_KEEPER_TILE
+            return parser_util.SHOP_KEEPER_TILE
         elif tile_code is tiles.TileCode.Floor:
-            return TextBasedDungeonGenerator.__FLOOR_TILE
+            return parser_util.FLOOR_TILE
         else:
             # todo print warning?
             return None
 
-    @staticmethod
-    def __check_for_overspecified_columns(x: int, symbol_type):
-        return x == Map.MAX_WIDTH and symbol_type != QrogueDungeonParser.VERTICAL_SEPARATOR or x > Map.MAX_WIDTH
-
-    def __init__(self, seed: int):
+    def __init__(self, seed: int, load_map_callback: Callable[[str, Coordinate], None],
+                 achievement_manager: AchievementManager):
         super().__init__(seed, 0, 0)
         self.__seed = seed
+        self.__load_map = load_map_callback
+        self.__achievement_manager = achievement_manager
+
         self.__cbp = None
         self.__robot = None
         self.__rm = MyRandom(seed)
@@ -144,46 +133,11 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
                 self.__hallways[room2] = {room1: door}
 
     def __get_hallways(self, pos: Coordinate) -> "dict of Direction and Hallway":
-        hallway_dictionary = self.__created_hallways
-        if pos in self.__hallways:
-            hallways = self.__hallways[pos]
-            if hallways:
-                room_hallways = {
-                    Direction.North: None, Direction.East: None, Direction.South: None, Direction.West: None,
-                }
-                for neighbor in hallways:
-                    direction = Direction.from_coordinates(pos, neighbor)
-                    opposite = direction.opposite()
-                    # get hallway from neighbor if it exists, otherwise create it
-                    if neighbor in hallway_dictionary and opposite in hallway_dictionary[neighbor]:
-                        hallway = hallway_dictionary[neighbor][opposite]
-                    else:
-                        door = hallways[neighbor]
-                        if door.direction not in [direction, direction.opposite()]:
-                            if door.is_one_way:
-                                self.warning("Found one way door with invalid direction! Horizontal hallways can only "
-                                             "have East or West doors and vertical ones only North and South doors! "
-                                             "Removing the one way aspect and setting the direction to a valid one.")
-                                door = door.copy(direction)
-                            else:
-                                door = door.copy(direction)
-                        hallway = rooms.Hallway(door)
-                        if neighbor in hallway_dictionary:
-                            hallway_dictionary[neighbor][opposite] = hallway
-                        else:
-                            hallway_dictionary[neighbor] = {opposite: hallway}
-
-                    # store the hallway so the neighbors can find it if necessary
-                    if pos not in hallway_dictionary:
-                        hallway_dictionary[pos] = {}
-                    hallway_dictionary[pos][direction] = hallway
-                    room_hallways[direction] = hallway
-                return room_hallways
-        return None
+        return parser_util.get_hallways(self.__created_hallways, self.__hallways, pos)
 
     def __get_default_tile(self, tile_str: str, enemy_dic: Dict[int, List[tiles.Enemy]],
                            get_entangled_tiles: Callable[[int], List[tiles.Tile]]) -> tiles.Tile:
-        if tile_str == TextBasedDungeonGenerator.__PLACE_HOLDER_TILE:
+        if tile_str == parser_util.PLACE_HOLDER_TILE:
             return tiles.Floor()
 
         tile_code = TextBasedDungeonGenerator.__tile_str_to_code(tile_str)
@@ -225,15 +179,16 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
             self.warning(f"Unknown tile specified: {tile_str}. Using a Floor-Tile instead.")
             return tiles.Floor()
 
-    def generate(self, robot: Robot, cbp: CallbackPack, data: str) -> Tuple[Map, bool]:
-        input_stream = InputStream(data)
+    def generate(self, cbp: CallbackPack, file_name: str) -> Tuple[LevelMap, bool]:
+        map_data = PathConfig.read_level(file_name)
+
+        input_stream = InputStream(map_data)
         lexer = QrogueDungeonLexer(input_stream)
         token_stream = CommonTokenStream(lexer)
         parser = QrogueDungeonParser(token_stream)
-        parser.addErrorListener(MyErrorListener())
+        parser.addErrorListener(parser_util.MyErrorListener())
 
         self.__cbp = cbp        # needs to be accessed during creation
-        self.__robot = robot    # is handed over to a function during creation (but if everything works correctly not used)
         try:
             room_matrix = self.visit(parser.start())
         except SyntaxError as se:
@@ -249,21 +204,7 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
             if len(row) < max_len:
                 row += [None] * (max_len - len(row))
 
-        map = Map(self.__seed, room_matrix, robot, self.__spawn_pos, cbp)
-
-        """
-        text = ""
-        for row in room_matrix:
-            for room in row:
-                if room:
-                    text += str(room)
-                else:
-                    text += "...."
-                text += "  "
-            text += "\n"
-        print(text)
-        """
-
+        map = LevelMap(file_name, self.__seed, room_matrix, self.__robot, self.__spawn_pos, self.__achievement_manager)
         return map, True
 
     ##### load from references #####
@@ -343,9 +284,9 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
     def __load_hallway(self, reference: str) -> tiles.Door:
         if reference in self.__hallways_by_id:
             return self.__hallways_by_id[reference]
-        elif reference == self.__EMPTY_HALLWAY_CODE:
+        elif reference == parser_util.EMPTY_HALLWAY_CODE:
             return None
-        elif reference == TextBasedDungeonGenerator.__DEFAULT_HALLWAY_STR:
+        elif reference == parser_util.DEFAULT_HALLWAY_STR:
             return tiles.Door(Direction.North)
         else:
             # todo implement hallway imports
@@ -363,7 +304,7 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
             return room.copy(hw_dic)
         elif self.__normalize_reference(reference) == 'sr':
             hw_dic = self.__get_hallways(Coordinate(x, y))
-            room = rooms.SpawnRoom(None, hw_dic[Direction.North], hw_dic[Direction.East],
+            room = rooms.SpawnRoom(self.__load_map, None, hw_dic[Direction.North], hw_dic[Direction.East],
                                    hw_dic[Direction.South], hw_dic[Direction.West])
             if self.__spawn_pos:
                 self.warning("A second SpawnRoom was defined! Ignoring the first one and using this one as "
@@ -377,8 +318,7 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
             self.warning(f"room_id \"{reference}\" not specified and imports not yet supported! "
                          "Placing an empty room instead.")
             # row.append(rooms.Placeholder.empty_room())
-        return rooms.SpawnRoom()
-
+        return rooms.SpawnRoom(self.__load_map)
 
     ##### General area
 
@@ -873,7 +813,7 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
     def __hallway_handling(self, ctx_children: List[TerminalNodeImpl], y: int, direction: Direction):
         x = 0
         for child in ctx_children:
-            if self.__check_for_overspecified_columns(x, child.symbol.type):
+            if parser_util.check_for_overspecified_columns(x, child.symbol.type, QrogueDungeonParser.VERTICAL_SEPARATOR):
                 self.warning(
                     f"Too much room columns specified. Only maps of size ({Map.MAX_WIDTH}, {Map.MAX_HEIGHT}) supported. "
                     f"Ignoring over-specified columns.")
@@ -895,7 +835,7 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
         row = []
         x = 0
         for child in ctx.children:
-            if self.__check_for_overspecified_columns(x, child.symbol.type):
+            if parser_util.check_for_overspecified_columns(x, child.symbol.type, QrogueDungeonParser.VERTICAL_SEPARATOR):
                 self.warning( f"Too much room columns specified. Only maps of size ({Map.MAX_WIDTH}, {Map.MAX_HEIGHT}) "
                               "supported. Ignoring over-specified columns.")
                 break
@@ -913,12 +853,11 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
     def visitRobot(self, ctx:QrogueDungeonParser.RobotContext) -> None:
         num_of_qubits = int(ctx.DIGIT().getText())
-        collectibles = []
+        gates = []
         for ref in ctx.REFERENCE():
-            collectibles.append(self.__load_gate(ref.getText()))  # todo what about pickups?
+            gates.append(self.__load_gate(ref.getText()))  # todo what about pickups?
 
-        #self.__robot = TestBot()
-        #temp = True
+        self.__robot = TestBot(num_of_qubits, gates)
 
     ##### Start area #####
 
@@ -941,19 +880,3 @@ class TextBasedDungeonGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
         # for the last step we retrieve the room matrix from layout
         return self.visit(ctx.layout())
-
-
-class MyErrorListener(ErrorListener):
-    def syntaxError(self, recognizer, offendingSymbol, line, column, msg, e):
-        #print(f"Syntax Error: \"{offendingSymbol}\" at line {line}, column {column} - {msg}")
-        raise SyntaxError(msg)
-
-    def reportAmbiguity(self, recognizer, dfa, startIndex, stopIndex, exact, ambigAlts, configs):
-        print("Ambiguity")
-
-    def reportAttemptingFullContext(self, recognizer, dfa, startIndex, stopIndex, conflictingAlts, configs):
-        print("Attempting full context")
-
-    def reportContextSensitivity(self, recognizer, dfa, startIndex, stopIndex, prediction, configs):
-        print("Context sensitivity")
-

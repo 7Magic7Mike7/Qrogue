@@ -9,6 +9,7 @@ from typing import Tuple, List
 from qiskit import QuantumCircuit, transpile
 from qiskit.providers.aer import StatevectorSimulator
 
+from game.actors.controllable import Controllable
 from game.collectibles.collectible import Collectible, MultiCollectible
 from game.collectibles.consumable import Consumable
 from game.collectibles import consumable
@@ -217,8 +218,9 @@ class BackpackIterator:
         raise StopIteration
 
 
-class Robot(ABC):
+class Robot(Controllable):
     def __init__(self, name: str, attributes: _Attributes, backpack: Backpack):
+        super().__init__(name)
         # initialize qubit stuff (rows)
         self.__simulator = StatevectorSimulator()#ddsim.JKQProvider().get_backend('statevector_simulator')
         self.__stv = None
@@ -239,10 +241,6 @@ class Robot(ABC):
         self.update_statevector()  # to initialize the statevector
 
     @property
-    def name(self) -> str:
-        return self.__name
-
-    @property
     def backpack(self) -> Backpack:
         return self.__backpack
 
@@ -250,17 +248,8 @@ class Robot(ABC):
     def state_vector(self) -> StateVector:
         return self.__stv
 
-    @property
     def key_count(self) -> int:
         return self.backpack.key_count
-
-    @abstractmethod
-    def get_img(self):
-        pass
-
-    @abstractmethod
-    def description(self) -> str:
-        pass
 
     def use_key(self) -> bool:
         return self.backpack.use_key()
@@ -443,27 +432,3 @@ class LukeBot(Robot):
 
     def description(self) -> str:
         return "The loyal Robot you start with. A true all-rounder - take good care of it!"
-
-
-class NilsBot(Robot):
-    def __init__(self):
-        attributes = _Attributes(DummyQubitSet())
-        backpack = Backpack(capacity=5)
-
-        # add random gates and a HealthPotion
-        rm = MyRandom(2)
-        if rm.get() < 0.5:
-            num_of_gates = 3
-        else:
-            num_of_gates = 4
-        gate_factory = GateFactory.default()
-        for gate in gate_factory.produce_multiple(rm, num_of_gates):
-            backpack.add(gate)
-        backpack.place_in_pouch(consumable.HealthPotion(3))
-        super().__init__("Nils", attributes, backpack)
-
-    def get_img(self):
-        return "N"
-
-    def description(self) -> str:
-        return "The second Robot for now."

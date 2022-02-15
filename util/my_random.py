@@ -23,6 +23,9 @@ class MyRandom:
         """
         return min + int(self.get() * (max - min))
 
+    def get_seed(self) -> int:
+        return self.get_int(min=0, max=Config.MAX_SEED)
+
     def get_element(self, iterable, remove: bool = False):
         if len(iterable) == 0:
             return None

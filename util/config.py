@@ -11,6 +11,7 @@ class FileTypes(enum.Enum):
     ScreenPrint = ".qrsc"
     Save = ".qrsave"
     Dungeon = ".qrdg"
+    World = ".qrw"
     Templates = ".txt"
 
 
@@ -131,7 +132,18 @@ class PathConfig:
             raise FileNotFoundError(f"There is no such key log file: {path}")
 
     @staticmethod
-    def read_dungeon(file_name: str, in_dungeon_folder: bool = True):
+    def read_world(file_name: str, in_dungeon_folder: bool = True):
+        if not file_name.endswith(FileTypes.World.value):
+            file_name += FileTypes.World.value
+
+        if in_dungeon_folder:
+            path = PathConfig.base_path(os.path.join(PathConfig.__DUNGEON_FOLDER, file_name))
+        else:
+            path = file_name
+        return PathConfig.read(path, in_base_path=False)
+
+    @staticmethod
+    def read_level(file_name: str, in_dungeon_folder: bool = True):
         if not file_name.endswith(FileTypes.Dungeon.value):
             file_name += FileTypes.Dungeon.value
 
@@ -484,6 +496,10 @@ class Config:   # todo make singleton and handle access to other configs?
     @staticmethod
     def player_name() -> str:
         return "Mike"
+
+    @staticmethod
+    def back_map_string() -> str:
+        return "back"
 
     @staticmethod
     def version() -> str:

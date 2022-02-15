@@ -1,14 +1,19 @@
+from game.achievements import AchievementManager
 from game.actors import robot
+from game.actors.player import Player
+from game.callbacks import CallbackPack
 from util.config import PathConfig, Config
-from util.logger import Logger
 
 
 class SaveData:
     __NUMBER_OF_SAVE_FILES = 7    # how many save files can be present before we delete the oldest one  # todo maybe move to Config?
     SAVE_NAME = "qrogue-save"
 
-    def __init__(self):
-        path = PathConfig.find_latest_save_file()
+    def __init__(self, cbp: CallbackPack):
+        self.__cbp = cbp
+        self.__player = Player()
+        self.__achievements = AchievementManager()
+        #path = PathConfig.find_latest_save_file()
         #content = ""
         #try:
         #    content = PathConfig.read(path, True)
@@ -18,9 +23,24 @@ class SaveData:
         # todo parse content
         self.__expeditions_finished = 0
         self.__available_robots = [
+            robot.TestBot(),
             robot.LukeBot(),
-            robot.NilsBot(),
         ]
+
+    @property
+    def cbp(self) -> CallbackPack:
+        return self.__cbp
+
+    @property
+    def player(self) -> Player:
+        return self.__player
+
+    @property
+    def achievement_manager(self) -> AchievementManager:
+        return self.__achievements
+
+    def get_expedition_seed(self) -> int:
+        return 7    # todo implement
 
     def played_tutorial(self) -> bool:
         return self.__expeditions_finished <= 0 and Config.debugging()

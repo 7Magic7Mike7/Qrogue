@@ -5,7 +5,9 @@ from game.logic.instruction import Instruction
 from game.map.navigation import Coordinate
 from game.map.tiles import *
 from game.map.tiles import Enemy as EnemyTile
+from util.config import Config
 from util.my_random import RandomManager as RM
+from widgets.my_popups import CommonQuestions
 
 
 class AreaType(Enum):
@@ -13,6 +15,7 @@ class AreaType(Enum):
     Placeholder = 0
     Hallway = 1
     EmptyRoom = 2
+    MetaRoom = 3
 
     SpawnRoom = 10
     WildRoom = 11
@@ -285,6 +288,16 @@ class Hallway(Area):
 class Room(Area):
     INNER_WIDTH = Area.UNIT_WIDTH - 2        # width inside the room, i.e. without walls and hallways
     INNER_HEIGHT = Area.UNIT_HEIGHT - 2      # height inside the room, i.e. without walls and hallways
+    INNER_MID_X = int(INNER_WIDTH / 2)
+    INNER_MID_Y = int(INNER_HEIGHT / 2)
+
+    @staticmethod
+    def _set(tile_list: List[Tile], x: int, y: int, tile: Tile) -> bool:
+        index = y * Room.INNER_WIDTH + x
+        if 0 <= index < len(tile_list):
+            tile_list[index] = tile
+            return True
+        return False
 
     @staticmethod
     def coordinate_to_index(pos: Coordinate) -> int:
@@ -295,9 +308,9 @@ class Room(Area):
         return [Floor()] * (Room.INNER_WIDTH * Room.INNER_HEIGHT)
 
     @staticmethod
-    def dic_to_tile_list(tile_dic: "dic of Coordinate and Tile") -> "list of Tiles":
+    def dic_to_tile_list(tile_dic: Dict[Coordinate, Tile]) -> List[Tile]:
         tile_list = Room.get_empty_room_tile_list()
-        if tile_dic is not None:
+        if tile_dic:
             for coordinate, tile in tile_dic.items():
                 index = Room.coordinate_to_index(coordinate)
                 if 0 <= index < len(tile_list):
@@ -396,7 +409,109 @@ class Room(Area):
         return self.abbreviation() + str(self._id)
 
 
-class CustomRoom(Room):
+class CopyAbleRoom(Room, ABC):
+    @abstractmethod
+    def copy(self, hw_dic: Dict[Direction, Hallway]) -> "CopyAbleRoom":
+        pass
+
+
+class MetaRoom(CopyAbleRoom):
+    def __init__(self, load_map_callback: Callable[[str], None], orientation: Direction, message: str,
+                 level_to_load: str, world: bool, blocking: bool = True, north_hallway: Hallway = None,
+                 east_hallway: Hallway = None, south_hallway: Hallway = None, west_hallway: Hallway = None,
+                 is_spawn: bool = False):
+        self.__load_map_callback = load_map_callback
+        self.__orientation = orientation
+        self.__message = message
+        self.__level_to_load = level_to_load
+        self.__world = world
+        self.__blocking = blocking
+
+        if blocking:
+            if orientation.is_horizontal():
+                dash_decoration = Decoration('|')
+            else:
+                dash_decoration = Decoration('-')
+        else:
+            dash_decoration = Floor()   # ignore it for non-blocking since it might be placed in front of a hallway
+
+        if world:
+            type_decoration = Decoration('W')
+            title = "World"
+        else:
+            type_decoration = Decoration('L')
+            title = "Level"
+
+        tile_list = Room.get_empty_room_tile_list()
+        msg_tile = Message.create(self.__message, title, -1)
+        level_tile = Teleport(self.__load_map_callback, level_to_load, None)
+
+        if orientation is Direction.North:
+            self._set(tile_list, 0, 0, type_decoration)
+            self._set(tile_list, Room.INNER_MID_X, 0, dash_decoration)
+            self._set(tile_list, 0, Room.INNER_HEIGHT - 1, msg_tile)
+            self._set(tile_list, Room.INNER_WIDTH - 1, Room.INNER_HEIGHT - 1, level_tile)
+            coordinate = Coordinate(0, Room.INNER_MID_Y - 1)
+            addition = Direction.East
+
+        elif orientation is Direction.East:
+            self._set(tile_list, Room.INNER_WIDTH-1, 0, type_decoration)
+            self._set(tile_list, Room.INNER_WIDTH-1, Room.INNER_MID_Y, dash_decoration)
+            self._set(tile_list, 0, 0, msg_tile)
+            self._set(tile_list, 0, Room.INNER_HEIGHT - 1, level_tile)
+            coordinate = Coordinate(Room.INNER_MID_X + 1, 0)
+            addition = Direction.South
+
+        elif orientation is Direction.South:
+            self._set(tile_list, 0, Room.INNER_HEIGHT-1, type_decoration)
+            self._set(tile_list, Room.INNER_MID_X, Room.INNER_HEIGHT-1, dash_decoration)
+            self._set(tile_list, 0, 0, msg_tile)
+            self._set(tile_list, Room.INNER_WIDTH - 1, 0, level_tile)
+            coordinate = Coordinate(0, Room.INNER_MID_Y + 1)
+            addition = Direction.East
+
+        elif orientation is Direction.West:
+            self._set(tile_list, 0, 0, type_decoration)
+            self._set(tile_list, 0, Room.INNER_MID_Y, dash_decoration)
+            self._set(tile_list, Room.INNER_WIDTH - 1, 0, msg_tile)
+            self._set(tile_list, Room.INNER_WIDTH - 1, Room.INNER_HEIGHT - 1, msg_tile)
+            coordinate = Coordinate(Room.INNER_MID_X - 1, 0)
+            addition = Direction.South
+
+        else:
+            raise SyntaxError(f"Invalid orientation for Hallway: {orientation}.")
+
+        if blocking:
+            counter = 0
+            while counter < 5 and self._set(tile_list, coordinate.x, coordinate.y, Wall()):
+                coordinate += addition
+                counter += 1
+        super(MetaRoom, self).__init__(AreaType.MetaRoom, tile_list, north_hallway, east_hallway, south_hallway,
+                                       west_hallway)
+
+    def abbreviation(self) -> str:
+        return "MR"
+
+    def copy(self, hw_dic: Dict[Direction, Hallway]) -> CopyAbleRoom:
+        # if we wouldn't copy it we could very easily get errors because the hallways
+        # will be set for all the layout positions that reference this room and hence
+        # can ultimately lead to non-existing rooms
+        if hw_dic:
+            new_room = MetaRoom(self.__load_map_callback, self.__orientation, self.__message, self.__level_to_load,
+                                self.__world, self.__blocking, hw_dic[Direction.North], hw_dic[Direction.East],
+                                hw_dic[Direction.South], hw_dic[Direction.West])
+        else:
+            raise SyntaxError("Room without hallway!")
+
+        if self._is_visible_value:
+            # don't use Room's implementation but Area's
+            super(CopyAbleRoom, new_room).make_visible()
+        elif self._is_in_sight:
+            new_room.in_sight()
+        return new_room
+
+
+class CustomRoom(CopyAbleRoom):
     def __init__(self, type: AreaType, tile_matrix: List[List[Tile]], north_hallway: Hallway = None,
                  east_hallway: Hallway = None, south_hallway: Hallway = None, west_hallway: Hallway = None):
         self.__tile_matrix = tile_matrix
@@ -408,7 +523,7 @@ class CustomRoom(Room):
     def abbreviation(self) -> str:
         return "CR"
 
-    def copy(self, hw_dic: Dict[Direction, Hallway]) -> Room:
+    def copy(self, hw_dic: Dict[Direction, Hallway]) -> CopyAbleRoom:
         # if we wouldn't copy it we could very easily get errors because the hallways
         # will be set for all the layout positions that reference this room and hence
         # can ultimately lead to non-existing rooms
@@ -435,7 +550,7 @@ class EmptyRoom(CustomRoom):
 
 
 class SpecialRoom(Room, ABC):
-    def __init__(self, type: AreaType, hallway: Hallway, direction: Direction, tile_dic: "dic of Coordinate and Tile"):
+    def __init__(self, type: AreaType, hallway: Hallway, direction: Direction, tile_dic: Dict[Coordinate, Tile]):
         """
 
         :param hallway:
@@ -456,13 +571,40 @@ class SpecialRoom(Room, ABC):
 
 
 class SpawnRoom(Room):
-    def __init__(self, tile_dic: "dic of Coordinate and Tile" = None, north_hallway: Hallway = None,
-                 east_hallway: Hallway = None, south_hallway: Hallway = None, west_hallway: Hallway = None):
+    def __init__(self, load_map_callback: Callable[[str, Coordinate], None], tile_dic: Dict[Coordinate, Tile] = None,
+                 north_hallway: Hallway = None, east_hallway: Hallway = None, south_hallway: Hallway = None,
+                 west_hallway: Hallway = None):
+        room_mid = Coordinate(Room.INNER_MID_X, Room.INNER_MID_Y)
+        if tile_dic:
+            if room_mid in tile_dic:
+                Logger.instance().error("Specified tile_dic with non-empty room-center for SpawnRoom. Overriding it "
+                                        "with Teleporter.", show=False)
+        else:
+            tile_dic = {}
+        tile_dic[room_mid] = Teleport(self.__teleport_callback, Config.back_map_string(), None)
         tile_list = Room.dic_to_tile_list(tile_dic)
         super().__init__(AreaType.SpawnRoom, tile_list, north_hallway, east_hallway, south_hallway, west_hallway)
+        self.__load_map = load_map_callback
+        self.__is_done = None
 
     def abbreviation(self):
         return "SR"
+
+    def set_is_done_callback(self, is_done_callback: Callable[[], bool]):
+        self.__is_done = is_done_callback
+
+    def __teleport_callback(self, level_to_load: str, room: Coordinate):
+        if self.__is_done:
+            if self.__is_done():
+                self.__conditional_going_back(True)
+            else:
+                CommonQuestions.GoingBack.ask(self.__conditional_going_back)
+        else:
+            Logger.instance().error("is_done_callback not set yet!")
+
+    def __conditional_going_back(self, confirmed: bool):
+        if confirmed:
+            self.__load_map(Config.back_map_string(), None)
 
 
 class BaseWildRoom(Room):

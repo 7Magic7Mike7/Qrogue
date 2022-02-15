@@ -6,6 +6,7 @@ import py_cui
 from py_cui.widget_set import WidgetSet
 
 from game.actors.boss import Boss
+from game.actors.controllable import Controllable
 from game.actors.enemy import Enemy
 from game.actors.robot import Robot
 from game.actors.riddle import Riddle
@@ -14,7 +15,6 @@ from game.collectibles.collectible import ShopItem
 from game.controls import Controls
 from game.map.map import Map
 from game.map.navigation import Direction
-from game.map.tiles import RobotTile
 from game.save_data import SaveData
 from util.config import GameplayConfig, PathConfig, Config
 from util.help_texts import HelpText, HelpTextType
@@ -379,8 +379,11 @@ class ExploreWidgetSet(MyWidgetSet):
     def get_main_widget(self) -> MyBaseWidget:
         return self.__map_widget.widget
 
-    def set_data(self, map: Map, robot_tile: RobotTile) -> None:
-        self.__hud.set_data(robot_tile.robot)
+    def set_data(self, map: Map, controllable: Controllable) -> None:
+        if isinstance(controllable, Robot):
+            self.__hud.set_data(controllable)
+        else:
+            self.__hud.reset_data()
         self.__map_widget.set_data(map)
 
     def get_widget_list(self) -> List[Widget]:

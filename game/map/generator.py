@@ -1,11 +1,14 @@
 from abc import ABC, abstractmethod
 from enum import IntEnum
+from typing import Callable
 
+from game.achievements import AchievementManager
 from game.actors.factory import EnemyFactory, RiddleFactory, TargetDifficulty, BossFactory
 from game.callbacks import CallbackPack
 from game.collectibles import pickup, consumable
 from game.collectibles.factory import GateFactory, ShopFactory
 from game.map import tiles
+from game.map.level_map import LevelMap
 from game.map.map import Map
 from game.map.navigation import Coordinate, Direction
 from game.map.rooms import Hallway, WildRoom, SpawnRoom, ShopRoom, RiddleRoom, GateRoom, BossRoom
@@ -282,10 +285,10 @@ class RandomLayoutGenerator:
                     if self.__is_corner(wild_room):
                         # if the connected WildRoom is in the corner, we swap position between it and the SpecialRoom
                         self.__set(wild_room, code)
-                        self.__place_wild(wild_room, tiles.Door(direction.opposite(), locked=True))
+                        self.__place_wild(wild_room, tiles.Door(direction.opposite(), tiles.DoorOpenState.KeyLocked))
                         return wild_room
                     else:
-                        self.__place_wild(pos, tiles.Door(direction, locked=True))
+                        self.__place_wild(pos, tiles.Door(direction, tiles.DoorOpenState.KeyLocked))
                         return pos
             except NotImplementedError:
                 print("ERROR!")
@@ -536,7 +539,7 @@ class DungeonGenerator(ABC):
         return self._height
 
     @abstractmethod
-    def generate(self, robot: Robot, cbp: CallbackPack, data) -> (Map, bool):
+    def generate(self, cbp: CallbackPack, data) -> (LevelMap, bool):
         pass
 
 
@@ -544,12 +547,16 @@ class RandomDungeonGenerator(DungeonGenerator):
     __MIN_ENEMY_FACTORY_CHANCE = 0.45
     __MAX_ENEMY_FACTORY_CHANCE = 0.7
 
-    def __init__(self, seed: int, width: int = DungeonGenerator.WIDTH, height: int = DungeonGenerator.HEIGHT):
+    def __init__(self, seed: int, load_map_callback: Callable[[str], None], achievement_manager: AchievementManager,
+                 width: int = DungeonGenerator.WIDTH, height: int = DungeonGenerator.HEIGHT):
         super(RandomDungeonGenerator, self).__init__(seed, width, height)
+        self.__load_map = load_map_callback
+        self.__achievement_manager = achievement_manager
         self.__layout = RandomLayoutGenerator(self.seed, width, height)
 
-    def generate(self, robot: Robot, cbp: CallbackPack, data = None) -> (Map, bool):
+    def generate(self, cbp: CallbackPack, data: Robot) -> (LevelMap, bool):
         # Testing: seeds from 0 to 500_000 were successful
+        robot = data
 
         rm = RandomManager.create_new()     # needed for WildRooms
         gate_factory = GateFactory.default()
@@ -622,11 +629,12 @@ class RandomDungeonGenerator(DungeonGenerator):
                         room = None
                         if code == _Code.Spawn:
                             spawn_room = pos
-                            room = SpawnRoom(north_hallway=room_hallways[Direction.North],
-                                             east_hallway=room_hallways[Direction.East],
-                                             south_hallway=room_hallways[Direction.South],
-                                             west_hallway=room_hallways[Direction.West],
-                                             )
+                            room = SpawnRoom(self.__load_map,
+                                north_hallway=room_hallways[Direction.North],
+                                east_hallway=room_hallways[Direction.East],
+                                south_hallway=room_hallways[Direction.South],
+                                west_hallway=room_hallways[Direction.West],
+                                )
                         elif code == _Code.Wild:
                             enemy_factory = rm.get_element_prioritized(enemy_factories, enemy_factory_priorities)
                             room = WildRoom(
@@ -652,7 +660,8 @@ class RandomDungeonGenerator(DungeonGenerator):
                         if room:
                             rooms[y][x] = room
             if spawn_room:
-                my_map = Map(self.seed, rooms, robot, spawn_room, cbp)
+                my_map = LevelMap(f"Expedition {self.seed}", self.seed, rooms, robot, spawn_room,
+                                  self.__achievement_manager)
                 return my_map, True
             else:
                 return None, False
