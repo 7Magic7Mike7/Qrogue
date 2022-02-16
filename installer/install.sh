@@ -3,11 +3,16 @@
 ENV_PATH="../.env_qrogue"
 DATA_PATH="../game_data"
 
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  realpath() {
+    [[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}"
+  }
+fi
+
 echo "[Qrogue] Creating a new venv..."
 
 FULL_PATH=$(realpath "$0")
 cd "$(dirname "${FULL_PATH}")" || exit 202
-mkdir -p ${ENV_PATH}
 python3 -m venv ${ENV_PATH}
 
 if [ $? ]; then
@@ -17,7 +22,7 @@ if [ $? ]; then
 
 	if [ $? ]; then
 		echo "[Qrogue] Downloading and installing required packages..."
-		pip3 install -q -r requirements_linux.txt
+		pip3 install -q -r requirements_unix.txt
 
 		if [ $? ]; then
 			echo "[Qrogue] Creating config files..."

@@ -47,15 +47,18 @@ your journey.
 However, both of these dependencies are installed automatically
 in the virtual environment by the corresponding installer.
 
-### Linux ###
+### Linux/macOS ###
 
 #### Prerequisites ####
 
 - Python 3.8
 - python3-venv
 
-For Linux you simply have to run `installer/install.sh` in your
-downloaded Qrogue folder to create a new virtual environment for 
+For Linux/macOS you simply have to run 
+```bash
+cd installer && ./install.sh
+```
+in your downloaded Qrogue folder to create a new virtual environment for 
 the game and install the required packages in there. 
 
 Afterwards just run `play_qrogue.sh` to play the game.
