@@ -2,6 +2,8 @@
 import random
 import sys
 
+import py_cui.errors
+
 from qrogue.game.game import GameHandler
 from qrogue.util.config import Config
 from qrogue.util.logger import Logger
@@ -11,21 +13,21 @@ def start_game():
     __CONSOLE_ARGUMENT = "--from-console"
     __DEBUG_ARGUMENT = "--debug"
 
-    note = """
-        Climate Crisis Narrative? E.g. the game plays on earth in 2070, most places have been destroyed 
-        and the remaining lives are weird mutations/... 
-        The goal is to find parts of a Quantum Computer (inspiration from Entanglion) so we are able to 
-        turn back time so we can "stop" the climate crisis and live on a healthy planet?
-        """
-
     return_code = Config.load()  # NEEDS TO BE THE FIRST THING WE DO!
     if return_code == 0:
         if __DEBUG_ARGUMENT in sys.argv:
             Config.activate_debugging()
         seed = random.randint(0, Config.MAX_SEED)
         print(f"[Qrogue] Starting game with seed = {seed}")
-        game = GameHandler(seed)
-        game.start()
+        try:
+            game = GameHandler(seed)
+            game.start()
+        except py_cui.errors.PyCUIOutOfBoundsError:
+            #print("[Qrogue] ERROR!")
+            #print("Your terminal window is too small. "
+            #      "Please make it bigger (i.e. maximize it) or reduce the font size.")
+            print("---------------------------------------------------------")
+            exit(1)
 
         # flush after the player stopped playing
         Logger.instance().flush()
@@ -40,3 +42,5 @@ def start_game():
     if __CONSOLE_ARGUMENT not in sys.argv:
         print()
         input("[Qrogue] Press ENTER to close the application")
+
+    exit(return_code)

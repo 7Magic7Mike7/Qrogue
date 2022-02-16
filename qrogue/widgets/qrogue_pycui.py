@@ -76,6 +76,19 @@ class QrogueCUI(py_cui.PyCUI):
         self.__state_machine.change_state(State.Menu, None)
         self.__game_started = False
 
+    def _refresh_height_width(self) -> None:
+        try:
+            super(QrogueCUI, self)._refresh_height_width()
+        except py_cui.errors.PyCUIOutOfBoundsError:
+            print("[Qrogue] ERROR!")
+            rows, cols = self._grid.get_dimensions_absolute()
+            x, y = self._grid.get_dimensions()
+            x, y = (x * 3 + 1, y * 3 + 1)
+            print(f"Current dimensions are ({cols}, {rows}) but at least ({x}, {y}) is needed. "
+                  f"We recommend to make it more wide than high though, e.g. ({x * 3}, {y}) would be a suitable size. "
+                  f"Alternatively you can also reduce the font size.")
+            raise py_cui.errors.PyCUIOutOfBoundsError
+
     @property
     def simulating(self) -> bool:
         return self.__simulator is not None
