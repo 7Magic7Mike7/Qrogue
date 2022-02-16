@@ -1,0 +1,36 @@
+Qrogue<
+
+[Layout]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+| __ .. __ .. __ .. __ .. __ .. __ .. __ |
+| ..    ..    ..    ..    ..    ..    .. |
+| SR == wa == wb .. __ .. __ .. __ .. __ |
+| ..    ..    ==    ..    ..    ..    .. |
+| __ .. wd == wc .. __ .. __ .. __ .. __ |
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[Rooms]
+SR (World; North):
+description "Spawn"
+teleport *back
+
+wa (World; North):
+description "Enter World 1"
+teleport *w1
+
+wb (World; East):
+description "Enter World 2"
+teleport *w2
+
+wc (World; South):
+description "Enter World 3"
+teleport *w3
+
+wd (World; West):
+description "Enter World 4"
+teleport *w4
+
+[Hallways]
+
+
+>Qrogue
