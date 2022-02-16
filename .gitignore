@@ -6,7 +6,7 @@
 /.env_qrogue
 powershell.txt
 installer/qrogue.config
-test/installer/qrogue.config
+qrogue/test/installer/qrogue.config
 qrogue_game.config
 *.pyc
 /Qrogue - Verknüpfung.lnk
