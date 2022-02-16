@@ -1,7 +1,18 @@
+import enum
 import os
 from datetime import datetime
 
 import py_cui
+
+
+class FileTypes(enum.Enum):
+    Log = ".qrlog"
+    KeyLog = ".qrkl"
+    ScreenPrint = ".qrsc"
+    Save = ".qrsave"
+    Dungeon = ".qrdg"
+    World = ".qrw"
+    Templates = ".txt"
 
 
 class PathConfig:
@@ -9,18 +20,34 @@ class PathConfig:
     __LOG_FOLDER = "logs"
     __KEY_LOG_FOLDER = "keylogs"
     __SCREEN_PRINTS_FOLDER = "screenprints"
+    __SAVE_DATA_FOLDER = "saves"
+    __DUNGEON_FOLDER = os.path.join("data", "dungeons")
+    __TEMPLATE_ROOMS = os.path.join("data", "rooms")
+    __TEMPLATE_HALLWAYS = os.path.join("data", "hallways")
+    __TEMPLATE_STV_POOLS = os.path.join("data", "stv_pools")
+    __TEMPLATE_REWARD_POOLS = os.path.join("data", "reward_pools")
+    __TEMPLATE_FILE = f"templates{FileTypes.Templates}"
+
+    __SAVE_FILE_NUMERATION_SEPARATOR = "_"
+
+    @staticmethod
+    def __now_str() -> str:
+        return datetime.now().strftime("%d%m%Y_%H%M%S")
 
     @staticmethod
     def create_data_folder(base_path: str) -> None:
         log_path = os.path.join(base_path, PathConfig.__LOG_FOLDER)
         key_log_path = os.path.join(base_path, PathConfig.__KEY_LOG_FOLDER)
         screen_prints_path = os.path.join(base_path, PathConfig.__SCREEN_PRINTS_FOLDER)
+        save_data_path = os.path.join(base_path, PathConfig.__SAVE_DATA_FOLDER)
         if not os.path.exists(log_path):
             os.mkdir(log_path)
         if not os.path.exists(key_log_path):
             os.mkdir(key_log_path)
         if not os.path.exists(screen_prints_path):
             os.mkdir(screen_prints_path)
+        if not os.path.exists(save_data_path):
+            os.mkdir(save_data_path)
 
     @staticmethod
     def set_base_path() -> bool:
@@ -40,19 +67,40 @@ class PathConfig:
 
     @staticmethod
     def new_log_file(seed: int) -> str:
-        now_str = datetime.now().strftime("%d%m%Y_%H%M%S")
-        return os.path.join(PathConfig.__LOG_FOLDER, f"{now_str}_seed{seed}.qrlog")
+        now_str = PathConfig.__now_str()
+        return os.path.join(PathConfig.__LOG_FOLDER, f"{now_str}_seed{seed}{FileTypes.Log.value}")
 
     @staticmethod
     def new_key_log_file(seed) -> (str, str):
-        now_str = datetime.now().strftime("%d%m%Y_%H%M%S")
-        return os.path.join(PathConfig.__KEY_LOG_FOLDER, f"{now_str}_seed{seed}.qrkl"), now_str
+        now_str = PathConfig.__now_str()
+        return os.path.join(PathConfig.__KEY_LOG_FOLDER, f"{now_str}_seed{seed}{FileTypes.KeyLog.value}")
 
     @staticmethod
     def new_screen_print(text: str):
-        now_str = datetime.now().strftime("%d%m%Y_%H%M%S")
-        file_name = os.path.join(PathConfig.__SCREEN_PRINTS_FOLDER, f"{now_str}.qrsc")
+        now_str = PathConfig.__now_str()
+        file_name = os.path.join(PathConfig.__SCREEN_PRINTS_FOLDER, f"{now_str}{FileTypes.ScreenPrint.value}")
         PathConfig.write(file_name, now_str + "\n" + text, True, True)
+
+    @staticmethod
+    def new_save_file(text: str):
+        now_str = PathConfig.__now_str()
+        num = 0
+        # todo list files of folder to find out the next number and if we delete a previous save
+        file_name = os.path.join(PathConfig.__SAVE_DATA_FOLDER,
+                                 f"qrogue-save{PathConfig.__SAVE_FILE_NUMERATION_SEPARATOR}{num}{FileTypes.Save.value}")
+        PathConfig.write(file_name, now_str + "\n" + text, False, False)
+
+    @staticmethod
+    def find_latest_save_file() -> str:
+        folder = os.path.join(PathConfig.__BASE_PATH, PathConfig.__SAVE_DATA_FOLDER)
+        files = os.listdir(folder)
+        num = 0
+        for file in files:
+            file_ending_index = file.rindex(FileTypes.Save.value)
+            cur_num = int(file[file.rindex(PathConfig.__SAVE_FILE_NUMERATION_SEPARATOR) + 1:file_ending_index])
+            if cur_num > num:
+                num = cur_num
+        return f"qrogue-save{PathConfig.__SAVE_FILE_NUMERATION_SEPARATOR}{num}{FileTypes.Save.value}"
 
     @staticmethod
     def write(file_name: str, text: str, may_exist: bool = True, append: bool = False):
@@ -68,6 +116,8 @@ class PathConfig:
 
     @staticmethod
     def read_keylog_buffered(file_name: str, in_keylog_folder: bool = True, buffer_size: int = 1024) -> str:
+        if not file_name.endswith(FileTypes.KeyLog.value):
+            file_name += FileTypes.KeyLog.value
         if in_keylog_folder:
             path = PathConfig.base_path(os.path.join(PathConfig.__KEY_LOG_FOLDER, file_name))
         else:
@@ -82,6 +132,28 @@ class PathConfig:
             raise FileNotFoundError(f"There is no such key log file: {path}")
 
     @staticmethod
+    def read_world(file_name: str, in_dungeon_folder: bool = True):
+        if not file_name.endswith(FileTypes.World.value):
+            file_name += FileTypes.World.value
+
+        if in_dungeon_folder:
+            path = PathConfig.base_path(os.path.join(PathConfig.__DUNGEON_FOLDER, file_name))
+        else:
+            path = file_name
+        return PathConfig.read(path, in_base_path=False)
+
+    @staticmethod
+    def read_level(file_name: str, in_dungeon_folder: bool = True):
+        if not file_name.endswith(FileTypes.Dungeon.value):
+            file_name += FileTypes.Dungeon.value
+
+        if in_dungeon_folder:
+            path = PathConfig.base_path(os.path.join(PathConfig.__DUNGEON_FOLDER, file_name))
+        else:
+            path = file_name
+        return PathConfig.read(path, in_base_path=False)
+
+    @staticmethod
     def read(file_name: str, in_base_path: bool = True) -> str:
         if in_base_path:
             path = PathConfig.base_path(file_name)
@@ -91,6 +163,8 @@ class PathConfig:
         if os.path.exists(path):
             with open(path, "r") as file:
                 content = file.read()
+        else:
+            raise FileNotFoundError(f"File \"{file_name}\" could not be found!")
         return content
 
     @staticmethod
@@ -100,27 +174,40 @@ class PathConfig:
             os.remove(path)
 
 
-class ColorConfig:
-    SELECTION_HIGHLIGHT = py_cui.BLACK_ON_WHITE
-    QUBIT_INFO_COLOR = py_cui.CYAN_ON_BLACK
-    STV_HEADING_COLOR = py_cui.CYAN_ON_BLACK
-    CORRECT_AMPLITUDE_COLOR = py_cui.GREEN_ON_BLACK
-    CIRCUIT_COLOR = py_cui.CYAN_ON_BLACK
-
-    ERROR_COLOR = py_cui.RED_ON_BLUE
-    TEXT_HIGHLIGHT = "//"
-    REGEX_TEXT_HIGHLIGHT = "//"
-    HIGHLIGHT_WIDTH = len(TEXT_HIGHLIGHT)
-    CODE_WIDTH = 2
+class ColorCode(enum.Enum):
     TILE_HIGHLIGHT = "01"
     OBJECT_HIGHLIGHT = "02"
     WORD_HIGHLIGHT = "03"
     KEY_HIGHLIGHT = "04"
+    SPACESHIP_FLOOR = "70"
+
+    def __init__(self, code: str):
+        self.__code = code
+
+    def __str__(self):
+        return self.__code
+
+
+class ColorConfig:
+    CODE_WIDTH = 2
+    SELECTION_COLOR = py_cui.BLACK_ON_WHITE
+    QUBIT_INFO_COLOR = py_cui.CYAN_ON_BLACK
+    STV_HEADING_COLOR = py_cui.CYAN_ON_BLACK
+    CORRECT_AMPLITUDE_COLOR = py_cui.GREEN_ON_BLACK
+    WRONG_AMPLITUDE_COLOR = py_cui.RED_ON_BLACK
+    CIRCUIT_COLOR = py_cui.CYAN_ON_BLACK
+
+    ERROR_COLOR = py_cui.RED_ON_BLUE
+    TEXT_HIGHLIGHT = "//"
+    REGEX_TEXT_HIGHLIGHT = "//"     # regex recognizable version of TEXT_HIGHLIGHT (some characters need escaping)
+    HIGHLIGHT_WIDTH = len(TEXT_HIGHLIGHT)
     __DIC = {
-        TILE_HIGHLIGHT: py_cui.WHITE_ON_BLACK,
-        OBJECT_HIGHLIGHT: py_cui.BLUE_ON_WHITE,
-        WORD_HIGHLIGHT: py_cui.RED_ON_WHITE,
-        KEY_HIGHLIGHT: py_cui.MAGENTA_ON_WHITE,
+        str(ColorCode.TILE_HIGHLIGHT): py_cui.WHITE_ON_BLACK,
+        str(ColorCode.OBJECT_HIGHLIGHT): py_cui.BLUE_ON_WHITE,
+        str(ColorCode.WORD_HIGHLIGHT): py_cui.RED_ON_WHITE,
+        str(ColorCode.KEY_HIGHLIGHT): py_cui.MAGENTA_ON_WHITE,
+
+        str(ColorCode.SPACESHIP_FLOOR): py_cui.BLACK_ON_WHITE,
     }
 
     @staticmethod
@@ -192,8 +279,8 @@ class ColorConfig:
         return character_removals
 
     @staticmethod
-    def __highlight(type: str, text) -> str:
-        return f"{ColorConfig.TEXT_HIGHLIGHT}{type}{text}{ColorConfig.TEXT_HIGHLIGHT}"
+    def colorize(color_code: ColorCode, text) -> str:
+        return f"{ColorConfig.TEXT_HIGHLIGHT}{color_code}{text}{ColorConfig.TEXT_HIGHLIGHT}"
 
     @staticmethod
     def highlight_tile(tile: str) -> str:
@@ -202,7 +289,7 @@ class ColorConfig:
         :param tile:
         :return:
         """
-        return ColorConfig.__highlight(ColorConfig.TILE_HIGHLIGHT, tile)
+        return ColorConfig.colorize(ColorCode.TILE_HIGHLIGHT, tile)
 
     @staticmethod
     def highlight_object(obj: str) -> str:
@@ -211,7 +298,7 @@ class ColorConfig:
         :param obj:
         :return:
         """
-        return ColorConfig.__highlight(ColorConfig.OBJECT_HIGHLIGHT, obj)
+        return ColorConfig.colorize(ColorCode.OBJECT_HIGHLIGHT, obj)
 
     @staticmethod
     def highlight_word(word: str) -> str:
@@ -220,7 +307,7 @@ class ColorConfig:
         :param word:
         :return:
         """
-        return ColorConfig.__highlight(ColorConfig.WORD_HIGHLIGHT, word)
+        return ColorConfig.colorize(ColorCode.WORD_HIGHLIGHT, word)
 
     @staticmethod
     def highlight_key(key: str) -> str:
@@ -229,14 +316,18 @@ class ColorConfig:
         :param key:
         :return:
         """
-        return ColorConfig.__highlight(ColorConfig.KEY_HIGHLIGHT, key)
+        return ColorConfig.colorize(ColorCode.KEY_HIGHLIGHT, key)
 
     @staticmethod
-    def get(char: str):
+    def get(char: str) -> int:
         try:
             return ColorConfig.__DIC[char]
         except KeyError:
             return ColorConfig.ERROR_COLOR
+
+    @staticmethod
+    def get_from_code(code: ColorCode) -> int:
+        return ColorConfig.get(str(code))
 
 
 class PopupConfig:
@@ -246,8 +337,6 @@ class PopupConfig:
 
 
 class CheatConfig:
-    INPUT_CHEAT_KEY = py_cui.keys.KEY_CTRL_I
-    CHEAT_LIST_KEY = py_cui.keys.KEY_CTRL_L
     __ALL = "aLL"
     __GOD_MODE = "Qod-Mode"
     __SCARED_RABBIT = "Rabbit_Tunnel"
@@ -390,14 +479,40 @@ class GameplayConfig:
 
 class Config:   # todo make singleton and handle access to other configs?
     MAX_SEED = 1000000
-    __VERSION = "v0.1"
+    __VERSION = "v0.2"
     __GAME_CONFIG = "qrogue_game.config"
     __GAMEPLAY_HEAD = "[Gameplay]\n"
     __DEBUG = False
 
+    __HEADER = "Qrogue "
+    __SEED_HEAD = "Seed="
+    __TIME_HEAD = "Time="
+    __CONFIG_HEAD = "[Config]"
+
+    @staticmethod
+    def scientist_name() -> str:
+        return "Robb"
+
+    @staticmethod
+    def player_name() -> str:
+        return "Mike"
+
+    @staticmethod
+    def back_map_string() -> str:
+        return "back"
+
     @staticmethod
     def version() -> str:
         return Config.__VERSION
+
+    @staticmethod
+    def get_log_head(seed: int) -> str:
+        now_str = datetime.now().strftime("%d%m%Y_%H%M%S")
+        head = f"{Config.__HEADER}{Config.version()}\n"
+        head += f"{Config.__SEED_HEAD}{seed}\n"
+        head += f"{Config.__TIME_HEAD}{now_str}\n\n"
+        head += f"{Config.__CONFIG_HEAD}\n{GameplayConfig.to_file_text()}\n"
+        return head
 
     @staticmethod
     def config_file() -> str:
@@ -418,7 +533,11 @@ class Config:   # todo make singleton and handle access to other configs?
         text += GameplayConfig.to_file_text()
 
         file_path = os.path.join(os.path.dirname(__file__), "..", "installer", "qrogue.config")
-        config_content = PathConfig.read(file_path, False).splitlines()
+        try:
+            config_content = PathConfig.read(file_path, False).splitlines()
+        except FileNotFoundError:
+            raise FileNotFoundError("Could not find the base config file qrogue.config\nPlease download the installer "
+                                    "folder again!")
         PathConfig.create_data_folder(config_content[1])
         path = os.path.join(config_content[1], Config.__GAME_CONFIG)
         with open(path, "x") as file:
@@ -432,7 +551,10 @@ class Config:   # todo make singleton and handle access to other configs?
         if not os.path.exists(os.path.join(PathConfig.base_path(), Config.__GAME_CONFIG)):
             Config.create()
 
-        config = PathConfig.read(Config.__GAME_CONFIG)
+        try:
+            config = PathConfig.read(Config.__GAME_CONFIG)
+        except FileNotFoundError:
+            raise FileNotFoundError("Could not load the game's config file!")
 
         gameplay_section = config.index(Config.__GAMEPLAY_HEAD) + len(Config.__GAMEPLAY_HEAD)
         gameplay_section = (gameplay_section, len(config))

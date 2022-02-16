@@ -1,4 +1,4 @@
-from game.controls import Controls
+from game.controls import Controls, Keys
 from util.config import PathConfig, GameplayConfig, Config
 from util.key_logger import KeyLogger
 from util.logger import Logger
@@ -98,7 +98,7 @@ class GameSimulator:
         """
         if self.__notification_popup:
             self.__notification_popup = False
-            return self.__controls.popup_close[0]
+            return self.__controls.get_key(Keys.PopupClose)
         while self.__cur_chunk is not None:
             key = self.__next_key()
             if key > -1:

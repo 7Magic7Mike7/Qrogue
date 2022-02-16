@@ -1,30 +1,29 @@
 import time
 from abc import abstractmethod, ABC
+from typing import List, Callable
 
 import py_cui
 from py_cui.widget_set import WidgetSet
 
 from game.actors.boss import Boss
+from game.actors.controllable import Controllable
 from game.actors.enemy import Enemy
-from game.actors.player import Player as PlayerActor
-from game.actors.player import DummyPlayer
+from game.actors.robot import Robot
 from game.actors.riddle import Riddle
 from game.actors.target import Target
-from game.callbacks import CallbackPack
 from game.collectibles.collectible import ShopItem
-from game.map.generator import DungeonGenerator
+from game.controls import Controls
 from game.map.map import Map
 from game.map.navigation import Direction
-from game.map.tiles import Player as PlayerTile
-from game.map.tutorial import Tutorial, TutorialPlayer
+from game.save_data import SaveData
 from util.config import GameplayConfig, PathConfig, Config
 from util.help_texts import HelpText, HelpTextType
 from util.logger import Logger
 from util.my_random import RandomManager
 from widgets.color_rules import ColorRules
 from widgets.my_popups import Popup, CommonPopups
-from widgets.my_widgets import SelectionWidget, StateVectorWidget, CircuitWidget, MapWidget, SimpleWidget, HudWidget, \
-    QubitInfoWidget, MyBaseWidget
+from widgets.my_widgets import SelectionWidget, CircuitWidget, MapWidget, SimpleWidget, HudWidget, \
+    QubitInfoWidget, MyBaseWidget, Widget, CurrentStateVectorWidget, TargetStateVectorWidget
 from widgets.renderable import Renderable
 
 
@@ -35,13 +34,16 @@ class MyWidgetSet(WidgetSet, Renderable, ABC):
 
     NUM_OF_ROWS = 9
     NUM_OF_COLS = 9
+    BACK_STRING = "-Back-"
 
-    def __init__(self, logger, root: py_cui.PyCUI, base_render_callback: "()"):
+    def __init__(self, controls: Controls, logger, root: py_cui.PyCUI,
+                 base_render_callback: Callable[[List[Renderable]], None]):
         super().__init__(MyWidgetSet.NUM_OF_ROWS, MyWidgetSet.NUM_OF_COLS, logger, root)
-        self.init_widgets()
+        self.init_widgets(controls)
         self.__base_render = base_render_callback
 
-    def add_block_label(self, title, row, column, row_span = 1, column_span = 1, padx = 1, pady = 0, center=True):
+    def add_block_label(self, title, row, column, row_span = 1, column_span = 1, padx = 1, pady = 0, center=True)\
+            -> MyBaseWidget:
         """Function that adds a new block label to the CUI grid
 
                 Parameters
@@ -68,8 +70,8 @@ class MyWidgetSet(WidgetSet, Renderable, ABC):
                 new_widget : MyBaseWidget
                     A reference to the created widget object.
                 """
-        id = 'Widget{}'.format(len(self._widgets.keys()))
-        new_widget = MyBaseWidget(id,
+        wid = 'Widget{}'.format(len(self._widgets.keys()))
+        new_widget = MyBaseWidget(wid,
                                        title,
                                        self._grid,
                                        row,
@@ -80,7 +82,7 @@ class MyWidgetSet(WidgetSet, Renderable, ABC):
                                        pady,
                                        center,
                                        self._logger)
-        self._widgets[id] = new_widget
+        self._widgets[wid] = new_widget
         self._logger.info('Adding widget {} w/ ID {} of type {}'.format(title, id, str(type(new_widget))))
         return new_widget
 
@@ -88,15 +90,15 @@ class MyWidgetSet(WidgetSet, Renderable, ABC):
         self.__base_render(self.get_widget_list())
 
     @abstractmethod
-    def init_widgets(self) -> None:
+    def init_widgets(self, controls: Controls) -> None:
         pass
 
     @abstractmethod
-    def get_widget_list(self) -> "list of Widgets":
+    def get_widget_list(self) -> List[Widget]:
         pass
 
     @abstractmethod
-    def get_main_widget(self) -> py_cui.widgets.Widget:
+    def get_main_widget(self) -> MyBaseWidget:
         pass
 
     @abstractmethod
@@ -129,28 +131,29 @@ class MenuWidgetSet(MyWidgetSet):
     __MAP_WIDTH = 50
     __MAP_HEIGHT = 14
 
-    def __init__(self, render: "()", logger, root: py_cui.PyCUI, cbp: CallbackPack, stop_callback: "()",
-                 start_simulation_callback: "(str,)"):
-        super().__init__(logger, root, render)
+    def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
+                 start_playing_callback: "()",
+                 stop_callback: "()", start_simulation_callback: "(str,)"):
         self.__seed = 0
-        self.__cbp = cbp
+        self.__start_playing = start_playing_callback
         self.__stop = stop_callback
         self.__start_simulation = start_simulation_callback
+        super().__init__(controls, logger, root, render)
 
-    def init_widgets(self) -> None:
+    def init_widgets(self, controls: Controls) -> None:
         height = 5
         width = 3
         selection = self.add_block_label("", 2, 0, row_span=height, column_span=width, center=True)
-        self.__selection = SelectionWidget(selection, 1)
+        self.__selection = SelectionWidget(selection, controls, 1)
         if Config.debugging():
             self.__selection.set_data(data=(
-                ["PLAY\n", "TUTORIAL\n", "SIMULATOR\n", "OPTIONS\n", "EXIT\n"],
-                [self.__play, self.__tutorial, self.__simulate, self.__options, self.__exit]
+                ["PLAY\n", "SIMULATOR\n", "OPTIONS\n", "EXIT\n"],
+                [self.__start_playing, self.__simulate, self.__options, self.__exit]
             ))
         else:
             self.__selection.set_data(data=(
-                ["PLAY\n", "TUTORIAL\n", "OPTIONS\n", "EXIT\n"],
-                [self.__play, self.__tutorial, self.__options, self.__exit]
+                ["PLAY\n", "OPTIONS\n", "EXIT\n"],
+                [self.__start_playing, self.__options, self.__exit]
             ))
 
         seed = self.add_block_label("Seed", MyWidgetSet.NUM_OF_ROWS-1, 0, row_span=1, column_span=width, center=False)
@@ -169,13 +172,13 @@ class MenuWidgetSet(MyWidgetSet):
     def simulate_with_seed(self, simulation_seed: int):
         self.__seed = simulation_seed
 
-    def get_widget_list(self) -> "list of Widgets":
+    def get_widget_list(self) -> List[Widget]:
         return [
             self.__title,
             self.__selection
         ]
 
-    def get_main_widget(self) -> py_cui.widgets.Widget:
+    def get_main_widget(self) -> MyBaseWidget:
         return self.__selection.widget
 
     def reset(self) -> None:
@@ -184,24 +187,6 @@ class MenuWidgetSet(MyWidgetSet):
     @property
     def selection(self) -> SelectionWidget:
         return self.__selection
-
-    def __play(self) -> None:
-        RandomManager.force_seed(self.__seed)
-
-        player = DummyPlayer(self.__seed)   # todo use real player
-        generator = DungeonGenerator(self.__seed)
-        map, success = generator.generate(player, self.__cbp)
-        if success:
-            self.__cbp.start_gameplay(map)
-        else:
-            Logger.instance().throw(ValueError(f"Illegal state! No map can be generated for seed = {self.__seed}!"))
-
-    def __tutorial(self) -> None:
-        player = TutorialPlayer()
-        rooms, spawn_room_pos = Tutorial().build_tutorial_map(player, self.__cbp)
-        map = Map(Tutorial.seed(), rooms, player, spawn_room_pos, self.__cbp)
-        self.__cbp.start_gameplay(map)
-        Popup.message("Welcome to Qrogue! (scroll with arrow keys)", HelpText.get(HelpTextType.Welcome))
 
     def __simulate(self) -> None:
         self.__start_simulation()
@@ -231,18 +216,19 @@ class PauseMenuWidgetSet(MyWidgetSet):
          ]
     )
 
-    def __init__(self, render: "()", logger, root: py_cui.PyCUI, continue_callback: "()", exit_run_callback: "()"):
-        super().__init__(logger, root, render)
+    def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
+                 continue_callback: "()", exit_run_callback: "()"):
+        super().__init__(controls, logger, root, render)
         self.__continue_callback = continue_callback
         self.__exit_run = exit_run_callback
 
-    def init_widgets(self) -> None:
+    def init_widgets(self, controls: Controls) -> None:
         hud = self.add_block_label('HUD', 0, 0, row_span=1, column_span=MyWidgetSet.NUM_OF_COLS, center=False)
         hud.toggle_border()
         self.__hud = HudWidget(hud)
 
         choices = self.add_block_label('Choices', 1, 0, row_span= MyWidgetSet.NUM_OF_ROWS-1, column_span=3, center=True)
-        self.__choices = SelectionWidget(choices, stay_selected=True)
+        self.__choices = SelectionWidget(choices, controls, stay_selected=True)
         self.__choices.set_data(data=(
             ["Continue", "Options", "Help", "Exit"],
             [self.__continue, self.__options, self.__help, self.__exit]
@@ -250,7 +236,7 @@ class PauseMenuWidgetSet(MyWidgetSet):
 
         details = self.add_block_label('Details', 1, 3, row_span=MyWidgetSet.NUM_OF_ROWS-1,
                                        column_span=MyWidgetSet.NUM_OF_COLS-3, center=True)
-        self.__details = SelectionWidget(details, is_second=True)
+        self.__details = SelectionWidget(details, controls, is_second=True)
 
     @property
     def choices(self) -> SelectionWidget:
@@ -266,7 +252,7 @@ class PauseMenuWidgetSet(MyWidgetSet):
 
     def __options(self) -> bool:
         self.__details.set_data(data=(
-            ["Gameplay Config", "-Back-"],
+            ["Gameplay Config", MyWidgetSet.BACK_STRING],
             [self.__options_text]
         ))
         return True
@@ -281,7 +267,7 @@ class PauseMenuWidgetSet(MyWidgetSet):
 
     def __help(self) -> bool:
         self.__details.set_data(data=(
-            PauseMenuWidgetSet.__HELP_TEXTS[0] + ["-Back-"],
+            PauseMenuWidgetSet.__HELP_TEXTS[0] + [MyWidgetSet.BACK_STRING],
             [self.__help_text]
         ))
         return True
@@ -296,29 +282,91 @@ class PauseMenuWidgetSet(MyWidgetSet):
         self.__exit_run()
         return True
 
-    def get_widget_list(self) -> "list of Widgets":
+    def get_widget_list(self) -> List[Widget]:
         return [
             self.__hud,
             self.__choices,
             self.__details,
         ]
 
-    def get_main_widget(self) -> py_cui.widgets.Widget:
+    def get_main_widget(self) -> MyBaseWidget:
         return self.__choices.widget
 
-    def set_data(self, player: PlayerActor):
-        self.__hud.set_data(player)
+    def set_data(self, robot: Robot):
+        self.__hud.set_data(robot)
 
     def reset(self) -> None:
         self.__choices.render_reset()
         self.__details.render_reset()
 
 
-class ExploreWidgetSet(MyWidgetSet):
-    def __init__(self, render: "()", logger, root: py_cui.PyCUI):
-        super().__init__(logger, root, render)
+class WorkbenchWidgetSet(MyWidgetSet):
+    def __init__(self, controls: Controls, logger, root: py_cui.PyCUI, render: Callable[[List[Renderable]], None],
+                 continue_callback: ()):
+        super().__init__(controls, logger, root, render)
+        self.__save_data = None
+        self.__continue = continue_callback
 
-    def init_widgets(self) -> None:
+    def init_widgets(self, controls: Controls) -> None:
+        robot_selection = self.add_block_label('Robot Selection', 0, 0, row_span=MyWidgetSet.NUM_OF_COLS, center=False)
+        self.__robot_selection = SelectionWidget(robot_selection, controls, stay_selected=True)
+
+        robot_details = self.add_block_label('Robot Details', 0, 1, 3, 4, center=True)
+        self.__robot_info = SimpleWidget(robot_details)
+
+        available_upgrades = self.add_block_label('Upgrades', 4, 1, 2, 2, center=True)
+        self.__available_upgrades = SelectionWidget(available_upgrades, controls, 4, is_second=True, stay_selected=False)
+
+    def set_data(self, save_data: SaveData):
+        self.__save_data = save_data
+        self.__robot_selection.set_data((
+            [robot.name for robot in save_data.available_robots()] + [MyWidgetSet.BACK_STRING],
+            [self.__details]
+        ))
+
+    def get_widget_list(self) -> List[Widget]:
+        return [
+            self.__robot_selection,
+            self.__robot_info,
+            self.__available_upgrades,
+        ]
+
+    def get_main_widget(self) -> MyBaseWidget:
+        return self.__robot_selection.widget
+
+    def reset(self) -> None:
+        pass
+
+    @property
+    def selection(self) -> SelectionWidget:
+        return self.__robot_selection
+
+    @property
+    def upgrades(self) -> SelectionWidget:
+        return self.__available_upgrades
+
+    def __details(self, index: int) -> bool:
+        if self.__save_data:
+            robot = self.__save_data.get_robot(index)
+            if robot:
+                self.__robot_info.set_data(robot.description())
+                self.__available_upgrades.set_data(data=(
+                    ["Test", "Fuel"],
+                    [self.__upgrade],
+                ))
+            else:
+                self.__continue()
+        return True
+
+    def __upgrade(self, index: int) -> bool:
+        return True
+
+
+class ExploreWidgetSet(MyWidgetSet):
+    def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI):
+        super().__init__(controls, logger, root, render)
+
+    def init_widgets(self, controls: Controls) -> None:
         hud = self.add_block_label('HUD', 0, 0, row_span=1, column_span=MyWidgetSet.NUM_OF_COLS, center=False)
         hud.toggle_border()
         self.__hud = HudWidget(hud)
@@ -328,14 +376,17 @@ class ExploreWidgetSet(MyWidgetSet):
         self.__map_widget = MapWidget(map_widget)
         ColorRules.apply_map_rules(self.__map_widget)
 
-    def get_main_widget(self) -> py_cui.widgets.Widget:
+    def get_main_widget(self) -> MyBaseWidget:
         return self.__map_widget.widget
 
-    def set_data(self, map: Map, player_tile: PlayerTile) -> None:
-        self.__hud.set_data(player_tile.player)
+    def set_data(self, map: Map, controllable: Controllable) -> None:
+        if isinstance(controllable, Robot):
+            self.__hud.set_data(controllable)
+        else:
+            self.__hud.reset_data()
         self.__map_widget.set_data(map)
 
-    def get_widget_list(self) -> "list of Widgets":
+    def get_widget_list(self) -> List[Widget]:
         return [
             self.__hud,
             self.__map_widget
@@ -372,39 +423,34 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
     __CHOICE_COLUMNS = 2
     __DETAILS_COLUMNS = 2
 
-    def __init__(self, render: "()", logger, root: py_cui.PyCUI, continue_exploration_callback: "()", flee_choice: str = "Flee"):
-        self.__choice_strings = ["Add/Remove", "Commit", "Reset", "Items", "Help", flee_choice]
-        super().__init__(logger, root, render)
+    def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
+                 continue_exploration_callback: "()", flee_choice: str = "Flee"):
+        self.__choice_strings = ["[1] Add/Remove", "[2] Commit", "[3] Reset", "[4] Items", "[5] Help", flee_choice]
+        super().__init__(controls, logger, root, render)
         self._continue_exploration_callback = continue_exploration_callback
-        self._player = None
+        self._robot = None
         self._target = None
 
-    def init_widgets(self) -> None:
+    def init_widgets(self, controls: Controls) -> None:
         hud = self.add_block_label('HUD', 0, 0, row_span=1, column_span=MyWidgetSet.NUM_OF_COLS, center=False)
         hud.toggle_border()
         self.__hud = HudWidget(hud)
 
         stv_row = 1
         row_span = 3
-        qi_player = self.add_block_label('Qubit Info', stv_row, 0, row_span=row_span, column_span=1, center=True)
-        self.__qi_player = QubitInfoWidget(qi_player, left_aligned=False)
-        stv = self.add_block_label('Player StV', stv_row, 1, row_span=row_span, column_span=2, center=True)
-        self.__stv_player = StateVectorWidget(stv, "Current State")
-
-        stv = self.add_block_label('Diff StV', stv_row, 3, row_span=row_span, column_span=3, center=True)
-        self.__stv_diff = StateVectorWidget(stv, "Difference", diff=True)
-
-        stv = self.add_block_label('Target StV', stv_row, 6, row_span=row_span, column_span=2, center=True)
-        self.__stv_target = StateVectorWidget(stv, "Target State")
-        qi_target = self.add_block_label('Qubit Info', stv_row, 8, row_span=row_span, column_span=1, center=True)
-        self.__qi_target = QubitInfoWidget(qi_target, left_aligned=False)
+        stv = self.add_block_label('Player StV', stv_row, 0, row_span=row_span, column_span=3, center=True)
+        self.__stv_robot = CurrentStateVectorWidget(stv, "Current State")
+        truth_table = self.add_block_label('Truth table', stv_row, 3, row_span=row_span, column_span=3, center=True)
+        self.__truth_table = QubitInfoWidget(truth_table)
+        stv = self.add_block_label('Target StV', stv_row, 6, row_span=row_span, column_span=3, center=True)
+        self.__stv_target = TargetStateVectorWidget(stv, "Target State")
 
         circuit = self.add_block_label('Circuit', 6, 0, row_span=1, column_span=MyWidgetSet.NUM_OF_COLS, center=True)
         self.__circuit = CircuitWidget(circuit)
 
         choices = self.add_block_label('Choices', 7, 0, row_span=2, column_span=3, center=True)
         choices.toggle_border()
-        self._choices = SelectionWidget(choices, columns=self.__CHOICE_COLUMNS)
+        self._choices = SelectionWidget(choices, controls, columns=self.__CHOICE_COLUMNS)
         self._choices.set_data(data=(
             self.__choice_strings,
             [self.__choices_adapt, self.__choices_commit, self.__choices_reset, self.__choices_items,
@@ -413,39 +459,33 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
         details = self.add_block_label('Details', 7, 3, row_span=2, column_span=6, center=True)
         details.toggle_border()
-        self._details = SelectionWidget(details, columns=self.__DETAILS_COLUMNS, is_second=True)
+        self._details = SelectionWidget(details, controls, columns=self.__DETAILS_COLUMNS, is_second=True)
 
-    def get_main_widget(self) -> py_cui.widgets.Widget:
+    def get_main_widget(self) -> MyBaseWidget:
         return self._choices.widget
 
-    def set_data(self, player: PlayerActor, target: Target) -> None:
+    def set_data(self, robot: Robot, target: Target) -> None:
         # from a code readers perspective the reset would make more sense in switch_to_fight() etc. but then we would
         # have to add it to multiple locations and have the risk of forgetting to add it for new ReachTargetWidgetSets
         if GameplayConfig.auto_reset_circuit():
-            player.reset_circuit()
+            robot.reset_circuit()
 
-        self._player = player
+        self._robot = robot
         self._target = target
 
-        self.__hud.set_data(player)
-        self.__circuit.set_data(player)
+        self.__hud.set_data(robot)
+        self.__circuit.set_data(robot)
 
-        p_stv = player.state_vector
-        t_stv = target.statevector
-        self.__qi_player.set_data(p_stv.num_of_qubits)
-        self.__stv_player.set_data(p_stv)
-        self.__stv_diff.set_data(p_stv.get_diff(t_stv))
-        self.__stv_target.set_data(t_stv)
-        self.__qi_target.set_data(p_stv.num_of_qubits)
+        self.__stv_robot.set_data((robot.state_vector, target.state_vector))
+        self.__truth_table.set_data(robot.state_vector.num_of_qubits)
+        self.__stv_target.set_data(target.state_vector)
 
-    def get_widget_list(self) -> "list of Widgets":
+    def get_widget_list(self) -> List[Widget]:
         return [
             self.__hud,
-            self.__qi_player,
-            self.__stv_player,
-            self.__stv_diff,
+            self.__stv_robot,
+            self.__truth_table,
             self.__stv_target,
-            self.__qi_target,
             self.__circuit,
             self._choices,
             self._details
@@ -465,22 +505,22 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
     def __choices_adapt(self) -> bool:
         self._details.set_data(data=(
-            [instruction.selection_str() for instruction in self._player.backpack] + ["-Back-"],
+            [instruction.selection_str() for instruction in self._robot.backpack] + [MyWidgetSet.BACK_STRING],
             [self.__choose_instruction]
         ))
         return True
 
     def __choose_instruction(self, index: int):
-        if 0 <= index < self._player.backpack.used_capacity:
-            self.__cur_instruction = self._player.get_instruction(index)
+        if 0 <= index < self._robot.backpack.used_capacity:
+            self.__cur_instruction = self._robot.get_instruction(index)
             if self.__cur_instruction is not None:
                 if self.__cur_instruction.is_used():
-                    self._player.remove_instruction(index)
-                    self.details.update_text(self._player.backpack.get(index).selection_str(), index)
+                    self._robot.remove_instruction(index)
+                    self.details.update_text(self._robot.backpack.get(index).selection_str(), index)
                 else:
-                    if self._player.is_space_left():
+                    if self._robot.is_space_left():
                         self.details.set_data(data=(
-                            [self.__cur_instruction.preview_str(i) for i in range(self._player.num_of_qubits)],
+                            [self.__cur_instruction.preview_str(i) for i in range(self._robot.num_of_qubits)],
                             [self.__choose_qubit]
                         ))
                     else:
@@ -494,7 +534,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             return True
 
     def __choose_qubit(self, index: int = 0):
-        selection = list(range(self._player.num_of_qubits))
+        selection = list(range(self._robot.num_of_qubits))
         for q in self.__cur_instruction.qargs_iter():
             selection.remove(q)
         if self.__cur_instruction.use_qubit(selection[index]):
@@ -504,9 +544,9 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                 [self.__choose_qubit]
             ))
         else:
-            self._player.use_instruction(self.__cur_instruction)
+            self._robot.use_instruction(self.__cur_instruction)
             self._details.set_data(data=(
-                [instruction.selection_str() for instruction in self._player.backpack] + ["-Back-"],
+                [instruction.selection_str() for instruction in self._robot.backpack] + [MyWidgetSet.BACK_STRING],
                 [self.__choose_instruction]
             ))
         self.render()
@@ -517,14 +557,13 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             from util.logger import Logger
             Logger.instance().error("Error! Target is not set!")
             return False
-        result = self._player.update_statevector()
-        self.__stv_player.set_data(result)
-        self.__stv_diff.set_data(result.get_diff(self._target.statevector))
+        result = self._robot.update_statevector()
+        self.__stv_robot.set_data((result, self._target.state_vector))
         self.render()
 
-        if self._target.is_reached(result):
-            reward = self._target.get_reward()
-            self._player.give_collectible(reward)
+        success, reward = self._target.is_reached(result)
+        if success:
+            self._robot.give_collectible(reward)
             self._details.set_data(data=(
                 [f"Congratulations! Get reward: {reward.to_string()}"],
                 [self._continue_exploration_callback]
@@ -534,24 +573,22 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             return self._on_commit_fail()
 
     def __choices_reset(self) -> bool:
-        if self._player.has_empty_circuit():
+        if self._robot.has_empty_circuit():
             self._details.set_data(data=(
                 ["Nothing to reset"],
                 [self._empty_callback]
             ))
             return True
         else:
-            self._player.reset_circuit()
-            pstv = self._player.state_vector
-            self.__stv_player.set_data(pstv)
-            self.__stv_diff.set_data(pstv.get_diff(self._target.statevector))
+            self._robot.reset_circuit()
+            self.__stv_robot.set_data((self._robot.state_vector, self._target.state_vector))
             self.render()
             return False
 
     def __choices_items(self) -> bool:
-        if self._player.backpack.num_of_available_items > 0:
+        if self._robot.backpack.num_of_available_items > 0:
             self._details.set_data(data=(
-                [consumable.to_string() for consumable in self._player.backpack.pouch_iterator()] + ["-Back-"],
+                [consumable.to_string() for consumable in self._robot.backpack.pouch_iterator()] + [MyWidgetSet.BACK_STRING],
                 [self.__choose_item]
             ))
         else:
@@ -563,9 +600,9 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
     def __continue_consuming(self) -> bool:
         # leave if there are no more consumables left, stay if we could consume another one
-        if self._player.backpack.num_of_available_items > 0:
+        if self._robot.backpack.num_of_available_items > 0:
             self._details.set_data(data=(
-                [consumable.to_string() for consumable in self._player.backpack.pouch_iterator()] + ["-Back-"],
+                [consumable.to_string() for consumable in self._robot.backpack.pouch_iterator()] + [MyWidgetSet.BACK_STRING],
                 [self.__choose_item]
             ))
             self._details.render()
@@ -574,11 +611,10 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             return True
 
     def __choose_item(self, index: int = 0) -> bool:
-        # todo adapt when implementing ActiveItems? maybe implement ActiveItem as Consumable with infinite charges?
-        if 0 <= index < self._player.backpack.consumables_in_pouch:
-            consumable = self._player.backpack.get_from_pouch(index)
+        if 0 <= index < self._robot.backpack.consumables_in_pouch:
+            consumable = self._robot.backpack.get_from_pouch(index)
             if consumable is not None:
-                if consumable.consume(self._player):
+                if consumable.consume(self._robot):
                     if consumable.charges_left() > 0:
                         text = f"You partially consumed {consumable.name()} and there "
                         if consumable.charges_left() > 1:
@@ -587,7 +623,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                             text += "is only 1 more portion "
                         text += "left to consume. "
                     else:
-                        self._player.backpack.remove_from_pouch(consumable)
+                        self._robot.backpack.remove_from_pouch(consumable)
                         text = f"You fully consumed {consumable.name()}. "
                     text += f"\nYou gained the following effect:\n{consumable.effect_description()}"
                     self._details.set_data(data=([text], [self.__continue_consuming]))
@@ -601,14 +637,14 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
     def __choices_help(self) -> bool:
         self._details.set_data(data=(
-            [instruction.name() for instruction in self._player.backpack] + ["-Back-"],
+            [instruction.name() for instruction in self._robot.backpack] + [MyWidgetSet.BACK_STRING],
             [self.__show_help_popup]
         ))
         return True
 
     def __show_help_popup(self, index: int = 0) -> bool:
-        if 0 <= index < self._player.backpack.used_capacity:
-            instruction = self._player.backpack.get(index)
+        if 0 <= index < self._robot.backpack.used_capacity:
+            instruction = self._robot.backpack.get(index)
             Popup.message(instruction.name(), instruction.description())
             return False
         return True
@@ -626,27 +662,27 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
 
 class FightWidgetSet(ReachTargetWidgetSet):
-    def __init__(self, render: "()", logger, root: py_cui.PyCUI, continue_exploration_callback: "()", game_over_callback: "()"):
-        super(FightWidgetSet, self).__init__(render, logger, root, continue_exploration_callback)
+    def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
+                 continue_exploration_callback: "()", game_over_callback: "()"):
+        super(FightWidgetSet, self).__init__(controls, render, logger, root, continue_exploration_callback)
         self.__random = RandomManager.create_new()
         self.__game_over_callback = game_over_callback
         self.__flee_chance = 0
 
-    def set_data(self, player: PlayerActor, target: Enemy):
-        super(FightWidgetSet, self).set_data(player, target)
+    def set_data(self, robot: Robot, target: Enemy):
+        super(FightWidgetSet, self).set_data(robot, target)
         self.__flee_chance = target.flee_chance
 
     def _on_commit_fail(self) -> bool:
-        # diff = self._target.statevector.get_diff(self._player.state_vector)
-        damage_taken = self._player.damage(target=self._target.statevector)
-        if damage_taken < 0:
+        damage_taken, deadly = self._robot.damage()
+        if deadly:
             self._details.set_data(data=(
                 [f"Oh no, you took {damage_taken} damage and died!"],
                 [self.__game_over_callback]
             ))
         else:
             self._details.set_data(data=(
-                [f"Wrong, you took {damage_taken} damage. Remaining HP = {self._player.cur_hp}"],
+                [f"Wrong, you took {damage_taken} damage. Remaining HP = {self._robot.cur_hp}"],
                 [self._empty_callback]
             ))
         return True
@@ -658,29 +694,29 @@ class FightWidgetSet(ReachTargetWidgetSet):
                 [self._continue_exploration_callback]
             ))
         else:
-            self._player.damage(amount=1)
-            if self._player.cur_hp > 0:
-                self._details.set_data(data=(
-                    ["Failed to flee. You lost 1 HP."],
-                    [self._empty_callback]
-                ))
-            else:
+            damage_taken, deadly = self._robot.damage(amount=1)
+            if deadly:
                 self._details.set_data(data=(
                     ["Failed to flee. You have no more HP left and die."],
                     [self.__game_over_callback]
+                ))
+            else:
+                self._details.set_data(data=(
+                    ["Failed to flee. You lost 1 HP."],
+                    [self._empty_callback]
                 ))
         return True
 
 
 class BossFightWidgetSet(FightWidgetSet):
-    def __init__(self, render: "()", logger, root: py_cui.PyCUI, continue_exploration_callback: "()", game_over_callback: "()",
-                 tutorial_won_callback: "()"):
+    def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
+                 continue_exploration_callback: "()", game_over_callback: "()", tutorial_won_callback: "()"):
         self.__continue_exploration_callback = continue_exploration_callback
         self.__tutorial_won = tutorial_won_callback
-        super().__init__(render, logger, root, self.__continue_exploration, game_over_callback)
+        super().__init__(controls, render, logger, root, self.__continue_exploration, game_over_callback)
 
-    def set_data(self, player: PlayerActor, target: Boss):
-        super(BossFightWidgetSet, self).set_data(player, target)
+    def set_data(self, robot: Robot, target: Boss):
+        super(BossFightWidgetSet, self).set_data(robot, target)
 
     def __continue_exploration(self):
         if self._target.is_defeated:
@@ -690,24 +726,25 @@ class BossFightWidgetSet(FightWidgetSet):
 
 
 class ShopWidgetSet(MyWidgetSet):
-    def __init__(self, render: "()", logger, root: py_cui.PyCUI, continue_exploration_callback: "()"):
-        super().__init__(logger, root, render)
+    def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
+                 continue_exploration_callback: "()"):
+        super().__init__(controls, logger, root, render)
         self.__continue_exploration = continue_exploration_callback
-        self.__player = None
+        self.__robot = None
         self.__items = None
 
-    def init_widgets(self) -> None:
+    def init_widgets(self, controls: Controls) -> None:
         hud = self.add_block_label("HUD", 0, 0, row_span=1, column_span=MyWidgetSet.NUM_OF_COLS, center=False)
         self.__hud = HudWidget(hud)
 
         inv_width = 4
         inventory = self.add_block_label("Inventory", 1, 0, row_span=7, column_span=inv_width)
-        self.__inventory = SelectionWidget(inventory, stay_selected=True)
+        self.__inventory = SelectionWidget(inventory, controls, stay_selected=True)
 
         details = self.add_block_label("Details", 1, inv_width, row_span=4, column_span=MyWidgetSet.NUM_OF_COLS - inv_width)
         self.__details = SimpleWidget(details)
         buy = self.add_block_label("Buy", 4, inv_width, row_span=1, column_span=MyWidgetSet.NUM_OF_COLS - inv_width)
-        self.__buy = SelectionWidget(buy, is_second=True)
+        self.__buy = SelectionWidget(buy, controls, is_second=True)
 
     @property
     def inventory(self) -> SelectionWidget:
@@ -721,7 +758,7 @@ class ShopWidgetSet(MyWidgetSet):
     def details(self) -> SimpleWidget:
         return self.__details
 
-    def get_widget_list(self) -> "list of Widgets":
+    def get_widget_list(self) -> List[Widget]:
         return [
             self.__hud,
             self.__inventory,
@@ -729,18 +766,18 @@ class ShopWidgetSet(MyWidgetSet):
             self.__buy,
         ]
 
-    def get_main_widget(self) -> py_cui.widgets.Widget:
+    def get_main_widget(self) -> MyBaseWidget:
         return self.__inventory.widget
 
     def reset(self) -> None:
         self.__inventory.render_reset()
 
-    def set_data(self, player: PlayerActor, items: "list of ShopItems") -> None:
-        self.__player = player
-        self.__hud.set_data(player)
+    def set_data(self, robot: Robot, items: List[ShopItem]) -> None:
+        self.__robot = robot
+        self.__hud.set_data(robot)
         self.__update_inventory(items)
 
-    def __update_inventory(self, items: [ShopItem]):
+    def __update_inventory(self, items: List[ShopItem]):
         self.__items = items
         self.__inventory.set_data(data=(
             [si.to_string() for si in items] + ["-Leave-"],
@@ -755,7 +792,7 @@ class ShopWidgetSet(MyWidgetSet):
         shop_item = self.__items[index]
         self.__cur_item = shop_item
         self.__details.set_data(shop_item.collectible.description())
-        if self.__player.backpack.can_afford(shop_item.price):
+        if self.__robot.backpack.can_afford(shop_item.price):
             self.__buy.set_data(data=(
                 ["Buy!", "No thanks"],
                 [self.__buy_item, self.__back_to_inventory]
@@ -768,8 +805,8 @@ class ShopWidgetSet(MyWidgetSet):
         return True
 
     def __buy_item(self) -> bool:
-        if self.__player.backpack.use_coins(self.__cur_item.price):
-            self.__player.give_collectible(self.__cur_item.collectible)
+        if self.__robot.backpack.use_coins(self.__cur_item.price):
+            self.__robot.give_collectible(self.__cur_item.collectible)
             self.__hud.render()
             self.__items.remove(self.__cur_item)
             self.__update_inventory(self.__items)
@@ -783,11 +820,12 @@ class ShopWidgetSet(MyWidgetSet):
 
 
 class RiddleWidgetSet(ReachTargetWidgetSet):
-    def __init__(self, render: "()", logger, root: py_cui.PyCUI, continue_exploration_callback: "()"):
-        super().__init__(render, logger, root, continue_exploration_callback, "Give Up")
+    def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
+                 continue_exploration_callback: Callable[[None], None]):
+        super().__init__(controls, render, logger, root, continue_exploration_callback, "Give Up")
 
-    def set_data(self, player: PlayerActor, target: Riddle) -> None:
-        super(RiddleWidgetSet, self).set_data(player, target)
+    def set_data(self, robot: Robot, target: Riddle) -> None:
+        super(RiddleWidgetSet, self).set_data(robot, target)
 
     def _on_commit_fail(self) -> bool:
         if self._target.attempts <= 0:

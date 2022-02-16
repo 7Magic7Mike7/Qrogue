@@ -1,20 +1,24 @@
+from abc import ABC, abstractmethod
+from typing import List
 
 import game.map.tiles as tiles
-from game.actors.player import Player as PlayerActor
-from game.callbacks import CallbackPack
+from game.achievements import AchievementManager
+from game.actors.controllable import Controllable
 from game.map.navigation import Coordinate, Direction
-from game.map.rooms import Room, Area
+from game.map.rooms import Room, Area, Placeholder, SpawnRoom, MetaRoom
+from util.config import Config
 from util.logger import Logger
 
 
-class Map:
-    WIDTH = 7
-    HEIGHT = 3
+class Map(ABC):
+    DONE_EVENT_ID = "Done".lower()
+    MAX_WIDTH = 7
+    MAX_HEIGHT = 3
 
     @staticmethod
     def __calculate_pos(pos_of_room: Coordinate, pos_in_room: Coordinate) -> Coordinate:
         """
-        Calculates and returns a Coordinate on the Map corresponding to the Cooridante of a Room on the Map and
+        Calculates and returns a Coordinate on the Map corresponding to the Coordinate of a Room on the Map and
         a Coordinate in the Room.
 
         :param pos_of_room: Coordinate of the Room on the Map
@@ -25,36 +29,70 @@ class Map:
         y = pos_of_room.y * (Area.UNIT_HEIGHT + 1) + pos_in_room.y
         return Coordinate(x, y)
 
-    def __init__(self, seed: int, rooms: "[[Room]]", player: PlayerActor, spawn_room: Coordinate, cbp: CallbackPack):
+    def __init__(self, name: str, seed: int, rooms: List[List[Room]], controllable: Controllable,
+                 spawn_room: Coordinate, achievement_manager: AchievementManager):
+        self.__name = name
         self.__seed = seed
         self.__rooms = rooms
-        self.__player = tiles.Player(player)
-        self.__cbp = cbp
+        self.__controllable_tile = tiles.ControllableTile(controllable)
+        self.__achievement_manager = achievement_manager
 
-        self.__player_pos = Map.__calculate_pos(spawn_room, Coordinate(Area.MID_X, Area.MID_Y))
+        self.__dimensions = Coordinate(len(rooms[0]), len(rooms))
+
+        self.__controllable_pos = Map.__calculate_pos(spawn_room, Coordinate(Area.MID_X, Area.MID_Y))
         self.__cur_area = self.__rooms[spawn_room.y][spawn_room.x]
         self.__cur_area.enter(Direction.Center)
         self.__cur_area.make_visible()
+
+        if isinstance(self.__cur_area, SpawnRoom):
+            self.__cur_area.set_is_done_callback(self.__is_done)
+        elif not isinstance(self.__cur_area, MetaRoom):
+            Logger.instance().error(f"{name} starts in area that is not a SpawnRoom! cur_area = {self.__cur_area}")
+
+        # todo better solution would be nice, but since our sizes are fixed it doesn't make sense performance-wise
+        # e.g. maximal WIDTH * HEIGHT * 4 = 7 * 3 * 4 = 84 iterations
+        # set the check event callback for all doors
+        for room_row in rooms:
+            for room in room_row:
+                if room:
+                    for direction in Direction.values():
+                        hw = room.get_hallway(direction, throw_error=False)
+                        if hw:
+                            hw.set_check_event_callback(self.check_event)
+
+        self.__events = {}
 
     @property
     def seed(self) -> int:
         return self.__seed
 
     @property
-    def height(self) -> int:
-        return Map.HEIGHT * (Area.UNIT_HEIGHT + 1) - 1
-
-    @property
     def width(self) -> int:
-        return Map.WIDTH * (Area.UNIT_WIDTH + 1) - 1
+        return self.__dimensions.x
 
     @property
-    def player_tile(self) -> tiles.Player:
-        return self.__player
+    def height(self) -> int:
+        return self.__dimensions.y
 
     @property
-    def player_pos(self) -> Coordinate:
-        return self.__player_pos
+    def full_width(self) -> int:
+        return self.width * (Area.UNIT_WIDTH + 1) - 1
+
+    @property
+    def full_height(self) -> int:
+        return self.height * (Area.UNIT_HEIGHT + 1) - 1
+
+    @property
+    def controllable_tile(self) -> tiles.ControllableTile:
+        return self.__controllable_tile
+
+    @property
+    def controllable_pos(self) -> Coordinate:
+        return self.__controllable_pos
+
+    @abstractmethod
+    def is_world(self) -> bool:
+        pass
 
     def __get_area(self, x: int, y: int) -> (Area, tiles.Tile):
         """
@@ -101,32 +139,93 @@ class Map:
             return room, room.at(x_mod, y_mod)
 
     def room_at(self, x: int, y: int) -> Room:
-        if 0 <= x < Map.WIDTH and 0 <= y < Map.HEIGHT:
+        if 0 <= x < self.width and 0 <= y < self.height:
             return self.__rooms[y][x]
         return None
 
     def move(self, direction: Direction) -> bool:
         """
-        Tries to move the player into the given Direction.
-        :param direction: in which direction the player should move
-        :return: True if the player was able to move, False otherwise
+        Tries to move the robot into the given Direction.
+        :param direction: in which direction the robot should move
+        :return: True if the robot was able to move, False otherwise
         """
-        new_pos = self.__player_pos + direction
-        if new_pos.y < 0 or self.height <= new_pos.y or \
-                new_pos.x < 0 or self.width <= new_pos.x:
+        new_pos = self.__controllable_pos + direction
+        if new_pos.y < 0 or self.full_height <= new_pos.y or \
+                new_pos.x < 0 or self.full_width <= new_pos.x:
             return False
 
         area, tile = self.__get_area(new_pos.x, new_pos.y)
-        if tile.is_walkable(direction, self.__player.player):
+        if tile.is_walkable(direction, self.__controllable_tile.controllable):
             if area != self.__cur_area:
                 self.__cur_area.leave(direction)
                 self.__cur_area = area
                 self.__cur_area.enter(direction)
 
             if isinstance(tile, tiles.WalkTriggerTile):
-                tile.on_walk(direction, self.player_tile.player)
+                tile.trigger(direction, self.controllable_tile.controllable, self.__trigger_event)
 
-            self.__player_pos = new_pos
+            self.__controllable_pos = new_pos
             return True
         else:
             return False
+
+    def check_event(self, event_id: str) -> bool:
+        return event_id in self.__events
+
+    def __is_done(self) -> bool:
+        return self.check_event(self.DONE_EVENT_ID)
+
+    def __trigger_event(self, event_id: str):
+        if event_id.lower() == self.DONE_EVENT_ID:
+            if self.is_world():
+                self.__achievement_manager.finished_world(self.__name)
+            else:
+                self.__achievement_manager.finished_level(self.__name)  # todo what about expeditions?
+        if Config.debugging():
+            print("triggered event: " + event_id)
+        self.__events[event_id] = True
+
+    def row_strings(self) -> List[str]:
+        rows = []
+        offset = 0
+        # iterate through every row of Rooms
+        for y in range(self.height):
+            last_row = y == self.height - 1  # there are no more Hallways after the last row of Rooms
+            areas = []
+            south_hallways = []
+
+            for x in range(self.width):
+                last_col = x == self.width - 1  # there are no more Hallways after the last Room in a row
+                room = self.room_at(x, y)
+                if room is None:
+                    areas.append(Placeholder.pseudo_room())
+                    if not last_col:
+                        areas.append(Placeholder.vertical())
+                    if not last_row:
+                        south_hallways.append(Placeholder.horizontal().get_row_str(0))
+
+                else:
+                    areas.append(room)
+                    if not last_col:
+                        hallway = room.get_hallway(Direction.East, throw_error=False)
+                        if hallway is None:
+                            areas.append(Placeholder.vertical())
+                        else:
+                            areas.append(hallway)
+                    if not last_row:
+                        hallway = room.get_hallway(Direction.South, throw_error=False)
+                        if hallway is None:
+                            south_hallways.append(Placeholder.horizontal().get_row_str(0))
+                        else:
+                            south_hallways.append(hallway.get_row_str(0))
+
+            rows += ([""] * Area.UNIT_HEIGHT)  # initialize the new "block" of rows with empty strings
+            for area in areas:
+                for ry in range(Area.UNIT_HEIGHT):
+                    rows[offset + ry] += area.get_row_str(ry)
+            rows.append(Area.void().get_img().join(south_hallways))
+            offset += Area.UNIT_HEIGHT + 1
+        return rows
+
+    def __str__(self):
+        return "\n".join(self.row_strings())

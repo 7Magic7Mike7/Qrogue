@@ -1,5 +1,6 @@
 import py_cui.colors
 
+from game.actors.controllable import ControllableType
 from game.map.tiles import TileCode
 from util.config import PathConfig, ColorConfig
 from widgets.my_widgets import MapWidget
@@ -13,9 +14,10 @@ __color_manager = {
     TileCode.FogOfWar: py_cui.CYAN_ON_BLACK,
     TileCode.Door: py_cui.CYAN_ON_BLACK,
     TileCode.Collectible: py_cui.CYAN_ON_BLACK,
-    TileCode.Player: py_cui.GREEN_ON_BLACK,
+    TileCode.Controllable: py_cui.GREEN_ON_BLACK,
     TileCode.Enemy: py_cui.RED_ON_BLACK,
     TileCode.Boss: py_cui.BLACK_ON_RED,
+    TileCode.SpaceshipWalk: py_cui.BLACK_ON_WHITE,
 }
 def get_color(tile: TileCode) -> int:
     return __color_manager[tile]
@@ -108,11 +110,8 @@ class FragmentStorage:
 
 
 class MultiColorRenderer(py_cui.renderer.Renderer):
-    __FILE_NAME = "multi_color_debug.txt"
-
     def __init__(self, root, stdscr, logger):
         super().__init__(root, stdscr, logger)
-        PathConfig.delete(self.__FILE_NAME)
 
     def _get_render_text(self, ui_element, line, centered, bordered, selected, start_pos):
         """Internal function that computes the scope of the text that should be drawn
@@ -204,7 +203,8 @@ class ColorRules:
     @staticmethod
     def apply_map_rules(map_widget: MapWidget) -> None:
         w = map_widget.widget
-        w.add_text_color_rule('P', get_color(TileCode.Player), 'contains', match_type='regex')
+        for ct in ControllableType.values():
+            w.add_text_color_rule(ct.name, get_color(TileCode.Controllable), 'contains', match_type='regex')
         w.add_text_color_rule('B', get_color(TileCode.Boss), 'contains', match_type='regex')
         w.add_text_color_rule('\d', get_color(TileCode.Enemy), 'contains', match_type='regex')
         w.add_text_color_rule('#', get_color(TileCode.Wall), 'contains', match_type='regex')

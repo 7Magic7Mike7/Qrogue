@@ -1,10 +1,12 @@
 from enum import Enum
+from typing import Callable
 
 import py_cui
 import py_cui.ui
 from py_cui import ColorRule
 
-from util.config import PopupConfig, ColorConfig as CC
+from game.controls import Keys
+from util.config import Config, PopupConfig, ColorConfig as CC
 from util.logger import Logger
 
 
@@ -35,6 +37,30 @@ class Popup:
             Popup.__show_popup(self.__title, self.__text, self.__color)
         else:
             show_popup_callback(self.__title, self.__text, self.__color)
+
+
+class ConfirmationPopup:
+    __SHOW_POPUP = None
+
+    @staticmethod
+    def update_popup_function(show_popup_callback: Callable[[str, str, Callable[[bool], None], int], None]):
+        ConfirmationPopup.__SHOW_POPUP = show_popup_callback
+
+    @staticmethod
+    def ask(text: str, callback: Callable[[bool], None]):
+        ConfirmationPopup(Config.scientist_name(), text, callback)
+
+    def __init__(self, title: str, text: str, callback: Callable[[bool], None],
+                 color: int = PopupConfig.default_color(), show: bool = True):
+        self.__title = title
+        self.__text = text
+        self.__callback = callback
+        self.__color = color
+        if show:
+            self.show()
+
+    def show(self):
+        self.__SHOW_POPUP(self.__title, self.__text, self.__callback, self.__color)
 
 
 class MultilinePopup(py_cui.popups.Popup, py_cui.ui.MenuImplementation):
@@ -101,11 +127,21 @@ class MultilinePopup(py_cui.popups.Popup, py_cui.ui.MenuImplementation):
                 split_text.append(paragraph[index:].strip())
         return split_text
 
-    def __init__(self, root, title, text, color, renderer, logger, controls):
+    def __init__(self, root, title, text, color, renderer, logger, controls,
+                 confirmation_callback: Callable[[bool], None] = None):
         super().__init__(root, title, text, color, renderer, logger)
         self.__controls = controls
+        self.__confirmation_callback = confirmation_callback
         self._top_view = 0
         self.__lines = MultilinePopup.__split_text(text, self._width - 6, logger)  # 6: based on PyCUI "padding" I think
+
+        if self._is_question:
+            self.__lines.append("-" * self._width + "\n")
+            self.__lines.append("Cancel" + " " * 10 + "Confirm")     # todo how to explain controls?
+
+    @property
+    def _is_question(self) -> bool:
+        return self.__confirmation_callback is not None
 
     @property
     def textbox_height(self) -> int:
@@ -123,12 +159,20 @@ class MultilinePopup(py_cui.popups.Popup, py_cui.ui.MenuImplementation):
     def _handle_key_press(self, key_pressed):
         """Overrides base class handle_key_press function
         """
-        if key_pressed in self.__controls.popup_close:
-            self._root.close_popup()
-        elif key_pressed == self.__controls.popup_scroll_up:
-            self.up()
-        elif key_pressed == self.__controls.popup_scroll_down:
-            self.down()
+        if self._is_question:
+            if key_pressed in self.__controls.get_keys(Keys.Action):
+                self.__confirmation_callback(True)
+                self._root.close_popup()
+            elif key_pressed in self.__controls.get_keys(Keys.Cancel):
+                self.__confirmation_callback(False)
+                self._root.close_popup()
+        else:
+            if key_pressed in self.__controls.get_keys(Keys.PopupClose):
+                self._root.close_popup()
+            elif key_pressed in self.__controls.get_keys(Keys.PopupScrollUp):
+                self.up()
+            elif key_pressed in self.__controls.get_keys(Keys.PopupScrollDown):
+                self.down()
 
     def _draw(self):
         """Overrides base class draw function
@@ -152,6 +196,10 @@ def _locked_door() -> str:
     key = CC.highlight_object("Key")
     door = CC.highlight_object("Door")
     return f"Come back with a {key} to open the {door}."
+def _one_way_door() -> str:
+    one_way = CC.highlight_object("one way")
+    door = CC.highlight_object("Door")
+    return f"This is a {one_way} {door} that can only be opened from the other side!"
 def _entangled_door() -> str:
     door = CC.highlight_object("Door")
     entangled = CC.highlight_word("entangled")
@@ -169,6 +217,8 @@ def _no_space() -> str:
     return f"Your {circ} has {space} left. Remove a {gate} to place another one."
 class CommonPopups(Enum):
     LockedDoor = ("Door is locked!", _locked_door())
+    EventDoor = (Config.scientist_name(), "Hmm, I think we should complete the current task first.")
+    WrongDirectionDoor = (Config.scientist_name(), "We sadly cannot access the door from this direction.")
     EntangledDoor = ("Door is entangled!", _entangled_door())
     TutorialBlocked = ("Halt!", _tutorial_blocked())
     NotEnoughMoney = ("$$$", _not_enough_money())
@@ -181,3 +231,14 @@ class CommonPopups(Enum):
 
     def show(self):
         Popup.message(self.__title, self.__text, self.__color)
+
+
+class CommonQuestions(Enum):
+    GoingBack = "We are not done yet. \nDo you really want to go back to the spaceship?"
+
+    def __init__(self, text: str):
+        self.__text = text
+
+    def ask(self, callback: Callable[[bool], None]):
+        Popup.message(Config.scientist_name(), self.__text, PopupConfig.default_color())
+        ConfirmationPopup.ask(self.__text, callback)

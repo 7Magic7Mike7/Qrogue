@@ -1,0 +1,56 @@
+Qrogue<
+
+[Layout]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+| __ .. __ .. __ .. oh .. __ .. __ .. __ |
+| ..    ..    ..    ==    ..    ..    .. |
+| __ .. __ .. __ .. SR .. __ .. __ .. __ |
+| ..    ..    ..    ..    ..    ..    .. |
+| __ .. __ .. __ .. __ .. __ .. __ .. __ |
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[Custom Rooms]
+oh (Wild):
+#############
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+#############
+c *key 2 
+0 *stv *rewards
+
+c *coin 5; t *8093 		// nothing happens if we specify a trigger that is not used
+r [1, -0, +0, 0j] *hp
+$ *mixedPool 3
+c *key 1
+
+cc (visible Wild):
+#############
+#     _     #
+#     _     #
+# _ _ 0 _ _ #
+#     _     #
+#     _     #
+#############
+
+
+[Hallways]
+01 (locked; ; )
+
+[StateVector Pools]
+custom
+*myStvPool [ [0j, -0j, -1j, +0], [0.5, -.5j, +.5, 0.5j ] ];  
+            default rewards: random *defaultStvRewardPool
+
+default random [ [.707, +0, -0 + 4j, .707j] ]
+
+[Reward Pools]
+custom 
+*myRewardPool [key 2, coin 3, gate *H, gate *x, gate *CxGate]
+*defaultStvRewardPool [coin 2, key 1]
+
+default ordered *myRewards
+
+>Qrogue

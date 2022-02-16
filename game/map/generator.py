@@ -1,14 +1,18 @@
+from abc import ABC, abstractmethod
 from enum import IntEnum
+from typing import Callable
 
+from game.achievements import AchievementManager
 from game.actors.factory import EnemyFactory, RiddleFactory, TargetDifficulty, BossFactory
 from game.callbacks import CallbackPack
 from game.collectibles import pickup, consumable
 from game.collectibles.factory import GateFactory, ShopFactory
 from game.map import tiles
+from game.map.level_map import LevelMap
 from game.map.map import Map
 from game.map.navigation import Coordinate, Direction
 from game.map.rooms import Hallway, WildRoom, SpawnRoom, ShopRoom, RiddleRoom, GateRoom, BossRoom
-from game.actors.player import Player as PlayerActor
+from game.actors.robot import Robot
 from util.logger import Logger
 from util.my_random import MyRandom, RandomManager
 
@@ -17,7 +21,7 @@ class _Code(IntEnum):
     # meta codes
     PriorityMul = -1
     Free = PriorityMul  # best priority for free, unbiased cells
-    Blocked = 0 # all before Blocked is free, all after Blocked is already taken
+    Blocked = 0  # all before Blocked is free, all after Blocked is already taken
     # room codes
     Spawn = 10
     Shop = 40
@@ -84,24 +88,22 @@ class _Code(IntEnum):
             return "W"
         return "#"
 
+    @staticmethod
+    def from_enum_string(enum_string: str) -> "_Code":
+        if enum_string.startswith("_Code"):
+            enum_string = enum_string[enum_string.index(".") + 1:]
+        return _Code[enum_string]
 
-class LayoutGenerator:
+
+class RandomLayoutGenerator:
     __MIN_AREA = 10
-    __MAX_WALKS = 100
-    __PCM = 0.5     # priority corner multiplier
-    __PRIORITY_FILTER = [
-        Direction.North + Direction.West, Direction.North, Direction.North + Direction.East,
-        Direction.West, Direction.East,
-        Direction.South + Direction.West, Direction.South, Direction.South + Direction.East,
-    ]
-    __PRIORITY_WEIGHTS = [__PCM, 1, __PCM, 1, 1, __PCM, 1, __PCM]
     __MIN_NORMAL_ROOMS = 4
 
     def __init__(self, seed: int, width: int, height: int):
-        self.__seed = seed      # todo remove
-        if width * height < LayoutGenerator.__MIN_AREA:
+        self.__seed = seed
+        if width * height < RandomLayoutGenerator.__MIN_AREA:
             Logger.instance().throw(ValueError(f"width={width}, height={height} create a too small grid "
-                             f"(minimal grid area = {LayoutGenerator.__MIN_AREA}). Please use bigger values!"))
+                                               f"(minimal grid area = {RandomLayoutGenerator.__MIN_AREA}). Please use bigger values!"))
         self.__rm = MyRandom(seed)
         self.__width = width
         self.__height = height
@@ -283,10 +285,10 @@ class LayoutGenerator:
                     if self.__is_corner(wild_room):
                         # if the connected WildRoom is in the corner, we swap position between it and the SpecialRoom
                         self.__set(wild_room, code)
-                        self.__place_wild(wild_room, tiles.Door(direction.opposite(), locked=True))
+                        self.__place_wild(wild_room, tiles.Door(direction.opposite(), tiles.DoorOpenState.KeyLocked))
                         return wild_room
                     else:
-                        self.__place_wild(pos, tiles.Door(direction, locked=True))
+                        self.__place_wild(pos, tiles.Door(direction, tiles.DoorOpenState.KeyLocked))
                         return pos
             except NotImplementedError:
                 print("ERROR!")
@@ -426,8 +428,8 @@ class LayoutGenerator:
         #        self.__add_hallway(spawn_pos, new_pos, door)
 
         self.__new_prio()
-        if len(self.__normal_rooms) < LayoutGenerator.__MIN_NORMAL_ROOMS:
-            self.__prio_sum -= (len(self.__normal_rooms) + len(special_rooms))     # subtract now blocked Rooms
+        if len(self.__normal_rooms) < RandomLayoutGenerator.__MIN_NORMAL_ROOMS:
+            self.__prio_sum -= (len(self.__normal_rooms) + len(special_rooms))  # subtract now blocked Rooms
             pos = self.__random_coordinate()
             self.__set(pos, _Code.Wild)
 
@@ -449,8 +451,6 @@ class LayoutGenerator:
             if len(neighbors) > 0:
                 direction, _, new_pos = self.__rm.get_element(neighbors)
                 self.__add_hallway(spawn_pos, new_pos, tiles.Door(direction))
-            else:
-                pass    # todo: add new WR?
 
         success = True
         # as last step, add missing Hallways and WildRooms to connect every SpecialRoom with the SpawnRoom
@@ -517,57 +517,80 @@ class LayoutGenerator:
         return str_rep
 
 
-class DungeonGenerator:
-    WIDTH = Map.WIDTH
-    HEIGHT = Map.HEIGHT
-    __MIN_ENEMY_FACTORY_CHANCE = 0.45
-    __MAX_ENEMY_FACTORY_CHANCE = 0.7
+class DungeonGenerator(ABC):
+    WIDTH = Map.MAX_WIDTH
+    HEIGHT = Map.MAX_HEIGHT
 
-    def __init__(self, seed: int):
-        self.__width = DungeonGenerator.WIDTH
-        self.__height = DungeonGenerator.HEIGHT
-        self.__layout = LayoutGenerator(seed, self.__width, self.__height)
+    def __init__(self, seed: int, width: int = WIDTH, height: int = HEIGHT):
+        self.__seed = seed
+        self._width = width
+        self._height = height
 
     @property
     def seed(self) -> int:
-        return self.__layout.seed
+        return self.__seed
 
-    def generate(self, player: PlayerActor, cbp: CallbackPack) -> (Map, bool):
+    @property
+    def width(self) -> int:
+        return self._width
+
+    @property
+    def height(self) -> int:
+        return self._height
+
+    @abstractmethod
+    def generate(self, cbp: CallbackPack, data) -> (LevelMap, bool):
+        pass
+
+
+class RandomDungeonGenerator(DungeonGenerator):
+    __MIN_ENEMY_FACTORY_CHANCE = 0.45
+    __MAX_ENEMY_FACTORY_CHANCE = 0.7
+
+    def __init__(self, seed: int, load_map_callback: Callable[[str], None], achievement_manager: AchievementManager,
+                 width: int = DungeonGenerator.WIDTH, height: int = DungeonGenerator.HEIGHT):
+        super(RandomDungeonGenerator, self).__init__(seed, width, height)
+        self.__load_map = load_map_callback
+        self.__achievement_manager = achievement_manager
+        self.__layout = RandomLayoutGenerator(self.seed, width, height)
+
+    def generate(self, cbp: CallbackPack, data: Robot) -> (LevelMap, bool):
         # Testing: seeds from 0 to 500_000 were successful
+        robot = data
 
         rm = RandomManager.create_new()     # needed for WildRooms
         gate_factory = GateFactory.default()
         shop_factory = ShopFactory.default()
-        riddle_factory = RiddleFactory.default(player)
-        boss_factory = BossFactory.default(player)
+        riddle_factory = RiddleFactory.default(robot)
+        boss_factory = BossFactory.default(robot)
 
-        gate = gate_factory.produce()
-        riddle = riddle_factory.produce()
-        shop_items = shop_factory.produce()
-        dungeon_boss = boss_factory.produce([gate])    # todo based on chance also add gates from riddle or shop_items?
+        gate = gate_factory.produce(rm)
+        riddle = riddle_factory.produce(rm)
+        shop_items = shop_factory.produce(rm, num_of_items=3)
+        dungeon_boss = boss_factory.produce([gate])  # todo based on chance also add gates from riddle or shop_items?
 
         enemy_factories = [
-            EnemyFactory(player, cbp.start_fight, TargetDifficulty(
+            EnemyFactory(cbp.start_fight, TargetDifficulty(
                 2, [pickup.Coin(2), pickup.Heart()]
             )),
-            EnemyFactory(player, cbp.start_fight, TargetDifficulty(
+            EnemyFactory(cbp.start_fight, TargetDifficulty(
                 2, [pickup.Coin(1), pickup.Coin(2), pickup.Coin(2), pickup.Coin(3), pickup.Key(), pickup.Heart()]
             )),
-            EnemyFactory(player, cbp.start_fight, TargetDifficulty(
+            EnemyFactory(cbp.start_fight, TargetDifficulty(
                 3, [pickup.Coin(1), pickup.Coin(5), pickup.Key(), pickup.Heart(), consumable.HealthPotion(2)]
             )),
-            EnemyFactory(player, cbp.start_fight, TargetDifficulty(
+            EnemyFactory(cbp.start_fight, TargetDifficulty(
                 3, [pickup.Coin(1), pickup.Coin(1), consumable.HealthPotion(3)]
             )),
         ]
         enemy_factory_priorities = [0.25, 0.35, 0.3, 0.1]
 
-        rooms = [[None for x in range(self.__width)] for y in range(self.__height)]
+        rooms = [[None for _ in range(self.width)] for _ in range(self.height)]
         spawn_room = None
         created_hallways = {}
         if self.__layout.generate():
-            for y in range(DungeonGenerator.HEIGHT):
-                for x in range(DungeonGenerator.WIDTH):
+            for y in range(self.height):
+                for x in range(self.width):
                     pos = Coordinate(x, y)
                     code = self.__layout.get_room(pos)
                     if code and code > _Code.Blocked:
@@ -606,24 +629,26 @@ class DungeonGenerator:
                         room = None
                         if code == _Code.Spawn:
                             spawn_room = pos
-                            room = SpawnRoom(north_hallway=room_hallways[Direction.North],
-                                             east_hallway=room_hallways[Direction.East],
-                                             south_hallway=room_hallways[Direction.South],
-                                             west_hallway=room_hallways[Direction.West],
-                                             )
+                            room = SpawnRoom(self.__load_map,
+                                north_hallway=room_hallways[Direction.North],
+                                east_hallway=room_hallways[Direction.East],
+                                south_hallway=room_hallways[Direction.South],
+                                west_hallway=room_hallways[Direction.West],
+                                )
                         elif code == _Code.Wild:
                             enemy_factory = rm.get_element_prioritized(enemy_factories, enemy_factory_priorities)
                             room = WildRoom(
                                 enemy_factory,
-                                chance=rm.get(DungeonGenerator.__MIN_ENEMY_FACTORY_CHANCE,
-                                              DungeonGenerator.__MAX_ENEMY_FACTORY_CHANCE),
+                                chance=rm.get(RandomDungeonGenerator.__MIN_ENEMY_FACTORY_CHANCE,
+                                              RandomDungeonGenerator.__MAX_ENEMY_FACTORY_CHANCE),
                                 north_hallway=room_hallways[Direction.North],
                                 east_hallway=room_hallways[Direction.East],
                                 south_hallway=room_hallways[Direction.South],
                                 west_hallway=room_hallways[Direction.West],
                             )
                         else:
-                            hw = room_hallways[direction]   # special rooms have exactly 1 neighbor
+                            # special rooms have exactly 1 neighbor which is already stroed in direction
+                            hw = room_hallways[direction]
                             if code == _Code.Shop:
                                 room = ShopRoom(hw, direction, shop_items, cbp.visit_shop)
                             elif code == _Code.Riddle:
@@ -635,7 +660,8 @@ class DungeonGenerator:
                         if room:
                             rooms[y][x] = room
             if spawn_room:
-                my_map = Map(self.seed, rooms, player, spawn_room, cbp)
+                my_map = LevelMap(f"Expedition {self.seed}", self.seed, rooms, robot, spawn_room,
+                                  self.__achievement_manager)
                 return my_map, True
             else:
                 return None, False

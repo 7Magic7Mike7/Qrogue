@@ -1,29 +1,45 @@
 from enum import IntEnum
+from typing import List
 
 from py_cui.keys import *
 
 
 class Keys(IntEnum):
     MoveUp = 0
-    MoveRight = 1
-    MoveDown = 2
-    MoveLeft = 3
+    MoveRight = MoveUp + 1
+    MoveDown = MoveUp + 2
+    MoveLeft = MoveUp + 3
 
-    SelectionUp = 4
-    SelectionRight = 5
-    SelectionDown = 6
-    SelectionLeft = 7
+    SelectionUp = MoveLeft + 1
+    SelectionRight = SelectionUp + 1
+    SelectionDown = SelectionUp + 2
+    SelectionLeft = SelectionUp + 3
 
-    PopupClose = 8
-    PopupScrollUp = 9
-    PopupScrollDown = 10
+    PopupClose = SelectionLeft + 1
+    PopupScrollUp = PopupClose + 1
+    PopupScrollDown = PopupClose + 2
 
-    Action = 11
-    Pause = 12
+    Action = PopupScrollDown + 1
+    Cancel = Action + 1
+    Pause = Cancel + 1
 
-    Render = 13
-    PrintScreen = 14
-    Escape = 15
+    HotKey1 = Pause + 1
+    HotKey2 = Pause + 2
+    HotKey3 = Pause + 3
+    HotKey4 = Pause + 4
+    HotKey5 = Pause + 5
+    HotKey6 = Pause + 6
+    HotKey7 = Pause + 7
+    HotKey8 = Pause + 8
+    HotKey9 = Pause + 9
+    HotKey0 = Pause + 10
+
+    Render = HotKey0 + 1
+    PrintScreen = Render + 1
+    StopSimulator = PrintScreen + 1
+
+    CheatInput = StopSimulator + 1
+    CheatList = CheatInput + 1
 
     Invalid = 126
 
@@ -62,26 +78,42 @@ class Controls:
 
     def __init__(self):
         self.__pycui_keys = [
-            KEY_UP_ARROW,
-            KEY_RIGHT_ARROW,
-            KEY_DOWN_ARROW,
-            KEY_LEFT_ARROW,
-
-            KEY_UP_ARROW,
-            KEY_RIGHT_ARROW,
-            KEY_DOWN_ARROW,
-            KEY_LEFT_ARROW,
-
+            # move
+            [KEY_UP_ARROW, KEY_W_LOWER],
+            [KEY_RIGHT_ARROW, KEY_D_LOWER],
+            [KEY_DOWN_ARROW, KEY_S_LOWER],
+            [KEY_LEFT_ARROW, KEY_A_LOWER],
+            # select
+            [KEY_UP_ARROW, KEY_W_LOWER],
+            [KEY_RIGHT_ARROW, KEY_D_LOWER],
+            [KEY_DOWN_ARROW, KEY_S_LOWER],
+            [KEY_LEFT_ARROW, KEY_A_LOWER],
+            # popups
             [KEY_ESCAPE, KEY_SPACE, KEY_ENTER],
-            KEY_UP_ARROW,
-            KEY_DOWN_ARROW,
+            [KEY_UP_ARROW, KEY_W_LOWER],
+            [KEY_DOWN_ARROW, KEY_S_LOWER],
 
-            KEY_SPACE,
-            KEY_P_LOWER,
+            [KEY_SPACE, KEY_ENTER],     # action
+            [KEY_BACKSPACE, KEY_A_UPPER, KEY_SHIFT_LEFT],  # cancel/back
+            [KEY_P_LOWER, KEY_TAB],  # pause    (Escape doesn't work here due to its special purpose for the engine)
 
-            KEY_R_LOWER,
-            KEY_CTRL_P,
-            KEY_ESCAPE,
+            # special purpose hotkeys
+            [KEY_1],  # Fight: Adapt (Add/Remove)
+            [KEY_2],  # Fight: Commit
+            [KEY_3],  # Fight: Reset
+            [KEY_4],  # Fight: Items
+            [KEY_5],  # Fight: Help
+            [KEY_6],  # Fight: Flee
+            [KEY_7],
+            [KEY_8],
+            [KEY_9],
+            [KEY_0],
+
+            [KEY_CTRL_R],  # render screen
+            [KEY_CTRL_P],   # print screen
+            [KEY_ESCAPE],   # stop simulator
+            [KEY_CTRL_I],   # cheat input
+            [KEY_CTRL_L],   # cheat list
         ]
 
     def encode(self, key_pressed: int) -> Keys:
@@ -95,7 +127,6 @@ class Controls:
                 return Keys.from_index(i)
         return Keys.Invalid
 
-
     def decode(self, key_code: int) -> int:
         """
         Decodes a code representation to a corresponding Keys element
@@ -105,70 +136,20 @@ class Controls:
         if key_code == Keys.Invalid.code:
             return None
         key = Keys.from_code(key_code)
+        return self.get_key(key)
+
+    def get_keys(self, key: Keys) -> List[int]:
         return self.__pycui_keys[key.num]
 
-    def get(self, key: Keys) -> int:
-        return self.__pycui_keys[key.num]
+    def get_key(self, key: Keys, index: int = 0):
+        keys = self.get_keys(key)
+        if 0 <= index < len(keys):
+            return keys[index]
+        return keys[0]
 
     @property
-    def move_up(self) -> int:
-        return self.__pycui_keys[Keys.MoveUp.num]
-
-    @property
-    def move_right(self) -> int:
-        return self.__pycui_keys[Keys.MoveRight.num]
-
-    @property
-    def move_down(self) -> int:
-        return self.__pycui_keys[Keys.MoveDown.num]
-
-    @property
-    def move_left(self) -> int:
-        return self.__pycui_keys[Keys.MoveLeft.num]
-
-    @property
-    def selection_up(self) -> int:
-        return self.__pycui_keys[Keys.SelectionUp.num]
-
-    @property
-    def selection_right(self) -> int:
-        return self.__pycui_keys[Keys.SelectionRight.num]
-
-    @property
-    def selection_down(self) -> int:
-        return self.__pycui_keys[Keys.SelectionDown.num]
-
-    @property
-    def selection_left(self) -> int:
-        return self.__pycui_keys[Keys.SelectionLeft.num]
-
-    @property
-    def popup_close(self) -> "list of ints":
-        return self.__pycui_keys[Keys.PopupClose.num]
-
-    @property
-    def popup_scroll_up(self) -> int:
-        return self.__pycui_keys[Keys.PopupScrollUp.num]
-
-    @property
-    def popup_scroll_down(self) -> int:
-        return self.__pycui_keys[Keys.PopupScrollDown.num]
-
-    @property
-    def action(self) -> int:
+    def action(self) -> List[int]:
         return self.__pycui_keys[Keys.Action.num]
-
-    @property
-    def pause(self) -> int:
-        return self.__pycui_keys[Keys.Pause.num]
-
-    @property
-    def render(self) -> int:
-        return self.__pycui_keys[Keys.Render.num]
-
-    @property
-    def print_screen(self) -> int:
-        return self.__pycui_keys[Keys.PrintScreen.num]
 
 
 class Pausing:

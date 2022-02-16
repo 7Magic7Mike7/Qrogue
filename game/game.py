@@ -1,6 +1,5 @@
 
 from game.controls import Controls
-from util.key_logger import KeyLogger
 from util.logger import Logger
 from util.my_random import RandomManager
 from widgets.qrogue_pycui import QrogueCUI

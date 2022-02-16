@@ -26,7 +26,7 @@ class Logger(py_cui.debug.PyCUILogger):
             self.__error_popup = None
             self.__save_file = PathConfig.new_log_file(seed)
             self.__buffer_size = 0
-            self.__buffer = []
+            self.__buffer = [Config.get_log_head(seed)]
             Logger.__instance = self
 
     def set_popup(self, message_popup_function: "void(str, str)", error_popup_function: "void(str, str)") -> None:
@@ -50,15 +50,15 @@ class Logger(py_cui.debug.PyCUILogger):
     def show_error(self, message) -> None:
         self.__error_popup("ERROR", str(message))
 
-    def error(self, message, **kwargs) -> None:
-        self.__error_popup("ERROR", str(message))
+    def error(self, message, show: bool = True, **kwargs) -> None:
+        if show:
+            self.__error_popup("ERROR", str(message))
         highlighting = "\n----------------------------------\n"
         self.info(f"{highlighting}ERROR |{message}{highlighting}")
-        KeyLogger.instance().log_error(message)
 
     def throw(self, error) -> None:
         print(error)
-        self.__write(str(error))
+        self.__write(f"[ERROR] {error}")
         self.flush()
         raise error
 

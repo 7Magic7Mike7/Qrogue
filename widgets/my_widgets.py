@@ -1,8 +1,10 @@
 from abc import ABC, abstractmethod
+from typing import List, Any, Callable, Tuple
 
 from py_cui.widgets import BlockLabel
 
-from game.actors.player import Player as PlayerActor
+from game.actors.robot import Robot
+from game.controls import Controls, Keys
 from game.logic.instruction import Instruction
 from game.logic.qubit import StateVector
 from game.map.map import Map
@@ -10,12 +12,28 @@ from game.map.navigation import Direction
 from game.map.rooms import Area, Placeholder
 from util.config import ColorConfig
 from util.logger import Logger
+from util import util_functions as uf
 from widgets.renderable import Renderable
 
 
 class MyBaseWidget(BlockLabel):
-    def __init__(self, id, title, grid, row, column, row_span, column_span, padx, pady, center, logger):
-        super().__init__(id, title, grid, row, column, row_span, column_span, padx, pady, center, logger)
+    def __init__(self, wid, title, grid, row, column, row_span, column_span, padx, pady, center, logger):
+        super().__init__(wid, title, grid, row, column, row_span, column_span, padx, pady, center, logger)
+
+    def set_title(self, title: str) -> None:
+        super(MyBaseWidget, self).set_title(title)
+
+    def get_title(self) -> str:
+        return super(MyBaseWidget, self).get_title()
+
+    def add_text_color_rule(self, regex: str, color: int, rule_type: str, match_type: str = 'line',
+                            region: List[int] = [0,1], include_whitespace: bool=False, selected_color=None) -> None:
+        super(MyBaseWidget, self).add_text_color_rule(regex, color, rule_type, match_type, region, include_whitespace,
+                                                      selected_color)
+
+    def add_key_command(self, keys: List[int], command: Callable[[],Any]) -> Any:
+        for key in keys:
+            super(MyBaseWidget, self).add_key_command(key, command)
 
 
 class Widget(Renderable, ABC):
@@ -58,19 +76,22 @@ class SimpleWidget(Widget):
 class HudWidget(Widget):
     def __init__(self, widget: MyBaseWidget):
         super().__init__(widget)
-        self.__player = None
+        self.__robot = None
         self.__render_duration = None
 
-    def set_data(self, player:PlayerActor) -> None:
-        self.__player = player
+    def set_data(self, robot: Robot) -> None:
+        self.__robot = robot
+
+    def reset_data(self) -> None:
+        self.__robot = None
 
     def update_render_duration(self, duration: float):
         self.__render_duration = duration * 1000
 
     def render(self) -> None:
-        if self.__player is not None:
-            text = f"{self.__player.cur_hp} HP   \t" \
-                   f"{self.__player.backpack.coin_count}$, {self.__player.backpack.key_count} keys"
+        if self.__robot is not None:
+            text = f"{self.__robot.cur_hp} / {self.__robot.max_hp} HP   \t" \
+                   f"{self.__robot.backpack.coin_count}$, {self.__robot.key_count()} keys"
             if self.__render_duration is not None:
                 text += f"\t\t{self.__render_duration:.2f} ms"
             self.widget.set_title(text)
@@ -82,23 +103,20 @@ class HudWidget(Widget):
 class CircuitWidget(Widget):
     def __init__(self, widget: MyBaseWidget):
         super().__init__(widget)
-        self.__player = None
+        self.__robot = None
         # highlight everything between {} (gates), |> (start) or <| (end)
         widget.add_text_color_rule("(\{.*?\}|\|.*?\>|\<.*?\|)", ColorConfig.CIRCUIT_COLOR, 'contains',
                                    match_type='regex')
 
-    def set_data(self, player: PlayerActor) -> None:
-        self.__player = player
+    def set_data(self, robot: Robot) -> None:
+        self.__robot = robot
 
     def render(self) -> None:
-        if self.__player is not None:
+        if self.__robot is not None:
             entry = "-" * (3 + Instruction.MAX_ABBREVIATION_LEN + 3)
-            row = [entry] * self.__player.circuit_space
-            rows = []
-            for i in range(self.__player.num_of_qubits):
-                rows.append(row.copy())
+            rows = [[entry] * self.__robot.circuit_space for _ in range(self.__robot.num_of_qubits)]
 
-            for i, inst in self.__player.circuit_enumerator():
+            for i, inst in self.__robot.circuit_enumerator():
                 for q in inst.qargs_iter():
                     inst_str = inst.abbreviation(q)
                     diff_len = Instruction.MAX_ABBREVIATION_LEN - len(inst_str)
@@ -112,10 +130,10 @@ class CircuitWidget(Widget):
                             inst_str = inst_str.rjust(len(inst_str) + half_diff + 1, "-")
                     rows[q][i] = inst_str
             circ_str = ""
-            q = 0
-            for row in rows:
-                circ_str += f"| q{q} >---" # add qubit
-                q += 1
+            # place qubits from top to bottom, high to low index
+            for q in range(len(rows) - 1, -1, -1):
+                circ_str += f"| q{q} >---"
+                row = rows[q]
                 for i in range(len(row)):
                     circ_str += row[i]
                     if i < len(row) - 1:
@@ -138,50 +156,11 @@ class MapWidget(Widget):
 
     def render(self) -> None:
         if self.__map is not None:
-            rows = []
-            offset = 0
-            # iterate through every row of Rooms
-            for y in range(Map.HEIGHT):
-                last_row = y == Map.HEIGHT - 1  # there are no more Hallways after the last row of Rooms
-                areas = []
-                south_hallways = []
-
-                for x in range(Map.WIDTH):
-                    last_col = x == Map.WIDTH - 1   # there are no more Hallways after the last Room in a row
-                    room = self.__map.room_at(x, y)
-                    if room is None:
-                        areas.append(Placeholder.room())
-                        if not last_col:
-                            areas.append(Placeholder.vertical())
-                        if not last_row:
-                            south_hallways.append(Placeholder.horizontal().get_row_str(0))
-
-                    else:
-                        areas.append(room)
-                        if not last_col:
-                            hallway = room.get_hallway(Direction.East, throw_error=False)
-                            if hallway is None:
-                                areas.append(Placeholder.vertical())
-                            else:
-                                areas.append(hallway)
-                        if not last_row:
-                            hallway = room.get_hallway(Direction.South, throw_error=False)
-                            if hallway is None:
-                                south_hallways.append(Placeholder.horizontal().get_row_str(0))
-                            else:
-                                south_hallways.append(hallway.get_row_str(0))
-
-                rows += ([""] * Area.UNIT_HEIGHT)   # initialize the new "block" of rows with empty strings
-                for area in areas:
-                    for ry in range(Area.UNIT_HEIGHT):
-                        rows[offset + ry] += area.get_row_str(ry)
-                rows.append(Area.void().get_img().join(south_hallways))
-                offset += Area.UNIT_HEIGHT + 1
-
-            # add player
-            x = self.__map.player_pos.x
-            y = self.__map.player_pos.y
-            rows[y] = rows[y][0:x] + self.__map.player_tile.get_img() + rows[y][x+1:]
+            rows = self.__map.row_strings()
+            # add robot
+            x = self.__map.controllable_pos.x
+            y = self.__map.controllable_pos.y
+            rows[y] = rows[y][0:x] + self.__map.controllable_tile.get_img() + rows[y][x + 1:]
 
             self.widget.set_title("\n".join(rows))
 
@@ -193,14 +172,12 @@ class MapWidget(Widget):
         return self.__map.move(direction)
 
 
-class StateVectorWidget(Widget):
-    def __init__(self, widget: MyBaseWidget, headline: str, diff: bool = False):
+class TargetStateVectorWidget(Widget):
+    def __init__(self, widget: MyBaseWidget, headline: str):
         super().__init__(widget)
         self.__headline = headline
         self.__state_vector = None
         widget.add_text_color_rule("~.*~", ColorConfig.STV_HEADING_COLOR, 'contains', match_type='regex')
-        if diff:
-            widget.add_text_color_rule("0", ColorConfig.CORRECT_AMPLITUDE_COLOR, "startswith", match_type="regex")
 
     def set_data(self, state_vector: StateVector) -> None:
         self.__state_vector = state_vector
@@ -214,8 +191,44 @@ class StateVectorWidget(Widget):
         self.widget.set_title("")
 
 
+class CurrentStateVectorWidget(Widget):
+    def __init__(self, widget: MyBaseWidget, headline: str):
+        super().__init__(widget)
+        self.__headline = headline
+        self.__state_vector = None
+        self.__diff_vector = None
+        widget.add_text_color_rule("~.*~", ColorConfig.STV_HEADING_COLOR, 'contains', match_type='regex')
+        widget.add_text_color_rule("\(0\)", ColorConfig.CORRECT_AMPLITUDE_COLOR, "contains", match_type="regex")
+        #widget.add_text_color_rule("\(\d\)", ColorConfig.CORRECT_AMPLITUDE_COLOR, "contains", match_type="regex")
+        widget.add_text_color_rule("\([^0].*\)", ColorConfig.WRONG_AMPLITUDE_COLOR, "contains", match_type="regex")
+
+    def set_data(self, state_vectors: Tuple[StateVector, StateVector]) -> None:
+        self.__state_vector, target = state_vectors
+        self.__diff_vector = target.get_diff(self.__state_vector)
+
+    def render(self) -> None:
+        if self.__state_vector is not None:
+            str_rep = f"~{self.__headline}~\n"
+            stv_rows = self.__state_vector.to_string().split('\n')
+            diff_rows = ["(" + val + ")" for val in self.__diff_vector.to_string().split('\n')]
+
+            max_stv_width = max([len(val) for val in stv_rows])
+            max_diff_width = max([len(val) for val in diff_rows])
+
+            # last row is empty due to the trailing \n and therefore uninteresting to us
+            for i in range(len(stv_rows) - 1):
+                str_rep += uf.center_string(stv_rows[i], max_stv_width, uneven_left=True)
+                str_rep += "  "
+                str_rep += uf.center_string(diff_rows[i], max_diff_width, uneven_left=False)
+                str_rep += "\n"
+            self.widget.set_title(str_rep)
+
+    def render_reset(self) -> None:
+        self.widget.set_title("")
+
+
 class QubitInfoWidget(Widget):
-    def __init__(self, widget: MyBaseWidget, left_aligned: bool):
+    def __init__(self, widget: MyBaseWidget, left_aligned: bool = True):
         super(QubitInfoWidget, self).__init__(widget)
         self.__left_aligned = left_aligned
         self.__text = ""
@@ -257,7 +270,8 @@ class QubitInfoWidget(Widget):
 class SelectionWidget(Widget):
     __COLUMN_SEPARATOR = "   "
 
-    def __init__(self, widget: MyBaseWidget, columns: int = 1, is_second: bool = False, stay_selected: bool = False):
+    def __init__(self, widget: MyBaseWidget, controls: Controls, columns: int = 1, is_second: bool = False,
+                 stay_selected: bool = False):
         super(SelectionWidget, self).__init__(widget)
         self.__columns = columns
         self.__is_second = is_second
@@ -265,7 +279,19 @@ class SelectionWidget(Widget):
         self.__index = 0
         self.__choices = []
         self.__callbacks = []
-        self.widget.add_text_color_rule(f"->", ColorConfig.SELECTION_HIGHLIGHT, 'contains', match_type='regex')
+        self.widget.add_text_color_rule(f"->", ColorConfig.SELECTION_COLOR, 'contains', match_type='regex')
+
+        # sadly cannot use a loop here because how lambda expressions work the index would be the same for all calls
+        self.widget.add_key_command(controls.get_keys(Keys.HotKey1), lambda: self.__jump_to_index(0))
+        self.widget.add_key_command(controls.get_keys(Keys.HotKey2), lambda: self.__jump_to_index(1))
+        self.widget.add_key_command(controls.get_keys(Keys.HotKey3), lambda: self.__jump_to_index(2))
+        self.widget.add_key_command(controls.get_keys(Keys.HotKey4), lambda: self.__jump_to_index(3))
+        self.widget.add_key_command(controls.get_keys(Keys.HotKey5), lambda: self.__jump_to_index(4))
+        self.widget.add_key_command(controls.get_keys(Keys.HotKey6), lambda: self.__jump_to_index(5))
+        self.widget.add_key_command(controls.get_keys(Keys.HotKey7), lambda: self.__jump_to_index(6))
+        self.widget.add_key_command(controls.get_keys(Keys.HotKey8), lambda: self.__jump_to_index(7))
+        self.widget.add_key_command(controls.get_keys(Keys.HotKey9), lambda: self.__jump_to_index(8))
+        self.widget.add_key_command(controls.get_keys(Keys.HotKey0), lambda: self.__jump_to_index(9))
 
     @property
     def num_of_choices(self) -> int:
@@ -281,8 +307,7 @@ class SelectionWidget(Widget):
 
     def set_data(self, data: "tuple of list of str and list of SelectionCallbacks") -> None:
         self.render_reset()
-        self.__choices = data[0]
-        self.__callbacks = data[1]
+        self.__choices, self.__callbacks = data
         choice_length = 0
         for choice in self.__choices:
             if len(choice) > choice_length:
@@ -386,6 +411,15 @@ class SelectionWidget(Widget):
                 self.__index -= 1
                 if self.__index < 0:
                     self.__index += self.__columns
+        self.render()
+
+    def __jump_to_index(self, index: int):
+        if index < 0:
+            self.__index = 0
+        elif self.num_of_choices <= index:
+            self.__index = self.num_of_choices - 1
+        else:
+            self.__index = index
         self.render()
 
     def use(self) -> bool:

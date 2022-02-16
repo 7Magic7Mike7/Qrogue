@@ -93,6 +93,15 @@ class Coordinate:
     def resolve(self) -> (int, int):
         return self.__x, self.__y
 
+    def linearize(self, row_width: int) -> int:
+        """
+        Returns the index this Coordinate would have if it was stored in a row-wise fashion in a 1D array.
+
+        :param row_width: width of one row of the grid stored in a corresponding 1D array
+        :return:
+        """
+        return self.x + self.y * row_width
+
     def __add__(self, other) -> "Coordinate":
         if isinstance(other, Direction):
             return Coordinate(self.x + other.x, self.y + other.y)
