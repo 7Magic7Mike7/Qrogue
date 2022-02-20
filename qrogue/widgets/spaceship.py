@@ -7,10 +7,11 @@ from qrogue.dungeon_editor.dungeon_parser.QrogueLevelGenerator import QrogueLeve
 from qrogue.dungeon_editor.world_parser.QrogueWorldGenerator import QrogueWorldGenerator
 from qrogue.game.actors.controllable import Controllable
 from qrogue.game.actors.player import Player
-from qrogue.game.actors.robot import Robot
+from qrogue.game.actors.robot import Robot, LukeBot
 from qrogue.game.callbacks import CallbackPack
 from qrogue.game.controls import Controls
 from qrogue.game.map import tiles
+from qrogue.game.map.generator import RandomDungeonGenerator
 from qrogue.game.map.navigation import Direction, Coordinate
 from qrogue.game.map.tiles import WalkTriggerTile, TileCode
 from qrogue.game.map.world_map import WorldMap
@@ -278,6 +279,15 @@ class SpaceshipWidget(Widget):
                     Logger.instance().error(f"Could not load level \"{map_name}\"!")
             except FileNotFoundError:
                 Logger.instance().error(f"Failed to open the specified level-file: {map_name}")
+        elif map_name.lower() == "expedition":
+            seed = self.__rm.get_seed()
+            generator = RandomDungeonGenerator(seed, self.__save_data, self.__load_map)
+            expedition, success = generator.generate(LukeBot())
+            if success:
+                self.__in_level = True
+                self.__cbp.start_level(seed, expedition)
+            else:
+                Logger.instance().error(f"Could not create expedition with seed = {seed}")
         elif map_name == Config.back_map_string():
             if self.__in_level:
                 # if we are currently in a level we return to the current world
@@ -289,6 +299,7 @@ class SpaceshipWidget(Widget):
             else:
                 # if we are currently in a world we return to the hub-world
                 self.__show_world(self.__save_data, self.__worlds)
+                self.__cur_world = self.__worlds
         else:
             Logger.instance().error(f"Invalid map to load: {map_name}")
 
