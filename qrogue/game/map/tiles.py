@@ -81,6 +81,11 @@ class WalkTriggerTile(Tile):
     def __init__(self, code: TileCode):
         super().__init__(code)
         self.__event_id = None
+        self.__trigger_event = None
+
+    def _late_trigger(self) -> Any:
+        if self.__trigger_event and self.__event_id:
+            return self.__trigger_event(self.__event_id)
 
     def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
         return True
@@ -90,18 +95,18 @@ class WalkTriggerTile(Tile):
 
     def trigger(self, direction: Direction, controllable: Controllable, trigger_event_callback: Callable[[str], Any]) \
             -> Any:
-        self._on_walk(direction, controllable)
-        if self.__event_id:
+        self.__trigger_event = trigger_event_callback
+        if self._on_walk(direction, controllable) and self.__event_id:
             return trigger_event_callback(self.__event_id)
         return None
     
     @abstractmethod
-    def _on_walk(self, direction: Direction, controllable: Controllable) -> None:
+    def _on_walk(self, direction: Direction, controllable: Controllable) -> bool:
         """
         Event that is triggered when an actor moves onto this Tile
         :param direction: the Direction from which the actor moves onto this Tile
         :param controllable: the actor (e.g. Player) that is moving onto this Tile
-        :return: None
+        :return: True if we can trigger an event afterwards, False otherwise
         """
         pass
 
@@ -210,8 +215,9 @@ class Trigger(WalkTriggerTile):
         super().__init__(TileCode.Trigger)
         self.__callback = callback
 
-    def _on_walk(self, direction: Direction, controllable: Controllable) -> None:
+    def _on_walk(self, direction: Direction, controllable: Controllable) -> bool:
         self.__callback(direction, controllable)
+        return True
 
     def get_img(self):
         return self._invisible
@@ -224,8 +230,9 @@ class Teleport(WalkTriggerTile):
         self.__target_map = target_map
         self.__room = room
 
-    def _on_walk(self, direction: Direction, controllable: Controllable) -> None:
+    def _on_walk(self, direction: Direction, controllable: Controllable) -> bool:
         self.__callback(self.__target_map, self.__room)
+        return True
 
     def get_img(self):
         return "t"
@@ -253,10 +260,12 @@ class Message(WalkTriggerTile):
     def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
         return True
 
-    def _on_walk(self, direction: Direction, controllable: Controllable) -> None:
-        if self.__times > 0:
-            self.__popup.show()
+    def _on_walk(self, direction: Direction, controllable: Controllable) -> bool:
         self.__times -= 1
+        if self.__times >= 0:
+            self.__popup.show()
+            return True
+        return False
 
 
 class Riddler(WalkTriggerTile):
@@ -264,13 +273,23 @@ class Riddler(WalkTriggerTile):
         super().__init__(TileCode.Riddler)
         self.__open_riddle = open_riddle_callback
         self.__riddle = riddle
+        self.__is_active = True
 
-    def _on_walk(self, direction: Direction, controllable: Controllable) -> None:
-        if self.__riddle.is_active:
+    @property
+    def _is_active(self) -> bool:
+        if self.__is_active:
+            if not self.__riddle.is_active:
+                self._late_trigger()
+                self.__is_active = False
+        return self.__is_active
+
+    def _on_walk(self, direction: Direction, controllable: Controllable) -> bool:
+        if self._is_active:
             self.__open_riddle(controllable, self.__riddle)
+        return False
 
     def get_img(self):
-        if self.__riddle.is_active:
+        if self._is_active:
             return "?"
         else:
             return self._invisible
@@ -282,8 +301,9 @@ class ShopKeeper(WalkTriggerTile):
         self.__visit_shop = visit_shop_callback
         self.__inventory = inventory
 
-    def _on_walk(self, direction: Direction, controllable: Controllable) -> None:
+    def _on_walk(self, direction: Direction, controllable: Controllable) -> bool:
         self.__visit_shop(controllable, self.__inventory)
+        return True
 
     def get_img(self):
         return "$"
@@ -355,7 +375,7 @@ class Door(WalkTriggerTile):
             CommonPopups.WrongDirectionDoor.show()
             return False
 
-    def _on_walk(self, direction: Direction, controllable: Controllable) -> None:
+    def _on_walk(self, direction: Direction, controllable: Controllable) -> bool:
         if self.is_key_locked:
             if isinstance(controllable, Robot):
                 if not controllable.use_key():
@@ -364,6 +384,7 @@ class Door(WalkTriggerTile):
             else:
                 Logger.instance().error(f"Error! Non-Robot walked through a locked door: {controllable}")
         self.__open_state = DoorOpenState.Open
+        return True
 
     @property
     def direction(self) -> Direction:
@@ -439,9 +460,10 @@ class EntangledDoor(Door):
             return False
         return super(EntangledDoor, self).is_walkable(direction, controllable)
 
-    def _on_walk(self, direction: Direction, controllable: Controllable) -> None:
+    def _on_walk(self, direction: Direction, controllable: Controllable) -> bool:
         for door in self.__entangled_doors:
             door.__activate_entanglement_lock()
+        return True
 
     def __activate_entanglement_lock(self):
         self.__entanglement_locked = True
@@ -476,13 +498,15 @@ class Collectible(WalkTriggerTile):
     def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
         return True
 
-    def _on_walk(self, direction: Direction, controllable: Controllable) -> None:
+    def _on_walk(self, direction: Direction, controllable: Controllable) -> bool:
         if self.__active:
             name = self.__collectible.name()
             desc = self.__collectible.description()
             Popup.message(self.__collectible.name(), f"You picked up: {name}\n{desc}")
             controllable.give_collectible(self.__collectible)
             self.__active = False
+            return True
+        return False
 
 
 class Energy(WalkTriggerTile):
@@ -500,10 +524,12 @@ class Energy(WalkTriggerTile):
     def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
         return True
 
-    def _on_walk(self, direction: Direction, controllable: Controllable) -> None:
+    def _on_walk(self, direction: Direction, controllable: Controllable) -> bool:
         if self.__active:
             controllable.give_collectible(LogicalEnergy(self.__amount))
             self.__active = False
+            return True
+        return False
 
 
 class ControllableTile(Tile):
@@ -537,6 +563,23 @@ class Enemy(WalkTriggerTile):
         self.__id = id
         self.__amplitude = amplitude
         self.__rm = RandomManager.create_new()
+        self.__enemy = None
+
+    @property
+    def eid(self) -> int:
+        return self.__id
+
+    @property
+    def amplitude(self) -> float:
+        return self.__amplitude
+
+    @property
+    def _state(self) -> _EnemyState:
+        if self.__enemy:
+            if self.__state == _EnemyState.FIGHT and not self.__enemy.is_active:
+                self.__state = _EnemyState.DEAD
+                self._late_trigger()
+        return self.__state
 
     def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
         if isinstance(controllable, Robot):
@@ -548,59 +591,42 @@ class Enemy(WalkTriggerTile):
         else:
             Logger.instance().error(f"Error! Non-Robot walked over Enemy: {controllable}")
 
-    def _on_walk(self, direction: Direction, controllable: Controllable) -> None:
+    def _on_walk(self, direction: Direction, controllable: Controllable) -> bool:
         if isinstance(controllable, Robot):
             robot = controllable
-            if self.__state == _EnemyState.UNDECIDED:
-                if self.measure():
-                    enemy = self.__factory.produce(robot, self.__rm, self.__amplitude)
-                    self.__factory.start(robot, enemy, direction)
-                    self.__state = _EnemyState.DEAD
+            if self._state == _EnemyState.UNDECIDED:
+                if self.__measure():
+                    self.__fight(robot, direction)
                 else:
                     self.__state = _EnemyState.FLED
-            elif self.__state == _EnemyState.FIGHT:
+            elif self._state == _EnemyState.FIGHT:
                 if CheatConfig.is_scared_rabbit():
                     self.__state = _EnemyState.FLED
                 else:
-                    enemy = self.__factory.produce(robot, self.__rm, self.__amplitude)
-                    self.__factory.start(robot, enemy, direction)
-                    self.__state = _EnemyState.DEAD # todo check if this makes sense? couldn't it also be "robot fled"?
-            elif self.__state == _EnemyState.FREE:
+                    self.__fight(robot, direction)
+            elif self._state == _EnemyState.FREE:
                 self.__state = _EnemyState.FLED
+        return False
 
     def get_img(self):
-        if self.__state == _EnemyState.DEAD :
+        if self._state == _EnemyState.DEAD :
             return self._invisible
-        elif self.__state == _EnemyState.FLED:
+        elif self._state == _EnemyState.FLED:
             return self._invisible
         else:
             return str(self.__id)
 
-    @property
-    def id(self) -> int:
-        return self.__id
-
-    @property
-    def amplitude(self) -> float:
-        return self.__amplitude
-
-    def set_entangled_tile_callback(self, callback: "(int, )") -> bool: # todo delete
-        if self.__get_entangled_tiles is None:
-            self.__get_entangled_tiles = callback
-            return True
-        return False
-
     def _set_state(self, val: _EnemyState) -> None:
-        if self.__state == _EnemyState.UNDECIDED:
+        if self._state == _EnemyState.UNDECIDED:
             self.__state = val
         else:
             if CheatConfig.did_cheat():     # this is a legal state if we used the "Scared Rabbit" cheat
                 return
             Logger.instance().throw(RuntimeError(
-                f"Illegal enemy state! Tried to set state to {val} although it is already at {self.__state}."
+                f"Illegal enemy state! Tried to set state to {val} although it is already at {self._state}."
             ))
 
-    def measure(self):
+    def __measure(self):
         if CheatConfig.is_scared_rabbit():
             return False
 
@@ -615,14 +641,19 @@ class Enemy(WalkTriggerTile):
         for enemy in entangled_tiles:
             enemy._set_state(state)
 
-        # sometimes when there is no entanglement we have to explicitely set the state of self
-        if self.__state == _EnemyState.UNDECIDED:
+        # sometimes when there is no entanglement we have to explicitly set the state of self
+        if self._state == _EnemyState.UNDECIDED:
             self.__state = state
 
         return state == _EnemyState.FIGHT
 
+    def __fight(self, robot: Robot, direction: Direction):
+        if self.__enemy is None:
+            self.__enemy = self.__factory.produce(robot, self.__rm, flee_chance=0.5)
+        self.__factory.start(robot, self.__enemy, direction)
+
     def __str__(self) -> str:
-        return f"E({self.__id}|{self.__state})"
+        return f"E({self.__id}|{self._state})"
 
 
 class Boss(WalkTriggerTile):
@@ -630,16 +661,26 @@ class Boss(WalkTriggerTile):
         super().__init__(TileCode.Boss)
         self.__boss = boss
         self.__on_walk_callback = on_walk_callback
+        self.__is_active = True
 
-    def _on_walk(self, direction: Direction, controllable: Controllable) -> None:
+    @property
+    def _is_active(self) -> bool:
+        if self.__is_active:
+            if not self.__boss.is_active:
+                self._late_trigger()
+                self.__is_active = False
+        return self.__is_active
+
+    def _on_walk(self, direction: Direction, controllable: Controllable) -> bool:
         if isinstance(controllable, Robot):
-            if not self.__boss.is_defeated:
+            if self._is_active:
                 self.__on_walk_callback(controllable, self.__boss, direction)
         else:
             Logger.instance().error(f"Non-Robot walked on Boss! controllable = {controllable}")
+        return False
 
     def get_img(self):
-        if self.__boss.is_defeated:
-            return self._invisible
-        else:
+        if self._is_active:
             return "B"
+        else:
+            return self._invisible
