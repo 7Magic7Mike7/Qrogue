@@ -15,12 +15,13 @@ from qrogue.game.collectibles.collectible import ShopItem
 from qrogue.game.controls import Controls
 from qrogue.game.map.map import Map
 from qrogue.game.map.navigation import Direction
+from qrogue.game.map.tiles import TileCode
 from qrogue.game.save_data import SaveData
 from qrogue.util.config import GameplayConfig, PathConfig, Config
 from qrogue.util.help_texts import HelpText, HelpTextType
 from qrogue.util.logger import Logger
 from qrogue.util.my_random import RandomManager
-from qrogue.widgets.color_rules import ColorRules
+from qrogue.widgets.color_rules import ColorRules, get_color
 from qrogue.widgets.my_popups import Popup, CommonPopups
 from qrogue.widgets.my_widgets import SelectionWidget, CircuitWidget, MapWidget, SimpleWidget, HudWidget, \
     QubitInfoWidget, MyBaseWidget, Widget, CurrentStateVectorWidget, TargetStateVectorWidget
@@ -379,7 +380,8 @@ class ExploreWidgetSet(MyWidgetSet):
     def get_main_widget(self) -> MyBaseWidget:
         return self.__map_widget.widget
 
-    def set_data(self, map: Map, controllable: Controllable) -> None:
+    def set_data(self, map: Map) -> None:
+        controllable = map.controllable_tile.controllable
         if isinstance(controllable, Robot):
             self.__hud.set_data(controllable)
         else:
@@ -398,6 +400,49 @@ class ExploreWidgetSet(MyWidgetSet):
         duration = time.time() - start
         self.__hud.update_render_duration(duration)
         self.__hud.render()
+
+    def reset(self) -> None:
+        self.__map_widget.render_reset()
+
+    def move_up(self) -> None:
+        if self.__map_widget.move(Direction.Up):
+            self.render()
+
+    def move_right(self) -> None:
+        if self.__map_widget.move(Direction.Right):
+            self.render()
+
+    def move_down(self) -> None:
+        if self.__map_widget.move(Direction.Down):
+            self.render()
+
+    def move_left(self) -> None:
+        if self.__map_widget.move(Direction.Left):
+            self.render()
+
+
+class NavigationWidgetSet(MyWidgetSet):
+    def __init__(self, controls: Controls, logger, root: py_cui.PyCUI,
+                 base_render_callback: Callable[[List[Renderable]], None]):
+
+        super().__init__(controls, logger, root, base_render_callback)
+
+    def init_widgets(self, controls: Controls) -> None:
+        map_widget = self.add_block_label('MAP', 1, 0, row_span=MyWidgetSet.NUM_OF_ROWS - 1,
+                                          column_span=MyWidgetSet.NUM_OF_COLS, center=True)
+        self.__map_widget = MapWidget(map_widget)
+        map_widget.add_text_color_rule('#', get_color(TileCode.Wall), 'contains', match_type='regex')
+
+    def get_main_widget(self) -> MyBaseWidget:
+        return self.__map_widget.widget
+
+    def set_data(self, map: Map) -> None:
+        self.__map_widget.set_data(map)
+
+    def get_widget_list(self) -> List[Widget]:
+        return [
+            self.__map_widget
+        ]
 
     def reset(self) -> None:
         self.__map_widget.render_reset()
@@ -476,7 +521,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self.__hud.set_data(robot)
         self.__circuit.set_data(robot)
 
-        self.__stv_robot.set_data((robot.state_vector, target.state_vector))
+        self.__stv_robot.set_data((self._robot.state_vector, self._target.state_vector))
         self.__truth_table.set_data(robot.state_vector.num_of_qubits)
         self.__stv_target.set_data(target.state_vector)
 
@@ -557,11 +602,11 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             from qrogue.util.logger import Logger
             Logger.instance().error("Error! Target is not set!")
             return False
-        result = self._robot.update_statevector()
-        self.__stv_robot.set_data((result, self._target.state_vector))
+        self._robot.update_statevector()
+        self.__stv_robot.set_data((self._robot.state_vector, self._target.state_vector))
         self.render()
 
-        success, reward = self._target.is_reached(result)
+        success, reward = self._target.is_reached(self._robot.state_vector)
         if success:
             self._robot.give_collectible(reward)
             self._details.set_data(data=(

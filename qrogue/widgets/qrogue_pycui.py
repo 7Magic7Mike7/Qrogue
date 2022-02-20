@@ -27,7 +27,7 @@ from qrogue.widgets.my_popups import Popup, MultilinePopup, ConfirmationPopup
 from qrogue.widgets.renderable import Renderable
 from qrogue.widgets.spaceship import SpaceshipWidgetSet
 from qrogue.widgets.widget_sets import ExploreWidgetSet, FightWidgetSet, MyWidgetSet, ShopWidgetSet, \
-    RiddleWidgetSet, BossFightWidgetSet, PauseMenuWidgetSet, MenuWidgetSet, WorkbenchWidgetSet
+    RiddleWidgetSet, BossFightWidgetSet, PauseMenuWidgetSet, MenuWidgetSet, WorkbenchWidgetSet, NavigationWidgetSet
 
 
 class QrogueCUI(py_cui.PyCUI):
@@ -61,6 +61,7 @@ class QrogueCUI(py_cui.PyCUI):
                                               self.__show_world, cbp, self.__save_data)
         self.__workbench = WorkbenchWidgetSet(controls, Logger.instance(), self, self.__render,
                                               self.__continue_spaceship)
+        self.__navigation = NavigationWidgetSet(controls, Logger.instance(), self, self.__render)
 
         self.__explore = ExploreWidgetSet(controls, self.__render, Logger.instance(), self)
         self.__fight = FightWidgetSet(controls, self.__render, Logger.instance(), self, self.__continue_explore,
@@ -365,6 +366,13 @@ class QrogueCUI(py_cui.PyCUI):
         self.__workbench.selection.widget.add_key_command(self.__controls.action, self.__workbench_selection)
         self.__workbench.upgrades.widget.add_key_command(self.__controls.action, self.__workbench_upgrades)
 
+        # navigation
+        w = self.__navigation.get_main_widget()
+        w.add_key_command(self.__controls.get_keys(Keys.MoveUp), self.__navigation.move_up)
+        w.add_key_command(self.__controls.get_keys(Keys.MoveRight), self.__navigation.move_right)
+        w.add_key_command(self.__controls.get_keys(Keys.MoveDown), self.__navigation.move_down)
+        w.add_key_command(self.__controls.get_keys(Keys.MoveLeft), self.__navigation.move_left)
+
         # pause
         self.__pause.choices.widget.add_key_command(self.__controls.action, self.__pause_choices)
         self.__pause.details.widget.add_key_command(self.__controls.action, self.__pause_details)
@@ -461,7 +469,13 @@ class QrogueCUI(py_cui.PyCUI):
         if world is None:
             self.__state_machine.change_state(State.Spaceship, None)
         else:
-            self.__state_machine.change_state(State.Explore, world)
+            self.__state_machine.change_state(State.Navigation, world)
+
+    def switch_to_navigation(self, data) -> None:
+        if data is not None:
+            map = data
+            self.__navigation.set_data(map)
+        self.apply_widget_set(self.__navigation)
 
     def __start_level(self, seed: int, level: LevelMap) -> None:
         robot = level.controllable_tile.controllable
@@ -483,7 +497,7 @@ class QrogueCUI(py_cui.PyCUI):
         Popup.message("You won!", f"Congratulations, you defeated {bell} and successfully played the Tutorial!")
 
     def __start_fight(self, robot: Robot, enemy: Enemy, direction: Direction) -> None:
-        self.__state_machine.change_state(State.Fight, (enemy, robot))
+        self.__state_machine.change_state(State.Fight, (robot, enemy))
 
     def __start_boss_fight(self, robot: Robot, boss: Boss, direction: Direction):
         self.__state_machine.change_state(State.BossFight, (robot, boss))
@@ -498,7 +512,7 @@ class QrogueCUI(py_cui.PyCUI):
     def switch_to_explore(self, data) -> None:
         if data is not None:
             map = data
-            self.__explore.set_data(map, map.controllable_tile.controllable)
+            self.__explore.set_data(map)
         self.apply_widget_set(self.__explore)
 
     def __continue_explore(self) -> None:
@@ -506,9 +520,9 @@ class QrogueCUI(py_cui.PyCUI):
 
     def switch_to_fight(self, data) -> None:
         if data is not None:
-            enemy = data[0]
-            player = data[1]
-            self.__fight.set_data(player, enemy)
+            robot = data[0]
+            enemy = data[1]
+            self.__fight.set_data(robot, enemy)
         self.apply_widget_set(self.__fight)
 
     def switch_to_boss_fight(self, data) -> None:
@@ -648,6 +662,7 @@ class State(Enum):
 
     Spaceship = 7
     Workbench = 8
+    Navigation = 9
 
 
 class StateMachine:
@@ -687,4 +702,5 @@ class StateMachine:
             self.__renderer.switch_to_spaceship(data)
         elif self.__cur_state == State.Workbench:
             self.__renderer.switch_to_workbench(data)
-            Logger.instance().debug("changing to Workbench")
+        elif self.__cur_state == State.Navigation:
+            self.__renderer.switch_to_navigation(data)

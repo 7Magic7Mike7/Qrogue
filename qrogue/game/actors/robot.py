@@ -2,7 +2,7 @@
 Author: Artner Michael
 13.06.2021
 """
-
+from abc import ABC
 from typing import Tuple, List
 
 from qiskit import QuantumCircuit, transpile
@@ -217,7 +217,7 @@ class BackpackIterator:
         raise StopIteration
 
 
-class Robot(Controllable):
+class Robot(Controllable, ABC):
     def __init__(self, name: str, attributes: _Attributes, backpack: Backpack):
         super().__init__(name)
         # initialize qubit stuff (rows)
@@ -256,7 +256,7 @@ class Robot(Controllable):
     def circuit_enumerator(self):
         return enumerate(self.__instructions)
 
-    def update_statevector(self) -> StateVector:
+    def update_statevector(self):
         """
         Compiles and simulates the current circuit and saves and returns the resulting StateVector
         :return: an updated StateVector corresponding to the current circuit
@@ -265,7 +265,6 @@ class Robot(Controllable):
         job = self.__simulator.run(compiled_circuit, shots=1)
         result = job.result()
         self.__stv = StateVector(result.get_statevector(self.__circuit))
-        return self.__stv
 
     def get_instruction(self, instruction_index: int) -> Instruction:
         if 0 <= instruction_index < self.backpack.used_capacity:
