@@ -418,77 +418,84 @@ class CopyAbleRoom(Room, ABC):
 
 class MetaRoom(CopyAbleRoom):
     def __init__(self, load_map_callback: Callable[[str], None], orientation: Direction, message: str,
-                 level_to_load: str, world: bool, blocking: bool = True, north_hallway: Hallway = None,
+                 level_to_load: str, mtype: str, num: int, blocking: bool = True, north_hallway: Hallway = None,
                  east_hallway: Hallway = None, south_hallway: Hallway = None, west_hallway: Hallway = None,
                  is_spawn: bool = False):
         self.__load_map_callback = load_map_callback
         self.__orientation = orientation
         self.__message = message
         self.__level_to_load = level_to_load
-        self.__world = world
+        self.__mtype = mtype
+        self.__num = num
         self.__blocking = blocking
+        self.__is_spawn = is_spawn
 
-        if blocking:
-            if orientation.is_horizontal():
-                dash_decoration = Decoration('|')
+        if is_spawn and False:  # todo not used/wanted currently, maybe add back later
+            super(MetaRoom, self).__init__(AreaType.MetaRoom, Room.get_empty_room_tile_list(), north_hallway,
+                                           east_hallway, south_hallway, west_hallway)
+        else:
+            if blocking:
+                if orientation.is_horizontal():
+                    dash_decoration = Decoration('|')
+                else:
+                    dash_decoration = Decoration('-')
             else:
-                dash_decoration = Decoration('-')
-        else:
-            dash_decoration = Floor()   # ignore it for non-blocking since it might be placed in front of a hallway
+                dash_decoration = Floor()   # ignore it for non-blocking since it might be placed in front of a hallway
 
-        if world:
-            type_decoration = Decoration('W')
-            title = "World"
-        else:
-            type_decoration = Decoration('L')
-            title = "Level"
+            type_decoration = Decoration(mtype)
+            num_decoration = Decoration(str(num)[0])        # todo handle double digits
+            title = level_to_load
 
-        tile_list = Room.get_empty_room_tile_list()
-        msg_tile = Message.create(self.__message, title, -1)
-        level_tile = Teleport(self.__load_map_callback, level_to_load, None)
+            tile_list = Room.get_empty_room_tile_list()
+            msg_tile = Message.create(self.__message, title, -1)
+            level_tile = Teleport(self.__load_map_callback, level_to_load, None)
 
-        if orientation is Direction.North:
-            self._set(tile_list, 0, 0, type_decoration)
-            self._set(tile_list, Room.INNER_MID_X, 0, dash_decoration)
-            self._set(tile_list, 0, Room.INNER_HEIGHT - 1, msg_tile)
-            self._set(tile_list, Room.INNER_WIDTH - 1, Room.INNER_HEIGHT - 1, level_tile)
-            coordinate = Coordinate(0, Room.INNER_MID_Y - 1)
-            addition = Direction.East
+            if orientation is Direction.North:
+                self._set(tile_list, 0, 0, type_decoration)
+                self._set(tile_list, Room.INNER_MID_X, 0, dash_decoration)
+                self._set(tile_list, Room.INNER_WIDTH - 1, 0, num_decoration)
+                self._set(tile_list, 0, Room.INNER_HEIGHT - 1, msg_tile)
+                self._set(tile_list, Room.INNER_WIDTH - 1, Room.INNER_HEIGHT - 1, level_tile)
+                coordinate = Coordinate(0, Room.INNER_MID_Y - 1)
+                addition = Direction.East
 
-        elif orientation is Direction.East:
-            self._set(tile_list, Room.INNER_WIDTH-1, 0, type_decoration)
-            self._set(tile_list, Room.INNER_WIDTH-1, Room.INNER_MID_Y, dash_decoration)
-            self._set(tile_list, 0, 0, msg_tile)
-            self._set(tile_list, 0, Room.INNER_HEIGHT - 1, level_tile)
-            coordinate = Coordinate(Room.INNER_MID_X + 1, 0)
-            addition = Direction.South
+            elif orientation is Direction.East:
+                self._set(tile_list, Room.INNER_WIDTH - 1, 0, type_decoration)
+                self._set(tile_list, Room.INNER_WIDTH - 1, Room.INNER_MID_Y, dash_decoration)
+                self._set(tile_list, Room.INNER_WIDTH - 1, Room.INNER_HEIGHT - 1, num_decoration)
+                self._set(tile_list, 0, 0, msg_tile)
+                self._set(tile_list, 0, Room.INNER_HEIGHT - 1, level_tile)
+                coordinate = Coordinate(Room.INNER_MID_X + 1, 0)
+                addition = Direction.South
 
-        elif orientation is Direction.South:
-            self._set(tile_list, 0, Room.INNER_HEIGHT-1, type_decoration)
-            self._set(tile_list, Room.INNER_MID_X, Room.INNER_HEIGHT-1, dash_decoration)
-            self._set(tile_list, 0, 0, msg_tile)
-            self._set(tile_list, Room.INNER_WIDTH - 1, 0, level_tile)
-            coordinate = Coordinate(0, Room.INNER_MID_Y + 1)
-            addition = Direction.East
+            elif orientation is Direction.South:
+                self._set(tile_list, 0, Room.INNER_HEIGHT - 1, type_decoration)
+                self._set(tile_list, Room.INNER_MID_X, Room.INNER_HEIGHT - 1, dash_decoration)
+                self._set(tile_list, Room.INNER_WIDTH - 1, Room.INNER_HEIGHT - 1, num_decoration)
+                self._set(tile_list, 0, 0, msg_tile)
+                self._set(tile_list, Room.INNER_WIDTH - 1, 0, level_tile)
+                coordinate = Coordinate(0, Room.INNER_MID_Y + 1)
+                addition = Direction.East
 
-        elif orientation is Direction.West:
-            self._set(tile_list, 0, 0, type_decoration)
-            self._set(tile_list, 0, Room.INNER_MID_Y, dash_decoration)
-            self._set(tile_list, Room.INNER_WIDTH - 1, 0, msg_tile)
-            self._set(tile_list, Room.INNER_WIDTH - 1, Room.INNER_HEIGHT - 1, msg_tile)
-            coordinate = Coordinate(Room.INNER_MID_X - 1, 0)
-            addition = Direction.South
+            elif orientation is Direction.West:
+                self._set(tile_list, 0, 0, type_decoration)
+                self._set(tile_list, 0, Room.INNER_MID_Y, dash_decoration)
+                self._set(tile_list,0, Room.INNER_HEIGHT - 1, num_decoration)
+                self._set(tile_list, Room.INNER_WIDTH - 1, 0, msg_tile)
+                self._set(tile_list, Room.INNER_WIDTH - 1, Room.INNER_HEIGHT - 1, msg_tile)
+                coordinate = Coordinate(Room.INNER_MID_X - 1, 0)
+                addition = Direction.South
 
-        else:
-            raise SyntaxError(f"Invalid orientation for Hallway: {orientation}.")
+            else:
+                raise SyntaxError(f"Invalid orientation for Hallway: {orientation}.")
 
-        if blocking:
-            counter = 0
-            while counter < 5 and self._set(tile_list, coordinate.x, coordinate.y, Wall()):
-                coordinate += addition
-                counter += 1
-        super(MetaRoom, self).__init__(AreaType.MetaRoom, tile_list, north_hallway, east_hallway, south_hallway,
-                                       west_hallway)
+            if blocking:
+                counter = 0
+                while counter < 5 and self._set(tile_list, coordinate.x, coordinate.y, Wall()):
+                    coordinate += addition
+                    counter += 1
+            super(MetaRoom, self).__init__(AreaType.MetaRoom, tile_list, north_hallway, east_hallway, south_hallway,
+                                           west_hallway)
 
     def abbreviation(self) -> str:
         return "MR"
@@ -499,8 +506,9 @@ class MetaRoom(CopyAbleRoom):
         # can ultimately lead to non-existing rooms
         if hw_dic:
             new_room = MetaRoom(self.__load_map_callback, self.__orientation, self.__message, self.__level_to_load,
-                                self.__world, self.__blocking, hw_dic[Direction.North], hw_dic[Direction.East],
-                                hw_dic[Direction.South], hw_dic[Direction.West])
+                                self.__mtype, self.__num, self.__blocking, hw_dic[Direction.North],
+                                hw_dic[Direction.East], hw_dic[Direction.South], hw_dic[Direction.West],
+                                self.__is_spawn)
         else:
             raise SyntaxError("Room without hallway!")
 
@@ -676,7 +684,7 @@ class DefinedWildRoom(BaseWildRoom):
         self.__dictionary = {1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [], 9: []}
         for tile in tile_list:
             if isinstance(tile, EnemyTile):
-                self.__dictionary[tile.id].append(tile)
+                self.__dictionary[tile.eid].append(tile)
         super().__init__(tile_list, self.__get_tiles_by_id, north_hallway=north_hallway, east_hallway=east_hallway,
                          south_hallway=south_hallway, west_hallway=west_hallway)
 

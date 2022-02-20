@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List, Tuple, Callable
 
 from antlr4 import InputStream, CommonTokenStream
 from antlr4.tree.Tree import TerminalNodeImpl
@@ -20,11 +20,10 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
     def is_spawn_room(room_id: str) -> bool:
         return room_id.lower() == 'sr'
 
-    def __init__(self, seed: int, save_data: SaveData, load_map_callback):
+    def __init__(self, seed: int, save_data: SaveData, load_map_callback: Callable[[str, Coordinate], None]):
         self.__seed = seed
         self.__save_data = save_data
         self.__load_map = load_map_callback
-        self.__cbp = None
 
         self.__hallways_by_id = {}
         self.__created_hallways = {}
@@ -54,7 +53,9 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
         parser.addErrorListener(parser_util.MyErrorListener())
 
         try:
-            room_matrix = self.visit(parser.start())
+            name, room_matrix = self.visit(parser.start())
+            if name is None:
+                name = file_name
         except SyntaxError as se:
             print(se)
             return None, False
@@ -68,7 +69,7 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
             if len(row) < max_len:
                 row += [None] * (max_len - len(row))
 
-        map = WorldMap(file_name, self.__seed, room_matrix, self.__save_data.player, self.__spawn_pos,
+        map = WorldMap(name, self.__seed, room_matrix, self.__save_data.player, self.__spawn_pos,
                        self.__save_data.achievement_manager)
         return map, True
 
@@ -132,11 +133,11 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
 
     ##### Room area #####
 
-    def visitR_type(self, ctx: QrogueWorldParser.R_typeContext) -> bool:
+    def visitR_type(self, ctx: QrogueWorldParser.R_typeContext) -> str:
         if ctx.WORLD_LITERAL():
-            return True
+            return "W"
         elif ctx.LEVEL_LITERAL():
-            return False
+            return "L"
         else:
             raise ValueError(f"Invalid r_type: {ctx.getText()}")
 
@@ -150,23 +151,28 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
         return visible, foggy
 
     def visitR_attributes(self, ctx: QrogueWorldParser.R_attributesContext) \
-            -> Tuple[Tuple[bool, bool], bool, Direction]:
+            -> Tuple[Tuple[bool, bool], bool, int, Direction]:
         visibility = self.visit(ctx.r_visibility())
-        type = self.visit(ctx.r_type())
+        rtype = self.visit(ctx.r_type())
+        num = 0
+        for digit in ctx.DIGIT():
+            num *= 10
+            d = int(digit.getText())
+            num += d
         direction = parser_util.direction_from_string(ctx.DIRECTION().getText())
-        return visibility, type, direction
+        return visibility, rtype, num, direction
 
     def visitRoom(self, ctx: QrogueWorldParser.RoomContext) -> Tuple[str, rooms.MetaRoom]:
         room_id = ctx.ROOM_ID().getText()
         message = ctx.TEXT().getText()[1:-1]    # strip encapsulating \"
         level_to_load = parser_util.normalize_reference(ctx.REFERENCE().getText())
-        visibility, world, orientation = self.visit(ctx.r_attributes())
+        visibility, mtype, num, orientation = self.visit(ctx.r_attributes())
 
         # hallways will be added later
         if self.is_spawn_room(room_id):
-            room = rooms.MetaRoom(self.__load_map, orientation, message, level_to_load, world, is_spawn=True)
+            room = rooms.MetaRoom(self.__load_map, orientation, message, level_to_load, mtype, num, is_spawn=True)
         else:
-            room = rooms.MetaRoom(self.__load_map, orientation, message, level_to_load, world)
+            room = rooms.MetaRoom(self.__load_map, orientation, message, level_to_load, mtype, num)
         visible, foggy = visibility
         if visible:
             room.make_visible()
@@ -241,12 +247,17 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
 
     ##### Start area #####
 
-    def visitStart(self, ctx:QrogueWorldParser.StartContext) -> List[List[rooms.Room]]:
+    def visitStart(self, ctx:QrogueWorldParser.StartContext) -> Tuple[str, List[List[rooms.Room]]]:
+        if ctx.NAME():
+            name = ctx.TEXT().getText()[1:-1]
+        else:
+            name = None
+
         # prepare hallways first because they are standalone
         self.visit(ctx.hallways())
         # next prepare the rooms because they reference hallways
         self.visit(ctx.rooms())
 
         # for the last step we retrieve the room matrix from layout
-        return self.visit(ctx.layout())
+        return name, self.visit(ctx.layout())
 

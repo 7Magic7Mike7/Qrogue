@@ -2,7 +2,9 @@ grammar QrogueWorld;
 
 // RULES
 
-start  : HEADER layout rooms hallways ENDER;
+start  :    HEADER (NAME '=' TEXT)?
+            layout rooms hallways
+            ENDER;
 
 // building the layout of the dungeon
 layout : LAYOUT HORIZONTAL_SEPARATOR* l_room_row (l_hallway_row l_room_row)* HORIZONTAL_SEPARATOR* ;
@@ -18,7 +20,7 @@ rooms : ROOMS room* ;
 room : ROOM_ID r_attributes ':'
             'description' TEXT                // world/level description
             'teleport' REFERENCE ;  // which world/level to load
-r_attributes : '(' r_visibility r_type DIRECTION ')' ;  // visibile/in sight, type, orientation of info text
+r_attributes : '(' r_visibility r_type DIGIT DIGIT? DIRECTION ')' ;  // visibile/in sight, type, orientation of info text
 r_visibility : (VISIBLE_LITERAL | FOGGY_LITERAL)? ;
 r_type :  (WORLD_LITERAL | LEVEL_LITERAL) ;
 
@@ -59,6 +61,7 @@ EVENT_LITERAL : 'event' ;
 // headline token
 HEADER : 'Qrogue<' ;
 ENDER : '>Qrogue' ;
+NAME : 'Name' ;
 ROBOT : '[Robot]' ;
 LAYOUT : '[Layout]' ;
 ROOMS : '[Rooms]' ;
