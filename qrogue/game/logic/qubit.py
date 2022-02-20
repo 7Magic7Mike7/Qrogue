@@ -7,14 +7,19 @@ from qiskit import transpile, QuantumCircuit
 from qiskit.providers.aer import StatevectorSimulator
 
 from qrogue.game.logic.instruction import Instruction
+from qrogue.util import util_functions
 
 
 class StateVector:
     __TOLERANCE = 0.1
     __DECIMALS = 3
 
-    def __init__(self, amplitudes: List[complex]):
-        self.__amplitudes = amplitudes
+    @staticmethod
+    def check_amplitudes(amplitudes: List[complex]):
+        if util_functions.is_power_of_2(len(amplitudes)):
+            amp_sum = sum([c.real**2 + c.imag**2 for c in amplitudes])
+            return 1 - StateVector.__TOLERANCE <= amp_sum <= 1 + StateVector.__TOLERANCE
+        return False
 
     @staticmethod
     def from_gates(gates: List[Instruction], num_of_qubits: int) -> "StateVector":
@@ -42,6 +47,9 @@ class StateVector:
             else:
                 return str(val)[1:-1]    # remove the parentheses
 
+    def __init__(self, amplitudes: List[complex]):
+        self.__amplitudes = amplitudes
+
     @property
     def size(self) -> int:
         return len(self.__amplitudes)
@@ -60,6 +68,7 @@ class StateVector:
         #  (so the robot can have more qubits than the enemy)
         if self.size > other.size:
             return False
+        """
         self_value = self.__amplitudes  #self.to_value()
         other_value = other.__amplitudes    #other.to_value()
         for i in range(len(self_value)):
@@ -68,6 +77,11 @@ class StateVector:
             p_max = self_value[i] + tolerance/2
             if not (p_min <= p <= p_max):
                 return False
+        """
+        diff = [self.__amplitudes[i] - other.__amplitudes[i] for i in range(self.size)]
+        for val in diff:
+            if val < -self.__TOLERANCE or self.__TOLERANCE < val:
+                return False
         return True
 
     def get_diff(self, other: "StateVector") -> "StateVector":
@@ -75,7 +89,8 @@ class StateVector:
             diff = [self.__amplitudes[i] - other.__amplitudes[i] for i in range(self.size)]
             return StateVector(diff)
         else:
-            return None
+            raise ValueError("Cannot calculate the difference between StateVectors of different size! "
+                             f"self = {self}, other = {other}")
 
     def to_string(self) -> str:
         text = ""

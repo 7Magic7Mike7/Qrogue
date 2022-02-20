@@ -6,7 +6,6 @@ from antlr4 import InputStream, CommonTokenStream
 from qrogue.dungeon_editor.dungeon_parser.QrogueDungeonLexer import QrogueDungeonLexer
 from qrogue.dungeon_editor.dungeon_parser.QrogueDungeonParser import QrogueDungeonParser
 from qrogue.dungeon_editor.dungeon_parser.QrogueDungeonVisitor import QrogueDungeonVisitor
-from qrogue.game.achievements import AchievementManager
 
 from qrogue.dungeon_editor import parser_util
 from qrogue.game.actors.factory import ExplicitTargetDifficulty, TargetDifficulty, EnemyFactory
@@ -23,7 +22,7 @@ from qrogue.game.map.generator import DungeonGenerator
 from qrogue.game.map.level_map import LevelMap
 from qrogue.game.map.map import Map
 from qrogue.game.map.navigation import Coordinate, Direction
-from qrogue.util import util_functions
+from qrogue.game.save_data import SaveData
 from qrogue.util.config import Config, PathConfig
 from qrogue.util.my_random import MyRandom
 from qrogue.widgets.my_popups import Popup
@@ -87,14 +86,12 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             # todo print warning?
             return None
 
-    def __init__(self, seed: int, load_map_callback: Callable[[str, Coordinate], None],
-                 achievement_manager: AchievementManager):
+    def __init__(self, seed: int, save_data: SaveData, load_map_callback: Callable[[str, Coordinate], None]):
         super().__init__(seed, 0, 0)
         self.__seed = seed
+        self.__save_data = save_data
         self.__load_map = load_map_callback
-        self.__achievement_manager = achievement_manager
 
-        self.__cbp = None
         self.__robot = None
         self.__rm = MyRandom(seed)
 
@@ -122,6 +119,40 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         # holds references to already created hallways so that neighbors can use it instead of
         # creating their own, redundant hallway
         self.__created_hallways = {}
+
+    @property
+    def __cbp(self) -> CallbackPack:
+        return self.__save_data.cbp
+
+    def generate(self, file_name: str, in_dungeon_folder: bool = True) -> Tuple[LevelMap, bool]:
+        map_data = PathConfig.read_level(file_name, in_dungeon_folder)
+
+        input_stream = InputStream(map_data)
+        lexer = QrogueDungeonLexer(input_stream)
+        token_stream = CommonTokenStream(lexer)
+        parser = QrogueDungeonParser(token_stream)
+        parser.addErrorListener(parser_util.MyErrorListener())
+
+        try:
+            name, room_matrix = self.visit(parser.start())
+            if name is None:
+                name = file_name
+        except SyntaxError as se:
+            print(se)
+            return None, False
+
+        # add empty rooms if rows don't have the same width
+        max_len = 0
+        for row in room_matrix:
+            if len(row) > max_len:
+                max_len = len(row)
+        for row in room_matrix:
+            if len(row) < max_len:
+                row += [None] * (max_len - len(row))
+
+        map = LevelMap(name, self.__seed, room_matrix, self.__robot, self.__spawn_pos,
+                       self.__save_data.achievement_manager)
+        return map, True
 
     def _add_hallway(self, room1: Coordinate, room2: Coordinate, door: tiles.Door):
         if door:    # for simplicity door could be null so we check it here
@@ -180,34 +211,6 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         else:
             self.warning(f"Unknown tile specified: {tile_str}. Using a Floor-Tile instead.")
             return tiles.Floor()
-
-    def generate(self, cbp: CallbackPack, file_name: str) -> Tuple[LevelMap, bool]:
-        map_data = PathConfig.read_level(file_name)
-
-        input_stream = InputStream(map_data)
-        lexer = QrogueDungeonLexer(input_stream)
-        token_stream = CommonTokenStream(lexer)
-        parser = QrogueDungeonParser(token_stream)
-        parser.addErrorListener(parser_util.MyErrorListener())
-
-        self.__cbp = cbp        # needs to be accessed during creation
-        try:
-            room_matrix = self.visit(parser.start())
-        except SyntaxError as se:
-            print(se)
-            return None, False
-
-        # add empty rooms if rows don't have the same width
-        max_len = 0
-        for row in room_matrix:
-            if len(row) > max_len:
-                max_len = len(row)
-        for row in room_matrix:
-            if len(row) < max_len:
-                row += [None] * (max_len - len(row))
-
-        map = LevelMap(file_name, self.__seed, room_matrix, self.__robot, self.__spawn_pos, self.__achievement_manager)
-        return map, True
 
     ##### load from references #####
 
@@ -439,13 +442,10 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         amplitudes = []
         for cn in ctx.complex_number():
             amplitudes.append(self.visit(cn))
-        diff = 1 - sum(amplitudes)
-        # todo: instead of checking for 0 check for tolerance like in StateVector itself
-        if diff == 0 and util_functions.is_power_of_2(len(amplitudes)):
-            return StateVector(amplitudes)
-        else:
-            # todo adapt?
-            return StateVector([1, 0, 0, 0, 0, 0, 0, 0])
+        if not StateVector.check_amplitudes(amplitudes):
+            self.warning(f"Invalid amplitudes for StateVector: {amplitudes}! Using 0-only basis state instead.")
+            amplitudes = [1] + [0] * (2 ** self.__robot.num_of_qubits - 1)
+        return StateVector(amplitudes)
 
     def visitStvs(self, ctx: QrogueDungeonParser.StvsContext) -> List[StateVector]:
         stvs = []
@@ -738,7 +738,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         for descriptor in ctx.tile_descriptor():
             tile = self.visit(descriptor)
             if tile.code is tiles.TileCode.Enemy:
-                tile_str = str(tile.id)
+                tile_str = str(tile.eid)
             else:
                 tile_str = QrogueLevelGenerator.__tile_code_to_str(tile.code)
             if tile_str in tile_dic:
@@ -865,7 +865,12 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
     ##### Start area #####
 
-    def visitStart(self, ctx:QrogueDungeonParser.StartContext) -> List[List[rooms.Room]]:
+    def visitStart(self, ctx:QrogueDungeonParser.StartContext) -> Tuple[str, List[List[rooms.Room]]]:
+        if ctx.NAME():
+            name = ctx.TEXT().getText()[1:-1]
+        else:
+            name = None
+
         # prepare the robot
         self.visit(ctx.robot())
 
@@ -883,4 +888,4 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         self.visit(ctx.rooms())
 
         # for the last step we retrieve the room matrix from layout
-        return self.visit(ctx.layout())
+        return name, self.visit(ctx.layout())

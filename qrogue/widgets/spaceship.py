@@ -268,10 +268,9 @@ class SpaceshipWidget(Widget):
                 Logger.instance().error(f"Failed to open the specified world-file: {map_name}")
         elif map_name[0].lower() == "l":
             # todo maybe levels should be able to have arbitrary names aside from "w..." or "back"?
-            generator = QrogueLevelGenerator(self.__rm.get_seed(), self.__load_map,
-                                                  self.__save_data.achievement_manager)
+            generator = QrogueLevelGenerator(self.__rm.get_seed(), self.__save_data, self.__load_map)
             try:
-                level, success = generator.generate(self.__cbp, map_name)
+                level, success = generator.generate(map_name)
                 if success:
                     self.__in_level = True
                     self.__cbp.start_level(self.__rm.get_seed(), level)

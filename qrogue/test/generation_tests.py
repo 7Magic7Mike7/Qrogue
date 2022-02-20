@@ -86,7 +86,7 @@ def dungeon_test(robot: Robot, cbp: CallbackPack):
         i += 1
         if i % 5000 == 0:
             print(f"Run {i + 1}): seed = {seed}")
-        generator = RandomDungeonGenerator(seed, load_map, AchievementManager())
+        generator = RandomDungeonGenerator(seed, AchievementManager(), load_map)
         start_time = time.time()
         map, success = generator.generate(cbp, robot)
         if not success:

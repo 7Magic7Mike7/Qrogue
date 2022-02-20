@@ -33,11 +33,11 @@ class Expedition:
     def start(self) -> bool:
         test_mode = 0
         if test_mode == 0:
-            generator = RandomDungeonGenerator(self._seed, self.__load_map, self.__save_data.achievement_manager)
-            map, success = generator.generate(self._cbp, self.__robot)
+            generator = RandomDungeonGenerator(self._seed, self.__save_data, self.__load_map)
+            map, success = generator.generate(self.__robot)
         elif test_mode == 1:
-            generator = QrogueLevelGenerator(self._seed, self.__load_map, self.__save_data.achievement_manager)
-            map, success = generator.generate(self._cbp, "tutorial")
+            generator = QrogueLevelGenerator(self._seed, self.__save_data, self.__load_map)
+            map, success = generator.generate("tutorial")
         else:
             success = False
             #generator = QrogueWorldGenerator(self.__seed, aaaa)

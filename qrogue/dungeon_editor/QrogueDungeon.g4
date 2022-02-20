@@ -2,7 +2,9 @@ grammar QrogueDungeon;
 
 // RULES
 
-start  : HEADER robot layout rooms hallways stv_pools reward_pools messages ENDER;
+start  :    HEADER (NAME '=' TEXT)?
+            robot layout rooms hallways stv_pools reward_pools messages
+            ENDER;
 
 integer : DIGIT | HALLWAY_ID | INTEGER ;
 complex_number : SIGN? (IMAG_NUMBER | (integer | FLOAT) (SIGN IMAG_NUMBER)?) ;
@@ -117,6 +119,7 @@ MINUS_SIGN : '-' ;
 // headline token
 HEADER : 'Qrogue<' ;
 ENDER : '>Qrogue' ;
+NAME : 'Name' ;
 ROBOT : '[Robot]' ;
 LAYOUT : '[Layout]' ;
 ROOMS : '[Custom Rooms]' ;

@@ -54,7 +54,7 @@ def generation_test(file_name: str, world: bool = False):
     if world:
         generator = QrogueWorldGenerator(7, SaveData(cbp), load_level)
     else:
-        generator = QrogueLevelGenerator(7, load_level, AchievementManager())
+        generator = QrogueLevelGenerator(7, SaveData(cbp), load_level)
     map, success = generator.generate(file_name, False)
     if success:
         print(map)
@@ -62,6 +62,6 @@ def generation_test(file_name: str, world: bool = False):
 
 
 RandomManager(7)    # needs to be initialized
-file_name = "worlds"
+file_name = "w1"
 path = os.path.join(BASE_PATH, "dungeons", file_name)
 generation_test(path, world=True)
