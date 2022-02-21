@@ -1,3 +1,5 @@
+from typing import List
+
 from qrogue.game.collectibles.collectible import Collectible, ShopItem
 from qrogue.game.collectibles import consumable, pickup
 from qrogue.game.logic import instruction as gates
@@ -6,15 +8,15 @@ from qrogue.util.my_random import RandomManager, MyRandom
 
 
 class CollectibleFactory:
-    def __init__(self, pool: "list of Collectibles") -> None:
+    def __init__(self, pool: List[Collectible]) -> None:
         if pool is None or len(pool) < 1:
             Logger.instance().throw(f"invalid pool for CollectibleFactory: {pool}")
-        self.__pool = pool
+        self.__pool = pool.copy()
         self.__rm = RandomManager.create_new()
         self.__order_index = -1
 
     @property
-    def pool_copy(self) -> [Collectible]:
+    def pool_copy(self) -> List[Collectible]:
         return self.__pool.copy()
 
     def __produce(self, rm: MyRandom, remove: bool = False):
@@ -32,7 +34,7 @@ class CollectibleFactory:
     def produce(self, rm: MyRandom) -> Collectible:
         return self.__produce(rm, remove=False)
 
-    def produce_multiple(self, rm: MyRandom, num_of_elements: int, unique_elements: bool = True) -> [Collectible]:
+    def produce_multiple(self, rm: MyRandom, num_of_elements: int, unique_elements: bool = True) -> List[Collectible]:
         if unique_elements:
             temp = self.pool_copy
             elements = []
@@ -56,13 +58,13 @@ class OrderedCollectibleFactory(CollectibleFactory):
     def from_factory(factory: CollectibleFactory):
         return OrderedCollectibleFactory(factory.pool_copy)
 
-    def __init__(self, pool: "list of Collectibles"):
+    def __init__(self, pool: List[Collectible]):
         super().__init__(pool)
 
     def produce(self, rm: MyRandom = None) -> Collectible:
         return super(OrderedCollectibleFactory, self).produce(None)
 
-    def produce_multiple(self, rm: MyRandom, num_of_elements: int, unique_elements: bool = True) -> [Collectible]:
+    def produce_multiple(self, rm: MyRandom, num_of_elements: int, unique_elements: bool = True) -> List[Collectible]:
         return super(OrderedCollectibleFactory, self).produce_multiple(None, num_of_elements, unique_elements)
 
 
@@ -82,7 +84,7 @@ class ShopFactory:
         common_pool = [pickup.Key(1), pickup.Key(2), pickup.Heart(4), consumable.HealthPotion(2)]
         return ShopFactory(common_pool, special_pool, quality_level=1)
 
-    def __init__(self, common_pool: [Collectible], special_pool: [Collectible], quality_level: int = 1,
+    def __init__(self, common_pool: List[Collectible], special_pool: List[Collectible], quality_level: int = 1,
                  min_items: int = 2, max_items: int = 5, discount: bool = False):
         """
 
@@ -100,7 +102,7 @@ class ShopFactory:
         self.__max_items = max_items
         self.__discount = discount
 
-    def produce(self, rm: MyRandom, num_of_items: int = 0) -> [ShopItem]:
+    def produce(self, rm: MyRandom, num_of_items: int = 0) -> List[ShopItem]:
         """
         Produces a random list of ShopItems based on the factory's parameter. Said parameter are not changed allowing
         to produce multiple lists with the same factory. The only thing that obviously changes is the current seed of
