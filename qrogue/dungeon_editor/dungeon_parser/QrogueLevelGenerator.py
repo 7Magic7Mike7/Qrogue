@@ -642,18 +642,19 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         pool_id = ctx.REFERENCE(0).getText()
         if pool_id in self.__stv_pools:
             stv_pool, reward_factory = self.__stv_pools[pool_id]
-            pool_id = ctx.REFERENCE(1)
-            if pool_id and pool_id in self.__reward_pools:
-                reward_pool = self.__reward_pools[pool_id]
-                # todo rethink draw_strategy because right now 'ordered' only affects default pools correctly
-                if ctx.draw_strategy(1) and self.visit(ctx.draw_strategy(1)):
-                    reward_factory = factory.OrderedCollectibleFactory(reward_pool)
-                else:
-                    reward_factory = factory.CollectibleFactory(reward_pool)
-            elif not reward_factory:
-                reward_factory = self.__default_reward_factory
-            difficulty = ExplicitTargetDifficulty(stv_pool, reward_factory, ordered)
-            enemy_factory = EnemyFactory(self.__cbp.start_fight, difficulty)
+            if ctx.REFERENCE(1):
+                pool_id = ctx.REFERENCE(1).getText()
+                if pool_id in self.__reward_pools:
+                    reward_pool = self.__reward_pools[pool_id]
+                    # todo rethink draw_strategy because right now 'ordered' only affects default pools correctly
+                    if ctx.draw_strategy(1) and self.visit(ctx.draw_strategy(1)):
+                        reward_factory = factory.OrderedCollectibleFactory(reward_pool)
+                    else:
+                        reward_factory = factory.CollectibleFactory(reward_pool)
+                elif not reward_factory:
+                    reward_factory = self.__default_reward_factory
+                difficulty = ExplicitTargetDifficulty(stv_pool, reward_factory, ordered)
+                enemy_factory = EnemyFactory(self.__cbp.start_fight, difficulty)
         else:
             self.warning("Imports not yet supported! Choosing from default_stv_pool")
             enemy_factory = self.__default_enemy_factory
