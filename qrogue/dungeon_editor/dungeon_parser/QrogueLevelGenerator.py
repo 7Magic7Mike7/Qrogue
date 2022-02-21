@@ -24,6 +24,7 @@ from qrogue.game.map.map import Map
 from qrogue.game.map.navigation import Coordinate, Direction
 from qrogue.game.save_data import SaveData
 from qrogue.util.config import Config, PathConfig
+from qrogue.util.help_texts import HelpText
 from qrogue.util.my_random import MyRandom
 from qrogue.widgets.my_popups import Popup
 
@@ -280,9 +281,13 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         norm_ref = self.__normalize_reference(reference)
         if norm_ref in self.__messages:
             return self.__messages[norm_ref]
-        else:
-            self.warning(f"Unknown text reference: {reference}. Returning \"Message not found!\"")
-            return "Message not found!"
+        elif norm_ref.startswith("helptext"):
+            help_text_type = norm_ref[len("helptext"):]
+            help_text = HelpText.load(help_text_type)
+            if help_text:
+                return help_text
+        self.warning(f"Unknown text reference: {reference}. Returning \"Message not found!\"")
+        return "Message not found!"
 
     def __load_hallway(self, reference: str) -> tiles.Door:
         if reference in self.__hallways_by_id:

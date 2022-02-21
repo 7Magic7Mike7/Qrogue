@@ -198,3 +198,10 @@ class HelpText:
     @staticmethod
     def get(type: HelpTextType) -> str:
         return HelpText.__DIC[type]
+
+    @staticmethod
+    def load(type: str) -> str:
+        for key in HelpText.__DIC.keys():
+            if key.name.lower() == type.lower():
+                return HelpText.__DIC[key]
+        return None
