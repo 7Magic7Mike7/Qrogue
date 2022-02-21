@@ -25,6 +25,10 @@ class Popup:
     def message(title: str, text: str, color: int = PopupConfig.default_color()):
         Popup(title, text, color, show=True)
 
+    @staticmethod
+    def scientist_says(text: str):
+        Popup.message(Config.scientist_name(), text)
+
     def __init__(self, title: str, text: str, color: int = PopupConfig.default_color(), show: bool = True):
         self.__title = title
         self.__text = text

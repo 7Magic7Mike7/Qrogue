@@ -184,8 +184,9 @@ class Placeholder:
         return Placeholder.__ROOM
 
     @staticmethod
-    def empty_room() -> "Room":
-        return EmptyRoom()
+    def empty_room(north_hallway: "Hallway" = None, east_hallway: "Hallway" = None, south_hallway: "Hallway" = None,
+                   west_hallway: "Hallway" = None) -> "Room":
+        return EmptyRoom(north_hallway, east_hallway, south_hallway, west_hallway)
 
 
 class Hallway(Area):
@@ -550,9 +551,12 @@ class CustomRoom(CopyAbleRoom):
         return new_room
 
 
-class EmptyRoom(CustomRoom):
-    def __init__(self):
-        super(EmptyRoom, self).__init__(AreaType.EmptyRoom, [[]])
+class EmptyRoom(Room):
+    def __init__(self, north_hallway: Hallway = None, east_hallway: Hallway = None, south_hallway: Hallway = None,
+                 west_hallway: Hallway = None):
+        tile_list = Room.get_empty_room_tile_list()
+        super(EmptyRoom, self).__init__(AreaType.EmptyRoom, tile_list, north_hallway, east_hallway, south_hallway,
+                                        west_hallway)
 
     def abbreviation(self) -> str:
         return "ER"

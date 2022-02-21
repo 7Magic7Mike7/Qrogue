@@ -32,7 +32,7 @@ tile :  't' | 'm' | DIGIT | 'c' | 'e' | 'r' | '$' | '_' ;    // enemy, collectib
 // further describing the tiles used in the room
 tile_descriptor : trigger_descriptor | message_descriptor |
                   (enemy_descriptor | collectible_descriptor | energy_descriptor | riddle_descriptor | shop_descriptor)
-                  ('trigger' REFERENCE)? ;  // winning a fight or picking up a collectible can also trigger an event
+                  (TUTORIAL_LITERAL REFERENCE)? (TRIGGER_LITERAL REFERENCE)? ;  // winning a fight or picking up a collectible can also trigger an event
 trigger_descriptor : 't' REFERENCE ;   // reference to the event to trigger
 message_descriptor : 'm' integer REFERENCE ;    // #times displayed, reference to the text that should be shown
 enemy_descriptor : DIGIT draw_strategy? REFERENCE (draw_strategy? REFERENCE)?;    // enemy, id of statevector pool, id of reward pool
@@ -108,6 +108,8 @@ RIDDLE_LITERAL : 'Riddle' ;
 BOSS_LITERAL : 'Boss' ;
 GATE_ROOM_LITERAL : 'Gate' ;
 
+TUTORIAL_LITERAL : 'tutorial' ;
+TRIGGER_LITERAL : 'trigger' ;
 KEY_LITERAL : 'key' ;
 COIN_LITERAL : 'coin' ;
 HEALTH_LITERAL : 'health' ;

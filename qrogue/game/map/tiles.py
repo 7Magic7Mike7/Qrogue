@@ -80,6 +80,7 @@ class Tile(ABC):
 class WalkTriggerTile(Tile):
     def __init__(self, code: TileCode):
         super().__init__(code)
+        self.__explanation = None
         self.__event_id = None
         self.__trigger_event = None
 
@@ -90,6 +91,9 @@ class WalkTriggerTile(Tile):
     def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
         return True
 
+    def set_explanation(self, msg: str):
+        self.__explanation = msg
+
     def set_event(self, event_id: str):
         self.__event_id = event_id
 
@@ -98,6 +102,9 @@ class WalkTriggerTile(Tile):
         self.__trigger_event = trigger_event_callback
         if self._on_walk(direction, controllable) and self.__event_id:
             return trigger_event_callback(self.__event_id)
+        if self.__explanation:
+            Popup.scientist_says(self.__explanation)
+            self.__explanation = None   # only display once
         return None
     
     @abstractmethod

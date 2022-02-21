@@ -34,10 +34,6 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
     __ROBOT_NO_GATES = "none"
 
     @staticmethod
-    def warning(text: str):
-        parser_util.warning(text)
-
-    @staticmethod
     def __normalize_reference(reference: str) -> str:
         return parser_util.normalize_reference(reference)
 
@@ -92,6 +88,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         self.__save_data = save_data
         self.__load_map = load_map_callback
 
+        self.__warnings = 0
         self.__robot = None
         self.__rm = MyRandom(seed)
 
@@ -123,6 +120,10 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
     @property
     def __cbp(self) -> CallbackPack:
         return self.__save_data.cbp
+
+    def warning(self, text: str):
+        parser_util.warning(text)
+        self.__warnings += 1
 
     def generate(self, file_name: str, in_dungeon_folder: bool = True) -> Tuple[LevelMap, bool]:
         map_data = PathConfig.read_level(file_name, in_dungeon_folder)
@@ -164,9 +165,6 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
                 self.__hallways[room2][room1] = door
             else:
                 self.__hallways[room2] = {room1: door}
-
-    def __get_hallways(self, pos: Coordinate) -> "dict of Direction and Hallway":
-        return parser_util.get_hallways(self.__created_hallways, self.__hallways, pos)
 
     def __get_default_tile(self, tile_str: str, enemy_dic: Dict[int, List[tiles.Enemy]],
                            get_entangled_tiles: Callable[[int], List[tiles.Tile]]) -> tiles.Tile:
@@ -298,6 +296,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             return tiles.Door(Direction.North)
 
     def __load_room(self, reference: str, x: int, y: int) -> rooms.Room:
+        hw_dic = parser_util.get_hallways(self.__created_hallways, self.__hallways, Coordinate(x, y))
         if reference in self.__rooms:
             room = self.__rooms[reference]
             if room.type is rooms.AreaType.SpawnRoom:
@@ -305,10 +304,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
                     self.warning("A second SpawnRoom was defined! Ignoring the first one "
                                  "and using this one as SpawnRoom.")
                 self.__spawn_pos = Coordinate(x, y)
-            hw_dic = self.__get_hallways(Coordinate(x, y))
             return room.copy(hw_dic)
         elif self.__normalize_reference(reference) == 'sr':
-            hw_dic = self.__get_hallways(Coordinate(x, y))
             room = rooms.SpawnRoom(self.__load_map, None, hw_dic[Direction.North], hw_dic[Direction.East],
                                    hw_dic[Direction.South], hw_dic[Direction.West])
             if self.__spawn_pos:
@@ -318,12 +315,17 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             return room
         elif reference[0] == '_':
             # todo handle templates
-            pass
+            room = rooms.CustomRoom(rooms.AreaType.Placeholder, None, hw_dic[Direction.North], hw_dic[Direction.East],
+                                    hw_dic[Direction.South], hw_dic[Direction.West])
+            self.__rooms[reference] = room
+            return room
         else:
             self.warning(f"room_id \"{reference}\" not specified and imports not yet supported! "
                          "Placing an empty room instead.")
-            # row.append(rooms.Placeholder.empty_room())
-        return rooms.SpawnRoom(self.__load_map)
+            room = rooms.Placeholder.empty_room(hw_dic[Direction.North], hw_dic[Direction.East],
+                                                hw_dic[Direction.South], hw_dic[Direction.West])
+            self.__rooms[reference] = room
+            return room
 
     ##### General area
 
@@ -661,9 +663,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
     def visitTile_descriptor(self, ctx:QrogueDungeonParser.Tile_descriptorContext) -> tiles.Tile:
         if ctx.trigger_descriptor():
-            return self.visit(ctx.trigger_descriptor())
-
-        if ctx.enemy_descriptor():
+            tile = self.visit(ctx.trigger_descriptor())
+        elif ctx.enemy_descriptor():
             tile = self.visit(ctx.enemy_descriptor())
         elif ctx.collectible_descriptor():
             tile = self.visit(ctx.collectible_descriptor())
@@ -680,9 +681,17 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
                          "Returning tiles.Invalid() as consequence.")
             return tiles.Invalid()
 
-        if ctx.REFERENCE() and isinstance(tile, tiles.WalkTriggerTile):
-            event_id = QrogueLevelGenerator.__normalize_reference(ctx.REFERENCE().getText())
-            tile.set_event(event_id)
+        if isinstance(tile, tiles.WalkTriggerTile):
+            ref_index = 0
+            if ctx.TUTORIAL_LITERAL():
+                ref = ctx.REFERENCE(ref_index).getText()
+                msg = self.__load_message(ref)
+                tile.set_explanation(msg)
+                ref_index += 1
+            if ctx.TRIGGER_LITERAL():
+                ref = ctx.REFERENCE(ref_index).getText()
+                event_id = QrogueLevelGenerator.__normalize_reference(ref)
+                tile.set_event(event_id)
         return tile
 
     def visitTile(self, ctx:QrogueDungeonParser.TileContext) -> str:
