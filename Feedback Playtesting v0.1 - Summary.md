@@ -15,7 +15,7 @@ PyPI package | downloading and installing in several steps is tedious | High | p
 
 Feedback | Underlying Issue | Priority | Proposed Solution | Done
 | - | - | - | - | :-: |
-terminal size error is frustrating | terminal needs a certain size for the game to work/render | High | start in fullscreen or adapt font size |
+terminal size error is frustrating | terminal needs a certain size for the game to work/render | High | print error description and fix directly in terminal | `x`
 space to confirm in menu is not obvious | stated nowhere | High | add "Enter" to select controls and state controls in Readme | `x`
 exception on instant exit | try to flush uninitialized KeyLogger | - | KeyLogger generated at beginning of playing | `x` 
 
