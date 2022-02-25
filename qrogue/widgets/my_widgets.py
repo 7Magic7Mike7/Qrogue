@@ -236,6 +236,8 @@ class QubitInfoWidget(Widget):
     def set_data(self, num_of_qubits: int) -> None:
         head = ""
         body = ""
+        box_left = "|" + " " * 2
+        box_right = " " * 2 + "|"
         if self.__left_aligned:
             head_range = range(num_of_qubits-1, -1, -1)
         else:
@@ -243,17 +245,18 @@ class QubitInfoWidget(Widget):
 
         for i in head_range:
             head += f" q{i} "
-        head = "~" + head[1:-1] + "~"
+        # skip 1 character left because of the additional ~ and 2 right because of the qubit index and ~
+        head = box_left[:-1] + "~" + head[1:-1] + "~" + box_right[2:]
 
         for i in range(2 ** num_of_qubits):
             bin_num = bin(i)[2:]    # get rid of the '0b' at the beginning of the binary representation
             bin_num = bin_num.rjust(num_of_qubits, '0')     # add 0s to the beginning (left) by justifying the text to
                                                             # the right
             row = "   ".join(bin_num)  # separate the digits in the string with spaces
-            if self.__left_aligned:
-                body += row + " \n"
-            else:
-                body += row[::-1] + "\n"    # [::-1] reverses the list so q0 is on the left
+            if not self.__left_aligned:
+                row = row[::-1] # [::-1] reverses the list so q0 is on the left
+            body += box_left + row + box_right
+            body += "\n"
 
         self.__text = head + "\n" + body
         self.widget.set_title(self.__text)
