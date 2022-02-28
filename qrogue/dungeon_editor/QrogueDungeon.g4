@@ -27,7 +27,8 @@ r_attributes : '(' r_visibility r_type ')' ;  // visibile/in sight, type
 r_visibility : (VISIBLE_LITERAL | FOGGY_LITERAL)? ;
 r_type :  (SPAWN_LITERAL | BOSS_LITERAL | WILD_LITERAL | SHOP_LITERAL | RIDDLE_LITERAL | GATE_ROOM_LITERAL) ;
 r_row : WALL tile+ WALL ;
-tile :  't' | 'm' | DIGIT | 'c' | 'e' | 'r' | '$' | '_' ;    // enemy, collectible, trigger, energy, riddle, shop, floor
+tile :  'o' | 't' | 'm' | DIGIT | 'c' | 'e' | 'r' | '$' | '_' ;    // obstacle, trigger, message, enemy, collectible,
+                                                                   // energy, riddle, shop, floor
 
 // further describing the tiles used in the room
 tile_descriptor : trigger_descriptor | message_descriptor |

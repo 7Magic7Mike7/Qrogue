@@ -57,6 +57,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             return tiles.TileCode.ShopKeeper
         elif tile_str == parser_util.FLOOR_TILE:
             return tiles.TileCode.Floor
+        elif tile_str == parser_util.OBSTACLE_TILE:
+            return tiles.TileCode.Obstacle
         else:
             return tiles.TileCode.Invalid
 
@@ -206,7 +208,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
         elif tile_code is tiles.TileCode.Floor:
             return tiles.Floor()
-
+        elif tile_code is tiles.TileCode.Obstacle:
+            return tiles.Obstacle()
         else:
             self.warning(f"Unknown tile specified: {tile_str}. Using a Floor-Tile instead.")
             return tiles.Floor()
