@@ -9,7 +9,7 @@ import sys
 def serializedATN():
     with StringIO() as buf:
         buf.write(u"\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\3")
-        buf.write(u"P\u01a8\4\2\t\2\4\3\t\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t")
+        buf.write(u"P\u01a7\4\2\t\2\4\3\t\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t")
         buf.write(u"\7\4\b\t\b\4\t\t\t\4\n\t\n\4\13\t\13\4\f\t\f\4\r\t\r")
         buf.write(u"\4\16\t\16\4\17\t\17\4\20\t\20\4\21\t\21\4\22\t\22\4")
         buf.write(u"\23\t\23\4\24\t\24\4\25\t\25\4\26\t\26\4\27\t\27\4\30")
@@ -32,39 +32,39 @@ def serializedATN():
         buf.write(u"\20\3\20\3\20\3\20\3\20\3\20\3\20\5\20\u00df\n\20\3\20")
         buf.write(u"\3\20\5\20\u00e3\n\20\3\20\3\20\5\20\u00e7\n\20\5\20")
         buf.write(u"\u00e9\n\20\3\21\3\21\3\21\3\22\3\22\3\22\3\22\3\23\3")
-        buf.write(u"\23\5\23\u00f4\n\23\3\23\3\23\5\23\u00f8\n\23\3\23\5")
-        buf.write(u"\23\u00fb\n\23\3\24\3\24\5\24\u00ff\n\24\3\24\3\24\5")
-        buf.write(u"\24\u0103\n\24\3\25\3\25\3\25\3\26\3\26\3\26\5\26\u010b")
-        buf.write(u"\n\26\3\26\3\26\5\26\u010f\n\26\3\27\3\27\3\27\5\27\u0114")
-        buf.write(u"\n\27\3\27\3\27\3\30\3\30\7\30\u011a\n\30\f\30\16\30")
-        buf.write(u"\u011d\13\30\3\31\3\31\3\31\3\32\3\32\3\32\3\32\3\32")
-        buf.write(u"\3\32\5\32\u0128\n\32\3\32\3\32\3\32\5\32\u012d\n\32")
-        buf.write(u"\5\32\u012f\n\32\3\32\3\32\3\32\3\32\3\32\7\32\u0136")
-        buf.write(u"\n\32\f\32\16\32\u0139\13\32\3\32\5\32\u013c\n\32\3\32")
-        buf.write(u"\3\32\3\33\3\33\3\34\3\34\3\34\6\34\u0145\n\34\r\34\16")
-        buf.write(u"\34\u0146\5\34\u0149\n\34\3\34\3\34\3\34\3\35\3\35\3")
-        buf.write(u"\35\5\35\u0151\n\35\3\36\3\36\3\36\3\36\3\36\3\36\3\36")
-        buf.write(u"\3\36\5\36\u015b\n\36\3\37\3\37\3\37\3\37\7\37\u0161")
-        buf.write(u"\n\37\f\37\16\37\u0164\13\37\3\37\3\37\3 \3 \3 \3 \7")
-        buf.write(u" \u016c\n \f \16 \u016f\13 \3 \3 \3!\3!\3!\6!\u0176\n")
-        buf.write(u"!\r!\16!\u0177\5!\u017a\n!\3!\3!\3!\3\"\3\"\3\"\5\"\u0182")
-        buf.write(u"\n\"\3#\3#\3#\3$\3$\3$\3$\7$\u018b\n$\f$\16$\u018e\13")
-        buf.write(u"$\3$\3$\3%\3%\3%\3%\3%\3%\3%\3%\3%\3%\5%\u019c\n%\5%")
-        buf.write(u"\u019e\n%\3&\3&\3&\7&\u01a3\n&\f&\16&\u01a6\13&\3&\2")
-        buf.write(u"\2\'\2\4\6\b\n\f\16\20\22\24\26\30\32\34\36 \"$&(*,.")
-        buf.write(u"\60\62\64\668:<>@BDFHJ\2\t\4\2\27\30KK\4\2FFJJ\4\2EE")
-        buf.write(u"KK\3\2 !\3\2\'-\4\2\n\21\27\27\3\2HI\2\u01bc\2L\3\2\2")
-        buf.write(u"\2\4[\3\2\2\2\6^\3\2\2\2\bk\3\2\2\2\ny\3\2\2\2\f\u008f")
-        buf.write(u"\3\2\2\2\16\u009a\3\2\2\2\20\u00a2\3\2\2\2\22\u00a9\3")
-        buf.write(u"\2\2\2\24\u00c3\3\2\2\2\26\u00c9\3\2\2\2\30\u00cb\3\2")
-        buf.write(u"\2\2\32\u00cd\3\2\2\2\34\u00d5\3\2\2\2\36\u00e8\3\2\2")
-        buf.write(u"\2 \u00ea\3\2\2\2\"\u00ed\3\2\2\2$\u00f1\3\2\2\2&\u00fc")
-        buf.write(u"\3\2\2\2(\u0104\3\2\2\2*\u0107\3\2\2\2,\u0110\3\2\2\2")
-        buf.write(u".\u0117\3\2\2\2\60\u011e\3\2\2\2\62\u0121\3\2\2\2\64")
-        buf.write(u"\u013f\3\2\2\2\66\u0141\3\2\2\28\u014d\3\2\2\2:\u0152")
-        buf.write(u"\3\2\2\2<\u015c\3\2\2\2>\u0167\3\2\2\2@\u0172\3\2\2\2")
-        buf.write(u"B\u017e\3\2\2\2D\u0183\3\2\2\2F\u0186\3\2\2\2H\u019d")
-        buf.write(u"\3\2\2\2J\u019f\3\2\2\2LP\7\67\2\2MN\79\2\2NO\7\3\2\2")
+        buf.write(u"\23\3\23\5\23\u00f5\n\23\3\24\3\24\3\24\5\24\u00fa\n")
+        buf.write(u"\24\3\25\3\25\3\25\3\26\3\26\3\26\5\26\u0102\n\26\3\26")
+        buf.write(u"\3\26\5\26\u0106\n\26\3\27\3\27\3\27\5\27\u010b\n\27")
+        buf.write(u"\3\27\3\27\3\30\3\30\7\30\u0111\n\30\f\30\16\30\u0114")
+        buf.write(u"\13\30\3\31\3\31\3\31\3\32\3\32\3\32\3\32\3\32\3\32\5")
+        buf.write(u"\32\u011f\n\32\3\32\3\32\3\32\5\32\u0124\n\32\5\32\u0126")
+        buf.write(u"\n\32\3\32\3\32\3\32\3\32\3\32\7\32\u012d\n\32\f\32\16")
+        buf.write(u"\32\u0130\13\32\3\32\5\32\u0133\n\32\3\32\3\32\3\33\3")
+        buf.write(u"\33\3\34\3\34\3\34\6\34\u013c\n\34\r\34\16\34\u013d\5")
+        buf.write(u"\34\u0140\n\34\3\34\3\34\3\34\3\35\3\35\5\35\u0147\n")
+        buf.write(u"\35\3\35\5\35\u014a\n\35\3\36\3\36\5\36\u014e\n\36\3")
+        buf.write(u"\36\3\36\3\36\3\36\3\36\5\36\u0155\n\36\3\37\3\37\3\37")
+        buf.write(u"\3\37\7\37\u015b\n\37\f\37\16\37\u015e\13\37\3\37\3\37")
+        buf.write(u"\3 \3 \3 \3 \7 \u0166\n \f \16 \u0169\13 \3 \3 \3!\3")
+        buf.write(u"!\3!\6!\u0170\n!\r!\16!\u0171\5!\u0174\n!\3!\3!\3!\3")
+        buf.write(u"\"\3\"\5\"\u017b\n\"\3\"\5\"\u017e\n\"\3#\3#\5#\u0182")
+        buf.write(u"\n#\3#\3#\3$\3$\3$\3$\7$\u018a\n$\f$\16$\u018d\13$\3")
+        buf.write(u"$\3$\3%\3%\3%\3%\3%\3%\3%\3%\3%\3%\5%\u019b\n%\5%\u019d")
+        buf.write(u"\n%\3&\3&\3&\7&\u01a2\n&\f&\16&\u01a5\13&\3&\2\2\'\2")
+        buf.write(u"\4\6\b\n\f\16\20\22\24\26\30\32\34\36 \"$&(*,.\60\62")
+        buf.write(u"\64\668:<>@BDFHJ\2\t\4\2\27\30KK\4\2FFJJ\4\2EEKK\3\2")
+        buf.write(u" !\3\2\'-\4\2\n\21\27\27\3\2HI\2\u01bc\2L\3\2\2\2\4[")
+        buf.write(u"\3\2\2\2\6^\3\2\2\2\bk\3\2\2\2\ny\3\2\2\2\f\u008f\3\2")
+        buf.write(u"\2\2\16\u009a\3\2\2\2\20\u00a2\3\2\2\2\22\u00a9\3\2\2")
+        buf.write(u"\2\24\u00c3\3\2\2\2\26\u00c9\3\2\2\2\30\u00cb\3\2\2\2")
+        buf.write(u"\32\u00cd\3\2\2\2\34\u00d5\3\2\2\2\36\u00e8\3\2\2\2 ")
+        buf.write(u"\u00ea\3\2\2\2\"\u00ed\3\2\2\2$\u00f1\3\2\2\2&\u00f6")
+        buf.write(u"\3\2\2\2(\u00fb\3\2\2\2*\u00fe\3\2\2\2,\u0107\3\2\2\2")
+        buf.write(u".\u010e\3\2\2\2\60\u0115\3\2\2\2\62\u0118\3\2\2\2\64")
+        buf.write(u"\u0136\3\2\2\2\66\u0138\3\2\2\28\u0149\3\2\2\2:\u014b")
+        buf.write(u"\3\2\2\2<\u0156\3\2\2\2>\u0161\3\2\2\2@\u016c\3\2\2\2")
+        buf.write(u"B\u017d\3\2\2\2D\u017f\3\2\2\2F\u0185\3\2\2\2H\u019c")
+        buf.write(u"\3\2\2\2J\u019e\3\2\2\2LP\7\67\2\2MN\79\2\2NO\7\3\2\2")
         buf.write(u"OQ\7\37\2\2PM\3\2\2\2PQ\3\2\2\2QR\3\2\2\2RS\5\b\5\2S")
         buf.write(u"T\5\n\6\2TU\5\20\t\2UV\5.\30\2VW\5\66\34\2WX\5@!\2XY")
         buf.write(u"\5J&\2YZ\78\2\2Z\3\3\2\2\2[\\\t\2\2\2\\\5\3\2\2\2]_\7")
@@ -124,89 +124,89 @@ def serializedATN():
         buf.write(u"\u00d8\3\2\2\2\u00e8\u00de\3\2\2\2\u00e9\37\3\2\2\2\u00ea")
         buf.write(u"\u00eb\7\13\2\2\u00eb\u00ec\7L\2\2\u00ec!\3\2\2\2\u00ed")
         buf.write(u"\u00ee\7\f\2\2\u00ee\u00ef\5\4\3\2\u00ef\u00f0\7L\2\2")
-        buf.write(u"\u00f0#\3\2\2\2\u00f1\u00f3\7\27\2\2\u00f2\u00f4\5\64")
-        buf.write(u"\33\2\u00f3\u00f2\3\2\2\2\u00f3\u00f4\3\2\2\2\u00f4\u00f5")
-        buf.write(u"\3\2\2\2\u00f5\u00fa\7L\2\2\u00f6\u00f8\5\64\33\2\u00f7")
-        buf.write(u"\u00f6\3\2\2\2\u00f7\u00f8\3\2\2\2\u00f8\u00f9\3\2\2")
-        buf.write(u"\2\u00f9\u00fb\7L\2\2\u00fa\u00f7\3\2\2\2\u00fa\u00fb")
-        buf.write(u"\3\2\2\2\u00fb%\3\2\2\2\u00fc\u00fe\7\r\2\2\u00fd\u00ff")
-        buf.write(u"\5\64\33\2\u00fe\u00fd\3\2\2\2\u00fe\u00ff\3\2\2\2\u00ff")
-        buf.write(u"\u0100\3\2\2\2\u0100\u0102\7L\2\2\u0101\u0103\5\4\3\2")
-        buf.write(u"\u0102\u0101\3\2\2\2\u0102\u0103\3\2\2\2\u0103\'\3\2")
-        buf.write(u"\2\2\u0104\u0105\7\16\2\2\u0105\u0106\5\4\3\2\u0106)")
-        buf.write(u"\3\2\2\2\u0107\u010a\7\17\2\2\u0108\u010b\7L\2\2\u0109")
-        buf.write(u"\u010b\5> \2\u010a\u0108\3\2\2\2\u010a\u0109\3\2\2\2")
-        buf.write(u"\u010b\u010e\3\2\2\2\u010c\u010f\7L\2\2\u010d\u010f\5")
-        buf.write(u"H%\2\u010e\u010c\3\2\2\2\u010e\u010d\3\2\2\2\u010f+\3")
-        buf.write(u"\2\2\2\u0110\u0113\7\20\2\2\u0111\u0114\7L\2\2\u0112")
-        buf.write(u"\u0114\5F$\2\u0113\u0111\3\2\2\2\u0113\u0112\3\2\2\2")
-        buf.write(u"\u0114\u0115\3\2\2\2\u0115\u0116\5\4\3\2\u0116-\3\2\2")
-        buf.write(u"\2\u0117\u011b\7=\2\2\u0118\u011a\5\60\31\2\u0119\u0118")
-        buf.write(u"\3\2\2\2\u011a\u011d\3\2\2\2\u011b\u0119\3\2\2\2\u011b")
-        buf.write(u"\u011c\3\2\2\2\u011c/\3\2\2\2\u011d\u011b\3\2\2\2\u011e")
-        buf.write(u"\u011f\7K\2\2\u011f\u0120\5\62\32\2\u0120\61\3\2\2\2")
-        buf.write(u"\u0121\u0127\7\b\2\2\u0122\u0128\7\"\2\2\u0123\u0128")
-        buf.write(u"\7#\2\2\u0124\u0128\7$\2\2\u0125\u0126\7%\2\2\u0126\u0128")
-        buf.write(u"\7L\2\2\u0127\u0122\3\2\2\2\u0127\u0123\3\2\2\2\u0127")
-        buf.write(u"\u0124\3\2\2\2\u0127\u0125\3\2\2\2\u0128\u012e\3\2\2")
-        buf.write(u"\2\u0129\u012a\7\22\2\2\u012a\u012c\7G\2\2\u012b\u012d")
-        buf.write(u"\7&\2\2\u012c\u012b\3\2\2\2\u012c\u012d\3\2\2\2\u012d")
-        buf.write(u"\u012f\3\2\2\2\u012e\u0129\3\2\2\2\u012e\u012f\3\2\2")
-        buf.write(u"\2\u012f\u013b\3\2\2\2\u0130\u0131\7\23\2\2\u0131\u0132")
-        buf.write(u"\7\5\2\2\u0132\u0137\7K\2\2\u0133\u0134\7C\2\2\u0134")
-        buf.write(u"\u0136\7K\2\2\u0135\u0133\3\2\2\2\u0136\u0139\3\2\2\2")
-        buf.write(u"\u0137\u0135\3\2\2\2\u0137\u0138\3\2\2\2\u0138\u013a")
-        buf.write(u"\3\2\2\2\u0139\u0137\3\2\2\2\u013a\u013c\7\6\2\2\u013b")
-        buf.write(u"\u0130\3\2\2\2\u013b\u013c\3\2\2\2\u013c\u013d\3\2\2")
-        buf.write(u"\2\u013d\u013e\7\t\2\2\u013e\63\3\2\2\2\u013f\u0140\t")
-        buf.write(u"\b\2\2\u0140\65\3\2\2\2\u0141\u0148\7>\2\2\u0142\u0144")
-        buf.write(u"\7\24\2\2\u0143\u0145\5:\36\2\u0144\u0143\3\2\2\2\u0145")
-        buf.write(u"\u0146\3\2\2\2\u0146\u0144\3\2\2\2\u0146\u0147\3\2\2")
-        buf.write(u"\2\u0147\u0149\3\2\2\2\u0148\u0142\3\2\2\2\u0148\u0149")
-        buf.write(u"\3\2\2\2\u0149\u014a\3\2\2\2\u014a\u014b\7\25\2\2\u014b")
-        buf.write(u"\u014c\58\35\2\u014c\67\3\2\2\2\u014d\u0150\5\64\33\2")
-        buf.write(u"\u014e\u0151\7L\2\2\u014f\u0151\5<\37\2\u0150\u014e\3")
-        buf.write(u"\2\2\2\u0150\u014f\3\2\2\2\u01519\3\2\2\2\u0152\u0153")
-        buf.write(u"\7L\2\2\u0153\u015a\5<\37\2\u0154\u0155\7\25\2\2\u0155")
-        buf.write(u"\u0156\7\26\2\2\u0156\u0157\7\7\2\2\u0157\u0158\5\64")
-        buf.write(u"\33\2\u0158\u0159\7L\2\2\u0159\u015b\3\2\2\2\u015a\u0154")
-        buf.write(u"\3\2\2\2\u015a\u015b\3\2\2\2\u015b;\3\2\2\2\u015c\u015d")
-        buf.write(u"\7\5\2\2\u015d\u0162\5> \2\u015e\u015f\7C\2\2\u015f\u0161")
-        buf.write(u"\5> \2\u0160\u015e\3\2\2\2\u0161\u0164\3\2\2\2\u0162")
-        buf.write(u"\u0160\3\2\2\2\u0162\u0163\3\2\2\2\u0163\u0165\3\2\2")
-        buf.write(u"\2\u0164\u0162\3\2\2\2\u0165\u0166\7\6\2\2\u0166=\3\2")
-        buf.write(u"\2\2\u0167\u0168\7\5\2\2\u0168\u016d\5\6\4\2\u0169\u016a")
-        buf.write(u"\7C\2\2\u016a\u016c\5\6\4\2\u016b\u0169\3\2\2\2\u016c")
-        buf.write(u"\u016f\3\2\2\2\u016d\u016b\3\2\2\2\u016d\u016e\3\2\2")
-        buf.write(u"\2\u016e\u0170\3\2\2\2\u016f\u016d\3\2\2\2\u0170\u0171")
-        buf.write(u"\7\6\2\2\u0171?\3\2\2\2\u0172\u0179\7?\2\2\u0173\u0175")
-        buf.write(u"\7\24\2\2\u0174\u0176\5D#\2\u0175\u0174\3\2\2\2\u0176")
-        buf.write(u"\u0177\3\2\2\2\u0177\u0175\3\2\2\2\u0177\u0178\3\2\2")
-        buf.write(u"\2\u0178\u017a\3\2\2\2\u0179\u0173\3\2\2\2\u0179\u017a")
-        buf.write(u"\3\2\2\2\u017a\u017b\3\2\2\2\u017b\u017c\7\25\2\2\u017c")
-        buf.write(u"\u017d\5B\"\2\u017dA\3\2\2\2\u017e\u0181\5\64\33\2\u017f")
-        buf.write(u"\u0182\7L\2\2\u0180\u0182\5F$\2\u0181\u017f\3\2\2\2\u0181")
-        buf.write(u"\u0180\3\2\2\2\u0182C\3\2\2\2\u0183\u0184\7L\2\2\u0184")
-        buf.write(u"\u0185\5F$\2\u0185E\3\2\2\2\u0186\u0187\7\5\2\2\u0187")
-        buf.write(u"\u018c\5H%\2\u0188\u0189\7C\2\2\u0189\u018b\5H%\2\u018a")
-        buf.write(u"\u0188\3\2\2\2\u018b\u018e\3\2\2\2\u018c\u018a\3\2\2")
-        buf.write(u"\2\u018c\u018d\3\2\2\2\u018d\u018f\3\2\2\2\u018e\u018c")
-        buf.write(u"\3\2\2\2\u018f\u0190\7\6\2\2\u0190G\3\2\2\2\u0191\u0192")
-        buf.write(u"\7\60\2\2\u0192\u019e\5\4\3\2\u0193\u0194\7\61\2\2\u0194")
-        buf.write(u"\u019e\5\4\3\2\u0195\u0196\7\62\2\2\u0196\u019e\5\4\3")
-        buf.write(u"\2\u0197\u0198\7\63\2\2\u0198\u019e\7L\2\2\u0199\u019b")
-        buf.write(u"\7\64\2\2\u019a\u019c\5\4\3\2\u019b\u019a\3\2\2\2\u019b")
-        buf.write(u"\u019c\3\2\2\2\u019c\u019e\3\2\2\2\u019d\u0191\3\2\2")
-        buf.write(u"\2\u019d\u0193\3\2\2\2\u019d\u0195\3\2\2\2\u019d\u0197")
-        buf.write(u"\3\2\2\2\u019d\u0199\3\2\2\2\u019eI\3\2\2\2\u019f\u01a4")
-        buf.write(u"\7@\2\2\u01a0\u01a1\7L\2\2\u01a1\u01a3\7\37\2\2\u01a2")
-        buf.write(u"\u01a0\3\2\2\2\u01a3\u01a6\3\2\2\2\u01a4\u01a2\3\2\2")
-        buf.write(u"\2\u01a4\u01a5\3\2\2\2\u01a5K\3\2\2\2\u01a6\u01a4\3\2")
-        buf.write(u"\2\2\63P^cgit}\u0086\u008c\u0095\u009e\u00a6\u00af\u00b5")
-        buf.write(u"\u00ba\u00c0\u00c9\u00d1\u00de\u00e2\u00e6\u00e8\u00f3")
-        buf.write(u"\u00f7\u00fa\u00fe\u0102\u010a\u010e\u0113\u011b\u0127")
-        buf.write(u"\u012c\u012e\u0137\u013b\u0146\u0148\u0150\u015a\u0162")
-        buf.write(u"\u016d\u0177\u0179\u0181\u018c\u019b\u019d\u01a4")
+        buf.write(u"\u00f0#\3\2\2\2\u00f1\u00f2\7\27\2\2\u00f2\u00f4\7L\2")
+        buf.write(u"\2\u00f3\u00f5\7L\2\2\u00f4\u00f3\3\2\2\2\u00f4\u00f5")
+        buf.write(u"\3\2\2\2\u00f5%\3\2\2\2\u00f6\u00f7\7\r\2\2\u00f7\u00f9")
+        buf.write(u"\7L\2\2\u00f8\u00fa\5\4\3\2\u00f9\u00f8\3\2\2\2\u00f9")
+        buf.write(u"\u00fa\3\2\2\2\u00fa\'\3\2\2\2\u00fb\u00fc\7\16\2\2\u00fc")
+        buf.write(u"\u00fd\5\4\3\2\u00fd)\3\2\2\2\u00fe\u0101\7\17\2\2\u00ff")
+        buf.write(u"\u0102\7L\2\2\u0100\u0102\5> \2\u0101\u00ff\3\2\2\2\u0101")
+        buf.write(u"\u0100\3\2\2\2\u0102\u0105\3\2\2\2\u0103\u0106\7L\2\2")
+        buf.write(u"\u0104\u0106\5H%\2\u0105\u0103\3\2\2\2\u0105\u0104\3")
+        buf.write(u"\2\2\2\u0106+\3\2\2\2\u0107\u010a\7\20\2\2\u0108\u010b")
+        buf.write(u"\7L\2\2\u0109\u010b\5F$\2\u010a\u0108\3\2\2\2\u010a\u0109")
+        buf.write(u"\3\2\2\2\u010b\u010c\3\2\2\2\u010c\u010d\5\4\3\2\u010d")
+        buf.write(u"-\3\2\2\2\u010e\u0112\7=\2\2\u010f\u0111\5\60\31\2\u0110")
+        buf.write(u"\u010f\3\2\2\2\u0111\u0114\3\2\2\2\u0112\u0110\3\2\2")
+        buf.write(u"\2\u0112\u0113\3\2\2\2\u0113/\3\2\2\2\u0114\u0112\3\2")
+        buf.write(u"\2\2\u0115\u0116\7K\2\2\u0116\u0117\5\62\32\2\u0117\61")
+        buf.write(u"\3\2\2\2\u0118\u011e\7\b\2\2\u0119\u011f\7\"\2\2\u011a")
+        buf.write(u"\u011f\7#\2\2\u011b\u011f\7$\2\2\u011c\u011d\7%\2\2\u011d")
+        buf.write(u"\u011f\7L\2\2\u011e\u0119\3\2\2\2\u011e\u011a\3\2\2\2")
+        buf.write(u"\u011e\u011b\3\2\2\2\u011e\u011c\3\2\2\2\u011f\u0125")
+        buf.write(u"\3\2\2\2\u0120\u0121\7\22\2\2\u0121\u0123\7G\2\2\u0122")
+        buf.write(u"\u0124\7&\2\2\u0123\u0122\3\2\2\2\u0123\u0124\3\2\2\2")
+        buf.write(u"\u0124\u0126\3\2\2\2\u0125\u0120\3\2\2\2\u0125\u0126")
+        buf.write(u"\3\2\2\2\u0126\u0132\3\2\2\2\u0127\u0128\7\23\2\2\u0128")
+        buf.write(u"\u0129\7\5\2\2\u0129\u012e\7K\2\2\u012a\u012b\7C\2\2")
+        buf.write(u"\u012b\u012d\7K\2\2\u012c\u012a\3\2\2\2\u012d\u0130\3")
+        buf.write(u"\2\2\2\u012e\u012c\3\2\2\2\u012e\u012f\3\2\2\2\u012f")
+        buf.write(u"\u0131\3\2\2\2\u0130\u012e\3\2\2\2\u0131\u0133\7\6\2")
+        buf.write(u"\2\u0132\u0127\3\2\2\2\u0132\u0133\3\2\2\2\u0133\u0134")
+        buf.write(u"\3\2\2\2\u0134\u0135\7\t\2\2\u0135\63\3\2\2\2\u0136\u0137")
+        buf.write(u"\t\b\2\2\u0137\65\3\2\2\2\u0138\u013f\7>\2\2\u0139\u013b")
+        buf.write(u"\7\24\2\2\u013a\u013c\5:\36\2\u013b\u013a\3\2\2\2\u013c")
+        buf.write(u"\u013d\3\2\2\2\u013d\u013b\3\2\2\2\u013d\u013e\3\2\2")
+        buf.write(u"\2\u013e\u0140\3\2\2\2\u013f\u0139\3\2\2\2\u013f\u0140")
+        buf.write(u"\3\2\2\2\u0140\u0141\3\2\2\2\u0141\u0142\7\25\2\2\u0142")
+        buf.write(u"\u0143\58\35\2\u0143\67\3\2\2\2\u0144\u014a\7L\2\2\u0145")
+        buf.write(u"\u0147\5\64\33\2\u0146\u0145\3\2\2\2\u0146\u0147\3\2")
+        buf.write(u"\2\2\u0147\u0148\3\2\2\2\u0148\u014a\5<\37\2\u0149\u0144")
+        buf.write(u"\3\2\2\2\u0149\u0146\3\2\2\2\u014a9\3\2\2\2\u014b\u014d")
+        buf.write(u"\7L\2\2\u014c\u014e\5\64\33\2\u014d\u014c\3\2\2\2\u014d")
+        buf.write(u"\u014e\3\2\2\2\u014e\u014f\3\2\2\2\u014f\u0154\5<\37")
+        buf.write(u"\2\u0150\u0151\7\25\2\2\u0151\u0152\7\26\2\2\u0152\u0153")
+        buf.write(u"\7\7\2\2\u0153\u0155\7L\2\2\u0154\u0150\3\2\2\2\u0154")
+        buf.write(u"\u0155\3\2\2\2\u0155;\3\2\2\2\u0156\u0157\7\5\2\2\u0157")
+        buf.write(u"\u015c\5> \2\u0158\u0159\7C\2\2\u0159\u015b\5> \2\u015a")
+        buf.write(u"\u0158\3\2\2\2\u015b\u015e\3\2\2\2\u015c\u015a\3\2\2")
+        buf.write(u"\2\u015c\u015d\3\2\2\2\u015d\u015f\3\2\2\2\u015e\u015c")
+        buf.write(u"\3\2\2\2\u015f\u0160\7\6\2\2\u0160=\3\2\2\2\u0161\u0162")
+        buf.write(u"\7\5\2\2\u0162\u0167\5\6\4\2\u0163\u0164\7C\2\2\u0164")
+        buf.write(u"\u0166\5\6\4\2\u0165\u0163\3\2\2\2\u0166\u0169\3\2\2")
+        buf.write(u"\2\u0167\u0165\3\2\2\2\u0167\u0168\3\2\2\2\u0168\u016a")
+        buf.write(u"\3\2\2\2\u0169\u0167\3\2\2\2\u016a\u016b\7\6\2\2\u016b")
+        buf.write(u"?\3\2\2\2\u016c\u0173\7?\2\2\u016d\u016f\7\24\2\2\u016e")
+        buf.write(u"\u0170\5D#\2\u016f\u016e\3\2\2\2\u0170\u0171\3\2\2\2")
+        buf.write(u"\u0171\u016f\3\2\2\2\u0171\u0172\3\2\2\2\u0172\u0174")
+        buf.write(u"\3\2\2\2\u0173\u016d\3\2\2\2\u0173\u0174\3\2\2\2\u0174")
+        buf.write(u"\u0175\3\2\2\2\u0175\u0176\7\25\2\2\u0176\u0177\5B\"")
+        buf.write(u"\2\u0177A\3\2\2\2\u0178\u017e\7L\2\2\u0179\u017b\5\64")
+        buf.write(u"\33\2\u017a\u0179\3\2\2\2\u017a\u017b\3\2\2\2\u017b\u017c")
+        buf.write(u"\3\2\2\2\u017c\u017e\5F$\2\u017d\u0178\3\2\2\2\u017d")
+        buf.write(u"\u017a\3\2\2\2\u017eC\3\2\2\2\u017f\u0181\7L\2\2\u0180")
+        buf.write(u"\u0182\5\64\33\2\u0181\u0180\3\2\2\2\u0181\u0182\3\2")
+        buf.write(u"\2\2\u0182\u0183\3\2\2\2\u0183\u0184\5F$\2\u0184E\3\2")
+        buf.write(u"\2\2\u0185\u0186\7\5\2\2\u0186\u018b\5H%\2\u0187\u0188")
+        buf.write(u"\7C\2\2\u0188\u018a\5H%\2\u0189\u0187\3\2\2\2\u018a\u018d")
+        buf.write(u"\3\2\2\2\u018b\u0189\3\2\2\2\u018b\u018c\3\2\2\2\u018c")
+        buf.write(u"\u018e\3\2\2\2\u018d\u018b\3\2\2\2\u018e\u018f\7\6\2")
+        buf.write(u"\2\u018fG\3\2\2\2\u0190\u0191\7\60\2\2\u0191\u019d\5")
+        buf.write(u"\4\3\2\u0192\u0193\7\61\2\2\u0193\u019d\5\4\3\2\u0194")
+        buf.write(u"\u0195\7\62\2\2\u0195\u019d\5\4\3\2\u0196\u0197\7\63")
+        buf.write(u"\2\2\u0197\u019d\7L\2\2\u0198\u019a\7\64\2\2\u0199\u019b")
+        buf.write(u"\5\4\3\2\u019a\u0199\3\2\2\2\u019a\u019b\3\2\2\2\u019b")
+        buf.write(u"\u019d\3\2\2\2\u019c\u0190\3\2\2\2\u019c\u0192\3\2\2")
+        buf.write(u"\2\u019c\u0194\3\2\2\2\u019c\u0196\3\2\2\2\u019c\u0198")
+        buf.write(u"\3\2\2\2\u019dI\3\2\2\2\u019e\u01a3\7@\2\2\u019f\u01a0")
+        buf.write(u"\7L\2\2\u01a0\u01a2\7\37\2\2\u01a1\u019f\3\2\2\2\u01a2")
+        buf.write(u"\u01a5\3\2\2\2\u01a3\u01a1\3\2\2\2\u01a3\u01a4\3\2\2")
+        buf.write(u"\2\u01a4K\3\2\2\2\u01a5\u01a3\3\2\2\2\64P^cgit}\u0086")
+        buf.write(u"\u008c\u0095\u009e\u00a6\u00af\u00b5\u00ba\u00c0\u00c9")
+        buf.write(u"\u00d1\u00de\u00e2\u00e6\u00e8\u00f4\u00f9\u0101\u0105")
+        buf.write(u"\u010a\u0112\u011e\u0123\u0125\u012e\u0132\u013d\u013f")
+        buf.write(u"\u0146\u0149\u014d\u0154\u015c\u0167\u0171\u0173\u017a")
+        buf.write(u"\u017d\u0181\u018b\u019a\u019c\u01a3")
         return buf.getvalue()
 
 
@@ -1797,13 +1797,6 @@ class QrogueDungeonParser ( Parser ):
             else:
                 return self.getToken(QrogueDungeonParser.REFERENCE, i)
 
-        def draw_strategy(self, i=None):
-            if i is None:
-                return self.getTypedRuleContexts(QrogueDungeonParser.Draw_strategyContext)
-            else:
-                return self.getTypedRuleContext(QrogueDungeonParser.Draw_strategyContext,i)
-
-
         def getRuleIndex(self):
             return QrogueDungeonParser.RULE_enemy_descriptor
 
@@ -1833,29 +1826,13 @@ class QrogueDungeonParser ( Parser ):
             self.enterOuterAlt(localctx, 1)
             self.state = 239
             self.match(QrogueDungeonParser.DIGIT)
-            self.state = 241
-            self._errHandler.sync(self)
-            _la = self._input.LA(1)
-            if _la==QrogueDungeonParser.ORDERED_DRAW or _la==QrogueDungeonParser.RANDOM_DRAW:
-                self.state = 240
-                self.draw_strategy()
-
-
-            self.state = 243
+            self.state = 240
             self.match(QrogueDungeonParser.REFERENCE)
-            self.state = 248
+            self.state = 242
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            if ((((_la - 70)) & ~0x3f) == 0 and ((1 << (_la - 70)) & ((1 << (QrogueDungeonParser.ORDERED_DRAW - 70)) | (1 << (QrogueDungeonParser.RANDOM_DRAW - 70)) | (1 << (QrogueDungeonParser.REFERENCE - 70)))) != 0):
-                self.state = 245
-                self._errHandler.sync(self)
-                _la = self._input.LA(1)
-                if _la==QrogueDungeonParser.ORDERED_DRAW or _la==QrogueDungeonParser.RANDOM_DRAW:
-                    self.state = 244
-                    self.draw_strategy()
-
-
-                self.state = 247
+            if _la==QrogueDungeonParser.REFERENCE:
+                self.state = 241
                 self.match(QrogueDungeonParser.REFERENCE)
 
 
@@ -1876,10 +1853,6 @@ class QrogueDungeonParser ( Parser ):
 
         def REFERENCE(self):
             return self.getToken(QrogueDungeonParser.REFERENCE, 0)
-
-        def draw_strategy(self):
-            return self.getTypedRuleContext(QrogueDungeonParser.Draw_strategyContext,0)
-
 
         def integer(self):
             return self.getTypedRuleContext(QrogueDungeonParser.IntegerContext,0)
@@ -1909,26 +1882,17 @@ class QrogueDungeonParser ( Parser ):
 
         localctx = QrogueDungeonParser.Collectible_descriptorContext(self, self._ctx, self.state)
         self.enterRule(localctx, 36, self.RULE_collectible_descriptor)
-        self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 250
+            self.state = 244
             self.match(QrogueDungeonParser.T__10)
-            self.state = 252
-            self._errHandler.sync(self)
-            _la = self._input.LA(1)
-            if _la==QrogueDungeonParser.ORDERED_DRAW or _la==QrogueDungeonParser.RANDOM_DRAW:
-                self.state = 251
-                self.draw_strategy()
-
-
-            self.state = 254
+            self.state = 245
             self.match(QrogueDungeonParser.REFERENCE)
-            self.state = 256
+            self.state = 247
             self._errHandler.sync(self)
-            la_ = self._interp.adaptivePredict(self._input,26,self._ctx)
+            la_ = self._interp.adaptivePredict(self._input,23,self._ctx)
             if la_ == 1:
-                self.state = 255
+                self.state = 246
                 self.integer()
 
 
@@ -1977,9 +1941,9 @@ class QrogueDungeonParser ( Parser ):
         self.enterRule(localctx, 38, self.RULE_energy_descriptor)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 258
+            self.state = 249
             self.match(QrogueDungeonParser.T__11)
-            self.state = 259
+            self.state = 250
             self.integer()
         except RecognitionException as re:
             localctx.exception = re
@@ -2036,31 +2000,31 @@ class QrogueDungeonParser ( Parser ):
         self.enterRule(localctx, 40, self.RULE_riddle_descriptor)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 261
+            self.state = 252
             self.match(QrogueDungeonParser.T__12)
-            self.state = 264
+            self.state = 255
             self._errHandler.sync(self)
             token = self._input.LA(1)
             if token in [QrogueDungeonParser.REFERENCE]:
-                self.state = 262
+                self.state = 253
                 self.match(QrogueDungeonParser.REFERENCE)
                 pass
             elif token in [QrogueDungeonParser.T__2]:
-                self.state = 263
+                self.state = 254
                 self.stv()
                 pass
             else:
                 raise NoViableAltException(self)
 
-            self.state = 268
+            self.state = 259
             self._errHandler.sync(self)
             token = self._input.LA(1)
             if token in [QrogueDungeonParser.REFERENCE]:
-                self.state = 266
+                self.state = 257
                 self.match(QrogueDungeonParser.REFERENCE)
                 pass
             elif token in [QrogueDungeonParser.KEY_LITERAL, QrogueDungeonParser.COIN_LITERAL, QrogueDungeonParser.HEALTH_LITERAL, QrogueDungeonParser.GATE_LITERAL, QrogueDungeonParser.QUBIT_LITERAL]:
-                self.state = 267
+                self.state = 258
                 self.collectible()
                 pass
             else:
@@ -2118,23 +2082,23 @@ class QrogueDungeonParser ( Parser ):
         self.enterRule(localctx, 42, self.RULE_shop_descriptor)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 270
+            self.state = 261
             self.match(QrogueDungeonParser.T__13)
-            self.state = 273
+            self.state = 264
             self._errHandler.sync(self)
             token = self._input.LA(1)
             if token in [QrogueDungeonParser.REFERENCE]:
-                self.state = 271
+                self.state = 262
                 self.match(QrogueDungeonParser.REFERENCE)
                 pass
             elif token in [QrogueDungeonParser.T__2]:
-                self.state = 272
+                self.state = 263
                 self.collectibles()
                 pass
             else:
                 raise NoViableAltException(self)
 
-            self.state = 275
+            self.state = 266
             self.integer()
         except RecognitionException as re:
             localctx.exception = re
@@ -2188,15 +2152,15 @@ class QrogueDungeonParser ( Parser ):
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 277
+            self.state = 268
             self.match(QrogueDungeonParser.HALLWAYS)
-            self.state = 281
+            self.state = 272
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             while _la==QrogueDungeonParser.HALLWAY_ID:
-                self.state = 278
+                self.state = 269
                 self.hallway()
-                self.state = 283
+                self.state = 274
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
 
@@ -2248,9 +2212,9 @@ class QrogueDungeonParser ( Parser ):
         self.enterRule(localctx, 46, self.RULE_hallway)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 284
+            self.state = 275
             self.match(QrogueDungeonParser.HALLWAY_ID)
-            self.state = 285
+            self.state = 276
             self.h_attributes()
         except RecognitionException as re:
             localctx.exception = re
@@ -2327,77 +2291,77 @@ class QrogueDungeonParser ( Parser ):
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 287
+            self.state = 278
             self.match(QrogueDungeonParser.T__5)
-            self.state = 293
+            self.state = 284
             self._errHandler.sync(self)
             token = self._input.LA(1)
             if token in [QrogueDungeonParser.OPEN_LITERAL]:
-                self.state = 288
+                self.state = 279
                 self.match(QrogueDungeonParser.OPEN_LITERAL)
                 pass
             elif token in [QrogueDungeonParser.CLOSED_LITERAL]:
-                self.state = 289
+                self.state = 280
                 self.match(QrogueDungeonParser.CLOSED_LITERAL)
                 pass
             elif token in [QrogueDungeonParser.LOCKED_LITERAL]:
-                self.state = 290
+                self.state = 281
                 self.match(QrogueDungeonParser.LOCKED_LITERAL)
                 pass
             elif token in [QrogueDungeonParser.EVENT_LITERAL]:
-                self.state = 291
+                self.state = 282
                 self.match(QrogueDungeonParser.EVENT_LITERAL)
-                self.state = 292
+                self.state = 283
                 self.match(QrogueDungeonParser.REFERENCE)
                 pass
             else:
                 raise NoViableAltException(self)
 
-            self.state = 300
+            self.state = 291
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             if _la==QrogueDungeonParser.T__15:
-                self.state = 295
+                self.state = 286
                 self.match(QrogueDungeonParser.T__15)
-                self.state = 296
+                self.state = 287
                 self.match(QrogueDungeonParser.DIRECTION)
-                self.state = 298
+                self.state = 289
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
                 if _la==QrogueDungeonParser.PERMANENT_LITERAL:
-                    self.state = 297
+                    self.state = 288
                     self.match(QrogueDungeonParser.PERMANENT_LITERAL)
 
 
 
 
-            self.state = 313
+            self.state = 304
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             if _la==QrogueDungeonParser.T__16:
-                self.state = 302
+                self.state = 293
                 self.match(QrogueDungeonParser.T__16)
-                self.state = 303
+                self.state = 294
                 self.match(QrogueDungeonParser.T__2)
-                self.state = 304
+                self.state = 295
                 self.match(QrogueDungeonParser.HALLWAY_ID)
-                self.state = 309
+                self.state = 300
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
                 while _la==QrogueDungeonParser.LIST_SEPARATOR:
-                    self.state = 305
+                    self.state = 296
                     self.match(QrogueDungeonParser.LIST_SEPARATOR)
-                    self.state = 306
+                    self.state = 297
                     self.match(QrogueDungeonParser.HALLWAY_ID)
-                    self.state = 311
+                    self.state = 302
                     self._errHandler.sync(self)
                     _la = self._input.LA(1)
 
-                self.state = 312
+                self.state = 303
                 self.match(QrogueDungeonParser.T__3)
 
 
-            self.state = 315
+            self.state = 306
             self.match(QrogueDungeonParser.T__6)
         except RecognitionException as re:
             localctx.exception = re
@@ -2447,7 +2411,7 @@ class QrogueDungeonParser ( Parser ):
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 317
+            self.state = 308
             _la = self._input.LA(1)
             if not(_la==QrogueDungeonParser.ORDERED_DRAW or _la==QrogueDungeonParser.RANDOM_DRAW):
                 self._errHandler.recoverInline(self)
@@ -2510,21 +2474,21 @@ class QrogueDungeonParser ( Parser ):
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 319
+            self.state = 310
             self.match(QrogueDungeonParser.STV_POOLS)
-            self.state = 326
+            self.state = 317
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             if _la==QrogueDungeonParser.T__17:
-                self.state = 320
+                self.state = 311
                 self.match(QrogueDungeonParser.T__17)
-                self.state = 322 
+                self.state = 313 
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
                 while True:
-                    self.state = 321
+                    self.state = 312
                     self.stv_pool()
-                    self.state = 324 
+                    self.state = 315 
                     self._errHandler.sync(self)
                     _la = self._input.LA(1)
                     if not (_la==QrogueDungeonParser.REFERENCE):
@@ -2532,9 +2496,9 @@ class QrogueDungeonParser ( Parser ):
 
 
 
-            self.state = 328
+            self.state = 319
             self.match(QrogueDungeonParser.T__18)
-            self.state = 329
+            self.state = 320
             self.default_stv_pool()
         except RecognitionException as re:
             localctx.exception = re
@@ -2551,15 +2515,15 @@ class QrogueDungeonParser ( Parser ):
             super(QrogueDungeonParser.Default_stv_poolContext, self).__init__(parent, invokingState)
             self.parser = parser
 
-        def draw_strategy(self):
-            return self.getTypedRuleContext(QrogueDungeonParser.Draw_strategyContext,0)
-
-
         def REFERENCE(self):
             return self.getToken(QrogueDungeonParser.REFERENCE, 0)
 
         def stvs(self):
             return self.getTypedRuleContext(QrogueDungeonParser.StvsContext,0)
+
+
+        def draw_strategy(self):
+            return self.getTypedRuleContext(QrogueDungeonParser.Draw_strategyContext,0)
 
 
         def getRuleIndex(self):
@@ -2586,19 +2550,27 @@ class QrogueDungeonParser ( Parser ):
 
         localctx = QrogueDungeonParser.Default_stv_poolContext(self, self._ctx, self.state)
         self.enterRule(localctx, 54, self.RULE_default_stv_pool)
+        self._la = 0 # Token type
         try:
-            self.enterOuterAlt(localctx, 1)
-            self.state = 331
-            self.draw_strategy()
-            self.state = 334
+            self.state = 327
             self._errHandler.sync(self)
             token = self._input.LA(1)
             if token in [QrogueDungeonParser.REFERENCE]:
-                self.state = 332
+                self.enterOuterAlt(localctx, 1)
+                self.state = 322
                 self.match(QrogueDungeonParser.REFERENCE)
                 pass
-            elif token in [QrogueDungeonParser.T__2]:
-                self.state = 333
+            elif token in [QrogueDungeonParser.T__2, QrogueDungeonParser.ORDERED_DRAW, QrogueDungeonParser.RANDOM_DRAW]:
+                self.enterOuterAlt(localctx, 2)
+                self.state = 324
+                self._errHandler.sync(self)
+                _la = self._input.LA(1)
+                if _la==QrogueDungeonParser.ORDERED_DRAW or _la==QrogueDungeonParser.RANDOM_DRAW:
+                    self.state = 323
+                    self.draw_strategy()
+
+
+                self.state = 326
                 self.stvs()
                 pass
             else:
@@ -2657,25 +2629,32 @@ class QrogueDungeonParser ( Parser ):
 
         localctx = QrogueDungeonParser.Stv_poolContext(self, self._ctx, self.state)
         self.enterRule(localctx, 56, self.RULE_stv_pool)
+        self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 336
+            self.state = 329
             self.match(QrogueDungeonParser.REFERENCE)
-            self.state = 337
-            self.stvs()
-            self.state = 344
+            self.state = 331
             self._errHandler.sync(self)
-            la_ = self._interp.adaptivePredict(self._input,39,self._ctx)
-            if la_ == 1:
-                self.state = 338
-                self.match(QrogueDungeonParser.T__18)
-                self.state = 339
-                self.match(QrogueDungeonParser.T__19)
-                self.state = 340
-                self.match(QrogueDungeonParser.T__4)
-                self.state = 341
+            _la = self._input.LA(1)
+            if _la==QrogueDungeonParser.ORDERED_DRAW or _la==QrogueDungeonParser.RANDOM_DRAW:
+                self.state = 330
                 self.draw_strategy()
-                self.state = 342
+
+
+            self.state = 333
+            self.stvs()
+            self.state = 338
+            self._errHandler.sync(self)
+            la_ = self._interp.adaptivePredict(self._input,38,self._ctx)
+            if la_ == 1:
+                self.state = 334
+                self.match(QrogueDungeonParser.T__18)
+                self.state = 335
+                self.match(QrogueDungeonParser.T__19)
+                self.state = 336
+                self.match(QrogueDungeonParser.T__4)
+                self.state = 337
                 self.match(QrogueDungeonParser.REFERENCE)
 
 
@@ -2734,23 +2713,23 @@ class QrogueDungeonParser ( Parser ):
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 346
+            self.state = 340
             self.match(QrogueDungeonParser.T__2)
-            self.state = 347
+            self.state = 341
             self.stv()
-            self.state = 352
+            self.state = 346
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             while _la==QrogueDungeonParser.LIST_SEPARATOR:
-                self.state = 348
+                self.state = 342
                 self.match(QrogueDungeonParser.LIST_SEPARATOR)
-                self.state = 349
+                self.state = 343
                 self.stv()
-                self.state = 354
+                self.state = 348
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
 
-            self.state = 355
+            self.state = 349
             self.match(QrogueDungeonParser.T__3)
         except RecognitionException as re:
             localctx.exception = re
@@ -2807,23 +2786,23 @@ class QrogueDungeonParser ( Parser ):
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 357
+            self.state = 351
             self.match(QrogueDungeonParser.T__2)
-            self.state = 358
+            self.state = 352
             self.complex_number()
-            self.state = 363
+            self.state = 357
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             while _la==QrogueDungeonParser.LIST_SEPARATOR:
-                self.state = 359
+                self.state = 353
                 self.match(QrogueDungeonParser.LIST_SEPARATOR)
-                self.state = 360
+                self.state = 354
                 self.complex_number()
-                self.state = 365
+                self.state = 359
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
 
-            self.state = 366
+            self.state = 360
             self.match(QrogueDungeonParser.T__3)
         except RecognitionException as re:
             localctx.exception = re
@@ -2881,21 +2860,21 @@ class QrogueDungeonParser ( Parser ):
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 368
+            self.state = 362
             self.match(QrogueDungeonParser.REWARD_POOLS)
-            self.state = 375
+            self.state = 369
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             if _la==QrogueDungeonParser.T__17:
-                self.state = 369
+                self.state = 363
                 self.match(QrogueDungeonParser.T__17)
-                self.state = 371 
+                self.state = 365 
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
                 while True:
-                    self.state = 370
+                    self.state = 364
                     self.reward_pool()
-                    self.state = 373 
+                    self.state = 367 
                     self._errHandler.sync(self)
                     _la = self._input.LA(1)
                     if not (_la==QrogueDungeonParser.REFERENCE):
@@ -2903,9 +2882,9 @@ class QrogueDungeonParser ( Parser ):
 
 
 
-            self.state = 377
+            self.state = 371
             self.match(QrogueDungeonParser.T__18)
-            self.state = 378
+            self.state = 372
             self.default_reward_pool()
         except RecognitionException as re:
             localctx.exception = re
@@ -2922,15 +2901,15 @@ class QrogueDungeonParser ( Parser ):
             super(QrogueDungeonParser.Default_reward_poolContext, self).__init__(parent, invokingState)
             self.parser = parser
 
-        def draw_strategy(self):
-            return self.getTypedRuleContext(QrogueDungeonParser.Draw_strategyContext,0)
-
-
         def REFERENCE(self):
             return self.getToken(QrogueDungeonParser.REFERENCE, 0)
 
         def collectibles(self):
             return self.getTypedRuleContext(QrogueDungeonParser.CollectiblesContext,0)
+
+
+        def draw_strategy(self):
+            return self.getTypedRuleContext(QrogueDungeonParser.Draw_strategyContext,0)
 
 
         def getRuleIndex(self):
@@ -2957,19 +2936,27 @@ class QrogueDungeonParser ( Parser ):
 
         localctx = QrogueDungeonParser.Default_reward_poolContext(self, self._ctx, self.state)
         self.enterRule(localctx, 64, self.RULE_default_reward_pool)
+        self._la = 0 # Token type
         try:
-            self.enterOuterAlt(localctx, 1)
-            self.state = 380
-            self.draw_strategy()
-            self.state = 383
+            self.state = 379
             self._errHandler.sync(self)
             token = self._input.LA(1)
             if token in [QrogueDungeonParser.REFERENCE]:
-                self.state = 381
+                self.enterOuterAlt(localctx, 1)
+                self.state = 374
                 self.match(QrogueDungeonParser.REFERENCE)
                 pass
-            elif token in [QrogueDungeonParser.T__2]:
-                self.state = 382
+            elif token in [QrogueDungeonParser.T__2, QrogueDungeonParser.ORDERED_DRAW, QrogueDungeonParser.RANDOM_DRAW]:
+                self.enterOuterAlt(localctx, 2)
+                self.state = 376
+                self._errHandler.sync(self)
+                _la = self._input.LA(1)
+                if _la==QrogueDungeonParser.ORDERED_DRAW or _la==QrogueDungeonParser.RANDOM_DRAW:
+                    self.state = 375
+                    self.draw_strategy()
+
+
+                self.state = 378
                 self.collectibles()
                 pass
             else:
@@ -2997,6 +2984,10 @@ class QrogueDungeonParser ( Parser ):
             return self.getTypedRuleContext(QrogueDungeonParser.CollectiblesContext,0)
 
 
+        def draw_strategy(self):
+            return self.getTypedRuleContext(QrogueDungeonParser.Draw_strategyContext,0)
+
+
         def getRuleIndex(self):
             return QrogueDungeonParser.RULE_reward_pool
 
@@ -3021,11 +3012,20 @@ class QrogueDungeonParser ( Parser ):
 
         localctx = QrogueDungeonParser.Reward_poolContext(self, self._ctx, self.state)
         self.enterRule(localctx, 66, self.RULE_reward_pool)
+        self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 385
+            self.state = 381
             self.match(QrogueDungeonParser.REFERENCE)
-            self.state = 386
+            self.state = 383
+            self._errHandler.sync(self)
+            _la = self._input.LA(1)
+            if _la==QrogueDungeonParser.ORDERED_DRAW or _la==QrogueDungeonParser.RANDOM_DRAW:
+                self.state = 382
+                self.draw_strategy()
+
+
+            self.state = 385
             self.collectibles()
         except RecognitionException as re:
             localctx.exception = re
@@ -3082,23 +3082,23 @@ class QrogueDungeonParser ( Parser ):
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 388
+            self.state = 387
             self.match(QrogueDungeonParser.T__2)
-            self.state = 389
+            self.state = 388
             self.collectible()
-            self.state = 394
+            self.state = 393
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             while _la==QrogueDungeonParser.LIST_SEPARATOR:
-                self.state = 390
+                self.state = 389
                 self.match(QrogueDungeonParser.LIST_SEPARATOR)
-                self.state = 391
+                self.state = 390
                 self.collectible()
-                self.state = 396
+                self.state = 395
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
 
-            self.state = 397
+            self.state = 396
             self.match(QrogueDungeonParser.T__3)
         except RecognitionException as re:
             localctx.exception = re
@@ -3163,41 +3163,41 @@ class QrogueDungeonParser ( Parser ):
         self.enterRule(localctx, 70, self.RULE_collectible)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 411
+            self.state = 410
             self._errHandler.sync(self)
             token = self._input.LA(1)
             if token in [QrogueDungeonParser.KEY_LITERAL]:
-                self.state = 399
+                self.state = 398
                 self.match(QrogueDungeonParser.KEY_LITERAL)
-                self.state = 400
+                self.state = 399
                 self.integer()
                 pass
             elif token in [QrogueDungeonParser.COIN_LITERAL]:
-                self.state = 401
+                self.state = 400
                 self.match(QrogueDungeonParser.COIN_LITERAL)
-                self.state = 402
+                self.state = 401
                 self.integer()
                 pass
             elif token in [QrogueDungeonParser.HEALTH_LITERAL]:
-                self.state = 403
+                self.state = 402
                 self.match(QrogueDungeonParser.HEALTH_LITERAL)
-                self.state = 404
+                self.state = 403
                 self.integer()
                 pass
             elif token in [QrogueDungeonParser.GATE_LITERAL]:
-                self.state = 405
+                self.state = 404
                 self.match(QrogueDungeonParser.GATE_LITERAL)
-                self.state = 406
+                self.state = 405
                 self.match(QrogueDungeonParser.REFERENCE)
                 pass
             elif token in [QrogueDungeonParser.QUBIT_LITERAL]:
-                self.state = 407
+                self.state = 406
                 self.match(QrogueDungeonParser.QUBIT_LITERAL)
-                self.state = 409
+                self.state = 408
                 self._errHandler.sync(self)
-                la_ = self._interp.adaptivePredict(self._input,46,self._ctx)
+                la_ = self._interp.adaptivePredict(self._input,47,self._ctx)
                 if la_ == 1:
-                    self.state = 408
+                    self.state = 407
                     self.integer()
 
 
@@ -3262,17 +3262,17 @@ class QrogueDungeonParser ( Parser ):
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 413
+            self.state = 412
             self.match(QrogueDungeonParser.MESSAGES)
-            self.state = 418
+            self.state = 417
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             while _la==QrogueDungeonParser.REFERENCE:
-                self.state = 414
+                self.state = 413
                 self.match(QrogueDungeonParser.REFERENCE)
-                self.state = 415
+                self.state = 414
                 self.match(QrogueDungeonParser.TEXT)
-                self.state = 420
+                self.state = 419
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
 

@@ -37,8 +37,8 @@ tile_descriptor : trigger_descriptor | message_descriptor |
                   (TUTORIAL_LITERAL REFERENCE)? (TRIGGER_LITERAL REFERENCE)? ;  // winning a fight or picking up a collectible can also trigger an event
 trigger_descriptor : 't' REFERENCE ;   // reference to the event to trigger
 message_descriptor : 'm' integer REFERENCE ;    // #times displayed, reference to the text that should be shown
-enemy_descriptor : DIGIT draw_strategy? REFERENCE (draw_strategy? REFERENCE)?;    // enemy, id of statevector pool, id of reward pool
-collectible_descriptor : 'c' draw_strategy? REFERENCE integer? ; // id of reward pool to draw from, number of rewards to draw (note: template pools like *key provide "normal" collectibles)
+enemy_descriptor : DIGIT REFERENCE REFERENCE?;    // enemy, id of statevector pool, id of reward pool
+collectible_descriptor : 'c' REFERENCE integer? ; // id of reward pool to draw from, number of rewards to draw (note: template pools like *key provide "normal" collectibles)
 energy_descriptor : 'e' integer ;    // amount
 riddle_descriptor : 'r' (REFERENCE | stv) (REFERENCE | collectible) ;   // stv pool id, reward pool id
 shop_descriptor : '$' (REFERENCE | collectibles) integer ;   // reward pool id or collectible list, num of items to draw
@@ -55,14 +55,14 @@ h_attributes : '(' (OPEN_LITERAL | CLOSED_LITERAL | LOCKED_LITERAL | EVENT_LITER
 draw_strategy : RANDOM_DRAW | ORDERED_DRAW ;    // default is random draw, because mostly we don't want to have to explicitely define it
 
 stv_pools : STV_POOLS ('custom' stv_pool+)? 'default' default_stv_pool ;    // default pools are for enemies without defined pools
-default_stv_pool : draw_strategy (REFERENCE | stvs) ;
-stv_pool : REFERENCE stvs ('default' 'rewards' ':' draw_strategy REFERENCE)?;     // id of pool, list of statevectors, id of default reward pool
+default_stv_pool : REFERENCE | draw_strategy? stvs ;
+stv_pool : REFERENCE draw_strategy? stvs ('default' 'rewards' ':' REFERENCE)?;     // id of pool, list of statevectors, id of default reward pool
 stvs : '[' stv (LIST_SEPARATOR stv)* ']' ;
 stv :  '[' complex_number (LIST_SEPARATOR complex_number)* ']';
 
 reward_pools : REWARD_POOLS ('custom' reward_pool+)? 'default' default_reward_pool ;    // default pools are for enemies without defined pools
-default_reward_pool : draw_strategy (REFERENCE | collectibles) ;      // the default pool can either be an ID or a list of collectibles
-reward_pool : REFERENCE collectibles ;     // id, pool of collectibles
+default_reward_pool : REFERENCE | draw_strategy? collectibles ;      // the default pool can either be an ID or a list of collectibles
+reward_pool : REFERENCE draw_strategy? collectibles ;     // id, pool of collectibles
 collectibles : '[' collectible (LIST_SEPARATOR collectible)* ']' ;
 collectible :   (KEY_LITERAL integer | COIN_LITERAL integer | HEALTH_LITERAL integer | GATE_LITERAL REFERENCE |
                 QUBIT_LITERAL integer?) ;

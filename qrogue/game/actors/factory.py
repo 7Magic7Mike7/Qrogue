@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Callable
 
 from qrogue.game.actors.boss import Boss as BossActor
 from qrogue.game.actors.robot import Robot
@@ -122,14 +122,17 @@ class EnemyFactory:
     It is used by enemy tiles to trigger a fight.
     """
 
-    def __init__(self, start_fight_callback: "(Robot, Target, Direction)",
-                 difficulty: TargetDifficulty):
+    def __init__(self, start_fight_callback: Callable[[Robot, EnemyActor, Direction], None], difficulty: TargetDifficulty):
         """
 
         :param difficulty: difficulty of the enemy we produce
         """
         self.__difficulty = difficulty
+        self.__custom_reward_factory = None
         self.__start_fight = start_fight_callback
+
+    def set_custom_reward_factory(self, factory: CollectibleFactory):
+        self.__custom_reward_factory = factory
 
     def produce(self, robot: Robot, rm: MyRandom, flee_chance: float) -> EnemyActor:
         """
@@ -141,7 +144,10 @@ class EnemyFactory:
         :return: a freshly created enemy
         """
         stv = self.__difficulty.create_statevector(robot, rm)
-        reward = self.__difficulty.produce_reward(rm)
+        if self.__custom_reward_factory:
+            reward = self.__custom_reward_factory.produce(rm)
+        else:
+            reward = self.__difficulty.produce_reward(rm)
         return DummyEnemy(stv, reward, flee_chance)
 
     def start(self, robot: Robot, target: Target, direction: Direction):

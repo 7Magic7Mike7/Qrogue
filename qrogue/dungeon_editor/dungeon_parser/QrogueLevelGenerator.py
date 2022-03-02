@@ -215,30 +215,33 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             self.warning(f"Unknown tile specified: {tile_str}. Using a Floor-Tile instead.")
             return tiles.Floor()
 
+    def __get_draw_strategy(self, ctx: QrogueDungeonParser.Draw_strategyContext):
+        if ctx:
+            return self.visit(ctx)
+        return False    # default value is "random"
+
     ##### load from references #####
 
-    def __load_reward_pool(self, reference: str) -> List[Collectible]:
+    def __load_reward_pool(self, reference: str) -> factory.CollectibleFactory:
         if reference in self.__reward_pools:
             return self.__reward_pools[reference]
 
         ref = self.__normalize_reference(reference)
         if ref in ['coin', 'coins']:
-            return [pickup.Coin(1)]
+            pool = [pickup.Coin(1)]
         elif ref in ['key', 'keys']:
-            return [pickup.Key(1)]
+            pool = [pickup.Key(1)]
         elif ref in ['hp', 'health', 'heart', 'hearts', 'healthPoints']:
-            return [pickup.Heart(1)]
+            pool = [pickup.Heart(1)]
         else:
             self.warning(f"Imports not yet supported: {reference}")
             # todo load from somewhere else?
-            return [pickup.Key(0)]
+            pool = [pickup.Key(0)]
+        return factory.CollectibleFactory(pool)
 
-    def __load_stv_pool(self, reference: str, ordered: bool = False) -> TargetDifficulty:
+    def __load_stv_pool(self, reference: str) -> TargetDifficulty:
         if reference in self.__stv_pools:
-            stv_list, reward_factory = self.__stv_pools[reference]
-            if not reward_factory:
-                reward_factory = self.__default_reward_factory
-            return ExplicitTargetDifficulty(stv_list, reward_factory, ordered)
+            return self.__stv_pools[reference]
         else:
             # todo implement imports
 
@@ -417,29 +420,29 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             self.warning("No legal collectible specified!")
         return None
 
-    def visitCollectibles(self, ctx: QrogueDungeonParser.CollectiblesContext) -> [Collectible]:
+    def visitCollectibles(self, ctx: QrogueDungeonParser.CollectiblesContext) -> List[Collectible]:
         collectible_list = []
         for collectible in ctx.collectible():
             collectible_list.append(self.visit(collectible))
         return collectible_list
 
-    def visitReward_pool(self, ctx: QrogueDungeonParser.Reward_poolContext) -> (str, factory.CollectibleFactory):
+    def visitReward_pool(self, ctx: QrogueDungeonParser.Reward_poolContext) -> Tuple[str, factory.CollectibleFactory]:
         pool_id = ctx.REFERENCE().getText()
+        ordered = self.__get_draw_strategy(ctx.draw_strategy())
         collectible_list = self.visit(ctx.collectibles())
-        return pool_id, collectible_list
+        if ordered:
+            return pool_id, factory.OrderedCollectibleFactory(collectible_list)
+        else:
+            return pool_id, factory.CollectibleFactory(collectible_list)
 
     def visitDefault_reward_pool(self, ctx: QrogueDungeonParser.Default_reward_poolContext) \
             -> factory.CollectibleFactory:
-        ordered = self.visit(ctx.draw_strategy())
         if ctx.REFERENCE():  # implicit definition
             pool_id = ctx.REFERENCE().getText()
-            reward_pool = self.__load_reward_pool(pool_id)
-            if ordered:
-                return factory.OrderedCollectibleFactory(reward_pool)
-            else:
-                return factory.CollectibleFactory(reward_pool)
+            return self.__load_reward_pool(pool_id)
 
         else:  # explicit definition
+            ordered = self.__get_draw_strategy(ctx.draw_strategy())
             collectible_list = self.visit(ctx.collectibles())
             if ordered:
                 return factory.OrderedCollectibleFactory(collectible_list)
@@ -448,8 +451,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
     def visitReward_pools(self, ctx: QrogueDungeonParser.Reward_poolsContext) -> None:
         for reward_pool in ctx.reward_pool():
-            pool_id, collectible_list = self.visit(reward_pool)
-            self.__reward_pools[pool_id] = collectible_list
+            pool_id, collectible_factory = self.visit(reward_pool)
+            self.__reward_pools[pool_id] = collectible_factory
         self.__default_reward_factory = self.visit(ctx.default_reward_pool())
 
     ##### StateVector Pool area #####
@@ -469,39 +472,33 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             stvs.append(self.visit(stv))
         return stvs
 
-    def visitStv_pool(self, ctx: QrogueDungeonParser.Stv_poolContext) \
-            -> Tuple[str, List[StateVector], factory.CollectibleFactory]:
+    def visitStv_pool(self, ctx: QrogueDungeonParser.Stv_poolContext) -> Tuple[str, TargetDifficulty]:
         pool_id = ctx.REFERENCE(0).getText()
+        ordered = self.__get_draw_strategy(ctx.draw_strategy())
         stvs = self.visit(ctx.stvs())
 
-        reward_factory = None
         if ctx.REFERENCE(1):
             reward_pool_id = ctx.REFERENCE(1).getText()
-            if reward_pool_id in self.__reward_pools:
-                collectible_list = self.__reward_pools[reward_pool_id]
-            else:
-                collectible_list = self.__load_reward_pool(reward_pool_id)
-            if self.visit(ctx.draw_strategy()):
-                reward_factory = factory.OrderedCollectibleFactory(collectible_list)
-            else:
-                reward_factory = factory.CollectibleFactory(collectible_list)
+            reward_factory = self.__load_reward_pool(reward_pool_id)
+        else:
+            reward_factory = self.__default_reward_factory
 
-        return pool_id, stvs, reward_factory
+        return pool_id, ExplicitTargetDifficulty(stvs, reward_factory, ordered)
 
     def visitDefault_stv_pool(self, ctx: QrogueDungeonParser.Default_stv_poolContext) -> TargetDifficulty:
-        ordered = self.visit(ctx.draw_strategy())
         if ctx.REFERENCE():  # implicit definition
             pool_id = ctx.REFERENCE().getText()
-            return self.__load_stv_pool(pool_id, ordered)
+            return self.__load_stv_pool(pool_id)
 
         else:  # explicit definition
+            ordered = self.__get_draw_strategy(ctx.draw_strategy())
             stv_list = self.visit(ctx.stvs())
             return ExplicitTargetDifficulty(stv_list, self.__default_reward_factory, ordered)
 
     def visitStv_pools(self, ctx: QrogueDungeonParser.Stv_poolsContext) -> None:
         for stv_pool in ctx.stv_pool():
-            pool_id, stvs, reward_factory = self.visit(stv_pool)
-            self.__stv_pools[pool_id] = (stvs, reward_factory)
+            pool_id, target_difficulty = self.visit(stv_pool)
+            self.__stv_pools[pool_id] = target_difficulty
         self.__default_target_difficulty = self.visit(ctx.default_stv_pool())
         self.__default_enemy_factory = EnemyFactory(self.__cbp.start_fight, self.__default_target_difficulty)
 
@@ -580,7 +577,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         else:
             pool_id = ctx.REFERENCE(ref_index).getText()
             ref_index = 1
-            difficulty = self.__load_stv_pool(pool_id, ordered=False)
+            difficulty = self.__load_stv_pool(pool_id)
             stv = difficulty.create_statevector(self.__robot, self.__rm)
 
         if ctx.collectible():
@@ -608,27 +605,20 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         popup = Popup(Config.scientist_name(), text, show=False)
         return tiles.Message(popup, times)
 
-    def visitCollectible_descriptor(self, ctx:QrogueDungeonParser.Collectible_descriptorContext) -> tiles.Collectible:
-        # only draw ordered if it is explicitly stated like this
-        if ctx.draw_strategy() and self.visit(ctx.draw_strategy()):
-            rm = None
-        else:
-            rm = self.__rm
-
+    def visitCollectible_descriptor(self, ctx: QrogueDungeonParser.Collectible_descriptorContext) -> tiles.Collectible:
         pool_id = ctx.REFERENCE().getText()
-        reward_pool = self.__load_reward_pool(pool_id)
-        reward_factory = factory.CollectibleFactory(reward_pool)
+        reward_factory = self.__load_reward_pool(pool_id)
 
         times = 1
         if ctx.integer():
             times = self.visit(ctx.integer())
         if times > 1:
-            collectible = MultiCollectible(reward_factory.produce_multiple(rm, times))
+            collectible = MultiCollectible(reward_factory.produce_multiple(self.__rm, times))
         else:
-            collectible = reward_factory.produce(rm)
+            collectible = reward_factory.produce(self.__rm)
         return tiles.Collectible(collectible)
 
-    def visitEnemy_descriptor(self, ctx:QrogueDungeonParser.Enemy_descriptorContext) -> tiles.Enemy:
+    def visitEnemy_descriptor(self, ctx: QrogueDungeonParser.Enemy_descriptorContext) -> tiles.Enemy:
         enemy = None
         if self.__cur_room_id:
             room_id = self.__cur_room_id
@@ -643,27 +633,15 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
                 return [enemy]
 
         enemy_id = int(ctx.DIGIT().getText())
-        if ctx.draw_strategy(0):
-            ordered = self.visit(ctx.draw_strategy(0))
-        else:
-            ordered = False
-
         pool_id = ctx.REFERENCE(0).getText()
         if pool_id in self.__stv_pools:
-            stv_pool, reward_factory = self.__stv_pools[pool_id]
+            difficulty = self.__stv_pools[pool_id]
+            enemy_factory = EnemyFactory(self.__cbp.start_fight, difficulty)
             if ctx.REFERENCE(1):
                 pool_id = ctx.REFERENCE(1).getText()
                 if pool_id in self.__reward_pools:
-                    reward_pool = self.__reward_pools[pool_id]
-                    # todo rethink draw_strategy because right now 'ordered' only affects default pools correctly
-                    if ctx.draw_strategy(1) and self.visit(ctx.draw_strategy(1)):
-                        reward_factory = factory.OrderedCollectibleFactory(reward_pool)
-                    else:
-                        reward_factory = factory.CollectibleFactory(reward_pool)
-                elif not reward_factory:
-                    reward_factory = self.__default_reward_factory
-                difficulty = ExplicitTargetDifficulty(stv_pool, reward_factory, ordered)
-                enemy_factory = EnemyFactory(self.__cbp.start_fight, difficulty)
+                    reward_factory = self.__reward_pools[pool_id]
+                    enemy_factory.set_custom_reward_factory(reward_factory)
         else:
             self.warning("Imports not yet supported! Choosing from default_stv_pool")
             enemy_factory = self.__default_enemy_factory
