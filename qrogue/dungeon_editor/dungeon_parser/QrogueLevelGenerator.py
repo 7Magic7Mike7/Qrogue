@@ -14,6 +14,7 @@ from qrogue.game.actors.robot import Robot, TestBot
 from qrogue.game.callbacks import CallbackPack
 from qrogue.game.collectibles import pickup, factory
 from qrogue.game.collectibles.collectible import Collectible, MultiCollectible, ShopItem
+from qrogue.game.collectibles.qubit import Qubit
 from qrogue.game.logic import instruction
 from qrogue.game.logic.qubit import StateVector
 from qrogue.game.map import rooms
@@ -396,17 +397,22 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
     def visitCollectible(self, ctx: QrogueDungeonParser.CollectibleContext) -> Collectible:
         if ctx.KEY_LITERAL():
-            val = int(ctx.integer().getText())
+            val = self.visit(ctx.integer())
             return pickup.Key(val)
         elif ctx.COIN_LITERAL():
-            val = int(ctx.integer().getText())
+            val = self.visit(ctx.integer())
             return pickup.Coin(val)
         elif ctx.HEALTH_LITERAL():
-            val = int(ctx.integer().getText())
+            val = self.visit(ctx.integer())
             return pickup.Heart(val)
         elif ctx.GATE_LITERAL():
             reference = ctx.REFERENCE().getText()
             return self.__load_gate(reference)
+        elif ctx.QUBIT_LITERAL():
+            if ctx.integer():
+                return Qubit(self.visit(ctx.integer()))
+            else:
+                return Qubit(1)
         else:
             self.warning("No legal collectible specified!")
         return None
@@ -725,6 +731,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             return rooms.AreaType.RiddleRoom
         elif ctx.GATE_ROOM_LITERAL():
             return rooms.AreaType.GateRoom
+        elif ctx.TREASURE_LITERAL():
+            return rooms.AreaType.TreasureRoom
         else:
             self.warning(f"Invalid r_type: {ctx.getText()}")
             return rooms.AreaType.Invalid

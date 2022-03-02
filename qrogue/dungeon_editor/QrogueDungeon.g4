@@ -25,7 +25,8 @@ rooms : ROOMS room* ;
 room : ROOM_ID r_attributes ':' WALL* r_row+ WALL* tile_descriptor* ;
 r_attributes : '(' r_visibility r_type ')' ;  // visibile/in sight, type
 r_visibility : (VISIBLE_LITERAL | FOGGY_LITERAL)? ;
-r_type :  (SPAWN_LITERAL | BOSS_LITERAL | WILD_LITERAL | SHOP_LITERAL | RIDDLE_LITERAL | GATE_ROOM_LITERAL) ;
+r_type :    (SPAWN_LITERAL | BOSS_LITERAL | WILD_LITERAL | SHOP_LITERAL | RIDDLE_LITERAL | GATE_ROOM_LITERAL |
+            TREASURE_LITERAL) ;
 r_row : WALL tile+ WALL ;
 tile :  'o' | 't' | 'm' | DIGIT | 'c' | 'e' | 'r' | '$' | '_' ;    // obstacle, trigger, message, enemy, collectible,
                                                                    // energy, riddle, shop, floor
@@ -63,9 +64,11 @@ reward_pools : REWARD_POOLS ('custom' reward_pool+)? 'default' default_reward_po
 default_reward_pool : draw_strategy (REFERENCE | collectibles) ;      // the default pool can either be an ID or a list of collectibles
 reward_pool : REFERENCE collectibles ;     // id, pool of collectibles
 collectibles : '[' collectible (LIST_SEPARATOR collectible)* ']' ;
-collectible : (KEY_LITERAL integer | COIN_LITERAL integer | HEALTH_LITERAL integer | GATE_LITERAL REFERENCE) ;
+collectible :   (KEY_LITERAL integer | COIN_LITERAL integer | HEALTH_LITERAL integer | GATE_LITERAL REFERENCE |
+                QUBIT_LITERAL integer?) ;
 
 messages : MESSAGES (REFERENCE TEXT)* ;
+//message : REFERENCE TEXT ('event' REFERENCE 'alternative' REFERENCE)? ;    // alternative message if a certain event already happened
 
 // TOKEN
 
@@ -108,6 +111,7 @@ SHOP_LITERAL : 'Shop' ;
 RIDDLE_LITERAL : 'Riddle' ;
 BOSS_LITERAL : 'Boss' ;
 GATE_ROOM_LITERAL : 'Gate' ;
+TREASURE_LITERAL : 'Treasure' ;
 
 TUTORIAL_LITERAL : 'tutorial' ;
 TRIGGER_LITERAL : 'trigger' ;
@@ -115,6 +119,7 @@ KEY_LITERAL : 'key' ;
 COIN_LITERAL : 'coin' ;
 HEALTH_LITERAL : 'health' ;
 GATE_LITERAL : 'gate' ;
+QUBIT_LITERAL : 'qubit' ;
 
 PLUS_SIGN : '+' ;
 MINUS_SIGN : '-' ;

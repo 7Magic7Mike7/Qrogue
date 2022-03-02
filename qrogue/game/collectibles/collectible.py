@@ -10,6 +10,7 @@ class CollectibleType(Enum):
     ActiveItem = 3
     PassiveItem = 4
     Pickup = 5
+    Qubit = 6
 
     Multi = 0   # wraps multiple collectibles
 

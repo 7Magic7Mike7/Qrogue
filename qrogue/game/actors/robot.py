@@ -14,6 +14,7 @@ from qrogue.game.collectibles.consumable import Consumable
 from qrogue.game.collectibles import consumable
 from qrogue.game.collectibles import pickup
 from qrogue.game.collectibles.factory import GateFactory
+from qrogue.game.collectibles.qubit import Qubit
 from qrogue.game.logic.instruction import Instruction
 from qrogue.game.logic.qubit import QubitSet, DummyQubitSet, StateVector
 # from jkq import ddsim
@@ -47,6 +48,9 @@ class _Attributes:
     @property
     def qubits(self) -> QubitSet:
         return self.__qubits
+
+    def add_qubits(self, additional_qubits: int = 1):
+        self.__qubits = self.__qubits.add_qubits(additional_qubits)
 
 
 class Backpack:
@@ -335,6 +339,8 @@ class Robot(Controllable, ABC):
             self.backpack.add(collectible)
         elif isinstance(collectible, Consumable):
             self.backpack.place_in_pouch(collectible)
+        elif isinstance(collectible, Qubit):
+            self.__attributes.add_qubits(collectible.additional_qubits)
         elif isinstance(collectible, MultiCollectible):
             for c in collectible.iterator():
                 self.give_collectible(c)

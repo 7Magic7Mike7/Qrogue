@@ -130,7 +130,6 @@ class StateVector:
 
 # interface for a set of qubits (e.g. Ion-traps, Super conducting, ...)
 class QubitSet(ABC):
-
     def __init__(self, max_hp: int, size: int):
         self._max_hp = max_hp
         self._cur_hp = max_hp
@@ -169,6 +168,10 @@ class QubitSet(ABC):
         """
         pass
 
+    @abstractmethod
+    def add_qubits(self, additional_qubits: int = 1) -> "QubitSet":
+        pass
+
 
 class DummyQubitSet(QubitSet):
     __SIZE = 2
@@ -186,3 +189,6 @@ class DummyQubitSet(QubitSet):
             amount = self.max_hp - self.hp
         self._cur_hp += amount
         return amount
+
+    def add_qubits(self, additional_qubits: int = 1) -> "QubitSet":
+        return DummyQubitSet(self.size + additional_qubits)

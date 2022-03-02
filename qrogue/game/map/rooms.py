@@ -24,6 +24,7 @@ class AreaType(Enum):
     RiddleRoom = 13
     GateRoom = 14
     BossRoom = 15
+    TreasureRoom = 16
 
 
 class Area(ABC):
@@ -696,15 +697,26 @@ class DefinedWildRoom(BaseWildRoom):
         return self.__dictionary[id]
 
 
-class GateRoom(SpecialRoom):
-    def __init__(self, gate: Instruction, hallway: Hallway, direction: Direction,
-                 tile_dic: "dic of Coordinate and Tile" = None):
+class TreasureRoom(SpecialRoom):
+    def __init__(self, treasure: LogicalCollectible, hallway: Hallway, direction: Direction,
+                 tile_dic: Dict[Coordinate, Tile] = None):
         coordinate = Coordinate(Area.MID_X, Area.MID_Y)
         if not tile_dic:
             tile_dic = {}
-        tile_dic[coordinate] = Collectible(gate)
-        super().__init__(AreaType.GateRoom, hallway, direction, tile_dic)
-        #self._set_tile(Collectible(gate), x=Area.MID_X, y=Area.MID_Y)
+        tile_dic[coordinate] = Collectible(treasure)
+        if isinstance(treasure, Instruction):
+            super().__init__(AreaType.GateRoom, hallway, direction, tile_dic)
+        else:
+            super().__init__(AreaType.TreasureRoom, hallway, direction, tile_dic)
+
+    def abbreviation(self) -> str:
+        return "TR"
+
+
+class GateRoom(TreasureRoom):
+    def __init__(self, gate: Instruction, hallway: Hallway, direction: Direction,
+                 tile_dic: Dict[Coordinate, Tile] = None):
+        super().__init__(gate, hallway, direction, tile_dic)
 
     def abbreviation(self) -> str:
         return "GR"
