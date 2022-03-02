@@ -470,7 +470,8 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  continue_exploration_callback: "()", flee_choice: str = "Flee"):
-        self.__choice_strings = ["[1] Add/Remove", "[2] Commit", "[3] Reset", "[4] Items", "[5] Help", flee_choice]
+        self.__choice_strings = SelectionWidget.wrap_in_hotkey_str(["Add/Remove", "Commit", "Reset", "Items", "Help",
+                                                                    flee_choice])
         super().__init__(controls, logger, root, render)
         self._continue_exploration_callback = continue_exploration_callback
         self._robot = None
@@ -549,8 +550,9 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         return self._details
 
     def __choices_adapt(self) -> bool:
+        options = [instruction.selection_str() for instruction in self._robot.backpack]
         self._details.set_data(data=(
-            [instruction.selection_str() for instruction in self._robot.backpack] + [MyWidgetSet.BACK_STRING],
+            SelectionWidget.wrap_in_hotkey_str(options) + [MyWidgetSet.BACK_STRING],
             [self.__choose_instruction]
         ))
         return True
@@ -564,8 +566,9 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                     self.details.update_text(self._robot.backpack.get(index).selection_str(), index)
                 else:
                     if self._robot.is_space_left():
+                        options = [self.__cur_instruction.preview_str(i) for i in range(self._robot.num_of_qubits)]
                         self.details.set_data(data=(
-                            [self.__cur_instruction.preview_str(i) for i in range(self._robot.num_of_qubits)],
+                            SelectionWidget.wrap_in_hotkey_str(options),
                             [self.__choose_qubit]
                         ))
                     else:
@@ -584,14 +587,16 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             selection.remove(q)
         if self.__cur_instruction.use_qubit(selection[index]):
             selection.pop(index)
+            options = [self.__cur_instruction.preview_str(i) for i in selection]
             self.details.set_data(data=(
-                [self.__cur_instruction.preview_str(i) for i in selection],
+                SelectionWidget.wrap_in_hotkey_str(options),
                 [self.__choose_qubit]
             ))
         else:
             self._robot.use_instruction(self.__cur_instruction)
+            options = [instruction.selection_str() for instruction in self._robot.backpack]
             self._details.set_data(data=(
-                [instruction.selection_str() for instruction in self._robot.backpack] + [MyWidgetSet.BACK_STRING],
+                SelectionWidget.wrap_in_hotkey_str(options) + [MyWidgetSet.BACK_STRING],
                 [self.__choose_instruction]
             ))
         self.render()
@@ -610,7 +615,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         if success:
             self._robot.give_collectible(reward)
             self._details.set_data(data=(
-                [f"Congratulations! Get reward: {reward.to_string()}"],
+                [f"Congratulations! You received: {reward.to_string()}"],
                 [self._continue_exploration_callback]
             ))
             return True
@@ -632,8 +637,9 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
     def __choices_items(self) -> bool:
         if self._robot.backpack.num_of_available_items > 0:
+            options = [consumable.to_string() for consumable in self._robot.backpack.pouch_iterator()]
             self._details.set_data(data=(
-                [consumable.to_string() for consumable in self._robot.backpack.pouch_iterator()] + [MyWidgetSet.BACK_STRING],
+                SelectionWidget.wrap_in_hotkey_str(options) + [MyWidgetSet.BACK_STRING],
                 [self.__choose_item]
             ))
         else:
@@ -646,8 +652,9 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
     def __continue_consuming(self) -> bool:
         # leave if there are no more consumables left, stay if we could consume another one
         if self._robot.backpack.num_of_available_items > 0:
+            options = [consumable.to_string() for consumable in self._robot.backpack.pouch_iterator()]
             self._details.set_data(data=(
-                [consumable.to_string() for consumable in self._robot.backpack.pouch_iterator()] + [MyWidgetSet.BACK_STRING],
+                SelectionWidget.wrap_in_hotkey_str(options) + [MyWidgetSet.BACK_STRING],
                 [self.__choose_item]
             ))
             self._details.render()
@@ -681,8 +688,9 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         return True
 
     def __choices_help(self) -> bool:
+        options = [instruction.name() for instruction in self._robot.backpack]
         self._details.set_data(data=(
-            [instruction.name() for instruction in self._robot.backpack] + [MyWidgetSet.BACK_STRING],
+            SelectionWidget.wrap_in_hotkey_str(options) + [MyWidgetSet.BACK_STRING],
             [self.__show_help_popup]
         ))
         return True

@@ -272,6 +272,15 @@ class QubitInfoWidget(Widget):
 class SelectionWidget(Widget):
     __COLUMN_SEPARATOR = "   "
 
+    @staticmethod
+    def wrap_in_hotkey_str(options: List[str]) -> List[str]:
+        if len(options) <= 1:
+            return options      # no explicit hotkeys if there are not multiple options
+        wrapped_options = []
+        for i, option in enumerate(options):
+            wrapped_options.append(f"[{i}] {option}")
+        return wrapped_options
+
     def __init__(self, widget: MyBaseWidget, controls: Controls, columns: int = 1, is_second: bool = False,
                  stay_selected: bool = False):
         super(SelectionWidget, self).__init__(widget)
@@ -283,17 +292,31 @@ class SelectionWidget(Widget):
         self.__callbacks = []
         self.widget.add_text_color_rule(f"->", ColorConfig.SELECTION_COLOR, 'contains', match_type='regex')
 
-        # sadly cannot use a loop here because how lambda expressions work the index would be the same for all calls
-        self.widget.add_key_command(controls.get_keys(Keys.HotKey1), lambda: self.__jump_to_index(0))
-        self.widget.add_key_command(controls.get_keys(Keys.HotKey2), lambda: self.__jump_to_index(1))
-        self.widget.add_key_command(controls.get_keys(Keys.HotKey3), lambda: self.__jump_to_index(2))
-        self.widget.add_key_command(controls.get_keys(Keys.HotKey4), lambda: self.__jump_to_index(3))
-        self.widget.add_key_command(controls.get_keys(Keys.HotKey5), lambda: self.__jump_to_index(4))
-        self.widget.add_key_command(controls.get_keys(Keys.HotKey6), lambda: self.__jump_to_index(5))
-        self.widget.add_key_command(controls.get_keys(Keys.HotKey7), lambda: self.__jump_to_index(6))
-        self.widget.add_key_command(controls.get_keys(Keys.HotKey8), lambda: self.__jump_to_index(7))
-        self.widget.add_key_command(controls.get_keys(Keys.HotKey9), lambda: self.__jump_to_index(8))
-        self.widget.add_key_command(controls.get_keys(Keys.HotKey0), lambda: self.__jump_to_index(9))
+        # sadly cannot use a loop here because of how lambda expressions work the index would be the same for all calls
+        # instead we use a list of indices to still be flexible without changing much code
+        indices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        hotkeys = [
+            controls.get_keys(Keys.HotKey0),
+            controls.get_keys(Keys.HotKey1),
+            controls.get_keys(Keys.HotKey2),
+            controls.get_keys(Keys.HotKey3),
+            controls.get_keys(Keys.HotKey4),
+            controls.get_keys(Keys.HotKey5),
+            controls.get_keys(Keys.HotKey6),
+            controls.get_keys(Keys.HotKey7),
+            controls.get_keys(Keys.HotKey8),
+            controls.get_keys(Keys.HotKey9),
+        ]
+        self.widget.add_key_command(hotkeys[indices[0]], lambda : self.__jump_to_index(indices[0]))
+        self.widget.add_key_command(hotkeys[indices[1]], lambda : self.__jump_to_index(indices[1]))
+        self.widget.add_key_command(hotkeys[indices[2]], lambda : self.__jump_to_index(indices[2]))
+        self.widget.add_key_command(hotkeys[indices[3]], lambda : self.__jump_to_index(indices[3]))
+        self.widget.add_key_command(hotkeys[indices[4]], lambda : self.__jump_to_index(indices[4]))
+        self.widget.add_key_command(hotkeys[indices[5]], lambda : self.__jump_to_index(indices[5]))
+        self.widget.add_key_command(hotkeys[indices[6]], lambda : self.__jump_to_index(indices[6]))
+        self.widget.add_key_command(hotkeys[indices[7]], lambda : self.__jump_to_index(indices[7]))
+        self.widget.add_key_command(hotkeys[indices[8]], lambda : self.__jump_to_index(indices[8]))
+        self.widget.add_key_command(hotkeys[indices[9]], lambda : self.__jump_to_index(indices[9]))
 
     @property
     def num_of_choices(self) -> int:

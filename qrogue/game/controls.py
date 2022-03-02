@@ -107,7 +107,7 @@ class Controls:
             [KEY_7],
             [KEY_8],
             [KEY_9],
-            [KEY_0],
+            [KEY_0, 94],    # 94 = ^
 
             [KEY_CTRL_R],  # render screen
             [KEY_CTRL_P],   # print screen
