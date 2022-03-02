@@ -208,3 +208,4 @@ class ColorRules:
         w.add_text_color_rule('B', get_color(TileCode.Boss), 'contains', match_type='regex')
         w.add_text_color_rule('\d', get_color(TileCode.Enemy), 'contains', match_type='regex')
         w.add_text_color_rule('#', get_color(TileCode.Wall), 'contains', match_type='regex')
+        w.add_text_color_rule('o', get_color(TileCode.Wall), 'contains', match_type='regex')
