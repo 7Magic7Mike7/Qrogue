@@ -43,7 +43,7 @@ ascii_spaceship = \
     r"          |öööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööö|          " + "\n" \
     r"           \ööööööööööööööööööööööööööööööööööööööö--------------------Xööööööööööö|          " + "\n" \
     r"            \ööööööööööööööööööööööööööööööööööööö/                     \öööööööööö|          " + "\n" \
-    r"             \ööööööööööööööööööööööööööööööööööö/                       \ööööööööö|          " + "\n" \
+    r"             \ööööööööööö1ööööööööööööööööööööööö/                       \ööööööööö|          " + "\n" \
     r"              X-------------Xööööööööööööööööööö(                         \öööööööö|          " + "\n" \
     r"                             \ööööööööööööööööööö\                         \ööööööö|          " + "\n" \
     r"                              \ööööööööööööööööööö\                         \öööööö|          " + "\n" \
@@ -102,6 +102,7 @@ class SpaceshipTriggerTile(WalkTriggerTile):
     MAP_START_REPRESENTATION = "S"
     MAP_WORKBENCH_REPRESENTATION = "W"
     MAP_GATE_LIBRARY_REPRESENTATION = "G"
+    START_TUTORIAL = "1"
 
     def __init__(self, character: str, callback: (Direction, Robot)):
         super().__init__(TileCode.SpaceshipTrigger)
@@ -194,6 +195,8 @@ class SpaceshipWidget(Widget):
             tile = SpaceshipTriggerTile(character, self.__use_workbench)
         #elif character == SpaceshipTriggerTile.MAP_GATE_LIBRARY_REPRESENTATION:
         #    tile = SpaceshipTriggerTile(character, self.open_gate_library)
+        elif character == SpaceshipTriggerTile.START_TUTORIAL:
+            tile = SpaceshipTriggerTile(character, self.__start_tutorial)
         else:
             tile = SpaceshipWallTile(character)
         return tile
@@ -308,6 +311,9 @@ class SpaceshipWidget(Widget):
 
     def __use_workbench(self, direction: Direction, controllable: Controllable):
         self.__use_workbench_callback(self.__save_data)
+
+    def __start_tutorial(self, direction: Direction, controllable: Controllable):
+        self.__load_map("l1v1", None)
 
 
 class SpaceshipWidgetSet(MyWidgetSet):
