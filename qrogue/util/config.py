@@ -479,6 +479,16 @@ class GameplayConfig:
             return 0.4
 
 
+class MapConfig:
+    @staticmethod
+    def max_width() -> int:
+        return 7
+
+    @staticmethod
+    def max_height() -> int:
+        return 3
+
+
 class Config:   # todo make singleton and handle access to other configs?
     MAX_SEED = 1000000
     __VERSION = "v0.2"
