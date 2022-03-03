@@ -2,6 +2,94 @@ from enum import Enum
 from qrogue.util.config import ColorConfig as CC
 
 
+class _HL:
+    # objects
+    boss = CC.highlight_object("Boss")
+    circuit = CC.highlight_object("Circuit")
+    coins = CC.highlight_object("Coins")
+    collec = CC.highlight_object("Collectibles")
+    door = CC.highlight_object("Door")
+    enemies = CC.highlight_object("Enemies")
+    gates = CC.highlight_object("Gates")
+    key = CC.highlight_object("key")
+
+    quantum_circuit = CC.highlight_object("Quantum Circuit")
+    quantum_gates = CC.highlight_object("Quantum Gates")
+    quantum_state = CC.highlight_object("Quantum State")
+    qubits = CC.highlight_object("Qubits")
+    qubit_s = CC.highlight_object("Qubit(s)")
+    riddles = CC.highlight_object("Riddles")
+    shop = CC.highlight_object("Shop")
+    special_rooms = CC.highlight_object("Special Rooms")
+    state = CC.highlight_object("State")
+    state_vectors = CC.highlight_object("StateVectors")
+    target_state = CC.highlight_object("Target State")
+
+    # words
+    action = CC.highlight_word("action")
+    add_remove = CC.highlight_word("Add/remove")
+    attempt = CC.highlight_word("Attempt")
+    bell = CC.highlight_word("Bell, the Master of Entanglement")
+    both0 = CC.highlight_word("both 0")
+    both1 = CC.highlight_word("both 1")
+    buy = CC.highlight_word("buy")
+
+    cannot_flee = CC.highlight_word("cannot flee")
+    chance_based = CC.highlight_word("chance based")
+    commit = CC.highlight_word("Commit")
+    continue_ = CC.highlight_word("Continue")
+    details = CC.highlight_word("details")
+    difference = CC.highlight_word("Difference")
+    display_details = CC.highlight_word("displays details")
+    easier = CC.highlight_word("easier")
+    enemy = CC.highlight_object("Enemy")
+    entanglement = CC.highlight_word("Entanglement")
+    exit_ = CC.highlight_word("Exit")
+    fights = CC.highlight_word("Fights")
+    fight = CC.highlight_word("Fight")
+    five_parenthesis = CC.highlight_word("5)")
+    flee = CC.highlight_word("Flee")
+    four_parenthesis = CC.highlight_word("4)")
+
+    gate = CC.highlight_object("Gate")
+    give_up = CC.highlight_word("\"Give up\"")
+    help_ = CC.highlight_word("Help")
+    hp = CC.highlight_word("don't lose HP")
+    items = CC.highlight_word("Items")
+    leave = CC.highlight_word("\"-Leave-\"")
+    list_ = CC.highlight_word("list")
+    locked = CC.highlight_word("locked")
+    navigate = CC.highlight_word("navigate")
+    not_zero = CC.highlight_word("not zero")
+    one_hp = CC.highlight_word("1 HP")
+    one_parenthesis = CC.highlight_word("1)")
+    options = CC.highlight_word("Options")
+
+    quantum_computing = CC.highlight_word("Quantum Computing")
+    quantum_algorithm = CC.highlight_word("Quantum Algorithm")
+    reenter = CC.highlight_word("re-enter")
+    removed = CC.highlight_word("removed")
+    reward = CC.highlight_word("Reward")
+    serious = CC.highlight_word("serious")
+    two_parenthesis = CC.highlight_word("2)")
+    three_parenthesis = CC.highlight_word("3)")
+    use = CC.highlight_word("use")
+    vanishes = CC.highlight_word("vanishes")
+    win = CC.highlight_word("win")
+    zeros = CC.highlight_word("zeros")
+
+    # keys
+    arrow_keys = CC.highlight_key("Arrow Keys")
+    ctrl_q = CC.highlight_key("CTRL+Q")
+    p = CC.highlight_key("P")
+    q = CC.highlight_key("Q")
+    space = CC.highlight_key("Space")
+
+    # tiles
+    DOOR_TILE = CC.highlight_tile("-")
+    TUTORIAL_TILE = CC.highlight_tile(".")
+
+
 class HelpTextType(Enum):
     Controls = 0
     Fight = 1
@@ -12,93 +100,6 @@ class HelpTextType(Enum):
     Pause = 6
     Options = 7
     Welcome = 8
-
-
-class _HL:
-    # objects
-    quantum_circuit = CC.highlight_object("Quantum Circuit")
-    circuit = CC.highlight_object("Circuit")
-    quantum_gates = CC.highlight_object("Quantum Gates")
-    qubits = CC.highlight_object("Qubits")
-    qubit_s = CC.highlight_object("Qubit(s)")
-    quantum_state = CC.highlight_object("Quantum State")
-    state_vectors = CC.highlight_object("StateVectors")
-    target_state = CC.highlight_object("Target State")
-    state = CC.highlight_object("State")
-
-    enemies = CC.highlight_object("Enemies")
-    boss = CC.highlight_object("Boss")
-
-    special_rooms = CC.highlight_object("Special Rooms")
-    shop = CC.highlight_object("Shop")
-    riddles = CC.highlight_object("Riddles")
-
-    collec = CC.highlight_object("Collectibles")
-    coins = CC.highlight_object("Coins")
-    gates = CC.highlight_object("Gates")
-
-    door = CC.highlight_object("Door")
-
-    # words
-    quantum_computing = CC.highlight_word("Quantum Computing")
-    quantum_algorithm = CC.highlight_word("Quantum Algorithm")
-    fights = CC.highlight_word("Fights")
-    fight = CC.highlight_word("Fight")
-    one_parenthesis = CC.highlight_word("1)")
-    difference = CC.highlight_word("Difference")
-    zeros = CC.highlight_word("zeros")
-    win = CC.highlight_word("win")
-    two_parenthesis = CC.highlight_word("2)")
-    three_parenthesis = CC.highlight_word("3)")
-    action = CC.highlight_word("action")
-    add_remove = CC.highlight_word("Add/remove")
-    commit = CC.highlight_word("Commit")
-    not_zero = CC.highlight_word("not zero")
-    one_hp = CC.highlight_word("1 HP")
-    items = CC.highlight_word("Items")
-    easier = CC.highlight_word("easier")
-    flee = CC.highlight_word("Flee")
-    chance_based = CC.highlight_word("chance based")
-    cannot_flee = CC.highlight_word("cannot flee")
-    four_parenthesis = CC.highlight_word("4)")
-    display_details = CC.highlight_word("displays details")
-    five_parenthesis = CC.highlight_word("5)")
-    navigate = CC.highlight_word("navigate")
-    use = CC.highlight_word("use")
-    reward = CC.highlight_word("Reward")
-    removed = CC.highlight_word("removed")
-    enemy = CC.highlight_object("Enemy")
-    gate = CC.highlight_object("Gate")
-    hp = CC.highlight_word("don't lose HP")
-    attempt = CC.highlight_word("Attempt")
-    vanishes = CC.highlight_word("vanishes")
-    give_up = CC.highlight_word("\"Give up\"")
-    list_ = CC.highlight_word("list")
-    buy = CC.highlight_word("buy")
-    details = CC.highlight_word("details")
-    leave = CC.highlight_word("\"-Leave-\"")
-    reenter = CC.highlight_word("re-enter")
-    serious = CC.highlight_word("serious")
-    continue_ = CC.highlight_word("Continue")
-    options = CC.highlight_word("Options")
-    help_ = CC.highlight_word("Help")
-    exit_ = CC.highlight_word("Exit")
-
-    bell = CC.highlight_word("Bell, the Master of Entanglement")
-    both0 = CC.highlight_word("both 0")
-    both1 = CC.highlight_word("both 1")
-    entanglement = CC.highlight_word("Entanglement")
-
-    # keys
-    arrow_keys = CC.highlight_key("Arrow Keys")
-    space = CC.highlight_key("Space")
-    p = CC.highlight_key("P")
-    ctrl_q = CC.highlight_key("CTRL+Q")
-    q = CC.highlight_key("Q")
-
-    # tiles
-    DOOR_TILE = CC.highlight_tile("-")
-    TUTORIAL_TILE = CC.highlight_tile(".")
 
 
 class HelpText:
