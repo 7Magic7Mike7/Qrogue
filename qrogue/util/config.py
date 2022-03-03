@@ -1,6 +1,7 @@
 import enum
 import os
 from datetime import datetime
+from typing import Callable
 
 import py_cui
 
@@ -354,7 +355,8 @@ class CheatConfig:
     __input_popup = None
 
     @staticmethod
-    def init(popup_callback: "(str, str, int)", input_popup_callback: "(str, int, (str,))"):
+    def init(popup_callback: Callable[[str, str, int], None],
+             input_popup_callback: Callable[[str, int, Callable[[str], None]], None]):
         CheatConfig.__cheated = False
         CheatConfig.__popup = popup_callback
         CheatConfig.__input_popup = input_popup_callback
@@ -414,7 +416,7 @@ class CheatConfig:
             CheatConfig.__popup("Cheats", f"Successfully used the Cheat \"{code}\"", PopupConfig.default_color())
             CheatConfig.__cheated = True
         else:
-            CheatConfig.__popup("Cheats", "This is not a valid Cheat!")
+            CheatConfig.__popup("Cheats", "This is not a valid Cheat!", PopupConfig.default_color())
         return ret
 
 
