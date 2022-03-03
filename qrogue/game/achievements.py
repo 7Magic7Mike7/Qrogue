@@ -6,6 +6,7 @@ class AchievementType(enum.Enum):
     Level = 1
     Gate = 2
     Secret = 3  # is not shown until unlocked (therefore also needs to be done in one go, i.e. done_score = 1)
+    Tutorial = 4
 
 
 class Achievement:
@@ -44,9 +45,18 @@ class AchievementManager:
     def __init__(self):
         self.__storage = {}
 
+    def check_achievement(self, name: str) -> bool:
+        if name in self.__storage:
+            achievement = self.__storage[name]
+            return achievement.is_done()
+        return False
+
     def add_to_achievement(self, name: str, score: float):
         if name in self.__storage:
             self.__storage[name].add_score(score)
+
+    def finished_tutorial(self, tutorial: str):
+        self.__storage[tutorial] = Achievement(tutorial, AchievementType.Tutorial, 1, 1)
 
     def finished_level(self, level: str):
         self.__storage[level] = Achievement(level, AchievementType.Level, 1, 1)
@@ -57,4 +67,3 @@ class AchievementManager:
     def uncovered_secret(self, name: str):
         if name not in self.__storage:
             self.__storage[name] = Achievement(name, AchievementType.Secret, 1, 1)
-
