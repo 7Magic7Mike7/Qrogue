@@ -17,7 +17,7 @@ class Expedition:
 
     @property
     def _cbp(self) -> CallbackPack:
-        return self.__save_data.cbp
+        return CallbackPack.instance()
 
     @property
     def _seed(self) -> int:

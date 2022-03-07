@@ -6,7 +6,6 @@ import py_cui
 from py_cui.widget_set import WidgetSet
 
 from qrogue.game.actors.boss import Boss
-from qrogue.game.actors.controllable import Controllable
 from qrogue.game.actors.enemy import Enemy
 from qrogue.game.actors.robot import Robot
 from qrogue.game.actors.riddle import Riddle
@@ -305,25 +304,21 @@ class WorkbenchWidgetSet(MyWidgetSet):
     def __init__(self, controls: Controls, logger, root: py_cui.PyCUI, render: Callable[[List[Renderable]], None],
                  continue_callback: ()):
         super().__init__(controls, logger, root, render)
-        self.__save_data = None
         self.__continue = continue_callback
 
     def init_widgets(self, controls: Controls) -> None:
         robot_selection = self.add_block_label('Robot Selection', 0, 0, row_span=MyWidgetSet.NUM_OF_COLS, center=False)
         self.__robot_selection = SelectionWidget(robot_selection, controls, stay_selected=True)
+        self.__robot_selection.set_data((
+            [robot.name for robot in SaveData.instance().available_robots()] + [MyWidgetSet.BACK_STRING],
+            [self.__details]
+        ))
 
         robot_details = self.add_block_label('Robot Details', 0, 1, 3, 4, center=True)
         self.__robot_info = SimpleWidget(robot_details)
 
         available_upgrades = self.add_block_label('Upgrades', 4, 1, 2, 2, center=True)
         self.__available_upgrades = SelectionWidget(available_upgrades, controls, 4, is_second=True, stay_selected=False)
-
-    def set_data(self, save_data: SaveData):
-        self.__save_data = save_data
-        self.__robot_selection.set_data((
-            [robot.name for robot in save_data.available_robots()] + [MyWidgetSet.BACK_STRING],
-            [self.__details]
-        ))
 
     def get_widget_list(self) -> List[Widget]:
         return [

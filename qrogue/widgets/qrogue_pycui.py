@@ -9,10 +9,9 @@ from qrogue.game.actors.boss import Boss
 from qrogue.game.actors.enemy import Enemy
 from qrogue.game.actors.riddle import Riddle
 from qrogue.game.actors.robot import Robot
-from qrogue.game.actors.player import Player
 from qrogue.game.callbacks import CallbackPack
 from qrogue.game.controls import Controls, Pausing, Keys
-from qrogue.game.map import tiles
+from qrogue.game.map_management import MapManager
 from qrogue.game.map.level_map import LevelMap
 from qrogue.game.map.navigation import Direction
 from qrogue.game.map.tutorial import Tutorial
@@ -35,9 +34,14 @@ class QrogueCUI(py_cui.PyCUI):
         super().__init__(width, height)
         self.set_title(f"Qrogue {Config.version()}")
         Logger.instance().set_popup(self.show_message_popup, self.show_error_popup)
+        CheatConfig.init(self.__show_message_popup, self.__show_input_popup)
         Popup.update_popup_functions(self.__show_message_popup)
         ConfirmationPopup.update_popup_function(self.__show_confirmation_popup)
-        CheatConfig.init(self.__show_message_popup, self.__show_input_popup)
+
+        CallbackPack(self.__start_level, self.__start_fight, self.__start_boss_fight,
+                           self.__open_riddle, self.__visit_shop)
+        SaveData()  # todo load data
+        MapManager(seed, self.__show_world, self.__start_level)
 
         self.__key_logger = None  #KeyLogger(seed)
         self.__simulator = None
@@ -48,17 +52,13 @@ class QrogueCUI(py_cui.PyCUI):
         self.__last_key = None
         self.__focused_widget = None
 
-        cbp = CallbackPack(self.__start_level, self.__start_fight, self.__start_boss_fight,
-                           self.__open_riddle, self.__visit_shop)
-        self.__save_data = SaveData(cbp) # todo load data
-
         self.__menu = MenuWidgetSet(controls, self.__render, Logger.instance(), self, self.__start_playing, self.stop,
                                     self.__choose_simulation)
         self.__pause = PauseMenuWidgetSet(controls, self.__render, Logger.instance(), self, self.__general_continue,
                                           self.switch_to_menu)
 
         self.__spaceship = SpaceshipWidgetSet(self.__seed, controls, Logger.instance(), self, self.__render,
-                                              self.__show_world, cbp, self.__save_data)
+                                              MapManager.instance().load_map)
         self.__workbench = WorkbenchWidgetSet(controls, Logger.instance(), self, self.__render,
                                               self.__continue_spaceship)
         self.__navigation = NavigationWidgetSet(controls, Logger.instance(), self, self.__render)
@@ -421,17 +421,18 @@ class QrogueCUI(py_cui.PyCUI):
         self.__focused_widget = self.get_selected_widget()
         self._popup = MultilinePopup(self, title, text, color, self._renderer, self._logger, self.__controls)
 
-    def __show_input_popup(self, title: str, color: int, callback: "(str,)") -> None:
+    def __show_input_popup(self, title: str, color: int, callback: Callable[[str], None]) -> None:
         self.__focused_widget = self.get_selected_widget()
         self._popup = py_cui.popups.TextBoxPopup(self, title, color, callback, self._renderer, False, self._logger)
 
-    def __show_confirmation_popup(self, title: str, text: str, callback: Callable[[bool], None], color: int):
+    def __show_confirmation_popup(self, title: str, text: str, color: int, callback: Callable[[bool], None]):
         self.__focused_widget = self.get_selected_widget()
         self._popup = MultilinePopup(self, title, text, color, self._renderer, self._logger, self.__controls, callback)
 
     def close_popup(self) -> None:
         super(QrogueCUI, self).close_popup()
         self.move_focus(self.__focused_widget)
+        Popup.on_close()
 
     def __dummy(self) -> None:
         pass
@@ -441,13 +442,12 @@ class QrogueCUI(py_cui.PyCUI):
 
     def __start_playing(self):
         Pausing(self.__pause_game)
-        self.__state_machine.change_state(State.Spaceship, self.__save_data)
+        self.__state_machine.change_state(State.Spaceship, SaveData.instance())
 
     def switch_to_spaceship(self, data=None):
         # todo maybe data is the save data?
         if data:
-            player_tile = tiles.ControllableTile(Player())
-            self.__spaceship.set_data((player_tile, self.__use_workbench))
+            self.__spaceship.set_data(self.__use_workbench)
         self.apply_widget_set(self.__spaceship)
 
     def __continue_spaceship(self) -> None:
@@ -458,14 +458,13 @@ class QrogueCUI(py_cui.PyCUI):
         self.__state_machine.change_state(State.Workbench, save_data)
 
     def switch_to_workbench(self, data=None):
-        self.__workbench.set_data(self.__save_data)
         self.apply_widget_set(self.__workbench)
 
     def switch_to_menu(self, data=None) -> None:
         self.__menu.new_seed()
         self.apply_widget_set(self.__menu)
 
-    def __show_world(self, save_data: SaveData, world: WorldMap) -> None:
+    def __show_world(self, world: WorldMap = None) -> None:
         if world is None:
             self.__state_machine.change_state(State.Spaceship, None)
         else:
@@ -473,8 +472,7 @@ class QrogueCUI(py_cui.PyCUI):
 
     def switch_to_navigation(self, data) -> None:
         if data is not None:
-            map = data
-            self.__navigation.set_data(map)
+            self.__navigation.set_data(data)
         self.apply_widget_set(self.__navigation)
 
     def __start_level(self, seed: int, level: LevelMap) -> None:

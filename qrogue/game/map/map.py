@@ -1,19 +1,18 @@
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Callable
 
 from qrogue.game.map import tiles
-from qrogue.game.achievements import AchievementManager
 from qrogue.game.actors.controllable import Controllable
 from qrogue.game.map.navigation import Coordinate, Direction
 from qrogue.game.map.rooms import Room, Area, Placeholder, SpawnRoom, MetaRoom
+from qrogue.game.save_data import SaveData
 from qrogue.util.config import Config
 from qrogue.util.logger import Logger
+from qrogue.widgets.my_popups import CommonQuestions
 
 
 class Map(ABC):
     DONE_EVENT_ID = "Done".lower()
-    MAX_WIDTH = 7
-    MAX_HEIGHT = 3
 
     @staticmethod
     def __calculate_pos(pos_of_room: Coordinate, pos_in_room: Coordinate) -> Coordinate:
@@ -30,12 +29,12 @@ class Map(ABC):
         return Coordinate(x, y)
 
     def __init__(self, name: str, seed: int, rooms: List[List[Room]], controllable: Controllable,
-                 spawn_room: Coordinate, achievement_manager: AchievementManager):
+                 spawn_room: Coordinate, proceed_to_next_map: Callable[[], None]):
         self.__name = name
         self.__seed = seed
         self.__rooms = rooms
         self.__controllable_tile = tiles.ControllableTile(controllable)
-        self.__achievement_manager = achievement_manager
+        self.__proceed_to_next_map = proceed_to_next_map
 
         self.__dimensions = Coordinate(len(rooms[0]), len(rooms))
 
@@ -61,6 +60,10 @@ class Map(ABC):
                             hw.set_check_event_callback(self.check_event)
 
         self.__events = {}
+
+    @property
+    def name(self) -> str:
+        return self.__name
 
     @property
     def seed(self) -> int:
@@ -93,6 +96,10 @@ class Map(ABC):
     @abstractmethod
     def is_world(self) -> bool:
         pass
+
+    def __proceed(self, confirmed: bool = True):
+        if confirmed and self.__proceed_to_next_map:
+            self.__proceed_to_next_map()
 
     def __get_area(self, x: int, y: int) -> (Area, tiles.Tile):
         """
@@ -178,9 +185,10 @@ class Map(ABC):
     def __trigger_event(self, event_id: str):
         if event_id.lower() == self.DONE_EVENT_ID:
             if self.is_world():
-                self.__achievement_manager.finished_world(self.__name)
+                SaveData.instance().achievement_manager.finished_world(self.name)
             else:
-                self.__achievement_manager.finished_level(self.__name)  # todo what about expeditions?
+                SaveData.instance().achievement_manager.finished_level(self.name)  # todo what about expeditions?
+            CommonQuestions.ProceedToNextMap.ask(self.__proceed)
         if Config.debugging():
             print("triggered event: " + event_id)
         self.__events[event_id] = True

@@ -206,3 +206,28 @@ class HelpText:
             if key.name.lower() == type.lower():
                 return HelpText.__DIC[key]
         return None
+
+
+class TutorialTextType(Enum):
+    LockedDoorNoKey = 0
+    LockedDoorKey = 1
+
+
+class TutorialText:
+    __DIC = {
+        TutorialTextType.LockedDoorNoKey:
+            f"Hmm, the {_HL.door} is {_HL.locked}. Let's see if we can find a {_HL.key} somewhere.",
+        TutorialTextType.LockedDoorKey:
+            f"Oh the {_HL.door} is {_HL.locked}. Luckily we've already found a {_HL.key} to open it!",
+    }
+
+    @staticmethod
+    def get(type: TutorialTextType) -> str:
+        return TutorialText.__DIC[type]
+
+    @staticmethod
+    def load(type: str) -> str:
+        for key in TutorialText.__DIC.keys():
+            if key.name.lower() == type.lower():
+                return TutorialText.__DIC[key]
+        return None

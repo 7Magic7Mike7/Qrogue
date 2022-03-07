@@ -11,7 +11,10 @@ from qrogue.game.actors.riddle import Riddle
 from qrogue.game.collectibles.collectible import Collectible as LogicalCollectible
 from qrogue.game.collectibles.pickup import Energy as LogicalEnergy
 from qrogue.game.map.navigation import Direction, Coordinate
+from qrogue.game.save_data import SaveData
+from qrogue.util import achievements
 from qrogue.util.config import CheatConfig
+from qrogue.util.help_texts import TutorialText, TutorialTextType, HelpText, HelpTextType
 from qrogue.util.logger import Logger
 from qrogue.util.my_random import RandomManager
 from qrogue.widgets.my_popups import Popup, CommonPopups
@@ -84,6 +87,10 @@ class WalkTriggerTile(Tile):
         self.__event_id = None
         self.__trigger_event = None
 
+    @property
+    def has_explanation(self) -> bool:
+        return self.__explanation is not None
+
     def _late_trigger(self) -> Any:
         if self.__trigger_event and self.__event_id:
             return self.__trigger_event(self.__event_id)
@@ -100,11 +107,13 @@ class WalkTriggerTile(Tile):
     def trigger(self, direction: Direction, controllable: Controllable, trigger_event_callback: Callable[[str], Any]) \
             -> Any:
         self.__trigger_event = trigger_event_callback
-        if self._on_walk(direction, controllable) and self.__event_id:
-            return trigger_event_callback(self.__event_id)
-        if self.__explanation:
+        event_trigger_allowed = self._on_walk(direction, controllable)
+        if self.has_explanation:
             Popup.scientist_says(self.__explanation)
-            self.__explanation = None   # only display once
+            self.__explanation = None  # only display once
+        if event_trigger_allowed and self.__event_id:
+            return trigger_event_callback(self.__event_id)
+
         return None
     
     @abstractmethod
@@ -326,6 +335,8 @@ class DoorOneWayState(Enum):
     Temporary = 1
     Permanent = 2
 class Door(WalkTriggerTile):
+    __INVALID_DIRECTION_IMG = Invalid().get_img()
+
     def __init__(self, direction: Direction, open_state: DoorOpenState = DoorOpenState.Closed,
                  one_way_state: DoorOneWayState = DoorOneWayState.NoOneWay, event_id: str = None):
         super().__init__(TileCode.Door)
@@ -349,7 +360,7 @@ class Door(WalkTriggerTile):
             elif self.__direction is Direction.West:
                 return "<"
             else:
-                return Invalid().get_img()  # todo use something else?
+                return Door.__INVALID_DIRECTION_IMG
         else:
             if self.__direction is Direction.East or self.__direction is Direction.West:
                 return "|"
@@ -366,9 +377,16 @@ class Door(WalkTriggerTile):
         if correct_direction:
             if self.is_key_locked:
                 if controllable.key_count() > 0:
+                    if not SaveData.instance().achievement_manager.check_achievement(achievements.FirstDoorUnlocked):
+                        SaveData.instance().achievement_manager.finished_tutorial(achievements.FirstDoorUnlocked)
+                        Popup.scientist_says(TutorialText.get(TutorialTextType.LockedDoorKey))
                     return True
                 else:
-                    CommonPopups.LockedDoor.show()
+                    if SaveData.instance().achievement_manager.check_achievement(achievements.FirstDoorUnlocked):
+                        CommonPopups.LockedDoor.show()
+                    else:
+                        SaveData.instance().achievement_manager.finished_tutorial(achievements.FirstDoorUnlocked)
+                        Popup.scientist_says(TutorialText.get(TutorialTextType.LockedDoorNoKey))
                     return False
             elif self.is_event_locked:
                 if self.check_event():
@@ -507,9 +525,10 @@ class Collectible(WalkTriggerTile):
 
     def _on_walk(self, direction: Direction, controllable: Controllable) -> bool:
         if self.__active:
-            name = self.__collectible.name()
-            desc = self.__collectible.description()
-            Popup.message(self.__collectible.name(), f"You picked up: {name}\n{desc}")
+            if not self.has_explanation:
+                name = self.__collectible.name()
+                desc = self.__collectible.description()
+                Popup.message(self.__collectible.name(), f"You picked up: {name}\n{desc}")
             controllable.give_collectible(self.__collectible)
             self.__active = False
             return True

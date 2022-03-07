@@ -2,7 +2,6 @@ import os
 
 from qrogue.dungeon_editor.dungeon_parser.QrogueLevelGenerator import QrogueLevelGenerator
 from qrogue.dungeon_editor.world_parser.QrogueWorldGenerator import QrogueWorldGenerator
-from qrogue.game.achievements import AchievementManager
 from qrogue.game.callbacks import CallbackPack
 from qrogue.game.save_data import SaveData
 from qrogue.util.config import FileTypes
@@ -49,19 +48,47 @@ def read_world(file_name: str) -> str:
 
 
 def generation_test(file_name: str, world: bool = False):
-    cbp = CallbackPack(start_gp, start_fight, start_fight, start_fight, start_fight)
-
     if world:
-        generator = QrogueWorldGenerator(7, SaveData(cbp), load_level)
+        generator = QrogueWorldGenerator(7, SaveData(), load_level)
     else:
-        generator = QrogueLevelGenerator(7, SaveData(cbp), load_level)
+        generator = QrogueLevelGenerator(7, SaveData(), load_level)
     map, success = generator.generate(file_name, False)
     if success:
         print(map)
     debugging = True
 
 
+def general_python_test():
+    def print_i(i: int):
+        print(i)
+
+    size = 10
+    indices = list(range(size))
+    lambdas = [lambda : print_i(i) for i in range(size)]
+    lambdas += [lambda : print_i(size)]
+    size += 1
+    lambdas += [lambda : print_i(size)]
+    lambdas += [lambda : print_i(size+1)]
+
+    lambdas += [lambda : print_i(-11111111)]
+
+    indices = list(range(size))
+    lambdas += [lambda : print_i(indices[0])]
+    lambdas += [lambda : print_i(indices[1])]
+    lambdas += [lambda : print_i(indices[2])]
+    lambdas += [lambda : print_i(indices[3])]
+    lambdas += [lambda : print_i(indices[4])]
+    lambdas += [lambda : print_i(indices[5])]
+    lambdas += [lambda : print_i(indices[6])]
+
+    #for l in lambdas:
+    #    l()
+
+
+#general_python_test()
 RandomManager(7)    # needs to be initialized
-file_name = "w1"
+CallbackPack(start_gp, start_fight, start_fight, start_fight, start_fight)
+
+file_name = "l1v1"
 path = os.path.join(BASE_PATH, "dungeons", file_name)
-generation_test(path, world=True)
+generation_test(path, world=False)

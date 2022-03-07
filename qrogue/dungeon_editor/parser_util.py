@@ -2,9 +2,9 @@ from typing import Dict
 
 from antlr4.error.ErrorListener import ErrorListener
 
-from qrogue.game.map.map import Map
 from qrogue.game.map.navigation import Direction, Coordinate
 from qrogue.game.map.rooms import Hallway
+from qrogue.util.config import MapConfig
 
 DEFAULT_HALLWAY_STR = "=="
 TEMPLATE_PREFIX = "_"
@@ -27,7 +27,7 @@ def warning(text: str):
 
 
 def check_for_overspecified_columns(x: int, symbol_type, ref_type):
-    return x == Map.MAX_WIDTH and symbol_type != ref_type or x > Map.MAX_WIDTH
+    return x == MapConfig.max_width() and symbol_type != ref_type or x > MapConfig.max_width()
 
 
 def normalize_reference(reference: str) -> str:

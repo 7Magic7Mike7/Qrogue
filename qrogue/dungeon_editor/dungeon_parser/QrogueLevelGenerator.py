@@ -21,10 +21,9 @@ from qrogue.game.map import rooms
 from qrogue.game.map import tiles
 from qrogue.game.map.generator import DungeonGenerator
 from qrogue.game.map.level_map import LevelMap
-from qrogue.game.map.map import Map
 from qrogue.game.map.navigation import Coordinate, Direction
 from qrogue.game.save_data import SaveData
-from qrogue.util.config import Config, PathConfig
+from qrogue.util.config import Config, PathConfig, MapConfig
 from qrogue.util.help_texts import HelpText
 from qrogue.util.my_random import MyRandom
 from qrogue.widgets.my_popups import Popup
@@ -123,7 +122,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
     @property
     def __cbp(self) -> CallbackPack:
-        return self.__save_data.cbp
+        return CallbackPack.instance()
 
     def warning(self, text: str):
         parser_util.warning(text)
@@ -155,9 +154,12 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             if len(row) < max_len:
                 row += [None] * (max_len - len(row))
 
-        map = LevelMap(name, self.__seed, room_matrix, self.__robot, self.__spawn_pos,
-                       self.__save_data.achievement_manager)
+        map = LevelMap(name, self.__seed, room_matrix, self.__robot, self.__spawn_pos, self.__load_next)
         return map, True
+
+    def __load_next(self):
+        #MapManager.load_next()
+        pass
 
     def _add_hallway(self, room1: Coordinate, room2: Coordinate, door: tiles.Door):
         if door:    # for simplicity door could be null so we check it here
@@ -804,14 +806,14 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             self.__visitL_hallway_row(hw_row, y)
 
         room_matrix = []
-        for y in range(Map.MAX_HEIGHT):
+        for y in range(MapConfig.max_height()):
             row_ctx = ctx.l_room_row(y)
             if row_ctx:
                 room_matrix.append(self.__visitL_room_row(row_ctx, y))
             else:
                 break
-        if ctx.l_room_row(Map.MAX_HEIGHT):
-            self.warning(f"Too much room rows specified. Only maps of size ({Map.MAX_WIDTH}, {Map.MAX_HEIGHT}) supported. "
+        if ctx.l_room_row(MapConfig.max_height()):
+            self.warning(f"Too much room rows specified. Only maps of size ({MapConfig.max_width()}, {MapConfig.max_height()}) supported. "
                          f"Ignoring over-specified rows.")
 
         return room_matrix
@@ -821,7 +823,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         for child in ctx_children:
             if parser_util.check_for_overspecified_columns(x, child.symbol.type, QrogueDungeonParser.VERTICAL_SEPARATOR):
                 self.warning(
-                    f"Too much room columns specified. Only maps of size ({Map.MAX_WIDTH}, {Map.MAX_HEIGHT}) supported. "
+                    f"Too much room columns specified. Only maps of size ({MapConfig.max_width()}, {MapConfig.max_height()}) supported. "
                     f"Ignoring over-specified columns.")
                 break
             if child.symbol.type == QrogueDungeonParser.HALLWAY_ID:
@@ -842,7 +844,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         x = 0
         for child in ctx.children:
             if parser_util.check_for_overspecified_columns(x, child.symbol.type, QrogueDungeonParser.VERTICAL_SEPARATOR):
-                self.warning( f"Too much room columns specified. Only maps of size ({Map.MAX_WIDTH}, {Map.MAX_HEIGHT}) "
+                self.warning( f"Too much room columns specified. Only maps of size ({MapConfig.max_width()}, {MapConfig.max_height()}) "
                               "supported. Ignoring over-specified columns.")
                 break
 

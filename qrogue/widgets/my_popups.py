@@ -12,59 +12,89 @@ from qrogue.util.logger import Logger
 
 class Popup:
     __show_popup = None
+    __popup_queue = []
+    __cur_popup = None
 
     @staticmethod
     def update_popup_functions(show_popup_callback: "void(str, str, int)") -> None:
         Popup.__show_popup = show_popup_callback
 
     @staticmethod
-    def show_popup() -> "void(str, str, int)":
-        return Popup.__show_popup
+    def on_close() -> bool:
+        Popup.__cur_popup = None
+        if len(Popup.__popup_queue) > 0:
+            next_popup = Popup.__popup_queue.pop(0)
+            next_popup.show()
+            return False        # don't fully close popup
+        return True     # popup no longer needed so we can fully close it
 
     @staticmethod
     def message(title: str, text: str, color: int = PopupConfig.default_color()):
-        Popup(title, text, color, show=True)
+        Popup(title, text, color, show=True, overwrite=False)
 
     @staticmethod
     def scientist_says(text: str):
         Popup.message(Config.scientist_name(), text)
 
-    def __init__(self, title: str, text: str, color: int = PopupConfig.default_color(), show: bool = True):
+    def __init__(self, title: str, text: str, color: int = PopupConfig.default_color(), show: bool = True,
+                 overwrite: bool = False):
         self.__title = title
         self.__text = text
         self.__color = color
         if show:
-            self.show()
+            self.show(overwrite)
 
-    def show(self, show_popup_callback: "void(str, str, int)" = None) -> None:
-        if show_popup_callback is None:
-            Popup.__show_popup(self.__title, self.__text, self.__color)
+    @property
+    def _title(self) -> str:
+        return self.__title
+
+    @property
+    def _text(self) -> str:
+        return self.__text
+
+    @property
+    def _color(self) -> int:
+        return self.__color
+
+    def _base_show(self):
+        Popup.__show_popup(self.__title, self.__text, self.__color)
+
+    def _enqueue(self):
+        Popup.__popup_queue.append(self)
+
+    def show(self, overwrite: bool = False) -> None:
+        if overwrite:
+            Popup.__popup_queue.clear()
+            Popup.__cur_popup = None
+        if self.__cur_popup:
+            self._enqueue()
         else:
-            show_popup_callback(self.__title, self.__text, self.__color)
+            Popup.__cur_popup = self
+            self._base_show()
 
 
-class ConfirmationPopup:
-    __SHOW_POPUP = None
+class ConfirmationPopup(Popup):
+    __show_popup = None
 
     @staticmethod
-    def update_popup_function(show_popup_callback: Callable[[str, str, Callable[[bool], None], int], None]):
-        ConfirmationPopup.__SHOW_POPUP = show_popup_callback
+    def update_popup_function(show_popup_callback: Callable[[str, str, int, Callable[[bool], None]], None]):
+        ConfirmationPopup.__show_popup = show_popup_callback
 
     @staticmethod
     def ask(text: str, callback: Callable[[bool], None]):
         ConfirmationPopup(Config.scientist_name(), text, callback)
 
     def __init__(self, title: str, text: str, callback: Callable[[bool], None],
-                 color: int = PopupConfig.default_color(), show: bool = True):
-        self.__title = title
-        self.__text = text
+                 color: int = PopupConfig.default_color(), show: bool = True, overwrite: bool = False):
         self.__callback = callback
-        self.__color = color
-        if show:
-            self.show()
+        super().__init__(title, text, color, show, overwrite)
 
-    def show(self):
-        self.__SHOW_POPUP(self.__title, self.__text, self.__callback, self.__color)
+    @property
+    def _callback(self) -> Callable[[bool], None]:
+        return self.__callback
+
+    def _base_show(self) -> None:
+        ConfirmationPopup.__show_popup(self._title, self._text, self._color, self._callback)
 
 
 class MultilinePopup(py_cui.popups.Popup, py_cui.ui.MenuImplementation):
@@ -239,6 +269,7 @@ class CommonPopups(Enum):
 
 class CommonQuestions(Enum):
     GoingBack = "We are not done yet. \nDo you really want to go back to the spaceship?"
+    ProceedToNextMap = "Looks like we cleared this map. Shall we proceed directly to the next one?"
 
     def __init__(self, text: str):
         self.__text = text

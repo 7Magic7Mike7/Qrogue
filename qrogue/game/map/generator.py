@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 from enum import IntEnum
 from typing import Callable
 
-from qrogue.game.achievements import AchievementManager
 from qrogue.game.actors.factory import EnemyFactory, RiddleFactory, TargetDifficulty, BossFactory
 from qrogue.game.actors.robot import Robot
 from qrogue.game.callbacks import CallbackPack
@@ -10,10 +9,10 @@ from qrogue.game.collectibles import pickup, consumable
 from qrogue.game.collectibles.factory import GateFactory, ShopFactory
 from qrogue.game.map import tiles
 from qrogue.game.map.level_map import LevelMap
-from qrogue.game.map.map import Map
 from qrogue.game.map.navigation import Coordinate, Direction
 from qrogue.game.map.rooms import Hallway, WildRoom, SpawnRoom, ShopRoom, RiddleRoom, GateRoom, BossRoom
 from qrogue.game.save_data import SaveData
+from qrogue.util.config import MapConfig
 from qrogue.util.logger import Logger
 from qrogue.util.my_random import MyRandom, RandomManager
 
@@ -519,8 +518,8 @@ class RandomLayoutGenerator:
 
 
 class DungeonGenerator(ABC):
-    WIDTH = Map.MAX_WIDTH
-    HEIGHT = Map.MAX_HEIGHT
+    WIDTH = MapConfig.max_width()
+    HEIGHT = MapConfig.max_height()
 
     def __init__(self, seed: int, width: int = WIDTH, height: int = HEIGHT):
         self.__seed = seed
@@ -571,16 +570,16 @@ class RandomDungeonGenerator(DungeonGenerator):
         dungeon_boss = boss_factory.produce([gate])  # todo based on chance also add gates from riddle or shop_items?
 
         enemy_factories = [
-            EnemyFactory(self.__save_data.cbp.start_fight, TargetDifficulty(
+            EnemyFactory(CallbackPack.instance().start_fight, TargetDifficulty(
                 2, [pickup.Coin(2), pickup.Heart()]
             )),
-            EnemyFactory(self.__save_data.cbp.start_fight, TargetDifficulty(
+            EnemyFactory(CallbackPack.instance().start_fight, TargetDifficulty(
                 2, [pickup.Coin(1), pickup.Coin(2), pickup.Coin(2), pickup.Coin(3), pickup.Key(), pickup.Heart()]
             )),
-            EnemyFactory(self.__save_data.cbp.start_fight, TargetDifficulty(
+            EnemyFactory(CallbackPack.instance().start_fight, TargetDifficulty(
                 3, [pickup.Coin(1), pickup.Coin(5), pickup.Key(), pickup.Heart(), consumable.HealthPotion(2)]
             )),
-            EnemyFactory(self.__save_data.cbp.start_fight, TargetDifficulty(
+            EnemyFactory(CallbackPack.instance().start_fight, TargetDifficulty(
                 3, [pickup.Coin(1), pickup.Coin(1), consumable.HealthPotion(3)]
             )),
         ]
@@ -651,24 +650,27 @@ class RandomDungeonGenerator(DungeonGenerator):
                             # special rooms have exactly 1 neighbor which is already stroed in direction
                             hw = room_hallways[direction]
                             if code == _Code.Shop:
-                                room = ShopRoom(hw, direction, shop_items, self.__save_data.cbp.visit_shop)
+                                room = ShopRoom(hw, direction, shop_items, CallbackPack.instance().visit_shop)
                             elif code == _Code.Riddle:
-                                room = RiddleRoom(hw, direction, riddle, self.__save_data.cbp.open_riddle)
+                                room = RiddleRoom(hw, direction, riddle, CallbackPack.instance().open_riddle)
                             elif code == _Code.Gate:
                                 room = GateRoom(gate, hw, direction)
                             elif code == _Code.Boss:
                                 room = BossRoom(hw, direction, tiles.Boss(dungeon_boss,
-                                                                          self.__save_data.cbp.start_boss_fight))
+                                                                          CallbackPack.instance().start_boss_fight))
                         if room:
                             rooms[y][x] = room
             if spawn_room:
-                my_map = LevelMap(f"Expedition {self.seed}", self.seed, rooms, robot, spawn_room,
-                                  self.__save_data.achievement_manager)
+                my_map = LevelMap(f"Expedition {self.seed}", self.seed, rooms, robot, spawn_room, self.__load_next)
                 return my_map, True
             else:
                 return None, False
         else:
             return None, False
+
+    def __load_next(self):
+        #MapManager.load_next()
+        pass
 
     def __str__(self) -> str:
         return str(self.__layout)

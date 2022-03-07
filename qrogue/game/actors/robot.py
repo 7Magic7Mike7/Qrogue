@@ -11,7 +11,6 @@ from qiskit.providers.aer import StatevectorSimulator
 from qrogue.game.actors.controllable import Controllable
 from qrogue.game.collectibles.collectible import Collectible, MultiCollectible
 from qrogue.game.collectibles.consumable import Consumable
-from qrogue.game.collectibles import consumable
 from qrogue.game.collectibles import pickup
 from qrogue.game.collectibles.factory import GateFactory
 from qrogue.game.collectibles.qubit import Qubit
@@ -428,7 +427,7 @@ class LukeBot(Robot):
         gate_factory = GateFactory.default()
         for gate in gate_factory.produce_multiple(rm, num_of_gates):
             backpack.add(gate)
-        backpack.place_in_pouch(consumable.HealthPotion(3))
+        #backpack.place_in_pouch(HealthPotion(3))
         super().__init__("Luke", attributes, backpack)
 
     def get_img(self):

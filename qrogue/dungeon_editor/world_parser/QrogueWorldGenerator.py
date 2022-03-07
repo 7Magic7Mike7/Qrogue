@@ -8,11 +8,10 @@ from qrogue.dungeon_editor.world_parser.QrogueWorldLexer import QrogueWorldLexer
 from qrogue.dungeon_editor.world_parser.QrogueWorldParser import QrogueWorldParser
 from qrogue.dungeon_editor.world_parser.QrogueWorldVisitor import QrogueWorldVisitor
 from qrogue.game.map import tiles, rooms
-from qrogue.game.map.map import Map
 from qrogue.game.map.navigation import Direction, Coordinate
 from qrogue.game.map.world_map import WorldMap
 from qrogue.game.save_data import SaveData
-from qrogue.util.config import PathConfig
+from qrogue.util.config import PathConfig, MapConfig
 
 
 class QrogueWorldGenerator(QrogueWorldVisitor):
@@ -69,9 +68,11 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
             if len(row) < max_len:
                 row += [None] * (max_len - len(row))
 
-        map = WorldMap(name, self.__seed, room_matrix, self.__save_data.player, self.__spawn_pos,
-                       self.__save_data.achievement_manager)
+        map = WorldMap(name, self.__seed, room_matrix, self.__save_data.player, self.__spawn_pos, self.__load_next)
         return map, True
+
+    def __load_next(self):
+        self.__load_map("next", None)
 
     ##### loading #####
 
@@ -193,15 +194,15 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
             self.__visitL_hallway_row(hw_row, y)
 
         room_matrix = []
-        for y in range(Map.MAX_HEIGHT):
+        for y in range(MapConfig.max_height()):
             row_ctx = ctx.l_room_row(y)
             if row_ctx:
                 room_matrix.append(self.__visitL_room_row(row_ctx, y))
             else:
                 break
-        if ctx.l_room_row(Map.MAX_HEIGHT):
+        if ctx.l_room_row(MapConfig.max_height()):
             parser_util.warning(
-                f"Too much room rows specified. Only maps of size ({Map.MAX_WIDTH}, {Map.MAX_HEIGHT}) supported. "
+                f"Too much room rows specified. Only maps of size ({MapConfig.max_width()}, {MapConfig.max_height()}) supported. "
                 f"Ignoring over-specified rows.")
 
         return room_matrix
@@ -211,7 +212,7 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
         for child in ctx_children:
             if parser_util.check_for_overspecified_columns(x, child.symbol.type, QrogueWorldParser.VERTICAL_SEPARATOR):
                 parser_util.warning(
-                    f"Too much room columns specified. Only maps of size ({Map.MAX_WIDTH}, {Map.MAX_HEIGHT}) supported. "
+                    f"Too much room columns specified. Only maps of size ({MapConfig.max_width()}, {MapConfig.max_height()}) supported. "
                     f"Ignoring over-specified columns.")
                 break
             if child.symbol.type == QrogueWorldParser.HALLWAY_ID:
@@ -232,8 +233,8 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
         x = 0
         for child in ctx.children:
             if parser_util.check_for_overspecified_columns(x, child.symbol.type, QrogueWorldParser.VERTICAL_SEPARATOR):
-                parser_util.warning(f"Too much room columns specified. Only maps of size ({Map.MAX_WIDTH}, "
-                                    f"{Map.MAX_HEIGHT}) supported. Ignoring over-specified columns.")
+                parser_util.warning(f"Too much room columns specified. Only maps of size ({MapConfig.max_width()}, "
+                                    f"{MapConfig.max_height()}) supported. Ignoring over-specified columns.")
                 break
 
             if child.symbol.type == QrogueWorldParser.ROOM_ID:
