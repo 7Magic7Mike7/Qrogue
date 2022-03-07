@@ -67,8 +67,8 @@ collectibles : '[' collectible (LIST_SEPARATOR collectible)* ']' ;
 collectible :   (KEY_LITERAL integer | COIN_LITERAL integer | HEALTH_LITERAL integer | GATE_LITERAL REFERENCE |
                 QUBIT_LITERAL integer?) ;
 
-messages : MESSAGES (REFERENCE TEXT)* ;
-//message : REFERENCE TEXT ('event' REFERENCE 'alternative' REFERENCE)? ;    // alternative message if a certain event already happened
+messages : MESSAGES message* ;
+message : REFERENCE TEXT (EVENT_LITERAL REFERENCE ALTERNATIVE_LITERAL REFERENCE)? ;    // alternative message if a certain event already happened
 
 // TOKEN
 
@@ -120,6 +120,7 @@ COIN_LITERAL : 'coin' ;
 HEALTH_LITERAL : 'health' ;
 GATE_LITERAL : 'gate' ;
 QUBIT_LITERAL : 'qubit' ;
+ALTERNATIVE_LITERAL : 'alternative' ;
 
 PLUS_SIGN : '+' ;
 MINUS_SIGN : '-' ;

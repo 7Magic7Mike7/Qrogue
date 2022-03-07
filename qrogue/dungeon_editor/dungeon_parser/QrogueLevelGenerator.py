@@ -16,6 +16,7 @@ from qrogue.game.collectibles import pickup, factory
 from qrogue.game.collectibles.collectible import Collectible, MultiCollectible, ShopItem
 from qrogue.game.collectibles.qubit import Qubit
 from qrogue.game.logic import instruction
+from qrogue.game.logic.message import Message
 from qrogue.game.logic.qubit import StateVector
 from qrogue.game.map import rooms
 from qrogue.game.map import tiles
@@ -194,7 +195,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
         elif tile_code is tiles.TileCode.Message:
             # todo is it okay to print this?
-            return tiles.Message(Popup(Config.scientist_name(), "Hmm, I don't know what to say.", show=False))
+            return tiles.Message.create("Hmm, I don't know what to say.", Config.scientist_name())
 
         elif tile_code is tiles.TileCode.Energy:
             return tiles.Collectible(pickup.Energy())
@@ -284,7 +285,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
         return tiles.Trigger(callback)
 
-    def __load_message(self, reference: str) -> str:
+    def __load_message(self, reference: str) -> Message:
         if reference in self.__messages:
             return self.__messages[reference]
         norm_ref = self.__normalize_reference(reference)
@@ -294,9 +295,9 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             help_text_type = norm_ref[len("helptext"):]
             help_text = HelpText.load(help_text_type)
             if help_text:
-                return help_text
+                return Message.create_simple(norm_ref, help_text)
         self.warning(f"Unknown text reference: {reference}. Returning \"Message not found!\"")
-        return "Message not found!"
+        return Message.error("Message not found!")
 
     def __load_hallway(self, reference: str) -> tiles.Door:
         if reference in self.__hallways_by_id:
@@ -391,12 +392,29 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
     ##### Message area ######
 
-    def visitMessages(self, ctx:QrogueDungeonParser.MessagesContext):
+    def visitMessage(self, ctx: QrogueDungeonParser.MessageContext) -> Message:
+        m_id = self.__normalize_reference(ctx.REFERENCE(0).getText())
+        text = ctx.TEXT().getText()[1:-1]
+        if ctx.EVENT_LITERAL():
+            event = self.__normalize_reference(ctx.REFERENCE(1).getText())
+            msg_ref = self.__normalize_reference(ctx.REFERENCE(2).getText())
+            return Message(m_id, Config.scientist_name(), text, event, msg_ref)
+        else:
+            return Message.create_simple(m_id,text)
+
+    def visitMessages(self, ctx: QrogueDungeonParser.MessagesContext):
         self.__messages.clear()
-        for i, ref in enumerate(ctx.REFERENCE()):
-            ref = self.__normalize_reference(ref.getText())
-            text = ctx.TEXT(i).getText()[1:-1]  # skip the encapsulating \"
-            self.__messages[ref] = text
+        for msg in ctx.message():
+            message = self.visit(msg)
+            self.__messages[message.id] = message
+        for message in self.__messages.values():
+            if message.alt_message_ref and message.alt_message_ref in self.__messages:
+                alt_message = self.__messages[message.alt_message_ref]
+                try:
+                    message.resolve_message_ref(alt_message)
+                except ValueError as ve:
+                    self.warning(f"Message-cycle found: {ve}")
+
 
     ##### Reward Pool area #####
 
@@ -603,9 +621,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
     def visitMessage_descriptor(self, ctx: QrogueDungeonParser.Message_descriptorContext) -> tiles.Message:
         times = self.visit(ctx.integer())
         reference = ctx.REFERENCE().getText()
-        text = self.__load_message(reference)
-        popup = Popup(Config.scientist_name(), text, show=False)
-        return tiles.Message(popup, times)
+        message = self.__load_message(reference)
+        return tiles.Message(message, times)
 
     def visitCollectible_descriptor(self, ctx: QrogueDungeonParser.Collectible_descriptorContext) -> tiles.Collectible:
         pool_id = ctx.REFERENCE().getText()

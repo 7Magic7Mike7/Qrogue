@@ -476,6 +476,7 @@ class QrogueCUI(py_cui.PyCUI):
         self.apply_widget_set(self.__navigation)
 
     def __start_level(self, seed: int, level: LevelMap) -> None:
+        SaveData.instance().achievement_manager.reset_level_events()
         robot = level.controllable_tile.controllable
         if isinstance(robot, Robot):
             self.__pause.set_data(robot)   # needed for the HUD

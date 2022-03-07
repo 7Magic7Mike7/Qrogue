@@ -48,19 +48,6 @@ class Map(ABC):
         elif not isinstance(self.__cur_area, MetaRoom):
             Logger.instance().error(f"{name} starts in area that is not a SpawnRoom! cur_area = {self.__cur_area}")
 
-        # todo better solution would be nice, but since our sizes are fixed it doesn't make sense performance-wise
-        # e.g. maximal WIDTH * HEIGHT * 4 = 7 * 3 * 4 = 84 iterations
-        # set the check event callback for all doors
-        for room_row in rooms:
-            for room in room_row:
-                if room:
-                    for direction in Direction.values():
-                        hw = room.get_hallway(direction, throw_error=False)
-                        if hw:
-                            hw.set_check_event_callback(self.check_event)
-
-        self.__events = {}
-
     @property
     def name(self) -> str:
         return self.__name
@@ -176,11 +163,8 @@ class Map(ABC):
         else:
             return False
 
-    def check_event(self, event_id: str) -> bool:
-        return event_id in self.__events
-
     def __is_done(self) -> bool:
-        return self.check_event(self.DONE_EVENT_ID)
+        return SaveData.instance().achievement_manager.check_achievement(self.DONE_EVENT_ID)
 
     def __trigger_event(self, event_id: str):
         if event_id.lower() == self.DONE_EVENT_ID:
@@ -189,9 +173,9 @@ class Map(ABC):
             else:
                 SaveData.instance().achievement_manager.finished_level(self.name)  # todo what about expeditions?
             CommonQuestions.ProceedToNextMap.ask(self.__proceed)
+        SaveData.instance().achievement_manager.trigger_level_event(event_id)
         if Config.debugging():
             print("triggered event: " + event_id)
-        self.__events[event_id] = True
 
     def row_strings(self) -> List[str]:
         rows = []

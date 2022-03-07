@@ -10,6 +10,7 @@ from qrogue.game.actors.robot import Robot
 from qrogue.game.actors.riddle import Riddle
 from qrogue.game.collectibles.collectible import Collectible as LogicalCollectible
 from qrogue.game.collectibles.pickup import Energy as LogicalEnergy
+from qrogue.game.logic.message import Message as LogicalMessage
 from qrogue.game.map.navigation import Direction, Coordinate
 from qrogue.game.save_data import SaveData
 from qrogue.util import achievements
@@ -98,8 +99,8 @@ class WalkTriggerTile(Tile):
     def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
         return True
 
-    def set_explanation(self, msg: str):
-        self.__explanation = msg
+    def set_explanation(self, message: LogicalMessage):
+        self.__explanation = message
 
     def set_event(self, event_id: str):
         self.__event_id = event_id
@@ -109,7 +110,7 @@ class WalkTriggerTile(Tile):
         self.__trigger_event = trigger_event_callback
         event_trigger_allowed = self._on_walk(direction, controllable)
         if self.has_explanation:
-            Popup.scientist_says(self.__explanation)
+            self.__explanation.show()
             self.__explanation = None  # only display once
         if event_trigger_allowed and self.__event_id:
             return trigger_event_callback(self.__event_id)
@@ -255,14 +256,15 @@ class Teleport(WalkTriggerTile):
 
 
 class Message(WalkTriggerTile):
-    @staticmethod
-    def create(msg: str, title: str = "Message", popup_times: int = 1) -> "Message":
-        popup = Popup(title, msg, show=False)
-        return Message(popup, popup_times)
+    __msg_counter = 0
 
-    def __init__(self, popup: Popup, popup_times: int = 1):
+    @staticmethod
+    def create(text: str, title: str = "Message", popup_times: int = 1) -> "Message":
+        return Message(LogicalMessage.create_with_title(f"Msg_{Message.__msg_counter}", title, text), popup_times)
+
+    def __init__(self, message: LogicalMessage, popup_times: int = 1):
         super().__init__(TileCode.Message)
-        self.__popup = popup
+        self.__message = message
         if popup_times < 0:
             popup_times = 99999     # display "everytime" the controllable steps on it
         self.__times = popup_times
@@ -279,7 +281,7 @@ class Message(WalkTriggerTile):
     def _on_walk(self, direction: Direction, controllable: Controllable) -> bool:
         self.__times -= 1
         if self.__times >= 0:
-            self.__popup.show()
+            self.__message.show()
             return True
         return False
 
@@ -344,7 +346,6 @@ class Door(WalkTriggerTile):
         self.__open_state = open_state
         self.__one_way_state = one_way_state
         self.__event_id = event_id
-        self.__check_event = None
 
     def get_img(self):
         if self.is_open and self.__one_way_state is not DoorOneWayState.Permanent:
@@ -431,20 +432,16 @@ class Door(WalkTriggerTile):
     def is_one_way(self) -> bool:
         return self.__one_way_state is not DoorOneWayState.NoOneWay
 
-    def set_check_event_callback(self, check_event: Callable[[str], bool]):
-        self.__check_event = check_event
-
     def check_event(self) -> bool:
         # don't check again if the door is already open
         if self.is_open:
             return True
 
-        if self.__check_event is None or self.__event_id is None:
-            Logger.instance().error("Tried to enter event-locked door with event-callback or event-id still "
-                                    "uninitialized!")
+        if self.__event_id is None:
+            Logger.instance().error("Tried to enter event-locked door with event-id still uninitialized!")
             self.__open_state = DoorOpenState.Open
             return True
-        if self.__check_event(self.__event_id):
+        if SaveData.instance().achievement_manager.check_achievement(self.__event_id):
             self.__open_state = DoorOpenState.Open
             return True
         return False

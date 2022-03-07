@@ -7,6 +7,7 @@ class AchievementType(enum.Enum):
     Gate = 2
     Secret = 3  # is not shown until unlocked (therefore also needs to be done in one go, i.e. done_score = 1)
     Tutorial = 4
+    Event = 5    # in-level event
 
 
 class Achievement:
@@ -44,16 +45,29 @@ class Achievement:
 class AchievementManager:
     def __init__(self):
         self.__storage = {}
+        self.__temp_level_storage = {}
 
     def check_achievement(self, name: str) -> bool:
-        if name in self.__storage:
+        if name in self.__temp_level_storage:
+            achievement = self.__temp_level_storage[name]
+            return achievement.is_done()
+        elif name in self.__storage:
             achievement = self.__storage[name]
             return achievement.is_done()
         return False
 
+    def reset_level_events(self):
+        self.__temp_level_storage.clear()
+
     def add_to_achievement(self, name: str, score: float):
         if name in self.__storage:
             self.__storage[name].add_score(score)
+
+    def trigger_level_event(self, name: str, score: float = 1):
+        if name in self.__temp_level_storage:
+            self.__temp_level_storage[name].add_score(score)
+        else:
+            self.__temp_level_storage[name] = Achievement(name, AchievementType.Event, score, 1)
 
     def finished_tutorial(self, tutorial: str):
         self.__storage[tutorial] = Achievement(tutorial, AchievementType.Tutorial, 1, 1)

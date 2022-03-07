@@ -337,3 +337,12 @@ class QrogueDungeonListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by QrogueDungeonParser#message.
+    def enterMessage(self, ctx):
+        pass
+
+    # Exit a parse tree produced by QrogueDungeonParser#message.
+    def exitMessage(self, ctx):
+        pass
+
+
