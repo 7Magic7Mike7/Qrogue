@@ -89,6 +89,8 @@ class QrogueCUI(py_cui.PyCUI):
             print(f"Current dimensions are ({cols}, {rows}) but at least ({x}, {y}) is needed. "
                   f"We recommend to make it more wide than high though, e.g. ({x * 3}, {y}) would be a suitable size. "
                   f"Alternatively you can also reduce the font size.")
+            print("If you are running it in Windows Powershell you can also try to press ALT+ENTER to change to "
+                  "fullscreen mode.")
             raise py_cui.errors.PyCUIOutOfBoundsError
 
     @property
