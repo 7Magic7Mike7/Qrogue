@@ -1,10 +1,9 @@
 import time
 
-from qrogue.game.achievements import AchievementManager
-from qrogue.game.actors.robot import TestBot
 from qrogue.game.callbacks import CallbackPack
 from qrogue.game.map.generator import RandomLayoutGenerator, RandomDungeonGenerator
 from qrogue.game.map.tiles import *
+from qrogue.game.save_data import SaveData
 from qrogue.util.config import Config
 
 
@@ -72,7 +71,7 @@ def layout_test():
         mapgen.generate(debug=True)
 
 
-def dungeon_test(robot: Robot, cbp: CallbackPack):
+def dungeon_test():
     min_duration = (1, -1)
     duration_sum = 0
     max_duration = (0, -1)
@@ -86,9 +85,10 @@ def dungeon_test(robot: Robot, cbp: CallbackPack):
         i += 1
         if i % 5000 == 0:
             print(f"Run {i + 1}): seed = {seed}")
-        generator = RandomDungeonGenerator(seed, AchievementManager(), load_map)
+        save_data = SaveData()
+        generator = RandomDungeonGenerator(seed, save_data, load_map)
         start_time = time.time()
-        map, success = generator.generate(cbp, robot)
+        map, success = generator.generate(save_data.get_robot(0))
         if not success:
             failing_seeds.append((generator, seed))
             print(f"Failed for seed = {seed}")
@@ -116,8 +116,7 @@ if return_code != 0:
     print(f"Error #{return_code}")
 
 RandomManager(7)    # initialize RandomManager
-p = TestBot()
-c = CallbackPack(start_gp, start_fight, start_boss_fight, start_fight, start_fight)
+CallbackPack(start_gp, start_fight, start_boss_fight, start_fight, start_fight)
 
 layout_test()
-dungeon_test(p, c)
+dungeon_test()
