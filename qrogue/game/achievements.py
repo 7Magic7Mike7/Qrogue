@@ -1,5 +1,7 @@
 import enum
 
+from qrogue.util import achievements
+
 
 class AchievementType(enum.Enum):
     World = 0
@@ -46,6 +48,9 @@ class AchievementManager:
     def __init__(self):
         self.__storage = {}
         self.__temp_level_storage = {}
+
+        # todo load from file
+        self.__storage[achievements.EnteredPauseMenu] = Achievement(achievements.EnteredPauseMenu, AchievementType.Tutorial, 0, 1)
 
     def check_achievement(self, name: str) -> bool:
         if name in self.__temp_level_storage:

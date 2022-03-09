@@ -14,11 +14,12 @@ from qrogue.game.controls import Controls, Pausing, Keys
 from qrogue.game.map_management import MapManager
 from qrogue.game.map.level_map import LevelMap
 from qrogue.game.map.navigation import Direction
-from qrogue.game.map.tutorial import Tutorial
 from qrogue.game.map.world_map import WorldMap
 from qrogue.game.save_data import SaveData
+from qrogue.util import achievements
 from qrogue.util.config import PathConfig, ColorConfig, CheatConfig, GameplayConfig, Config
 from qrogue.util.game_simulator import GameSimulator
+from qrogue.util.help_texts import HelpText, HelpTextType
 from qrogue.util.key_logger import KeyLogger
 from qrogue.util.logger import Logger
 from qrogue.widgets.color_rules import MultiColorRenderer
@@ -506,7 +507,9 @@ class QrogueCUI(py_cui.PyCUI):
 
     def __pause_game(self) -> None:
         self.__state_machine.change_state(State.Pause, None)
-        Tutorial.show_pause_tutorial()
+        if not SaveData.instance().achievement_manager.check_achievement(achievements.EnteredPauseMenu):
+            Popup.message("Pause", HelpText.get(HelpTextType.Pause))
+            SaveData.instance().achievement_manager.add_to_achievement(achievements.EnteredPauseMenu)
 
     def switch_to_explore(self, data) -> None:
         if data is not None:
