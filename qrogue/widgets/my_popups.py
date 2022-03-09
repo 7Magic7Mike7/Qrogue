@@ -29,8 +29,8 @@ class Popup:
         return True     # popup no longer needed so we can fully close it
 
     @staticmethod
-    def message(title: str, text: str, color: int = PopupConfig.default_color()):
-        Popup(title, text, color, show=True, overwrite=False)
+    def message(title: str, text: str, color: int = PopupConfig.default_color(), overwrite: bool = False):
+        Popup(title, text, color, show=True, overwrite=overwrite)
 
     @staticmethod
     def scientist_says(text: str):

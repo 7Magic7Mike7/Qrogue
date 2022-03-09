@@ -542,6 +542,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             else:
                 one_way_state = tiles.DoorOneWayState.Temporary
 
+        ref_index = 0
         event_id = None
         if ctx.OPEN_LITERAL():
             open_state = tiles.DoorOpenState.Open
@@ -550,10 +551,10 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         elif ctx.LOCKED_LITERAL():
             open_state = tiles.DoorOpenState.KeyLocked
         elif ctx.EVENT_LITERAL():
-            # todo implement
-            if ctx.REFERENCE():
-                event_id = QrogueLevelGenerator.__normalize_reference(ctx.REFERENCE().getText())
+            if ctx.REFERENCE(ref_index):
+                event_id = self.__normalize_reference(ctx.REFERENCE(ref_index).getText())
                 open_state = tiles.DoorOpenState.EventLocked
+                ref_index += 1
             else:
                 open_state = tiles.DoorOpenState.Closed
                 self.warning("Event lock specified without an event id! Ignoring the lock and placing a closed door "
@@ -563,7 +564,16 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             self.warning("Invalid hallway attribute: it is neither locked nor opened nor closed!")
 
         # door = tiles.EntangledDoor(direction) # todo implement
-        return tiles.Door(direction, open_state, one_way_state, event_id)
+        door = tiles.Door(direction, open_state, one_way_state, event_id)
+
+        if ctx.TUTORIAL_LITERAL():
+            message = self.__load_message(ctx.REFERENCE(ref_index).getText())
+            door.set_explanation(message)
+            ref_index += 1
+        if ctx.TRIGGER_LITERAL():
+            event_to_trigger = self.__normalize_reference(ctx.REFERENCE(ref_index).getText())
+            door.set_event(event_to_trigger)
+        return door
 
     def visitHallway(self, ctx: QrogueDungeonParser.HallwayContext) -> Tuple[str, rooms.Hallway]:
         hw_id = ctx.HALLWAY_ID().getText()
@@ -702,7 +712,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
                 ref_index += 1
             if ctx.TRIGGER_LITERAL():
                 ref = ctx.REFERENCE(ref_index).getText()
-                event_id = QrogueLevelGenerator.__normalize_reference(ref)
+                event_id = self.__normalize_reference(ref)
                 tile.set_event(event_id)
         return tile
 

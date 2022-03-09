@@ -32,8 +32,8 @@ tile :  'o' | 't' | 'm' | DIGIT | 'c' | 'e' | 'r' | '$' | '_' ;    // obstacle, 
                                                                    // energy, riddle, shop, floor
 
 // further describing the tiles used in the room
-tile_descriptor : trigger_descriptor | message_descriptor |
-                  (enemy_descriptor | collectible_descriptor | energy_descriptor | riddle_descriptor | shop_descriptor)
+tile_descriptor : (trigger_descriptor | message_descriptor |
+                  enemy_descriptor | collectible_descriptor | energy_descriptor | riddle_descriptor | shop_descriptor)
                   (TUTORIAL_LITERAL REFERENCE)? (TRIGGER_LITERAL REFERENCE)? ;  // winning a fight or picking up a collectible can also trigger an event
 trigger_descriptor : 't' REFERENCE ;   // reference to the event to trigger
 message_descriptor : 'm' integer REFERENCE ;    // #times displayed, reference to the text that should be shown
@@ -49,7 +49,8 @@ hallways : HALLWAYS hallway*;
 hallway : HALLWAY_ID h_attributes ;
 h_attributes : '(' (OPEN_LITERAL | CLOSED_LITERAL | LOCKED_LITERAL | EVENT_LITERAL REFERENCE)
                 ('one way' DIRECTION PERMANENT_LITERAL?)?
-                ('entangled' '[' HALLWAY_ID (LIST_SEPARATOR HALLWAY_ID)* ']')? ')' ;
+                ('entangled' '[' HALLWAY_ID (LIST_SEPARATOR HALLWAY_ID)* ']')? ')'
+                (TUTORIAL_LITERAL REFERENCE)? (TRIGGER_LITERAL REFERENCE)? ;
 
 // how to draw an element from a pool
 draw_strategy : RANDOM_DRAW | ORDERED_DRAW ;    // default is random draw, because mostly we don't want to have to explicitely define it

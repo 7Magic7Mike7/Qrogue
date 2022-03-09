@@ -13,9 +13,7 @@ from qrogue.game.collectibles.pickup import Energy as LogicalEnergy
 from qrogue.game.logic.message import Message as LogicalMessage
 from qrogue.game.map.navigation import Direction, Coordinate
 from qrogue.game.save_data import SaveData
-from qrogue.util import achievements
 from qrogue.util.config import CheatConfig
-from qrogue.util.help_texts import TutorialText, TutorialTextType, HelpText, HelpTextType
 from qrogue.util.logger import Logger
 from qrogue.util.my_random import RandomManager
 from qrogue.widgets.my_popups import Popup, CommonPopups
@@ -92,7 +90,15 @@ class WalkTriggerTile(Tile):
     def has_explanation(self) -> bool:
         return self.__explanation is not None
 
-    def _late_trigger(self) -> Any:
+    @property
+    def _explanation(self) -> LogicalMessage:
+        return self.__explanation
+
+    @property
+    def _event_id(self) -> str:
+        return self.__event_id
+
+    def _explicit_trigger(self) -> Any:
         if self.__trigger_event and self.__event_id:
             return self.__trigger_event(self.__event_id)
 
@@ -297,7 +303,7 @@ class Riddler(WalkTriggerTile):
     def _is_active(self) -> bool:
         if self.__is_active:
             if not self.__riddle.is_active:
-                self._late_trigger()
+                self._explicit_trigger()
                 self.__is_active = False
         return self.__is_active
 
@@ -345,7 +351,7 @@ class Door(WalkTriggerTile):
         self.__direction = direction
         self.__open_state = open_state
         self.__one_way_state = one_way_state
-        self.__event_id = event_id
+        self.__event_lock_id = event_id
 
     def get_img(self):
         if self.is_open and self.__one_way_state is not DoorOneWayState.Permanent:
@@ -378,25 +384,22 @@ class Door(WalkTriggerTile):
         if correct_direction:
             if self.is_key_locked:
                 if controllable.key_count() > 0:
-                    if not SaveData.instance().achievement_manager.check_achievement(achievements.FirstDoorUnlocked):
-                        SaveData.instance().achievement_manager.finished_tutorial(achievements.FirstDoorUnlocked)
-                        Popup.scientist_says(TutorialText.get(TutorialTextType.LockedDoorKey))
-                    return True
+                    can_walk = True
                 else:
-                    if SaveData.instance().achievement_manager.check_achievement(achievements.FirstDoorUnlocked):
-                        CommonPopups.LockedDoor.show()
-                    else:
-                        SaveData.instance().achievement_manager.finished_tutorial(achievements.FirstDoorUnlocked)
-                        Popup.scientist_says(TutorialText.get(TutorialTextType.LockedDoorNoKey))
-                    return False
+                    CommonPopups.LockedDoor.show()
+                    can_walk = False
             elif self.is_event_locked:
                 if self.check_event():
-                    return True
+                    can_walk = True
                 else:
                     CommonPopups.EventDoor.show()
-                    return False
+                    can_walk = False
             else:
-                return True
+                can_walk = True
+            if self.has_explanation:
+                self._explanation.show(overwrite=True)  # we overwrite a common popup that may be shown
+            self._explicit_trigger()
+            return can_walk
         else:
             CommonPopups.WrongDirectionDoor.show()
             return False
@@ -437,11 +440,11 @@ class Door(WalkTriggerTile):
         if self.is_open:
             return True
 
-        if self.__event_id is None:
+        if self.__event_lock_id is None:
             Logger.instance().error("Tried to enter event-locked door with event-id still uninitialized!")
             self.__open_state = DoorOpenState.Open
             return True
-        if SaveData.instance().achievement_manager.check_achievement(self.__event_id):
+        if SaveData.instance().achievement_manager.check_achievement(self.__event_lock_id):
             self.__open_state = DoorOpenState.Open
             return True
         return False
@@ -461,7 +464,10 @@ class Door(WalkTriggerTile):
             one_way_state = DoorOneWayState.NoOneWay
         else:
             one_way_state = self.__one_way_state
-        return Door(new_direction, self.__open_state, one_way_state, self.__event_id)
+        door = Door(new_direction, self.__open_state, one_way_state, self.__event_lock_id)
+        door.set_explanation(self._explanation)
+        door.set_event(self._event_id)
+        return door
 
 
 class EntangledDoor(Door):
@@ -601,7 +607,7 @@ class Enemy(WalkTriggerTile):
         if self.__enemy:
             if self.__state == _EnemyState.FIGHT and not self.__enemy.is_active:
                 self.__state = _EnemyState.DEAD
-                self._late_trigger()
+                self._explicit_trigger()
         return self.__state
 
     def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
@@ -690,7 +696,7 @@ class Boss(WalkTriggerTile):
     def _is_active(self) -> bool:
         if self.__is_active:
             if not self.__boss.is_active:
-                self._late_trigger()
+                self._explicit_trigger()
                 self.__is_active = False
         return self.__is_active
 

@@ -57,9 +57,9 @@ class Message:
             return True
         return False
 
-    def show(self):
+    def show(self, overwrite: bool = False):
         if SaveData.instance().achievement_manager.check_achievement(self.__event):
             if self.__alt_message:
-                self.__alt_message.show()
+                self.__alt_message.show(overwrite)
         else:
-            Popup.message(self.__title, self.__text)
+            Popup.message(self.__title, self.__text, overwrite=overwrite)
