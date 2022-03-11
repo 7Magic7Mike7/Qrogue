@@ -1,8 +1,6 @@
-from typing import Optional, Callable
+from typing import Optional, Callable, Tuple
 
-from qrogue.game.save_data import SaveData
-from qrogue.util.config import Config
-from qrogue.widgets.my_popups import Popup
+from qrogue.util import Config
 
 
 class Message:
@@ -57,9 +55,9 @@ class Message:
             return True
         return False
 
-    def show(self, overwrite: bool = False):
-        if SaveData.instance().achievement_manager.check_achievement(self.__event):
+    def get(self, check_achievement: Callable[[str], bool]) -> Tuple[str, str]:
+        if check_achievement(self.__event):
             if self.__alt_message:
-                self.__alt_message.show(overwrite)
+                return self.__alt_message.get(check_achievement)
         else:
-            Popup.message(self.__title, self.__text, overwrite=overwrite)
+            return self.__title, self.__text

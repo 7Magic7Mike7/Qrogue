@@ -1,9 +1,8 @@
 import time
 
-from qrogue.game.callbacks import CallbackPack
-from qrogue.game.map.generator import RandomLayoutGenerator, RandomDungeonGenerator
-from qrogue.game.map.tiles import *
-from qrogue.game.save_data import SaveData
+from qrogue.dungeon_editor.generator import RandomLayoutGenerator, RandomDungeonGenerator
+from qrogue.game.world.map import CallbackPack
+from qrogue.management.save_data import SaveData
 from qrogue.util.config import Config
 
 
@@ -86,7 +85,7 @@ def dungeon_test():
         if i % 5000 == 0:
             print(f"Run {i + 1}): seed = {seed}")
         save_data = SaveData()
-        generator = RandomDungeonGenerator(seed, save_data, load_map)
+        generator = RandomDungeonGenerator(seed, load_map)
         start_time = time.time()
         map, success = generator.generate(save_data.get_robot(0))
         if not success:

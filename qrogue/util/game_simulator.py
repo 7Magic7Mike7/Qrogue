@@ -1,5 +1,5 @@
-from qrogue.game.controls import Controls, Keys
 from qrogue.util.config import PathConfig, GameplayConfig, Config
+from qrogue.util.controls import Controls, Keys
 from qrogue.util.key_logger import KeyLogger
 from qrogue.util.logger import Logger
 

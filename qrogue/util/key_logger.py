@@ -1,7 +1,7 @@
 import os.path
 
-from qrogue.game.controls import Controls, Keys
 from qrogue.util.config import PathConfig, Config
+from qrogue.util.controls import Controls, Keys
 
 
 class KeyLogger:

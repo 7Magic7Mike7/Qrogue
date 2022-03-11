@@ -3,7 +3,6 @@ from datetime import datetime
 import py_cui.debug
 
 from qrogue.util.config import PathConfig, Config
-from qrogue.util.key_logger import KeyLogger
 
 
 class Logger(py_cui.debug.PyCUILogger):

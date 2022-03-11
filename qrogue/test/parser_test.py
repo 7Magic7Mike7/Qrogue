@@ -2,8 +2,8 @@ import os
 
 from qrogue.dungeon_editor.dungeon_parser.QrogueLevelGenerator import QrogueLevelGenerator
 from qrogue.dungeon_editor.world_parser.QrogueWorldGenerator import QrogueWorldGenerator
-from qrogue.game.callbacks import CallbackPack
-from qrogue.game.save_data import SaveData
+from qrogue.game.world.map import CallbackPack
+from qrogue.management.save_data import SaveData
 from qrogue.util.config import FileTypes
 from qrogue.util.my_random import RandomManager
 
@@ -48,10 +48,14 @@ def read_world(file_name: str) -> str:
 
 
 def generation_test(file_name: str, world: bool = False):
+    SaveData()
+    player = SaveData.instance().player
+    check_achievement = SaveData.instance().achievement_manager.check_achievement
+    trigger_event = SaveData.instance().achievement_manager.trigger_level_event
     if world:
-        generator = QrogueWorldGenerator(7, SaveData(), load_level)
+        generator = QrogueWorldGenerator(7, player, check_achievement, load_level)
     else:
-        generator = QrogueLevelGenerator(7, SaveData(), load_level)
+        generator = QrogueLevelGenerator(7, check_achievement, trigger_event, load_level)
     map, success = generator.generate(file_name, False)
     if success:
         print(map)

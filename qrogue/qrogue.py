@@ -4,9 +4,8 @@ import sys
 
 import py_cui.errors
 
-from qrogue.game.game import GameHandler
-from qrogue.util.config import Config
-from qrogue.util.logger import Logger
+from qrogue.management import GameHandler
+from qrogue.util import Config, Logger
 
 
 def start_game():

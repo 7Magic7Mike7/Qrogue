@@ -197,6 +197,7 @@ class ColorConfig:
     CORRECT_AMPLITUDE_COLOR = py_cui.GREEN_ON_BLACK
     WRONG_AMPLITUDE_COLOR = py_cui.RED_ON_BLACK
     CIRCUIT_COLOR = py_cui.CYAN_ON_BLACK
+    SPACESHIP_FLOOR_COLOR = py_cui.BLACK_ON_WHITE
 
     ERROR_COLOR = py_cui.RED_ON_BLUE
     TEXT_HIGHLIGHT = "//"
@@ -207,8 +208,6 @@ class ColorConfig:
         str(ColorCode.OBJECT_HIGHLIGHT): py_cui.BLUE_ON_WHITE,
         str(ColorCode.WORD_HIGHLIGHT): py_cui.RED_ON_WHITE,
         str(ColorCode.KEY_HIGHLIGHT): py_cui.MAGENTA_ON_WHITE,
-
-        str(ColorCode.SPACESHIP_FLOOR): py_cui.BLACK_ON_WHITE,
     }
 
     @staticmethod
@@ -488,6 +487,32 @@ class MapConfig:
     def max_height() -> int:
         return 3
 
+    @staticmethod
+    def done_event_id() -> str:
+        return "done"
+
+    @staticmethod
+    def back_map_string() -> str:
+        return "back"
+
+    @staticmethod
+    def hub_world() -> str:
+        return "w0"
+
+    @staticmethod
+    def tutorial_level() -> str:
+        return "l1v1"
+
+
+class InstructionConfig:
+    MAX_ABBREVIATION_LEN = 3
+
+
+class ShopConfig:
+    @staticmethod
+    def base_unit() -> int:
+        return 1
+
 
 class Config:   # todo make singleton and handle access to other configs?
     MAX_SEED = 1000000
@@ -508,10 +533,6 @@ class Config:   # todo make singleton and handle access to other configs?
     @staticmethod
     def player_name() -> str:
         return "Mike"
-
-    @staticmethod
-    def back_map_string() -> str:
-        return "back"
 
     @staticmethod
     def version() -> str:
