@@ -18,13 +18,13 @@ class _EnemyState(Enum):
 
 
 class Enemy(WalkTriggerTile):
-    def __init__(self, factory: EnemyFactory, get_entangled_tiles, id: int = 0, amplitude: float = 0.5):
+    def __init__(self, factory: EnemyFactory, get_entangled_tiles, e_id: int = 0):
         super().__init__(TileCode.Enemy)
         self.__factory = factory
         self.__state = _EnemyState.UNDECIDED
         self.__get_entangled_tiles = get_entangled_tiles
-        self.__id = id
-        self.__amplitude = amplitude
+        self.__id = e_id
+        self.__amplitude = 0.1 * (10 - e_id)        # the lower the id the higher the chance of a fight
         self.__rm = RandomManager.create_new()
         self.__enemy = None
 
