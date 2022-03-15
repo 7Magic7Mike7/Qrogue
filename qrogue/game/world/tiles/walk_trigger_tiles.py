@@ -63,8 +63,8 @@ class WalkTriggerTile(Tile):
         if self.has_explanation:
             WalkTriggerTile._show_explanation(self.__explanation)
             self.__explanation = None  # only display once
-        if event_trigger_allowed and self.__event_id:
-            return trigger_event_callback(self.__event_id)
+        if event_trigger_allowed:
+            return self._explicit_trigger()
 
         return None
 
