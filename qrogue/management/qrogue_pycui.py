@@ -346,8 +346,8 @@ class QrogueCUI(py_cui.PyCUI):
                                                        CheatConfig.cheat_input)
         self.__pause.get_main_widget().add_key_command(self.__controls.get_keys(Keys.CheatList), CheatConfig.cheat_list)
         # don't add the pause key to Menu and Pause itself!
-        for widget_set in [self.__spaceship, self.__explore, self.__fight, self.__boss_fight, self.__shop,
-                           self.__riddle]:
+        for widget_set in [self.__spaceship, self.__navigation, self.__explore, self.__fight, self.__boss_fight,
+                           self.__shop, self.__riddle]:
             for widget in widget_set.get_widget_list():
                 widget.widget.add_key_command(self.__controls.get_keys(Keys.Pause), Pausing.pause)
 
