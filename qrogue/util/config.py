@@ -536,7 +536,7 @@ class ShopConfig:
 
 class Config:   # todo make singleton and handle access to other configs?
     MAX_SEED = 1000000
-    __VERSION = "v0.2"
+    __VERSION = "v0.2.1"
     __GAME_CONFIG = "qrogue_game.config"
     __GAMEPLAY_HEAD = "[Gameplay]\n"
     __DEBUG = False
