@@ -1,7 +1,7 @@
 # Must haves #
 - custom GameData location also for Unix!
 - automatic font size adaption
-  - instead try to start terminal maximized and print clear error message
+  + instead, try to start terminal maximized and print clear error message
   - research if it is feasible to make a web app out of Qrogue
 - multiple levels
 
@@ -17,7 +17,6 @@ https://medium.com/@joel.barmettler/how-to-upload-your-python-package-to-pypi-65
 - key input pauses?
 
 # Optionals #
-- use higher numbers for more difficult Enemies?
 - use TextBox instead of BlockLabels?
 - add Training-Table to Spaceship (implement with flee rate)
 
@@ -26,7 +25,7 @@ https://medium.com/@joel.barmettler/how-to-upload-your-python-package-to-pypi-65
 - ChallengeRooms: only use 3 gates, only 1 Hadamard, only 3 adaptions, ...
 
 # Finished #
-- raise Errors in Logger instead of arbitrary positions so we can actually log them!
+- raise Errors in Logger instead of arbitrary positions, so we can actually log them!
 - implement normal Game Mode (playing without Tutorial Stuff on generated (?) Map)
   - [x] make chance parameter of WildRooms more stable so 0.7 means 70% of 
   all Tiles in the Room are Enemies
