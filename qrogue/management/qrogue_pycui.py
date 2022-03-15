@@ -467,7 +467,6 @@ class QrogueCUI(py_cui.PyCUI):
 
     def __continue_spaceship(self) -> None:
         self.__state_machine.change_state(State.Spaceship, None)
-        print("continue spaceship")
 
     def __use_workbench(self, direction: Direction, controllable: Controllable):
         self.__state_machine.change_state(State.Workbench, SaveData.instance())

@@ -12,7 +12,7 @@ from qrogue.game.logic.collectibles import Collectible, pickup, instruction, Mul
 from qrogue.game.world import tiles
 from qrogue.game.world.map import CallbackPack, LevelMap, rooms
 from qrogue.game.world.navigation import Coordinate, Direction
-from qrogue.util import Config, HelpText, MapConfig, MyRandom, PathConfig
+from qrogue.util import Config, HelpText, MapConfig, MyRandom, PathConfig, Logger
 
 from . import parser_util
 from .generator import DungeonGenerator
@@ -136,7 +136,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             if name is None:
                 name = file_name
         except SyntaxError as se:
-            print(se)
+            Logger.instance().error(str(se))
             return None, False
 
         # add empty rooms if rows don't have the same width
