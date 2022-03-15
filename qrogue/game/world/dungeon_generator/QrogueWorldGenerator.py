@@ -179,7 +179,9 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
         level_to_load = parser_util.normalize_reference(ctx.REFERENCE().getText())
         visibility, m_type, num, orientation = self.visit(ctx.r_attributes())
 
-        message = Message.create_with_title(f"load{room_id}", level_to_load, msg)
+        alt_message = Message.create_with_title(f"load{room_id}Done", f"{level_to_load} - done", msg)
+        # the (internal) level name is also the name of the event that describes whether the level was completed or not
+        message = Message.create_with_alternative(f"load{room_id}", level_to_load, msg, level_to_load, alt_message)
         # hallways will be added later
         if self.is_spawn_room(room_id):
             room = MetaRoom(self.__load_map, orientation, message, level_to_load, m_type, num, is_spawn=True)
