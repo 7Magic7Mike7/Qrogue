@@ -1,0 +1,50 @@
+# dependencies between modules
+-util
+1) util
+
+-game
+2) target_factory
+--logic
+3) message [1]
+4) collectibles [1]
+5) actors (StateVector) [1, 4]
+6) controllables [4, 5]
+7) puzzles [1, 4, 5]
+--world
+8) navigation [1]
+9) tiles [1, 2, 3, 4, 5, 6, 7, 8]
+10) map [1, 3, 4, 5, 6, 7, 8, 9]
+11) dungeon_generator [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+-graphics
+12) rendering [1, 6, 9]
+13) popups [1, 3]
+14) widgets [1, 4, 5, 6, 7, 8, 10, 12, 13]
+
+-management
+15) management [1, 5, 6, 8, 9, 10, 11, 12, 13, 14]
+
+-----------------------------------------------------------------------------
+
+# load order of modules
+
+a) util
+b) game
+	1] logic
+		1} Message
+		2} collectibles
+		3} actors
+			1| StateVector
+			2| controllables
+			3| puzzles
+	2] world
+		1} navigation
+		2} tiles
+		3} map
+		4} dungeon_generator
+	3] target_factory
+c) graphics
+	1] rendering
+	2] popups
+	3] widgets
+e) management

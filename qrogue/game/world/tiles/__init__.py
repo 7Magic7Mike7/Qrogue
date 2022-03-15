@@ -7,6 +7,7 @@ from .door_tiles import DoorOpenState, DoorOneWayState, Door, EntangledDoor, Hal
 
 # importing
 # +util
+# +game (target_factory)
 # +logic
 # +logic.actors
 # +logic.actors.puzzles
