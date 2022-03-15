@@ -6,7 +6,7 @@ from py_cui.widgets import BlockLabel
 from qrogue.game.logic.actors import Robot
 from qrogue.game.world.map import Map
 from qrogue.game.world.navigation import Direction
-from qrogue.util import ColorConfig, Controls, InstructionConfig, Keys, Logger, util_functions as uf
+from qrogue.util import ColorConfig, Controls, InstructionConfig, Keys, Logger, util_functions as uf, Config
 
 from qrogue.graphics.widgets import Renderable
 
@@ -84,7 +84,8 @@ class HudWidget(Widget):
         self.__robot = None
 
     def update_render_duration(self, duration: float):
-        self.__render_duration = duration * 1000
+        if Config.debugging():
+            self.__render_duration = duration * 1000
 
     def render(self) -> None:
         text = ""
