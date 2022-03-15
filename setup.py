@@ -18,9 +18,9 @@ setup(
       ],
   classifiers=[
     'Development Status :: 3 - Alpha',      # Chose either "3 - Alpha", "4 - Beta" or "5 - Production/Stable"
-    'Intended Audience :: Anyone interested in Quantum Computing',
-    'Topic :: Quantum Computing :: Gamification',
-    'License :: MIT License',   # Again, pick a license
+    'Intended Audience :: Education',
+    'Intended Audience :: Science/Research',
+    'Topic :: Games/Entertainment :: Puzzle Games',
     'Programming Language :: Python :: 3.8',
   ],
 )

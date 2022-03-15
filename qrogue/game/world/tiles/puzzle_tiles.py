@@ -1,8 +1,8 @@
 from enum import Enum
 from typing import Callable
 
-from qrogue.game import EnemyFactory
 from qrogue.game.logic.actors import Controllable, Robot, Boss as BossActor
+from qrogue.game.target_factory import EnemyFactory
 from qrogue.game.world.navigation import Direction
 from qrogue.util import RandomManager, Logger, CheatConfig
 

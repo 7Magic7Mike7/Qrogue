@@ -3,12 +3,12 @@ from typing import Callable, List, Tuple, Dict
 from antlr4 import InputStream, CommonTokenStream
 from antlr4.tree.Tree import TerminalNodeImpl
 
-from qrogue.game import EnemyFactory, ExplicitTargetDifficulty, TargetDifficulty
 from qrogue.game.logic import Message, StateVector
 from qrogue.game.logic.actors import Controllable, Riddle
 from qrogue.game.logic.actors.controllables import TestBot
 from qrogue.game.logic.collectibles import Collectible, pickup, instruction, MultiCollectible, Qubit, ShopItem, \
     CollectibleFactory, OrderedCollectibleFactory
+from qrogue.game.target_factory import EnemyFactory, ExplicitTargetDifficulty, TargetDifficulty
 from qrogue.game.world import tiles
 from qrogue.game.world.map import CallbackPack, LevelMap, rooms
 from qrogue.game.world.navigation import Coordinate, Direction
