@@ -15,11 +15,11 @@ from qrogue.graphics.widgets import Renderable, SpaceshipWidgetSet, BossFightWid
     FightWidgetSet, MenuWidgetSet, MyWidgetSet, NavigationWidgetSet, PauseMenuWidgetSet, RiddleWidgetSet, \
     ShopWidgetSet, WorkbenchWidgetSet
 from qrogue.util import achievements, common_messages, CheatConfig, ColorConfig, Config, GameplayConfig, HelpText, \
-    HelpTextType, Logger, PathConfig, MapConfig, Controls, Pausing, Keys
+    HelpTextType, Logger, PathConfig, MapConfig, Controls, Keys
 from qrogue.util.game_simulator import GameSimulator
 from qrogue.util.key_logger import KeyLogger
 
-from qrogue.management import MapManager, SaveData
+from qrogue.management import MapManager, Pausing, SaveData
 
 
 class QrogueCUI(py_cui.PyCUI):
@@ -34,6 +34,7 @@ class QrogueCUI(py_cui.PyCUI):
         Popup.update_popup_functions(self.__show_message_popup)
         ConfirmationPopup.update_popup_function(self.__show_confirmation_popup)
 
+        Pausing(self.__pause_game)
         CallbackPack(self.__start_level, self.__start_fight, self.__start_boss_fight,
                            self.__open_riddle, self.__visit_shop)
         SaveData()  # todo load data
@@ -456,7 +457,6 @@ class QrogueCUI(py_cui.PyCUI):
         self.__state_machine.change_state(self.__state_machine.prev_state, None)
 
     def __start_playing(self):
-        Pausing(self.__pause_game)
         self.__state_machine.change_state(State.Spaceship, SaveData.instance())
 
     def switch_to_spaceship(self, data=None):
@@ -494,7 +494,7 @@ class QrogueCUI(py_cui.PyCUI):
         SaveData.instance().achievement_manager.reset_level_events()
         robot = level.controllable_tile.controllable
         if isinstance(robot, Robot):
-            self.__pause.set_data(robot)   # needed for the HUD
+            self.__pause.set_data(robot, level.name)   # needed for the HUD
             self.__state_machine.change_state(State.Explore, level)
 
             self.__key_logger = KeyLogger(seed)     # the seed used to build the Map

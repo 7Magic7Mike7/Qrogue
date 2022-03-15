@@ -3,9 +3,9 @@ from typing import Callable, Dict
 
 from qrogue.game import TargetDifficulty, BossFactory, EnemyFactory, RiddleFactory
 from qrogue.game.logic.actors import Robot
-from qrogue.game.logic.collectibles import GateFactory, ShopFactory, HealthPotion, Coin, Key, Heart
+from qrogue.game.logic.collectibles import GateFactory, ShopFactory, HealthPotion, Coin, Key, Heart, instruction
 from qrogue.game.world.map import CallbackPack, LevelMap, Hallway, WildRoom, SpawnRoom, ShopRoom, RiddleRoom, BossRoom, \
-    TreasureRoom
+    TreasureRoom, ExpeditionMap
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.game.world.tiles import Boss, Collectible, Door, DoorOpenState
 from qrogue.util import Logger, MyRandom, RandomManager
@@ -518,15 +518,23 @@ class ExpeditionGenerator(DungeonGenerator):
     __MIN_ENEMY_FACTORY_CHANCE = 0.45
     __MAX_ENEMY_FACTORY_CHANCE = 0.7
 
-    def __init__(self, seed: int, load_map_callback: Callable[[str], None], width: int = DungeonGenerator.WIDTH,
+    def __init__(self, seed: int, check_achievement: Callable[[str], bool], trigger_event: Callable[[str], None],
+                 load_map_callback: Callable[[str], None], width: int = DungeonGenerator.WIDTH,
                  height: int = DungeonGenerator.HEIGHT):
         super(ExpeditionGenerator, self).__init__(seed, width, height)
+        self.__check_achievement = check_achievement
+        self.__trigger_event = trigger_event
         self.__load_map = load_map_callback
         self.__layout = RandomLayoutGenerator(self.seed, width, height)
 
     def generate(self, data: Robot) -> (LevelMap, bool):
         # Testing: seeds from 0 to 500_000 were successful
         robot = data
+        if len(robot.get_available_instructions()) <= 0:
+
+            gates = [instruction.HGate(), instruction.XGate(), instruction.CXGate()]
+            for gate in gates:
+                robot.give_collectible(gate)
 
         rm = RandomManager.create_new()     # needed for WildRooms
         gate_factory = GateFactory.default()
@@ -631,8 +639,8 @@ class ExpeditionGenerator(DungeonGenerator):
                         if room:
                             rooms[y][x] = room
             if spawn_room:
-                my_map = LevelMap(f"Expedition {self.seed}", self.seed, rooms, robot, spawn_room,
-                                  self.__check_achievement, self.__trigger_event)
+                my_map = ExpeditionMap(self.seed, rooms, robot, spawn_room, self.__check_achievement,
+                                       self.__trigger_event)
                 return my_map, True
             else:
                 return None, False

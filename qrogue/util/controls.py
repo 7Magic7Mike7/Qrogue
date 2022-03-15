@@ -150,19 +150,3 @@ class Controls:
     @property
     def action(self) -> List[int]:
         return self.__pycui_keys[Keys.Action.num]
-
-
-class Pausing:
-    __instance = None
-
-    @staticmethod
-    def pause():
-        if Pausing.__instance is not None:
-            Pausing.__instance.__pause_now()
-
-    def __init__(self, callback: "()"):
-        self.__callback = callback
-        Pausing.__instance = self
-
-    def __pause_now(self):
-        self.__callback()

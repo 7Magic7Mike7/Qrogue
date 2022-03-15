@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Any, Callable, Tuple
+from typing import List, Any, Callable, Tuple, Optional
 
 from py_cui.widgets import BlockLabel
 
@@ -72,10 +72,13 @@ class HudWidget(Widget):
     def __init__(self, widget: MyBaseWidget):
         super().__init__(widget)
         self.__robot = None
+        self.__map_name = None
         self.__render_duration = None
 
-    def set_data(self, robot: Robot) -> None:
-        self.__robot = robot
+    def set_data(self, data: Tuple[Robot, Optional[str]]) -> None:
+        self.__robot = data[0]
+        if data[1]:
+            self.__map_name = data[1]
 
     def reset_data(self) -> None:
         self.__robot = None
@@ -84,12 +87,15 @@ class HudWidget(Widget):
         self.__render_duration = duration * 1000
 
     def render(self) -> None:
-        if self.__robot is not None:
-            text = f"{self.__robot.cur_hp} / {self.__robot.max_hp} HP   \t" \
+        text = ""
+        if self.__map_name:
+            text += f"{self.__map_name}\t"
+        if self.__robot:
+            text += f"{self.__robot.cur_hp} / {self.__robot.max_hp} HP   \t" \
                    f"{self.__robot.backpack.coin_count}$, {self.__robot.key_count()} keys"
-            if self.__render_duration is not None:
-                text += f"\t\t{self.__render_duration:.2f} ms"
-            self.widget.set_title(text)
+        if self.__render_duration:
+            text += f"\t\t{self.__render_duration:.2f} ms"
+        self.widget.set_title(text)
 
     def render_reset(self) -> None:
         self.widget.set_title("")

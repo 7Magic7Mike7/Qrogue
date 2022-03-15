@@ -492,8 +492,28 @@ class MapConfig:
         return "done"
 
     @staticmethod
+    def specific_done_event_id(completed_map: str) -> str:
+        return f"{completed_map}{MapConfig.done_event_id()}"
+
+    @staticmethod
+    def next_map_string() -> str:
+        return "next"
+
+    @staticmethod
     def back_map_string() -> str:
         return "back"
+
+    @staticmethod
+    def world_map_prefix() -> str:
+        return "w"
+
+    @staticmethod
+    def level_map_prefix() -> str:
+        return "l"
+
+    @staticmethod
+    def expedition_map_prefix() -> str:
+        return "expedition"
 
     @staticmethod
     def hub_world() -> str:
@@ -554,6 +574,11 @@ class Config:   # todo make singleton and handle access to other configs?
     @staticmethod
     def debugging() -> bool:
         return Config.__DEBUG
+
+    @staticmethod
+    def debug_print(text: str):
+        if Config.debugging():
+            print(text)
 
     @staticmethod
     def activate_debugging():

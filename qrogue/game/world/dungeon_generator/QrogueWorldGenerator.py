@@ -74,8 +74,8 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
             if len(row) < max_len:
                 row += [None] * (max_len - len(row))
 
-        world = WorldMap(name, self.__seed, room_matrix, self.__player, self.__spawn_pos, self.__check_achievement,
-                         self.__trigger_achievement)
+        world = WorldMap(name, file_name, self.__seed, room_matrix, self.__player, self.__spawn_pos,
+                         self.__check_achievement, self.__trigger_achievement)
         return world, True
 
     def __load_next(self):

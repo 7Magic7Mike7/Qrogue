@@ -1,9 +1,10 @@
 # exporting
 from .rooms import Area, Hallway, Room, BossRoom, MetaRoom, RiddleRoom, ShopRoom, SpawnRoom, TreasureRoom, WildRoom
-from .map import Map
+from .map import MapType, Map
 from .spaceship_map import SpaceshipMap
 from .world_map import WorldMap
 from .level_map import LevelMap
+from .expedition_map import ExpeditionMap
 from .callbacks import CallbackPack
 
 # importing

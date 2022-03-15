@@ -286,8 +286,8 @@ class PauseMenuWidgetSet(MyWidgetSet):
     def get_main_widget(self) -> MyBaseWidget:
         return self.__choices.widget
 
-    def set_data(self, robot: Robot):
-        self.__hud.set_data(robot)
+    def set_data(self, robot: Robot, map_name: str):
+        self.__hud.set_data((robot, map_name))
 
     def reset(self) -> None:
         self.__choices.render_reset()
@@ -373,7 +373,7 @@ class ExploreWidgetSet(MyWidgetSet):
     def set_data(self, map: Map) -> None:
         controllable = map.controllable_tile.controllable
         if isinstance(controllable, Robot):
-            self.__hud.set_data(controllable)
+            self.__hud.set_data((controllable, map.name))
         else:
             self.__hud.reset_data()
         self.__map_widget.set_data(map)
@@ -510,7 +510,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self._robot = robot
         self._target = target
 
-        self.__hud.set_data(robot)
+        self.__hud.set_data((robot, None))  # don't overwrite the current map name
         self.__circuit.set_data(robot)
 
         diff_stv = self._target.state_vector.get_diff(self._robot.state_vector)
@@ -710,15 +710,18 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
 class FightWidgetSet(ReachTargetWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
-                 continue_exploration_callback: "()", game_over_callback: "()"):
+                 continue_exploration_callback: Callable[[], None], game_over_callback: Callable[[], None]):
         super(FightWidgetSet, self).__init__(controls, render, logger, root, continue_exploration_callback)
         self.__random = RandomManager.create_new()
         self.__game_over_callback = game_over_callback
         self.__flee_chance = 0
 
-    def set_data(self, robot: Robot, target: Enemy):
+    def set_data(self, robot: Robot, target: Enemy, use_flee_chance: bool = True):
         super(FightWidgetSet, self).set_data(robot, target)
-        self.__flee_chance = target.flee_chance
+        if use_flee_chance:
+            self.__flee_chance = target.flee_chance
+        else:
+            self.__flee_chance = 1
 
     def _on_commit_fail(self) -> bool:
         damage_taken, deadly = self._robot.damage()
@@ -762,8 +765,8 @@ class BossFightWidgetSet(FightWidgetSet):
         self.__tutorial_won = tutorial_won_callback
         super().__init__(controls, render, logger, root, self.__continue_exploration, game_over_callback)
 
-    def set_data(self, robot: Robot, target: Boss):
-        super(BossFightWidgetSet, self).set_data(robot, target)
+    def set_data(self, robot: Robot, target: Boss, use_flee_chance: bool = False):
+        super(BossFightWidgetSet, self).set_data(robot, target, use_flee_chance)
 
     def __continue_exploration(self):
         if self._target.is_defeated:
@@ -821,7 +824,7 @@ class ShopWidgetSet(MyWidgetSet):
 
     def set_data(self, robot: Robot, items: List[ShopItem]) -> None:
         self.__robot = robot
-        self.__hud.set_data(robot)
+        self.__hud.set_data((robot, None))    # don't overwrite the current map name
         self.__update_inventory(items)
 
     def __update_inventory(self, items: List[ShopItem]):

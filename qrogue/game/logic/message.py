@@ -19,6 +19,12 @@ class Message:
     def create_with_title(m_id: str, title: str, text: str) -> "Message":
         return Message(m_id, title, text, None, None)
 
+    @staticmethod
+    def create_with_alternative(m_id: str, title: str, text: str, event: str, alternative: "Message") -> "Message":
+        message = Message(m_id, title, text, event, alternative.id)
+        message.resolve_message_ref(alternative)
+        return message
+
     def __init__(self, m_id: str, title: str, text: str, event: Optional[str], alternative: Optional[str]):
         self.__m_id = m_id
         self.__title = title

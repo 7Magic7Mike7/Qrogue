@@ -1,3 +1,4 @@
+import enum
 from abc import ABC, abstractmethod
 from typing import List, Callable
 
@@ -7,6 +8,12 @@ from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.util import Logger, MapConfig
 
 from qrogue.game.world.map.rooms import Room, Area, Placeholder, SpawnRoom, MetaRoom
+
+
+class MapType(enum.Enum):
+    World = 0
+    Level = 1
+    Expedition = 2
 
 
 class Map(ABC):
@@ -24,10 +31,11 @@ class Map(ABC):
         y = pos_of_room.y * (Area.UNIT_HEIGHT + 1) + pos_in_room.y
         return Coordinate(x, y)
 
-    def __init__(self, name: str, seed: int, rooms: List[List[Room]], controllable: Controllable,
+    def __init__(self, name: str, internal_name: str, seed: int, rooms: List[List[Room]], controllable: Controllable,
                  spawn_room: Coordinate, check_achievement: Callable[[str], bool],
                  trigger_event: Callable[[str], None]):
         self.__name = name
+        self.__internal_name = internal_name
         self.__seed = seed
         self.__rooms = rooms
         self.__controllable_tile = tiles.ControllableTile(controllable)
@@ -48,7 +56,20 @@ class Map(ABC):
 
     @property
     def name(self) -> str:
+        """
+        Name of the Map that is presented to the player.
+        Can be the same as its internal name.
+        :return: name of the Map that is shown in-game
+        """
         return self.__name
+
+    @property
+    def internal_name(self) -> str:
+        """
+        Name of the Map that is used to identify it in the game's logic (e.g. for events).
+        :return: name of the Map that is used internally
+        """
+        return self.__internal_name
 
     @property
     def seed(self) -> int:
@@ -79,7 +100,7 @@ class Map(ABC):
         return self.__controllable_pos
 
     @abstractmethod
-    def is_world(self) -> bool:
+    def get_type(self) -> MapType:
         pass
 
     def __get_area(self, x: int, y: int) -> (Area, tiles.Tile):

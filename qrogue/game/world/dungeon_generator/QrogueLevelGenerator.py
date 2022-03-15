@@ -148,8 +148,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             if len(row) < max_len:
                 row += [None] * (max_len - len(row))
 
-        level = LevelMap(name, self.__seed, room_matrix, self.__robot, self.__spawn_pos, self.__check_achievement,
-                         self.__trigger_event)
+        level = LevelMap(name, file_name, self.__seed, room_matrix, self.__robot, self.__spawn_pos,
+                         self.__check_achievement, self.__trigger_event)
         return level, True
 
     def _add_hallway(self, room1: Coordinate, room2: Coordinate, door: tiles.Door):
@@ -665,7 +665,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             self.warning("Imports not yet supported! Choosing from default_stv_pool")
             enemy_factory = self.__default_enemy_factory
 
-        enemy = tiles.Enemy(enemy_factory, get_entangled_tiles, id=enemy_id)
+        enemy = tiles.Enemy(enemy_factory, get_entangled_tiles, enemy_id)
         if room_id not in self.__enemy_groups_by_room:
             self.__enemy_groups_by_room[room_id] = {}
         if enemy_id not in self.__enemy_groups_by_room[room_id]:

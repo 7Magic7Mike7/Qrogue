@@ -3,6 +3,7 @@ import enum
 
 EnteredPauseMenu = "EnteredPauseMenu"
 FirstDoorUnlocked = "UnlockedDoor"
+CompletedExpedition = "CompletedExpedition"
 
 
 class AchievementType(enum.Enum):
@@ -12,6 +13,7 @@ class AchievementType(enum.Enum):
     Secret = 3  # is not shown until unlocked (therefore also needs to be done in one go, i.e. done_score = 1)
     Tutorial = 4
     Event = 5    # in-level event
+    Expedition = 6
 
 
 class Achievement:
@@ -53,6 +55,7 @@ class AchievementManager:
 
         # todo load from file
         self.__storage[EnteredPauseMenu] = Achievement(EnteredPauseMenu, AchievementType.Tutorial, 0, 1)
+        self.__storage[CompletedExpedition] = Achievement(CompletedExpedition, AchievementType.Expedition, 0, 1000)
 
     def check_achievement(self, name: str) -> bool:
         if name in self.__temp_level_storage:
