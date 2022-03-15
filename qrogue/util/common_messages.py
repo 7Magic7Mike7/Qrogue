@@ -3,16 +3,39 @@ from typing import Callable
 
 from qrogue.util import Config, ColorConfig as CC, Logger
 
-_show = None
-_ask = None
+class _CallbackHandler:
+    __show = None
+    __ask = None
+
+    @staticmethod
+    def show(title: str, text: str):
+        if _CallbackHandler.__show:
+            _CallbackHandler.__show(title, text)
+        else:
+            Logger.instance().error("CommonMessages' show is None!")
+
+    @staticmethod
+    def set_show_callback(show: Callable[[str, str], None]):
+        _CallbackHandler.__show = show
+
+    @staticmethod
+    def ask(text: str, callback: Callable[[bool], None]):
+        if _CallbackHandler.__ask:
+            _CallbackHandler.__ask(text, callback)
+        else:
+            Logger.instance().error("CommonMessages' ask is None!")
+
+    @staticmethod
+    def set_ask_callback(ask: Callable[[str, Callable[[bool], None]], None]):
+        _CallbackHandler.__ask = ask
 
 
 def set_show_callback(show: Callable[[str, str], None]):
-    _show = show
+    _CallbackHandler.set_show_callback(show)
 
 
 def set_ask_callback(ask: Callable[[str, Callable[[bool], None]], None]):
-    _ask = ask
+    _CallbackHandler.set_ask_callback(ask)
 
 
 def _locked_door() -> str:
@@ -64,13 +87,12 @@ class CommonPopups(Enum):
         self.__text = text
 
     def show(self):
-        if _show:
-            _show(self.__title, self.__text)
-        else:
-            Logger.instance().error("CommonMessages' show is None!")
+        _CallbackHandler.show(self.__title, self.__text)
 
 
 class CommonQuestions(Enum):
+    __ask = None
+
     GoingBack = "We are not done yet. \nDo you really want to go back to the spaceship?"
     ProceedToNextMap = "Looks like we cleared this map. Shall we proceed directly to the next one?"
 
@@ -78,9 +100,4 @@ class CommonQuestions(Enum):
         self.__text = text
 
     def ask(self, callback: Callable[[bool], None]):
-        #Popup.message(Config.scientist_name(), self.__text)
-        #ConfirmationPopup.ask(self.__text, callback)
-        if _ask:
-            _ask(self.__text, callback)
-        else:
-            Logger.instance().error("CommonQuestions' ask is None!")
+        _CallbackHandler.ask(self.__text, callback)
