@@ -161,8 +161,7 @@ class MapManager:
                 SaveData.instance().achievement_manager.add_to_achievement(achievements.CompletedExpedition, 1)
             CommonQuestions.ProceedToNextMap.ask(self.__proceed)
         SaveData.instance().achievement_manager.trigger_level_event(event_id)
-        if Config.debugging():
-            print("triggered event: " + event_id)
+        Config.debug_print("triggered event: " + event_id)
 
     def load_map(self, map_name: str, spawn_room: Coordinate):
         if map_name.lower() == MapConfig.next_map_string():
