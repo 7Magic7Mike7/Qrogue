@@ -1,7 +1,9 @@
 import enum
 import os
+import pathlib
+import shutil
 from datetime import datetime
-from typing import Callable
+from typing import Callable, List
 
 import py_cui
 
@@ -18,6 +20,7 @@ class FileTypes(enum.Enum):
 
 class PathConfig:
     __BASE_PATH = "../.."
+    __DATA_FOLDER = "data"
     __LOG_FOLDER = "logs"
     __KEY_LOG_FOLDER = "keylogs"
     __SCREEN_PRINTS_FOLDER = "screenprints"
@@ -37,10 +40,15 @@ class PathConfig:
 
     @staticmethod
     def create_data_folder(base_path: str) -> None:
+        pathlib.Path(base_path).mkdir(parents=True, exist_ok=True)
+        data_path = os.path.join(base_path, PathConfig.__DATA_FOLDER)
         log_path = os.path.join(base_path, PathConfig.__LOG_FOLDER)
         key_log_path = os.path.join(base_path, PathConfig.__KEY_LOG_FOLDER)
         screen_prints_path = os.path.join(base_path, PathConfig.__SCREEN_PRINTS_FOLDER)
         save_data_path = os.path.join(base_path, PathConfig.__SAVE_DATA_FOLDER)
+        if not os.path.exists(data_path):
+            base_data_path = os.path.join(os.path.dirname(__file__), "..", "data")
+            shutil.copytree(base_data_path, data_path)
         if not os.path.exists(log_path):
             os.mkdir(log_path)
         if not os.path.exists(key_log_path):
@@ -51,13 +59,18 @@ class PathConfig:
             os.mkdir(save_data_path)
 
     @staticmethod
-    def set_base_path() -> bool:
-        config_file_path = os.path.join(os.path.dirname(__file__), "../..", "installer", "qrogue.config")
+    def set_base_path(base_path: str):
+        PathConfig.__BASE_PATH = base_path
+
+    @staticmethod
+    def load_base_path(config_location: str) -> bool:
+        if config_location is None:
+            config_location = os.path.join(os.path.dirname(__file__), "../..", "installer", "qrogue.config")
         try:
-            with open(config_file_path) as f:
+            with open(config_location) as f:
                 content = f.readlines()
                 # ignore the last character because it is \n
-                PathConfig.__BASE_PATH = content[1][:-1]
+                PathConfig.set_base_path(content[1][:-1])
             return os.path.exists(PathConfig.__BASE_PATH)
         except:
             return False
@@ -585,25 +598,28 @@ class Config:   # todo make singleton and handle access to other configs?
         Config.__DEBUG = True
 
     @staticmethod
-    def create():
+    def create(custom_config: List[str] = None):
         text = ""
         text += Config.__GAMEPLAY_HEAD
         text += GameplayConfig.to_file_text()
 
-        file_path = os.path.join(os.path.dirname(__file__), "../..", "installer", "qrogue.config")
-        try:
-            config_content = PathConfig.read(file_path, False).splitlines()
-        except FileNotFoundError:
-            raise FileNotFoundError("Could not find the base config file qrogue.config\nPlease download the installer "
-                                    "folder again!")
+        if custom_config:
+            config_content = custom_config
+        else:
+            file_path = os.path.join(os.path.dirname(__file__), "../..", "installer", "qrogue.config")
+            try:
+                config_content = PathConfig.read(file_path, False).splitlines()
+            except FileNotFoundError:
+                raise FileNotFoundError("Could not find the base config file qrogue.config\nPlease download the installer "
+                                        "folder again!")
         PathConfig.create_data_folder(config_content[1])
         path = os.path.join(config_content[1], Config.__GAME_CONFIG)
         with open(path, "x") as file:
             file.write(text)
 
     @staticmethod
-    def load():
-        if not PathConfig.set_base_path():
+    def load(config_location: str):
+        if not PathConfig.load_base_path(config_location):
             return 1
 
         if not os.path.exists(os.path.join(PathConfig.base_path(), Config.__GAME_CONFIG)):

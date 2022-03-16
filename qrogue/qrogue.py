@@ -8,11 +8,15 @@ from qrogue.management import GameHandler
 from qrogue.util import Config, Logger
 
 
-def start_game():
+def setup_game(data_path: str):
+    Config.create(["Qrogue", data_path])
+
+
+def start_game(config_location: str = None):
     __CONSOLE_ARGUMENT = "--from-console"
     __DEBUG_ARGUMENT = "--debug"
 
-    return_code = Config.load()  # NEEDS TO BE THE FIRST THING WE DO!
+    return_code = Config.load(config_location)  # NEEDS TO BE THE FIRST THING WE DO!
     if return_code == 0:
         if __DEBUG_ARGUMENT in sys.argv:
             Config.activate_debugging()
