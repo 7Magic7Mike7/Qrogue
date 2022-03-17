@@ -17,10 +17,10 @@ setup(
                 'qrogue.graphics.rendering',
                 'qrogue.graphics.popups',
                 'qrogue.graphics.widgets',
-              'qrogue.management'
+              'qrogue.management',
               ],
   package_data={"data": ["qrogue/data"]},
-  version = '0.2.1.7',
+  version = '0.2.1.8',
   license='MIT',        # Chose a license from here: https://help.github.com/articles/licensing-a-repository
   description = 'Qrogue is a modernized Quantum Computing take of the classical game Rogue. It can be played in a '
                 'terminal and aims to improve your understanding of Quantum Computing',
@@ -33,7 +33,6 @@ setup(
           'py-cui',
           'qiskit',
           'antlr4-python3-runtime',
-    # todo
       ],
   classifiers=[
     'Development Status :: 3 - Alpha',      # Chose either "3 - Alpha", "4 - Beta" or "5 - Production/Stable"

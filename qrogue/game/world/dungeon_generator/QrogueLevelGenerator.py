@@ -790,7 +790,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
                     index = descriptor_indices[tile_str]
 
                     tile = tile_dic[tile_str][index]
-                    if index + 1 < len(tile_dic[tile_str]):
+                    if index + 1 < len(tile_dic[tile_str]):     # todo maybe default tiles are better than using the last definition?
                         descriptor_indices[tile_str] = index + 1
                 else:
                     tile = self.__get_default_tile(tile_str, enemy_dic, get_entangled_tiles)
