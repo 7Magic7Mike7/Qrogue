@@ -554,8 +554,11 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             self.__cur_instruction = self._robot.get_instruction(index)
             if self.__cur_instruction is not None:
                 if self.__cur_instruction.is_used():
-                    self._robot.remove_instruction(index)
-                    self.details.update_text(self._robot.backpack.get(index).selection_str(), index)
+                    options = [f"Position {i}" for i in range(self._robot.circuit_space)] + ["Remove"]
+                    self.details.set_data(data=(
+                        SelectionWidget.wrap_in_hotkey_str(options),
+                        [self.__choose_position]
+                    ))
                 else:
                     if self._robot.is_space_left():
                         options = [self.__cur_instruction.preview_str(i) for i in range(self._robot.num_of_qubits)]
@@ -585,12 +588,22 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                 [self.__choose_qubit]
             ))
         else:
-            self._robot.use_instruction(self.__cur_instruction)
-            options = [instruction.selection_str() for instruction in self._robot.backpack]
+            options = [f"Position {i}" for i in range(self._robot.circuit_space)] + ["Remove"]
             self._details.set_data(data=(
-                SelectionWidget.wrap_in_hotkey_str(options) + [MyWidgetSet.BACK_STRING],
-                [self.__choose_instruction]
+                SelectionWidget.wrap_in_hotkey_str(options),# + [MyWidgetSet.BACK_STRING],
+                [self.__choose_position]
             ))
+        self.render()
+        return False
+
+    def __choose_position(self, index: int = 0):
+        if not self._robot.use_instruction(self.__cur_instruction, index):
+            CommonPopups.NoCircuitSpace.show()
+        options = [instruction.selection_str() for instruction in self._robot.backpack]
+        self._details.set_data(data=(
+            SelectionWidget.wrap_in_hotkey_str(options) + [MyWidgetSet.BACK_STRING],
+            [self.__choose_instruction]
+        ))
         self.render()
         return False
 
