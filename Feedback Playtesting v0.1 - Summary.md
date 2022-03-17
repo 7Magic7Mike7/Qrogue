@@ -6,8 +6,8 @@
 
 Feedback | Underlying Issue | Priority | Proposed Solution | Done
 | - | - | - | - | :-: |
-macOS Support | no support yet | Medium | PR from Lukas |
-execute "install.sh" from "installer" folder | not mentioned in Readme | High | PR from Lukas | 
+macOS Support | no support yet | Medium | PR from Lukas | `x`
+execute "install.sh" from "installer" folder | not mentioned in Readme | High | PR from Lukas | `x`
 PyPI package | downloading and installing in several steps is tedious | High | provide PyPI package | 
 
 
@@ -36,11 +36,11 @@ why is 10 hp the maximum? | no explanation why you cannot heal over 10 hp | High
 I don't get the purpose of the different numbers | not described well enough | Medium | come up with a better description and smaller example | 
 concept of entangled doors is wrong | not described well enough? | Low | come up with a better description? | 
 misclick on gate selection tedious to undo | selection process cannot be canceled | Medium | key for cancel | `x`
-insert position of gate not selectable | simple queue because of the original concept | High | keys for position | 
+insert position of gate not selectable | simple queue because of the original concept | High | prompt for position after qubit selection, moving of used instructions instead of automatic removal | `x`
 
 ### Bugs
 Feedback | Underlying Issue | Priority | Proposed Solution | Done
 | - | - | - | - | :-: |
-inconsitent visualization of amplitudes | hard coded in Tutorial | Low | Tutorial will be revamped anyways | 
-"east" instead of "west" in Tutorial | forgot to adapt | Low | Tutorial will be revamped anyways | 
+inconsitent visualization of amplitudes | hard coded in Tutorial | Low | Tutorial will be revamped anyways | `x`
+"east" instead of "west" in Tutorial | forgot to adapt | Low | Tutorial will be revamped anyways | `x`
 H(0) + Z(0) gives wrong StateVector | forgot to change underlying gate when I copied the code from XGate | High | change underlying gate to ZGate | `x`
