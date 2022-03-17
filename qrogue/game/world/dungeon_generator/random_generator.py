@@ -1,11 +1,11 @@
 from enum import IntEnum
 from typing import Callable, Dict
 
-from qrogue.game import TargetDifficulty, BossFactory, EnemyFactory, RiddleFactory
 from qrogue.game.logic.actors import Robot
 from qrogue.game.logic.collectibles import GateFactory, ShopFactory, HealthPotion, Coin, Key, Heart, instruction
 from qrogue.game.world.map import CallbackPack, LevelMap, Hallway, WildRoom, SpawnRoom, ShopRoom, RiddleRoom, BossRoom, \
     TreasureRoom, ExpeditionMap
+from qrogue.game.target_factory import TargetDifficulty, BossFactory, EnemyFactory, RiddleFactory
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.game.world.tiles import Boss, Collectible, Door, DoorOpenState
 from qrogue.util import Logger, MyRandom, RandomManager
@@ -288,7 +288,7 @@ class RandomLayoutGenerator:
                         self.__place_wild(pos, Door(direction, DoorOpenState.KeyLocked))
                         return pos
             except NotImplementedError:
-                print("ERROR!")
+                Logger.instance().error("Unimplemented case happened!")
 
     def __astar_connect_neighbors(self, visited: set, pos: Coordinate) -> (Coordinate, bool):
         """
@@ -312,7 +312,7 @@ class RandomLayoutGenerator:
             return room[2], False
         else:
             if self.__get(pos) in _Code.special_rooms():
-                print(f"SpecialRoom marked as dead end for seed = {self.seed}")
+                Logger.instance().debug(f"SpecialRoom marked as dead end for seed = {self.seed}")
             return pos, True  # we found a dead end
 
     def __astar(self, visited: set, pos: Coordinate, target: Coordinate) -> ([Coordinate], bool):

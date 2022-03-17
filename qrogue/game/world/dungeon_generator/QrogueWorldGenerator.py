@@ -9,7 +9,7 @@ from qrogue.game.logic.actors import Player
 from qrogue.game.world.map import Room, MetaRoom, SpawnRoom, WorldMap
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.game.world.tiles import Door, DoorOneWayState, DoorOpenState
-from qrogue.util import MapConfig, PathConfig
+from qrogue.util import MapConfig, PathConfig, Logger
 
 from .world_parser.QrogueWorldLexer import QrogueWorldLexer
 from .world_parser.QrogueWorldParser import QrogueWorldParser
@@ -62,7 +62,7 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
             if name is None:
                 name = file_name
         except SyntaxError as se:
-            print(se)
+            Logger.instance().error(str(se))
             return None, False
 
         # add empty rooms if rows don't have the same width

@@ -1,0 +1,37 @@
+Qrogue<
+
+[Layout]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+| __ .. __ .. __ .. __ .. __ .. __ .. __ |
+| ..    ..    ..    ..    ..    ..    .. |
+| SR == la == tu .. __ .. __ .. __ |
+| ==    ..    ..    ..    ..    ..    .. |
+| ee .. __ .. __ .. __ .. __ |
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[Rooms]
+SR (World 1; North):
+description "Spawn"
+teleport *back
+
+la (Level 1; North):
+description "First level"
+teleport *l1v1
+
+lb (Level 2; North):
+description "Second level"
+teleport *l1v2
+
+ee (Level 0; South):
+description "Expedition"
+teleport *expedition1
+
+// just an example level for easier copying of map parts
+tu (Level 9; East):
+description "just an example level for easier copying of map parts"
+teleport *fullTemplate
+
+[Hallways]
+11 (event *l1v1Done; ; )
+
+>Qrogue

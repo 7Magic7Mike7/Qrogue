@@ -1,6 +1,6 @@
 # exporting
-from .color_rules import ColorRules
-from .renderer import MultiColorRenderer, TileRenderer
+from qrogue.graphics.rendering.color_rules import ColorRules
+from qrogue.graphics.rendering.renderer import MultiColorRenderer, TileRenderer
 
 # importing
 # +util

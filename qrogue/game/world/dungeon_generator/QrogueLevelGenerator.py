@@ -3,16 +3,16 @@ from typing import Callable, List, Tuple, Dict
 from antlr4 import InputStream, CommonTokenStream
 from antlr4.tree.Tree import TerminalNodeImpl
 
-from qrogue.game import EnemyFactory, ExplicitTargetDifficulty, TargetDifficulty
 from qrogue.game.logic import Message, StateVector
 from qrogue.game.logic.actors import Controllable, Riddle
 from qrogue.game.logic.actors.controllables import TestBot
 from qrogue.game.logic.collectibles import Collectible, pickup, instruction, MultiCollectible, Qubit, ShopItem, \
     CollectibleFactory, OrderedCollectibleFactory
+from qrogue.game.target_factory import EnemyFactory, ExplicitTargetDifficulty, TargetDifficulty
 from qrogue.game.world import tiles
 from qrogue.game.world.map import CallbackPack, LevelMap, rooms
 from qrogue.game.world.navigation import Coordinate, Direction
-from qrogue.util import Config, HelpText, MapConfig, MyRandom, PathConfig
+from qrogue.util import Config, HelpText, MapConfig, MyRandom, PathConfig, Logger
 
 from . import parser_util
 from .generator import DungeonGenerator
@@ -136,7 +136,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             if name is None:
                 name = file_name
         except SyntaxError as se:
-            print(se)
+            Logger.instance().error(str(se))
             return None, False
 
         # add empty rooms if rows don't have the same width
@@ -790,7 +790,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
                     index = descriptor_indices[tile_str]
 
                     tile = tile_dic[tile_str][index]
-                    if index + 1 < len(tile_dic[tile_str]):
+                    if index + 1 < len(tile_dic[tile_str]):     # todo maybe default tiles are better than using the last definition?
                         descriptor_indices[tile_str] = index + 1
                 else:
                     tile = self.__get_default_tile(tile_str, enemy_dic, get_entangled_tiles)

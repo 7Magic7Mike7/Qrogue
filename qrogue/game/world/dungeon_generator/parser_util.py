@@ -4,7 +4,7 @@ from antlr4.error.ErrorListener import ErrorListener
 
 from qrogue.game.world.map import Hallway
 from qrogue.game.world.navigation import Coordinate, Direction
-from qrogue.util import MapConfig
+from qrogue.util import MapConfig, Logger, Config
 
 DEFAULT_HALLWAY_STR = "=="
 TEMPLATE_PREFIX = "_"
@@ -23,7 +23,9 @@ FLOOR_TILE = " "
 
 
 def warning(text: str):
-    print("Warning: ", text)
+    Logger.instance().println(f"Warning: {text}")
+    if Config.debugging():
+        print("Warning", text)
 
 
 def check_for_overspecified_columns(x: int, symbol_type, ref_type):
@@ -95,12 +97,12 @@ class MyErrorListener(ErrorListener):
         raise SyntaxError(msg)
 
     def reportAmbiguity(self, recognizer, dfa, startIndex, stopIndex, exact, ambigAlts, configs):
-        print("Ambiguity")
+        Config.debug_print("Ambiguity")
 
     def reportAttemptingFullContext(self, recognizer, dfa, startIndex, stopIndex, conflictingAlts, configs):
-        print("Attempting full context")
+        Config.debug_print("Attempting full context")
 
     def reportContextSensitivity(self, recognizer, dfa, startIndex, stopIndex, prediction, configs):
-        print("Context sensitivity")
+        Config.debug_print("Context sensitivity")
 
 
