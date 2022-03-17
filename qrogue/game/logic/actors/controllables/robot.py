@@ -12,7 +12,7 @@ from qrogue.game.logic.actors import StateVector
 from qrogue.game.logic.actors.controllables import Controllable
 from qrogue.game.logic.collectibles import Coin, Collectible, Consumable, Heart, Instruction, Key, MultiCollectible, \
     Qubit
-from qrogue.util import CheatConfig, Config, Logger, MyRandom
+from qrogue.util import CheatConfig, Config, Logger, MyRandom, InstructionConfig
 
 from .qubit import QubitSet, DummyQubitSet
 
@@ -219,6 +219,21 @@ class BackpackIterator:
 
 
 class Robot(Controllable, ABC):
+    @staticmethod
+    def __counts_to_bit_list(counts):
+        counts = str(counts)
+        counts = counts[1:len(counts) - 1]
+        arr = counts.split(':')
+        if int(arr[1][1:]) != 1:
+            Logger.instance().throw(ValueError(f"Function only works for counts with 1 shot but counts was: {counts}"))
+        bits = arr[0]
+        bits = bits[1:len(bits) - 1]
+        list = []
+        for b in bits:
+            list.append(int(b))
+        list.reverse()  # so that list[i] corresponds to the measured value of qi
+        return list
+
     def __init__(self, name: str, attributes: _Attributes, backpack: Backpack):
         super().__init__(name)
         # initialize qubit stuff (rows)
@@ -232,11 +247,11 @@ class Robot(Controllable, ABC):
             self.__qubit_indices.append(i)
 
         # initialize gate stuff (columns)
-        self.__next_col = 0
+        self.__instruction_count = 0
 
         # apply gates/instructions, create the circuit
         self.__circuit = None
-        self.__instructions = []
+        self.__instructions = [None] * attributes.circuit_space
         self.__apply_instructions()
         self.update_statevector()  # to initialize the statevector
 
@@ -247,6 +262,30 @@ class Robot(Controllable, ABC):
     @property
     def state_vector(self) -> StateVector:
         return self.__stv
+
+    @property
+    def cur_hp(self) -> int:
+        return self.__attributes.qubits.hp
+
+    @property
+    def max_hp(self) -> int:
+        return self.__attributes.qubits.max_hp
+
+    @property
+    def num_of_qubits(self) -> int:
+        return self.__attributes.num_of_qubits
+
+    @property
+    def circuit_space(self) -> int:
+        return self.__attributes.circuit_space
+
+    def __apply_instructions(self):
+        circuit = QuantumCircuit(self.__attributes.num_of_qubits, self.__attributes.num_of_qubits)
+        for inst in self.__instructions:
+            if inst:
+                inst.append_to(circuit)
+        self.__circuit = circuit
+        return True
 
     def key_count(self) -> int:
         return self.backpack.key_count
@@ -273,50 +312,71 @@ class Robot(Controllable, ABC):
         return None
 
     def has_empty_circuit(self) -> bool:
-        return self.__next_col == 0
+        return self.__instruction_count == 0
 
     def is_space_left(self) -> bool:
-        return self.__next_col < self.__attributes.circuit_space
+        return self.__instruction_count < self.__attributes.circuit_space
 
-    def use_instruction(self, instruction: Instruction) -> bool:
+    def use_instruction(self, instruction: Instruction, position: int) -> bool:
         """
         Tries to put the Instruction corresponding to the given index in the backpack into the robot's circuit.
         If the Instruction is already in-use (put onto the circuit) it is removed instead.
 
         :param instruction: the Instruction we want to use
+        :param position: the position of the Instruction in the circuit
         :return: True if we were able to use the Instruction in our circuit
         """
         if instruction.is_used():
-            self.__remove_instruction(instruction)
+            self.__move_instruction(instruction, position)
         else:
             if self.is_space_left():
-                self.__append_instruction(instruction)
+                self.__place_instruction(instruction, position)
             else:
                 return False
         return self.__apply_instructions()
 
-    def remove_instruction(self, instruction_index: int) -> bool:
-        if 0 <= instruction_index < self.backpack.used_capacity:
-            instruction = self.backpack.get(instruction_index)
+    def __remove_instruction(self, instruction: Instruction, skip_qargs: bool = False):
+        if instruction and instruction.is_used():
+            self.__instructions[instruction.position] = None
+            self.__instruction_count -= 1
+            instruction.reset(skip_qargs=skip_qargs)
+
+    def __place_instruction(self, instruction: Instruction, position: int):
+        if instruction.position == position:
+            return  # nothing to do in this case
+        if instruction.is_used():
+            Logger.instance().throw(RuntimeError("Illegal state: Instruction was not removed before placing!"))
+
+        if 0 <= position < self.__attributes.circuit_space:
+            if self.__instructions[position]:
+                self.__remove_instruction(self.__instructions[position])
+            self.__instruction_count += 1
+            self.__instructions[position] = instruction
+            instruction.use(position)
+        else:
+            # illegal position removes the instruction from the circuit if possible
             self.__remove_instruction(instruction)
-        return self.__apply_instructions()
+
+    def __move_instruction(self, instruction: Instruction, position: int) -> bool:
+        if instruction.is_used():
+            if 0 <= position < self.__attributes.circuit_space:
+                self.__remove_instruction(instruction, skip_qargs=True)
+                if self.__instructions[position]:
+                    self.__remove_instruction(self.__instructions[position])
+                self.__place_instruction(instruction, position)
+                return True
+            else:
+                self.__remove_instruction(instruction)
+                return True
+        return False
 
     def reset_circuit(self):
         temp = self.__instructions.copy()
         for instruction in temp:
             self.__remove_instruction(instruction)
+        self.__instruction_count = 0
         self.__apply_instructions()
         self.update_statevector()
-
-    def __append_instruction(self, instruction: Instruction):
-        self.__instructions.append(instruction)
-        instruction.use()
-        self.__next_col += 1
-
-    def __remove_instruction(self, instruction: Instruction):
-        self.__instructions.remove(instruction)
-        instruction.reset()
-        self.__next_col -= 1
 
     def get_available_instructions(self) -> [Instruction]:
         """
@@ -355,43 +415,36 @@ class Robot(Controllable, ABC):
         """
         return self.__attributes.qubits.heal(amount)
 
-    @property
-    def cur_hp(self) -> int:
-        return self.__attributes.qubits.hp
+    def get_circuit_print(self) -> str:
+        entry = "-" * (3 + InstructionConfig.MAX_ABBREVIATION_LEN + 3)
+        rows = [[entry] * self.circuit_space for _ in range(self.num_of_qubits)]
 
-    @property
-    def max_hp(self) -> int:
-        return self.__attributes.qubits.max_hp
+        for i, inst in enumerate(self.__instructions):
+            if inst:
+                for q in inst.qargs_iter():
+                    inst_str = inst.abbreviation(q)
+                    diff_len = InstructionConfig.MAX_ABBREVIATION_LEN - len(inst_str)
+                    inst_str = f"--{{{inst_str}}}--"
+                    if diff_len > 0:
+                        half_diff = int(diff_len / 2)
+                        inst_str = inst_str.ljust(len(inst_str) + half_diff, "-")
+                        if diff_len % 2 == 0:
+                            inst_str = inst_str.rjust(len(inst_str) + half_diff, "-")
+                        else:
+                            inst_str = inst_str.rjust(len(inst_str) + half_diff + 1, "-")
+                    rows[q][i] = inst_str
 
-    @property
-    def num_of_qubits(self) -> int:
-        return self.__attributes.num_of_qubits
-
-    @property
-    def circuit_space(self) -> int:
-        return self.__attributes.circuit_space
-
-    def __apply_instructions(self):
-        circuit = QuantumCircuit(self.__attributes.num_of_qubits, self.__attributes.num_of_qubits)
-        for inst in self.__instructions:
-            inst.append_to(circuit)
-        self.__circuit = circuit
-        return True
-
-    @staticmethod
-    def __counts_to_bit_list(counts):
-        counts = str(counts)
-        counts = counts[1:len(counts)-1]
-        arr = counts.split(':')
-        if int(arr[1][1:]) != 1:
-            Logger.instance().throw(ValueError(f"Function only works for counts with 1 shot but counts was: {counts}"))
-        bits = arr[0]
-        bits = bits[1:len(bits)-1]
-        list = []
-        for b in bits:
-            list.append(int(b))
-        list.reverse()   # so that list[i] corresponds to the measured value of qi
-        return list
+        circ_str = ""
+        # place qubits from top to bottom, high to low index
+        for q in range(len(rows) - 1, -1, -1):
+            circ_str += f"| q{q} >---"
+            row = rows[q]
+            for i in range(len(row)):
+                circ_str += row[i]
+                if i < len(row) - 1:
+                    circ_str += "+"
+            circ_str += "< out |\n"
+        return circ_str
 
 
 class TestBot(Robot):
