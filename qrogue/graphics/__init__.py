@@ -1,4 +1,7 @@
 # exporting
+import qrogue.graphics.rendering
+import qrogue.graphics.popups
+import qrogue.graphics.widgets
 
 # importing
 # +util
