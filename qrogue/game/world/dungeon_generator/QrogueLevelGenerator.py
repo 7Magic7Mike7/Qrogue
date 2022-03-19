@@ -619,7 +619,10 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         return self.__load_trigger(reference)
 
     def visitMessage_descriptor(self, ctx: QrogueDungeonParser.Message_descriptorContext) -> tiles.Message:
-        times = self.visit(ctx.integer())
+        if ctx.integer():
+            times = self.visit(ctx.integer())
+        else:
+            times = -1      # = always show
         reference = ctx.REFERENCE().getText()
         message = self.__load_message(reference)
         return tiles.Message(message, times)
