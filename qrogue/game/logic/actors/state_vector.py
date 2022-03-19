@@ -35,16 +35,20 @@ class StateVector:
     def complex_to_string(val: complex) -> str:
         val = np.round(val, StateVector.__DECIMALS)
         if val.imag == 0:
-            return f"{val.real:g}"
+            text = f"{val.real:g}"  # g turns 0.0 to 0
         elif val.real == 0:
-            return f"{val.imag:g}j"
+            text = f"{val.imag:g}j"
         else:
             if val.imag == 1:
-                return f"{val.real:g}+j"
+                text = f"{val.real:g}+j"
             elif val.imag == -1:
-                return f"{val.real:g}-j"
+                text = f"{val.real:g}-j"
             else:
-                return str(val)[1:-1]    # remove the parentheses
+                text = str(val)[1:-1]    # remove the parentheses
+        # skip "-" in front if the text starts with "-0" and the value is actually 0 (so no more comma)
+        if text.startswith("-0") and (len(text) == 2 or len(text) > 2 and text[2] != "."):
+            text = text[1:]
+        return text
 
     def __init__(self, amplitudes: List[complex]):
         self.__amplitudes = amplitudes
