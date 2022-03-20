@@ -36,7 +36,7 @@ class QrogueCUI(py_cui.PyCUI):
 
         Pausing(self.__pause_game)
         CallbackPack(self.__start_level, self.__start_fight, self.__start_boss_fight,
-                           self.__open_riddle, self.__visit_shop)
+                           self.__open_riddle, self.__visit_shop, self.__game_over)
         SaveData()  # todo load data
         MapManager(seed, self.__show_world, self.__start_level)
         Popup.update_check_achievement_function(SaveData.instance().achievement_manager.check_achievement)
@@ -68,9 +68,9 @@ class QrogueCUI(py_cui.PyCUI):
 
         self.__explore = ExploreWidgetSet(self.__controls, self.__render, Logger.instance(), self)
         self.__fight = FightWidgetSet(self.__controls, self.__render, Logger.instance(), self, self.__continue_explore,
-                                      self.__end_of_gameplay)
+                                      self.__game_over)
         self.__boss_fight = BossFightWidgetSet(self.__controls, self.__render, Logger.instance(), self,
-                                               self.__continue_explore, self.__end_of_gameplay, self.__won_tutorial)
+                                               self.__continue_explore, self.__game_over, self.__won_tutorial)
         self.__riddle = RiddleWidgetSet(self.__controls, self.__render, Logger.instance(), self, self.__continue_explore)
         self.__shop = ShopWidgetSet(self.__controls, self.__render, Logger.instance(), self, self.__continue_explore)
 
@@ -501,8 +501,10 @@ class QrogueCUI(py_cui.PyCUI):
         else:
             Logger.instance().throw(ValueError(f"Tried to start a level with a non-Robot: {robot}"))
 
-    def __end_of_gameplay(self) -> None:
-        self.switch_to_menu(None)
+    def __game_over(self) -> None:
+        Popup.message("Game Over!", "You Robot was out of energy so your mission failed. You will return to the "
+                                    "Spaceship now.")
+        self.__state_machine.change_state(State.Spaceship, None)
 
     def __won_tutorial(self) -> None:
         self.switch_to_menu(None)

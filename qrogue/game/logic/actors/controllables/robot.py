@@ -268,14 +268,14 @@ class Robot(Controllable, ABC):
         list.reverse()  # so that list[i] corresponds to the measured value of qi
         return list
 
-    def __init__(self, name: str, attributes: _Attributes, backpack: Backpack):
+    def __init__(self, name: str, attributes: _Attributes, backpack: Backpack, game_over_callback: Callable[[], None]):
         super().__init__(name)
+        self.__attributes = attributes
+        self.__backpack = backpack
+        self.__game_over = game_over_callback
         # initialize qubit stuff (rows)
         self.__simulator = StatevectorSimulator()#ddsim.JKQProvider().get_backend('statevector_simulator')
         self.__stv = None
-        self.__name = name
-        self.__attributes = attributes
-        self.__backpack = backpack
         self.__qubit_indices = []
         for i in range(0, attributes.num_of_qubits):
             self.__qubit_indices.append(i)
@@ -485,11 +485,11 @@ class Robot(Controllable, ABC):
 
 
 class TestBot(Robot):
-    def __init__(self, num_of_qubits: int = 2, gates: List[Instruction] = None):
+    def __init__(self, game_over_callback: Callable[[], None], num_of_qubits: int = 2, gates: List[Instruction] = None):
         attributes = _Attributes(DummyQubitSet(num_of_qubits))
         backpack = Backpack(5, gates)
 
-        super(TestBot, self).__init__("Testbot", attributes, backpack)
+        super(TestBot, self).__init__("Testbot", attributes, backpack, game_over_callback)
     
     def give_collectible(self, collectible: Collectible):
         super(TestBot, self).give_collectible(collectible)
@@ -502,7 +502,7 @@ class TestBot(Robot):
 
 
 class LukeBot(Robot):
-    def __init__(self, size: int = 2):
+    def __init__(self, game_over_callback: Callable[[], None], size: int = 2):
         attributes = _Attributes(DummyQubitSet(size))
         backpack = Backpack(capacity=5)
 
@@ -516,7 +516,7 @@ class LukeBot(Robot):
         #for gate in gate_factory.produce_multiple(rm, num_of_gates):
         #    backpack.add(gate)
         #backpack.place_in_pouch(HealthPotion(3))
-        super().__init__("Luke", attributes, backpack)
+        super().__init__("Luke", attributes, backpack, game_over_callback)
 
     def get_img(self):
         return "L"

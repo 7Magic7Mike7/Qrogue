@@ -1,6 +1,7 @@
 
 from qrogue.game.logic.actors import Player, Robot
 from qrogue.game.logic.actors.controllables import TestBot, LukeBot
+from qrogue.game.world.map import CallbackPack
 from qrogue.util import Logger, PathConfig, AchievementManager
 
 
@@ -31,8 +32,8 @@ class SaveData:
             # todo parse content
             self.__expeditions_finished = 0
             self.__available_robots = [
-                TestBot(),
-                LukeBot(),
+                TestBot(CallbackPack.instance().game_over),
+                LukeBot(CallbackPack.instance().game_over),
             ]
 
             SaveData.__instance = self
