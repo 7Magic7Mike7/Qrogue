@@ -890,7 +890,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
                 continue
             gates.append(self.__load_gate(ref.getText()))  # todo what about pickups?
 
-        self.__robot = TestBot(num_of_qubits, gates)
+        self.__robot = TestBot(CallbackPack.instance().game_over, num_of_qubits, gates)
 
     ##### Start area #####
 
