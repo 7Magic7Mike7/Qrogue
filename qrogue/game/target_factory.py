@@ -115,19 +115,21 @@ class EnemyFactory:
     It is used by enemy tiles to trigger a fight.
     """
 
-    def __init__(self, start_fight_callback: Callable[[Robot, Enemy, Direction], None], difficulty: TargetDifficulty):
+    def __init__(self, start_fight_callback: Callable[[Robot, Enemy, Direction], None], difficulty: TargetDifficulty,
+                 default_flee_chance: float = 0.5):
         """
 
         :param difficulty: difficulty of the enemy we produce
         """
-        self.__difficulty = difficulty
-        self.__custom_reward_factory = None
         self.__start_fight = start_fight_callback
+        self.__difficulty = difficulty
+        self.__default_flee_chance = default_flee_chance
+        self.__custom_reward_factory = None
 
     def set_custom_reward_factory(self, factory: CollectibleFactory):
         self.__custom_reward_factory = factory
 
-    def produce(self, robot: Robot, rm: MyRandom, flee_chance: float) -> Enemy:
+    def produce(self, robot: Robot, rm: MyRandom, flee_chance: float = None) -> Enemy:
         """
         Creates an enemy based on the number of qubits the provided robot has.
 
@@ -141,6 +143,8 @@ class EnemyFactory:
             reward = self.__custom_reward_factory.produce(rm)
         else:
             reward = self.__difficulty.produce_reward(rm)
+        if flee_chance is None:
+            flee_chance = self.__default_flee_chance
         return DummyEnemy(stv, reward, flee_chance)
 
     def start(self, robot: Robot, enemy: Enemy, direction: Direction):
