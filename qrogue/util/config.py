@@ -533,8 +533,8 @@ class MapConfig:
         return "w0"
 
     @staticmethod
-    def tutorial_level() -> str:
-        return "l1v1"
+    def test_level() -> str:
+        return "l1v2"
 
 
 class InstructionConfig:

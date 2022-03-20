@@ -60,8 +60,7 @@ class QrogueCUI(py_cui.PyCUI):
         self.__pause = PauseMenuWidgetSet(self.__controls, self.__render, Logger.instance(), self,
                                           self.__general_continue, self.switch_to_menu)
 
-        self.__spaceship = SpaceshipWidgetSet(self.__seed, self.__controls, Logger.instance(), self, self.__render,
-                                              MapManager.instance().load_map)
+        self.__spaceship = SpaceshipWidgetSet(self.__controls, Logger.instance(), self, self.__render)
         self.__workbench = WorkbenchWidgetSet(self.__controls, Logger.instance(), self,
                                               SaveData.instance().available_robots(), self.__render,
                                               self.__continue_spaceship)
@@ -84,11 +83,11 @@ class QrogueCUI(py_cui.PyCUI):
         def open_world_view(direction: Direction, controllable: Controllable):
             return MapManager.instance().load_map(MapConfig.hub_world(), None)
 
-        def start_tutorial(direction: Direction, controllable: Controllable):
-            return MapManager.instance().load_map(MapConfig.tutorial_level(), None)
+        def start_test_level(direction: Direction, controllable: Controllable):
+            return MapManager.instance().load_map(MapConfig.test_level(), None)
 
         self.__spaceship_map = SpaceshipMap(seed, SaveData.instance().player, open_world_view, self.__use_workbench,
-                                            start_tutorial)
+                                            start_test_level)
 
 
     def _refresh_height_width(self) -> None:

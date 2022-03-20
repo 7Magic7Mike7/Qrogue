@@ -4,7 +4,7 @@ from typing import Callable, List
 from qrogue.game.logic.actors import Robot, Controllable, Player
 from qrogue.game.world.navigation import Direction, Coordinate
 from qrogue.game.world.tiles import Tile, TileCode, WalkTriggerTile
-from qrogue.util import MyRandom
+from qrogue.util import MyRandom, Config
 
 ascii_spaceship = \
     r"                                                                                              " + "\n" \
@@ -86,7 +86,7 @@ class SpaceshipTriggerTile(WalkTriggerTile):
     MAP_START_REPRESENTATION = "S"
     MAP_WORKBENCH_REPRESENTATION = "W"
     MAP_GATE_LIBRARY_REPRESENTATION = "G"
-    START_TUTORIAL = "1"
+    START_TEST_LEVEL = "l"
 
     def __init__(self, character: str, callback: Callable[[Direction, Robot], None]):
         super().__init__(TileCode.SpaceshipTrigger)
@@ -133,12 +133,12 @@ class SpaceshipMap:
 
     def __init__(self, seed: int, player: Player, open_world_view: Callable[[Direction, Controllable], None],
                  use_workbench: Callable[[Direction, Controllable], None],
-                 start_tutorial: Callable[[Direction, Controllable], None]):
+                 start_test_level: Callable[[Direction, Controllable], None]):
         self.__rm = MyRandom(seed)
         self.__player = player
         self.__open_world_view = open_world_view
         self.__use_workbench = use_workbench
-        self.__start_tutorial = start_tutorial
+        self.__start_test_level = start_test_level
         self.__tiles = []
         row = []
         for character in ascii_spaceship:
@@ -170,8 +170,11 @@ class SpaceshipMap:
             tile = SpaceshipTriggerTile(character, self.__use_workbench)
         # elif character == SpaceshipTriggerTile.MAP_GATE_LIBRARY_REPRESENTATION:
         #    tile = SpaceshipTriggerTile(character, self.open_gate_library)
-        elif character == SpaceshipTriggerTile.START_TUTORIAL:
-            tile = SpaceshipTriggerTile(character, self.__start_tutorial)
+        elif character == SpaceshipTriggerTile.START_TEST_LEVEL:
+            if Config.debugging():
+                tile = SpaceshipTriggerTile(character, self.__start_test_level)
+            else:
+                tile = SpaceshipFreeWalkTile()
         else:
             tile = SpaceshipWallTile(character)
         return tile
