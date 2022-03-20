@@ -80,7 +80,7 @@ class ShopFactory:
     @staticmethod
     def default() -> "ShopFactory":
         special_pool = [gates.HGate(), gates.XGate(), gates.HGate()]
-        common_pool = [pickup.Key(1), pickup.Key(2), pickup.Heart(4), consumable.HealthPotion(2)]
+        common_pool = [pickup.Key(1), pickup.Key(2), consumable.EnergyRefill(20)]
         return ShopFactory(common_pool, special_pool, quality_level=1)
 
     def __init__(self, common_pool: List[Collectible], special_pool: List[Collectible], quality_level: int = 1,

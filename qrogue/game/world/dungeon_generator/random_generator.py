@@ -2,7 +2,7 @@ from enum import IntEnum
 from typing import Callable, Dict
 
 from qrogue.game.logic.actors import Robot
-from qrogue.game.logic.collectibles import GateFactory, ShopFactory, HealthPotion, Coin, Key, Heart, instruction
+from qrogue.game.logic.collectibles import GateFactory, ShopFactory, EnergyRefill, Coin, Key, instruction
 from qrogue.game.world.map import CallbackPack, LevelMap, Hallway, WildRoom, SpawnRoom, ShopRoom, RiddleRoom, BossRoom, \
     TreasureRoom, ExpeditionMap
 from qrogue.game.target_factory import TargetDifficulty, BossFactory, EnemyFactory, RiddleFactory
@@ -549,16 +549,16 @@ class ExpeditionGenerator(DungeonGenerator):
 
         enemy_factories = [
             EnemyFactory(CallbackPack.instance().start_fight, TargetDifficulty(
-                2, [Coin(2), Heart()]
+                2, [Coin(2), EnergyRefill()]
             )),
             EnemyFactory(CallbackPack.instance().start_fight, TargetDifficulty(
-                2, [Coin(1), Coin(2), Coin(2), Coin(3), Key(), Heart()]
+                2, [Coin(1), Coin(2), Coin(2), Coin(3), Key(), EnergyRefill(15)]
             )),
             EnemyFactory(CallbackPack.instance().start_fight, TargetDifficulty(
-                3, [Coin(1), Coin(5), Key(), Heart(), HealthPotion(2)]
+                3, [Coin(1), Coin(5), Key(), EnergyRefill(20)]
             )),
             EnemyFactory(CallbackPack.instance().start_fight, TargetDifficulty(
-                3, [Coin(1), Coin(1), HealthPotion(3)]
+                3, [Coin(1), Coin(1), EnergyRefill(3)]
             )),
         ]
         enemy_factory_priorities = [0.25, 0.35, 0.3, 0.1]

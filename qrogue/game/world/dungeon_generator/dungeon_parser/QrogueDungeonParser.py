@@ -239,7 +239,7 @@ class QrogueDungeonParser ( Parser ):
                      u"'visible'", u"'foggy'", u"'open'", u"'closed'", u"'locked'", 
                      u"'event'", u"'permanent'", u"'Spawn'", u"'Wild'", 
                      u"'Shop'", u"'Riddle'", u"'Boss'", u"'Gate'", u"'Treasure'", 
-                     u"'tutorial'", u"'trigger'", u"'key'", u"'coin'", u"'health'", 
+                     u"'tutorial'", u"'trigger'", u"'key'", u"'coin'", u"'energy'", 
                      u"'gate'", u"'qubit'", u"'alternative'", u"'+'", u"'-'", 
                      u"'Qrogue<'", u"'>Qrogue'", u"'Name'", u"'[Robot]'", 
                      u"'[Layout]'", u"'[Custom Rooms]'", u"'[Hallways]'", 
@@ -260,7 +260,7 @@ class QrogueDungeonParser ( Parser ):
                       u"SHOP_LITERAL", u"RIDDLE_LITERAL", u"BOSS_LITERAL", 
                       u"GATE_ROOM_LITERAL", u"TREASURE_LITERAL", u"TUTORIAL_LITERAL", 
                       u"TRIGGER_LITERAL", u"KEY_LITERAL", u"COIN_LITERAL", 
-                      u"HEALTH_LITERAL", u"GATE_LITERAL", u"QUBIT_LITERAL", 
+                      u"ENERGY_LITERAL", u"GATE_LITERAL", u"QUBIT_LITERAL", 
                       u"ALTERNATIVE_LITERAL", u"PLUS_SIGN", u"MINUS_SIGN", 
                       u"HEADER", u"ENDER", u"NAME", u"ROBOT", u"LAYOUT", 
                       u"ROOMS", u"HALLWAYS", u"STV_POOLS", u"REWARD_POOLS", 
@@ -368,7 +368,7 @@ class QrogueDungeonParser ( Parser ):
     TRIGGER_LITERAL=45
     KEY_LITERAL=46
     COIN_LITERAL=47
-    HEALTH_LITERAL=48
+    ENERGY_LITERAL=48
     GATE_LITERAL=49
     QUBIT_LITERAL=50
     ALTERNATIVE_LITERAL=51
@@ -2034,7 +2034,7 @@ class QrogueDungeonParser ( Parser ):
                 self.state = 259
                 self.match(QrogueDungeonParser.REFERENCE)
                 pass
-            elif token in [QrogueDungeonParser.KEY_LITERAL, QrogueDungeonParser.COIN_LITERAL, QrogueDungeonParser.HEALTH_LITERAL, QrogueDungeonParser.GATE_LITERAL, QrogueDungeonParser.QUBIT_LITERAL]:
+            elif token in [QrogueDungeonParser.KEY_LITERAL, QrogueDungeonParser.COIN_LITERAL, QrogueDungeonParser.ENERGY_LITERAL, QrogueDungeonParser.GATE_LITERAL, QrogueDungeonParser.QUBIT_LITERAL]:
                 self.state = 260
                 self.collectible()
                 pass
@@ -3165,8 +3165,8 @@ class QrogueDungeonParser ( Parser ):
         def COIN_LITERAL(self):
             return self.getToken(QrogueDungeonParser.COIN_LITERAL, 0)
 
-        def HEALTH_LITERAL(self):
-            return self.getToken(QrogueDungeonParser.HEALTH_LITERAL, 0)
+        def ENERGY_LITERAL(self):
+            return self.getToken(QrogueDungeonParser.ENERGY_LITERAL, 0)
 
         def GATE_LITERAL(self):
             return self.getToken(QrogueDungeonParser.GATE_LITERAL, 0)
@@ -3218,9 +3218,9 @@ class QrogueDungeonParser ( Parser ):
                 self.state = 410
                 self.integer()
                 pass
-            elif token in [QrogueDungeonParser.HEALTH_LITERAL]:
+            elif token in [QrogueDungeonParser.ENERGY_LITERAL]:
                 self.state = 411
-                self.match(QrogueDungeonParser.HEALTH_LITERAL)
+                self.match(QrogueDungeonParser.ENERGY_LITERAL)
                 self.state = 412
                 self.integer()
                 pass

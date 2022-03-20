@@ -38,29 +38,29 @@ class Consumable(Collectible, ABC):
         pass
 
 
-class HealthPotion(Consumable):
-    def __init__(self, heal_amount: int):
-        super(HealthPotion, self).__init__(charges=2)
-        self.__amount = heal_amount
-        self.__hp_gained = 0
+class EnergyRefill(Consumable):
+    def __init__(self, refill_amount: int = 10):
+        super(EnergyRefill, self).__init__(charges=2)
+        self.__amount = refill_amount
+        self.__amount_refilled = 0
         self.__robot = None
 
     def on_consumption(self, robot: "Robot") -> bool:
-        self.__hp_gained = robot.heal(self.__amount)
+        self.__amount_refilled = robot.regenerate(self.__amount)
         self.__robot = robot
         return True
 
     def effect_description(self) -> str:
-        return f"Healed {self.__robot} by {self.__hp_gained} HP."  # todo change from robot to robot.qubit_set?
+        return f"Refilled {self.__robot}'s energy by {self.__amount_refilled}."
 
     def name(self) -> str:
-        return "Health Potion"
+        return "Energy Refill"
 
     def description(self) -> str:
-        return "Heals some HP on consumption."
+        return "Refills some energy of a robot on usage."
 
     def to_string(self) -> str:
-        return f"+{self.__amount}HP Potion"
+        return f"+{self.__amount} Energy Refill"
 
     def __str__(self):
         return self.to_string()

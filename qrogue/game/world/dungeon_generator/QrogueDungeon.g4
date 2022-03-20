@@ -65,7 +65,7 @@ reward_pools : REWARD_POOLS ('custom' reward_pool+)? 'default' default_reward_po
 default_reward_pool : REFERENCE | draw_strategy? collectibles ;      // the default pool can either be an ID or a list of collectibles
 reward_pool : REFERENCE draw_strategy? collectibles ;     // id, pool of collectibles
 collectibles : '[' collectible (LIST_SEPARATOR collectible)* ']' ;
-collectible :   (KEY_LITERAL integer | COIN_LITERAL integer | HEALTH_LITERAL integer | GATE_LITERAL REFERENCE |
+collectible :   (KEY_LITERAL integer | COIN_LITERAL integer | ENERGY_LITERAL integer | GATE_LITERAL REFERENCE |
                 QUBIT_LITERAL integer?) ;
 
 messages : MESSAGES message* ;
@@ -118,7 +118,7 @@ TUTORIAL_LITERAL : 'tutorial' ;
 TRIGGER_LITERAL : 'trigger' ;
 KEY_LITERAL : 'key' ;
 COIN_LITERAL : 'coin' ;
-HEALTH_LITERAL : 'health' ;
+ENERGY_LITERAL : 'energy' ;
 GATE_LITERAL : 'gate' ;
 QUBIT_LITERAL : 'qubit' ;
 ALTERNATIVE_LITERAL : 'alternative' ;

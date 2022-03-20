@@ -560,7 +560,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                         [self.__choose_position]
                     ))
                 else:
-                    if self._robot.is_space_left():
+                    if self._robot.is_space_left:
                         options = [self.__cur_instruction.preview_str(i) for i in range(self._robot.num_of_qubits)]
                         self.details.set_data(data=(
                             SelectionWidget.wrap_in_hotkey_str(options),
@@ -629,7 +629,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             return self._on_commit_fail()
 
     def __choices_reset(self) -> bool:
-        if self._robot.has_empty_circuit():
+        if self._robot.has_empty_circuit:
             self._details.set_data(data=(
                 ["Nothing to reset"],
                 [self._empty_callback]
@@ -745,7 +745,7 @@ class FightWidgetSet(ReachTargetWidgetSet):
             ))
         else:
             self._details.set_data(data=(
-                [f"Wrong, you took {damage_taken} damage. Remaining HP = {self._robot.cur_hp}"],
+                [f"Wrong, you took {damage_taken} damage. Remaining energy = {self._robot.cur_energy}"],
                 [self._empty_callback]
             ))
         return True
