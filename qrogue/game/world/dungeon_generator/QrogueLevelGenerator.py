@@ -224,8 +224,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             pool = [pickup.Coin(1)]
         elif ref in ['key', 'keys']:
             pool = [pickup.Key(1)]
-        elif ref in ['hp', 'health', 'heart', 'hearts', 'healthPoints']:
-            pool = [pickup.Heart(1)]
+        elif ref in ['energy']:
+            pool = [pickup.Energy()]
         else:
             self.warning(f"Imports not yet supported: {reference}")
             # todo load from somewhere else?
@@ -414,9 +414,9 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         elif ctx.COIN_LITERAL():
             val = self.visit(ctx.integer())
             return pickup.Coin(val)
-        elif ctx.HEALTH_LITERAL():
+        elif ctx.ENERGY_LITERAL():
             val = self.visit(ctx.integer())
-            return pickup.Heart(val)
+            return pickup.Energy(val)
         elif ctx.GATE_LITERAL():
             reference = ctx.REFERENCE().getText()
             return self.__load_gate(reference)

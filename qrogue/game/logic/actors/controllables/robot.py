@@ -3,15 +3,15 @@ Author: Artner Michael
 13.06.2021
 """
 from abc import ABC
-from typing import Tuple, List
+from typing import Tuple, List, Callable
 
 from qiskit import QuantumCircuit, transpile
 from qiskit.providers.aer import StatevectorSimulator
 
 from qrogue.game.logic.actors import StateVector
 from qrogue.game.logic.actors.controllables import Controllable
-from qrogue.game.logic.collectibles import Coin, Collectible, Consumable, Heart, Instruction, Key, MultiCollectible, \
-    Qubit
+from qrogue.game.logic.collectibles import Coin, Collectible, Consumable, Instruction, Key, MultiCollectible, \
+    Qubit, Energy
 from qrogue.util import CheatConfig, Config, Logger, MyRandom, InstructionConfig
 
 from .qubit import QubitSet, DummyQubitSet
@@ -21,6 +21,8 @@ from .qubit import QubitSet, DummyQubitSet
 
 
 class _Attributes:
+    __DAMAGE_TO_ENERGY = 10
+
     """
     Is used as storage for a bunch of attributes of the robot
     """
@@ -33,6 +35,12 @@ class _Attributes:
         """
         self.__space = space
         self.__qubits = qubits
+        self.__cur_energy = 1000
+        self.__max_energy = 1000
+
+    @property
+    def is_alive(self) -> bool:
+        return self.__cur_energy > 0
 
     @property
     def num_of_qubits(self) -> int:
@@ -46,8 +54,34 @@ class _Attributes:
     def qubits(self) -> QubitSet:
         return self.__qubits
 
+    @property
+    def cur_energy(self) -> int:
+        return self.__cur_energy
+
+    @property
+    def max_energy(self) -> int:
+        return self.__max_energy
+
     def add_qubits(self, additional_qubits: int = 1):
         self.__qubits = self.__qubits.add_qubits(additional_qubits)
+
+    def refill_energy(self, amount: int) -> int:
+        self.__cur_energy += amount
+        if self.__cur_energy > self.__max_energy:
+            overflow = self.__cur_energy - self.__max_energy
+            amount -= overflow
+            self.__cur_energy = self.__max_energy
+        return amount
+
+    def decrease_energy(self, amount: int) -> Tuple[int, bool]:
+        self.__cur_energy -= amount
+        if self.__cur_energy < 0:
+            amount += self.__cur_energy     # e.g. if we got 6 damage and cur_energy is now -2, we actually got 4 damage
+            self.__cur_energy = 0
+        return amount, not self.is_alive
+
+    def damage(self, amount: int) -> Tuple[int, bool]:
+        return self.decrease_energy(amount * _Attributes.__DAMAGE_TO_ENERGY)
 
 
 class Backpack:
@@ -264,20 +298,28 @@ class Robot(Controllable, ABC):
         return self.__stv
 
     @property
-    def cur_hp(self) -> int:
-        return self.__attributes.qubits.hp
+    def cur_energy(self) -> int:
+        return self.__attributes.cur_energy
 
     @property
-    def max_hp(self) -> int:
-        return self.__attributes.qubits.max_hp
+    def max_energy(self) -> int:
+        return self.__attributes.max_energy
 
     @property
     def num_of_qubits(self) -> int:
         return self.__attributes.num_of_qubits
 
     @property
+    def has_empty_circuit(self) -> bool:
+        return self.__instruction_count == 0
+
+    @property
     def circuit_space(self) -> int:
         return self.__attributes.circuit_space
+
+    @property
+    def is_space_left(self) -> bool:
+        return self.__instruction_count < self.circuit_space
 
     def __apply_instructions(self):
         circuit = QuantumCircuit(self.__attributes.num_of_qubits, self.__attributes.num_of_qubits)
@@ -287,14 +329,11 @@ class Robot(Controllable, ABC):
         self.__circuit = circuit
         return True
 
-    def key_count(self) -> int:
+    def key_count(self) -> int:     # cannot be a property since it is an abstractmethod in Controllable
         return self.backpack.key_count
 
     def use_key(self) -> bool:
         return self.backpack.use_key()
-
-    def circuit_enumerator(self):
-        return enumerate(self.__instructions)
 
     def update_statevector(self):
         """
@@ -305,35 +344,6 @@ class Robot(Controllable, ABC):
         job = self.__simulator.run(compiled_circuit, shots=1)
         result = job.result()
         self.__stv = StateVector(result.get_statevector(self.__circuit))
-
-    def get_instruction(self, instruction_index: int) -> Instruction:
-        if 0 <= instruction_index < self.backpack.used_capacity:
-            return self.backpack.get(instruction_index)
-        return None
-
-    def has_empty_circuit(self) -> bool:
-        return self.__instruction_count == 0
-
-    def is_space_left(self) -> bool:
-        return self.__instruction_count < self.__attributes.circuit_space
-
-    def use_instruction(self, instruction: Instruction, position: int) -> bool:
-        """
-        Tries to put the Instruction corresponding to the given index in the backpack into the robot's circuit.
-        If the Instruction is already in-use (put onto the circuit) it is removed instead.
-
-        :param instruction: the Instruction we want to use
-        :param position: the position of the Instruction in the circuit
-        :return: True if we were able to use the Instruction in our circuit
-        """
-        if instruction.is_used():
-            self.__move_instruction(instruction, position)
-        else:
-            if self.is_space_left():
-                self.__place_instruction(instruction, position)
-            else:
-                return False
-        return self.__apply_instructions()
 
     def __remove_instruction(self, instruction: Instruction, skip_qargs: bool = False):
         if instruction and instruction.is_used():
@@ -370,6 +380,29 @@ class Robot(Controllable, ABC):
                 return True
         return False
 
+    def get_instruction(self, instruction_index: int) -> Instruction:
+        if 0 <= instruction_index < self.backpack.used_capacity:
+            return self.backpack.get(instruction_index)
+        return None
+
+    def use_instruction(self, instruction: Instruction, position: int) -> bool:
+        """
+        Tries to put the Instruction corresponding to the given index in the backpack into the robot's circuit.
+        If the Instruction is already in-use (put onto the circuit) it is removed instead.
+
+        :param instruction: the Instruction we want to use
+        :param position: the position of the Instruction in the circuit
+        :return: True if we were able to use the Instruction in our circuit
+        """
+        if instruction.is_used():
+            self.__move_instruction(instruction, position)
+        else:
+            if self.is_space_left:
+                self.__place_instruction(instruction, position)
+            else:
+                return False
+        return self.__apply_instructions()
+
     def reset_circuit(self):
         temp = self.__instructions.copy()
         for instruction in temp:
@@ -390,8 +423,8 @@ class Robot(Controllable, ABC):
             self.backpack.give_coin(collectible.amount)
         elif isinstance(collectible, Key):
             self.backpack.give_key(collectible.amount)
-        elif isinstance(collectible, Heart):
-            self.heal(collectible.amount)
+        elif isinstance(collectible, Energy):
+            self.__attributes.refill_energy(collectible.amount)
         elif isinstance(collectible, Instruction):
             self.backpack.add(collectible)
         elif isinstance(collectible, Consumable):
@@ -404,16 +437,20 @@ class Robot(Controllable, ABC):
         else:
             Logger.instance().error(f"Received uncovered collectible: {collectible}")
 
+    def on_move(self):
+        _, died = self.__attributes.decrease_energy(amount=1)
+        return died
+
     def damage(self, amount: int = 1) -> Tuple[int, bool]:
-        return self.__attributes.qubits.damage(amount)
+        return self.__attributes.damage(amount)
 
-    def heal(self, amount: int = 1) -> int:
+    def regenerate(self, amount: int = 1) -> int:
         """
 
-        :param amount: how much hp to heal
-        :return: how much was actually healed (e.g. cannot exceed max health)
+        :param amount: how much energy to regenerate
+        :return: how much was actually regenerated (e.g. cannot exceed max health)
         """
-        return self.__attributes.qubits.heal(amount)
+        return self.__attributes.refill_energy(amount)
 
     def get_circuit_print(self) -> str:
         entry = "-" * (3 + InstructionConfig.MAX_ABBREVIATION_LEN + 3)

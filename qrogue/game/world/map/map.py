@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from typing import List, Callable
 
 import qrogue.game.world.tiles as tiles
-from qrogue.game.logic.actors import Controllable
+from qrogue.game.logic.actors import Controllable, Robot
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.util import Logger, MapConfig
 
@@ -163,6 +163,10 @@ class Map(ABC):
         :param direction: in which direction the robot should move
         :return: True if the robot was able to move, False otherwise
         """
+        robot = self.__controllable_tile.controllable
+        if isinstance(robot, Robot):
+            robot.on_move()
+
         new_pos = self.__controllable_pos + direction
         if new_pos.y < 0 or self.full_height <= new_pos.y or \
                 new_pos.x < 0 or self.full_width <= new_pos.x:

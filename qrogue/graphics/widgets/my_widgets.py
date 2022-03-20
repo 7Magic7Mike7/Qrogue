@@ -92,7 +92,7 @@ class HudWidget(Widget):
         if self.__map_name:
             text += f"{self.__map_name}\t"
         if self.__robot:
-            text += f"{self.__robot.cur_hp} / {self.__robot.max_hp} HP   \t" \
+            text += f"Energy: {self.__robot.cur_energy} / {self.__robot.max_energy}   \t" \
                    f"{self.__robot.backpack.coin_count}$, {self.__robot.key_count()} keys"
         if self.__render_duration:
             text += f"\t\t{self.__render_duration:.2f} ms"

@@ -47,7 +47,7 @@ null
 'trigger'
 'key'
 'coin'
-'health'
+'energy'
 'gate'
 'qubit'
 'alternative'
@@ -129,7 +129,7 @@ TUTORIAL_LITERAL
 TRIGGER_LITERAL
 KEY_LITERAL
 COIN_LITERAL
-HEALTH_LITERAL
+ENERGY_LITERAL
 GATE_LITERAL
 QUBIT_LITERAL
 ALTERNATIVE_LITERAL
