@@ -508,7 +508,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             pool_id, target_difficulty = self.visit(stv_pool)
             self.__stv_pools[pool_id] = target_difficulty
         self.__default_target_difficulty = self.visit(ctx.default_stv_pool())
-        self.__default_enemy_factory = EnemyFactory(self.__cbp.start_fight, self.__default_target_difficulty)
+        self.__default_enemy_factory = EnemyFactory(self.__cbp.start_fight, self.__default_target_difficulty, 1)
 
     ##### Hallway area #####
 
@@ -658,7 +658,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         pool_id = ctx.REFERENCE(0).getText()
         if pool_id in self.__stv_pools:
             difficulty = self.__stv_pools[pool_id]
-            enemy_factory = EnemyFactory(self.__cbp.start_fight, difficulty)
+            enemy_factory = EnemyFactory(self.__cbp.start_fight, difficulty, 1)
             if ctx.REFERENCE(1):
                 pool_id = ctx.REFERENCE(1).getText()
                 if pool_id in self.__reward_pools:

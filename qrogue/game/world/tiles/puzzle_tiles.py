@@ -112,7 +112,7 @@ class Enemy(WalkTriggerTile):
 
     def __fight(self, robot: Robot, direction: Direction):
         if self.__enemy is None:
-            self.__enemy = self.__factory.produce(robot, self.__rm, flee_chance=0.5)
+            self.__enemy = self.__factory.produce(robot, self.__rm)
         self.__factory.start(robot, self.__enemy, direction)
 
     def __str__(self) -> str:
