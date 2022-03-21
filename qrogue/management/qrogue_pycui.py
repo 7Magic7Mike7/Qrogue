@@ -89,7 +89,6 @@ class QrogueCUI(py_cui.PyCUI):
         self.__spaceship_map = SpaceshipMap(seed, SaveData.instance().player, open_world_view, self.__use_workbench,
                                             start_test_level)
 
-
     def _refresh_height_width(self) -> None:
         try:
             super(QrogueCUI, self)._refresh_height_width()
@@ -524,7 +523,7 @@ class QrogueCUI(py_cui.PyCUI):
         self.__state_machine.change_state(State.Pause, None)
         if not SaveData.instance().achievement_manager.check_achievement(achievements.EnteredPauseMenu):
             Popup.message("Pause", HelpText.get(HelpTextType.Pause))
-            SaveData.instance().achievement_manager.add_to_achievement(achievements.EnteredPauseMenu, 1)
+            SaveData.instance().achievement_manager.finished_tutorial(achievements.EnteredPauseMenu)
 
     def switch_to_explore(self, data) -> None:
         if data is not None:

@@ -54,6 +54,7 @@ class AchievementManager:
         self.__temp_level_storage = {}
 
         # todo load from file
+        self.__storage[FinishedTutorial] = Achievement(FinishedTutorial, AchievementType.Tutorial, 0, 1)
         self.__storage[EnteredPauseMenu] = Achievement(EnteredPauseMenu, AchievementType.Tutorial, 0, 1)
         self.__storage[CompletedExpedition] = Achievement(CompletedExpedition, AchievementType.Expedition, 0, 1000)
 
@@ -84,6 +85,8 @@ class AchievementManager:
 
     def finished_level(self, level: str):
         self.__storage[level] = Achievement(level, AchievementType.Level, 1, 1)
+        if not self.check_achievement(FinishedTutorial):
+            self.finished_tutorial(FinishedTutorial)
 
     def finished_world(self, world: str):
         self.__storage[world] = Achievement(world, AchievementType.World, 1, 1)
