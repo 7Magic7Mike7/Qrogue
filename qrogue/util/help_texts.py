@@ -66,6 +66,7 @@ class _HL:
     level = CC.highlight_word("Level")
     list_ = CC.highlight_word("list")
     locked = CC.highlight_word("locked")
+    map_ = CC.highlight_word("map")
     navigate = CC.highlight_word("navigate")
     not_zero = CC.highlight_word("not zero")
     one_hp = CC.highlight_word("1 HP")
@@ -136,13 +137,14 @@ class HelpText:
 
         HelpTextType.FirstLevelIntroduction:
             f"Alright, let's have a look at our {_HL.display}.\n"
-            f"The HUD is at the very top and shows you the current {_HL.level}, the battery life of the {_HL.robot} and the number "
-            f"of {_HL.coins} and {_HL.keys} you're carrying. Always keep an eye on your current {_HL.energy} as 0 energy means we can no "
+            f"The HUD is at the very top and shows you the current {_HL.level}, the [{_HL.energy} of the {_HL.robot} and the number "
+            f"of {_HL.coins} and {_HL.keys} it is carrying. Always keep an eye on your current energy as 0 energy means we can no "
             f"longer control the {_HL.robot} and have to {_HL.abort} the {_HL.level}.\n"
-            f"The rest of the screen shows a map of the area our Robot's currently in. Try to move the Robot to the "
+            f"The rest of the screen shows a {_HL.map_} of the area our Robot's currently in. Try to move the Robot to the "
             f"top left corner of the current room.",
 
         HelpTextType.Controls:
+            "Don't forget to scroll down to see all controls!\n"
             f"Move                  -   {_HL.arrow_keys}, {_HL.wasd}\n"
             f"Navigate Menus        -   {_HL.arrow_keys}, {_HL.wasd}\n"
             f"Confirm               -   {_HL.enter}, {_HL.space}\n"
@@ -151,7 +153,7 @@ class HelpText:
             f"Close Popup           -   {_HL.enter}, {_HL.space}, {_HL.escape}\n"
             f"Pause                 -   {_HL.p}, {_HL.tab}\n"
             f"Selection shortcuts   -   {_HL.shortcuts}\n"
-            "\n"
+            #"\n"
             f"Should you ever get stuck you can force-quit the game by pressing {_HL.ctrl_q} and then {_HL.q}. This "
             "will still save the logs so it is the preferred option over simply closing the window!",
 
