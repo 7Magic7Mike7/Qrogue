@@ -1,6 +1,6 @@
 import enum
 
-
+FinishedTutorial = "CompletedTutorial"
 EnteredPauseMenu = "EnteredPauseMenu"
 FirstDoorUnlocked = "UnlockedDoor"
 CompletedExpedition = "CompletedExpedition"

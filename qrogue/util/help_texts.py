@@ -11,8 +11,10 @@ class _HL:
     collec = CC.highlight_object("Collectibles")
     door = CC.highlight_object("Door")
     enemies = CC.highlight_object("Enemies")
+    energy = CC.highlight_object("Energy")
     gates = CC.highlight_object("Gates")
-    key = CC.highlight_object("key")
+    key = CC.highlight_object("Key")
+    keys = CC.highlight_object("Keys")
 
     quantum_circuit = CC.highlight_object("Quantum Circuit")
     quantum_gates = CC.highlight_object("Quantum Gates")
@@ -20,6 +22,7 @@ class _HL:
     qubits = CC.highlight_object("Qubits")
     qubit_s = CC.highlight_object("Qubit(s)")
     riddles = CC.highlight_object("Riddles")
+    robot = CC.highlight_object("Robot")
     shop = CC.highlight_object("Shop")
     special_rooms = CC.highlight_object("Special Rooms")
     state = CC.highlight_object("State")
@@ -27,6 +30,7 @@ class _HL:
     target_state = CC.highlight_object("Target State")
 
     # words
+    abort = CC.highlight_word("abort")
     action = CC.highlight_word("action")
     add_remove = CC.highlight_word("Add/remove")
     attempt = CC.highlight_word("Attempt")
@@ -41,6 +45,7 @@ class _HL:
     continue_ = CC.highlight_word("Continue")
     details = CC.highlight_word("details")
     difference = CC.highlight_word("Difference")
+    display = CC.highlight_word("display")
     display_details = CC.highlight_word("displays details")
     easier = CC.highlight_word("easier")
     enemy = CC.highlight_object("Enemy")
@@ -58,6 +63,7 @@ class _HL:
     hp = CC.highlight_word("don't lose HP")
     items = CC.highlight_word("Items")
     leave = CC.highlight_word("\"-Leave-\"")
+    level = CC.highlight_word("Level")
     list_ = CC.highlight_word("list")
     locked = CC.highlight_word("locked")
     navigate = CC.highlight_word("navigate")
@@ -81,17 +87,17 @@ class _HL:
 
     # keys
     arrow_keys = CC.highlight_key("Arrow Keys")
-    wasd = CC.highlight_key("WASD")
+    backspace = CC.highlight_key("Backspace")
     ctrl_q = CC.highlight_key("CTRL+Q")
     p = CC.highlight_key("P")
     q = CC.highlight_key("Q")
-    space = CC.highlight_key("Space")
     enter = CC.highlight_key("Enter")
-    tab = CC.highlight_key("TAB")
-    backspace = CC.highlight_key("Backspace")
+    escape = CC.highlight_key("ESC")
     shift_a = CC.highlight_key("Shift+A")
     shortcuts = CC.highlight_key("0") + ", " + CC.highlight_key("1") + ", ... , " + CC.highlight_key("9")
-    escape = CC.highlight_key("ESC")
+    space = CC.highlight_key("Space")
+    tab = CC.highlight_key("TAB")
+    wasd = CC.highlight_key("WASD")
 
     # tiles
     DOOR_TILE = CC.highlight_tile("-")
@@ -108,6 +114,7 @@ class HelpTextType(Enum):
     Pause = 6
     Options = 7
     Welcome = 8
+    FirstLevelIntroduction = 9
 
 
 class HelpText:
@@ -126,6 +133,14 @@ class HelpText:
             f"go to the {_HL.door} ({_HL.DOOR_TILE}) at the bottom!"
             f"\nThe fields with a {_HL.TUTORIAL_TILE} will show you the next steps. "
             f"Now close this dialog and start playing by pressing {_HL.space}.",
+
+        HelpTextType.FirstLevelIntroduction:
+            f"Alright, let's have a look at our {_HL.display}.\n"
+            f"The HUD is at the very top and shows you the current {_HL.level}, the battery life of the {_HL.robot} and the number "
+            f"of {_HL.coins} and {_HL.keys} you're carrying. Always keep an eye on your current {_HL.energy} as 0 energy means we can no "
+            f"longer control the {_HL.robot} and have to {_HL.abort} the {_HL.level}.\n"
+            f"The rest of the screen shows a map of the area our Robot's currently in. Try to move the Robot to the "
+            f"top left corner of the current room.",
 
         HelpTextType.Controls:
             f"Move                  -   {_HL.arrow_keys}, {_HL.wasd}\n"
