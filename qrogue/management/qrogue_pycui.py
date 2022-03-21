@@ -531,6 +531,11 @@ class QrogueCUI(py_cui.PyCUI):
             map = data
             self.__explore.set_data(map)
         self.apply_widget_set(self.__explore)
+        if data is not None:
+            # we cannot do this in the same if because we need to apply the widget set first otherwise the focus will
+            # be on the wrong widget after closing the popup
+            if not SaveData.instance().achievement_manager.check_achievement(achievements.FinishedTutorial):
+                Popup.scientist_says(HelpText.get(HelpTextType.FirstLevelIntroduction))
 
     def __continue_explore(self) -> None:
         self.__state_machine.change_state(State.Explore, None)
