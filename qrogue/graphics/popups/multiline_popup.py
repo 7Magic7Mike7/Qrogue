@@ -88,16 +88,28 @@ class MultilinePopup(py_cui.popups.Popup, py_cui.ui.MenuImplementation):
 
     @property
     def textbox_height(self) -> int:
+        """
+
+        :return: number of rows inside the popup
+        """
         return self._height - self._pady - 2    # subtract both title and end line
 
     def up(self):
         if len(self.__lines) > self.textbox_height and self._top_view > 0:
             self._top_view -= 1
 
+    def down_fast(self):
+        if len(self.__lines) > self.textbox_height and self._top_view > 0:
+            self._top_view = max(self._top_view - self.textbox_height, 0)
+
     def down(self):
         # since _top_view can never be negative we don't need to check if we have lines that don't fit on the popup
         if self._top_view < len(self.__lines) - self.textbox_height:
             self._top_view += 1
+
+    def up_fast(self):
+        if self._top_view < len(self.__lines) - self.textbox_height:
+            self._top_view = min(self._top_view + self.textbox_height, len(self.__lines) - self.textbox_height)
 
     def _handle_key_press(self, key_pressed):
         """Overrides base class handle_key_press function
@@ -114,8 +126,12 @@ class MultilinePopup(py_cui.popups.Popup, py_cui.ui.MenuImplementation):
                 self._root.close_popup()
             elif key_pressed in self.__controls.get_keys(Keys.PopupScrollUp):
                 self.up()
+            elif key_pressed in self.__controls.get_keys(Keys.PopupScrollUpFast):
+                self.up_fast()
             elif key_pressed in self.__controls.get_keys(Keys.PopupScrollDown):
                 self.down()
+            elif key_pressed in self.__controls.get_keys(Keys.PopupScrollDownFast):
+                self.down_fast()
 
     def _draw(self):
         """Overrides base class draw function
