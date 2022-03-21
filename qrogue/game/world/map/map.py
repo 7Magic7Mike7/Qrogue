@@ -7,7 +7,7 @@ from qrogue.game.logic.actors import Controllable, Robot
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.util import Logger, MapConfig
 
-from qrogue.game.world.map.rooms import Room, Area, Placeholder, SpawnRoom, MetaRoom
+from qrogue.game.world.map.rooms import Room, Area, Placeholder, SpawnRoom, MetaRoom, AreaType
 
 
 class MapType(enum.Enum):
@@ -51,7 +51,7 @@ class Map(ABC):
 
         if isinstance(self.__cur_area, SpawnRoom):
             self.__cur_area.set_is_done_callback(self.__is_done)
-        elif not isinstance(self.__cur_area, MetaRoom):
+        elif not isinstance(self.__cur_area, MetaRoom) and self.__cur_area.type is not AreaType.SpawnRoom:
             Logger.instance().error(f"{name} starts in area that is not a SpawnRoom! cur_area = {self.__cur_area}")
 
     @property

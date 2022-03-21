@@ -25,6 +25,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
     __DEFAULT_NUM_OF_SHOP_ITEMS = 3
     __DEFAULT_NUM_OF_RIDDLE_ATTEMPTS = 7
     __ROBOT_NO_GATES = "none"
+    __SPAWN_ROOM_ID = "SR"
 
     @staticmethod
     def __normalize_reference(reference: str) -> str:
@@ -310,7 +311,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
                                  "and using this one as SpawnRoom.")
                 self.__spawn_pos = Coordinate(x, y)
             return room.copy(hw_dic)
-        elif self.__normalize_reference(reference) == 'sr':
+        elif self.__normalize_reference(reference) == self.__SPAWN_ROOM_ID:
             room = rooms.SpawnRoom(self.__load_map, None, hw_dic[Direction.North], hw_dic[Direction.East],
                                    hw_dic[Direction.South], hw_dic[Direction.West])
             if self.__spawn_pos:
