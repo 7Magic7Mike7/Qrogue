@@ -12,7 +12,7 @@ from qrogue.game.target_factory import EnemyFactory, ExplicitTargetDifficulty, T
 from qrogue.game.world import tiles
 from qrogue.game.world.map import CallbackPack, LevelMap, rooms
 from qrogue.game.world.navigation import Coordinate, Direction
-from qrogue.util import Config, HelpText, MapConfig, MyRandom, PathConfig, Logger
+from qrogue.util import Config, HelpText, MapConfig, MyRandom, PathConfig, Logger, CommonQuestions
 
 from . import parser_util
 from .generator import DungeonGenerator
@@ -213,6 +213,12 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         if ctx:
             return self.visit(ctx)
         return False    # default value is "random"
+
+    def __teleport_callback(self, map_name: str, spawn_pos: Coordinate):
+        def cb(confirm: bool):
+            if confirm:
+                self.__load_map(map_name, spawn_pos)
+        CommonQuestions.GoingBack.ask(cb)
 
     ##### load from references #####
 
@@ -773,7 +779,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             else:
                 tile_dic[tile_str] = [tile]
 
-        # this local method is needed here for not explicitely defined enemies
+        # this local method is needed here for not explicitly defined enemies
         # but since we are already in a room we don't have to reference to global data
         enemy_dic = {}
 
@@ -805,6 +811,10 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
         while len(tile_matrix) < rooms.Room.INNER_HEIGHT:
             tile_matrix.append([tiles.Floor()] * rooms.Room.INNER_WIDTH)
+
+        if room_type is rooms.AreaType.SpawnRoom:
+            tile_matrix[int(rooms.Room.INNER_HEIGHT / 2)][int(rooms.Room.INNER_WIDTH / 2)] = \
+                tiles.Teleport(self.__teleport_callback, MapConfig.back_map_string(), None)
 
         # hallways will be added later
         room = rooms.CustomRoom(room_type, tile_matrix)
