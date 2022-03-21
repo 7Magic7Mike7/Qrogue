@@ -14,6 +14,17 @@ Name = "Level 1-1"
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 [Custom Rooms]
+SR (Spawn):
+#############
+# m _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+#############
+m *helpTextControls trigger *sawManual
+//m *movingTutorial
+
 aa (Wild):
 #############
 # c _ _ 0 _ #
@@ -30,13 +41,14 @@ c *key 1 tutorial *foundKeyLockUnknown trigger *pickedUpKey
 
 bb (Wild):
 #############
-# o o _ o o #
+# o o c o o #
 # o o _ o o #
 # _ _ 0 _ _ #
 # o o _ o o #
 # o o _ o o #
 #############
 0 *base0 *coin tutorial *emptyPuzzle
+c *energy
 
 
 cc (Treasure):
@@ -53,13 +65,14 @@ dd (Wild):
 #############
 # _ _ _ _ _ #
 # _ _ 0 _ _ #
-# _ _ _ _ _ #
+# _ _ c _ _ #
 # _ 0 _ 0 _ #
 # _ _ _ _ _ #
 #############
 0 *base01 *twoXs
 0 *base10 *twoXs
 0 *base11 *coin tutorial *twoXgates trigger *twoXgatesDone
+c *energy
 
 ee (Gate):
 #############
@@ -89,7 +102,7 @@ c *hgate tutorial *receivedHgate trigger *done
 
 [StateVector Pools]
 custom
-//*myStvPool [ [0j, -0j, -1j, +0], [0.5, -.5j, +.5, 0.5j ] ];  
+//*myStvPool [ [0j, -0j, -1j, +0], [0.5, -.5j, +.5, 0.5j ] ];
 //            default rewards: random *coin
 *base0 [ [1, 0] ]
 *base1 [ [0, 1] ]
@@ -101,22 +114,26 @@ custom
 default random [ [.707, +0, -0 + 0j, .707j] ]
 
 [Reward Pools]
-custom 
+custom
 *key [key 1]
 *coin [coin 1]
 *xgate [gate *x]
 *hgate [gate *h]
 *qubit [qubit 1]
+*energy [energy 20]
 *twoXs ordered [coin 1, key 1]
 
 default *coin
 
 [Messages]
 // highlight text by encapsulating it in "//02abcd//" where "abcd" is the text to highlight and "02" one of the available styles: 01 is for tiles, 02 is for game objects, 03 for words and 04 for keys on the keyboard
+*movingTutorial "Alright, you can control the movement of the //02Robot// with your //04Movement Keys// (Arrow Keys and WASD). Try to stir the Robot to the top left //01.//." event *sawManual alternative *movingDone
+*movingDone "Great! You're ready to enter the next room to the right."
+
 *puzzle1 "Look the //010// over there is a puzzle! Let's try if we can solve it. And the //01c// is a //02Collectible// that might come in handy later."
 
 *lockedDoorTutorial "The door to our right is locked. Let's see if we can find a //02Key// somewhere." event *pickedUpKey alternative *lockedDoorDone
-*lockedDoorDone "Oh the //02Door// is //03locked//. Luckily we've already found a //02Key// to open it!" 
+*lockedDoorDone "Oh the //02Door// is //03locked//. Luckily we've already found a //02Key// to open it!"
 
 *foundKeyLockUnknown "Cool, that's a //02Key//. It will be very useful should we encounter a locked //02Door//." event *sawLockedDoor alternative *foundKeyLockKnown
 *foundKeyLockKnown "Here we go, exactly what we were searching for: a //02Key// for opening locked //02Doors//!"
@@ -126,7 +143,7 @@ default *coin
 *newQubit "You found a second Qubit! This means we can now solve more complex puzzles."
 
 *twoXgates "I'm afraid you need //03two X gates// for this. Let's see if we can find a second one somewhere in here." event *pickedUpSecondXgate alternative *twoXgatesAlt
-*twoXgatesAlt "So for this we need //03two X gates//. Luckily we already managed to gather a second one!"
+*twoXgatesAlt "So for this we need //03two X gates//. Luckily we already managed to get a second one!"
 
 *receivedHgate "WOW! A Hadamard gate! This gives us so many new possibilities. We can use it to bring a //02Qubit// into //03Superposition//."
 

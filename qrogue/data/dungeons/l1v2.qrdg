@@ -2,132 +2,177 @@ Qrogue<
 Name = "Level 1-2"
 
 [Robot]
-1 qubits [ *xgate ]
+2 qubits [ *xgate, *hgate ]
 
 [Layout]
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-| SR 11 aa 11 bb == cc .. __ .. __ .. __ |
-| ..    14    12    ..    ..    ..    .. |
-| __ .. ff 13 dd 11 ee .. __ .. __ .. __ |
-| ..    ..    ..    ..    ..    ..    .. |
-| __ .. __ .. __ .. __ .. __ .. __ .. __ |
+| SR == aa == bb 13 cc .. __ .. __ .. __ |
+| ..    15    ==    12    ..    ..    .. |
+| __ .. ff 14 dd 11 ee == sh .. __ .. __ |
+| ..    ..    16    17    ..    ..    .. |
+| __ .. __ .. gg .. hh .. __ .. __ .. __ |
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 [Custom Rooms]
 aa (Wild):
 #############
-# c _ _ 0 _ #
-# o o o _ o #
-# m _ o _ m #
-# o _ o o _ #
-# _ _ _ _ _ #
+# _ 0 _ c _ #
+# _ _ o _ _ #
+# _ m o _ _ #
+# o o o o o #
+# _ c _ _ _ #
 #############
-m 1 *puzzle1
-m 1 *lockedDoorTutorial trigger *sawLockedDoor
-// enemy_id, state vector pool, reward pool, tutorial message, event trigger
-0 *base1 *coin tutorial *helptextFight trigger *enemy1
-c *key 1 tutorial *foundKeyLockUnknown trigger *pickedUpKey
+0 *superpos0p *coin tutorial *superPosTutorial
+m *wondering
+c *coin
+c *coin trigger *foundHiddenTreasure
 
 bb (Wild):
 #############
-# o o _ o o #
-# o o _ o o #
-# _ _ 0 _ _ #
-# o o _ o o #
-# o o _ o o #
+# _ _ _ _ _ #
+# _ 0 o 0 _ #
+# _ o o o _ #
+# _ m o 0 _ #
+# _ _ _ _ _ #
 #############
-0 *base0 *coin tutorial *emptyPuzzle
+0 *superpos0m *room1
+0 *superpos1p *room1
+//0 *superpos1m1 *room1
+0 *superpos1m2 *room1
+m *allHXCombinations
 
-
-cc (Treasure):
+cc (Wild):
 #############
-# _ _ _ _ _ #
-# _ _ _ _ _ #
-# _ _ c _ _ #
-# _ _ _ _ _ #
+# _ 0 _ 0 _ #
+# _ _ _ _ 0 #
+# _ o _ _ _ #
+# _ o o _ 0 #
 # _ _ _ _ _ #
 #############
-c *qubit 1 tutorial *newQubit trigger *twoQubits
+0 *cxOthers *energy
+0 *cxOthers *energy
+0 *base11 *energy tutorial *cxX
+0 *base00 *energy tutorial *cxEmpty
 
 dd (Wild):
 #############
+# o o _ _ _ #
+# o _ _ _ _ #
+# 0 _ m _ _ #
+# o _ _ _ _ #
+# o o _ _ _ #
+#############
+0 *sesamWarden *wardenReward trigger *sesamOpen
+
+ee (Wild):
+#############
+# 0 _ _ _ 0 #
+# _ _ _ _ _ #
+# m _ 0 _ _ #
+# _ _ _ _ _ #
+# 0 _ _ _ 0 #
+#############
+m 1 *oneWayTutorial	// display only once
+0 *eePuzzles
+
+ff (Wild):
+#############
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+#############
+
+
+gg (Wild):
+#############
+# _ _ _ _ _ #
 # _ _ _ _ _ #
 # _ _ 0 _ _ #
 # _ _ _ _ _ #
+# _ _ _ _ _ #
+#############
+0 *boss *cxgate trigger *done
+
+hh (Wild):
+#############
+# 0 _ c _ 0 #
 # _ 0 _ 0 _ #
-# _ _ _ _ _ #
+# 0 _ 0 _ 0 #
+# _ 0 _ 0 _ #
+# 0 _ 0 _ 0 #
 #############
-0 *base01 *twoXs
-0 *base10 *twoXs
-0 *base11 *coin tutorial *twoXgates trigger *twoXgatesDone
+c *coin
 
-ee (Gate):
+sh (Shop):
 #############
 # _ _ _ _ _ #
 # _ _ _ _ _ #
-# _ _ c _ _ #
+# _ _ $ _ _ #
 # _ _ _ _ _ #
 # _ _ _ _ _ #
 #############
-c *xgate trigger *pickedUpSecondXgate
+$ [gate *cx, key 1, energy 10] 2 tutorial *helpTextShop trigger *sawShop  //*shopTutorial
 
-ff (Gate):
-#############
-# _ _ _ _ _ #
-# _ _ _ _ _ #
-# _ _ c _ _ #
-# _ _ _ _ _ #
-# _ _ _ _ _ #
-#############
-c *hgate tutorial *receivedHgate trigger *done
 
 [Hallways]
-11 (locked; ; )
-12 (event *twoQubits; ; )
-13 (event *twoXgatesDone; ; )
-14 (event *done; ; )
+11 (closed; one way East permanent; )
+12 (event *sawShop; ; )
+13 (event *sawShop; one way West; )
+14 (event *sesamOpen; ; )
+15 (event *sesamOpen; ; )
+16 (locked; ; )
+17 (locked; ; )
 
 [StateVector Pools]
 custom
-//*myStvPool [ [0j, -0j, -1j, +0], [0.5, -.5j, +.5, 0.5j ] ];  
+//*myStvPool [ [0j, -0j, -1j, +0], [0.5, -.5j, +.5, 0.5j ] ];
 //            default rewards: random *coin
-*base0 [ [1, 0] ]
-*base1 [ [0, 1] ]
-*base00 [ [1, 0, 0, 0] ]
-*base01 [ [0, 1, 0, 0] ]
-*base10 [ [0, 0, 1, 0] ]
-*base11 [ [0, 0, 0, 1] ]
+*superpos0p [ [0.707, 0.707, 0, 0] ]
+*superpos0m [ [0.707, -0.707, 0, 0] ]
+*superpos1p [ [0.707, 0, 0.707, 0] ]
+//*superpos1m1 [ [-0.707, 0, 0.707, 0] ]
+*superpos1m2 [ [0.707, 0, -0.707, 0] ]
 
-default random [ [.707, +0, -0 + 0j, .707j] ]
+*eePuzzles random [ [0, 1, 0, 0], [0.707, 0.707, 0, 0], [0, 0, 1, 0], [0.707, 0, 0.707, 0], [0.707, -0.707, 0, 0], [0.707, 0, -0.707, 0] ]
+
+*base00 [ [1, 0, 0, 0] ]
+*base11 [ [0, 0, 0, 1] ]
+*cxOthers [ [0, 0, 0.707, 0.707], [1, 0, 0, 0] ]	// TODO second vector
+
+
+*sesamWarden [ [0, 0.707, 0.707, 0] ]
+*boss [ [0.707, 0, 0, 0.707] ]
+
+default *eePuzzles
 
 [Reward Pools]
-custom 
+custom
 *key [key 1]
 *coin [coin 1]
+*energy [energy 10]
 *xgate [gate *x]
 *hgate [gate *h]
-*qubit [qubit 1]
-*twoXs ordered [coin 1, key 1]
+*cxgate [gate *cx]
 
-default *coin
+*room1 ordered [coin 1, coin 1, coin 2]
+*wardenReward [coin 5]
+
+default random [coin 1, coin 2, coin 3, coin 5]
 
 [Messages]
 // highlight text by encapsulating it in "//02abcd//" where "abcd" is the text to highlight and "02" one of the available styles: 01 is for tiles, 02 is for game objects, 03 for words and 04 for keys on the keyboard
-*puzzle1 "Look the //010// over there is a puzzle! Let's try if we can solve it. And the //01c// is a //02Collectible// that might come in handy later."
+*wondering "Hmm, I wonder how we can reach the other side of these obstacles..." event *foundHiddenTreasure alternative *noMoreWondering
+*noMoreWondering "I'm glad that you found a way to the other side of these obstacles!"
 
-*lockedDoorTutorial "The door to our right is locked. Let's see if we can find a //02Key// somewhere." event *pickedUpKey alternative *lockedDoorDone
-*lockedDoorDone "Oh the //02Door// is //03locked//. Luckily we've already found a //02Key// to open it!" 
+*allHXCombinations "The three puzzles of this room and the one from the first room should cover all"	// TODO
 
-*foundKeyLockUnknown "Cool, that's a //02Key//. It will be very useful should we encounter a locked //02Door//." event *sawLockedDoor alternative *foundKeyLockKnown
-*foundKeyLockKnown "Here we go, exactly what we were searching for: a //02Key// for opening locked //02Doors//!"
+*superPosTutorial "test"
+*oneWayTutorial "Seems like this //02Hallway// is only passable from the other side. Guess we have to find another path then."
+*shopTutorial "This is a Shop"
 
-*emptyPuzzle "Alright, this should be easy. We could even solve this without our //03X gate// ;)"
-
-*newQubit "You found a second Qubit! This means we can now solve more complex puzzles."
-
-*twoXgates "I'm afraid you need //03two X gates// for this. Let's see if we can find a second one somewhere in here." event *pickedUpSecondXgate alternative *twoXgatesAlt
-*twoXgatesAlt "So for this we need //03two X gates//. Luckily we already managed to gather a second one!"
-
-*receivedHgate "WOW! A Hadamard gate! This gives us so many new possibilities. We can use it to bring a //02Qubit// into //03Superposition//."
+*cxEmpty "Okay you already know that puzzle. But let's try to solve it while using our new //02CX Gate//!"
+*cxX "We also know this puzzle. But now we don't have //03two// //02X Gates//. Let's try to solve it with the help of our new //02CX Gate//."
 
 >Qrogue
