@@ -19,7 +19,7 @@ class FileTypes(enum.Enum):
 
 
 class PathConfig:
-    __BASE_PATH = "../.."
+    __BASE_PATH = os.path.join("..", "..")
     __DATA_FOLDER = "data"
     __LOG_FOLDER = "logs"
     __KEY_LOG_FOLDER = "keylogs"
@@ -614,8 +614,9 @@ class Config:   # todo make singleton and handle access to other configs?
                                         "folder again!")
         PathConfig.create_data_folder(config_content[1])
         path = os.path.join(config_content[1], Config.__GAME_CONFIG)
-        with open(path, "x") as file:
-            file.write(text)
+        if not os.path.exists(path):
+            with open(path, "x") as file:
+                file.write(text)
 
     @staticmethod
     def load(config_location: str):
