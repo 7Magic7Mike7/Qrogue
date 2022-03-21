@@ -317,7 +317,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
                                  "and using this one as SpawnRoom.")
                 self.__spawn_pos = Coordinate(x, y)
             return room.copy(hw_dic)
-        elif self.__normalize_reference(reference) == self.__SPAWN_ROOM_ID:
+        elif reference == self.__SPAWN_ROOM_ID:
             room = rooms.SpawnRoom(self.__load_map, None, hw_dic[Direction.North], hw_dic[Direction.East],
                                    hw_dic[Direction.South], hw_dic[Direction.West])
             if self.__spawn_pos:
