@@ -580,7 +580,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         selection = list(range(self._robot.num_of_qubits))
         for q in self.__cur_instruction.qargs_iter():
             selection.remove(q)
-        if self.__cur_instruction.use_qubit(selection[index]):
+        if len(selection) > index and self.__cur_instruction.use_qubit(selection[index]):
             selection.pop(index)
             options = [self.__cur_instruction.preview_str(i) for i in selection]
             self.details.set_data(data=(
