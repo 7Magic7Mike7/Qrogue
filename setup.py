@@ -49,4 +49,7 @@ setup(
 		'Topic :: Games/Entertainment :: Puzzle Games',
 		'Programming Language :: Python :: 3.8',
 	],
+	entry_points={
+		'console_scripts': ['qrogue=qrogue.qrogue:start_game'],
+	}
 )
