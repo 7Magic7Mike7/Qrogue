@@ -54,7 +54,7 @@ class _HL:
 
     gate = CC.highlight_object("Gate")
     give_up = CC.highlight_word("\"Give up\"")
-    help_ = CC.highlight_word("Help")
+    help_ = CC.highlight_word("Manual")
     hp = CC.highlight_word("don't lose HP")
     items = CC.highlight_word("Items")
     leave = CC.highlight_word("\"-Leave-\"")
@@ -81,10 +81,17 @@ class _HL:
 
     # keys
     arrow_keys = CC.highlight_key("Arrow Keys")
+    wasd = CC.highlight_key("WASD")
     ctrl_q = CC.highlight_key("CTRL+Q")
     p = CC.highlight_key("P")
     q = CC.highlight_key("Q")
     space = CC.highlight_key("Space")
+    enter = CC.highlight_key("Enter")
+    tab = CC.highlight_key("TAB")
+    backspace = CC.highlight_key("Backspace")
+    shift_a = CC.highlight_key("Shift+A")
+    shortcuts = CC.highlight_key("0") + ", " + CC.highlight_key("1") + ", ... , " + CC.highlight_key("9")
+    escape = CC.highlight_key("ESC")
 
     # tiles
     DOOR_TILE = CC.highlight_tile("-")
@@ -121,9 +128,15 @@ class HelpText:
             f"Now close this dialog and start playing by pressing {_HL.space}.",
 
         HelpTextType.Controls:
-            f"Move with the {_HL.arrow_keys}\n"
-            f"Close Popups and select with {_HL.space}\n"
-            f"Pause the game by pressing {_HL.p}\n\n"
+            f"Move                  -   {_HL.arrow_keys}, {_HL.wasd}\n"
+            f"Navigate Menus        -   {_HL.arrow_keys}, {_HL.wasd}\n"
+            f"Confirm               -   {_HL.enter}, {_HL.space}\n"
+            f"Cancel/Back           -   {_HL.backspace}, {_HL.shift_a}\n"
+            f"Scroll in Popup       -   {_HL.arrow_keys}, {_HL.wasd}\n"
+            f"Close Popup           -   {_HL.enter}, {_HL.space}, {_HL.escape}\n"
+            f"Pause                 -   {_HL.p}, {_HL.tab}\n"
+            f"Selection shortcuts   -   {_HL.shortcuts}\n"
+            "\n"
             f"Should you ever get stuck you can force-quit the game by pressing {_HL.ctrl_q} and then {_HL.q}. This "
             "will still save the logs so it is the preferred option over simply closing the window!",
 
@@ -187,10 +200,10 @@ class HelpText:
         HelpTextType.Pause:
             "In the Pause Menu you can do several things:\n"
             f"{_HL.continue_} - Leave the Pause Menu and continue where you stopped.\n"
-            f"{_HL.options} - Configure some Options of the game, like font size or coloring.\n"
             f"{_HL.help_} - If you ever feel stuck and don't remember how certain stuff in the game works select "
             f"this menu and we will try to help you.\n"
-            f"{_HL.exit_} - Exit your current Playthrough and go back to the Main Menu.\n",
+            f"{_HL.options} - Configure some Options of the game, like font size or coloring.\n"
+            f"{_HL.exit_} - Exit the current Level or Expedition and return to the Spaceship.\n",
 
         HelpTextType.Options:
             "",

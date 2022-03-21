@@ -196,7 +196,7 @@ class PauseMenuWidgetSet(MyWidgetSet):
     __HELP_TEXTS = (
         [
             "Game",
-            "Move", "Fight",
+            "Controls", "Fight",
             "Riddle", "Shop",
             "Boss Fight", "Pause",
             "Options",
@@ -211,7 +211,7 @@ class PauseMenuWidgetSet(MyWidgetSet):
     )
 
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
-                 continue_callback: "()", exit_run_callback: "()"):
+                 continue_callback: Callable[[], None], exit_run_callback: Callable[[], None]):
         super().__init__(controls, logger, root, render)
         self.__continue_callback = continue_callback
         self.__exit_run = exit_run_callback
@@ -224,8 +224,8 @@ class PauseMenuWidgetSet(MyWidgetSet):
         choices = self.add_block_label('Choices', 1, 0, row_span= MyWidgetSet.NUM_OF_ROWS-1, column_span=3, center=True)
         self.__choices = SelectionWidget(choices, controls, stay_selected=True)
         self.__choices.set_data(data=(
-            ["Continue", "Options", "Help", "Exit"],
-            [self.__continue, self.__options, self.__help, self.__exit]
+            ["Continue", "Manual", "Options", "Exit"],
+            [self.__continue, self.__help, self.__options, self.__exit]
         ))
 
         details = self.add_block_label('Details', 1, 3, row_span=MyWidgetSet.NUM_OF_ROWS-1,
