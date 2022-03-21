@@ -4,8 +4,49 @@ import sys
 
 import py_cui.errors
 
+from qrogue.game.logic.actors import Player
+from qrogue.game.world.dungeon_generator import QrogueLevelGenerator, QrogueWorldGenerator
+from qrogue.game.world.map import CallbackPack
+from qrogue.game.world.navigation import Coordinate
 from qrogue.management import GameHandler
-from qrogue.util import Config, Logger
+from qrogue.util import Config, Logger, RandomManager
+
+
+def __init_singletons(seed: int):
+    Config.load(None)
+    Config.activate_debugging()
+
+    def log_print(title: str, text: str):
+        #print(f"\"{title}\": {text}")
+        pass
+
+    def log_print_error(title: str, text: str):
+        log_print(f"Error - {title}", text)
+
+    Logger(seed)
+    Logger.instance().set_popup(log_print, log_print_error)
+
+    RandomManager(seed)
+
+    def start_level(num, level):
+        pass
+
+    def start_fight(robot, enemy, direction):
+        pass
+
+    def start_boss_fight(robot, boss, direction):
+        pass
+
+    def open_riddle(robot, riddle):
+        pass
+
+    def visit_shop(robot, shop_item_list):
+        pass
+
+    def game_over():
+        pass
+
+    CallbackPack(start_level, start_fight, start_boss_fight, open_riddle, visit_shop, game_over)
 
 
 def setup_game(data_path: str):
@@ -47,3 +88,36 @@ def start_game(config_location: str = None):
         input("[Qrogue] Press ENTER to close the application")
 
     exit(return_code)
+
+
+def validate_map(path: str, is_level: bool = True, in_base_path: bool = True) -> bool:
+    seed = 7
+    __init_singletons(seed)
+
+    def check_achievement(achievement: str) -> bool:
+        return False
+
+    def trigger_event(event: str):
+        pass
+
+    def load_map(map_name: str, spawn_pos: Coordinate):
+        pass
+
+    if is_level:
+        generator = QrogueLevelGenerator(seed, check_achievement, trigger_event, load_map)
+    else:
+        player = Player()
+        generator = QrogueWorldGenerator(seed, player, check_achievement, trigger_event, load_map)
+
+    try:
+        error_occurred = False
+        generator.generate(path, in_base_path)
+    except FileNotFoundError as fnf:
+        error_occurred = True
+        print(f"Could not find specified file! Error: {fnf}")
+    except SyntaxError as se:
+        error_occurred = True
+        print("Found syntax error!")
+        print(se)
+
+    return not error_occurred
