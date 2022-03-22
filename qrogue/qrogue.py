@@ -9,11 +9,11 @@ from qrogue.game.world.dungeon_generator import QrogueLevelGenerator, QrogueWorl
 from qrogue.game.world.map import CallbackPack
 from qrogue.game.world.navigation import Coordinate
 from qrogue.management import GameHandler
-from qrogue.util import Config, Logger, RandomManager
+from qrogue.util import Config, Logger, RandomManager, PathConfig
 
 
 def __init_singletons(seed: int):
-    Config.load(None)
+    Config.load()
     Config.activate_debugging()
 
     def log_print(title: str, text: str):
@@ -49,15 +49,30 @@ def __init_singletons(seed: int):
     CallbackPack(start_level, start_fight, start_boss_fight, open_riddle, visit_shop, game_over)
 
 
-def setup_game(data_path: str):
-    Config.create(["Qrogue", data_path])
+def setup_game(game_data_path: str = "", user_data_path: str = "") -> None:
+    """
+    Creates the needed folder structure and game config file qrogue_game.config if not already existent.
+    :param game_data_path: the path where we want to setup the game data
+    :param user_data_path: the path where we want to load and store the user data (e.g. logs, save data)
+    :return: None
+    """
+    Config.setup_user_data(user_data_path)
+
+    path = PathConfig.launch_config_path()
+    data = "\n"
+    data += f"{game_data_path}\n"
+    data += f"{user_data_path}\n"
+    PathConfig.write(path, data, in_user_path=False, may_exist=True, append=False)
 
 
-def start_game(config_location: str = None):
+def start_game(data_folder: str = None, user_data_folder: str = None):
     __CONSOLE_ARGUMENT = "--from-console"
     __DEBUG_ARGUMENT = "--debug"
 
-    return_code = Config.load(config_location)  # NEEDS TO BE THE FIRST THING WE DO!
+    if PathConfig.load_paths(data_folder, user_data_folder):
+        return_code = Config.load()  # NEEDS TO BE THE FIRST THING WE DO!
+    else:
+        return_code = 1
     if return_code == 0:
         if __DEBUG_ARGUMENT in sys.argv:
             Config.activate_debugging()
@@ -92,7 +107,13 @@ def start_game(config_location: str = None):
 
 def validate_map(path: str, is_level: bool = True, in_base_path: bool = True) -> bool:
     seed = 7
-    __init_singletons(seed)
+    try:
+        __init_singletons(seed)
+    except Exception as ex:
+        print(f"Error: {ex}")
+        print("Most likely you used validate_map() while also running the game which is forbidden. Make sure to "
+              "validate maps separately!")
+        return False
 
     def check_achievement(achievement: str) -> bool:
         return False

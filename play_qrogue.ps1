@@ -3,7 +3,7 @@
 )
 
 $QROGUE_PATH = Split-Path -Path $MyInvocation.MyCommand.Path -Parent
-$CONFIG_PATH = Join-Path -Path ${QROGUE_PATH} -ChildPath "installer\qrogue.config"
+$CONFIG_PATH = Join-Path -Path ${QROGUE_PATH} -ChildPath "qrogue\data\qrogue_launch.config"
 $GAME_PATH = Join-Path -Path ${QROGUE_PATH} -ChildPath "main.py"
 
 $config = Get-Content ${CONFIG_PATH}

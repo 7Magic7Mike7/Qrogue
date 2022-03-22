@@ -2,6 +2,7 @@
 
 ENV_PATH="../.env_qrogue"
 DATA_PATH="../game_data"
+LAUNCH_CONFIG="qrogue_launch.config"
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
   realpath() {
@@ -27,9 +28,9 @@ if [ $? ]; then
 		if [ $? ]; then
 			echo "[Qrogue] Creating config files..."
 
-			touch qrogue.config
-			realpath "${ENV_PATH}" > qrogue.config
-			realpath "${DATA_PATH}" >> qrogue.config
+			touch ${LAUNCH_CONFIG}
+			realpath "${ENV_PATH}" > ${LAUNCH_CONFIG}
+			realpath "${DATA_PATH}" >> ${LAUNCH_CONFIG}
 			mkdir -p "${DATA_PATH}"
 			#mkdir -p ${DATA_PATH}/logs
 			#mkdir -p ${DATA_PATH}/keylogs
@@ -41,7 +42,7 @@ if [ $? ]; then
 				echo "[Qrogue] You can play now my executing play_qrogue.sh!"
 				exit 0
 			else
-				echo "[Qrogue] ERROR: Could not create qrogue.config!"
+				echo "[Qrogue] ERROR: Could not create qrogue_launch.config!"
 				exit 4
 			fi
 		else

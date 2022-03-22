@@ -253,7 +253,7 @@ class PauseMenuWidgetSet(MyWidgetSet):
 
     def __options_text(self, index: int = 0) -> bool:
         if index == 0:
-            path = PathConfig.base_path(Config.config_file())
+            path = PathConfig.user_data_path(Config.game_config_file())
             Popup.message(f"Configuration located at {path}", GameplayConfig.to_file_text())
             return False
         else:

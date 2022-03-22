@@ -39,7 +39,7 @@ if ($continue -eq "y") {
     Write-Host "[Qrogue] Done installing dependencies!"
 
     Write-Host "[Qrogue] Setting up Game data..."
-    $CONFIG_PATH = Join-Path -Path ${QROGUE_PATH} -ChildPath "installer\qrogue.config"
+    $CONFIG_PATH = Join-Path -Path ${QROGUE_PATH} -ChildPath "qrogue\data\qrogue_launch.config"
     $EnvName | Out-File -FilePath ${CONFIG_PATH} -Encoding utf8
     $SavesPath | Out-File -FilePath ${CONFIG_PATH} -Encoding utf8 -Append
 
