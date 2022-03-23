@@ -13,3 +13,4 @@ qrogue/test/installer/qrogue.config
 /MANIFEST
 /dist/
 /qrogue.egg-info/
+/qrogue/QrogueData/
