@@ -78,10 +78,8 @@ class PathConfig:
 
     @staticmethod
     def set_user_data_path(user_data_path: str):
-        if os.path.exists(user_data_path):
-            PathConfig.__User_Data_Path = user_data_path
-        else:
-            raise FileNotFoundError(f"Given user data path is not valid: {user_data_path}")
+        PathConfig.create_folder_structure(user_data_path)  # does nothing for existing folders
+        PathConfig.__User_Data_Path = user_data_path
 
     @staticmethod
     def load_paths(custom_data_path: str, custom_user_data_path: str) -> bool:
