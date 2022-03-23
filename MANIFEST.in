@@ -1,1 +1,1 @@
-recursive-include qrogue/data *
+graft qrogue/data
