@@ -1,6 +1,7 @@
 
 import random
 import sys
+from typing import Tuple, List
 
 import py_cui.errors
 
@@ -49,6 +50,18 @@ def __init_singletons(seed: int):
     CallbackPack(start_level, start_fight, start_boss_fight, open_riddle, visit_shop, game_over)
 
 
+def __parse_argument(argument: List[str], has_value: bool = False) -> Tuple[bool, str]:
+    for arg in argument:
+        if arg in sys.argv:
+            if has_value:
+                i = sys.argv.index(argument[0])
+                if i + 1 < len(sys.argv):
+                    return True, sys.argv[i + 1]
+            else:
+                return True, None
+    return False, None
+
+
 def setup_game(game_data_path: str = "", user_data_path: str = "") -> None:
     """
     Creates the needed folder structure and game config file qrogue_game.config if not already existent.
@@ -66,15 +79,24 @@ def setup_game(game_data_path: str = "", user_data_path: str = "") -> None:
 
 
 def start_game(data_folder: str = None, user_data_folder: str = None):
-    __CONSOLE_ARGUMENT = "--from-console"
-    __DEBUG_ARGUMENT = "--debug"
+    __CONSOLE_ARGUMENT = ["--from-console", "-fc"]
+    __DEBUG_ARGUMENT = ["--debug", "-d"]
+    __GAME_DATA_PATH_ARGUMENT = ["--game-data", "-gd"]
+    __USER_DATA_PATH_ARGUMENT = ["--user-data", "-ud"]
+
+    exists, value = __parse_argument(__GAME_DATA_PATH_ARGUMENT, has_value=True)
+    if exists:
+        data_folder = value
+    exists, value = __parse_argument(__USER_DATA_PATH_ARGUMENT, has_value=True)
+    if exists:
+        user_data_folder = value
 
     if PathConfig.load_paths(data_folder, user_data_folder):
         return_code = Config.load()  # NEEDS TO BE THE FIRST THING WE DO!
     else:
         return_code = 1
     if return_code == 0:
-        if __DEBUG_ARGUMENT in sys.argv:
+        if __parse_argument(__DEBUG_ARGUMENT)[0]:
             Config.activate_debugging()
         seed = random.randint(0, Config.MAX_SEED)
         print(f"[Qrogue] Starting game with seed = {seed}")
@@ -98,7 +120,7 @@ def start_game(data_folder: str = None, user_data_folder: str = None):
                   "to your save files). Using special characters in the path could also cause this error so if the path is "
                   "valid please consider using another one without special characters.")
 
-    if __CONSOLE_ARGUMENT not in sys.argv:
+    if not __parse_argument(__CONSOLE_ARGUMENT)[0]:
         print()
         input("[Qrogue] Press ENTER to close the application")
 
