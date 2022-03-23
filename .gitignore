@@ -11,4 +11,5 @@ qrogue/test/installer/qrogue.config
 *.pyc
 /Qrogue - Verknüpfung.lnk
 /MANIFEST
-/dist/qrogue-*.tar.gz
+/dist/
+/qrogue.egg-info/
