@@ -1,4 +1,5 @@
 import enum
+from typing import List
 
 FinishedTutorial = "CompletedTutorial"
 EnteredPauseMenu = "EnteredPauseMenu"
@@ -17,6 +18,18 @@ class AchievementType(enum.Enum):
 
 
 class Achievement:
+    __DATA_SEPARATOR = ">q<"
+
+    @staticmethod
+    def from_string(text: str) -> "Achievement":
+        data = text.split(Achievement.__DATA_SEPARATOR)
+        if len(data) == 5:
+            name = data[0]
+            atype = AchievementType(int(data[1]))
+            score = float(data[2])
+            done_score = float(data[3])
+            return Achievement(name, atype, score, done_score)
+
     # todo add unlock-date?
     def __init__(self, name: str, atype: AchievementType, score: float, done_score: float):
         self.__name = name
@@ -47,16 +60,21 @@ class Achievement:
         if score > 0:
             self.__score += score
 
+    def to_string(self) -> str:
+        text = f"{self.name}{Achievement.__DATA_SEPARATOR}"
+        text += f"{self.type.value}{Achievement.__DATA_SEPARATOR}"
+        text += f"{self.score}{Achievement.__DATA_SEPARATOR}"
+        text += f"{self.done_score}{Achievement.__DATA_SEPARATOR}"
+        return text
+
 
 class AchievementManager:
-    def __init__(self):
+    def __init__(self, achievements: List[Achievement]):
         self.__storage = {}
         self.__temp_level_storage = {}
 
-        # todo load from file
-        self.__storage[FinishedTutorial] = Achievement(FinishedTutorial, AchievementType.Tutorial, 0, 1)
-        self.__storage[EnteredPauseMenu] = Achievement(EnteredPauseMenu, AchievementType.Tutorial, 0, 1)
-        self.__storage[CompletedExpedition] = Achievement(CompletedExpedition, AchievementType.Expedition, 0, 1000)
+        for achievement in achievements:
+            self.__storage[achievement.name] = achievement
 
     def check_achievement(self, name: str) -> bool:
         if name in self.__temp_level_storage:
@@ -94,3 +112,9 @@ class AchievementManager:
     def uncovered_secret(self, name: str):
         if name not in self.__storage:
             self.__storage[name] = Achievement(name, AchievementType.Secret, 1, 1)
+
+    def to_string(self) -> str:
+        text = ""
+        for value in self.__storage.values():
+            text += f"{value.to_string()}\n"
+        return text

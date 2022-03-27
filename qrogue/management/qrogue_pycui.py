@@ -58,7 +58,7 @@ class QrogueCUI(py_cui.PyCUI):
         self.__menu = MenuWidgetSet(self.__controls, self.__render, Logger.instance(), self, self.__start_playing,
                                     self.stop, self.__choose_simulation)
         self.__pause = PauseMenuWidgetSet(self.__controls, self.__render, Logger.instance(), self,
-                                          self.__general_continue, self.switch_to_menu)
+                                          self.__general_continue, SaveData.instance().save, self.switch_to_menu)
 
         self.__spaceship = SpaceshipWidgetSet(self.__controls, Logger.instance(), self, self.__render)
         self.__workbench = WorkbenchWidgetSet(self.__controls, Logger.instance(), self,

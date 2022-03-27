@@ -211,9 +211,11 @@ class PauseMenuWidgetSet(MyWidgetSet):
     )
 
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
-                 continue_callback: Callable[[], None], exit_run_callback: Callable[[], None]):
+                 continue_callback: Callable[[], None], save_callback: Callable[[], bool],
+                 exit_run_callback: Callable[[], None]):
         super().__init__(controls, logger, root, render)
         self.__continue_callback = continue_callback
+        self.__save_callback = save_callback
         self.__exit_run = exit_run_callback
 
     def init_widgets(self, controls: Controls) -> None:
@@ -224,8 +226,8 @@ class PauseMenuWidgetSet(MyWidgetSet):
         choices = self.add_block_label('Choices', 1, 0, row_span= MyWidgetSet.NUM_OF_ROWS-1, column_span=3, center=True)
         self.__choices = SelectionWidget(choices, controls, stay_selected=True)
         self.__choices.set_data(data=(
-            ["Continue", "Manual", "Options", "Exit"],
-            [self.__continue, self.__help, self.__options, self.__exit]
+            ["Continue", "Manual", "Save", "Options", "Exit"],
+            [self.__continue, self.__help, self.__save, self.__options, self.__exit]
         ))
 
         details = self.add_block_label('Details', 1, 3, row_span=MyWidgetSet.NUM_OF_ROWS-1,
@@ -244,6 +246,26 @@ class PauseMenuWidgetSet(MyWidgetSet):
         self.__continue_callback()
         return False
 
+    def __help(self) -> bool:
+        self.__details.set_data(data=(
+            PauseMenuWidgetSet.__HELP_TEXTS[0] + [MyWidgetSet.BACK_STRING],
+            [self.__help_text]
+        ))
+        return True
+
+    def __help_text(self, index: int = 0) -> bool:
+        if index < len(PauseMenuWidgetSet.__HELP_TEXTS[0]):
+            Popup.message(f"{PauseMenuWidgetSet.__HELP_TEXTS[0][index]}", PauseMenuWidgetSet.__HELP_TEXTS[1][index])
+            return False
+        return True
+
+    def __save(self) -> bool:
+        if self.__save_callback():
+            CommonPopups.SavingSuccessful.show()
+        else:
+            CommonPopups.SavingFailed.show()
+        return False
+
     def __options(self) -> bool:
         self.__details.set_data(data=(
             ["Gameplay Config", MyWidgetSet.BACK_STRING],
@@ -258,19 +280,6 @@ class PauseMenuWidgetSet(MyWidgetSet):
             return False
         else:
             return True
-
-    def __help(self) -> bool:
-        self.__details.set_data(data=(
-            PauseMenuWidgetSet.__HELP_TEXTS[0] + [MyWidgetSet.BACK_STRING],
-            [self.__help_text]
-        ))
-        return True
-
-    def __help_text(self, index: int = 0) -> bool:
-        if index < len(PauseMenuWidgetSet.__HELP_TEXTS[0]):
-            Popup.message(f"{PauseMenuWidgetSet.__HELP_TEXTS[0][index]}", PauseMenuWidgetSet.__HELP_TEXTS[1][index])
-            return False
-        return True
 
     def __exit(self) -> bool:
         self.__exit_run()

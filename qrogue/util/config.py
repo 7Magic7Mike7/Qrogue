@@ -2,7 +2,7 @@ import enum
 import os
 import pathlib
 from datetime import datetime
-from typing import Callable
+from typing import Callable, Tuple
 
 import py_cui
 
@@ -31,7 +31,9 @@ class PathConfig:
     __TEMPLATE_STV_POOLS = "stv_pools"
     __TEMPLATE_REWARD_POOLS = "reward_pools"
     __TEMPLATE_FILE = f"templates{FileTypes.Templates}"
+    __FRESH_SAVE_FILE = "fresh"
     __SAVE_FILE_NUMERATION_SEPARATOR = "_"
+    __NUMBER_OF_SAVE_FILES = 7    # how many save files can be present before we delete the oldest one
 
     __Base_Path = __DEFAULT_GAME_DATA_PATH
     __User_Data_Path = __DEFAULT_USER_DATA_PATH
@@ -39,6 +41,29 @@ class PathConfig:
     @staticmethod
     def __now_str() -> str:
         return datetime.now().strftime("%d%m%Y_%H%M%S")
+
+    @staticmethod
+    def __save_file_str(num: int) -> str:
+        return os.path.join(PathConfig.__SAVE_DATA_FOLDER,
+                            f"qrogue-save{PathConfig.__SAVE_FILE_NUMERATION_SEPARATOR}{num}{FileTypes.Save.value}")
+
+    @staticmethod
+    def __get_save_files_stats() -> Tuple[int, int]:
+        """
+
+        :return: number of available save files, number of the latest save file
+        """
+        files = os.listdir(PathConfig.user_data_path(PathConfig.__SAVE_DATA_FOLDER))
+        num = -1
+        num_of_files = 0
+        for file in files:
+            file_ending_index = file.rindex(FileTypes.Save.value)
+            if file_ending_index > 0:
+                num_of_files += 1
+                cur_num = int(file[file.rindex(PathConfig.__SAVE_FILE_NUMERATION_SEPARATOR) + 1:file_ending_index])
+                if cur_num > num:
+                    num = cur_num
+        return num_of_files, num
 
     @staticmethod
     def launch_config_path() -> str:
@@ -139,22 +164,21 @@ class PathConfig:
     @staticmethod
     def new_save_file(text: str):
         now_str = PathConfig.__now_str()
-        num = 0
-        # todo list files of folder to find out the next number and if we delete a previous save
-        path = os.path.join(PathConfig.__SAVE_DATA_FOLDER,
-                                 f"qrogue-save{PathConfig.__SAVE_FILE_NUMERATION_SEPARATOR}{num}{FileTypes.Save.value}")
-        PathConfig.write(path, now_str + "\n" + text, may_exist=False)
+        num_of_files, num = PathConfig.__get_save_files_stats()
+        num += 1    # increment to get the highest number for the new save file (if no save file exists yet,
+                    # -1 will be incremented to 0)
+        if num_of_files >= PathConfig.__NUMBER_OF_SAVE_FILES:
+            oldest_num = num - PathConfig.__NUMBER_OF_SAVE_FILES
+            PathConfig.delete(PathConfig.__save_file_str(oldest_num))
+        PathConfig.write(PathConfig.__save_file_str(num), now_str + "\n" + text, may_exist=False)
 
     @staticmethod
     def find_latest_save_file() -> str:
-        files = os.listdir(PathConfig.user_data_path(PathConfig.__SAVE_DATA_FOLDER))
-        num = 0
-        for file in files:
-            file_ending_index = file.rindex(FileTypes.Save.value)
-            cur_num = int(file[file.rindex(PathConfig.__SAVE_FILE_NUMERATION_SEPARATOR) + 1:file_ending_index])
-            if cur_num > num:
-                num = cur_num
-        return f"qrogue-save{PathConfig.__SAVE_FILE_NUMERATION_SEPARATOR}{num}{FileTypes.Save.value}"
+        _, num = PathConfig.__get_save_files_stats()
+        if num >= 0:
+            return PathConfig.__save_file_str(num)
+        else:
+            return PathConfig.base_path(f"{PathConfig.__FRESH_SAVE_FILE}{FileTypes.Save.value}")
 
     @staticmethod
     def read_keylog_buffered(file_name: str, in_keylog_folder: bool = True, buffer_size: int = 1024) -> str:
@@ -223,7 +247,7 @@ class PathConfig:
 
     @staticmethod
     def delete(file_name):
-        path = PathConfig.user_data_path(file_name)     # data in base_path is static so we can only write user data
+        path = PathConfig.user_data_path(file_name)     # data in base_path is static so we can only delete user data
         if os.path.exists(path):
             os.remove(path)
 
