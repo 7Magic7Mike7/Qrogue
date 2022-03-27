@@ -614,7 +614,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             reward_pool = self.__load_reward_pool(pool_id)
             reward = self.__rm.get_element(reward_pool)     # todo check if we should wrap it in a factory?
 
-        riddle = Riddle(stv, reward)
+        attempts = self.visit(ctx.integer())
+        riddle = Riddle(stv, reward, attempts)
         return tiles.Riddler(self.__cbp.open_riddle, riddle)
 
     def visitEnergy_descriptor(self, ctx: QrogueDungeonParser.Energy_descriptorContext) -> tiles.Tile:
