@@ -1,25 +1,9 @@
 import time
 
-from qrogue.dungeon_editor.generator import RandomLayoutGenerator, RandomDungeonGenerator
-from qrogue.game.world.map import CallbackPack
+import test_util
+from qrogue.game.world.dungeon_generator import DungeonGenerator
+from qrogue.game.world.dungeon_generator.random_generator import RandomLayoutGenerator
 from qrogue.management.save_data import SaveData
-from qrogue.util.config import Config
-
-
-def start_gp(args):
-    print("started game")
-
-
-def start_fight(robot: Robot, enemy: Enemy, direction: Direction):
-    pass
-
-
-def start_boss_fight(robot: Robot, boss: Boss, direction: Direction):
-    pass
-
-
-def load_map(map_name: str):
-    print(f"Load map: {map_name}")
 
 
 def layout_test():
@@ -38,7 +22,7 @@ def layout_test():
     for seed in seeds:
         if i % 50000 == 0:
             print(f"Run {i + 1}): seed = {seed}")
-        mapgen = RandomLayoutGenerator(seed, RandomDungeonGenerator.WIDTH, RandomDungeonGenerator.HEIGHT)
+        mapgen = RandomLayoutGenerator(seed, DungeonGenerator.WIDTH, DungeonGenerator.HEIGHT)
         now_time = time.time()
         if not mapgen.generate(debug=False):
             failing_seeds.append(mapgen)
@@ -66,7 +50,7 @@ def layout_test():
     print()
 
     for mg in failing_seeds:
-        mapgen = RandomLayoutGenerator(mg.seed, RandomDungeonGenerator.WIDTH, RandomDungeonGenerator.HEIGHT)
+        mapgen = RandomLayoutGenerator(mg.seed, DungeonGenerator.WIDTH, DungeonGenerator.HEIGHT)
         mapgen.generate(debug=True)
 
 
@@ -85,7 +69,7 @@ def dungeon_test():
         if i % 5000 == 0:
             print(f"Run {i + 1}): seed = {seed}")
         save_data = SaveData()
-        generator = RandomDungeonGenerator(seed, load_map)
+        generator = DungeonGenerator(seed)
         start_time = time.time()
         map, success = generator.generate(save_data.get_robot(0))
         if not success:
@@ -110,12 +94,6 @@ def dungeon_test():
     print()
 
 
-return_code = Config.load()
-if return_code != 0:
-    print(f"Error #{return_code}")
-
-RandomManager(7)    # initialize RandomManager
-CallbackPack(start_gp, start_fight, start_boss_fight, start_fight, start_fight)
-
-layout_test()
-dungeon_test()
+if test_util.init_singletons(include_config=True):
+    layout_test()
+    dungeon_test()

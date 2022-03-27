@@ -1,50 +1,13 @@
 import os
+import sys
 
-from qrogue.dungeon_editor.dungeon_parser.QrogueLevelGenerator import QrogueLevelGenerator
-from qrogue.dungeon_editor.world_parser.QrogueWorldGenerator import QrogueWorldGenerator
-from qrogue.game.world.map import CallbackPack
+from qrogue.game.world.dungeon_generator import QrogueWorldGenerator, QrogueLevelGenerator
 from qrogue.management.save_data import SaveData
+from qrogue.test import test_util
 from qrogue.util.config import FileTypes
-from qrogue.util.my_random import RandomManager
-
-
-def start_gp(args):
-    print("started game")
-
-
-def start_fight(**kwargs):
-    pass
-
-
-def load_level(level: str):
-    print(f"Pseudo-loading level: {level}")
 
 
 BASE_PATH = os.path.join("D:\\", "Documents", "Studium", "Master", "3. Semester", "Qrogue", "QrogueData", "data")
-
-
-def read_dungeon(file_name: str) -> str:
-    if not file_name.endswith(FileTypes.Dungeon.value):
-        file_name += FileTypes.Dungeon.value
-    path = os.path.join(BASE_PATH, "dungeons", file_name)
-    if os.path.exists(path):
-        with open(path, "r") as file:
-            content = file.read()
-        return content
-    else:
-        raise FileNotFoundError(f"File \"{file_name}\" could not be found!")
-
-
-def read_world(file_name: str) -> str:
-    if not file_name.endswith(FileTypes.World.value):
-        file_name += FileTypes.World.value
-    path = os.path.join(BASE_PATH, "dungeons", file_name)
-    if os.path.exists(path):
-        with open(path, "r") as file:
-            content = file.read()
-        return content
-    else:
-        raise FileNotFoundError(f"File \"{file_name}\" could not be found!")
 
 
 def generation_test(file_name: str, world: bool = False):
@@ -53,10 +16,10 @@ def generation_test(file_name: str, world: bool = False):
     check_achievement = SaveData.instance().achievement_manager.check_achievement
     trigger_event = SaveData.instance().achievement_manager.trigger_level_event
     if world:
-        generator = QrogueWorldGenerator(7, player, check_achievement, load_level)
+        generator = QrogueWorldGenerator(7, player, check_achievement, trigger_event, test_util.load_map)
     else:
-        generator = QrogueLevelGenerator(7, check_achievement, trigger_event, load_level)
-    map, success = generator.generate(file_name, False)
+        generator = QrogueLevelGenerator(7, check_achievement, trigger_event, test_util.load_map)
+    map, success = generator.generate(file_name, True)
     if success:
         print(map)
     debugging = True
@@ -90,9 +53,8 @@ def general_python_test():
 
 
 #general_python_test()
-RandomManager(7)    # needs to be initialized
-CallbackPack(start_gp, start_fight, start_fight, start_fight, start_fight)
+user_data_path = sys.argv[1]
+test_util.init_singletons(include_config=True, custom_user_path=user_data_path)
 
 file_name = "l1v1"
-path = os.path.join(BASE_PATH, "dungeons", file_name)
-generation_test(path, world=False)
+generation_test(file_name, world=False)
