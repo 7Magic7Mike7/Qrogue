@@ -137,7 +137,7 @@ class HelpText:
 
         HelpTextType.FirstLevelIntroduction:
             f"Alright, let's have a look at our {_HL.display}.\n"
-            f"The HUD is at the very top and shows you the current {_HL.level}, the [{_HL.energy} of the {_HL.robot} and the number "
+            f"The HUD is at the very top and shows you the current {_HL.level}, the {_HL.energy} of the {_HL.robot} and the number "
             f"of {_HL.coins} and {_HL.keys} it is carrying. Always keep an eye on your current energy as 0 energy means we can no "
             f"longer control the {_HL.robot} and have to {_HL.abort} the {_HL.level}.\n"
             f"The rest of the screen shows a {_HL.map_} of the area our Robot's currently in. Try to move the Robot to the "
