@@ -1,7 +1,7 @@
 import os
 from setuptools import setup
 
-README_PATH = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'README.md')
+README_PATH = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'Readme.md')
 with open(README_PATH) as readme_file:
 	README = readme_file.read()
 
@@ -31,7 +31,7 @@ setup(
 	],
 	package_data={"data": ["qrogue/data"]},
 	include_package_data=True,
-	version='0.3.2.5',
+	version='0.3.2.5.1',
 	license='MIT',  # Chose a license from here: https://help.github.com/articles/licensing-a-repository
 	description='Qrogue is a modernized Quantum Computing take of the classical game Rogue.',
 	long_description=README,
