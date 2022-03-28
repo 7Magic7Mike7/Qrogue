@@ -59,6 +59,7 @@ class QrogueCUI(py_cui.PyCUI):
                                     self.stop, self.__choose_simulation)
         self.__pause = PauseMenuWidgetSet(self.__controls, self.__render, Logger.instance(), self,
                                           self.__general_continue, SaveData.instance().save, self.switch_to_menu)
+        self.__pause.set_data(None, "Qrogue", SaveData.instance().achievement_manager)
 
         self.__spaceship = SpaceshipWidgetSet(self.__controls, Logger.instance(), self, self.__render)
         self.__workbench = WorkbenchWidgetSet(self.__controls, Logger.instance(), self,
@@ -465,7 +466,6 @@ class QrogueCUI(py_cui.PyCUI):
 
     def __continue_spaceship(self) -> None:
         self.__state_machine.change_state(State.Spaceship, None)
-        print("continue spaceship")
 
     def __use_workbench(self, direction: Direction, controllable: Controllable):
         self.__state_machine.change_state(State.Workbench, SaveData.instance())
@@ -480,8 +480,10 @@ class QrogueCUI(py_cui.PyCUI):
     def __show_world(self, world: WorldMap = None) -> None:
         if world is None:
             self.__state_machine.change_state(State.Spaceship, None)
+            self.__pause.set_data(None, "Spaceship", SaveData.instance().achievement_manager)
         else:
             self.__state_machine.change_state(State.Navigation, world)
+            self.__pause.set_data(None, world.name, SaveData.instance().achievement_manager)
 
     def switch_to_navigation(self, data) -> None:
         if data is not None:
@@ -492,7 +494,7 @@ class QrogueCUI(py_cui.PyCUI):
         SaveData.instance().achievement_manager.reset_level_events()
         robot = level.controllable_tile.controllable
         if isinstance(robot, Robot):
-            self.__pause.set_data(robot, level.name)   # needed for the HUD
+            self.__pause.set_data(robot, level.name, SaveData.instance().achievement_manager)
             self.__state_machine.change_state(State.Explore, level)
 
             self.__key_logger = KeyLogger(seed)     # the seed used to build the Map

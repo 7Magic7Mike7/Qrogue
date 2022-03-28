@@ -1,6 +1,6 @@
 import time
 from abc import abstractmethod, ABC
-from typing import List, Callable
+from typing import List, Callable, Optional
 
 import py_cui
 from py_cui.widget_set import WidgetSet
@@ -14,7 +14,7 @@ from qrogue.game.world.navigation import Direction
 from qrogue.graphics.popups import Popup
 from qrogue.graphics.rendering import ColorRules
 from qrogue.util import CommonPopups, Config, Controls, GameplayConfig, HelpText, HelpTextType, Logger, PathConfig, \
-    RandomManager
+    RandomManager, AchievementManager
 
 from qrogue.graphics.widgets import Renderable
 from .my_widgets import SelectionWidget, CircuitWidget, MapWidget, SimpleWidget, HudWidget, \
@@ -217,6 +217,7 @@ class PauseMenuWidgetSet(MyWidgetSet):
         self.__continue_callback = continue_callback
         self.__save_callback = save_callback
         self.__exit_run = exit_run_callback
+        self.__achievement_manager = None
 
     def init_widgets(self, controls: Controls) -> None:
         hud = self.add_block_label('HUD', 0, 0, row_span=1, column_span=MyWidgetSet.NUM_OF_COLS, center=False)
@@ -226,8 +227,8 @@ class PauseMenuWidgetSet(MyWidgetSet):
         choices = self.add_block_label('Choices', 1, 0, row_span= MyWidgetSet.NUM_OF_ROWS-1, column_span=3, center=True)
         self.__choices = SelectionWidget(choices, controls, stay_selected=True)
         self.__choices.set_data(data=(
-            ["Continue", "Manual", "Save", "Options", "Exit"],
-            [self.__continue, self.__help, self.__save, self.__options, self.__exit]
+            ["Continue", "Save", "Manual", "Achievements", "Options", "Exit"],
+            [self.__continue, self.__save, self.__help, self.__achievements, self.__options, self.__exit]
         ))
 
         details = self.add_block_label('Details', 1, 3, row_span=MyWidgetSet.NUM_OF_ROWS-1,
@@ -246,6 +247,13 @@ class PauseMenuWidgetSet(MyWidgetSet):
         self.__continue_callback()
         return False
 
+    def __save(self) -> bool:
+        if self.__save_callback():
+            CommonPopups.SavingSuccessful.show()
+        else:
+            CommonPopups.SavingFailed.show()
+        return False
+
     def __help(self) -> bool:
         self.__details.set_data(data=(
             PauseMenuWidgetSet.__HELP_TEXTS[0] + [MyWidgetSet.BACK_STRING],
@@ -259,11 +267,12 @@ class PauseMenuWidgetSet(MyWidgetSet):
             return False
         return True
 
-    def __save(self) -> bool:
-        if self.__save_callback():
-            CommonPopups.SavingSuccessful.show()
+    def __achievements(self) -> bool:
+        if self.__achievement_manager:
+            text = self.__achievement_manager.to_display_string()
+            Popup.message("Current Achievement status", text)
         else:
-            CommonPopups.SavingFailed.show()
+            Popup.message("Error", "No achievements available yet!")
         return False
 
     def __options(self) -> bool:
@@ -295,8 +304,9 @@ class PauseMenuWidgetSet(MyWidgetSet):
     def get_main_widget(self) -> MyBaseWidget:
         return self.__choices.widget
 
-    def set_data(self, robot: Robot, map_name: str):
+    def set_data(self, robot: Optional[Robot], map_name: str, achievement_manager: AchievementManager):
         self.__hud.set_data((robot, map_name))
+        self.__achievement_manager = achievement_manager
 
     def reset(self) -> None:
         self.__choices.render_reset()

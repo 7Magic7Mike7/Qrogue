@@ -16,6 +16,14 @@ class AchievementType(enum.Enum):
     Event = 5    # in-level event
     Expedition = 6
 
+    @staticmethod
+    def get_display_order() -> "List[AchievementType]":
+        return [
+            AchievementType.Secret, AchievementType.Gate,
+            AchievementType.Expedition, AchievementType.World, AchievementType.Level,
+            AchievementType.Tutorial,
+        ]
+
 
 class Achievement:
     __DATA_SEPARATOR = ">q<"
@@ -67,8 +75,18 @@ class Achievement:
         text += f"{self.done_score}{Achievement.__DATA_SEPARATOR}"
         return text
 
+    def to_display_string(self) -> str:
+        if self.is_done():
+            text = "[X]"
+        else:
+            text = "[_]"
+        text += f" {self.name} ({self.score} / {self.done_score})"
+        return text
+
 
 class AchievementManager:
+    __DISPLAY_STRING_IDENT = "  "
+
     def __init__(self, achievements: List[Achievement]):
         self.__storage = {}
         self.__temp_level_storage = {}
@@ -117,4 +135,26 @@ class AchievementManager:
         text = ""
         for value in self.__storage.values():
             text += f"{value.to_string()}\n"
+        return text
+
+    def to_display_string(self) -> str:
+        type_text = {}
+        for value in self.__storage.values():
+            if value.type in type_text:
+                type_text[value.type].append(value.to_display_string())
+            else:
+                type_text[value.type] = [value.to_display_string()]
+
+        text = ""
+        # first add the temporary level events
+        if len(self.__temp_level_storage) > 0:
+            text += f"{AchievementType.Event.name}\n"
+            for event in self.__temp_level_storage:
+                text += f"{AchievementManager.__DISPLAY_STRING_IDENT}{event.to_display_string()}\n"
+        # now add permanent the achievements
+        for a_type in AchievementType.get_display_order():
+            if a_type in type_text:
+                text += f"{a_type.name}\n"
+                for achievement in type_text[a_type]:
+                    text += f"{AchievementManager.__DISPLAY_STRING_IDENT}{achievement}\n"
         return text
