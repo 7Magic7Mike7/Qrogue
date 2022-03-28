@@ -80,7 +80,10 @@ class Achievement:
             text = "[X]"
         else:
             text = "[_]"
-        text += f" {self.name} ({self.score} / {self.done_score})"
+        if self.type is AchievementType.Secret:
+            text += "???"
+        else:
+            text += f" {self.name} ({self.score} / {self.done_score})"
         return text
 
 
