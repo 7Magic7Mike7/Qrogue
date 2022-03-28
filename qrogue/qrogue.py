@@ -9,8 +9,8 @@ from qrogue.game.logic.actors import Player
 from qrogue.game.world.dungeon_generator import QrogueLevelGenerator, QrogueWorldGenerator
 from qrogue.game.world.map import CallbackPack
 from qrogue.game.world.navigation import Coordinate
-from qrogue.management import GameHandler
-from qrogue.util import Config, Logger, RandomManager, PathConfig
+from qrogue.management import GameHandler, SaveData
+from qrogue.util import Config, Logger, RandomManager, PathConfig, GameplayConfig
 
 
 def __init_singletons(seed: int):
@@ -111,6 +111,11 @@ def start_game(data_folder: str = None, user_data_folder: str = None):
             exit(1)
 
         # flush after the player stopped playing
+        if GameplayConfig.auto_save():
+            if SaveData.instance().save():
+                print("[Qrogue] Successfully saved the game!")
+            else:
+                Logger.instance().error("Failed to save the game.", show=False)
         Logger.instance().flush()
         print("[Qrogue] Successfully flushed all logs and shut down the game without any problems. See you next time!")
     else:

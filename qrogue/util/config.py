@@ -499,11 +499,13 @@ class CheatConfig:
 class GameplayConfig:
     __KEY_VALUE_SEPARATOR = "="
 
+    __AUTO_SAVE = "Auto save on exit"
     __AUTO_RESET_CIRCUIT = "Auto reset Circuit"
     __LOG_KEYS = "Log Keys"
     __SIMULATION_KEY_PAUSE = "Simulation key pause"
     __GAMEPLAY_KEY_PAUSE = "Gameplay key pause"
     __CONFIG = {
+        __AUTO_SAVE: ("True", "Automatically saves the game when you exit it."),
         __AUTO_RESET_CIRCUIT: ("True", "Automatically reset your Circuit to a clean state at the beginning of a Fight, "
                                      "Riddle, etc."),
         __LOG_KEYS: ("True", "Stores all keys you pressed in a .qrkl-file so one can replay them (e.g. for analysing a "
@@ -531,6 +533,10 @@ class GameplayConfig:
             except KeyError:
                 return False
         return True
+
+    @staticmethod
+    def auto_save() -> bool:
+        return GameplayConfig.__CONFIG[GameplayConfig.__AUTO_SAVE][0] == "True"
 
     @staticmethod
     def auto_reset_circuit() -> bool:
@@ -693,9 +699,15 @@ class Config:   # todo make singleton and handle access to other configs?
         except FileNotFoundError:
             raise FileNotFoundError("Could not load the game's config file!")
 
-        gameplay_section = config.index(Config.__GAMEPLAY_HEAD) + len(Config.__GAMEPLAY_HEAD)
-        gameplay_section = (gameplay_section, len(config))
-        if not GameplayConfig.from_log_text(config[gameplay_section[0]:gameplay_section[1]]):
+        gameplay_start = config.index(Config.__GAMEPLAY_HEAD) + len(Config.__GAMEPLAY_HEAD)
+        gameplay_end = len(config)
+        if not GameplayConfig.from_log_text(config[gameplay_start:gameplay_end]):
             return 2
 
         return 0
+
+    @staticmethod
+    def save_gameplay_config() -> bool:
+        text = f"{Config.__GAMEPLAY_HEAD}\n{GameplayConfig.to_file_text()}\n"
+        PathConfig.write(Config.game_config_file(), text, in_user_path=True, may_exist=True, append=False)
+        return True
