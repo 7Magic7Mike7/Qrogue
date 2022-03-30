@@ -61,6 +61,9 @@ class SpaceshipWallTile(Tile):
     def is_walkable(self, direction: Direction, robot: Robot) -> bool:
         return False
 
+    def copy(self) -> "Tile":
+        return SpaceshipWallTile(self.__img)
+
     def __str__(self):
         return "W"
 
@@ -77,6 +80,9 @@ class SpaceshipFreeWalkTile(Tile):
 
     def is_walkable(self, direction: Direction, robot: Robot) -> bool:
         return True
+
+    def copy(self) -> "Tile":
+        return SpaceshipFreeWalkTile()
 
     def __str__(self):
         return "f"
@@ -98,6 +104,9 @@ class SpaceshipTriggerTile(WalkTriggerTile):
 
     def get_img(self):
         return self.__img
+
+    def copy(self) -> "Tile":
+        return SpaceshipTriggerTile(self.__img, self.__callback)
 
 
 class OuterSpaceTile(Tile):
@@ -121,6 +130,9 @@ class OuterSpaceTile(Tile):
 
     def is_walkable(self, direction: Direction, robot: Robot) -> bool:
         return False
+
+    def copy(self) -> "Tile":
+        return OuterSpaceTile()
 
     def __str__(self):
         return "o"

@@ -91,6 +91,9 @@ class Trigger(WalkTriggerTile):
     def get_img(self):
         return self._invisible
 
+    def copy(self) -> "Tile":
+        return Trigger(self.__callback)
+
 
 class Teleport(WalkTriggerTile):
     def __init__(self, callback: Callable[[str, Coordinate], None], target_map: str, room: Coordinate):
@@ -105,6 +108,9 @@ class Teleport(WalkTriggerTile):
 
     def get_img(self):
         return "t"
+
+    def copy(self) -> "Tile":
+        return Teleport(self.__callback, self.__target_map, self.__room)
 
 
 class Message(WalkTriggerTile):
@@ -145,9 +151,13 @@ class Message(WalkTriggerTile):
             return True
         return False
 
+    def copy(self) -> "Tile":
+        message = LogicalMessage.create_from_message(self.__message)
+        return Message(message, self.__times)
+
 
 class Riddler(WalkTriggerTile):
-    def __init__(self, open_riddle_callback: "void(Player, Riddle)", riddle: Riddle):
+    def __init__(self, open_riddle_callback: Callable[[Controllable, Riddle], None], riddle: Riddle):
         super().__init__(TileCode.Riddler)
         self.__open_riddle = open_riddle_callback
         self.__riddle = riddle
@@ -172,6 +182,9 @@ class Riddler(WalkTriggerTile):
         else:
             return self._invisible
 
+    def copy(self) -> "Tile":
+        return Riddler(self.__open_riddle, self.__riddle)
+
 
 class ShopKeeper(WalkTriggerTile):
     def __init__(self, visit_shop_callback, inventory: "List[ShopItem]"):
@@ -185,6 +198,9 @@ class ShopKeeper(WalkTriggerTile):
 
     def get_img(self):
         return "$"
+
+    def copy(self) -> "Tile":
+        return ShopKeeper(self.__visit_shop, self.__inventory.copy())
 
 
 class Collectible(WalkTriggerTile):
@@ -222,6 +238,9 @@ class Collectible(WalkTriggerTile):
             return True
         return False
 
+    def copy(self) -> "Tile":
+        return Collectible(self.__collectible)
+
 
 class Energy(WalkTriggerTile):
     def __init__(self, amount: int):
@@ -245,5 +264,5 @@ class Energy(WalkTriggerTile):
             return True
         return False
 
-
-
+    def copy(self) -> "Tile":
+        return Energy(self.__amount)

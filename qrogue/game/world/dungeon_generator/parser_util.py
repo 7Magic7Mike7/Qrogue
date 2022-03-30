@@ -73,9 +73,9 @@ def get_hallways(hallway_dictionary: Dict[Coordinate, Dict[Direction, Hallway]],
                             warning("Found one way door with invalid direction! Horizontal hallways can only "
                                          "have East or West doors and vertical ones only North and South doors! "
                                          "Removing the one way aspect and setting the direction to a valid one.")
-                            door = door.copy(direction)
+                            door = door.copy_and_adapt(direction)
                         else:
-                            door = door.copy(direction)
+                            door = door.copy_and_adapt(direction)
                     hallway = Hallway(door)
                     if neighbor in hallway_dictionary:
                         hallway_dictionary[neighbor][opposite] = hallway

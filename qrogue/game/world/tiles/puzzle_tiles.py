@@ -6,7 +6,7 @@ from qrogue.game.target_factory import EnemyFactory
 from qrogue.game.world.navigation import Direction
 from qrogue.util import RandomManager, Logger, CheatConfig
 
-from qrogue.game.world.tiles import TileCode, WalkTriggerTile
+from qrogue.game.world.tiles import Tile, TileCode, WalkTriggerTile
 
 
 class _EnemyState(Enum):
@@ -115,6 +115,9 @@ class Enemy(WalkTriggerTile):
             self.__enemy = self.__factory.produce(robot, self.__rm)
         self.__factory.start(robot, self.__enemy, direction)
 
+    def copy(self) -> "Tile":
+        return Enemy(self.__factory, self.__get_entangled_tiles, self.__id)
+
     def __str__(self) -> str:
         return f"E({self.__id}|{self._state})"
 
@@ -147,3 +150,7 @@ class Boss(WalkTriggerTile):
             return "B"
         else:
             return self._invisible
+
+    def copy(self) -> "Tile":
+        # Bosses should not be duplicated in a level anyways, so it doesn't matter if we reference the same BossActor
+        return Boss(self.__boss, self.__on_walk_callback)

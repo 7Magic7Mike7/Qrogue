@@ -128,7 +128,11 @@ class Door(WalkTriggerTile):
             return True
         return False
 
-    def copy(self, new_direction: Direction, reset_one_way: bool = True) -> "Door":
+    def copy(self) -> "Tile":
+        # this should not matter because at the moment we do not place doors inside rooms so this method is never called
+        return Door(self.__direction, self.__open_state, self.__one_way_state, self.__event_check)
+
+    def copy_and_adapt(self, new_direction: Direction, reset_one_way: bool = True) -> "Door":
         """
         Copies a door and assigns a new direction to it. Needed to create Hallways in the text based dungeon creator.
         Since one-way doors already have their direction set normally it doesn't make sense to give them a new one.
@@ -192,3 +196,5 @@ class HallwayEntrance(Tile):
     def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
         return not self.__door_ref.is_event_locked
 
+    def copy(self) -> "Tile":
+        return HallwayEntrance(self.__door_ref)

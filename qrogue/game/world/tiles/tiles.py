@@ -92,6 +92,10 @@ class Tile(ABC):
     def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
         pass
 
+    @abstractmethod
+    def copy(self) -> "Tile":
+        pass
+
     def __str__(self):
         return self.get_img()
 
@@ -106,6 +110,9 @@ class Invalid(Tile):
     def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
         return False
 
+    def copy(self) -> "Tile":
+        return Invalid()
+
 
 class Debug(Tile):
     def __init__(self, num: int):
@@ -118,6 +125,9 @@ class Debug(Tile):
     def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
         return False
 
+    def copy(self) -> "Tile":
+        return Debug(int(self.__num))
+
 
 class Void(Tile):
     def __init__(self):
@@ -128,6 +138,9 @@ class Void(Tile):
 
     def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
         return False
+
+    def copy(self) -> "Tile":
+        return Void()
 
 
 class Floor(Tile):
@@ -144,6 +157,9 @@ class Floor(Tile):
     def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
         return True
 
+    def copy(self) -> "Tile":
+        return Floor()
+
 
 class Wall(Tile):
     @staticmethod
@@ -159,6 +175,9 @@ class Wall(Tile):
     def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
         return False
 
+    def copy(self) -> "Tile":
+        return Wall()
+
 
 class Obstacle(Tile):
     def __init__(self):
@@ -170,6 +189,9 @@ class Obstacle(Tile):
     def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
         return False
 
+    def copy(self) -> "Tile":
+        return Obstacle()
+
 
 class FogOfWar(Tile):
     def __init__(self):
@@ -180,6 +202,9 @@ class FogOfWar(Tile):
 
     def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
         return True
+
+    def copy(self) -> "Tile":
+        return FogOfWar()
 
 
 class Decoration(Tile):
@@ -193,6 +218,9 @@ class Decoration(Tile):
 
     def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
         return not self.__blocking
+
+    def copy(self) -> "Tile":
+        return Decoration(self.__decoration, self.__blocking)
 
 
 class ControllableTile(Tile):
@@ -209,3 +237,6 @@ class ControllableTile(Tile):
     @property
     def controllable(self) -> Controllable:
         return self.__controllable
+
+    def copy(self) -> "Tile":
+        return ControllableTile(self.__controllable)
