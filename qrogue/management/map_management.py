@@ -56,12 +56,13 @@ class MapManager:
 
             MapManager.__instance = self
 
-    def move_on_cur_map(self, direction: Direction) -> bool:
-        return self.__cur_map.move(direction)
-
     @property
     def __hub_world(self) -> WorldMap:
         return self.__get_world(self.HUB_WORLD_NAME)
+
+    @property
+    def in_hub_world(self) -> bool:
+        return self.__cur_map is self.__hub_world
 
     def __get_world(self, level_name: str) -> WorldMap:
         if level_name[0] == "l" and level_name[1].isdigit():

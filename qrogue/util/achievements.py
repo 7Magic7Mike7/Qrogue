@@ -5,6 +5,7 @@ FinishedTutorial = "CompletedTutorial"
 EnteredPauseMenu = "EnteredPauseMenu"
 FirstDoorUnlocked = "UnlockedDoor"
 CompletedExpedition = "CompletedExpedition"
+UnlockedWorkbench = "UnlockedWorkbench"
 
 
 class AchievementType(enum.Enum):
@@ -120,7 +121,8 @@ class AchievementManager:
             self.__temp_level_storage[name] = Achievement(name, AchievementType.Event, score, 1)
 
     def finished_tutorial(self, tutorial: str):
-        self.__storage[tutorial] = Achievement(tutorial, AchievementType.Tutorial, 1, 1)
+        if tutorial not in self.__storage:
+            self.__storage[tutorial] = Achievement(tutorial, AchievementType.Tutorial, 1, 1)
 
     def finished_level(self, level: str):
         self.__storage[level] = Achievement(level, AchievementType.Level, 1, 1)

@@ -4,7 +4,6 @@ from qrogue.game.logic.actors.controllables import ControllableType
 from qrogue.game.world.tiles import TileCode, TileColorer
 
 
-
 class ColorRules:
     @staticmethod
     def apply_map_rules(widget: Widget) -> None:
@@ -19,9 +18,9 @@ class ColorRules:
     @staticmethod
     def apply_spaceship_rules(widget: Widget):
         widget.add_text_color_rule('\.', TileColorer.get_color(TileCode.SpaceshipWalk), 'contains', match_type='regex')
-        widget.add_text_color_rule('(P|R)', TileColorer.get_color(TileCode.SpaceshipWalk), 'contains',
-                                   match_type='regex')
-        widget.add_text_color_rule('(S|W|N)', TileColorer.get_color(TileCode.SpaceshipWalk), 'contains',
+        widget.add_text_color_rule('M', TileColorer.get_color(TileCode.Controllable), 'contains', match_type='regex')
+        widget.add_text_color_rule('R', TileColorer.get_color(TileCode.Npc), 'contains', match_type='regex')
+        widget.add_text_color_rule('(B|W|N|G)', TileColorer.get_color(TileCode.SpaceshipWalk), 'contains',
                                    match_type='regex')
 
     @staticmethod

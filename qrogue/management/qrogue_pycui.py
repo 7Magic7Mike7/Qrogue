@@ -6,7 +6,7 @@ from typing import List, Callable
 import py_cui
 
 from qrogue.game.logic.actors import Boss, Controllable, Enemy, Riddle, Robot
-from qrogue.game.world.map import CallbackPack, LevelMap, SpaceshipMap, WorldMap
+from qrogue.game.world.map import CallbackPack, SpaceshipMap, WorldMap, Map
 from qrogue.game.world.navigation import Direction
 from qrogue.game.world.tiles import WalkTriggerTile, Message, Collectible
 from qrogue.graphics.rendering import MultiColorRenderer
@@ -20,6 +20,7 @@ from qrogue.util.game_simulator import GameSimulator
 from qrogue.util.key_logger import KeyLogger
 
 from qrogue.management import MapManager, Pausing, SaveData
+from qrogue.util.scientist_texts import ScientistTexts
 
 
 class QrogueCUI(py_cui.PyCUI):
@@ -40,6 +41,7 @@ class QrogueCUI(py_cui.PyCUI):
         SaveData()  # todo load data
         MapManager(seed, self.__show_world, self.__start_level)
         Popup.update_check_achievement_function(SaveData.instance().achievement_manager.check_achievement)
+        ScientistTexts.set_check_achievement(SaveData.instance().achievement_manager.check_achievement)
         common_messages.set_show_callback(Popup.message)
         common_messages.set_ask_callback(ConfirmationPopup.ask)
         WalkTriggerTile.set_show_explanation_callback(Popup.from_message)
@@ -81,14 +83,18 @@ class QrogueCUI(py_cui.PyCUI):
         self.__state_machine.change_state(State.Menu, None)
         self.__game_started = False
 
+        def stop_playing(direction: Direction, controllable: Controllable):
+            return self.switch_to_menu(None)
+
         def open_world_view(direction: Direction, controllable: Controllable):
             return MapManager.instance().load_map(MapConfig.hub_world(), None)
 
         def start_test_level(direction: Direction, controllable: Controllable):
             return MapManager.instance().load_map(MapConfig.test_level(), None)
 
-        self.__spaceship_map = SpaceshipMap(seed, SaveData.instance().player, open_world_view, self.__use_workbench,
-                                            start_test_level)
+        self.__spaceship_map = SpaceshipMap(seed, SaveData.instance().player,
+                                            SaveData.instance().achievement_manager.check_achievement, Popup.message,
+                                            stop_playing, open_world_view, self.__use_workbench, start_test_level)
 
     def _refresh_height_width(self) -> None:
         try:
@@ -459,6 +465,8 @@ class QrogueCUI(py_cui.PyCUI):
         self.__state_machine.change_state(State.Spaceship, SaveData.instance())
 
     def switch_to_spaceship(self, data=None):
+        if not SaveData.instance().achievement_manager.check_achievement(achievements.FinishedTutorial):
+            Popup.scientist_says(HelpText.get(HelpTextType.GameIntroduction))
         # todo maybe data is the save data?
         if data:
             self.__spaceship.set_data(self.__spaceship_map)
@@ -488,9 +496,12 @@ class QrogueCUI(py_cui.PyCUI):
     def switch_to_navigation(self, data) -> None:
         if data is not None:
             self.__navigation.set_data(data)
+        if MapManager.instance().in_hub_world and \
+                not SaveData.instance().achievement_manager.check_achievement(achievements.FinishedTutorial):
+            Popup.scientist_says(HelpText.get(HelpTextType.NavigationIntroduction))
         self.apply_widget_set(self.__navigation)
 
-    def __start_level(self, seed: int, level: LevelMap) -> None:
+    def __start_level(self, seed: int, level: Map) -> None:
         SaveData.instance().achievement_manager.reset_level_events()
         robot = level.controllable_tile.controllable
         if isinstance(robot, Robot):

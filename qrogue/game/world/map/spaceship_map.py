@@ -4,13 +4,16 @@ from typing import Callable, List
 from qrogue.game.logic.actors import Robot, Controllable, Player
 from qrogue.game.world.navigation import Direction, Coordinate
 from qrogue.game.world.tiles import Tile, TileCode, WalkTriggerTile
-from qrogue.util import MyRandom, Config
+from qrogue.game.world.tiles.tiles import NpcTile
+from qrogue.util import MyRandom, Config, achievements
+from qrogue.util.scientist_texts import ScientistTexts
 
+SCIENTIST_TILE_REPRESENTATION = Config.scientist_name()[0]
 ascii_spaceship = \
     r"                                                                                              " + "\n" \
     r"                                    X---------------X                                         " + "\n" \
     r"                                   /ööööööööööööööööö)>                                       " + "\n" \
-    r"                                  /öööööööööööööööööö)>                           /)          " + "\n" \
+    r"                                  /öööööööBöööööööööö)>                           /)          " + "\n" \
     r"                                 /ööööööööööööööööööö)>                          /ö|          " + "\n" \
     r"                                |öööööööööööööööööööö)>                         /öö|          " + "\n" \
     r"                                |öööööööööööööööööööö)>                        /ööö|          " + "\n" \
@@ -23,7 +26,7 @@ ascii_spaceship = \
     r"            /ööööööööööööööööööööööööööööööööööööö\                     /öööööööööö|          " + "\n" \
     r"           /ööööööööWöööööööööööööööööööööööööööööö--------------------Xööööööööööö|          " + "\n" \
     r"          |öööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööö|          " + "\n" \
-    r"          |ööSööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööö|          " + "\n" \
+    r"          |ööNöööööööööRööööööööööööööööööööööööööööööööööööööööööööööööööööööööööö|          " + "\n" \
     r"          |öööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööö|          " + "\n" \
     r"           \ööööööööööööööööööööööööööööööööööööööö--------------------Xööööööööööö|          " + "\n" \
     r"            \ööööööööööööööööööööööööööööööööööööö/                     \öööööööööö|          " + "\n" \
@@ -44,7 +47,7 @@ ascii_spaceship = \
 
 
 __rm = random.Random()
-def spaceship_random() -> float:
+def _spaceship_random() -> float:
     return __rm.random()
 
 
@@ -89,7 +92,8 @@ class SpaceshipFreeWalkTile(Tile):
 
 
 class SpaceshipTriggerTile(WalkTriggerTile):
-    MAP_START_REPRESENTATION = "S"
+    BED_SPAWN_REPRESENTATION = "B"
+    MAP_START_REPRESENTATION = "N"
     MAP_WORKBENCH_REPRESENTATION = "W"
     MAP_GATE_LIBRARY_REPRESENTATION = "G"
     START_TEST_LEVEL = "l"
@@ -116,15 +120,15 @@ class OuterSpaceTile(Tile):
 
     def __init__(self):
         super(OuterSpaceTile, self).__init__(TileCode.OuterSpace)
-        self.__is_star = spaceship_random() < 0.007
+        self.__is_star = _spaceship_random() < 0.007
 
     def get_img(self):
         if self.__is_star:
-            if spaceship_random() < OuterSpaceTile.__STAR_DIE_CHANCE:
+            if _spaceship_random() < OuterSpaceTile.__STAR_DIE_CHANCE:
                 self.__is_star = False
             return "*"
         else:
-            if spaceship_random() < OuterSpaceTile.__STAR_BIRTH_CHANCE:
+            if _spaceship_random() < OuterSpaceTile.__STAR_BIRTH_CHANCE:
                 self.__is_star = True
             return self._invisible
 
@@ -143,13 +147,18 @@ class SpaceshipMap:
     HEIGHT = ascii_spaceship.count("\n")
     SPAWN_POS = Coordinate(x=25, y=16)
 
-    def __init__(self, seed: int, player: Player, open_world_view: Callable[[Direction, Controllable], None],
+    def __init__(self, seed: int, player: Player, check_achievement: Callable[[str], bool],
+                 show_message: Callable[[str, str], None], stop_playing: Callable[[Direction, Controllable], None],
+                 open_world_view: Callable[[Direction, Controllable], None],
                  use_workbench: Callable[[Direction, Controllable], None],
                  start_test_level: Callable[[Direction, Controllable], None]):
         self.__rm = MyRandom(seed)
         self.__player = player
+        self.__check_achievement = check_achievement
+        self.__show_message = show_message
+        self.__stop_playing_callback = stop_playing
         self.__open_world_view = open_world_view
-        self.__use_workbench = use_workbench
+        self.__use_workbench_callback = use_workbench
         self.__start_test_level = start_test_level
         self.__tiles = []
         row = []
@@ -158,6 +167,9 @@ class SpaceshipMap:
                 self.__tiles.append(row)
                 row = []
             else:
+                if character == SpaceshipTriggerTile.BED_SPAWN_REPRESENTATION:
+                    # we want to start on top of the bed
+                    SpaceshipMap.SPAWN_POS = Coordinate(len(row), len(self.__tiles))
                 tile = self.__ascii_to_tile(character)
                 row.append(tile)
 
@@ -170,12 +182,16 @@ class SpaceshipMap:
         return self.__player_pos
 
     def __ascii_to_tile(self, character: str) -> Tile:
-        if character == SpaceshipFreeWalkTile.MAP_REPRESENTATION:
+        if character == SCIENTIST_TILE_REPRESENTATION:
+            tile = NpcTile(Config.scientist_name(), self.__show_message, ScientistTexts.get)
+        elif character == SpaceshipFreeWalkTile.MAP_REPRESENTATION:
             tile = SpaceshipFreeWalkTile()
         elif character == OuterSpaceTile.MAP_REPRESENTATION:
             tile = OuterSpaceTile()
         elif character == SpaceshipWallTile.MAP_INVISIBLE_PRESENTATION:
             tile = SpaceshipWallTile(" ")
+        elif character == SpaceshipTriggerTile.BED_SPAWN_REPRESENTATION:
+            tile = SpaceshipTriggerTile(character, self.__stop_playing)
         elif character == SpaceshipTriggerTile.MAP_START_REPRESENTATION:
             tile = SpaceshipTriggerTile(character, self.__open_world_view)
         elif character == SpaceshipTriggerTile.MAP_WORKBENCH_REPRESENTATION:
@@ -218,6 +234,14 @@ class SpaceshipMap:
             return True
         else:
             return False
+
+    def __stop_playing(self, direction: Direction, controllable: Controllable):
+        if self.__check_achievement(achievements.FinishedTutorial):
+            self.__stop_playing_callback(direction, controllable)
+
+    def __use_workbench(self, direction: Direction, controllable: Controllable):
+        if self.__check_achievement(achievements.UnlockedWorkbench):
+            self.__use_workbench_callback(direction, controllable)
 
     def __trigger_event(self, event_id: str):
         # todo check if we really don't need this in the Spaceship

@@ -1,6 +1,7 @@
 
 from abc import ABC, abstractmethod
 from enum import Enum
+from typing import Callable
 
 import py_cui
 
@@ -26,6 +27,7 @@ class TileCode(Enum):
     Door = 4
 
     Controllable = 20
+    Npc = 25
     Enemy = 30
     Boss = 40
 
@@ -51,6 +53,7 @@ class TileColorer:
         TileCode.Door: py_cui.CYAN_ON_BLACK,
         TileCode.Collectible: py_cui.CYAN_ON_BLACK,
         TileCode.Controllable: py_cui.GREEN_ON_BLACK,
+        TileCode.Npc: py_cui.BLUE_ON_BLACK,
         TileCode.Enemy: py_cui.RED_ON_BLACK,
         TileCode.Boss: py_cui.BLACK_ON_RED,
         TileCode.SpaceshipWalk: py_cui.BLACK_ON_WHITE,
@@ -240,3 +243,22 @@ class ControllableTile(Tile):
 
     def copy(self) -> "Tile":
         return ControllableTile(self.__controllable)
+
+
+class NpcTile(Tile):
+    def __init__(self, name: str, show_message_callback: Callable[[str, str], None],
+                 get_text_callback: Callable[[], str]):
+        super(NpcTile, self).__init__(TileCode.Npc)
+        self.__name = name
+        self.__show_message = show_message_callback
+        self.__get_text = get_text_callback
+
+    def get_img(self):
+        return self.__name[0]
+
+    def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
+        self.__show_message(self.__name, self.__get_text())
+        return False
+
+    def copy(self) -> "Tile":
+        return NpcTile(self.__name, self.__show_message, self.__get_text)

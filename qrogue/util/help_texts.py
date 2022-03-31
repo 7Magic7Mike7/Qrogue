@@ -1,6 +1,7 @@
 from enum import Enum
 
 from qrogue.util.config import ColorConfig as CC
+from qrogue.util.scientist_texts import ScientistTexts
 
 
 class _HL:
@@ -116,6 +117,8 @@ class HelpTextType(Enum):
     Options = 7
     Welcome = 8
     FirstLevelIntroduction = 9
+    GameIntroduction = 10
+    NavigationIntroduction = 11
 
 
 class HelpText:
@@ -134,6 +137,12 @@ class HelpText:
             f"go to the {_HL.door} ({_HL.DOOR_TILE}) at the bottom!"
             f"\nThe fields with a {_HL.TUTORIAL_TILE} will show you the next steps. "
             f"Now close this dialog and start playing by pressing {_HL.space}.",
+
+        HelpTextType.GameIntroduction:
+            ScientistTexts.intro(),
+
+        HelpTextType.NavigationIntroduction:
+            ScientistTexts.navigation(),
 
         HelpTextType.FirstLevelIntroduction:
             f"Alright, let's have a look at our {_HL.display}.\n"
@@ -154,8 +163,8 @@ class HelpText:
             f"Pause                 -   {_HL.p}, {_HL.tab}\n"
             f"Selection shortcuts   -   {_HL.shortcuts}\n"
             #"\n"
-            f"Should you ever get stuck you can force-quit the game by pressing {_HL.ctrl_q} and then {_HL.q}. This "
-            "will still save the logs so it is the preferred option over simply closing the window!",
+            f"[Should you ever get stuck you can force-quit the game by pressing {_HL.ctrl_q} and then {_HL.q}. This "
+            "will still save the logs so it is the preferred option over simply closing the window!]",
 
         HelpTextType.Fight:
             f"{_HL.one_parenthesis} In the middle of the screen you see 3 {_HL.state_vectors}. The left one (Current "
