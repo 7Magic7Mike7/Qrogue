@@ -109,7 +109,7 @@ class SpaceshipTriggerTile(WalkTriggerTile):
     def get_img(self):
         return self.__img
 
-    def copy(self) -> "Tile":
+    def _copy(self) -> "Tile":
         return SpaceshipTriggerTile(self.__img, self.__callback)
 
 

@@ -128,7 +128,7 @@ class Door(WalkTriggerTile):
             return True
         return False
 
-    def copy(self) -> "Tile":
+    def _copy(self) -> "Tile":
         # this should not matter because at the moment we do not place doors inside rooms so this method is never called
         return Door(self.__direction, self.__open_state, self.__one_way_state, self.__event_check)
 

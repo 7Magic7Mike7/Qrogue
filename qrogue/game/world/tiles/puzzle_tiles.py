@@ -115,7 +115,7 @@ class Enemy(WalkTriggerTile):
             self.__enemy = self.__factory.produce(robot, self.__rm)
         self.__factory.start(robot, self.__enemy, direction)
 
-    def copy(self) -> "Tile":
+    def _copy(self) -> "Tile":
         return Enemy(self.__factory, self.__get_entangled_tiles, self.__id)
 
     def __str__(self) -> str:
@@ -151,6 +151,6 @@ class Boss(WalkTriggerTile):
         else:
             return self._invisible
 
-    def copy(self) -> "Tile":
+    def _copy(self) -> "Tile":
         # Bosses should not be duplicated in a level anyways, so it doesn't matter if we reference the same BossActor
         return Boss(self.__boss, self.__on_walk_callback)
