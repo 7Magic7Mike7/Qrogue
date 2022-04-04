@@ -2,13 +2,14 @@ from typing import Callable, Optional
 
 from qrogue.game.world.dungeon_generator import ExpeditionGenerator, QrogueLevelGenerator, QrogueWorldGenerator
 from qrogue.game.world.map import Map, WorldMap, MapType
-from qrogue.game.world.navigation import Coordinate, Direction
+from qrogue.game.world.navigation import Coordinate
 from qrogue.util import CommonQuestions, Config, Logger, MyRandom, MapConfig, achievements
 
 from qrogue.management.save_data import SaveData
 
 
 __MAP_ORDER = {
+    MapConfig.spaceship(): "l1v1",
     "l1v1": "l1v2",
     "l1v2": "l1v3",
     "l1v3": "l1v4",
@@ -17,13 +18,20 @@ __MAP_ORDER = {
 
 
 def get_next(cur_level: str) -> str:
-    if cur_level in __MAP_ORDER:
+    if cur_level == MapConfig.spaceship():
+        next_level = __MAP_ORDER[cur_level]
+        while SaveData.instance().achievement_manager.check_achievement(next_level):
+            if next_level in __MAP_ORDER:
+                next_level = __MAP_ORDER[next_level]
+            else:
+                break
+        return next_level
+    elif cur_level in __MAP_ORDER:
         return __MAP_ORDER[cur_level]
     return None
 
 
 class MapManager:
-    HUB_WORLD_NAME = "w0"
     __instance = None
 
     @staticmethod
@@ -50,7 +58,7 @@ class MapManager:
             if not success:
                 Logger.instance().throw(RuntimeError("Unable to build world map! Please download again and make sure "
                                                      "to not edit game data."))
-            self.__world_memory[self.HUB_WORLD_NAME] = hub_world
+            self.__world_memory[MapConfig.hub_world()] = hub_world
             self.__cur_map = hub_world
             self.__in_level = False
 
@@ -58,7 +66,7 @@ class MapManager:
 
     @property
     def __hub_world(self) -> WorldMap:
-        return self.__get_world(self.HUB_WORLD_NAME)
+        return self.__get_world(MapConfig.hub_world())
 
     @property
     def in_hub_world(self) -> bool:
@@ -81,28 +89,35 @@ class MapManager:
                     return world
                 else:
                     Logger.instance().error(f"Error! Unable to build map \"{world_name}\". Returning to HubWorld")
-        return self.__world_memory[self.HUB_WORLD_NAME]
+        return self.__world_memory[MapConfig.hub_world()]
 
     def __load_map(self, map_name: str, room: Coordinate):
-        if map_name[0].lower().startswith(MapConfig.world_map_prefix()): # and map_name[1].isdigit():
-            if map_name in self.__world_memory:
-                self.__show_world(self.__world_memory[map_name])
-            else:
-                player = SaveData.instance().player
-                check_achievement = SaveData.instance().achievement_manager.check_achievement
-                trigger_event = self.trigger_level_event  # SaveData.instance().achievement_manager.trigger_level_event
+        if map_name == MapConfig.spaceship():
+            next_map = get_next(MapConfig.spaceship())
+            if next_map is None:
+                next_map = MapConfig.hub_world()
+            self.load_map(next_map, None)
+        elif map_name in self.__world_memory:
+            self.__cur_map = self.__world_memory[map_name]
+            self.__in_level = False
+            self.__show_world(self.__cur_map)
+        elif map_name[0].lower().startswith(MapConfig.world_map_prefix()): # and map_name[1].isdigit():
+            player = SaveData.instance().player
+            check_achievement = SaveData.instance().achievement_manager.check_achievement
+            trigger_event = self.trigger_level_event  # SaveData.instance().achievement_manager.trigger_level_event
 
-                generator = QrogueWorldGenerator(self.__rm.get_seed(), player, check_achievement, trigger_event,
-                                                 self.__load_map)
-                try:
-                    world, success = generator.generate(map_name)
-                    if success:
-                        self.__cur_map = world
-                        self.__show_world(world)
-                    else:
-                        Logger.instance().error(f"Could not load world \"{map_name}\"!")
-                except FileNotFoundError:
-                    Logger.instance().error(f"Failed to open the specified world-file: {map_name}")
+            generator = QrogueWorldGenerator(self.__rm.get_seed(), player, check_achievement, trigger_event,
+                                             self.__load_map)
+            try:
+                world, success = generator.generate(map_name)
+                if success:
+                    self.__cur_map = world
+                    self.__in_level = False
+                    self.__show_world(self.__cur_map)
+                else:
+                    Logger.instance().error(f"Could not load world \"{map_name}\"!")
+            except FileNotFoundError:
+                Logger.instance().error(f"Failed to open the specified world-file: {map_name}")
         elif map_name.lower().startswith(MapConfig.level_map_prefix()):
             # todo maybe levels should be able to have arbitrary names aside from "w..." or "back"?
             check_achievement = SaveData.instance().achievement_manager.check_achievement
@@ -142,8 +157,9 @@ class MapManager:
                 self.__show_world(None)
             else:
                 # if we are currently in a world we return to the hub-world
-                self.__show_world(self.__hub_world)
                 self.__cur_map = self.__hub_world
+                self.__in_level = False
+                self.__show_world(self.__cur_map)
         else:
             Logger.instance().error(f"Invalid map to load: {map_name}")
 

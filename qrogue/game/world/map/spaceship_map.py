@@ -5,7 +5,7 @@ from qrogue.game.logic.actors import Robot, Controllable, Player
 from qrogue.game.world.navigation import Direction, Coordinate
 from qrogue.game.world.tiles import Tile, TileCode, WalkTriggerTile
 from qrogue.game.world.tiles.tiles import NpcTile
-from qrogue.util import MyRandom, Config, achievements
+from qrogue.util import MyRandom, Config, MapConfig, achievements
 from qrogue.util.scientist_texts import ScientistTexts
 
 SCIENTIST_TILE_REPRESENTATION = Config.scientist_name()[0]
@@ -26,11 +26,11 @@ ascii_spaceship = \
     r"            /ööööööööööööööööööööööööööööööööööööö\                     /öööööööööö|          " + "\n" \
     r"           /ööööööööWöööööööööööööööööööööööööööööö--------------------Xööööööööööö|          " + "\n" \
     r"          |öööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööö|          " + "\n" \
-    r"          |ööNöööööööööRööööööööööööööööööööööööööööööööööööööööööööööööööööööööööö|          " + "\n" \
+    r"          |ööNööööööööööRöööööööööööööööööööööööööööööööööööööööööööööööööööööööööö|          " + "\n" \
     r"          |öööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööööö|          " + "\n" \
     r"           \ööööööööööööööööööööööööööööööööööööööö--------------------Xööööööööööö|          " + "\n" \
     r"            \ööööööööööööööööööööööööööööööööööööö/                     \öööööööööö|          " + "\n" \
-    r"             \ööööööööööölööööööööööööööööööööööö/                       \ööööööööö|          " + "\n" \
+    r"             \öööööööööööQööööööööööööööööööööööö/                       \ööööööööö|          " + "\n" \
     r"              X-------------Xööööööööööööööööööö(                         \öööööööö|          " + "\n" \
     r"                             \ööööööööööööööööööö\                         \ööööööö|          " + "\n" \
     r"                              \ööööööööööööööööööö\                         \öööööö|          " + "\n" \
@@ -96,7 +96,7 @@ class SpaceshipTriggerTile(WalkTriggerTile):
     MAP_START_REPRESENTATION = "N"
     MAP_WORKBENCH_REPRESENTATION = "W"
     MAP_GATE_LIBRARY_REPRESENTATION = "G"
-    START_TEST_LEVEL = "l"
+    START_TEST_LEVEL = "Q"      # Quickstart
 
     def __init__(self, character: str, callback: Callable[[Direction, Robot], None]):
         super().__init__(TileCode.SpaceshipTrigger)
@@ -151,7 +151,7 @@ class SpaceshipMap:
                  show_message: Callable[[str, str], None], stop_playing: Callable[[Direction, Controllable], None],
                  open_world_view: Callable[[Direction, Controllable], None],
                  use_workbench: Callable[[Direction, Controllable], None],
-                 start_test_level: Callable[[Direction, Controllable], None]):
+                 load_map: Callable[[str, Coordinate], None]):
         self.__rm = MyRandom(seed)
         self.__player = player
         self.__check_achievement = check_achievement
@@ -159,7 +159,7 @@ class SpaceshipMap:
         self.__stop_playing_callback = stop_playing
         self.__open_world_view = open_world_view
         self.__use_workbench_callback = use_workbench
-        self.__start_test_level = start_test_level
+        self.__load_map = load_map
         self.__tiles = []
         row = []
         for character in ascii_spaceship:
@@ -200,9 +200,13 @@ class SpaceshipMap:
         #    tile = SpaceshipTriggerTile(character, self.open_gate_library)
         elif character == SpaceshipTriggerTile.START_TEST_LEVEL:
             if Config.debugging():
-                tile = SpaceshipTriggerTile(character, self.__start_test_level)
+                def start_test_level(direction: Direction, controllable: Controllable):
+                    self.__load_map(MapConfig.test_level(), None)
+                tile = SpaceshipTriggerTile(character, start_test_level)
             else:
-                tile = SpaceshipFreeWalkTile()
+                def start_newest_level(direction: Direction, controllable: Controllable):
+                    self.__load_map(MapConfig.spaceship(), None)
+                tile = SpaceshipTriggerTile(character, start_newest_level)
         else:
             tile = SpaceshipWallTile(character)
         return tile

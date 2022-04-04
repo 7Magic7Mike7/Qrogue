@@ -599,6 +599,10 @@ class MapConfig:
         return "expedition"
 
     @staticmethod
+    def spaceship() -> str:
+        return "spaceship"
+
+    @staticmethod
     def hub_world() -> str:
         return "w0"
 

@@ -84,17 +84,18 @@ class QrogueCUI(py_cui.PyCUI):
         self.__game_started = False
 
         def stop_playing(direction: Direction, controllable: Controllable):
-            return self.switch_to_menu(None)
+            if SaveData.instance().achievement_manager.finished_tutorial(achievements.FinishedTutorial):
+                self.switch_to_menu(None)
 
         def open_world_view(direction: Direction, controllable: Controllable):
-            return MapManager.instance().load_map(MapConfig.hub_world(), None)
-
-        def start_test_level(direction: Direction, controllable: Controllable):
-            return MapManager.instance().load_map(MapConfig.test_level(), None)
+            if SaveData.instance().achievement_manager.finished_tutorial(achievements.FinishedTutorial):
+                MapManager.instance().load_map(MapConfig.hub_world(), None)
 
         self.__spaceship_map = SpaceshipMap(seed, SaveData.instance().player,
                                             SaveData.instance().achievement_manager.check_achievement, Popup.message,
-                                            stop_playing, open_world_view, self.__use_workbench, start_test_level)
+                                            stop_playing, open_world_view, self.__use_workbench,
+                                            MapManager.instance().load_map)
+        self.__spaceship.set_data(self.__spaceship_map)
 
     def _refresh_height_width(self) -> None:
         try:
@@ -467,9 +468,6 @@ class QrogueCUI(py_cui.PyCUI):
     def switch_to_spaceship(self, data=None):
         if not SaveData.instance().achievement_manager.check_achievement(achievements.FinishedTutorial):
             Popup.scientist_says(HelpText.get(HelpTextType.GameIntroduction))
-        # todo maybe data is the save data?
-        if data:
-            self.__spaceship.set_data(self.__spaceship_map)
         self.apply_widget_set(self.__spaceship)
 
     def __continue_spaceship(self) -> None:
