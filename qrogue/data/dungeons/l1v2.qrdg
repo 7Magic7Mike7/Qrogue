@@ -163,12 +163,12 @@ default random [coin 1, coin 2, coin 3, coin 5]
 
 [Messages]
 // highlight text by encapsulating it in "//02abcd//" where "abcd" is the text to highlight and "02" one of the available styles: 01 is for tiles, 02 is for game objects, 03 for words and 04 for keys on the keyboard
-*wondering "Hmm, I wonder how we can reach the other side of these obstacles..." event *foundHiddenTreasure alternative *noMoreWondering
-*noMoreWondering "I'm glad that you found a way to the other side of these obstacles!"
+*wondering "Hmm, I wonder how we can reach the south side of these obstacles..." event *foundHiddenTreasure alternative *noMoreWondering
+*noMoreWondering "I'm glad that you found a way to the south side of these obstacles!"
 
 *allHXCombinations "The three puzzles of this room and the one from the first room should cover all"	// TODO
 
-*superPosTutorial "test"
+*superPosTutorial "Now that we have a //02Hadamard Gate// we can put //02Qubits// into //03Superposition//. This means that the state is no longer deterministic but rather somewhere inbetween 0 and 1. In the case of a single //02Hadamard Gate// this results in a 50% chance of measuring 0 and 50% chance of measuring 1. Since the probability corresponds to the values of the //02StateVector// //03squared// the target StateVector of this puzzle describes a 50% chance of measuring |00> and another 50% for |01>."
 *oneWayTutorial "Seems like this //02Hallway// is only passable from the other side. Guess we have to find another path then."
 *shopTutorial "This is a Shop"
 

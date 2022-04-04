@@ -607,6 +607,14 @@ class MapConfig:
         return "w0"
 
     @staticmethod
+    def first_world() -> str:
+        return "w1"
+
+    @staticmethod
+    def intro_level() -> str:
+        return "l1v1"
+
+    @staticmethod
     def test_level() -> str:
         return "l1v2"
 

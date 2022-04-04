@@ -6,7 +6,6 @@ from qrogue.game.world.navigation import Direction, Coordinate
 from qrogue.game.world.tiles import Tile, TileCode, WalkTriggerTile
 from qrogue.game.world.tiles.tiles import NpcTile
 from qrogue.util import MyRandom, Config, MapConfig, achievements
-from qrogue.util.scientist_texts import ScientistTexts
 
 SCIENTIST_TILE_REPRESENTATION = Config.scientist_name()[0]
 ascii_spaceship = \
@@ -96,7 +95,7 @@ class SpaceshipTriggerTile(WalkTriggerTile):
     MAP_START_REPRESENTATION = "N"
     MAP_WORKBENCH_REPRESENTATION = "W"
     MAP_GATE_LIBRARY_REPRESENTATION = "G"
-    START_TEST_LEVEL = "Q"      # Quickstart
+    QUICKSTART_LEVEL = "Q"      # Quickstart
 
     def __init__(self, character: str, callback: Callable[[Direction, Robot], None]):
         super().__init__(TileCode.SpaceshipTrigger)
@@ -147,13 +146,14 @@ class SpaceshipMap:
     HEIGHT = ascii_spaceship.count("\n")
     SPAWN_POS = Coordinate(x=25, y=16)
 
-    def __init__(self, seed: int, player: Player, check_achievement: Callable[[str], bool],
+    def __init__(self, seed: int, player: Player, scientist: NpcTile, check_achievement: Callable[[str], bool],
                  show_message: Callable[[str, str], None], stop_playing: Callable[[Direction, Controllable], None],
                  open_world_view: Callable[[Direction, Controllable], None],
                  use_workbench: Callable[[Direction, Controllable], None],
                  load_map: Callable[[str, Coordinate], None]):
         self.__rm = MyRandom(seed)
         self.__player = player
+        self.__scientist = scientist
         self.__check_achievement = check_achievement
         self.__show_message = show_message
         self.__stop_playing_callback = stop_playing
@@ -183,7 +183,7 @@ class SpaceshipMap:
 
     def __ascii_to_tile(self, character: str) -> Tile:
         if character == SCIENTIST_TILE_REPRESENTATION:
-            tile = NpcTile(Config.scientist_name(), self.__show_message, ScientistTexts.get)
+            tile = self.__scientist
         elif character == SpaceshipFreeWalkTile.MAP_REPRESENTATION:
             tile = SpaceshipFreeWalkTile()
         elif character == OuterSpaceTile.MAP_REPRESENTATION:
@@ -198,7 +198,7 @@ class SpaceshipMap:
             tile = SpaceshipTriggerTile(character, self.__use_workbench)
         # elif character == SpaceshipTriggerTile.MAP_GATE_LIBRARY_REPRESENTATION:
         #    tile = SpaceshipTriggerTile(character, self.open_gate_library)
-        elif character == SpaceshipTriggerTile.START_TEST_LEVEL:
+        elif character == SpaceshipTriggerTile.QUICKSTART_LEVEL:
             if Config.debugging():
                 def start_test_level(direction: Direction, controllable: Controllable):
                     self.__load_map(MapConfig.test_level(), None)

@@ -2,23 +2,23 @@ Qrogue<
 
 [Layout]
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-| __ .. __ .. __ .. __ .. __ .. __ .. __ |
+| la 12 SR == lb 10 ee .. __ .. __ .. __ |
+| 12    ..    ..    ..    ..    ..    .. |
+| tu .. __ .. __ .. __ .. __ .. __ .. __ |
 | ..    ..    ..    ..    ..    ..    .. |
-| SR == la == lb .. __ .. __ .. __ |
-| ==    ==    ..    ..    ..    ..    .. |
-| ee .. tu .. __ .. __ .. __ |
+| __ .. __ .. __ .. __ .. __ .. __ .. __ |
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 [Rooms]
-SR (World 1; North):
+SR (World 1; South):
 description "Spawn"
 teleport *back
 
-la (Level 1; North):
+la (visible Level 1; West):
 description "First level"
 teleport *l1v1
 
-lb (Level 2; North):
+lb (visible Level 2; North):
 description "Second level"
 teleport *l1v2
 
@@ -32,6 +32,8 @@ description "just an example level for easier copying of map parts"
 teleport *fullTemplate
 
 [Hallways]
+10 (event *w1Done; ; )
 11 (event *l1v1Done; ; )
+12 (event *l1v2Done; ; )
 
 >Qrogue

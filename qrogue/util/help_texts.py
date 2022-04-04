@@ -1,7 +1,6 @@
 from enum import Enum
 
 from qrogue.util.config import ColorConfig as CC
-from qrogue.util.scientist_texts import ScientistTexts
 
 
 class _HL:
@@ -68,6 +67,7 @@ class _HL:
     list_ = CC.highlight_word("list")
     locked = CC.highlight_word("locked")
     map_ = CC.highlight_word("map")
+    manual = CC.highlight_word("Manual")
     navigate = CC.highlight_word("navigate")
     not_zero = CC.highlight_word("not zero")
     one_hp = CC.highlight_word("1 HP")
@@ -117,8 +117,6 @@ class HelpTextType(Enum):
     Options = 7
     Welcome = 8
     FirstLevelIntroduction = 9
-    GameIntroduction = 10
-    NavigationIntroduction = 11
 
 
 class HelpText:
@@ -138,22 +136,16 @@ class HelpText:
             f"\nThe fields with a {_HL.TUTORIAL_TILE} will show you the next steps. "
             f"Now close this dialog and start playing by pressing {_HL.space}.",
 
-        HelpTextType.GameIntroduction:
-            ScientistTexts.intro(),
-
-        HelpTextType.NavigationIntroduction:
-            ScientistTexts.navigation(),
-
         HelpTextType.FirstLevelIntroduction:
-            f"Alright, let's have a look at our {_HL.display}.\n"
+            f"Alright, let's have a look at the {_HL.display}.\n"
             f"The HUD is at the very top and shows you the current {_HL.level}, the {_HL.energy} of the {_HL.robot} and the number "
             f"of {_HL.coins} and {_HL.keys} it is carrying. Always keep an eye on your current energy as 0 energy means we can no "
             f"longer control the {_HL.robot} and have to {_HL.abort} the {_HL.level}.\n"
-            f"The rest of the screen shows a {_HL.map_} of the area our Robot's currently in. Try to move the Robot to the "
-            f"top left corner of the current room.",
+            f"The rest of the screen shows a {_HL.map_} of the area our Robot's currently in. Next try to move the "
+            f"Robot to the top left corner of the current room.",
 
         HelpTextType.Controls:
-            "Don't forget to scroll down to see all controls!\n"
+            f"That's the {_HL.manual}. Have a look at it and don't forget to scroll down to see everything!\n"
             f"Move                  -   {_HL.arrow_keys}, {_HL.wasd}\n"
             f"Navigate Menus        -   {_HL.arrow_keys}, {_HL.wasd}\n"
             f"Confirm               -   {_HL.enter}, {_HL.space}\n"

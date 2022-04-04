@@ -3,14 +3,16 @@ from typing import Callable, Optional
 from qrogue.game.world.dungeon_generator import ExpeditionGenerator, QrogueLevelGenerator, QrogueWorldGenerator
 from qrogue.game.world.map import Map, WorldMap, MapType
 from qrogue.game.world.navigation import Coordinate
+from qrogue.management import StoryNarration
 from qrogue.util import CommonQuestions, Config, Logger, MyRandom, MapConfig, achievements
 
 from qrogue.management.save_data import SaveData
 
 
 __MAP_ORDER = {
-    MapConfig.spaceship(): "l1v1",
-    "l1v1": "l1v2",
+    MapConfig.spaceship(): MapConfig.intro_level(),
+    MapConfig.intro_level(): "w1",  # "hacky" fix to the problem that the player might use quickstart instead of
+                                    # navigation during MoonMission
     "l1v2": "l1v3",
     "l1v3": "l1v4",
     "l1v4": "w2",
@@ -148,24 +150,35 @@ class MapManager:
             else:
                 Logger.instance().error(f"Could not create expedition with seed = {seed}")
         elif map_name == MapConfig.back_map_string():
-            if self.__in_level:
-                # if we are currently in a level we return to the current world
-                self.__in_level = False
-                self.__show_world(self.__get_world(self.__cur_map.internal_name))
-            elif self.__cur_map is self.__hub_world:
-                # if we are currently in the hub-world we return to the spaceship
-                self.__show_world(None)
-            else:
-                # if we are currently in a world we return to the hub-world
-                self.__cur_map = self.__hub_world
-                self.__in_level = False
-                self.__show_world(self.__cur_map)
+            self.__load_back()
         else:
             Logger.instance().error(f"Invalid map to load: {map_name}")
 
+    def __load_next(self):
+        next_map = get_next(self.__cur_map.internal_name)
+        if next_map:
+            self.load_map(next_map, None)
+        else:
+            world = self.__get_world(self.__cur_map.internal_name)
+            self.__show_world(world)
+
+    def __load_back(self):
+        if self.__in_level:
+            # if we are currently in a level we return to the current world
+            self.__in_level = False
+            self.__show_world(self.__get_world(self.__cur_map.internal_name))
+        elif self.__cur_map is self.__hub_world or not StoryNarration.unlocked_free_navigation():
+            # we return to the spaceship if we are currently in the hub-world or haven't unlocked it yet
+            self.__show_world(None)
+        else:
+            # if we are currently in a world we return to the hub-world
+            self.__cur_map = self.__hub_world
+            self.__in_level = False
+            self.__show_world(self.__cur_map)
+
     def __proceed(self, confirmed: bool = True):
         if confirmed:
-            self.load_next()
+            self.__load_next()
 
     def trigger_level_event(self, event_id: str):
         if event_id.lower() == MapConfig.done_event_id():
@@ -176,21 +189,17 @@ class MapManager:
                 SaveData.instance().achievement_manager.finished_level(self.__cur_map.internal_name)
             elif self.__cur_map.get_type() is MapType.Expedition:
                 SaveData.instance().achievement_manager.add_to_achievement(achievements.CompletedExpedition, 1)
-            CommonQuestions.ProceedToNextMap.ask(self.__proceed)
+
+            if self.__cur_map.internal_name == MapConfig.intro_level():
+                self.__show_world(None)     # go back to the spaceship
+            else:
+                CommonQuestions.ProceedToNextMap.ask(self.__proceed)
         SaveData.instance().achievement_manager.trigger_level_event(event_id)
         if Config.debugging():
             print("triggered event: " + event_id)
 
     def load_map(self, map_name: str, spawn_room: Coordinate):
         if map_name.lower() == MapConfig.next_map_string():
-            self.load_next()
+            self.__load_next()
         else:
             self.__load_map(map_name, spawn_room)
-
-    def load_next(self):
-        next_map = get_next(self.__cur_map.internal_name)
-        if next_map:
-            self.load_map(next_map, None)
-        else:
-            world = self.__get_world(self.__cur_map.internal_name)
-            self.__show_world(world)

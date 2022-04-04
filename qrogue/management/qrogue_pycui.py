@@ -9,18 +9,19 @@ from qrogue.game.logic.actors import Boss, Controllable, Enemy, Riddle, Robot
 from qrogue.game.world.map import CallbackPack, SpaceshipMap, WorldMap, Map
 from qrogue.game.world.navigation import Direction
 from qrogue.game.world.tiles import WalkTriggerTile, Message, Collectible
+from qrogue.game.world.tiles.tiles import NpcTile
 from qrogue.graphics.rendering import MultiColorRenderer
 from qrogue.graphics.popups import Popup, MultilinePopup, ConfirmationPopup
 from qrogue.graphics.widgets import Renderable, SpaceshipWidgetSet, BossFightWidgetSet, ExploreWidgetSet, \
     FightWidgetSet, MenuWidgetSet, MyWidgetSet, NavigationWidgetSet, PauseMenuWidgetSet, RiddleWidgetSet, \
     ShopWidgetSet, WorkbenchWidgetSet
+from qrogue.management import StoryNarration
 from qrogue.util import achievements, common_messages, CheatConfig, ColorConfig, Config, GameplayConfig, HelpText, \
     HelpTextType, Logger, PathConfig, MapConfig, Controls, Keys
 from qrogue.util.game_simulator import GameSimulator
 from qrogue.util.key_logger import KeyLogger
 
 from qrogue.management import MapManager, Pausing, SaveData
-from qrogue.util.scientist_texts import ScientistTexts
 
 
 class QrogueCUI(py_cui.PyCUI):
@@ -41,7 +42,6 @@ class QrogueCUI(py_cui.PyCUI):
         SaveData()  # todo load data
         MapManager(seed, self.__show_world, self.__start_level)
         Popup.update_check_achievement_function(SaveData.instance().achievement_manager.check_achievement)
-        ScientistTexts.set_check_achievement(SaveData.instance().achievement_manager.check_achievement)
         common_messages.set_show_callback(Popup.message)
         common_messages.set_ask_callback(ConfirmationPopup.ask)
         WalkTriggerTile.set_show_explanation_callback(Popup.from_message)
@@ -83,15 +83,20 @@ class QrogueCUI(py_cui.PyCUI):
         self.__state_machine.change_state(State.Menu, None)
         self.__game_started = False
 
+        # init spaceship
         def stop_playing(direction: Direction, controllable: Controllable):
             if SaveData.instance().achievement_manager.finished_tutorial(achievements.FinishedTutorial):
                 self.switch_to_menu(None)
 
         def open_world_view(direction: Direction, controllable: Controllable):
-            if SaveData.instance().achievement_manager.finished_tutorial(achievements.FinishedTutorial):
-                MapManager.instance().load_map(MapConfig.hub_world(), None)
+            if StoryNarration.unlocked_navigation():
+                if StoryNarration.unlocked_free_navigation():
+                    MapManager.instance().load_map(MapConfig.hub_world(), None)
+                else:
+                    MapManager.instance().load_map(MapConfig.first_world(), None)
 
-        self.__spaceship_map = SpaceshipMap(seed, SaveData.instance().player,
+        scientist = NpcTile(Config.scientist_name(), Popup.message, StoryNarration.scientist_text)
+        self.__spaceship_map = SpaceshipMap(seed, SaveData.instance().player, scientist,
                                             SaveData.instance().achievement_manager.check_achievement, Popup.message,
                                             stop_playing, open_world_view, self.__use_workbench,
                                             MapManager.instance().load_map)
@@ -466,8 +471,7 @@ class QrogueCUI(py_cui.PyCUI):
         self.__state_machine.change_state(State.Spaceship, SaveData.instance())
 
     def switch_to_spaceship(self, data=None):
-        if not SaveData.instance().achievement_manager.check_achievement(achievements.FinishedTutorial):
-            Popup.scientist_says(HelpText.get(HelpTextType.GameIntroduction))
+        StoryNarration.returned_to_spaceship()
         self.apply_widget_set(self.__spaceship)
 
     def __continue_spaceship(self) -> None:
@@ -494,9 +498,7 @@ class QrogueCUI(py_cui.PyCUI):
     def switch_to_navigation(self, data) -> None:
         if data is not None:
             self.__navigation.set_data(data)
-        if MapManager.instance().in_hub_world and \
-                not SaveData.instance().achievement_manager.check_achievement(achievements.FinishedTutorial):
-            Popup.scientist_says(HelpText.get(HelpTextType.NavigationIntroduction))
+        StoryNarration.entered_navigation()
         self.apply_widget_set(self.__navigation)
 
     def __start_level(self, seed: int, level: Map) -> None:

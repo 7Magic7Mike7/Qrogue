@@ -6,7 +6,7 @@ Name = "Level 1-1"
 
 [Layout]
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-| SR == aa 11 bb == cc .. __ .. __ .. __ |
+| SR 10 aa 11 bb == cc .. __ .. __ .. __ |
 | ..    14    12    ..    ..    ..    .. |
 | __ .. ff 13 dd 11 ee .. __ .. __ .. __ |
 | ..    ..    ..    ..    ..    ..    .. |
@@ -18,14 +18,14 @@ SR (Spawn):
 #############
 # m _ _ _ _ #
 # _ _ _ _ _ #
-# _ _ _ _ _ #
+# _ _ _ _ m #
 # _ _ _ _ _ #
 # _ _ _ _ _ #
 #############
 m *helpTextControls trigger *sawManual
-//m *movingTutorial
+m *goToManual
 
-aa (Wild):
+aa (foggy Wild):
 #############
 # c _ _ 0 _ #
 # o o o _ o #
@@ -88,13 +88,15 @@ ff (Gate):
 #############
 # _ _ _ _ _ #
 # _ _ _ _ _ #
-# _ _ c _ _ #
+# _ _ m _ _ #
 # _ _ _ _ _ #
 # _ _ _ _ _ #
 #############
-c *hgate tutorial *receivedHgate trigger *done
+//c *hgate tutorial *receivedHgate trigger *done
+m *finishedLevel trigger *done
 
 [Hallways]
+10 (event *sawManual; ; )
 11 (locked; ; )
 12 (event *twoQubits; ; )
 13 (event *twoXgatesDone; ; )
@@ -127,12 +129,12 @@ default *coin
 
 [Messages]
 // highlight text by encapsulating it in "//02abcd//" where "abcd" is the text to highlight and "02" one of the available styles: 01 is for tiles, 02 is for game objects, 03 for words and 04 for keys on the keyboard
-*movingTutorial "Alright, you can control the movement of the //02Robot// with your //04Movement Keys// (Arrow Keys and WASD). Try to stir the Robot to the top left //01.//." event *sawManual alternative *movingDone
+*goToManual "Wait, you should go to the //03manual// in the top left corner first." event *sawManual alternative *movingDone
 *movingDone "Great! You're ready to enter the next room to the right."
 
-*puzzle1 "Look the //010// over there is a puzzle! Let's try if we can solve it. And the //01c// is a //02Collectible// that might come in handy later."
+*puzzle1 "Look, the //010// over there is a puzzle! Let's try to solve it. And the //01c// is a //02Collectible// that might come in handy later."
 
-*lockedDoorTutorial "The door to our right is locked. Let's see if we can find a //02Key// somewhere." event *pickedUpKey alternative *lockedDoorDone
+*lockedDoorTutorial "The door to our right is locked. Maybe we can find a //02Key// somewhere." event *pickedUpKey alternative *lockedDoorDone
 *lockedDoorDone "Oh the //02Door// is //03locked//. Luckily we've already found a //02Key// to open it!"
 
 *foundKeyLockUnknown "Cool, that's a //02Key//. It will be very useful should we encounter a locked //02Door//." event *sawLockedDoor alternative *foundKeyLockKnown
@@ -146,5 +148,7 @@ default *coin
 *twoXgatesAlt "So for this we need //03two X gates//. Luckily we already managed to get a second one!"
 
 *receivedHgate "WOW! A Hadamard gate! This gives us so many new possibilities. We can use it to bring a //02Qubit// into //03Superposition//."
+
+*finishedLevel "Great, you did it!"
 
 >Qrogue

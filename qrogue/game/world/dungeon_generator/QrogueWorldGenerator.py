@@ -188,7 +188,7 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
         else:
             room = MetaRoom(self.__load_map, orientation, message, level_to_load, m_type, num)
         visible, foggy = visibility
-        if visible:
+        if visible or self.__check_achievement(level_to_load):  # always show finished levels
             room.make_visible()
         elif foggy:
             room.in_sight()
