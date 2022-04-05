@@ -125,6 +125,7 @@ version will likely work but are not recommended.
 - Move in game world: Arrow Keys, wasd
 - Scroll in popup: Arrow Up/Arrow Down, W/S
 - Close popup: Space, Enter, Escape
+- Reopen last popup: H
 - Confirm selection (also in question popup): Space, Enter
 - Cancel/back (also in question popup): Shift+A, Shift+Left, Backspace
 - Pause: P, Tab

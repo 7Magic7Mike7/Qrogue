@@ -9,6 +9,7 @@ class Popup:
     __check_achievement = None
     __popup_queue = []
     __cur_popup = None
+    __last_popup = None
 
     @staticmethod
     def update_popup_functions(show_popup_callback: Callable[[str, str, int], None]) -> None:
@@ -20,12 +21,18 @@ class Popup:
 
     @staticmethod
     def on_close() -> bool:
+        Popup.__last_popup = Popup.__cur_popup
         Popup.__cur_popup = None
         if len(Popup.__popup_queue) > 0:
             next_popup = Popup.__popup_queue.pop(0)
             next_popup.show()
             return False        # don't fully close popup
         return True     # popup no longer needed so we can fully close it
+
+    @staticmethod
+    def reopen():
+        if Popup.__last_popup and Popup.__cur_popup is None:
+            Popup.__last_popup.show()
 
     @staticmethod
     def message(title: str, text: str, color: int = PopupConfig.default_color(), overwrite: bool = False):

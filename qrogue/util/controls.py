@@ -20,8 +20,9 @@ class Keys(IntEnum):
     PopupScrollDown = PopupClose + 2
     PopupScrollUpFast = PopupClose + 3
     PopupScrollDownFast = PopupClose + 4
+    PopupReopen = PopupClose + 5
 
-    Action = PopupScrollDownFast + 1
+    Action = PopupReopen + 1
     Cancel = Action + 1
     Pause = Cancel + 1
 
@@ -96,6 +97,7 @@ class Controls:
             [KEY_DOWN_ARROW, KEY_S_LOWER],
             [KEY_RIGHT_ARROW, KEY_D_LOWER],
             [KEY_LEFT_ARROW, KEY_A_LOWER],
+            [KEY_H_LOWER],
 
             [KEY_SPACE, KEY_ENTER],     # action
             [KEY_BACKSPACE, KEY_A_UPPER, KEY_SHIFT_LEFT],  # cancel/back
