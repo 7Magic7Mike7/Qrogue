@@ -548,7 +548,7 @@ class QrogueCUI(py_cui.PyCUI):
         if data is not None:
             # we cannot do this in the same if because we need to apply the widget set first otherwise the focus will
             # be on the wrong widget after closing the popup
-            if not SaveData.instance().achievement_manager.check_achievement(achievements.FinishedTutorial):
+            if not StoryNarration.unlocked_navigation():
                 Popup.scientist_says(HelpText.get(HelpTextType.FirstLevelIntroduction))
 
     def __continue_explore(self) -> None:

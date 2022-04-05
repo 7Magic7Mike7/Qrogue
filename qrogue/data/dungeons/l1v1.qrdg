@@ -6,7 +6,7 @@ Name = "Level 1-1"
 
 [Layout]
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-| SR 10 aa 11 bb == cc .. __ .. __ .. __ |
+| SR 10 aa 11 bb 11 cc .. __ .. __ .. __ |
 | ..    14    12    ..    ..    ..    .. |
 | __ .. ff 13 dd 11 ee .. __ .. __ .. __ |
 | ..    ..    ..    ..    ..    ..    .. |
@@ -47,7 +47,7 @@ bb (Wild):
 # o o _ o o #
 # o o _ o o #
 #############
-0 *base0 *coin tutorial *emptyPuzzle
+0 *base0 *key tutorial *emptyPuzzle
 c *energy
 
 

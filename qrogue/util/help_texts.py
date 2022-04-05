@@ -9,6 +9,7 @@ class _HL:
     circuit = CC.highlight_object("Circuit")
     coins = CC.highlight_object("Coins")
     collec = CC.highlight_object("Collectibles")
+    current_state = CC.highlight_object("Current State")
     door = CC.highlight_object("Door")
     enemies = CC.highlight_object("Enemies")
     energy = CC.highlight_object("Energy")
@@ -16,9 +17,11 @@ class _HL:
     key = CC.highlight_object("Key")
     keys = CC.highlight_object("Keys")
 
+    puzzle = CC.highlight_object("Puzzle")
     quantum_circuit = CC.highlight_object("Quantum Circuit")
     quantum_gates = CC.highlight_object("Quantum Gates")
     quantum_state = CC.highlight_object("Quantum State")
+    qubit = CC.highlight_object("Qubit")
     qubits = CC.highlight_object("Qubits")
     qubit_s = CC.highlight_object("Qubit(s)")
     riddles = CC.highlight_object("Riddles")
@@ -66,6 +69,7 @@ class _HL:
     level = CC.highlight_word("Level")
     list_ = CC.highlight_word("list")
     locked = CC.highlight_word("locked")
+    loses_energy = CC.highlight_word("loses some Energy")
     map_ = CC.highlight_word("map")
     manual = CC.highlight_word("Manual")
     navigate = CC.highlight_word("navigate")
@@ -74,6 +78,7 @@ class _HL:
     one_parenthesis = CC.highlight_word("1)")
     options = CC.highlight_word("Options")
 
+    position = CC.highlight_word("Position")
     quantum_computing = CC.highlight_word("Quantum Computing")
     quantum_algorithm = CC.highlight_word("Quantum Algorithm")
     reenter = CC.highlight_word("re-enter")
@@ -85,16 +90,18 @@ class _HL:
     use = CC.highlight_word("use")
     vanishes = CC.highlight_word("vanishes")
     win = CC.highlight_word("win")
+    zero_energy = CC.highlight_word("0 energy")
     zeros = CC.highlight_word("zeros")
 
     # keys
     arrow_keys = CC.highlight_key("Arrow Keys")
     backspace = CC.highlight_key("Backspace")
     ctrl_q = CC.highlight_key("CTRL+Q")
-    p = CC.highlight_key("P")
-    q = CC.highlight_key("Q")
+    h = CC.highlight_key("H")
     enter = CC.highlight_key("Enter")
     escape = CC.highlight_key("ESC")
+    p = CC.highlight_key("P")
+    q = CC.highlight_key("Q")
     shift_a = CC.highlight_key("Shift+A")
     shortcuts = CC.highlight_key("0") + ", " + CC.highlight_key("1") + ", ... , " + CC.highlight_key("9")
     space = CC.highlight_key("Space")
@@ -138,20 +145,23 @@ class HelpText:
 
         HelpTextType.FirstLevelIntroduction:
             f"Alright, let's have a look at the {_HL.display}.\n"
-            f"The HUD is at the very top and shows you the current {_HL.level}, the {_HL.energy} of the {_HL.robot} and the number "
-            f"of {_HL.coins} and {_HL.keys} it is carrying. Always keep an eye on your current energy as 0 energy means we can no "
-            f"longer control the {_HL.robot} and have to {_HL.abort} the {_HL.level}.\n"
+            f"The HUD is at the very top and shows you the current {_HL.level}, the {_HL.energy} of the "
+            f"{_HL.robot} and the number of {_HL.coins} and {_HL.keys} it is carrying. Always keep an eye on your "
+            f"current energy as {_HL.zero_energy} means we can no longer control the {_HL.robot} and have to "
+            f"{_HL.abort} the {_HL.level}.\n"
             f"The rest of the screen shows a {_HL.map_} of the area our Robot's currently in. Next try to move the "
             f"Robot to the top left corner of the current room.",
 
         HelpTextType.Controls:
-            f"That's the {_HL.manual}. Have a look at it and don't forget to scroll down to see everything!\n"
+            f"That's the {_HL.manual}. You can always reopen it from the pause menu. Have a look at it and don't "
+            f"forget to scroll down to see everything!\n"
             f"Move                  -   {_HL.arrow_keys}, {_HL.wasd}\n"
-            f"Navigate Menus        -   {_HL.arrow_keys}, {_HL.wasd}\n"
+            f"Navigate menus        -   {_HL.arrow_keys}, {_HL.wasd}\n"
             f"Confirm               -   {_HL.enter}, {_HL.space}\n"
             f"Cancel/Back           -   {_HL.backspace}, {_HL.shift_a}\n"
-            f"Scroll in Popup       -   {_HL.arrow_keys}, {_HL.wasd}\n"
-            f"Close Popup           -   {_HL.enter}, {_HL.space}, {_HL.escape}\n"
+            f"Scroll in message     -   {_HL.arrow_keys}, {_HL.wasd}\n"
+            f"Close message         -   {_HL.enter}, {_HL.space}, {_HL.escape}\n"
+            f"Reopen last message   -   {_HL.h}\n"
             f"Pause                 -   {_HL.p}, {_HL.tab}\n"
             f"Selection shortcuts   -   {_HL.shortcuts}\n"
             #"\n"
@@ -159,29 +169,35 @@ class HelpText:
             "will still save the logs so it is the preferred option over simply closing the window!]",
 
         HelpTextType.Fight:
-            f"{_HL.one_parenthesis} In the middle of the screen you see 3 {_HL.state_vectors}. The left one (Current "
-            f"State) corresponds to the output of your {_HL.circuit} (more on that later) while the right one "
-            f"(Target State) is constant and depending on the "
-            f"{_HL.enemy} you fight. You {_HL.win} the Fight by setting your Current State to the Target State by "
-            f"adapting the mentioned Circuit. In between those two you can see their {_HL.difference}. If "
-            f"it shows only {_HL.zeros} you reached your target and won the Fight!\n"
-            f"{_HL.two_parenthesis} Underneath the StateVectors is your {_HL.circuit}. Currently you have 2 "
-            f"{_HL.qubits} (q0, q1) and 0 out of 3 {_HL.gates} applied to them. The before mentioned Current "
-            f"{_HL.state} reflects the output (out) of your {_HL.circuit}.\n"
+            f"{_HL.one_parenthesis} Below the HUD you can see three columns. The left one "
+            f"(Current State) corresponds to the output of your {_HL.circuit} (more on that later) while the right one "
+            f"(Target State) is constant and shows the Puzzle we want to solve. As soon as the current state matches "
+            f"the target state the Puzzle will count as solved. The difference of the two states (i.e. what is still "
+            f"missing to solve the Puzzle) is displayed in the middle one of the three columns. Therefore, if it only "
+            f"shows {_HL.zeros} you win!\n"
+        
+            f"{_HL.two_parenthesis} Underneath the States (also called StateVectors due to their shape) is the "
+            f"{_HL.circuit}. Currently we have 1 {_HL.qubit} q0 and 0 out of 3 {_HL.gates} applied to them. The "
+            f"before mentioned {_HL.current_state} reflects the output (out) of the {_HL.circuit} and depends on the "
+            f"{_HL.gates} we applied.\n"
+            
             f"{_HL.three_parenthesis} On the bottom left you can choose the {_HL.action} you want to take: \n"
-            f"{_HL.add_remove} - Change your {_HL.circuit} with the {_HL.gates} available to you (selection to the right). "
-            f"After selecting a {_HL.gate} you are asked on which {_HL.qubit_s} you want to place it. If you select an "
-            f"already used one it will be {_HL.removed} from your Circuit instead.\n"
-            f"{_HL.commit} - Commit your changes and update your {_HL.circuit}. If Difference is {_HL.not_zero} you "
-            f"lose {_HL.one_hp}.\n"
-            f"{_HL.items} - Use one of your Items to make the Fight {_HL.easier} (you don't have any Items yet!)\n"
+            f"{_HL.add_remove} - Change your {_HL.circuit} with the {_HL.gates} available to you (selection to the "
+            f"right). After selecting a {_HL.gate} you have to define where to place it - so on which {_HL.qubit_s} "
+            f"and on which {_HL.position}. If you select an already placed Gate you can either move it to a different "
+            f"position or remove it from the Circuit.\n"
+            f"{_HL.commit} - Commit your changes and update your Current State. If Difference is {_HL.not_zero} the "
+            f"Robot {_HL.loses_energy}.\n"
+            f"{_HL.items} - Use one of your Items to make the Puzzle {_HL.easier} (you don't have any Items yet!)\n"
             f"{_HL.flee} - Try to flee from the Fight. This is {_HL.chance_based} and you lose {_HL.one_hp} if you "
             f"fail to flee (Note: for Tutorial purposes you {_HL.cannot_flee} in this Room!)\n"
+            
             f"{_HL.four_parenthesis} The bottom right {_HL.display_details} based on the action you chose on the left "
             f"side. E.g. you can select the {_HL.gate} you want to use in your {_HL.circuit}.\n"
+            
             f"{_HL.five_parenthesis} Use your {_HL.arrow_keys} to {_HL.navigate} between your available options at the "
             f"bottom and press {_HL.space} to {_HL.use} the selected one. Again, your goal now is to reach the "
-            f"{_HL.target_state} of the {_HL.enemy}. If you succeed, you will get a {_HL.reward}!",
+            f"{_HL.target_state} of the {_HL.puzzle}. If you succeed, you will get a {_HL.reward}!",
 
         HelpTextType.Riddle:
             f"{_HL.riddles} are very similar to {_HL.fights}. You have a {_HL.target_state} you need to reach (Difference is zero) "

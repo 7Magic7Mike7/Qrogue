@@ -9,6 +9,7 @@ from qrogue.util import ColorConfig, MapConfig
 class _StoryProgress(enum.Enum):
     RobotShowcase = 0
     MoonMission = 1
+    EntangledMars = 2
 
     NewHorizons = 10    # w1 done, now we can travel to new solar systems (other worlds)
 
@@ -16,6 +17,7 @@ class _StoryProgress(enum.Enum):
     def progress_order() -> List["_StoryProgress"]:
         return [
             _StoryProgress.RobotShowcase, _StoryProgress.MoonMission,
+            _StoryProgress.EntangledMars,
             _StoryProgress.NewHorizons,
         ]
 
@@ -53,6 +55,12 @@ class StoryNarration:
         return ordered_progress.index(progress) >= ordered_progress.index(_StoryProgress.MoonMission)
 
     @staticmethod
+    def completed_tutorial() -> bool:
+        progress = StoryNarration.__get_story_progress()
+        ordered_progress = _StoryProgress.progress_order()
+        return ordered_progress.index(progress) >= ordered_progress.index(_StoryProgress.EntangledMars)
+
+    @staticmethod
     def unlocked_free_navigation() -> bool:
         progress = StoryNarration.__get_story_progress()
         ordered_progress = _StoryProgress.progress_order()
@@ -68,13 +76,13 @@ class StoryNarration:
             msg_tile = ColorConfig.highlight_tile(".")
             t_tile = ColorConfig.highlight_tile("t")
             Popup.scientist_says(f"In the navigation view you can see rooms representing the different locations "
-                                 f"{l_tile} we can navigate to. E.g. to the right you can see {l2_tile} which "
-                                 f"represents our current destination: the {moon}. Aside from the number of the "
-                                 f"location each room also has a description of the location you can access by moving "
-                                 f"onto {msg_tile} as well as {t_tile} to actually travel there.\n"
+                                 f"{l_tile} we can navigate to. E.g. at the top of the room to the right you can see "
+                                 f"{l2_tile} which represents our current destination: the {moon}. Aside from the "
+                                 f"number of the location each room also has a description of the location you can "
+                                 f"access by moving onto {msg_tile} as well as {t_tile} to actually travel there.\n"
                                  f"Right now you are in the navigation hub where you can find a general description "
                                  f"and {t_tile} will exit the navigation view.\n"
-                                 f"PS: Later you can also go back to earth to redo our previous showcase - but right "
+                                 f"PS: Later we can also go back to earth to redo our previous task - but right "
                                  f"now there is an exciting moon mission and we don't want to waste any more time!")
 
     @staticmethod
@@ -99,7 +107,7 @@ class StoryNarration:
         if progress is _StoryProgress.RobotShowcase:
             q_tile = ColorConfig.highlight_tile("Q")
             return "We can finally present the full potential of our Circuit-Robots! And if the authority sees how " \
-                   "good you can control them, they'll even let us join the upcoming moon mission!!\n" \
+                   "good you are at controlling them, they'll even let us join the upcoming moon mission!!\n" \
                    "...\n" \
                    "You look still a bit tired... but no worries, I will guide you through it step by step!\n" \
                    f"Move onto the {q_tile} on the bottom to start."

@@ -3,6 +3,7 @@ from typing import Callable, Optional
 from qrogue.game.world.dungeon_generator import ExpeditionGenerator, QrogueLevelGenerator, QrogueWorldGenerator
 from qrogue.game.world.map import Map, WorldMap, MapType
 from qrogue.game.world.navigation import Coordinate
+from qrogue.graphics.popups import Popup
 from qrogue.management import StoryNarration
 from qrogue.util import CommonQuestions, Config, Logger, MyRandom, MapConfig, achievements
 
@@ -169,7 +170,11 @@ class MapManager:
             self.__show_world(self.__get_world(self.__cur_map.internal_name))
         elif self.__cur_map is self.__hub_world or not StoryNarration.unlocked_free_navigation():
             # we return to the spaceship if we are currently in the hub-world or haven't unlocked it yet
-            self.__show_world(None)
+            if StoryNarration.completed_tutorial():
+                self.__show_world(None)
+            else:
+                # if we haven't completed the tutorial yet, we are not allowed to go back manually
+                Popup.scientist_says("No no, we should do the moon mission now. Let's head over to the next room!")
         else:
             # if we are currently in a world we return to the hub-world
             self.__cur_map = self.__hub_world
