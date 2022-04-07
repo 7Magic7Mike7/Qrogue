@@ -612,7 +612,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         else:
             pool_id = ctx.REFERENCE(ref_index).getText()
             reward_pool = self.__load_reward_pool(pool_id)
-            reward = self.__rm.get_element(reward_pool)     # todo check if we should wrap it in a factory?
+            reward = reward_pool.produce(self.__rm)
 
         attempts = self.visit(ctx.integer())
         riddle = Riddle(stv, reward, attempts)
