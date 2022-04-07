@@ -69,7 +69,7 @@ collectible :   (KEY_LITERAL integer | COIN_LITERAL integer | ENERGY_LITERAL int
                 QUBIT_LITERAL integer?) ;
 
 messages : MESSAGES message* ;
-message : REFERENCE TEXT (EVENT_LITERAL REFERENCE ALTERNATIVE_LITERAL REFERENCE)? ;    // alternative message if a certain event already happened
+message : REFERENCE TEXT+ (EVENT_LITERAL REFERENCE ALTERNATIVE_LITERAL REFERENCE)? ;    // alternative message if a certain event already happened
 
 // TOKEN
 

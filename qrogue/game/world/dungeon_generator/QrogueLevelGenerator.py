@@ -391,13 +391,15 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
     def visitMessage(self, ctx: QrogueDungeonParser.MessageContext) -> Message:
         m_id = self.__normalize_reference(ctx.REFERENCE(0).getText())
-        text = ctx.TEXT().getText()[1:-1]
+        msg = ""
+        for text in ctx.TEXT():
+            msg = f"{msg}\n{text.getText()[1:-1]}"
         if ctx.EVENT_LITERAL():
             event = self.__normalize_reference(ctx.REFERENCE(1).getText())
             msg_ref = self.__normalize_reference(ctx.REFERENCE(2).getText())
-            return Message(m_id, Config.scientist_name(), text, event, msg_ref)
+            return Message(m_id, Config.scientist_name(), msg, event, msg_ref)
         else:
-            return Message.create_simple(m_id, text)
+            return Message.create_simple(m_id, msg)
 
     def visitMessages(self, ctx: QrogueDungeonParser.MessagesContext):
         self.__messages.clear()
