@@ -18,6 +18,7 @@ class _HL:
     keys = CC.highlight_object("Keys")
 
     puzzle = CC.highlight_object("Puzzle")
+    puzzles = CC.highlight_object("Puzzles")
     quantum_circuit = CC.highlight_object("Quantum Circuit")
     quantum_gates = CC.highlight_object("Quantum Gates")
     quantum_state = CC.highlight_object("Quantum State")
@@ -54,8 +55,6 @@ class _HL:
     enemy = CC.highlight_object("Enemy")
     entanglement = CC.highlight_word("Entanglement")
     exit_ = CC.highlight_word("Exit")
-    fights = CC.highlight_word("Fights")
-    fight = CC.highlight_word("Fight")
     five_parenthesis = CC.highlight_word("5)")
     flee = CC.highlight_word("Flee")
     four_parenthesis = CC.highlight_word("4)")
@@ -63,7 +62,7 @@ class _HL:
     gate = CC.highlight_object("Gate")
     give_up = CC.highlight_word("\"Give up\"")
     help_ = CC.highlight_word("Manual")
-    hp = CC.highlight_word("don't lose HP")
+    hp = CC.highlight_word("don't lose Energy")
     items = CC.highlight_word("Items")
     leave = CC.highlight_word("\"-Leave-\"")
     level = CC.highlight_word("Level")
@@ -200,12 +199,13 @@ class HelpText:
             f"{_HL.target_state} of the {_HL.puzzle}. If you succeed, you will get a {_HL.reward}!",
 
         HelpTextType.Riddle:
-            f"{_HL.riddles} are very similar to {_HL.fights}. You have a {_HL.target_state} you need to reach (Difference is zero) "
+            f"{_HL.riddles} are very similar to {_HL.puzzles}. You have a {_HL.target_state} you need to reach "
+            f"(Difference is zero) "
             f"by adapting your {_HL.circuit}. The main difference is that you {_HL.hp} if you fail but instead 1 "
-            f"{_HL.attempt} for solving the Riddle. When you have no more Attempts left the Riddle {_HL.vanishes} "
-            "together with its reward - which is usually much better than the ones from Fights. Also fleeing (or in "
+            f"{_HL.attempt} for solving the Riddle. When you have no more attempts left the Riddle {_HL.vanishes} "
+            "together with its reward - which is usually much better than the ones from Puzzles. Also fleeing (or in "
             f"this case {_HL.give_up}) will always work but obviously cost you your current {_HL.attempt} which is "
-            f"why you are notified if this would lead to 0 Attempts left.",
+            f"why you are notified if this would lead to 0 attempts left.",
 
         HelpTextType.Shop:
             f"In the {_HL.shop} you can use {_HL.coins} you got (e.g. from Fights) to buy various {_HL.collec}. On the "
