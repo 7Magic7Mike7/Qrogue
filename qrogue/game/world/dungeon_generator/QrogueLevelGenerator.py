@@ -393,7 +393,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         m_id = self.__normalize_reference(ctx.REFERENCE(0).getText())
         msg = ""
         for text in ctx.TEXT():
-            msg = f"{msg}\n{text.getText()[1:-1]}"
+            msg += f"{text.getText()[1:-1]}\n"
         if ctx.EVENT_LITERAL():
             event = self.__normalize_reference(ctx.REFERENCE(1).getText())
             msg_ref = self.__normalize_reference(ctx.REFERENCE(2).getText())
