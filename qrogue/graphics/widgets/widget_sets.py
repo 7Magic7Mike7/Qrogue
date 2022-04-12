@@ -186,7 +186,7 @@ class MenuWidgetSet(MyWidgetSet):
         self.__start_simulation()
 
     def __options(self) -> None:
-        Popup.message("Gameplay Config", GameplayConfig.to_file_text())
+        Popup.generic_info("Gameplay Config", GameplayConfig.to_file_text())
 
     def __exit(self) -> None:
         self.__stop()
@@ -261,16 +261,16 @@ class PauseMenuWidgetSet(MyWidgetSet):
 
     def __help_text(self, index: int = 0) -> bool:
         if index < len(PauseMenuWidgetSet.__HELP_TEXTS[0]):
-            Popup.message(f"{PauseMenuWidgetSet.__HELP_TEXTS[0][index]}", PauseMenuWidgetSet.__HELP_TEXTS[1][index])
+            Popup.generic_info(f"{PauseMenuWidgetSet.__HELP_TEXTS[0][index]}", PauseMenuWidgetSet.__HELP_TEXTS[1][index])
             return False
         return True
 
     def __achievements(self) -> bool:
         if self.__achievement_manager:
             text = self.__achievement_manager.to_display_string()
-            Popup.message("Current Achievement status", text)
+            Popup.generic_info("Current Achievement status", text)
         else:
-            Popup.message("Error", "No achievements available yet!")
+            Popup.generic_info("Error", "No achievements available yet!")
         return False
 
     def __options(self) -> bool:
@@ -283,7 +283,7 @@ class PauseMenuWidgetSet(MyWidgetSet):
     def __options_text(self, index: int = 0) -> bool:
         if index == 0:
             path = PathConfig.user_data_path(Config.game_config_file())
-            Popup.message(f"Configuration located at {path}", GameplayConfig.to_file_text())
+            Popup.generic_info(f"Configuration located at {path}", GameplayConfig.to_file_text())
             return False
         else:
             return True
@@ -704,7 +704,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                     text += f"\nYou gained the following effect:\n{consumable.effect_description()}"
                     self._details.set_data(data=([text], [self.__continue_consuming]))
                 else:
-                    Popup.message(consumable.name(), f"Failed to consume {consumable.name()}")
+                    Popup.generic_info(consumable.name(), f"Failed to consume {consumable.name()}")
                 self.render()
                 return False
             else:
@@ -722,7 +722,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
     def __show_help_popup(self, index: int = 0) -> bool:
         if 0 <= index < self._robot.backpack.used_capacity:
             instruction = self._robot.backpack.get(index)
-            Popup.message(instruction.name(), instruction.description())
+            Popup.generic_info(instruction.name(), instruction.description())
             return False
         return True
 

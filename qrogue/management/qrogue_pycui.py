@@ -42,11 +42,11 @@ class QrogueCUI(py_cui.PyCUI):
         SaveData()  # todo load data
         MapManager(seed, self.__show_world, self.__start_level)
         Popup.update_check_achievement_function(SaveData.instance().achievement_manager.check_achievement)
-        common_messages.set_show_callback(Popup.message)
+        common_messages.set_show_callback(Popup.generic_info)
         common_messages.set_ask_callback(ConfirmationPopup.ask)
         WalkTriggerTile.set_show_explanation_callback(Popup.from_message)
         Message.set_show_callback(Popup.from_message)
-        Collectible.set_pickup_message_callback(Popup.message)
+        Collectible.set_pickup_message_callback(Popup.generic_info)
 
         self.__key_logger = None  #KeyLogger(seed)
         self.__simulator = None
@@ -95,11 +95,10 @@ class QrogueCUI(py_cui.PyCUI):
                 else:
                     MapManager.instance().load_map(MapConfig.first_world(), None)
 
-        scientist = NpcTile(Config.scientist_name(), Popup.message, StoryNarration.scientist_text)
+        scientist = NpcTile(Config.scientist_name(), Popup.npc_says, StoryNarration.scientist_text)
         self.__spaceship_map = SpaceshipMap(seed, SaveData.instance().player, scientist,
-                                            SaveData.instance().achievement_manager.check_achievement, Popup.message,
-                                            stop_playing, open_world_view, self.__use_workbench,
-                                            MapManager.instance().load_map)
+                                            SaveData.instance().achievement_manager.check_achievement, stop_playing,
+                                            open_world_view, self.__use_workbench, MapManager.instance().load_map)
         self.__spaceship.set_data(self.__spaceship_map)
 
     def _refresh_height_width(self) -> None:
@@ -141,14 +140,15 @@ class QrogueCUI(py_cui.PyCUI):
             super(QrogueCUI, self)._handle_key_presses(self.__controls.get_key(Keys.Action))
             if self.__simulator.version == Config.version():
                 __space = "Space"
-                Popup.message("Starting Simulation", f"You started a run with \nseed = {self.__simulator.seed}\n"
+                Popup.generic_info("Starting Simulation", f"You started a run with \nseed = {self.__simulator.seed}\n"
                                                      f"recorded at {self.__simulator.time}.\n"
                                                      f"Press {ColorConfig.highlight_key(__space)} to execute the "
                                                      "simulation step by step. Alternatively, if you keep it pressed "
                                                      "the simulation will be executed automatically with short delays "
                                                      "after each step until you let go of Space again.")
             else:
-                Popup.message("Simulating other version", "You try to simulate the run of a different game version.\n"
+                Popup.generic_info("Simulating other version", "You try to simulate the run of a different game "
+                                                               "version.\n"
                                                           f"Your version: {Config.version()}\n"
                                                           f"Version you try to simulate: {self.__simulator.version}\n"
                                                           "This is not supported and can cause problems. Only "
@@ -184,7 +184,7 @@ class QrogueCUI(py_cui.PyCUI):
                         self.__key_logger.log(self.__controls, key_pressed)
                     super(QrogueCUI, self)._handle_key_presses(key_pressed)
         elif key_pressed in self.__controls.get_keys(Keys.StopSimulator):
-            Popup.message("Simulator", "stopped Simulator")
+            Popup.generic_info("Simulator", "stopped Simulator")
             self.__simulator = None
         else:
             if self._ready_for_input(key_pressed, gameplay=False):
@@ -192,7 +192,7 @@ class QrogueCUI(py_cui.PyCUI):
                 if key:
                     super(QrogueCUI, self)._handle_key_presses(key)
                 else:
-                    Popup.message("Simulator", "finished")
+                    Popup.generic_info("Simulator", "finished")
                     self.__simulator = None
 
     def _draw(self, stdscr) -> None:    # overridden because we want to ignore mouse events
@@ -516,14 +516,14 @@ class QrogueCUI(py_cui.PyCUI):
             Logger.instance().throw(ValueError(f"Tried to start a level with a non-Robot: {robot}"))
 
     def __game_over(self) -> None:
-        Popup.message("Game Over!", "You Robot was out of energy so your mission failed. You will return to the "
+        Popup.generic_info("Game Over!", "You Robot was out of energy so your mission failed. You will return to the "
                                     "Spaceship now.")
         self.__state_machine.change_state(State.Spaceship, None)
 
     def __won_tutorial(self) -> None:
         self.switch_to_menu(None)
         bell = ColorConfig.highlight_word("Bell")
-        Popup.message("You won!", f"Congratulations, you defeated {bell} and successfully played the Tutorial!")
+        Popup.generic_info("You won!", f"Congratulations, you defeated {bell} and successfully played the Tutorial!")
 
     def __start_fight(self, robot: Robot, enemy: Enemy, direction: Direction) -> None:
         self.__state_machine.change_state(State.Fight, (robot, enemy))
@@ -537,7 +537,7 @@ class QrogueCUI(py_cui.PyCUI):
     def __pause_game(self) -> None:
         self.__state_machine.change_state(State.Pause, None)
         if not SaveData.instance().achievement_manager.check_achievement(achievements.EnteredPauseMenu):
-            Popup.message("Pause", HelpText.get(HelpTextType.Pause))
+            Popup.generic_info("Pause", HelpText.get(HelpTextType.Pause))
             SaveData.instance().achievement_manager.finished_tutorial(achievements.EnteredPauseMenu)
 
     def switch_to_explore(self, data) -> None:
