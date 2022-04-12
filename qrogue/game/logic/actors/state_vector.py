@@ -6,6 +6,7 @@ from qiskit import transpile, QuantumCircuit
 from qiskit.providers.aer import StatevectorSimulator
 
 from qrogue.game.logic.collectibles import Instruction
+from qrogue.util import Logger
 from qrogue.util.util_functions import is_power_of_2
 
 
@@ -90,6 +91,13 @@ class StateVector:
     def get_diff(self, other: "StateVector") -> "StateVector":
         if self.size == other.size:
             diff = [self.__amplitudes[i] - other.__amplitudes[i] for i in range(self.size)]
+            return StateVector(diff)
+        elif self.size < other.size:
+            Logger.instance().info("Requested difference between StateVectors of different sizes! "
+                                   f"self = {self}, other = {other}; padding self with the needed number of 0s")
+            diff = [0] * other.size
+            for i in range(self.size):
+                diff[i] = self.__amplitudes[i] - other.__amplitudes[i]
             return StateVector(diff)
         else:
             raise ValueError("Cannot calculate the difference between StateVectors of different size! "
