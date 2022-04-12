@@ -158,7 +158,7 @@ class ExplicitEnemyFactory(EnemyFactory):
         self.__reward_pool = reward_pool
         super().__init__(start_fight_callback, DummyTargetDifficulty())
 
-    def produce(self, robot: Robot, rm: MyRandom, flee_chance: float) -> Enemy:
+    def produce(self, robot: Robot, rm: MyRandom, flee_chance: float = None) -> Enemy:
         stv = rm.get_element(self.__stv_pool)
         reward = rm.get_element(self.__reward_pool)
         return DummyEnemy(stv, reward, flee_chance)

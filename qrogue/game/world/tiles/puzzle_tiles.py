@@ -112,7 +112,8 @@ class Enemy(WalkTriggerTile):
 
     def __fight(self, robot: Robot, direction: Direction):
         if self.__enemy is None:
-            self.__enemy = self.__factory.produce(robot, self.__rm)
+            # the higher the amplitude the easier it should be to flee
+            self.__enemy = self.__factory.produce(robot, self.__rm, self.__amplitude)
         self.__factory.start(robot, self.__enemy, direction)
 
     def _copy(self) -> "Tile":
