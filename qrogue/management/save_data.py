@@ -2,7 +2,7 @@
 from qrogue.game.logic.actors import Player, Robot
 from qrogue.game.logic.actors.controllables import TestBot, LukeBot
 from qrogue.game.world.map import CallbackPack
-from qrogue.util import Logger, PathConfig, AchievementManager, RandomManager
+from qrogue.util import Logger, PathConfig, AchievementManager, RandomManager, CommonPopups, CheatConfig
 from qrogue.util.achievements import Achievement
 
 
@@ -68,11 +68,16 @@ class SaveData:
             return self.__available_robots[index]
         return None
 
-    def save(self) -> bool:
-        data = ""
-        data += f"{SaveData.__ROBOT_SECTION}\n"
-        data += f"{SaveData.__COLLECTIBLE_SECTION}\n"
-        data += f"{SaveData.__ACHIEVEMENT_SECTION}\n"
-        data += f"{self.achievement_manager.to_string()}\n"
-        PathConfig.new_save_file(data)
-        return True
+    def save(self) -> CommonPopups:
+        if CheatConfig.did_cheat():
+            return CommonPopups.NoSavingWithCheats
+        try:
+            data = ""
+            data += f"{SaveData.__ROBOT_SECTION}\n"
+            data += f"{SaveData.__COLLECTIBLE_SECTION}\n"
+            data += f"{SaveData.__ACHIEVEMENT_SECTION}\n"
+            data += f"{self.achievement_manager.to_string()}\n"
+            PathConfig.new_save_file(data)
+            return CommonPopups.SavingSuccessful
+        except:
+            return CommonPopups.SavingFailed

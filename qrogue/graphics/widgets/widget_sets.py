@@ -211,7 +211,7 @@ class PauseMenuWidgetSet(MyWidgetSet):
     )
 
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
-                 continue_callback: Callable[[], None], save_callback: Callable[[], bool],
+                 continue_callback: Callable[[], None], save_callback: Callable[[], CommonPopups],
                  exit_run_callback: Callable[[], None]):
         super().__init__(controls, logger, root, render)
         self.__continue_callback = continue_callback
@@ -248,10 +248,8 @@ class PauseMenuWidgetSet(MyWidgetSet):
         return False
 
     def __save(self) -> bool:
-        if self.__save_callback():
-            CommonPopups.SavingSuccessful.show()
-        else:
-            CommonPopups.SavingFailed.show()
+        common_popup = self.__save_callback()
+        common_popup.show()
         return False
 
     def __help(self) -> bool:
