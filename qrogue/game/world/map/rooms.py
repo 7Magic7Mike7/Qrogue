@@ -60,7 +60,7 @@ class Area(ABC):
         return self.__id
 
     @property
-    def _is_visible(self) -> bool:
+    def is_visible(self) -> bool:
         return self.__is_visible or CheatConfig.revealed_map()
 
     @property
@@ -68,7 +68,7 @@ class Area(ABC):
         return self.__is_visible
 
     @property
-    def _is_in_sight(self) -> bool:
+    def is_in_sight(self) -> bool:
         return self.__is_in_sight
 
     @property
@@ -97,10 +97,10 @@ class Area(ABC):
         :return: the Tile at the requested position
         """
         if 0 <= x < self.__width and 0 <= y < self.__height:
-            if self._is_visible or force:
+            if self.is_visible or force:
                 return self.__tiles[y][x]
             else:
-                if self._is_in_sight:
+                if self.is_in_sight:
                     return Area.__FOG
                 else:
                     return Area.void()
@@ -111,10 +111,10 @@ class Area(ABC):
         if row >= len(self.__tiles):
             return "".join([Invalid().get_img()] * Area.UNIT_WIDTH)
 
-        if self._is_visible:
+        if self.is_visible:
             tiles = [t.get_img() for t in self.__tiles[row]]
             return "".join(tiles)
-        elif self._is_in_sight:
+        elif self.is_in_sight:
             fog_str = Area.__FOG.get_img()
             return fog_str * self.__width
         else:
@@ -261,7 +261,10 @@ class Hallway(Area):
     def get_row_str(self, row: int) -> str:
         if self.__hide:
             if self.__door.check_event():
-                self.make_visible()
+                if self.__room1.is_visible or self.__room2.is_visible:
+                    self.make_visible()
+                #elif self.__room1.in_sight or self.__room2.in_sight:
+                #    self.in_sight()
                 self.__hide = False
         return super(Hallway, self).get_row_str(row)
 
@@ -515,7 +518,7 @@ class MetaRoom(CopyAbleRoom):
         if self._is_visible_value:
             # don't use Room's implementation but Area's
             super(CopyAbleRoom, new_room).make_visible()
-        elif self._is_in_sight:
+        elif self.is_in_sight:
             new_room.in_sight()
         return new_room
 
@@ -545,7 +548,7 @@ class CustomRoom(CopyAbleRoom):
         if self._is_visible_value:
             # don't use Room's implementation but Area's
             super(Room, new_room).make_visible()
-        elif self._is_in_sight:
+        elif self.is_in_sight:
             new_room.in_sight()
         return new_room
 
