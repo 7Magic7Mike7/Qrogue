@@ -147,7 +147,7 @@ class SpaceshipMap:
     SPAWN_POS = Coordinate(x=25, y=16)
 
     def __init__(self, seed: int, player: Player, scientist: NpcTile, check_achievement: Callable[[str], bool],
-                 show_message: Callable[[str, str], None], stop_playing: Callable[[Direction, Controllable], None],
+                 stop_playing: Callable[[Direction, Controllable], None],
                  open_world_view: Callable[[Direction, Controllable], None],
                  use_workbench: Callable[[Direction, Controllable], None],
                  load_map: Callable[[str, Coordinate], None]):
@@ -155,7 +155,6 @@ class SpaceshipMap:
         self.__player = player
         self.__scientist = scientist
         self.__check_achievement = check_achievement
-        self.__show_message = show_message
         self.__stop_playing_callback = stop_playing
         self.__open_world_view = open_world_view
         self.__use_workbench_callback = use_workbench
