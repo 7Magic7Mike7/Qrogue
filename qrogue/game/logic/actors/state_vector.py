@@ -84,7 +84,7 @@ class StateVector:
         """
         diff = [self.__amplitudes[i] - other.__amplitudes[i] for i in range(self.size)]
         for val in diff:
-            if val < -self.__TOLERANCE or self.__TOLERANCE < val:
+            if abs(val) < -self.__TOLERANCE or self.__TOLERANCE < abs(val):
                 return False
         return True
 
