@@ -21,7 +21,7 @@ class Popup:
 
     @staticmethod
     def on_close() -> bool:
-        if Popup.__cur_popup.is_reopenable:
+        if Popup.__cur_popup and Popup.__cur_popup.is_reopenable:
             Popup.__last_popup = Popup.__cur_popup
         Popup.__cur_popup = None
         if len(Popup.__popup_queue) > 0:
