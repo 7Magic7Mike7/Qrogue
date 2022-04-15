@@ -92,7 +92,7 @@ class Controls:
             [KEY_DOWN_ARROW, KEY_S_LOWER],
             [KEY_LEFT_ARROW, KEY_A_LOWER],
             # popups
-            [KEY_ESCAPE, KEY_SPACE, KEY_ENTER],
+            [KEY_SPACE, KEY_ENTER, KEY_ESCAPE],     # KEY_ESCAPE is not allowed to be at the first position because then the simulator would stop itself
             [KEY_UP_ARROW, KEY_W_LOWER],
             [KEY_DOWN_ARROW, KEY_S_LOWER],
             [KEY_RIGHT_ARROW, KEY_D_LOWER],
@@ -129,7 +129,7 @@ class Controls:
         :return: an element of Key corresponding to the action executed by pressing key_pressed
         """
         for i in range(len(self.__pycui_keys)):
-            if key_pressed == self.__pycui_keys[i]:
+            if key_pressed in self.__pycui_keys[i]:
                 return Keys.from_index(i)
         return Keys.Invalid
 
@@ -152,6 +152,18 @@ class Controls:
         if 0 <= index < len(keys):
             return keys[index]
         return keys[0]
+
+    def from_int(self, key_pressed: int) -> Keys:
+        """
+        Mostly used for debugging to be able to print meaningful names. But be aware that the returned Key is not
+        necessarily the pressed one since there are redundancies (e.g. scrolling in popups is the same as moving).
+        :param key_pressed:
+        :return:
+        """
+        for i in range(len(self.__pycui_keys)):
+            if key_pressed in self.__pycui_keys[i]:
+                return Keys.from_index(i)
+        return Keys.Invalid
 
     @property
     def action(self) -> List[int]:

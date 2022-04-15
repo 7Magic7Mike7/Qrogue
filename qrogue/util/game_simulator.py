@@ -1,6 +1,5 @@
 from qrogue.util.config import PathConfig, GameplayConfig, Config
 from qrogue.util.controls import Controls, Keys
-from qrogue.util.key_logger import KeyLogger
 from qrogue.util.logger import Logger
 
 
@@ -20,22 +19,26 @@ class GameSimulator:
         self.__cur_index = -1
         self.__notification_popup = True
 
+        # retrieve the name of the map that was played
+        second_line = self.__cur_chunk.index((bytes("\n", GameSimulator.__ENCODING)))
+        self.__map_name = str(self.__cur_chunk[0:second_line], GameSimulator.__ENCODING)
+
         # change the config so we can reproduce the run (e.g. different auto reset would destroy the simulation)
-        if self.__cur_chunk.startswith(bytes(KeyLogger.HEADER, GameSimulator.__ENCODING)):
-            version_start = len(KeyLogger.HEADER)
+        if self.__cur_chunk[second_line+1:].startswith(bytes(Config.HEADER(), GameSimulator.__ENCODING)):
+            version_start = second_line + len(Config.HEADER())
             version_end = self.__cur_chunk.index(bytes("\n", GameSimulator.__ENCODING), version_start)
             self.__version = str(self.__cur_chunk[version_start:version_end], GameSimulator.__ENCODING)
-            seed_start = self.__cur_chunk.index(bytes(KeyLogger.SEED_HEAD, GameSimulator.__ENCODING), version_end) \
-                         + len(KeyLogger.SEED_HEAD)
+            seed_start = self.__cur_chunk.index(bytes(Config.SEED_HEAD(), GameSimulator.__ENCODING), version_end) \
+                         + len(Config.SEED_HEAD())
             seed_end = self.__cur_chunk.index(bytes("\n", GameSimulator.__ENCODING), seed_start)
             self.__seed = int(self.__cur_chunk[seed_start:seed_end])
-            time_start = self.__cur_chunk.index(bytes(KeyLogger.TIME_HEAD, GameSimulator.__ENCODING), seed_end) \
-                         + len(KeyLogger.TIME_HEAD)
+            time_start = self.__cur_chunk.index(bytes(Config.TIME_HEAD(), GameSimulator.__ENCODING), seed_end) \
+                         + len(Config.TIME_HEAD())
             time_end = self.__cur_chunk.index(bytes("\n", GameSimulator.__ENCODING), time_start)
             self.__time = str(self.__cur_chunk[time_start:time_end], GameSimulator.__ENCODING)
 
-            start = self.__cur_chunk.index(bytes(KeyLogger.CONFIG_HEAD, GameSimulator.__ENCODING), seed_end) \
-                    + len(KeyLogger.CONFIG_HEAD) + 1  # start at the first line after CONFIG_HEAD
+            start = self.__cur_chunk.index(bytes(Config.CONFIG_HEAD(), GameSimulator.__ENCODING), seed_end) \
+                    + len(Config.CONFIG_HEAD()) + 1  # start at the first line after CONFIG_HEAD
             end = self.__cur_chunk.index(bytes("\n\n", GameSimulator.__ENCODING), start)
             config = str(self.__cur_chunk[start:end], GameSimulator.__ENCODING)
             GameplayConfig.from_log_text(config)
@@ -51,10 +54,23 @@ class GameSimulator:
             print()
             print()
             print("Keys:")
-            while self.next():
-                pass
+            key_str = ""
+            while True:
+                k = self.next()
+                if k is None:
+                    break
+                key_str += f"{k} ({self.__controls.from_int(k)}), "
+            print(key_str)
             print("finished")
             print()
+
+    @property
+    def map_name(self) -> str:
+        return self.__map_name
+
+    @property
+    def simulates_over_world(self) -> bool:
+        return self.__map_name == "meta"
 
     @property
     def version(self) -> str:
@@ -97,6 +113,7 @@ class GameSimulator:
         :return: the key to press or None if the simulation finished
         """
         if self.__notification_popup:
+            # close the notification popup if it is still open before using any real simulation keys
             self.__notification_popup = False
             return self.__controls.get_key(Keys.PopupClose)
         while self.__cur_chunk is not None:

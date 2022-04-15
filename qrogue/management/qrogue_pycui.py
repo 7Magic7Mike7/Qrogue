@@ -19,7 +19,7 @@ from qrogue.management import StoryNarration
 from qrogue.util import achievements, common_messages, CheatConfig, ColorConfig, Config, GameplayConfig, HelpText, \
     HelpTextType, Logger, PathConfig, MapConfig, Controls, Keys
 from qrogue.util.game_simulator import GameSimulator
-from qrogue.util.key_logger import KeyLogger
+from qrogue.util.key_logger import KeyLogger, OverWorldKeyLogger
 
 from qrogue.management import MapManager, Pausing, SaveData
 
@@ -48,7 +48,7 @@ class QrogueCUI(py_cui.PyCUI):
         Message.set_show_callback(Popup.from_message)
         Collectible.set_pickup_message_callback(Popup.generic_info)
 
-        self.__key_logger = None  #KeyLogger(seed)
+        self.__key_logger = KeyLogger()
         self.__simulator = None
         self.__state_machine = StateMachine(self)
         self.__controls = Controls()   # todo load later from file!
@@ -81,7 +81,6 @@ class QrogueCUI(py_cui.PyCUI):
         self.__init_keys()
 
         self.__state_machine.change_state(State.Menu, None)
-        self.__game_started = False
 
         # init spaceship
         def stop_playing(direction: Direction, controllable: Controllable):
@@ -132,12 +131,14 @@ class QrogueCUI(py_cui.PyCUI):
         if not path.endswith(".qrkl"):
             path += ".qrkl"
         try:
-            self.__simulator = GameSimulator(self.__controls, path, in_keylog_folder=True)
+            self.__simulator = GameSimulator(self.__controls, path, in_keylog_folder=True, debug_print=False)
             self.__menu.simulate_with_seed(self.__simulator.seed)
-            # go back to the original position of the cursor and start the game
-            super(QrogueCUI, self)._handle_key_presses(self.__controls.get_key(Keys.SelectionUp))
-            super(QrogueCUI, self)._handle_key_presses(self.__controls.get_key(Keys.SelectionUp))
-            super(QrogueCUI, self)._handle_key_presses(self.__controls.get_key(Keys.Action))
+
+            if self.__simulator.simulates_over_world:
+                # go back to the original position of the cursor and start the game
+                super(QrogueCUI, self)._handle_key_presses(self.__controls.get_key(Keys.SelectionUp))
+            else:
+                MapManager.instance().load_map(self.__simulator.map_name, None)
             if self.__simulator.version == Config.version():
                 __space = "Space"
                 Popup.generic_info("Starting Simulation", f"You started a run with \nseed = {self.__simulator.seed}\n"
@@ -180,8 +181,11 @@ class QrogueCUI(py_cui.PyCUI):
                 if key_pressed == py_cui.keys.KEY_ESCAPE:
                     pass    # ignore ESC because this makes you leave the CUI
                 else:
-                    if GameplayConfig.log_keys() and self.__game_started and not self.is_simulating:
-                        self.__key_logger.log(self.__controls, key_pressed)
+                    if GameplayConfig.log_keys() and not self.is_simulating:
+                        if MapManager.instance().in_level:
+                            self.__key_logger.log(self.__controls, key_pressed)
+                        else:
+                            OverWorldKeyLogger.instance().log(self.__controls, key_pressed)
                     super(QrogueCUI, self)._handle_key_presses(key_pressed)
         elif key_pressed in self.__controls.get_keys(Keys.StopSimulator):
             Popup.generic_info("Simulator", "stopped Simulator")
@@ -486,6 +490,8 @@ class QrogueCUI(py_cui.PyCUI):
         self.apply_widget_set(self.__workbench)
 
     def switch_to_menu(self, data=None) -> None:
+        if self.__key_logger and self.__key_logger.is_initialized:
+            self.__key_logger.flush_if_useful()
         self.__menu.new_seed()
         self.apply_widget_set(self.__menu)
 
@@ -507,11 +513,10 @@ class QrogueCUI(py_cui.PyCUI):
         SaveData.instance().achievement_manager.reset_level_events()
         robot = level.controllable_tile.controllable
         if isinstance(robot, Robot):
+            self.__key_logger.reinit(seed, level.internal_name)  # the seed used to build the Map
+
             self.__pause.set_data(robot, level.name, SaveData.instance().achievement_manager)
             self.__state_machine.change_state(State.Explore, level)
-
-            self.__key_logger = KeyLogger(seed)     # the seed used to build the Map
-            self.__game_started = True
         else:
             Logger.instance().throw(ValueError(f"Tried to start a level with a non-Robot: {robot}"))
 

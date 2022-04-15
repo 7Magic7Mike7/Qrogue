@@ -75,6 +75,10 @@ class MapManager:
     def in_hub_world(self) -> bool:
         return self.__cur_map is self.__hub_world
 
+    @property
+    def in_level(self) -> bool:
+        return self.__cur_map.get_type() is MapType.Level
+
     def __get_world(self, level_name: str) -> WorldMap:
         if level_name[0] == "l" and level_name[1].isdigit():
             world_name = "w" + level_name[1]

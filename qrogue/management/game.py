@@ -2,6 +2,7 @@
 from qrogue.util import Logger, RandomManager
 
 from qrogue.management.qrogue_pycui import QrogueCUI
+from qrogue.util.key_logger import OverWorldKeyLogger
 
 
 class GameHandler:
@@ -21,6 +22,7 @@ class GameHandler:
             # create the singletons
             RandomManager(seed)
             Logger(seed)
+            OverWorldKeyLogger().reinit(seed, "meta")
 
             self.__renderer = QrogueCUI(seed)
 

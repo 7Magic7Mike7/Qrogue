@@ -11,6 +11,7 @@ from qrogue.game.world.map import CallbackPack
 from qrogue.game.world.navigation import Coordinate
 from qrogue.management import GameHandler, SaveData
 from qrogue.util import Config, Logger, RandomManager, PathConfig, GameplayConfig, CheatConfig
+from qrogue.util.key_logger import OverWorldKeyLogger
 
 
 def __init_singletons(seed: int):
@@ -117,6 +118,7 @@ def start_game(data_folder: str = None, user_data_folder: str = None):
             else:
                 Logger.instance().error("Failed to save the game.", show=False)
         Logger.instance().flush()
+        OverWorldKeyLogger.instance().flush_if_useful()
         print("[Qrogue] Successfully flushed all logs and shut down the game without any problems. See you next time!")
     else:
         print(f"[Qrogue] Error #{return_code}:")

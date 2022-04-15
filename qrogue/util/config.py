@@ -151,9 +151,12 @@ class PathConfig:
         return os.path.join(PathConfig.__LOG_FOLDER, f"{now_str}_seed{seed}{FileTypes.Log.value}")
 
     @staticmethod
-    def new_key_log_file(seed) -> (str, str):
+    def new_key_log_file(seed: int, is_level: bool = True) -> str:
         now_str = PathConfig.__now_str()
-        return os.path.join(PathConfig.__KEY_LOG_FOLDER, f"{now_str}_seed{seed}{FileTypes.KeyLog.value}")
+        if is_level:
+            return os.path.join(PathConfig.__KEY_LOG_FOLDER, f"{now_str}_seed{seed}{FileTypes.KeyLog.value}")
+        else:
+            return os.path.join(PathConfig.__KEY_LOG_FOLDER, f"{now_str}_meta{seed}{FileTypes.KeyLog.value}")
 
     @staticmethod
     def new_screen_print(text: str):
@@ -640,6 +643,22 @@ class Config:   # todo make singleton and handle access to other configs?
     __SEED_HEAD = "Seed="
     __TIME_HEAD = "Time="
     __CONFIG_HEAD = "[Config]"
+
+    @staticmethod
+    def HEADER() -> str:
+        return Config.__HEADER
+
+    @staticmethod
+    def SEED_HEAD() -> str:
+        return Config.__SEED_HEAD
+
+    @staticmethod
+    def TIME_HEAD() -> str:
+        return Config.__TIME_HEAD
+
+    @staticmethod
+    def CONFIG_HEAD() -> str:
+        return Config.__CONFIG_HEAD
 
     @staticmethod
     def scientist_name() -> str:
