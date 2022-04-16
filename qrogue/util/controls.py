@@ -153,18 +153,6 @@ class Controls:
             return keys[index]
         return keys[0]
 
-    def from_int(self, key_pressed: int) -> Keys:
-        """
-        Mostly used for debugging to be able to print meaningful names. But be aware that the returned Key is not
-        necessarily the pressed one since there are redundancies (e.g. scrolling in popups is the same as moving).
-        :param key_pressed:
-        :return:
-        """
-        for i in range(len(self.__pycui_keys)):
-            if key_pressed in self.__pycui_keys[i]:
-                return Keys.from_index(i)
-        return Keys.Invalid
-
     @property
     def action(self) -> List[int]:
         return self.__pycui_keys[Keys.Action.num]

@@ -59,7 +59,7 @@ class GameSimulator:
                 k = self.next()
                 if k is None:
                     break
-                key_str += f"{k} ({self.__controls.from_int(k)}), "
+                key_str += f"{k} ({self.__controls.encode(k)}), "
             print(key_str)
             print("finished")
             print()
