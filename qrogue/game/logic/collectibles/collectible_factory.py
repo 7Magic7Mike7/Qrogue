@@ -18,7 +18,7 @@ class CollectibleFactory:
 
     def __produce(self, rm: Optional[MyRandom], remove: bool = False):
         if rm:
-            return rm.get_element(self.__pool, remove=remove)
+            return rm.get_element(self.__pool, remove=remove, msg="CollectibleFactory.__produce")
         else:
             self.__order_index += 1
             if self.__order_index >= len(self.__pool):
@@ -115,26 +115,26 @@ class ShopFactory:
         special_items = self.__special_pool.copy()
         pickups = self.__common_pool.copy()
         if num_of_items <= 0:
-            num_of_items = rm.get_int(self.__min_items, self.__max_items)
+            num_of_items = rm.get_int(self.__min_items, self.__max_items, msg="ShopFactory.produce_numOfItems")
         quality_level = self.__quality_level
         while len(shop_items) <= num_of_items:
             if quality_level > 0:
                 # with a certain probability the next item will be a special one (1 is guaranteed at quality_level == 1)
-                gets_special = rm.get() < 1.0 / quality_level
+                gets_special = rm.get(msg="ShopFactory_specialItemProb") < 1.0 / quality_level
             else:
                 gets_special = False
 
             if gets_special and self.__special_pool is not None and len(special_items) > 0:
-                item = rm.get_element(special_items, remove=True)
+                item = rm.get_element(special_items, remove=True, msg="ShopFactory_specialItemSelect")
             else:
-                item = rm.get_element(pickups, remove=False)
+                item = rm.get_element(pickups, remove=False, msg="ShopFactory_pickupSelect")
 
             # calculate the price with possibly a small variation
             if self.__discount:
                 price = round(item.default_price() / 2)
             else:
                 price_sigma = max(ShopConfig.base_unit(), item.default_price() * 0.1)
-                price = item.default_price() + round(rm.get(-price_sigma, +price_sigma))
+                price = item.default_price() + round(rm.get(-price_sigma, +price_sigma, msg="ShopFactory_price"))
 
             shop_items.append(ShopItem(item, price))
             quality_level -= 1

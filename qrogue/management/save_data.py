@@ -58,7 +58,7 @@ class SaveData:
         return self.__player
 
     def get_expedition_seed(self) -> int:
-        return RandomManager.instance().get_seed()  #7    # todo implement
+        return RandomManager.instance().get_seed(msg="SaveData.get_expedition_seed()")  #7    # todo implement
 
     def available_robots(self) -> iter:
         return iter(self.__available_robots)

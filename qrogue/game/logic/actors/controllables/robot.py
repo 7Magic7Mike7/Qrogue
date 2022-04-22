@@ -12,7 +12,7 @@ from qrogue.game.logic.actors import StateVector
 from qrogue.game.logic.actors.controllables import Controllable
 from qrogue.game.logic.collectibles import Coin, Collectible, Consumable, Instruction, Key, MultiCollectible, \
     Qubit, Energy
-from qrogue.util import CheatConfig, Config, Logger, MyRandom, InstructionConfig
+from qrogue.util import CheatConfig, Config, Logger, InstructionConfig
 
 from .qubit import QubitSet, DummyQubitSet
 
@@ -506,12 +506,13 @@ class LukeBot(Robot):
         attributes = _Attributes(DummyQubitSet(size))
         backpack = Backpack(capacity=5)
 
+        # randomness is not allowed during Robot creation because it messes up the seed
         # add random gates and a HealthPotion
-        rm = MyRandom(1)
-        if rm.get() < 0.5:
-            num_of_gates = 3
-        else:
-            num_of_gates = 4
+        #rm = RandomManager.create_new()
+        #if rm.get(msg="LukeBot.init()") < 0.5:
+        #    num_of_gates = 3
+        #else:
+        #    num_of_gates = 4
         #gate_factory = GateFactory.default()
         #for gate in gate_factory.produce_multiple(rm, num_of_gates):
         #    backpack.add(gate)

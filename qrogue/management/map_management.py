@@ -5,7 +5,7 @@ from qrogue.game.world.map import Map, WorldMap, MapType
 from qrogue.game.world.navigation import Coordinate
 from qrogue.graphics.popups import Popup
 from qrogue.management import StoryNarration
-from qrogue.util import CommonQuestions, Config, Logger, MyRandom, MapConfig, achievements
+from qrogue.util import CommonQuestions, Config, Logger, MapConfig, achievements, RandomManager
 
 from qrogue.management.save_data import SaveData
 
@@ -48,7 +48,8 @@ class MapManager:
         if MapManager.__instance is not None:
             Logger.instance().throw(Exception("This class is a singleton!"))
         else:
-            self.__rm = MyRandom(seed)
+            self.__base_seed = seed
+            self.__rm = RandomManager.create_new(seed)
             self.__show_world = show_world
             self.__start_level = start_level
             self.__world_memory = {}    # str -> WorldMap
@@ -56,7 +57,7 @@ class MapManager:
             generator = QrogueWorldGenerator(seed, SaveData.instance().player,
                                              SaveData.instance().achievement_manager.check_achievement,
                                              SaveData.instance().achievement_manager.add_to_achievement,
-                                             self.__load_map)
+                                             self.load_map)
             hub_world, success = generator.generate("worlds")
             if not success:
                 Logger.instance().throw(RuntimeError("Unable to build world map! Please download again and make sure "
@@ -88,8 +89,8 @@ class MapManager:
                 def trigger_achievement(name: str):
                     SaveData.instance().achievement_manager.add_to_achievement(name, 1)
                 check_achievement = SaveData.instance().achievement_manager.check_achievement
-                generator = QrogueWorldGenerator(self.__rm.get_seed(), SaveData.instance().player, check_achievement,
-                                                 trigger_achievement, self.__load_map)
+                generator = QrogueWorldGenerator(self.__base_seed, SaveData.instance().player, check_achievement,
+                                                 trigger_achievement, self.load_map)
                 world, success = generator.generate(world_name)
                 if success:
                     self.__world_memory[world_name] = world
@@ -98,7 +99,7 @@ class MapManager:
                     Logger.instance().error(f"Error! Unable to build map \"{world_name}\". Returning to HubWorld")
         return self.__world_memory[MapConfig.hub_world()]
 
-    def __load_map(self, map_name: str, room: Coordinate):
+    def __load_map(self, map_name: str, room: Coordinate, map_seed: int = None):
         if map_name == MapConfig.spaceship():
             next_map = get_next(MapConfig.spaceship())
             if next_map is None:
@@ -113,8 +114,8 @@ class MapManager:
             check_achievement = SaveData.instance().achievement_manager.check_achievement
             trigger_event = self.trigger_level_event  # SaveData.instance().achievement_manager.trigger_level_event
 
-            generator = QrogueWorldGenerator(self.__rm.get_seed(), player, check_achievement, trigger_event,
-                                             self.__load_map)
+            generator = QrogueWorldGenerator(self.__base_seed, player, check_achievement, trigger_event,
+                                             self.load_map)
             try:
                 world, success = generator.generate(map_name)
                 if success:
@@ -126,34 +127,39 @@ class MapManager:
             except FileNotFoundError:
                 Logger.instance().error(f"Failed to open the specified world-file: {map_name}")
         elif map_name.lower().startswith(MapConfig.level_map_prefix()):
+            if map_seed is None:
+                map_seed = self.__rm.get_seed(msg="MapMngr_seedForLevel")
+
             # todo maybe levels should be able to have arbitrary names aside from "w..." or "back"?
             check_achievement = SaveData.instance().achievement_manager.check_achievement
             trigger_event = self.trigger_level_event
-            generator = QrogueLevelGenerator(self.__rm.get_seed(), check_achievement, trigger_event, self.__load_map)
+            generator = QrogueLevelGenerator(map_seed, check_achievement, trigger_event, self.load_map)
             try:
                 level, success = generator.generate(map_name)
                 if success:
                     self.__cur_map = level
                     self.__in_level = True
-                    self.__start_level(self.__rm.get_seed(), self.__cur_map)
+                    self.__start_level(map_seed, self.__cur_map)
                 else:
                     Logger.instance().error(f"Could not load level \"{map_name}\"!")
             except FileNotFoundError:
                 Logger.instance().error(f"Failed to open the specified level-file: {map_name}")
         elif map_name.lower().startswith(MapConfig.expedition_map_prefix()):
+            if map_seed is None:
+                map_seed = self.__rm.get_seed(msg="MapMngr_seedForExpedition")
+
             difficulty = int(map_name[len(MapConfig.expedition_map_prefix()):])
-            seed = self.__rm.get_seed()
             robot = SaveData.instance().get_robot(0)
             check_achievement = SaveData.instance().achievement_manager.check_achievement
             trigger_event = self.trigger_level_event #SaveData.instance().achievement_manager.trigger_level_event
-            generator = ExpeditionGenerator(seed, check_achievement, trigger_event, self.__load_map)
+            generator = ExpeditionGenerator(map_seed, check_achievement, trigger_event, self.load_map)
             expedition, success = generator.generate(robot)
             if success:
                 self.__cur_map = expedition
                 self.__in_level = True
-                self.__start_level(seed, self.__cur_map)
+                self.__start_level(map_seed, self.__cur_map)
             else:
-                Logger.instance().error(f"Could not create expedition with seed = {seed}")
+                Logger.instance().error(f"Could not create expedition with seed = {map_seed}")
         elif map_name == MapConfig.back_map_string():
             self.__load_back()
         else:
@@ -207,8 +213,8 @@ class MapManager:
         if Config.debugging():
             print("triggered event: " + event_id)
 
-    def load_map(self, map_name: str, spawn_room: Coordinate):
+    def load_map(self, map_name: str, spawn_room: Coordinate, map_seed: int = None):
         if map_name.lower() == MapConfig.next_map_string():
             self.__load_next()
         else:
-            self.__load_map(map_name, spawn_room)
+            self.__load_map(map_name, spawn_room, map_seed)

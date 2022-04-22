@@ -9,8 +9,8 @@ from qrogue.game.logic.actors import Player
 from qrogue.game.world.dungeon_generator import QrogueLevelGenerator, QrogueWorldGenerator
 from qrogue.game.world.map import CallbackPack
 from qrogue.game.world.navigation import Coordinate
-from qrogue.management import GameHandler, SaveData
-from qrogue.util import Config, Logger, RandomManager, PathConfig, GameplayConfig, CheatConfig
+from qrogue.management import SaveData, QrogueCUI
+from qrogue.util import Config, Logger, RandomManager, PathConfig, GameplayConfig, CheatConfig, Controls
 from qrogue.util.key_logger import OverWorldKeyLogger
 
 
@@ -55,12 +55,32 @@ def __parse_argument(argument: List[str], has_value: bool = False) -> Tuple[bool
     for arg in argument:
         if arg in sys.argv:
             if has_value:
-                i = sys.argv.index(argument[0])
+                i = sys.argv.index(arg)
                 if i + 1 < len(sys.argv):
                     return True, sys.argv[i + 1]
             else:
                 return True, None
     return False, None
+
+
+def start_qrogue() -> None:
+    __CONSOLE_ARGUMENT = ["--from-console", "-fc"]
+    __DEBUG_ARGUMENT = ["--debug", "-d"]
+    __GAME_DATA_PATH_ARGUMENT = ["--game-data", "-gd"]  # path argument
+    __USER_DATA_PATH_ARGUMENT = ["--user-data", "-ud"]  # path argument
+    #__CONTROLS_ARGUMENT = ["--controls", "-c"]          # int argument
+    __SIMULATION_FILE_ARGUMENT = ["--simulation-path", "-sp"]   # path argument
+
+    from_console, _ = __parse_argument(__CONSOLE_ARGUMENT)
+    debugging, _ = __parse_argument(__DEBUG_ARGUMENT)
+    _, data_folder = __parse_argument(__GAME_DATA_PATH_ARGUMENT, has_value=True)
+    _, user_data_folder = __parse_argument(__USER_DATA_PATH_ARGUMENT, has_value=True)
+    _, simulation_path = __parse_argument(__SIMULATION_FILE_ARGUMENT, has_value=True)
+
+    if simulation_path:
+        simulate_game(simulation_path, from_console, debugging, data_folder, user_data_folder)
+    else:
+        start_game(from_console, debugging, data_folder, user_data_folder)
 
 
 def setup_game(game_data_path: str = "", user_data_path: str = "") -> None:
@@ -79,31 +99,20 @@ def setup_game(game_data_path: str = "", user_data_path: str = "") -> None:
     PathConfig.write(path, data, in_user_path=False, may_exist=True, append=False)
 
 
-def start_game(data_folder: str = None, user_data_folder: str = None):
-    __CONSOLE_ARGUMENT = ["--from-console", "-fc"]
-    __DEBUG_ARGUMENT = ["--debug", "-d"]
-    __GAME_DATA_PATH_ARGUMENT = ["--game-data", "-gd"]
-    __USER_DATA_PATH_ARGUMENT = ["--user-data", "-ud"]
-
-    exists, value = __parse_argument(__GAME_DATA_PATH_ARGUMENT, has_value=True)
-    if exists:
-        data_folder = value
-    exists, value = __parse_argument(__USER_DATA_PATH_ARGUMENT, has_value=True)
-    if exists:
-        user_data_folder = value
-
+def start_game(from_console: bool = False, debugging: bool = False, data_folder: str = None,
+               user_data_folder: str = None):
     if PathConfig.load_paths(data_folder, user_data_folder):
         return_code = Config.load()  # NEEDS TO BE THE FIRST THING WE DO!
     else:
         return_code = 1
     if return_code == 0:
-        if __parse_argument(__DEBUG_ARGUMENT)[0]:
+        if debugging:
             Config.activate_debugging()
+
         seed = random.randint(0, Config.MAX_SEED)
         print(f"[Qrogue] Starting game with seed = {seed}")
         try:
-            game = GameHandler(seed)
-            game.start()
+            QrogueCUI(seed).start()
         except py_cui.errors.PyCUIOutOfBoundsError:
             #print("[Qrogue] ERROR!")
             #print("Your terminal window is too small. "
@@ -124,10 +133,53 @@ def start_game(data_folder: str = None, user_data_folder: str = None):
         print(f"[Qrogue] Error #{return_code}:")
         if return_code == 1:
             print("qrogue.config is invalid. Please check if the second line describes a valid path (the path "
+                  "to your save files). Using special characters in the path could also cause this error so if the "
+                  "path is valid please consider using another one without special characters.")
+
+    if not from_console:
+        print()
+        input("[Qrogue] Press ENTER to close the application")
+
+    exit(return_code)
+
+
+def simulate_game(simulation_path: str, from_console: bool = False, debugging: bool = False, data_folder: str = None,
+                  user_data_folder: str = None):
+    if PathConfig.load_paths(data_folder, user_data_folder):
+        return_code = Config.load()  # NEEDS TO BE THE FIRST THING WE DO!
+    else:
+        return_code = 1
+    if return_code == 0:
+        if debugging:
+            Config.activate_debugging()
+
+        print(f"[Qrogue] Simulating the game recorded at \"{simulation_path}\"")
+        try:
+            QrogueCUI.start_simulation(simulation_path)
+        except py_cui.errors.PyCUIOutOfBoundsError:
+            # print("[Qrogue] ERROR!")
+            # print("Your terminal window is too small. "
+            #      "Please make it bigger (i.e. maximize it) or reduce the font size.")
+            print("---------------------------------------------------------")
+            exit(1)
+
+        # flush after the player stopped playing
+        if GameplayConfig.auto_save() and not CheatConfig.did_cheat():
+            if SaveData.instance().save():
+                print("[Qrogue] Successfully saved the game!")
+            else:
+                Logger.instance().error("Failed to save the game.", show=False)
+        Logger.instance().flush()
+        OverWorldKeyLogger.instance().flush_if_useful()
+        print("[Qrogue] Successfully flushed all logs and shut down the game without any problems. See you next time!")
+    else:
+        print(f"[Qrogue] Error #{return_code}:")
+        if return_code == 1:
+            print("qrogue.config is invalid. Please check if the second line describes a valid path (the path "
                   "to your save files). Using special characters in the path could also cause this error so if the path is "
                   "valid please consider using another one without special characters.")
 
-    if not __parse_argument(__CONSOLE_ARGUMENT)[0]:
+    if not from_console:
         print()
         input("[Qrogue] Press ENTER to close the application")
 

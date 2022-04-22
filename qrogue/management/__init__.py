@@ -4,7 +4,6 @@ from .save_data import SaveData
 from .story import StoryNarration
 from .map_management import MapManager
 from .qrogue_pycui import QrogueCUI
-from .game import GameHandler
 
 # importing
 # +util

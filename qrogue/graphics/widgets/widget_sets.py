@@ -126,8 +126,8 @@ class MenuWidgetSet(MyWidgetSet):
     __MAP_HEIGHT = 14
 
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
-                 start_playing_callback: "()",
-                 stop_callback: "()", start_simulation_callback: "(str,)"):
+                 start_playing_callback: Callable[[], None], stop_callback: Callable[[], None],
+                 start_simulation_callback: Callable[[str], None]):
         self.__seed = 0
         self.__start_playing = start_playing_callback
         self.__stop = stop_callback
@@ -159,12 +159,15 @@ class MenuWidgetSet(MyWidgetSet):
         self.__title.set_data(_ascii_art)
 
     def new_seed(self) -> None:
-        self.__seed = RandomManager.instance().get_int(min=0, max=Config.MAX_SEED)
+        self.__seed = RandomManager.instance().get_seed(msg="MenuWS.new_seed()")
         self.__seed_widget.set_data(f"Seed: {self.__seed}")
         self.__seed_widget.render()
 
-    def simulate_with_seed(self, simulation_seed: int):
-        self.__seed = simulation_seed
+    def set_seed(self, new_seed: int):
+        self.__seed = new_seed
+        RandomManager.force_seed(new_seed)
+        self.__seed_widget.set_data(f"Seed: {self.__seed}")
+        self.__seed_widget.render()
 
     def get_widget_list(self) -> List[Widget]:
         return [
@@ -742,16 +745,12 @@ class FightWidgetSet(ReachTargetWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  continue_exploration_callback: Callable[[], None], game_over_callback: Callable[[], None]):
         super(FightWidgetSet, self).__init__(controls, render, logger, root, continue_exploration_callback)
-        self.__random = RandomManager.create_new()
         self.__game_over_callback = game_over_callback
-        self.__flee_chance = 0
+        self.__flee_check = None
 
-    def set_data(self, robot: Robot, target: Enemy, use_flee_chance: bool = True):
+    def set_data(self, robot: Robot, target: Enemy):
         super(FightWidgetSet, self).set_data(robot, target)
-        if use_flee_chance:
-            self.__flee_chance = target.flee_chance
-        else:
-            self.__flee_chance = 1
+        self.__flee_check = target.flee_check
 
     def _on_commit_fail(self) -> bool:
         damage_taken, deadly = self._robot.damage()
@@ -768,7 +767,7 @@ class FightWidgetSet(ReachTargetWidgetSet):
         return True
 
     def _choices_flee(self) -> bool:
-        if self.__random.get() < self.__flee_chance:
+        if self.__flee_check():
             self._details.set_data(data=(
                 ["You successfully fled!"],
                 [self._continue_exploration_callback]
@@ -790,17 +789,16 @@ class FightWidgetSet(ReachTargetWidgetSet):
 
 class BossFightWidgetSet(FightWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
-                 continue_exploration_callback: "()", game_over_callback: "()", tutorial_won_callback: "()"):
+                 continue_exploration_callback: Callable[[], None], game_over_callback: Callable[[], None]):
         self.__continue_exploration_callback = continue_exploration_callback
-        self.__tutorial_won = tutorial_won_callback
         super().__init__(controls, render, logger, root, self.__continue_exploration, game_over_callback)
 
-    def set_data(self, robot: Robot, target: Boss, use_flee_chance: bool = False):
-        super(BossFightWidgetSet, self).set_data(robot, target, use_flee_chance)
+    def set_data(self, robot: Robot, target: Boss):
+        super(BossFightWidgetSet, self).set_data(robot, target)
 
     def __continue_exploration(self):
         if self._target.is_defeated:
-            self.__tutorial_won()
+            Logger.instance().info("Defeated boss.")    # todo
         else:
             self.__continue_exploration_callback()
 

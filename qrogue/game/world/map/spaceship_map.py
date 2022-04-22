@@ -5,7 +5,7 @@ from qrogue.game.logic.actors import Robot, Controllable, Player
 from qrogue.game.world.navigation import Direction, Coordinate
 from qrogue.game.world.tiles import Tile, TileCode, WalkTriggerTile
 from qrogue.game.world.tiles.tiles import NpcTile
-from qrogue.util import MyRandom, Config, MapConfig, achievements
+from qrogue.util import Config, MapConfig, achievements, RandomManager
 
 SCIENTIST_TILE_REPRESENTATION = Config.scientist_name()[0]
 ascii_spaceship = \
@@ -151,7 +151,6 @@ class SpaceshipMap:
                  open_world_view: Callable[[Direction, Controllable], None],
                  use_workbench: Callable[[Direction, Controllable], None],
                  load_map: Callable[[str, Coordinate], None]):
-        self.__rm = MyRandom(seed)
         self.__player = player
         self.__scientist = scientist
         self.__check_achievement = check_achievement

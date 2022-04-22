@@ -662,7 +662,7 @@ class WildRoom(BaseWildRoom):
         for y in range(Room.INNER_HEIGHT):
             available_positions += [Coordinate(x, y) for x in range(Room.INNER_WIDTH)]
         num_of_enemies = len(available_positions) * chance
-        if rm.get() < 0.5:
+        if rm.get(msg="WR_enemyPlacementRounding") < 0.5:
             num_of_enemies = math.floor(num_of_enemies)
         else:
             num_of_enemies = math.ceil(num_of_enemies)
@@ -671,11 +671,11 @@ class WildRoom(BaseWildRoom):
 
         tile_list = Room.get_empty_room_tile_list()
         for i in range(num_of_enemies):
-            id = rm.get_int(min=0, max=WildRoom.__NUM_OF_ENEMY_GROUPS + 1)
+            id = rm.get_int(min=0, max=WildRoom.__NUM_OF_ENEMY_GROUPS + 1, msg="WildRoom_eid")
             enemy = EnemyTile(factory, self.__get_tiles_by_id, id)
             if id > 0:
                 self.__dictionary[id].append(enemy)
-            pos = rm.get_element(available_positions, remove=True)
+            pos = rm.get_element(available_positions, remove=True, msg="WildRoom_epos")
             tile_list[Room.coordinate_to_index(pos)] = enemy
 
         super().__init__(tile_list, self.__get_tiles_by_id, north_hallway, east_hallway, south_hallway, west_hallway)

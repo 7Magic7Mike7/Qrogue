@@ -12,7 +12,7 @@ from qrogue.game.target_factory import EnemyFactory, ExplicitTargetDifficulty, T
 from qrogue.game.world import tiles
 from qrogue.game.world.map import CallbackPack, LevelMap, rooms
 from qrogue.game.world.navigation import Coordinate, Direction
-from qrogue.util import Config, HelpText, MapConfig, MyRandom, PathConfig, Logger, CommonQuestions
+from qrogue.util import Config, HelpText, MapConfig, PathConfig, Logger, CommonQuestions, RandomManager
 
 from . import parser_util
 from .generator import DungeonGenerator
@@ -88,7 +88,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
         self.__warnings = 0
         self.__robot = None
-        self.__rm = MyRandom(seed)
+        self.__rm = RandomManager.create_new(seed)
 
         self.__messages = {}        # str -> str
 

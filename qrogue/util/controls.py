@@ -1,5 +1,5 @@
 from enum import IntEnum
-from typing import List
+from typing import List, Tuple
 
 from py_cui.keys import *
 
@@ -44,7 +44,14 @@ class Keys(IntEnum):
     CheatInput = StopSimulator + 1
     CheatList = CheatInput + 1
 
-    Invalid = 126
+    # non valid keys
+    Invalid = 100
+    ErrorMarker = 101
+    LevelBegin = 110
+
+    @staticmethod
+    def invalid_values() -> "List[Keys]":
+        return [Keys.Invalid, Keys.ErrorMarker, Keys.LevelBegin]
 
     @staticmethod
     def from_code(code: int) -> "Keys":
@@ -53,8 +60,12 @@ class Keys(IntEnum):
 
     @staticmethod
     def from_index(index: int) -> "Keys":
+        if index < len(Keys):
+            values = Keys
+        else:
+            values = Keys.invalid_values()
         i = 0
-        for elem in Keys:
+        for elem in values:
             if i == index:
                 return elem
             i += 1
@@ -77,7 +88,7 @@ class Keys(IntEnum):
 
 
 class Controls:
-    INVALID_KEY = Keys.Invalid.num
+    INVALID_KEY = KEY_ALT_I     # is not allowed to be used as a valid key in the controls!
 
     def __init__(self):
         self.__pycui_keys = [
@@ -133,21 +144,25 @@ class Controls:
                 return Keys.from_index(i)
         return Keys.Invalid
 
-    def decode(self, key_code: int) -> int:
+    def decode(self, key_code: int) -> Tuple[int, Keys]:
         """
         Decodes a code representation to a corresponding Keys element
         :param key_code: code representation of a Keys element
-        :return: a keyboard key that can be pressed to trigger the corresponding action
+        :return: a keyboard key that can be pressed to trigger the corresponding action and its logical counterpart
         """
         if key_code == Keys.Invalid.code:
-            return None
+            return Controls.INVALID_KEY, Keys.Invalid
         key = Keys.from_code(key_code)
-        return self.get_key(key)
+        return self.get_key(key), key
 
     def get_keys(self, key: Keys) -> List[int]:
+        if key in Keys.invalid_values():
+            return []
         return self.__pycui_keys[key.num]
 
-    def get_key(self, key: Keys, index: int = 0):
+    def get_key(self, key: Keys, index: int = 0) -> int:
+        if key in Keys.invalid_values():
+            return Controls.INVALID_KEY
         keys = self.get_keys(key)
         if 0 <= index < len(keys):
             return keys[index]

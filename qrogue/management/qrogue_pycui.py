@@ -16,8 +16,9 @@ from qrogue.graphics.widgets import Renderable, SpaceshipWidgetSet, BossFightWid
     FightWidgetSet, MenuWidgetSet, MyWidgetSet, NavigationWidgetSet, PauseMenuWidgetSet, RiddleWidgetSet, \
     ShopWidgetSet, WorkbenchWidgetSet
 from qrogue.management import StoryNarration
-from qrogue.util import achievements, common_messages, CheatConfig, ColorConfig, Config, GameplayConfig, HelpText, \
-    HelpTextType, Logger, PathConfig, MapConfig, Controls, Keys
+from qrogue.util import achievements, common_messages, CheatConfig, Config, GameplayConfig, HelpText, \
+    HelpTextType, Logger, PathConfig, MapConfig, Controls, Keys, RandomManager
+from qrogue.util.config import FileTypes
 from qrogue.util.game_simulator import GameSimulator
 from qrogue.util.key_logger import KeyLogger, OverWorldKeyLogger
 
@@ -25,10 +26,23 @@ from qrogue.management import MapManager, Pausing, SaveData
 
 
 class QrogueCUI(py_cui.PyCUI):
+    @staticmethod
+    def start_simulation(simulation_path: str):
+        try:
+            simulator = GameSimulator(simulation_path, in_keylog_folder=True)
+            qrogue_cui = QrogueCUI(simulator.seed)
+            qrogue_cui._set_simulator(simulator)
+            qrogue_cui.start()
+        except FileNotFoundError:
+            Logger.instance().show_error(f"File \"{simulation_path}\" could not be found!")
+
     def __init__(self, seed: int, width: int = 8, height: int = 9):
         super().__init__(width, height)
         self.set_title(f"Qrogue {Config.version()}")
-        self.__seed = seed
+        self.__controls = Controls()
+        Logger(seed)
+        RandomManager(seed)
+        OverWorldKeyLogger().reinit(seed, "meta")
 
         # init management
         Logger.instance().set_popup(self.show_message_popup, self.show_error_popup)
@@ -39,7 +53,7 @@ class QrogueCUI(py_cui.PyCUI):
         Pausing(self.__pause_game)
         CallbackPack(self.__start_level, self.__start_fight, self.__start_boss_fight,
                            self.__open_riddle, self.__visit_shop, self.__game_over)
-        SaveData()  # todo load data
+        SaveData()
         MapManager(seed, self.__show_world, self.__start_level)
         Popup.update_check_achievement_function(SaveData.instance().achievement_manager.check_achievement)
         common_messages.set_show_callback(Popup.generic_info)
@@ -51,7 +65,6 @@ class QrogueCUI(py_cui.PyCUI):
         self.__key_logger = KeyLogger()
         self.__simulator = None
         self.__state_machine = StateMachine(self)
-        self.__controls = Controls()   # todo load later from file!
         self.__last_input = time.time()
         self.__last_key = None
         self.__focused_widget = None
@@ -73,14 +86,14 @@ class QrogueCUI(py_cui.PyCUI):
         self.__fight = FightWidgetSet(self.__controls, self.__render, Logger.instance(), self, self.__continue_explore,
                                       self.__game_over)
         self.__boss_fight = BossFightWidgetSet(self.__controls, self.__render, Logger.instance(), self,
-                                               self.__continue_explore, self.__game_over, self.__won_tutorial)
+                                               self.__continue_explore, self.__game_over)
         self.__riddle = RiddleWidgetSet(self.__controls, self.__render, Logger.instance(), self, self.__continue_explore)
         self.__shop = ShopWidgetSet(self.__controls, self.__render, Logger.instance(), self, self.__continue_explore)
 
         self.__cur_widget_set = None
         self.__init_keys()
 
-        self.__state_machine.change_state(State.Menu, None)
+        self.__state_machine.change_state(State.Menu, seed)
 
         # init spaceship
         def stop_playing(direction: Direction, controllable: Controllable):
@@ -119,44 +132,40 @@ class QrogueCUI(py_cui.PyCUI):
     def is_simulating(self) -> bool:
         return self.__simulator is not None
 
+    @property
+    def controls(self) -> Controls:
+        return self.__controls
+
     def start(self):
         self.render()
         super(QrogueCUI, self).start()
 
     def __choose_simulation(self):
-        title = "Enter the path to the .qrkl-file to simulate:"
+        title = f"Enter the path to the {FileTypes.KeyLog.value}-file to simulate:"
         self.__show_input_popup(title, py_cui.WHITE_ON_CYAN, self.__start_simulation)
 
     def __start_simulation(self, path: str):
-        if not path.endswith(".qrkl"):
-            path += ".qrkl"
         try:
-            self.__simulator = GameSimulator(self.__controls, path, in_keylog_folder=True, debug_print=False)
-            self.__menu.simulate_with_seed(self.__simulator.seed)
-
-            if self.__simulator.simulates_over_world:
-                # go back to the original position of the cursor and start the game
-                super(QrogueCUI, self)._handle_key_presses(self.__controls.get_key(Keys.SelectionUp))
-            else:
-                MapManager.instance().load_map(self.__simulator.map_name, None)
-            if self.__simulator.version == Config.version():
-                __space = "Space"
-                Popup.generic_info("Starting Simulation", f"You started a run with \nseed = {self.__simulator.seed}\n"
-                                                     f"recorded at {self.__simulator.time}.\n"
-                                                     f"Press {ColorConfig.highlight_key(__space)} to execute the "
-                                                     "simulation step by step. Alternatively, if you keep it pressed "
-                                                     "the simulation will be executed automatically with short delays "
-                                                     "after each step until you let go of Space again.")
-            else:
-                Popup.generic_info("Simulating other version", "You try to simulate the run of a different game "
-                                                               "version.\n"
-                                                          f"Your version: {Config.version()}\n"
-                                                          f"Version you try to simulate: {self.__simulator.version}\n"
-                                                          "This is not supported and can cause problems. Only "
-                                                          "continue if you know what you do! Else close this popup "
-                                                          "and press ESC to abort the simulation.")
+            simulator = GameSimulator(path, in_keylog_folder=True)
+            super(QrogueCUI, self)._handle_key_presses(self.__controls.get_key(Keys.SelectionUp))
+            self._set_simulator(simulator)
         except FileNotFoundError:
             Logger.instance().show_error(f"File \"{path}\" could not be found!")
+
+    def _set_simulator(self, simulator: GameSimulator):
+        self.__simulator = simulator
+        simulator.set_controls(self.controls)
+
+        if simulator.simulates_over_world:
+            self.__menu.set_seed(simulator.seed)
+        else:
+            MapManager.instance().load_map(simulator.map_name, None, simulator.seed)
+
+        if simulator.version == Config.version():
+            title, text = simulator.version_alright()
+        else:
+            title, text = simulator.version_warning()
+        Popup.generic_info(title, text)
 
     def _ready_for_input(self, key_pressed: int, gameplay: bool = True) -> bool:
         if self.__last_key != key_pressed:
@@ -174,6 +183,8 @@ class QrogueCUI(py_cui.PyCUI):
         return False
 
     def _handle_key_presses(self, key_pressed):
+        if key_pressed == 0:    # skips the "empty" key press during initialization
+            return
         if key_pressed == py_cui.keys.KEY_CTRL_Q:
             super(QrogueCUI, self)._handle_key_presses(py_cui.keys.KEY_ESCAPE)
         if self.__simulator is None:
@@ -184,11 +195,10 @@ class QrogueCUI(py_cui.PyCUI):
                     if GameplayConfig.log_keys() and not self.is_simulating:
                         if MapManager.instance().in_level:
                             self.__key_logger.log(self.__controls, key_pressed)
-                        else:
-                            OverWorldKeyLogger.instance().log(self.__controls, key_pressed)
+                        OverWorldKeyLogger.instance().log(self.__controls, key_pressed)
                     super(QrogueCUI, self)._handle_key_presses(key_pressed)
         elif key_pressed in self.__controls.get_keys(Keys.StopSimulator):
-            Popup.generic_info("Simulator", "stopped Simulator")
+            Popup.message("Simulator", "stopped Simulator", reopen=False, overwrite=True)
             self.__simulator = None
         else:
             if self._ready_for_input(key_pressed, gameplay=False):
@@ -492,7 +502,11 @@ class QrogueCUI(py_cui.PyCUI):
     def switch_to_menu(self, data=None) -> None:
         if self.__key_logger and self.__key_logger.is_initialized:
             self.__key_logger.flush_if_useful()
-        self.__menu.new_seed()
+        if data:
+            seed = data
+        else:
+            seed = RandomManager.instance().get_seed(msg="QroguePyCUI.switch_to_menu()")
+        self.__menu.set_seed(seed)
         self.apply_widget_set(self.__menu)
 
     def __show_world(self, world: WorldMap = None) -> None:
@@ -513,7 +527,8 @@ class QrogueCUI(py_cui.PyCUI):
         SaveData.instance().achievement_manager.reset_level_events()
         robot = level.controllable_tile.controllable
         if isinstance(robot, Robot):
-            self.__key_logger.reinit(seed, level.internal_name)  # the seed used to build the Map
+            self.__key_logger.reinit(level.seed, level.internal_name)  # the seed used to build the Map
+            OverWorldKeyLogger.instance().level_start(level.internal_name)
 
             self.__pause.set_data(robot, level.name, SaveData.instance().achievement_manager)
             self.__state_machine.change_state(State.Explore, level)
@@ -524,11 +539,6 @@ class QrogueCUI(py_cui.PyCUI):
         Popup.generic_info("Game Over!", "You Robot was out of energy so your mission failed. You will return to the "
                                     "Spaceship now.")
         self.__state_machine.change_state(State.Spaceship, None)
-
-    def __won_tutorial(self) -> None:
-        self.switch_to_menu(None)
-        bell = ColorConfig.highlight_word("Bell")
-        Popup.generic_info("You won!", f"Congratulations, you defeated {bell} and successfully played the Tutorial!")
 
     def __start_fight(self, robot: Robot, enemy: Enemy, direction: Direction) -> None:
         self.__state_machine.change_state(State.Fight, (robot, enemy))
