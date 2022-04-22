@@ -30,7 +30,7 @@ class PathConfig:
     __TEMPLATE_HALLWAYS = "hallways"
     __TEMPLATE_STV_POOLS = "stv_pools"
     __TEMPLATE_REWARD_POOLS = "reward_pools"
-    __TEMPLATE_FILE = f"templates{FileTypes.Templates}"
+    __TEMPLATE_FILE = f"templates{FileTypes.Templates.value}"
     __FRESH_SAVE_FILE = "fresh"
     __SAVE_FILE_NUMERATION_SEPARATOR = "_"
     __NUMBER_OF_SAVE_FILES = 7    # how many save files can be present before we delete the oldest one
