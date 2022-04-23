@@ -2,90 +2,137 @@ Qrogue<
 Name = "Level 1-2"
 
 [Robot]
-2 qubits [ *xgate, *hgate ]
+2 qubits [ *xgate, *xgate ]
 
 [Layout]
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-| SR == aa == bb 13 cc .. __ .. __ .. __ |
-| ..    15    ==    12    ..    ..    .. |
-| __ .. ff 14 dd 11 ee == sh .. __ .. __ |
-| ..    ..    16    17    ..    ..    .. |
-| __ .. __ .. gg .. hh .. __ .. __ .. __ |
+| __ .. __ .. ad 12 aa 13 ab .. __ .. __ |
+| ..    ..    11    ==    11    ..    .. |
+| __ .. __ .. dd == SR == bb .. __ .. __ |
+| ..    ..    ..    ==    11    ..    .. |
+| zz 15 xx 14 cd 11 cc .. ee .. __ .. __ |
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 [Custom Rooms]
+SR (Spawn):
+#############
+# _ _ _ _ _ #
+# _ o o o _ #
+# _ o _ o _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+#############
+
 aa (Wild):
 #############
-# _ 0 _ c _ #
-# _ _ o _ _ #
-# _ m o _ _ #
-# o o o o o #
-# _ c _ _ _ #
+# c _ _ o o #
+# _ _ o o _ #
+# m o o _ m #
+# o o _ _ _ #
+# o _ _ _ _ #
 #############
-0 *superpos0p *coin tutorial *superPosTutorial
-m *wondering
-c *coin
-c *coin trigger *foundHiddenTreasure
+c *key
+m 1 *tempOneWay
+m 1 *oneway5 trigger *sawOneWay
 
 bb (Wild):
 #############
-# _ _ _ _ _ #
-# _ 0 o 0 _ #
-# _ o o o _ #
-# _ m o 0 _ #
-# _ _ _ _ _ #
+# o o _ o o #
+# o _ _ o o #
+# _ _ _ 0 c #
+# o _ _ o o #
+# o o _ o o #
 #############
-0 *superpos0m *room1
-0 *superpos1p *room1
-//0 *superpos1m1 *room1
-0 *superpos1m2 *room1
-m *allHXCombinations
+c *key
+0 *roomBB *energy
 
 cc (Wild):
 #############
-# _ 0 _ 0 _ #
-# _ _ _ _ 0 #
-# _ o _ _ _ #
-# _ o o _ 0 #
+# _ _ m _ _ #
+# _ _ _ _ _ #
+# _ _ r o _ #
+# _ _ o o _ #
 # _ _ _ _ _ #
 #############
-0 *cxOthers *energy
-0 *cxOthers *energy
-0 *base11 *energy tutorial *cxX
-0 *base00 *energy tutorial *cxEmpty
+m 1 *riddleMsg trigger *sawRiddle
+r [0, 0, 1, 0] *key 4 tutorial *helpTextRiddle
 
 dd (Wild):
 #############
-# o o _ _ _ #
-# o _ _ _ _ #
-# 0 _ m _ _ #
-# o _ _ _ _ #
-# o o _ _ _ #
+# 0 0 _ 0 0 #
+# 0 0 _ 0 0 #
+# 0 0 _ _ _ #
+# 0 0 0 0 0 #
+# 0 0 0 0 0 #
 #############
-0 *sesamWarden *wardenReward trigger *sesamOpen
+0 *oneX *rewDD
 
 ee (Wild):
 #############
-# 0 _ _ _ 0 #
+# _ _ _ _ c #
 # _ _ _ _ _ #
-# m _ 0 _ _ #
 # _ _ _ _ _ #
-# 0 _ _ _ 0 #
+# _ _ _ _ _ #
+# _ _ _ _ c #
 #############
-m 1 *oneWayTutorial	// display only once
-0 *eePuzzles
+c *energyBig
+c *key
 
-ff (Wild):
+ab (Wild):
+#############
+# 8 _ _ _ 6 #
+# _ 0 o 1 _ #
+# m o o o _ #
+# _ 2 o 3 _ #
+# 9 _ m _ 7 #
+#############
+0 *oneX *rewAB
+1 *oneX *rewAB
+2 *oneX *rewAB
+3 *oneX *rewAB
+6 *oneX *rewAB
+7 *oneX *rewAB
+8 *oneX *rewAB
+9 *oneX *rewAB
+m 1 *oneway3 trigger *sawOneWay
+m 1 *diffNumbers trigger *sawDiffNumbers
+
+ad (Wild):
 #############
 # _ _ _ _ _ #
 # _ _ _ _ _ #
+# _ _ r _ m #
 # _ _ _ _ _ #
+# _ _ m _ _ #
+#############
+r [0, 0, 0, 1] *hgate 4 trigger *receivedHadamard
+m 1 *oneway1 trigger *sawOneWay
+m 1 *riddleMsg trigger *sawRiddle
+
+cd (Wild):
+#############
+# o o o o o #
+# _ 0 o _ _ #
+# _ 0 0 _ _ #
+# _ 0 o _ _ #
+# o o o o o #
+#############
+0 *superPos *rewCD
+0 *superPos *rewCD
+0 *superPos1 *rewCD tutorial *tutSuperPos
+0 *superPos *rewCD
+
+xx (Wild):
+#############
 # _ _ _ _ _ #
+# _ c _ c _ #
+# _ _ _ _ _ #
+# _ c _ c _ #
 # _ _ _ _ _ #
 #############
+c *treasure
 
-
-gg (Wild):
+zz (Wild):
 #############
 # _ _ _ _ _ #
 # _ _ _ _ _ #
@@ -93,86 +140,83 @@ gg (Wild):
 # _ _ _ _ _ #
 # _ _ _ _ _ #
 #############
-0 *boss *cxgate trigger *done
-
-hh (Wild):
-#############
-# 0 _ c _ 0 #
-# _ 0 _ 0 _ #
-# 0 _ 0 _ 0 #
-# _ 0 _ 0 _ #
-# 0 _ 0 _ 0 #
-#############
-c *coin
-
-sh (Shop):
-#############
-# _ _ _ _ _ #
-# _ _ _ _ _ #
-# _ _ $ _ _ #
-# _ _ _ _ _ #
-# _ _ _ _ _ #
-#############
-$ [gate *cx, key 1, energy 10] 2 tutorial *helpTextShop trigger *sawShop  //*shopTutorial
+0 *boss *energy trigger *done
 
 
 [Hallways]
-11 (closed; one way East permanent; )
-12 (event *sawShop; ; )
-13 (event *sawShop; one way West; )
-14 (event *sesamOpen; ; )
-15 (event *sesamOpen; ; )
-16 (locked; ; )
-17 (locked; ; )
+11 (locked; ; )
+12 (closed; one way East; ) trigger *oneWayTemp
+13 (closed; one way West permanent; ) trigger *oneWayPermanent
+14 (event *sawOneWay; ; )
+15 (event *sawDiffNumbers; ; )
 
 [StateVector Pools]
 custom
-//*myStvPool [ [0j, -0j, -1j, +0], [0.5, -.5j, +.5, 0.5j ] ];
 //            default rewards: random *coin
-*superpos0p [ [0.707, 0.707, 0, 0] ]
-*superpos0m [ [0.707, -0.707, 0, 0] ]
-*superpos1p [ [0.707, 0, 0.707, 0] ]
-//*superpos1m1 [ [-0.707, 0, 0.707, 0] ]
-*superpos1m2 [ [0.707, 0, -0.707, 0] ]
 
-*eePuzzles random [ [0, 1, 0, 0], [0.707, 0.707, 0, 0], [0, 0, 1, 0], [0.707, 0, 0.707, 0], [0.707, -0.707, 0, 0], [0.707, 0, -0.707, 0] ]
+*superPos1 [ [0.707, 0.707, 0, 0] ]
+*superPos ordered [ [0.707, 0, 0.707, 0], [0.707, -0.707, 0, 0], [0.707, 0, -0.707, 0] ]
 
-*base00 [ [1, 0, 0, 0] ]
-*base11 [ [0, 0, 0, 1] ]
-*cxOthers [ [0, 0, 0.707, 0.707], [1, 0, 0, 0] ]	// TODO second vector
+*roomBB [ [0, 0, 0, 1] ]
+*oneX [ [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [1, 0, 0, 0] ]
 
 
-*sesamWarden [ [0, 0.707, 0.707, 0] ]
-*boss [ [0.707, 0, 0, 0.707] ]
+*boss [ [0, 0, 0.707, -0.707] ]
 
-default *eePuzzles
+default *roomAB
 
 [Reward Pools]
 custom
 *key [key 1]
 *coin [coin 1]
-*energy [energy 10]
-*xgate [gate *x]
+*energy [energy 5]
 *hgate [gate *h]
-*cxgate [gate *cx]
 
-*room1 ordered [coin 1, coin 1, coin 2]
-*wardenReward [coin 5]
+*energyBig [energy 30]
+*treasure [coin 5]
 
-default random [coin 1, coin 2, coin 3, coin 5]
+*rewAB ordered [coin 1, coin 1, coin 1, key 1, coin 1, coin 1, coin 1]
+*rewDD ordered [coin 1, coin 1, key 1, coin 1, coin 1, coin 1, coin 1, coin 1, coin 1, coin 1, coin 1, coin 1, coin 1, coin 1, coin 1, key 1, coin 1, coin 1, coin 1]
+*rewCD ordered [energy 10, energy 5, energy 20, key 1]
+
+default *rewAB
 
 [Messages]
 // highlight text by encapsulating it in "//02abcd//" where "abcd" is the text to highlight and "02" one of the available styles: 01 is for tiles, 02 is for game objects, 03 for words and 04 for keys on the keyboard
-*wondering "Hmm, I wonder how we can reach the south side of these obstacles..." event *foundHiddenTreasure alternative *noMoreWondering
-*noMoreWondering "I'm glad that you found a way to the south side of these obstacles!"
+//*wondering "Hmm, I wonder how we can reach the south side of these obstacles..." event *foundHiddenTreasure alternative *noMoreWondering
+*diffNumbers "As you can see also //03other digits// aside from //010// exist and represent //02Puzzles//. However, there is a small difference between them:"
+"//011//s have a //0310% chance not to trigger// which means they vanish together with their rewards without us getting the chance to solve them. //012//s have a 20% chance for this and so on until //019//s with a 90% chance not to trigger." 
+"But if they do trigger and you decide to flee it might fail with the same probability. So there's a 10% chance that you cannot flee and just lose some energy for a //011// up to 90% again for a //019//."
+"Likewise the same is true for the //010//s we already know. But a 0% chance means they will always trigger and fleeing will always work."
 
-*allHXCombinations "The three puzzles of this room and the one from the first room should cover all"	// TODO
+*riddleMsg "Look, the //01?// ahead is a //02Riddle//. It is similar to a //02Puzzle// but we only have a //03fixed number of attempts// to solve it. However, it usually has a //03great reward// to make up for this!" event *sawRiddle alternative *riddleAgain
+*riddleAgain "There's another riddle!"
 
-*superPosTutorial "Now that we have a //02Hadamard Gate// we can put //02Qubits// into //03Superposition//. This means that the state is no longer deterministic but rather somewhere inbetween 0 and 1. In the case of a single //02Hadamard Gate// this results in a 50% chance of measuring 0 and 50% chance of measuring 1. Since the probability corresponds to the values of the //02StateVector// //03squared// the target StateVector of this puzzle describes a 50% chance of measuring |00> and another 50% for |01>."
-*oneWayTutorial "Seems like this //02Hallway// is only passable from the other side. Guess we have to find another path then."
-*shopTutorial "This is a Shop"
+*oneway1 "To the right you can see a //02One-way Door//. As the name suggests, we can only //03walk through// it from //03one side// - in this particular case from left to right."
+"Actually, there are //03two kinds// of one-way Doors but you cannot see any difference in their appearance. Some will block your way //03permanently// from one side while others are only //03temporary// and will vanish after you walked through them once." 
+"I hope this one will only be temporary... else it would trap us!" event *sawOneWay alternative *oneway2
+*oneway2 "Here's a //02One-way Door// again. "
+*tempOneWay "Puh, luckily it was a temporary one."
 
-*cxEmpty "Okay you already know that puzzle. But let's try to solve it while using our new //02CX Gate//!"
-*cxX "We also know this puzzle. But now we don't have //03two// //02X Gates//. Let's try to solve it with the help of our new //02CX Gate//."
+*oneway3 "To the left you can see a //02One-way Door//. As the name suggests, we can only //03walk through// it from //03one side// - in this particular case from right to left."
+"Actually, there are //03two kinds// of one-way Doors but you cannot see any difference in their appearance. Some will block your way //03permanently// from one side while others are only //03temporary// and will vanish after you walked through them once."
+"I wonder of what kind this one will be." event *sawOneWay alternative *oneway4
+*oneway4 "We can check out this //02One-way Door// from this side."
+
+*oneway5 "To the right you can see a //02One-way Door//. As the name suggests, we can only //03walk through// it from //03one side// - in this particular case from right to left."
+"Actually, there are //03two kinds// of one-way Doors but you cannot see any difference in their appearance. Some will block your way //03permanently// from one side while others are only //03temporary// and will vanish after you walked through them once."
+"I wonder of what kind this one will be." event *sawOneWay alternative *oneway6
+*oneway6 "We definitely cannot go through this //02One-way Door// from this side." event *oneWayPermanent alternative *oneway7
+*oneway7 "Ok, seems like this one is permanent."
+
+*tutSuperPos "Exciting, that's our first //03non-deterministic// //02StateVector//! As you can see it doesn't have one 1 and the rest 0 as all the others before - the first two entries are 0.707 which means that q0 is in Superposition. Therefore it is both 0 and 1 at the same time!" 
+"And if we take a closer look specifically at q0 it will turn to a 0 with a 50% chance and also to a 1 with 50%. Why? Because 0.707 squared is 0.5 which corresponds to 50%."
+"Basically the same as previously where we tried to have 100% for the desired outcome and 0% for all others."
+"There is a special gate called //02Hadamard Gate// that produces exactly the kind of Superposition we need here. But it's very hard to create so I doubt that we can find one. Especially since we are on the Moon."
+event *receivedHadamard alternative *tutSuperPosHGate
+*tutSuperPosHGate "Exciting, that's our first //03non-deterministic// //02StateVector//! As you can see it doesn't have one 1 and the rest 0 as all the others before - the first two entries are 0.707 which means that q0 is in Superposition. Therefore it is both 0 and 1 at the same time!" 
+"And if we take a closer look specifically at q0 it will turn to a 0 with a 50% chance and also to a 1 with 50%. Why? Because 0.707 squared is 0.5 which corresponds to 50%."
+"Basically the same as previously where we tried to have 100% for the desired outcome and 0% for the others."
+"The //02Hadamard Gate// we found earlier is exactly what we need here. I can't believe we found something that rare here on the moon!"
 
 >Qrogue
