@@ -504,6 +504,7 @@ class GameplayConfig:
 
     __AUTO_SAVE = "Auto save on exit"
     __AUTO_RESET_CIRCUIT = "Auto reset Circuit"
+    __AUTO_SWAP_GATES = "Auto swap Gates"
     __LOG_KEYS = "Log Keys"
     __SIMULATION_KEY_PAUSE = "Simulation key pause"
     __GAMEPLAY_KEY_PAUSE = "Gameplay key pause"
@@ -511,6 +512,8 @@ class GameplayConfig:
         __AUTO_SAVE: ("True", "Automatically saves the game when you exit it."),
         __AUTO_RESET_CIRCUIT: ("True", "Automatically reset your Circuit to a clean state at the beginning of a Fight, "
                                      "Riddle, etc."),
+        __AUTO_SWAP_GATES: ("True", "Automatically swaps position of two gates if you try to move one to an occupied "
+                                    "slot."),
         __LOG_KEYS: ("True", "Stores all keys you pressed in a .qrkl-file so one can replay them (e.g. for analysing a "
                            "bug)"),
         __SIMULATION_KEY_PAUSE: ("0.2", "How long to wait before we process the next input during simulation."),
@@ -562,6 +565,10 @@ class GameplayConfig:
             return float(GameplayConfig.__CONFIG[GameplayConfig.__GAMEPLAY_KEY_PAUSE][0])
         except:
             return 0.4
+
+    @staticmethod
+    def auto_swap_gates() -> bool:
+        return GameplayConfig.__CONFIG[GameplayConfig.__AUTO_SWAP_GATES][0] == "True"
 
 
 class MapConfig:

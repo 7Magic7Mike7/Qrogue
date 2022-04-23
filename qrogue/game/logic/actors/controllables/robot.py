@@ -12,7 +12,7 @@ from qrogue.game.logic.actors import StateVector
 from qrogue.game.logic.actors.controllables import Controllable
 from qrogue.game.logic.collectibles import Coin, Collectible, Consumable, Instruction, Key, MultiCollectible, \
     Qubit, Energy
-from qrogue.util import CheatConfig, Config, Logger, InstructionConfig
+from qrogue.util import CheatConfig, Config, Logger, InstructionConfig, GameplayConfig
 
 from .qubit import QubitSet, DummyQubitSet
 
@@ -370,9 +370,15 @@ class Robot(Controllable, ABC):
     def __move_instruction(self, instruction: Instruction, position: int) -> bool:
         if instruction.is_used():
             if 0 <= position < self.__attributes.circuit_space:
-                self.__remove_instruction(instruction, skip_qargs=True)
                 if self.__instructions[position]:
-                    self.__remove_instruction(self.__instructions[position])
+                    prev_pos = instruction.position
+                    self.__remove_instruction(instruction, skip_qargs=True)
+                    if GameplayConfig.auto_swap_gates():
+                        self.__place_instruction(self.__instructions[position], prev_pos)
+                    else:
+                        self.__remove_instruction(self.__instructions[position])
+                else:
+                    self.__remove_instruction(instruction, skip_qargs=True)
                 self.__place_instruction(instruction, position)
                 return True
             else:
