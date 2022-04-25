@@ -798,7 +798,7 @@ class BossFightWidgetSet(FightWidgetSet):
 
     def __continue_exploration(self):
         if self._target.is_defeated:
-            Logger.instance().info("Defeated boss.")    # todo
+            Logger.instance().info("Defeated boss.", from_pycui=False)    # todo
         else:
             self.__continue_exploration_callback()
 

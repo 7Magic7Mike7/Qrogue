@@ -312,7 +312,7 @@ class RandomLayoutGenerator:
             return room[2], False
         else:
             if self.__get(pos) in _Code.special_rooms():
-                Logger.instance().debug(f"SpecialRoom marked as dead end for seed = {self.seed}")
+                Logger.instance().debug(f"SpecialRoom marked as dead end for seed = {self.seed}", from_pycui=False)
             return pos, True  # we found a dead end
 
     def __astar(self, visited: set, pos: Coordinate, target: Coordinate) -> ([Coordinate], bool):

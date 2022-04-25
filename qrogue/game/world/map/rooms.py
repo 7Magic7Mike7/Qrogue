@@ -252,11 +252,11 @@ class Hallway(Area):
         if self.__room1:
             self.__room1.in_sight()
         else:
-            Logger.instance().debug("room1 is None!")
+            Logger.instance().debug("room1 is None!", from_pycui=False)
         if self.__room2:
             self.__room2.in_sight()
         else:
-            Logger.instance().debug("room2 is None!")
+            Logger.instance().debug("room2 is None!", from_pycui=False)
 
     def get_row_str(self, row: int) -> str:
         if self.__hide:
