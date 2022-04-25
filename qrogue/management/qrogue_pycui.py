@@ -209,6 +209,9 @@ class QrogueCUI(py_cui.PyCUI):
                     Popup.generic_info("Simulator", "finished")
                     self.__simulator = None
 
+    def _cycle_widgets(self, reverse: bool=False) -> None:
+        pass    # this is neither needed nor allowed in Qrogue
+
     def _draw(self, stdscr) -> None:    # overridden because we want to ignore mouse events
         """Main CUI draw loop called by start()
 
