@@ -57,8 +57,8 @@ class PathConfig:
         num = -1
         num_of_files = 0
         for file in files:
-            file_ending_index = file.rindex(FileTypes.Save.value)
-            if file_ending_index > 0:
+            if file.endswith(FileTypes.Save.value):
+                file_ending_index = len(file) - len(FileTypes.Save.value)
                 num_of_files += 1
                 cur_num = int(file[file.rindex(PathConfig.__SAVE_FILE_NUMERATION_SEPARATOR) + 1:file_ending_index])
                 if cur_num > num:
