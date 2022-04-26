@@ -244,4 +244,4 @@ class CXGate(DoubleQubitGate):
         return CXGate()
 
     def description(self) -> str:
-        return f"Applies an X Gate onto its second Qubit if its first Qubit is True."
+        return f"Applies an X Gate onto its second Qubit if its first Qubit is 1."
