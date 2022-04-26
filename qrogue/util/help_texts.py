@@ -36,7 +36,7 @@ class _HL:
     # words
     abort = CC.highlight_word("abort")
     action = CC.highlight_word("action")
-    add_remove = CC.highlight_word("Add/remove")
+    add_remove = CC.highlight_word("Add/Remove")
     attempt = CC.highlight_word("Attempt")
     bell = CC.highlight_word("Bell, the Master of Entanglement")
     both0 = CC.highlight_word("both 0")
@@ -54,7 +54,9 @@ class _HL:
     easier = CC.highlight_word("easier")
     enemy = CC.highlight_object("Enemy")
     entanglement = CC.highlight_word("Entanglement")
+    exam = CC.highlight_word("Exam")
     exit_ = CC.highlight_word("Exit")
+    finally_ = CC.highlight_word("finally")
     five_parenthesis = CC.highlight_word("5)")
     flee = CC.highlight_word("Flee")
     four_parenthesis = CC.highlight_word("4)")
@@ -65,13 +67,17 @@ class _HL:
     hp = CC.highlight_word("don't lose Energy")
     items = CC.highlight_word("Items")
     leave = CC.highlight_word("\"-Leave-\"")
-    level = CC.highlight_word("Level")
     list_ = CC.highlight_word("list")
+    location = CC.highlight_word("Location")
     locked = CC.highlight_word("locked")
     loses_energy = CC.highlight_word("loses some Energy")
     map_ = CC.highlight_word("map")
     manual = CC.highlight_word("Manual")
+    mission = CC.highlight_word("Mission")
+    moon = CC.highlight_word("Moon")
+    moon_mission = CC.highlight_word("Moon Mission")
     navigate = CC.highlight_word("navigate")
+    navigation_panel = CC.highlight_word("Navigation Panel")
     not_zero = CC.highlight_word("not zero")
     one_hp = CC.highlight_word("1 HP")
     one_parenthesis = CC.highlight_word("1)")
@@ -102,14 +108,21 @@ class _HL:
     p = CC.highlight_key("P")
     q = CC.highlight_key("Q")
     shift_a = CC.highlight_key("Shift+A")
+    shift_left = CC.highlight_key("Shift+Left")
     shortcuts = CC.highlight_key("0") + ", " + CC.highlight_key("1") + ", ... , " + CC.highlight_key("9")
     space = CC.highlight_key("Space")
     tab = CC.highlight_key("TAB")
     wasd = CC.highlight_key("WASD")
 
     # tiles
-    DOOR_TILE = CC.highlight_tile("-")
-    TUTORIAL_TILE = CC.highlight_tile(".")
+    door_tile = CC.highlight_tile("-")
+    level_decoration_tile = CC.highlight_tile("L")
+    level2_decoration_tile = CC.highlight_tile("L - 2")
+    msg_tile = CC.highlight_tile(".")
+    navigation_tile = CC.highlight_tile("N")
+    quickstart_tile = CC.highlight_tile("Q")
+    robb_tile = CC.highlight_tile("R")
+    teleport_tile = CC.highlight_tile("t")
 
 
 class HelpTextType(Enum):
@@ -138,16 +151,16 @@ class HelpText:
             f"by a {_HL.boss} - a special Enemy that wants to see a "
             f"{_HL.quantum_algorithm} from you...\n"
             f"Now let's start! Try to move around with the {_HL.arrow_keys} and "
-            f"go to the {_HL.door} ({_HL.DOOR_TILE}) at the bottom!"
-            f"\nThe fields with a {_HL.TUTORIAL_TILE} will show you the next steps. "
+            f"go to the {_HL.door} ({_HL.door_tile}) at the bottom!"
+            f"\nThe fields with a {_HL.msg_tile} will show you the next steps. "
             f"Now close this dialog and start playing by pressing {_HL.space}.",
 
         HelpTextType.FirstLevelIntroduction:
             f"Alright, let's have a look at the {_HL.display}.\n"
-            f"The HUD is at the very top and shows you the current {_HL.level}, the {_HL.energy} of the "
+            f"The HUD is at the very top and shows you the current {_HL.location}, the {_HL.energy} of the "
             f"{_HL.robot} and the number of {_HL.coins} and {_HL.keys} it is carrying. Always keep an eye on your "
             f"current energy as {_HL.zero_energy} means we can no longer control the {_HL.robot} and have to "
-            f"{_HL.abort} the {_HL.level}.\n"
+            f"{_HL.abort} the {_HL.mission}.\n"
             f"The rest of the screen shows a {_HL.map_} of the area our Robot's currently in. Next try to move the "
             f"Robot to the top left corner of the current room.",
 
@@ -157,25 +170,26 @@ class HelpText:
             f"Move                  -   {_HL.arrow_keys}, {_HL.wasd}\n"
             f"Navigate menus        -   {_HL.arrow_keys}, {_HL.wasd}\n"
             f"Confirm               -   {_HL.enter}, {_HL.space}\n"
-            f"Cancel/Back           -   {_HL.backspace}, {_HL.shift_a}\n"
+            f"Cancel/Back           -   {_HL.backspace}, {_HL.shift_a}, {_HL.shift_left}\n"
             f"Scroll in message     -   {_HL.arrow_keys}, {_HL.wasd}\n"
-            f"Close message         -   {_HL.enter}, {_HL.space}, {_HL.escape}\n"
+            f"Close message         -   {_HL.enter}, {_HL.space}\n"  # let's not mention ESC since it could lead to bugs
             f"Reopen last message   -   {_HL.h}\n"
             f"Pause                 -   {_HL.p}, {_HL.tab}\n"
             f"Selection shortcuts   -   {_HL.shortcuts}\n"
             #"\n"
             f"[Should you ever get stuck you can force-quit the game by pressing {_HL.ctrl_q} and then {_HL.q}. This "
-            "will still save the logs so it is the preferred option over simply closing the window!]",
+            "will still save everything so it is the preferred option over simply closing the window!]",
 
         HelpTextType.Fight:
-            f"{_HL.one_parenthesis} Below the HUD you can see three columns. The left one "
-            f"(Current State) corresponds to the output of your {_HL.circuit} (more on that later) while the right one "
-            f"(Target State) is constant and shows the Puzzle we want to solve. As soon as the current state matches "
-            f"the target state the Puzzle will count as solved. The difference of the two states (i.e. what is still "
-            f"missing to solve the Puzzle) is displayed in the middle one of the three columns. Therefore, if it only "
-            f"shows {_HL.zeros} you win!\n"
+            f"Now let me tell you how to solve {_HL.puzzles}:"
+            f"{_HL.one_parenthesis} Below the HUD you can see three columns. "
+            f"The right one ({_HL.target_state}) is constant and shows the {_HL.puzzle} we want to solve while the "
+            f"left one ({_HL.current_state}) corresponds to the output of your {_HL.circuit} (more on that later) and "
+            f"also shows the difference to the target state. The Puzzle is solved as soon as the current state matches "
+            f"the target state and therefore the difference is 0. The column in the middle shows to which qubit "
+            f"configuration each row of the StateVectors belong to.\n"
         
-            f"{_HL.two_parenthesis} Underneath the States (also called StateVectors due to their shape) is the "
+            f"{_HL.two_parenthesis} Underneath the States (also called StateVectors) is the "
             f"{_HL.circuit}. Currently we have 1 {_HL.qubit} q0 and 0 out of 3 {_HL.gates} applied to them. The "
             f"before mentioned {_HL.current_state} reflects the output (out) of the {_HL.circuit} and depends on the "
             f"{_HL.gates} we applied.\n"
@@ -185,11 +199,11 @@ class HelpText:
             f"right). After selecting a {_HL.gate} you have to define where to place it - so on which {_HL.qubit_s} "
             f"and on which {_HL.position}. If you select an already placed Gate you can either move it to a different "
             f"position or remove it from the Circuit.\n"
-            f"{_HL.commit} - Commit your changes and update your Current State. If Difference is {_HL.not_zero} the "
-            f"Robot {_HL.loses_energy}.\n"
-            f"{_HL.items} - Use one of your Items to make the Puzzle {_HL.easier} (you don't have any Items yet!)\n"
-            f"{_HL.flee} - Try to flee from the Fight. This is {_HL.chance_based} and you lose {_HL.one_hp} if you "
-            f"fail to flee (Note: for Tutorial purposes you {_HL.cannot_flee} in this Room!)\n"
+            f"{_HL.commit} - Commit your changes and update your Current State accordingly. If difference is "
+            f"{_HL.not_zero} the Robot {_HL.loses_energy}.\n"
+            f"{_HL.items} - Use one of your Items to make the Puzzle {_HL.easier} (you don't have any Items yet).\n"
+            f"{_HL.flee} - Try to flee from having to solve the Puzzle. This is {_HL.chance_based} and the Robot will "
+            f"lose some {_HL.energy} if it fails. Luckily, this 0 seems to always allow us to flee!\n"
             
             f"{_HL.four_parenthesis} The bottom right {_HL.display_details} based on the action you chose on the left "
             f"side. E.g. you can select the {_HL.gate} you want to use in your {_HL.circuit}.\n"
@@ -256,17 +270,64 @@ class HelpText:
         return None
 
 
+class StoryTextType(Enum):
+    Intro = 0
+    Exam = 1
+    MoonMission = 2
+
+
+class StoryText:
+    __DIC = {
+        StoryTextType.Intro:
+            f"Hey Mike, the time has {_HL.finally_} come! Quick, join me over here!\n\n"
+            f"[Move to the blue {_HL.robb_tile} with {_HL.arrow_keys} or {_HL.wasd} and close this dialog with "
+            f"{_HL.space} or {_HL.enter}]",
+        StoryTextType.Exam:
+            f"Alright, this will be the official and final {_HL.exam} before you can join the {_HL.moon_mission}. I "
+            "hope you're ready for it!\n"
+            "...\n"
+            "You look still a bit tired... but no worries, I will guide you through it step by step!\n"
+            f"Move onto the {_HL.quickstart_tile} on the bottom to start.",
+        StoryTextType.MoonMission:
+            "Great, you did it! Next stop: the Moon.\n"
+            f"Currently we are still orbiting earth, so please go over to the {_HL.navigation_panel} "
+            f"{_HL.navigation_tile} and set our new destination.",
+    }
+
+    @staticmethod
+    def get(type: StoryTextType) -> str:
+        return StoryText.__DIC[type]
+
+    @staticmethod
+    def load(type: str) -> str:
+        for key in StoryText.__DIC.keys():
+            if key.name.lower() == type.lower():
+                return StoryText.__DIC[key]
+        return None
+
+
 class TutorialTextType(Enum):
-    LockedDoorNoKey = 0
-    LockedDoorKey = 1
+    # LockedDoorNoKey = 0
+    # LockedDoorKey = 1
+    Navigation = 2
 
 
 class TutorialText:
     __DIC = {
-        TutorialTextType.LockedDoorNoKey:
-            f"Hmm, the {_HL.door} is {_HL.locked}. Let's see if we can find a {_HL.key} somewhere.",
-        TutorialTextType.LockedDoorKey:
-            f"Oh the {_HL.door} is {_HL.locked}. Luckily we've already found a {_HL.key} to open it!",
+        # TutorialTextType.LockedDoorNoKey:
+        #    f"Hmm, the {_HL.door} is {_HL.locked}. Let's see if we can find a {_HL.key} somewhere.",
+        # TutorialTextType.LockedDoorKey:
+        #    f"Oh the {_HL.door} is {_HL.locked}. Luckily we've already found a {_HL.key} to open it!",
+        TutorialTextType.Navigation:
+            f"In the navigation view you can see rooms representing the different locations "
+            f"{_HL.level_decoration_tile} we can navigate to. E.g. at the top of the room to the right you can see "
+            f"{_HL.level2_decoration_tile} which represents our current destination: the {_HL.moon}. Aside from the "
+            f"number of the location each room also has a description of the location you can "
+            f"access by moving onto {_HL.msg_tile} as well as {_HL.teleport_tile} to actually travel there.\n"
+            f"Right now you are in the navigation hub where you can find a general description "
+            f"and {_HL.teleport_tile} will exit the navigation view.\n"
+            f"PS: Later we can also go back to earth to redo your exam - but right "
+            f"now there is an exciting moon mission and we don't want to waste any more time!"
     }
 
     @staticmethod
