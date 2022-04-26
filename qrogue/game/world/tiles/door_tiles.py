@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Callable
+from typing import Callable, List
 
 from qrogue.game.logic.actors import Controllable, Robot
 from qrogue.game.world.navigation import Direction
@@ -13,6 +13,7 @@ class DoorOpenState(Enum):
     Closed = 1
     KeyLocked = 2
     EventLocked = 3
+    EntanglementLocked = 4
 
 
 class DoorOneWayState(Enum):
@@ -25,12 +26,18 @@ class Door(WalkTriggerTile):
     __INVALID_DIRECTION_IMG = Invalid().get_img()
 
     def __init__(self, direction: Direction, open_state: DoorOpenState = DoorOpenState.Closed,
-                 one_way_state: DoorOneWayState = DoorOneWayState.NoOneWay, event_check: Callable[[], bool] = None):
+                 one_way_state: DoorOneWayState = DoorOneWayState.NoOneWay, event_check: Callable[[], bool] = None,
+                 entangled: bool = False):
         super().__init__(TileCode.Door)
         self.__direction = direction
         self.__open_state = open_state
         self.__one_way_state = one_way_state
         self.__event_check = event_check
+        self.__entangled = entangled
+        self.__check_entanglement_lock_callback = None
+
+    def set_entanglement(self, check_entanglement_lock: Callable[[], None]):
+        self.__check_entanglement_lock_callback = check_entanglement_lock
 
     def get_img(self):
         if self.is_open and self.__one_way_state is not DoorOneWayState.Permanent:
@@ -61,7 +68,9 @@ class Door(WalkTriggerTile):
             # opposite direction is also fine for non one-way doors or opened temporary one-way doors
             correct_direction = direction in [self.__direction, self.__direction.opposite()]
         if correct_direction:
-            if self.is_key_locked:
+            if self.is_open:
+                can_walk = True
+            elif self.is_key_locked:
                 if controllable.key_count() > 0:
                     can_walk = True
                 else:
@@ -73,6 +82,9 @@ class Door(WalkTriggerTile):
                 else:
                     CommonPopups.EventDoor.show()
                     can_walk = False
+            elif self.is_entanglement_locked:
+                CommonPopups.EntangledDoor.show()
+                can_walk = False
             else:
                 can_walk = True
             if self.has_explanation:
@@ -99,6 +111,10 @@ class Door(WalkTriggerTile):
         return self.__direction
 
     @property
+    def is_entangled(self) -> bool:
+        return self.__entangled
+
+    @property
     def is_open(self) -> bool:
         return self.__open_state is DoorOpenState.Open
 
@@ -109,6 +125,12 @@ class Door(WalkTriggerTile):
     @property
     def is_event_locked(self) -> bool:
         return self.__open_state is DoorOpenState.EventLocked
+
+    @property
+    def is_entanglement_locked(self) -> bool:
+        if self.__check_entanglement_lock_callback:
+            return self.__check_entanglement_lock_callback()
+        return False
 
     @property
     def is_one_way(self) -> bool:
@@ -129,8 +151,9 @@ class Door(WalkTriggerTile):
         return False
 
     def _copy(self) -> "Tile":
-        # this should not matter because at the moment we do not place doors inside rooms so this method is never called
-        return Door(self.__direction, self.__open_state, self.__one_way_state, self.__event_check)
+        door = Door(self.__direction, self.__open_state, self.__one_way_state, self.__event_check)
+        door.set_entanglement(self.__check_entanglement_lock_callback)
+        return door
 
     def copy_and_adapt(self, new_direction: Direction, reset_one_way: bool = False) -> "Door":
         """
@@ -150,6 +173,7 @@ class Door(WalkTriggerTile):
         door = Door(new_direction, self.__open_state, one_way_state, self.__event_check)
         door.set_explanation(self._explanation)
         door.set_event(self._event_id)
+        door.set_entanglement(self.__check_entanglement_lock_callback)
         return door
 
 

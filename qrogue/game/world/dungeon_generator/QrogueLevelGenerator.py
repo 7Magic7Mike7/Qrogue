@@ -102,6 +102,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
         self.__hallways_by_id = {}      # hw_id -> Door
         self.__hallways = {}            # stores the
+        self.__entanglement_locks = set()     # stores hw_id of activated entanglement_locks
 
         #self.__template_events = PathConfig.read()
         self.__events = []
@@ -559,12 +560,14 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         else:
             open_state = tiles.DoorOpenState.Closed
             self.warning("Invalid hallway attribute: it is neither locked nor opened nor closed!")
+        # due to antlr4 version mismatch we currently cannot use the adapted grammar
+        entangled = len(ctx.HALLWAY_ID()) > 0 #ctx.ENTANGLED_LITERAL() is not None
 
-        # door = tiles.EntangledDoor(direction) # todo implement
         def door_check():
             return self.__check_achievement(event_id)
-        door = tiles.Door(direction, open_state, one_way_state, door_check)
+        door = tiles.Door(direction, open_state, one_way_state, door_check, entangled)
 
+        # todo move tutorial and trigger from attributes to hallway?
         if ctx.TUTORIAL_LITERAL():
             message = self.__load_message(ctx.REFERENCE(ref_index).getText())
             door.set_explanation(message)
@@ -577,13 +580,22 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
     def visitHallway(self, ctx: QrogueDungeonParser.HallwayContext) -> Tuple[str, rooms.Hallway]:
         hw_id = ctx.HALLWAY_ID().getText()
         door = self.visit(ctx.h_attributes())
+
+        if door.is_entangled:
+            def check_entanglement_lock() -> bool:
+                if hw_id in self.__entanglement_locks:
+                    return True
+                else:
+                    self.__entanglement_locks.add(hw_id)
+                    return False
+            door.set_entanglement(check_entanglement_lock)
+
         return hw_id, door
 
     def visitHallways(self, ctx: QrogueDungeonParser.HallwaysContext) -> None:
         for hallway_ctx in ctx.hallway():
             hw_id, door = self.visit(hallway_ctx)
             self.__hallways_by_id[hw_id] = door
-        # todo here we could entangle the doors if needed
 
     ##### Room area #####
 
