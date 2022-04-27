@@ -107,7 +107,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         #self.__template_events = PathConfig.read()
         self.__events = []
 
-        self.__enemy_groups_by_room = {}    # room_id -> dic[1-9]
+        self.__enemy_groups_by_room = {}    # room_id -> Dict[1-9] -> List[tiles.Enemy]
         self.__cur_room_id = None   # needed for enemy groups
         self.__rooms = {}
         self.__spawn_pos = None
@@ -166,14 +166,15 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
                 self.__hallways[room2] = {room1: door}
 
     def __get_default_tile(self, tile_str: str, enemy_dic: Dict[int, List[tiles.Enemy]],
-                           get_entangled_tiles: Callable[[int], List[tiles.Tile]]) -> tiles.Tile:
+                           get_entangled_enemies: Callable[[int], List[tiles.Enemy]],
+                           update_entangled_groups: Callable[[tiles.Enemy], None]) -> tiles.Tile:
         if tile_str == parser_util.PLACE_HOLDER_TILE:
             return tiles.Floor()
 
         tile_code = QrogueLevelGenerator.__tile_str_to_code(tile_str)
         if tile_code is tiles.TileCode.Enemy:
             enemy_id = int(tile_str)
-            enemy = tiles.Enemy(self.__default_enemy_factory, get_entangled_tiles, enemy_id)
+            enemy = tiles.Enemy(self.__default_enemy_factory, get_entangled_enemies, update_entangled_groups, enemy_id)
             if enemy_id not in enemy_dic:
                 enemy_dic[enemy_id] = []
             enemy_dic[enemy_id].append(enemy)
@@ -676,6 +677,13 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             else:
                 return [enemy]
 
+        def update_entangled_room_groups(new_enemy: tiles.Enemy):
+            if room_id not in self.__enemy_groups_by_room:
+                self.__enemy_groups_by_room[room_id] = {}
+            if enemy_id not in self.__enemy_groups_by_room[room_id]:
+                self.__enemy_groups_by_room[room_id][enemy_id] = []
+            self.__enemy_groups_by_room[room_id][enemy_id].append(new_enemy)
+
         enemy_id = int(ctx.DIGIT().getText())
         pool_id = ctx.REFERENCE(0).getText()
         if pool_id in self.__stv_pools:
@@ -690,12 +698,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             self.warning("Imports not yet supported! Choosing from default_stv_pool")
             enemy_factory = self.__default_enemy_factory
 
-        enemy = tiles.Enemy(enemy_factory, get_entangled_tiles, enemy_id)
-        if room_id not in self.__enemy_groups_by_room:
-            self.__enemy_groups_by_room[room_id] = {}
-        if enemy_id not in self.__enemy_groups_by_room[room_id]:
-            self.__enemy_groups_by_room[room_id][enemy_id] = []
-        self.__enemy_groups_by_room[room_id][enemy_id].append(enemy)
+        enemy = tiles.Enemy(enemy_factory, get_entangled_tiles, update_entangled_room_groups, enemy_id)
+        #   update_entangled_room_groups(enemy) # by commenting this the original (copied from) tile is not in the list
         return enemy
 
     def visitTile_descriptor(self, ctx: QrogueDungeonParser.Tile_descriptorContext) -> tiles.Tile:
@@ -798,11 +802,16 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         # but since we are already in a room we don't have to reference to global data
         enemy_dic = {}
 
-        def get_entangled_tiles(eid: int) -> List[tiles.Enemy]:
+        def get_entangled_enemies(eid: int) -> List[tiles.Enemy]:
             if eid in enemy_dic:
                 return enemy_dic[eid]
             else:
                 return []
+
+        def update_entangled_room_groups(new_enemy: tiles.Enemy):
+            if new_enemy.eid not in enemy_dic:
+                enemy_dic[new_enemy.eid] = []
+            enemy_dic[new_enemy.eid].append(new_enemy)
 
         descriptor_indices = {}
         tile_matrix = []
@@ -820,7 +829,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
                     if index + 1 < len(tile_dic[tile_str]):
                         descriptor_indices[tile_str] = index + 1
                 else:
-                    tile = self.__get_default_tile(tile_str, enemy_dic, get_entangled_tiles)
+                    tile = self.__get_default_tile(tile_str, enemy_dic, get_entangled_enemies,
+                                                   update_entangled_room_groups)
                 matrix_row.append(tile)
             # extended to the needed width with floors
             matrix_row += [tiles.Floor()] * (rooms.Room.INNER_WIDTH - len(matrix_row))

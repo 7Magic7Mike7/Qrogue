@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Callable
+from typing import Callable, List
 
 from qrogue.game.logic.actors import Controllable, Robot, Boss as BossActor
 from qrogue.game.target_factory import EnemyFactory
@@ -11,18 +11,20 @@ from qrogue.game.world.tiles import Tile, TileCode, WalkTriggerTile
 
 class _EnemyState(Enum):
     UNDECIDED = 0
-    FREE = 1
+    # FREE = 1
     FIGHT = 2
     DEAD = 3
     FLED = 4
 
 
 class Enemy(WalkTriggerTile):
-    def __init__(self, factory: EnemyFactory, get_entangled_tiles, e_id: int = 0):
+    def __init__(self, factory: EnemyFactory, get_entangled_tiles: Callable[[int], List["Enemy"]],
+                 update_entangled_groups: Callable[["Enemy"], None], e_id: int = 0):
         super().__init__(TileCode.Enemy)
         self.__factory = factory
         self.__state = _EnemyState.UNDECIDED
         self.__get_entangled_tiles = get_entangled_tiles
+        self.__update_entangled_groups = update_entangled_groups
         self.__id = e_id
         self.__amplitude = 0.1 * (10 - e_id)        # the lower the id the higher the chance of a fight
         self.__rm = RandomManager.create_new()
@@ -60,15 +62,8 @@ class Enemy(WalkTriggerTile):
             if self._state == _EnemyState.UNDECIDED:
                 if self.__measure():
                     self.__fight(robot, direction)
-                else:
-                    self.__state = _EnemyState.FLED
             elif self._state == _EnemyState.FIGHT:
-                if CheatConfig.is_scared_rabbit():
-                    self.__state = _EnemyState.FLED
-                else:
-                    self.__fight(robot, direction)
-            elif self._state == _EnemyState.FREE:
-                self.__state = _EnemyState.FLED
+                self.__fight(robot, direction)
         return False
 
     def get_img(self):
@@ -90,25 +85,21 @@ class Enemy(WalkTriggerTile):
             ))
 
     def __measure(self):
-        if CheatConfig.is_scared_rabbit():
-            return False
-
+        # since self will also be part of what get_entangled_tiles() returns, we act upon self via entangled_tiles
         if 0 < self.__id <= 9:
             entangled_tiles = self.__get_entangled_tiles(self.__id)
         else:
             entangled_tiles = [self]
 
-        state = _EnemyState.FREE
-        if self.__rm.get(msg="Target.__measure()") < self.amplitude:
+        # first do the randomness check because otherwise cheating could mess with some overall randomness
+        if self.__rm.get(msg="Target.__measure()") >= self.amplitude or CheatConfig.is_scared_rabbit():
+            state = _EnemyState.FLED
+        else:
             state = _EnemyState.FIGHT
         for enemy in entangled_tiles:
-            enemy._set_state(state)
+            enemy._set_state(state)     # this will also set self.__state
 
-        # sometimes when there is no entanglement we have to explicitly set the state of self
-        if self._state == _EnemyState.UNDECIDED:
-            self.__state = state
-
-        return state == _EnemyState.FIGHT
+        return self.__state is _EnemyState.FIGHT
 
     def __fight(self, robot: Robot, direction: Direction):
         if self.__enemy is None:
@@ -117,7 +108,9 @@ class Enemy(WalkTriggerTile):
         self.__factory.start(robot, self.__enemy, direction)
 
     def _copy(self) -> "Tile":
-        return Enemy(self.__factory, self.__get_entangled_tiles, self.__id)
+        enemy = Enemy(self.__factory, self.__get_entangled_tiles, self.__update_entangled_groups, self.__id)
+        self.__update_entangled_groups(enemy)
+        return enemy
 
     def __str__(self) -> str:
         return f"E({self.__id}|{self._state})"
