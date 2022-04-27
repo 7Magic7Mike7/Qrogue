@@ -70,17 +70,22 @@ def start_qrogue() -> None:
     __USER_DATA_PATH_ARGUMENT = ["--user-data", "-ud"]  # path argument
     #__CONTROLS_ARGUMENT = ["--controls", "-c"]          # int argument
     __SIMULATION_FILE_ARGUMENT = ["--simulation-path", "-sp"]   # path argument
+    __VALIDATE_MAP_ARGUMENT = ["--validate-map", "-vm"] # path argument
 
     from_console, _ = __parse_argument(__CONSOLE_ARGUMENT)
     debugging, _ = __parse_argument(__DEBUG_ARGUMENT)
     _, data_folder = __parse_argument(__GAME_DATA_PATH_ARGUMENT, has_value=True)
     _, user_data_folder = __parse_argument(__USER_DATA_PATH_ARGUMENT, has_value=True)
     _, simulation_path = __parse_argument(__SIMULATION_FILE_ARGUMENT, has_value=True)
+    _, map_path = __parse_argument(__VALIDATE_MAP_ARGUMENT, has_value=True)
 
-    if simulation_path:
-        simulate_game(simulation_path, from_console, debugging, data_folder, user_data_folder)
+    if map_path:
+        validate_map(map_path)
     else:
-        start_game(from_console, debugging, data_folder, user_data_folder)
+        if simulation_path:
+            simulate_game(simulation_path, from_console, debugging, data_folder, user_data_folder)
+        else:
+            start_game(from_console, debugging, data_folder, user_data_folder)
 
 
 def setup_game(game_data_path: str = "", user_data_path: str = "") -> None:
