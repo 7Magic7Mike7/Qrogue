@@ -44,7 +44,7 @@ class Target(ABC):
         :param state_vector: the StateVector to check for equality
         :return: True and a Collectible if the Target is reached, False and None otherwise
         """
-        if CheatConfig.in_god_mode() or self.__target.is_equal_to(state_vector):
+        if self.__target.is_equal_to(state_vector) or CheatConfig.in_god_mode():
             self._on_reached()
             self.__is_active = False
             temp = self.__reward
