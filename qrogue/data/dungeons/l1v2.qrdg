@@ -1,16 +1,16 @@
 Qrogue<
-Name = "Level 1-2"
+Name = "1-2: Moon"
 
 [Robot]
-2 qubits [ *xgate, *xgate ]
+2 qubits [ *xgate, *xgate, *hgate ]
 
 [Layout]
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 | __ .. __ .. ad 12 aa 13 ab .. __ .. __ |
 | ..    ..    11    ==    11    ..    .. |
-| __ .. __ .. dd == SR == bb .. __ .. __ |
-| ..    ..    ..    ==    11    ..    .. |
-| zz 15 xx 14 cd 11 cc .. ee .. __ .. __ |
+| __ .. __ .. dd == SR == bb 11 ee .. __ |
+| ..    ..    ..    15    ..    ..    .. |
+| __ .. __ .. __ .. cc 16 cd 11 zz .. __ |
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 [Custom Rooms]
@@ -19,9 +19,10 @@ SR (Spawn):
 # _ _ _ _ _ #
 # _ o o o _ #
 # _ o _ o _ #
-# _ _ _ _ _ #
+# _ _ m _ _ #
 # _ _ _ _ _ #
 #############
+m 1 *tutSuperPos
 
 aa (Wild):
 #############
@@ -31,7 +32,7 @@ aa (Wild):
 # o o _ _ _ #
 # o _ _ _ _ #
 #############
-c *key
+c *key trigger *usedHiddenPassage
 m 1 *tempOneWay
 m 1 *oneway5 trigger *sawOneWay
 
@@ -39,23 +40,22 @@ bb (Wild):
 #############
 # o o _ o o #
 # o _ _ o o #
-# _ _ _ 0 c #
+# _ _ _ 0 _ #
 # o _ _ o o #
 # o o _ o o #
 #############
-c *key
-0 *roomBB *energy
+0 *superPos *rewCD
 
 cc (Wild):
 #############
 # _ _ m _ _ #
 # _ _ _ _ _ #
-# _ _ r o _ #
-# _ _ o o _ #
+# _ o r _ _ #
+# _ o o o _ #
 # _ _ _ _ _ #
 #############
 m 1 *riddleMsg trigger *sawRiddle
-r [0, 0, 1, 0] *key 4 tutorial *helpTextRiddle
+r *superPos *key 7 tutorial *helpTextRiddle trigger *solvedRiddle
 
 dd (Wild):
 #############
@@ -71,12 +71,13 @@ ee (Wild):
 #############
 # _ _ _ _ c #
 # _ _ _ _ _ #
-# _ _ _ _ _ #
+# _ _ _ _ 0 #
 # _ _ _ _ _ #
 # _ _ _ _ c #
 #############
 c *energyBig
 c *key
+0 *superPos *rewCD
 
 ab (Wild):
 #############
@@ -101,36 +102,24 @@ ad (Wild):
 #############
 # _ _ _ _ _ #
 # _ _ _ _ _ #
-# _ _ r _ m #
+# _ _ 0 _ m #
 # _ _ _ _ _ #
-# _ _ m _ _ #
+# _ _ _ _ _ #
 #############
-r [0, 0, 0, 1] *hgate 4 trigger *receivedHadamard
+//r [0, 0, 0, 1] *hgate 4 tutorial *helpTextRiddle trigger *receivedHadamard
+0 *superPos *rewCD
 m 1 *oneway1 trigger *sawOneWay
-m 1 *riddleMsg trigger *sawRiddle
+//m 1 *riddleMsg trigger *sawRiddle
 
 cd (Wild):
 #############
-# o o o o o #
-# _ 0 o _ _ #
-# _ 0 0 _ _ #
-# _ 0 o _ _ #
-# o o o o o #
+# o o o o _ #
+# o o o _ _ #
+# 0 0 0 0 _ #
+# o o o _ _ #
+# o o o o _ #
 #############
-0 *superPos *rewCD
-0 *superPos *rewCD
-0 *superPos1 *rewCD tutorial *tutSuperPos
-0 *superPos *rewCD
-
-xx (Wild):
-#############
-# _ _ _ _ _ #
-# _ c _ c _ #
-# _ _ _ _ _ #
-# _ c _ c _ #
-# _ _ _ _ _ #
-#############
-c *treasure
+0 *superPosRand *rewCD
 
 zz (Wild):
 #############
@@ -149,13 +138,15 @@ zz (Wild):
 13 (closed; one way West permanent; ) trigger *oneWayPermanent
 14 (event *sawOneWay; ; )
 15 (event *sawDiffNumbers; ; )
+16 (event *solvedRiddle; ; )
+17 (event *usedHiddenPassage; ; )
 
 [StateVector Pools]
 custom
 //            default rewards: random *coin
 
-*superPos1 [ [0.707, 0.707, 0, 0] ]
-*superPos ordered [ [0.707, 0, 0.707, 0], [0.707, -0.707, 0, 0], [0.707, 0, -0.707, 0] ]
+*superPos ordered [ [0.707, 0.707, 0, 0], [0.707, 0, 0.707, 0], [0.707, -0.707, 0, 0], [0.707, 0, -0.707, 0] ]
+*superPosRand [ [0.707, 0.707, 0, 0], [0.707, 0, 0.707, 0], [0.707, -0.707, 0, 0], [0.707, 0, -0.707, 0] ]
 
 *roomBB [ [0, 0, 0, 1] ]
 *oneX [ [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [1, 0, 0, 0] ]
@@ -168,18 +159,16 @@ default *roomAB
 [Reward Pools]
 custom
 *key [key 1]
-*coin [coin 1]
 *energy [energy 5]
 *hgate [gate *h]
 
 *energyBig [energy 30]
-*treasure [coin 5]
 
-*rewAB ordered [coin 1, coin 1, coin 1, key 1, coin 1, coin 1, coin 1]
-*rewDD ordered [coin 1, coin 1, key 1, coin 1, coin 1, coin 1, coin 1, coin 1, coin 1, coin 1, coin 1, coin 1, coin 1, coin 1, coin 1, key 1, coin 1, coin 1, coin 1]
+*rewAB ordered [energy 10]
+*rewDD ordered [energy 5, energy 5, key 1, energy 5, energy 5, energy 5, energy 5, energy 5, energy 5, energy 5, energy 5, energy 5, energy 5, energy 5, energy 5, key 1, energy 5, energy 5, energy 5]
 *rewCD ordered [energy 10, energy 5, energy 20, key 1]
 
-default *rewAB
+default *energy
 
 [Messages]
 // highlight text by encapsulating it in "//02abcd//" where "abcd" is the text to highlight and "02" one of the available styles: 01 is for tiles, 02 is for game objects, 03 for words and 04 for keys on the keyboard
@@ -215,8 +204,8 @@ default *rewAB
 "There is a special gate called //02Hadamard Gate// that produces exactly the kind of Superposition we need here. But it's very hard to create so I doubt that we can find one. Especially since we are on the Moon."
 event *receivedHadamard alternative *tutSuperPosHGate
 *tutSuperPosHGate "Exciting, that's our first //03non-deterministic// //02StateVector//! As you can see it doesn't have one 1 and the rest 0 as all the others before - the first two entries are 0.707 which means that q0 is in Superposition. Therefore it is both 0 and 1 at the same time!" 
-"And if we take a closer look specifically at q0 it will turn to a 0 with a 50% chance and also to a 1 with 50%. Why? Because 0.707 squared is 0.5 which corresponds to 50%."
-"Basically the same as previously where we tried to have 100% for the desired outcome and 0% for the others."
+"And if we take a closer look specifically at q0 it will turn to a 0 with a 50% chance and also with 50% to a 1. Why? Because 0.707 squared is 0.5 which corresponds to 50%."
+"Basically the same as previously where we tried to have 100% (1²) for the desired outcome and 0% (0²) for the others."
 "The //02Hadamard Gate// we found earlier is exactly what we need here. I can't believe we found something that rare here on the moon!"
 
 >Qrogue

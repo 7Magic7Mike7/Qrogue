@@ -1,5 +1,5 @@
 Qrogue<
-Name = "Level 1-1"
+Name = "1-1: Exam"
 
 [Robot]
 1 qubits [ *xgate ]
@@ -36,7 +36,7 @@ aa (foggy Wild):
 m 1 *puzzle1
 m 1 *lockedDoorTutorial trigger *sawLockedDoor
 // enemy_id, state vector pool, reward pool, tutorial message, event trigger
-0 *base1 *coin tutorial *helptextFight trigger *enemy1
+0 *base1 tutorial *helptextFight trigger *enemy1
 c *key 1 tutorial *foundKeyLockUnknown trigger *pickedUpKey
 
 bb (Wild):
@@ -48,7 +48,7 @@ bb (Wild):
 # o o _ o o #
 #############
 0 *base0 *key tutorial *emptyPuzzle
-c *energy
+c *bigEnergy
 
 
 cc (Treasure):
@@ -71,8 +71,8 @@ dd (Wild):
 #############
 0 *base01 *twoXs
 0 *base10 *twoXs
-0 *base11 *coin tutorial *twoXgates trigger *twoXgatesDone
-c *energy
+0 *base11 tutorial *twoXgates trigger *twoXgatesDone
+c *bigEnergy
 
 ee (Gate):
 #############
@@ -105,7 +105,7 @@ m *finishedLevel trigger *done
 [StateVector Pools]
 custom
 //*myStvPool [ [0j, -0j, -1j, +0], [0.5, -.5j, +.5, 0.5j ] ];
-//            default rewards: random *coin
+//            default rewards: random *energy
 *base0 [ [1, 0] ]
 *base1 [ [0, 1] ]
 *base00 [ [1, 0, 0, 0] ]
@@ -118,14 +118,15 @@ default random [ [.707, +0, -0 + 0j, .707j] ]
 [Reward Pools]
 custom
 *key [key 1]
-*coin [coin 1]
 *xgate [gate *x]
 *hgate [gate *h]
 *qubit [qubit 1]
-*energy [energy 20]
-*twoXs ordered [coin 1, key 1]
+*energy [energy 10]
 
-default *coin
+*twoXs ordered [energy 5, key 1]
+*bigEnergy [energy 25]
+
+default *energy
 
 [Messages]
 // highlight text by encapsulating it in "//02abcd//" where "abcd" is the text to highlight and "02" one of the available styles: 01 is for tiles, 02 is for game objects, 03 for words and 04 for keys on the keyboard

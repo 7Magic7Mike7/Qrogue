@@ -2,11 +2,11 @@ Qrogue<
 
 [Layout]
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-| la 12 SR == lb 10 ee .. __ .. __ .. __ |
-| 12    ..    ..    ..    ..    ..    .. |
-| tu .. __ .. __ .. __ .. __ .. __ .. __ |
-| ..    ..    ..    ..    ..    ..    .. |
-| __ .. __ .. __ .. __ .. __ .. __ .. __ |
+| la 12 SR == lb .. __ .. __ .. __ .. __ |
+| 13    ..    ==    ..    ..    ..    .. |
+| tu .. ee 10 lc .. __ .. __ .. __ .. __ |
+| ..    ==    ..    ..    ..    ..    .. |
+| __ .. ff .. __ .. __ .. __ .. __ .. __ |
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 [Rooms]
@@ -15,16 +15,24 @@ description "Spawn"
 teleport *back
 
 la (visible Level 1; West):
-description "First level"
+description "Location: Orbiting Earth. Demonstration of the capabilities of our Circuit-Robots. Using two X-Gates and two Qubits."
 teleport *l1v1
 
 lb (visible Level 2; North):
-description "Second level"
+description "Location: Moon. Our first official research mission."
 teleport *l1v2
 
-ee (Level 0; South):
+lc (visible Level 3; South):
+description "Location: Moon. Our first official research mission."
+teleport *l1v3
+
+ee (foggy Level 0; West):
 description "Expedition"
 teleport *expedition1
+
+ff (Level 0; West):
+description "Expedition"
+teleport *expedition2
 
 // just an example level for easier copying of map parts
 tu (Level 9; East):
@@ -32,8 +40,9 @@ description "just an example level for easier copying of map parts"
 teleport *fullTemplate
 
 [Hallways]
-10 (event *w1Done; ; )
-11 (event *l1v1Done; ; )
-12 (event *l1v2Done; ; )
+10 (event *l1v3; ; )
+11 (event *l1v1; ; )
+12 (event *l1v3; ; )
+13 (event *w1Done; ; )
 
 >Qrogue
