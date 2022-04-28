@@ -3,8 +3,6 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Callable
 
-import py_cui
-
 from qrogue.game.logic.actors import Controllable
 from qrogue.game.world.navigation import Direction
 
@@ -40,35 +38,6 @@ class TileCode(Enum):
     SpaceshipWalk = 71
     SpaceshipTrigger = 72
     OuterSpace = 73
-
-
-class TileColorer:
-    __color_manager = {
-        TileCode.Invalid: py_cui.RED_ON_BLUE,
-        TileCode.Void: py_cui.CYAN_ON_BLACK,
-        TileCode.Floor: py_cui.CYAN_ON_BLACK,
-        TileCode.Wall: py_cui.BLACK_ON_WHITE,
-        TileCode.Obstacle: py_cui.CYAN_ON_BLACK,
-        TileCode.FogOfWar: py_cui.CYAN_ON_BLACK,
-        TileCode.Door: py_cui.CYAN_ON_BLACK,
-        TileCode.Collectible: py_cui.CYAN_ON_BLACK,
-        TileCode.Controllable: py_cui.GREEN_ON_BLACK,
-        TileCode.Npc: py_cui.BLUE_ON_BLACK,
-        TileCode.Enemy: py_cui.RED_ON_BLACK,
-        TileCode.Boss: py_cui.BLACK_ON_RED,
-        TileCode.SpaceshipWalk: py_cui.BLACK_ON_WHITE,
-    }
-
-    @staticmethod
-    def get_color(tile_code: TileCode) -> int:
-        """
-
-        :param tile_code: code of the Tile we want to get the default color of
-        :return: integer representing one of the possible foreground-background color comibnations, None for invalid
-        input
-        """
-        if tile_code in TileColorer.__color_manager:
-            return TileColorer.__color_manager[tile_code]
 
 
 class Tile(ABC):
