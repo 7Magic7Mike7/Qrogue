@@ -13,7 +13,7 @@ class TileColorer:
 
         TileCode.Floor: py_cui.CYAN_ON_BLACK,
         TileCode.Wall: py_cui.BLACK_ON_WHITE,
-        TileCode.Obstacle: py_cui.CYAN_ON_BLACK,
+        TileCode.Obstacle: py_cui.BLACK_ON_WHITE,
         TileCode.Door: py_cui.CYAN_ON_BLACK,
 
         TileCode.Collectible: py_cui.CYAN_ON_BLACK,
