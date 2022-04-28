@@ -200,24 +200,25 @@ class BossFactory:
 
         for g in include_gates:
             gate = g.copy()
-            self.__prepare_gate(gate, qubit_count, qubits)
-            used_gates.append(gate)
+            if self.__prepare_gate(gate, qubit_count, qubits):
+                used_gates.append(gate)
 
         usable_gates = self.__robot.get_available_instructions()
         while len(usable_gates) > 0:
             gate = self.__rm.get_element(usable_gates, remove=True, msg="BossFactory_selectGate")
-            self.__prepare_gate(gate, qubit_count, qubits)
-            used_gates.append(gate)
+            if self.__prepare_gate(gate, qubit_count, qubits):
+                used_gates.append(gate)
 
         reward = self.__rm.get_element(self.__reward_pool, msg="BossFactory_reward")
         return Boss(StateVector.from_gates(used_gates, self.__robot.num_of_qubits), reward)
 
-    def __prepare_gate(self, gate: Instruction, qubit_count, qubits):
+    def __prepare_gate(self, gate: Instruction, qubit_count, qubits) -> bool:
         gate_qubits = qubits.copy()
-        while True:
+        while len(gate_qubits) > 0:
             qubit = self.__rm.get_element(gate_qubits, remove=True, msg="BossFactory_selectQubit")
             qubit_count[qubit] += 1
             if qubit_count[qubit] >= self.__robot.circuit_space:
                 qubits.remove(qubit)
             if not gate.use_qubit(qubit):
-                return
+                return True
+        return False
