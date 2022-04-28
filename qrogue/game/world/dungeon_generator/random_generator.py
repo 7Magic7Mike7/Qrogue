@@ -515,8 +515,8 @@ class RandomLayoutGenerator:
 
 
 class ExpeditionGenerator(DungeonGenerator):
-    __MIN_ENEMY_FACTORY_CHANCE = 0.45
-    __MAX_ENEMY_FACTORY_CHANCE = 0.7
+    __MIN_ENEMY_FACTORY_CHANCE = 0.5
+    __MAX_ENEMY_FACTORY_CHANCE = 0.8
 
     def __init__(self, seed: int, check_achievement: Callable[[str], bool], trigger_event: Callable[[str], None],
                  load_map_callback: Callable[[str], None], width: int = DungeonGenerator.WIDTH,
