@@ -56,6 +56,7 @@ class _HL:
     entanglement = CC.highlight_word("Entanglement")
     exam = CC.highlight_word("Exam")
     exit_ = CC.highlight_word("Exit")
+    expedition = CC.highlight_word("Expedition")
     finally_ = CC.highlight_word("finally")
     five_parenthesis = CC.highlight_word("5)")
     flee = CC.highlight_word("Flee")
@@ -90,6 +91,7 @@ class _HL:
     removed = CC.highlight_word("removed")
     reward = CC.highlight_word("Reward")
     serious = CC.highlight_word("serious")
+    superposition = CC.highlight_word("Superposition")
     two_parenthesis = CC.highlight_word("2)")
     three_parenthesis = CC.highlight_word("3)")
     use = CC.highlight_word("use")
@@ -181,13 +183,13 @@ class HelpText:
             "will still save everything so it is the preferred option over simply closing the window!]",
 
         HelpTextType.Fight:
-            f"Now let me tell you how to solve {_HL.puzzles}:"
+            f"Now let me tell you how to solve {_HL.puzzles}:\n"
             f"{_HL.one_parenthesis} Below the HUD you can see three columns. "
             f"The right one ({_HL.target_state}) is constant and shows the {_HL.puzzle} we want to solve while the "
             f"left one ({_HL.current_state}) corresponds to the output of your {_HL.circuit} (more on that later) and "
             f"also shows the difference to the target state. The Puzzle is solved as soon as the current state matches "
             f"the target state and therefore the difference is 0. The column in the middle shows to which qubit "
-            f"configuration each row of the StateVectors belong to.\n"
+            f"configuration each row of the states belong to.\n"
         
             f"{_HL.two_parenthesis} Underneath the States (also called StateVectors) is the "
             f"{_HL.circuit}. Currently we have 1 {_HL.qubit} q0 and 0 out of 3 {_HL.gates} applied to them. The "
@@ -222,10 +224,10 @@ class HelpText:
             f"why you are notified if this would lead to 0 attempts left.",
 
         HelpTextType.Shop:
-            f"In the {_HL.shop} you can use {_HL.coins} you got (e.g. from Fights) to buy various {_HL.collec}. On the "
-            f"left side is a {_HL.list_} of everything you can {_HL.buy}. Navigate as usual with your {_HL.arrow_keys} "
-            f"and select something with {_HL.space} to see more {_HL.details} on the right side. There you can also "
-            f"buy it.\n"
+            f"In the {_HL.shop} you can exchange {_HL.coins} you got (e.g. from solving Puzzles) for various "
+            f"{_HL.collec}. On the left side is a {_HL.list_} of everything you can {_HL.buy}. Navigate as usual with "
+            f"your {_HL.arrow_keys} and select something with {_HL.space} to see more {_HL.details} on the right side. "
+            f"There you can also buy it.\n"
             f"{_HL.leave} obviously makes you leave the {_HL.shop}. You can always {_HL.reenter} it later if you want!",
 
         HelpTextType.BossFight: # todo make more generic
@@ -274,6 +276,7 @@ class StoryTextType(Enum):
     Intro = 0
     Exam = 1
     MoonMission = 2
+    FirstExpedition = 4
 
 
 class StoryText:
@@ -292,6 +295,10 @@ class StoryText:
             "Great, you did it! Next stop: the Moon.\n"
             f"Currently we are still orbiting earth, so please go over to the {_HL.navigation_panel} "
             f"{_HL.navigation_tile} and set our new destination.",
+        StoryTextType.FirstExpedition:
+            f"Nice, I think you sort of understand {_HL.entanglement} and {_HL.superposition} now.\n"
+            "Currently there is no new mission I could assign you to. But if you want you can go on an "
+            f"{_HL.expedition}. Just head back to the {_HL.navigation_panel} and go down."
     }
 
     @staticmethod
