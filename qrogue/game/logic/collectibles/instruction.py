@@ -1,5 +1,6 @@
 
 from abc import ABC, abstractmethod
+from typing import Iterator
 
 import qiskit.circuit.library.standard_gates as gates
 from qiskit import QuantumCircuit
@@ -57,7 +58,7 @@ class Instruction(Collectible, ABC):
     def append_to(self, circuit: QuantumCircuit):
         circuit.append(self.__instruction, self._qargs, self._cargs)
 
-    def qargs_iter(self) -> "Iterator":
+    def qargs_iter(self) -> Iterator[int]:
         return iter(self._qargs)
 
     def name(self) -> str:
