@@ -671,17 +671,20 @@ class WildRoom(BaseWildRoom):
 
         tile_list = Room.get_empty_room_tile_list()
         for i in range(num_of_enemies):
-            id = rm.get_int(min=0, max=WildRoom.__NUM_OF_ENEMY_GROUPS + 1, msg="WildRoom_eid")
-            enemy = EnemyTile(factory, self.__get_tiles_by_id, id)
-            if id > 0:
-                self.__dictionary[id].append(enemy)
+            eid = rm.get_int(min=0, max=WildRoom.__NUM_OF_ENEMY_GROUPS + 1, msg="WildRoom_eid")
+            enemy = EnemyTile(factory, self.__get_tiles_by_id, self.__update_entangled_tiles, eid)
+            if eid > 0:
+                self.__dictionary[eid].append(enemy)
             pos = rm.get_element(available_positions, remove=True, msg="WildRoom_epos")
             tile_list[Room.coordinate_to_index(pos)] = enemy
 
         super().__init__(tile_list, self.__get_tiles_by_id, north_hallway, east_hallway, south_hallway, west_hallway)
 
-    def __get_tiles_by_id(self, id: int) -> List[EnemyTile]:
-        return self.__dictionary[id]
+    def __get_tiles_by_id(self, eid: int) -> List[EnemyTile]:
+        return self.__dictionary[eid]
+
+    def __update_entangled_tiles(self, enemy: EnemyTile):
+        self.__dictionary[enemy.eid].append(enemy)
 
 
 class DefinedWildRoom(BaseWildRoom):
