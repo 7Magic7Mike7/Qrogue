@@ -64,7 +64,7 @@ class Energy(Pickup):
         return "Energy"
 
     def description(self) -> str:
-        return "Gives back some energy to the robot so it can stay longer in a dungeon."
+        return "Gives back some energy to the Robot so it can stay longer on a mission."
 
     def to_string(self) -> str:
         return f"Energy ({self.amount})"
