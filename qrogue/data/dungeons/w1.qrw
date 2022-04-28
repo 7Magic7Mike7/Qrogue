@@ -3,8 +3,8 @@ Qrogue<
 [Layout]
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 | la 12 SR == lb .. __ .. __ .. __ .. __ |
-| 13    ..    ==    ..    ..    ..    .. |
-| tu .. ee 10 lc .. __ .. __ .. __ .. __ |
+| 13    ..    10    ..    ..    ..    .. |
+| tu .. ee 11 lc .. __ .. __ .. __ .. __ |
 | ..    ==    ..    ..    ..    ..    .. |
 | __ .. ff .. __ .. __ .. __ .. __ .. __ |
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -40,8 +40,8 @@ description "just an example level for easier copying of map parts"
 teleport *fullTemplate
 
 [Hallways]
-10 (event *l1v3; ; )
-11 (event *l1v1; ; )
+10 (event *l1v2; ; )
+11 (event *l1v3; ; )
 12 (event *l1v3; ; )
 13 (event *w1Done; ; )
 
