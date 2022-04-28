@@ -89,12 +89,16 @@ class HudWidget(Widget):
 
     def render(self) -> None:
         text = ""
-        if self.__map_name:
+        if HudConfig.ShowMapName and self.__map_name:
             text += f"{self.__map_name}\t"
         if self.__robot:
-            text += f"Energy: {self.__robot.cur_energy} / {self.__robot.max_energy}   \t" \
-                   f"{self.__robot.backpack.coin_count}$, {self.__robot.key_count()} keys"
-        if self.__render_duration:
+            if HudConfig.ShowEnergy:
+                text += f"Energy: {self.__robot.cur_energy} / {self.__robot.max_energy}   \t"
+            if HudConfig.ShowKeys:
+                text += f"{self.__robot.key_count()} keys"
+            if HudConfig.ShowCoins:
+                text += f"{self.__robot.backpack.coin_count}$"
+        if HudConfig.ShowFPS and self.__render_duration:
             text += f"\t\t{self.__render_duration:.2f} ms"
         self.widget.set_title(text)
 

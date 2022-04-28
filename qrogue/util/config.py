@@ -571,6 +571,14 @@ class GameplayConfig:
         return GameplayConfig.__CONFIG[GameplayConfig.__AUTO_SWAP_GATES][0] == "True"
 
 
+class HudConfig:
+    ShowMapName = True
+    ShowEnergy = True
+    ShowKeys = True
+    ShowCoins = True
+    ShowFPS = False
+
+
 class MapConfig:
     @staticmethod
     def max_width() -> int:
