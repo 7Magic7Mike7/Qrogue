@@ -6,7 +6,7 @@ from py_cui.widgets import BlockLabel
 from qrogue.game.logic.actors import Robot
 from qrogue.game.world.map import Map
 from qrogue.game.world.navigation import Direction
-from qrogue.util import ColorConfig, Controls, InstructionConfig, Keys, Logger, util_functions as uf, Config
+from qrogue.util import ColorConfig, Controls, Keys, Logger, util_functions as uf, Config, HudConfig
 
 from qrogue.graphics.widgets import Renderable
 
@@ -22,11 +22,12 @@ class MyBaseWidget(BlockLabel):
         return super(MyBaseWidget, self).get_title()
 
     def add_text_color_rule(self, regex: str, color: int, rule_type: str, match_type: str = 'line',
-                            region: List[int] = [0,1], include_whitespace: bool=False, selected_color=None) -> None:
+                            region: List[int] = [0, 1], include_whitespace: bool = False, selected_color = None)\
+            -> None:
         super(MyBaseWidget, self).add_text_color_rule(regex, color, rule_type, match_type, region, include_whitespace,
                                                       selected_color)
 
-    def add_key_command(self, keys: List[int], command: Callable[[],Any]) -> Any:
+    def add_key_command(self, keys: List[int], command: Callable[[], Any]) -> Any:
         for key in keys:
             super(MyBaseWidget, self).add_key_command(key, command)
 
@@ -132,8 +133,8 @@ class MapWidget(Widget):
         self.__map = None
         self.__backup = None
 
-    def set_data(self, map: Map) -> None:
-        self.__map = map
+    def set_data(self, map_: Map) -> None:
+        self.__map = map_
 
     def render(self) -> None:
         if self.__map is not None:
@@ -180,7 +181,7 @@ class CurrentStateVectorWidget(Widget):
         self.__diff_vector_str = None
         widget.add_text_color_rule("~.*~", ColorConfig.STV_HEADING_COLOR, 'contains', match_type='regex')
         widget.add_text_color_rule("\(0\)", ColorConfig.CORRECT_AMPLITUDE_COLOR, "contains", match_type="regex")
-        #widget.add_text_color_rule("\(\d\)", ColorConfig.CORRECT_AMPLITUDE_COLOR, "contains", match_type="regex")
+        # widget.add_text_color_rule("\(\d\)", ColorConfig.CORRECT_AMPLITUDE_COLOR, "contains", match_type="regex")
         widget.add_text_color_rule("\([^0].*\)", ColorConfig.WRONG_AMPLITUDE_COLOR, "contains", match_type="regex")
 
     def set_data(self, state_vector_strings: Tuple[str, str]) -> None:
@@ -235,7 +236,7 @@ class QubitInfoWidget(Widget):
                                                             # the right
             row = "   ".join(bin_num)  # separate the digits in the string with spaces
             if not self.__left_aligned:
-                row = row[::-1] # [::-1] reverses the list so q0 is on the left
+                row = row[::-1]     # [::-1] reverses the list so q0 is on the left
             body += box_left + row + box_right
             body += "\n"
 
@@ -243,7 +244,7 @@ class QubitInfoWidget(Widget):
         self.widget.set_title(self.__text)
 
     def render(self) -> None:
-        #self.widget.set_title(self.__text)
+        # self.widget.set_title(self.__text)
         pass
 
     def render_reset(self) -> None:
@@ -288,16 +289,16 @@ class SelectionWidget(Widget):
             controls.get_keys(Keys.HotKey8),
             controls.get_keys(Keys.HotKey9),
         ]
-        self.widget.add_key_command(hotkeys[indices[0]], lambda : self.__jump_to_index(indices[0]))
-        self.widget.add_key_command(hotkeys[indices[1]], lambda : self.__jump_to_index(indices[1]))
-        self.widget.add_key_command(hotkeys[indices[2]], lambda : self.__jump_to_index(indices[2]))
-        self.widget.add_key_command(hotkeys[indices[3]], lambda : self.__jump_to_index(indices[3]))
-        self.widget.add_key_command(hotkeys[indices[4]], lambda : self.__jump_to_index(indices[4]))
-        self.widget.add_key_command(hotkeys[indices[5]], lambda : self.__jump_to_index(indices[5]))
-        self.widget.add_key_command(hotkeys[indices[6]], lambda : self.__jump_to_index(indices[6]))
-        self.widget.add_key_command(hotkeys[indices[7]], lambda : self.__jump_to_index(indices[7]))
-        self.widget.add_key_command(hotkeys[indices[8]], lambda : self.__jump_to_index(indices[8]))
-        self.widget.add_key_command(hotkeys[indices[9]], lambda : self.__jump_to_index(indices[9]))
+        self.widget.add_key_command(hotkeys[indices[0]], lambda: self.__jump_to_index(indices[0]))
+        self.widget.add_key_command(hotkeys[indices[1]], lambda: self.__jump_to_index(indices[1]))
+        self.widget.add_key_command(hotkeys[indices[2]], lambda: self.__jump_to_index(indices[2]))
+        self.widget.add_key_command(hotkeys[indices[3]], lambda: self.__jump_to_index(indices[3]))
+        self.widget.add_key_command(hotkeys[indices[4]], lambda: self.__jump_to_index(indices[4]))
+        self.widget.add_key_command(hotkeys[indices[5]], lambda: self.__jump_to_index(indices[5]))
+        self.widget.add_key_command(hotkeys[indices[6]], lambda: self.__jump_to_index(indices[6]))
+        self.widget.add_key_command(hotkeys[indices[7]], lambda: self.__jump_to_index(indices[7]))
+        self.widget.add_key_command(hotkeys[indices[8]], lambda: self.__jump_to_index(indices[8]))
+        self.widget.add_key_command(hotkeys[indices[9]], lambda: self.__jump_to_index(indices[9]))
 
     @property
     def num_of_choices(self) -> int:
@@ -440,7 +441,7 @@ class SelectionWidget(Widget):
                 Logger.instance().throw(IndexError(f"Invalid index = {self.__index} for {self.__callbacks}. "
                                                    f"Text of choices: {self.__choices}"))
             ret = self.__callbacks[self.__index]()
-        if ret is None: # move focus if nothing is returned
+        if ret is None:     # move focus if nothing is returned
             return True
         else:
             return ret
