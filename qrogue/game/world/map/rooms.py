@@ -485,7 +485,7 @@ class MetaRoom(CopyAbleRoom):
                 self._set(tile_list, 0, Room.INNER_MID_Y, dash_decoration)
                 self._set(tile_list,0, Room.INNER_HEIGHT - 1, num_decoration)
                 self._set(tile_list, Room.INNER_WIDTH - 1, 0, msg_tile)
-                self._set(tile_list, Room.INNER_WIDTH - 1, Room.INNER_HEIGHT - 1, msg_tile)
+                self._set(tile_list, Room.INNER_WIDTH - 1, Room.INNER_HEIGHT - 1, level_tile)
                 coordinate = Coordinate(Room.INNER_MID_X - 1, 0)
                 addition = Direction.South
 
