@@ -160,7 +160,7 @@ class HelpText:
         HelpTextType.FirstLevelIntroduction:
             f"Alright, let's have a look at the {_HL.display}.\n"
             f"The HUD is at the very top and shows you the current {_HL.location}, the {_HL.energy} of the "
-            f"{_HL.robot} and the number of {_HL.coins} and {_HL.keys} it is carrying. Always keep an eye on your "
+            f"{_HL.robot} and the number of {_HL.keys} it is carrying. Always keep an eye on your "
             f"current energy as {_HL.zero_energy} means we can no longer control the {_HL.robot} and have to "
             f"{_HL.abort} the {_HL.mission}.\n"
             f"The rest of the screen shows a {_HL.map_} of the area our Robot's currently in. Next try to move the "
@@ -201,8 +201,8 @@ class HelpText:
             f"right). After selecting a {_HL.gate} you have to define where to place it - so on which {_HL.qubit_s} "
             f"and on which {_HL.position}. If you select an already placed Gate you can either move it to a different "
             f"position or remove it from the Circuit.\n"
-            f"{_HL.commit} - Commit your changes and update your Current State accordingly. If difference is "
-            f"{_HL.not_zero} the Robot {_HL.loses_energy}.\n"
+            f"{_HL.commit} - Commit your changes and update your Current State accordingly. If the updated difference "
+            f"is {_HL.not_zero} the Robot {_HL.loses_energy}.\n"
             f"{_HL.items} - Use one of your Items to make the Puzzle {_HL.easier} (you don't have any Items yet).\n"
             f"{_HL.flee} - Try to flee from having to solve the Puzzle. This is {_HL.chance_based} and the Robot will "
             f"lose some {_HL.energy} if it fails. Luckily, this 0 seems to always allow us to flee!\n"
@@ -216,7 +216,7 @@ class HelpText:
 
         HelpTextType.Riddle:
             f"{_HL.riddles} are very similar to {_HL.puzzles}. You have a {_HL.target_state} you need to reach "
-            f"(Difference is zero) "
+            f"(difference is zero) "
             f"by adapting your {_HL.circuit}. The main difference is that you {_HL.hp} if you fail but instead 1 "
             f"{_HL.attempt} for solving the Riddle. When you have no more attempts left the Riddle {_HL.vanishes} "
             "together with its reward - which is usually much better than the ones from Puzzles. Also fleeing (or in "
@@ -230,7 +230,7 @@ class HelpText:
             f"There you can also buy it.\n"
             f"{_HL.leave} obviously makes you leave the {_HL.shop}. You can always {_HL.reenter} it later if you want!",
 
-        HelpTextType.BossFight: # todo make more generic
+        HelpTextType.BossFight:  # todo make more generic
             f"Now it's getting {_HL.serious}! You are fighting against {_HL.bell}. For the {_HL.state} you need to reach to "
             f"defeat Bell your two {_HL.qubits} will always have to be the same: either {_HL.both0} or {_HL.both1}.\n"
             f"This is called {_HL.entanglement}.\n\n"
