@@ -210,8 +210,6 @@ class MapManager:
             else:
                 CommonQuestions.ProceedToNextMap.ask(self.__proceed)
         SaveData.instance().achievement_manager.trigger_level_event(event_id)
-        if Config.debugging():
-            print("triggered event: " + event_id)
 
     def load_map(self, map_name: str, spawn_room: Coordinate, map_seed: int = None):
         if map_name.lower() == MapConfig.next_map_string():
