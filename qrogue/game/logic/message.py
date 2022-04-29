@@ -25,6 +25,13 @@ class Message:
         message.resolve_message_ref(alternative)
         return message
 
+    @staticmethod
+    def create_from_message(message: "Message") -> "Message":
+        msg = Message(message.__m_id, message.__title, message.__text, message.__event, message.__alt_ref)
+        if message.__alt_message:
+            msg.resolve_message_ref(message.__alt_message)
+        return msg
+
     def __init__(self, m_id: str, title: str, text: str, event: Optional[str], alternative: Optional[str]):
         self.__m_id = m_id
         self.__title = title

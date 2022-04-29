@@ -6,6 +6,7 @@ from qiskit import transpile, QuantumCircuit
 from qiskit.providers.aer import StatevectorSimulator
 
 from qrogue.game.logic.collectibles import Instruction
+from qrogue.util import Logger
 from qrogue.util.util_functions import is_power_of_2
 
 
@@ -35,16 +36,20 @@ class StateVector:
     def complex_to_string(val: complex) -> str:
         val = np.round(val, StateVector.__DECIMALS)
         if val.imag == 0:
-            return f"{val.real:g}"
+            text = f"{val.real:g}"  # g turns 0.0 to 0
         elif val.real == 0:
-            return f"{val.imag:g}j"
+            text = f"{val.imag:g}j"
         else:
             if val.imag == 1:
-                return f"{val.real:g}+j"
+                text = f"{val.real:g}+j"
             elif val.imag == -1:
-                return f"{val.real:g}-j"
+                text = f"{val.real:g}-j"
             else:
-                return str(val)[1:-1]    # remove the parentheses
+                text = str(val)[1:-1]    # remove the parentheses
+        # skip "-" in front if the text starts with "-0" and the value is actually 0 (so no more comma)
+        if text.startswith("-0") and (len(text) == 2 or len(text) > 2 and text[2] != "."):
+            text = text[1:]
+        return text
 
     def __init__(self, amplitudes: List[complex]):
         self.__amplitudes = amplitudes
@@ -79,13 +84,21 @@ class StateVector:
         """
         diff = [self.__amplitudes[i] - other.__amplitudes[i] for i in range(self.size)]
         for val in diff:
-            if val < -self.__TOLERANCE or self.__TOLERANCE < val:
+            if abs(val) < -self.__TOLERANCE or self.__TOLERANCE < abs(val):
                 return False
         return True
 
     def get_diff(self, other: "StateVector") -> "StateVector":
         if self.size == other.size:
             diff = [self.__amplitudes[i] - other.__amplitudes[i] for i in range(self.size)]
+            return StateVector(diff)
+        elif self.size < other.size:
+            Logger.instance().info("Requested difference between StateVectors of different sizes! "
+                                   f"self = {self}, other = {other}; padding self with the needed number of 0s",
+                                   from_pycui=False)
+            diff = [0] * other.size
+            for i in range(self.size):
+                diff[i] = self.__amplitudes[i] - other.__amplitudes[i]
             return StateVector(diff)
         else:
             raise ValueError("Cannot calculate the difference between StateVectors of different size! "

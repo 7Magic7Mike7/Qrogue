@@ -1,0 +1,212 @@
+Qrogue<
+Name = "1-3: Moon (dark side)"
+
+[Robot]
+2 qubits [ *xgate, *cxgate, *hgate ]
+
+[Layout]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+| __ .. __ .. ed 13 dd 11 gg .. __ .. __ |
+| ..    ..    ==    13    ==    ..    .. |
+| __ .. hh 14 ee == de .. ff == sh .. __ |
+| ..    15    ..    ..    12    ..    .. |
+| __ .. SR == aa == bb == cc .. __ .. __ |
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[Custom Rooms]
+
+aa (Wild):		// done
+#############
+# _ _ o _ _ #
+# _ _ _ _ o #
+# m _ _ _ _ #
+# _ _ 0 _ _ #
+# _ _ _ _ 0 #
+#############
+m 1 *cxGateTut
+0 *base11 *energy tutorial *cxX
+0 *superpos2xh1 *energy
+
+bb (Wild):		// done
+#############
+# _ _ 9 _ _ #
+# o o o o _ #
+# _ _ 0 _ _ #
+# o o o o o #
+# _ _ 9 _ _ #
+#############
+0 *superpos2xh2 *energy
+9 *commonPuzzles *energy
+
+cc (Wild):		// done
+#############
+# o _ _ o o #
+# _ _ o o o #
+# _ 0 o o c #
+# _ _ o o o #
+# o _ _ o o #
+#############
+0 *entanglement *bigCoin tutorial *tutEntanglement trigger *solvedEntanglement
+c *coin		// todo better reward?
+
+ff (Wild):		// done
+#############
+# 5 4 c _ _ #
+# 1 5 _ _ 4 #
+# 1 1 0 4 4 #
+# 1 5 7 4 _ #
+# 5 7 m 7 4 #
+#############
+c *coin
+m 1 *tutEntangledPuzzles
+
+gg (Wild):		// done
+#############
+# c 3 3 1 1 #
+# o o _ _ 7 #
+# 3 0 0 o 7 #
+# 9 0 0 o 7 #
+# 9 8 _ 7 7 #
+#############
+c *bigCoin
+
+dd (Wild):		// done
+#############
+# 0 _ _ _ _ #
+# o o _ _ _ #
+# m _ 0 _ _ #
+# o _ _ o _ #
+# o o m o 0 #
+#############
+m 1 *tutEntangledDoor trigger *sawEntangledDoor
+m 1 *tutEntangledDoor trigger *sawEntangledDoor
+0 *commonPuzzles
+0 *antiEntanglement tutorial *tutAntiEntanglement
+0 *commonPuzzles
+
+de (Wild):		// done
+#############
+# o 0 _ _ _ #
+# 0 o 1 _ 8 #
+# _ 1 o 3 8 #
+# _ _ 5 4 8 #
+# _ 7 7 7 6 #
+#############
+
+ed (Wild):		// done
+#############
+# 8 _ 9 9 _ #
+# _ o o o _ #
+# 7 o o o _ #
+# 7 o o o 0 #
+# _ _ 8 2 1 #
+#############
+
+ee (Wild):		// done
+#############
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ c _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+#############
+c *coin
+
+hh (Wild):		// done
+#############
+# c c c c _ #
+# c _ _ _ _ #
+# c _ 0 _ _ #
+# c _ _ _ _ #
+# _ _ _ _ _ #
+#############
+0 *boss *bigEnergy trigger *done
+c *coin
+
+sh (Shop):		// done
+#############
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# m _ $ _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+#############
+m 1 *foundShop
+$ [gate *h, key 1, key 1, energy 10] 4 tutorial *helpTextShop trigger *sawShop
+
+
+[Hallways]
+11 (locked; ; ) trigger *sawLockedDoor
+12 (event *solvedEntanglement; one way North permanent; )
+13 (closed; ; entangled [13]) trigger *checkedEntangledDoors
+14 (locked; ; )
+15 (event *checkedEntangledDoors; one way South; )
+
+[StateVector Pools]
+custom
+
+//*superpos0p [ [0.707, 0.707, 0, 0] ]
+//*superpos0m [ [0.707, -0.707, 0, 0] ]
+//*superpos1p [ [0.707, 0, 0.707, 0] ]
+//*superpos1m1 [ [-0.707, 0, 0.707, 0] ]
+*superpos2xh1 [ [0, 0, 0.707, -0.707] ]
+*superpos2xh2 [ [0, 0.707, 0, -0.707] ]
+
+*base00 [ [1, 0, 0, 0] ]
+*base11 [ [0, 0, 0, 1] ]
+
+
+*entanglement [ [0.707, 0, 0, 0.707] ]
+*antiEntanglement [ [0, 0.707, 0.707, 0] ]
+*boss [ [0.5, 0.5, 0.5, -0.5] ]
+
+*allPuzzles random [ [0, 1, 0, 0], [0.707, 0.707, 0, 0], [0, 0, 1, 0], [0.707, 0, 0.707, 0], [0.707, -0.707, 0, 0], [0.707, 0, -0.707, 0], [0.707, 0, 0, 0.707], [0, 0.707, 0.707, 0], [0, 0, 0.707, 0.707] ]
+*commonPuzzles random [ [0, 1, 0, 0], [0.707, 0.707, 0, 0], [0, 0, 1, 0], [0.707, 0, 0.707, 0], [0.707, -0.707, 0, 0], [0.707, 0, -0.707, 0] ]
+
+default *commonPuzzles
+
+[Reward Pools]
+custom
+*key [key 1]
+*coin [coin 1]
+*energy [energy 10]
+*xgate [gate *x]
+*hgate [gate *h]
+*cxgate [gate *cx]
+
+*bigCoin [coin 5]
+*bigEnergy [energy 50]
+*wardenReward [coin 5]
+
+default random [coin 1, coin 1, coin 1, coin 3]
+
+[Messages]
+// highlight text by encapsulating it in "//02abcd//" where "abcd" is the text to highlight and "02" one of the available styles: 01 is for tiles, 02 is for game objects, 03 for words and 04 for keys on the keyboard
+
+*cxGateTut "So now that we're on the //03dark side of the Moon// I replaced one of your X Gates with a //02CX Gate//. This will be your very first //03two Qubit Gate// meaning instead of placing it on only one Qubit like Hadamard and X Gate it needs to be put on exactly two Qubits. //03CX// stands for //03Controlled X// and will act as a simple //02X Gate// applied on its //03second Qubit// if its first //03(control) Qubit is 1//. If the control Qubit is 0 it will do nothing."
+"Remember to first set the control Qubit before placing the X part!"
+*cxX "We already know this puzzle. But now we don't have //03two// //02X Gates//. Let's try to solve it with the help of our new //02CX Gate//."
+
+*tutEntanglement "You might have already asked yourself what happens if the //03control Qubit// of our new gate is neither 0 nor 1 but rather //03in Superposition//. Let me tell you about the magic of //03Entanglement//:"
+"Let's say //03q0// is our //02control Qubit// and it is in //03Superposition// while //03q1 is simply 0//. Now imagine measuring it after it passed through our CX Gate. If we //03measure 0 at q0// we know that //03q1// also still //03must be 0// because the X Gate wasn't applied onto it. Likewise, if we //03measure 1// we know that //03q1// must have flipped to //031//. Of course the same must apply to the //03different direction//. Measuring //030 for q1// means it has not been flipped and therefore //03q0 must also be 0//. And lastly, //03measuring 1 for q1// means the X Gate was applied and therefore //03q0 must also be 1//. So, no matter whether we measure q0 or q1 and regardless of the result we immediately know to which state the other Qubit collapsed - because they were //03entangled//. To be precise in this example it is even incorrect to talk about q0 and q1 as if they'd have separate states because in fact you can no longer separate them without destroying their states."
+"Conclusion: The only possible states for such circuits are //0300// and //0311//. And that's exactly what this Puzzle's target state describes."
+
+*tutAntiEntanglement "Previously I didn't tell you the whole story about //03Entanglement//. Two entangled Qubits don't necessarily have to be in the exact same state - //03they can also be the complete opposite// of one another. Imagine the same setup as before but now //03q1 is 1 instead of 0// (e.g. by applying an X Gate beforehand). Now if //03q0 (control) is 0// we do not apply a second X Gate to q1 and therefore //03q1 stays 1//. And if //03q0 is 1// we flip q1 again, hence changing its //03state to 0//. The same thought process as before can be applied to find out what happens if q0 is in Superposition."
+
+*tutEntangledDoor "This is an //02Entangled Door//. Similar to the Qubits we just entangled they also sort of //03share their state// - but in an opposing way. So if you //03open one// entangled door all //03others// that are entangled with it will //03shut forever//."
+"I'll let you decide which one you want to take ;)" event *sawEntangledDoor alternative *otherEntangledDoor
+*otherEntangledDoor "This is the other //02Entangled Door//."
+
+*tutEntangledPuzzles "In this room you can see //02different digits// representing //03different chances// for having to solve a Puzzle when stepping on it (like in the previous mission). "
+"However, now we have the chance to see something special that we couldn't previously: //03the different digits are entangled//!"
+"So, actually you can imagine stepping onto the digits as measuring their state:" 
+"- if the //03state collapses to 0// you're presented with a Puzzle"
+"- if it //03collapses to 1// instead the digit will simply vanish"
+"As already mentioned, 0s have a 0% chance to collapse to 1, //031s have a 10%// chance and //039s have a 90%// chance to collapse to 1. Theoretically you could picture empty spaces as 10s with a 100% chance to collapse to 1 - but that's just a side note."
+"Back to the topic: //03How are the digits entangled?// Well, all //031s share their state//, all //032s share their state// and so on. So for example if the first 7 you step onto collapses to 1 all other 7s in this room will vanish too. But if the 7 collapses to 0 all other 7s in the room will give you a Puzzle as well."
+"The fun thing about this is that this way you can always think about taking the path with the lowest or highest probability of having to solve Puzzles depending on what your current goal is. Come on, try it out!"
+
+*foundShop "Look, a //02Shop//! Maybe there is some helpful stuff we can exchange for //02Coins//." event *sawLockedDoor alternative *foundShop2
+*foundShop2 "Key"
+
+>Qrogue

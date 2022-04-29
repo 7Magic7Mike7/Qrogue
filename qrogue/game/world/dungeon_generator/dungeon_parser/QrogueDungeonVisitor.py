@@ -1,4 +1,4 @@
-# Generated from D:/Documents/pycharm_workspace/Qrogue/qrogue/dungeon_editor\QrogueDungeon.g4 by ANTLR 4.9.2
+# Generated from D:/Documents/pycharm_workspace/Qrogue/qrogue/game/world/dungeon_generator\QrogueDungeon.g4 by ANTLR 4.9.2
 from antlr4 import *
 
 # This class defines a complete generic visitor for a parse tree produced by QrogueDungeonParser.

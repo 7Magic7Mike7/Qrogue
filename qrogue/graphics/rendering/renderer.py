@@ -32,6 +32,10 @@ class Fragment:
         self.__color = color
 
     @property
+    def text(self) -> str:
+        return self.__text
+
+    @property
     def start(self) -> int:
         return self.__start
 
@@ -41,11 +45,7 @@ class Fragment:
 
     @property
     def end(self) -> int:
-        return self.start + len(self.text)
-
-    @property
-    def text(self) -> str:
-        return self.__text
+        return self.start + self.length
 
     @property
     def color(self) -> int:

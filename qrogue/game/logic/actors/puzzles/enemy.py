@@ -1,6 +1,7 @@
 
 from qrogue.game.logic.actors import StateVector
 from qrogue.game.logic.collectibles import Collectible
+from qrogue.util import RandomManager
 
 from .target import Target
 
@@ -19,6 +20,7 @@ class Enemy(Target):
         """
         super().__init__(target, reward)
         self.__flee_chance = flee_chance
+        self.__rm = RandomManager.create_new()
 
     def _on_reached(self):
         """
@@ -27,13 +29,8 @@ class Enemy(Target):
         """
         pass
 
-    @property
-    def flee_chance(self):
-        """
-        Fleeing gets rid of a Target without having to reach it.
-        :return: the probability to succeed at fleeing from this Target
-        """
-        return self.__flee_chance
+    def flee_check(self) -> bool:
+        return self.__rm.get(msg="Enemy.flee_check()") < self.__flee_chance
 
     def __str__(self):
         return "Enemy " + super(Enemy, self).__str__()

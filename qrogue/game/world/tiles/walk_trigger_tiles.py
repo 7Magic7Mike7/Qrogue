@@ -50,6 +50,14 @@ class WalkTriggerTile(Tile):
     def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
         return True
 
+    def copy(self) -> "Tile":
+        tile_copy = self._copy()
+        if self.has_explanation:
+            tile_copy.set_explanation(self.__explanation)
+        if self.__event_id:
+            tile_copy.set_event(self.__event_id)
+        return tile_copy
+
     def set_explanation(self, message: LogicalMessage):
         self.__explanation = message
 
@@ -78,6 +86,10 @@ class WalkTriggerTile(Tile):
         """
         pass
 
+    @abstractmethod
+    def _copy(self) -> "WalkTriggerTile":
+        pass
+
 
 class Trigger(WalkTriggerTile):
     def __init__(self, callback: Callable[[Direction, Controllable], None]):
@@ -90,6 +102,9 @@ class Trigger(WalkTriggerTile):
 
     def get_img(self):
         return self._invisible
+
+    def _copy(self) -> "Tile":
+        return Trigger(self.__callback)
 
 
 class Teleport(WalkTriggerTile):
@@ -105,6 +120,9 @@ class Teleport(WalkTriggerTile):
 
     def get_img(self):
         return "t"
+
+    def _copy(self) -> "Tile":
+        return Teleport(self.__callback, self.__target_map, self.__room)
 
 
 class Message(WalkTriggerTile):
@@ -145,9 +163,13 @@ class Message(WalkTriggerTile):
             return True
         return False
 
+    def _copy(self) -> "Tile":
+        message = LogicalMessage.create_from_message(self.__message)
+        return Message(message, self.__times)
+
 
 class Riddler(WalkTriggerTile):
-    def __init__(self, open_riddle_callback: "void(Player, Riddle)", riddle: Riddle):
+    def __init__(self, open_riddle_callback: Callable[[Controllable, Riddle], None], riddle: Riddle):
         super().__init__(TileCode.Riddler)
         self.__open_riddle = open_riddle_callback
         self.__riddle = riddle
@@ -172,6 +194,9 @@ class Riddler(WalkTriggerTile):
         else:
             return self._invisible
 
+    def _copy(self) -> "Tile":
+        return Riddler(self.__open_riddle, self.__riddle)
+
 
 class ShopKeeper(WalkTriggerTile):
     def __init__(self, visit_shop_callback, inventory: "List[ShopItem]"):
@@ -185,6 +210,9 @@ class ShopKeeper(WalkTriggerTile):
 
     def get_img(self):
         return "$"
+
+    def _copy(self) -> "Tile":
+        return ShopKeeper(self.__visit_shop, self.__inventory.copy())
 
 
 class Collectible(WalkTriggerTile):
@@ -222,6 +250,9 @@ class Collectible(WalkTriggerTile):
             return True
         return False
 
+    def _copy(self) -> "Tile":
+        return Collectible(self.__collectible)
+
 
 class Energy(WalkTriggerTile):
     def __init__(self, amount: int):
@@ -245,5 +276,5 @@ class Energy(WalkTriggerTile):
             return True
         return False
 
-
-
+    def _copy(self) -> "Tile":
+        return Energy(self.__amount)

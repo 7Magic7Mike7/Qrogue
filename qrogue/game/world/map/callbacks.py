@@ -20,7 +20,8 @@ class CallbackPack:
                  start_fight: "Callable[[Robot, Enemy, Direction], None]",
                  start_boss_fight: "Callable[[Robot, Boss, Direction], None]",
                  open_riddle: "Callable[[Robot, Riddle], None]",
-                 visit_shop: "Callable[[Robot, List[ShopItem]], None]"):
+                 visit_shop: "Callable[[Robot, List[ShopItem]], None]",
+                 game_over: "Callable[[], None]"):
         if CallbackPack.__instance is not None:
             Logger.instance().throw(Exception("This class is a singleton!"))
         else:
@@ -29,6 +30,7 @@ class CallbackPack:
             self.__start_boss_fight = start_boss_fight
             self.__open_riddle = open_riddle
             self.__visit_shop = visit_shop
+            self.__game_over = game_over
 
             CallbackPack.__instance = self
 
@@ -51,3 +53,7 @@ class CallbackPack:
     @property
     def visit_shop(self):
         return self.__visit_shop
+
+    @property
+    def game_over(self):
+        return self.__game_over

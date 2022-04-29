@@ -6,7 +6,7 @@ from py_cui.widgets import BlockLabel
 from qrogue.game.logic.actors import Robot
 from qrogue.game.world.map import Map
 from qrogue.game.world.navigation import Direction
-from qrogue.util import ColorConfig, Controls, InstructionConfig, Keys, Logger, util_functions as uf, Config
+from qrogue.util import ColorConfig, Controls, Keys, Logger, util_functions as uf, Config, HudConfig
 
 from qrogue.graphics.widgets import Renderable
 
@@ -22,11 +22,12 @@ class MyBaseWidget(BlockLabel):
         return super(MyBaseWidget, self).get_title()
 
     def add_text_color_rule(self, regex: str, color: int, rule_type: str, match_type: str = 'line',
-                            region: List[int] = [0,1], include_whitespace: bool=False, selected_color=None) -> None:
+                            region: List[int] = [0, 1], include_whitespace: bool = False, selected_color = None)\
+            -> None:
         super(MyBaseWidget, self).add_text_color_rule(regex, color, rule_type, match_type, region, include_whitespace,
                                                       selected_color)
 
-    def add_key_command(self, keys: List[int], command: Callable[[],Any]) -> Any:
+    def add_key_command(self, keys: List[int], command: Callable[[], Any]) -> Any:
         for key in keys:
             super(MyBaseWidget, self).add_key_command(key, command)
 
@@ -89,12 +90,16 @@ class HudWidget(Widget):
 
     def render(self) -> None:
         text = ""
-        if self.__map_name:
+        if HudConfig.ShowMapName and self.__map_name:
             text += f"{self.__map_name}\t"
         if self.__robot:
-            text += f"{self.__robot.cur_hp} / {self.__robot.max_hp} HP   \t" \
-                   f"{self.__robot.backpack.coin_count}$, {self.__robot.key_count()} keys"
-        if self.__render_duration:
+            if HudConfig.ShowEnergy:
+                text += f"Energy: {self.__robot.cur_energy} / {self.__robot.max_energy}   \t"
+            if HudConfig.ShowKeys:
+                text += f"{self.__robot.key_count()} keys  \t"
+            if HudConfig.ShowCoins:
+                text += f"{self.__robot.backpack.coin_count}$  \t"
+        if HudConfig.ShowFPS and self.__render_duration:
             text += f"\t\t{self.__render_duration:.2f} ms"
         self.widget.set_title(text)
 
@@ -115,32 +120,7 @@ class CircuitWidget(Widget):
 
     def render(self) -> None:
         if self.__robot is not None:
-            entry = "-" * (3 + InstructionConfig.MAX_ABBREVIATION_LEN + 3)
-            rows = [[entry] * self.__robot.circuit_space for _ in range(self.__robot.num_of_qubits)]
-
-            for i, inst in self.__robot.circuit_enumerator():
-                for q in inst.qargs_iter():
-                    inst_str = inst.abbreviation(q)
-                    diff_len = InstructionConfig.MAX_ABBREVIATION_LEN - len(inst_str)
-                    inst_str = f"--{{{inst_str}}}--"
-                    if diff_len > 0:
-                        half_diff = int(diff_len / 2)
-                        inst_str = inst_str.ljust(len(inst_str) + half_diff, "-")
-                        if diff_len % 2 == 0:
-                            inst_str = inst_str.rjust(len(inst_str) + half_diff, "-")
-                        else:
-                            inst_str = inst_str.rjust(len(inst_str) + half_diff + 1, "-")
-                    rows[q][i] = inst_str
-            circ_str = ""
-            # place qubits from top to bottom, high to low index
-            for q in range(len(rows) - 1, -1, -1):
-                circ_str += f"| q{q} >---"
-                row = rows[q]
-                for i in range(len(row)):
-                    circ_str += row[i]
-                    if i < len(row) - 1:
-                         circ_str += "+"
-                circ_str += "< out |\n"
+            circ_str = self.__robot.get_circuit_print()
             self.widget.set_title(circ_str)
 
     def render_reset(self) -> None:
@@ -153,8 +133,8 @@ class MapWidget(Widget):
         self.__map = None
         self.__backup = None
 
-    def set_data(self, map: Map) -> None:
-        self.__map = map
+    def set_data(self, map_: Map) -> None:
+        self.__map = map_
 
     def render(self) -> None:
         if self.__map is not None:
@@ -201,7 +181,7 @@ class CurrentStateVectorWidget(Widget):
         self.__diff_vector_str = None
         widget.add_text_color_rule("~.*~", ColorConfig.STV_HEADING_COLOR, 'contains', match_type='regex')
         widget.add_text_color_rule("\(0\)", ColorConfig.CORRECT_AMPLITUDE_COLOR, "contains", match_type="regex")
-        #widget.add_text_color_rule("\(\d\)", ColorConfig.CORRECT_AMPLITUDE_COLOR, "contains", match_type="regex")
+        # widget.add_text_color_rule("\(\d\)", ColorConfig.CORRECT_AMPLITUDE_COLOR, "contains", match_type="regex")
         widget.add_text_color_rule("\([^0].*\)", ColorConfig.WRONG_AMPLITUDE_COLOR, "contains", match_type="regex")
 
     def set_data(self, state_vector_strings: Tuple[str, str]) -> None:
@@ -256,7 +236,7 @@ class QubitInfoWidget(Widget):
                                                             # the right
             row = "   ".join(bin_num)  # separate the digits in the string with spaces
             if not self.__left_aligned:
-                row = row[::-1] # [::-1] reverses the list so q0 is on the left
+                row = row[::-1]     # [::-1] reverses the list so q0 is on the left
             body += box_left + row + box_right
             body += "\n"
 
@@ -264,7 +244,7 @@ class QubitInfoWidget(Widget):
         self.widget.set_title(self.__text)
 
     def render(self) -> None:
-        #self.widget.set_title(self.__text)
+        # self.widget.set_title(self.__text)
         pass
 
     def render_reset(self) -> None:
@@ -294,6 +274,13 @@ class SelectionWidget(Widget):
         self.__callbacks = []
         self.widget.add_text_color_rule(f"->", ColorConfig.SELECTION_COLOR, 'contains', match_type='regex')
 
+        # init keys
+        self.widget.add_key_command(controls.get_keys(Keys.SelectionUp), self.up)
+        self.widget.add_key_command(controls.get_keys(Keys.SelectionUp), self.up)
+        self.widget.add_key_command(controls.get_keys(Keys.SelectionRight), self.right)
+        self.widget.add_key_command(controls.get_keys(Keys.SelectionDown), self.down)
+        self.widget.add_key_command(controls.get_keys(Keys.SelectionLeft), self.left)
+
         # sadly cannot use a loop here because of how lambda expressions work the index would be the same for all calls
         # instead we use a list of indices to still be flexible without changing much code
         indices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
@@ -309,16 +296,16 @@ class SelectionWidget(Widget):
             controls.get_keys(Keys.HotKey8),
             controls.get_keys(Keys.HotKey9),
         ]
-        self.widget.add_key_command(hotkeys[indices[0]], lambda : self.__jump_to_index(indices[0]))
-        self.widget.add_key_command(hotkeys[indices[1]], lambda : self.__jump_to_index(indices[1]))
-        self.widget.add_key_command(hotkeys[indices[2]], lambda : self.__jump_to_index(indices[2]))
-        self.widget.add_key_command(hotkeys[indices[3]], lambda : self.__jump_to_index(indices[3]))
-        self.widget.add_key_command(hotkeys[indices[4]], lambda : self.__jump_to_index(indices[4]))
-        self.widget.add_key_command(hotkeys[indices[5]], lambda : self.__jump_to_index(indices[5]))
-        self.widget.add_key_command(hotkeys[indices[6]], lambda : self.__jump_to_index(indices[6]))
-        self.widget.add_key_command(hotkeys[indices[7]], lambda : self.__jump_to_index(indices[7]))
-        self.widget.add_key_command(hotkeys[indices[8]], lambda : self.__jump_to_index(indices[8]))
-        self.widget.add_key_command(hotkeys[indices[9]], lambda : self.__jump_to_index(indices[9]))
+        self.widget.add_key_command(hotkeys[indices[0]], lambda: self.__jump_to_index(indices[0]))
+        self.widget.add_key_command(hotkeys[indices[1]], lambda: self.__jump_to_index(indices[1]))
+        self.widget.add_key_command(hotkeys[indices[2]], lambda: self.__jump_to_index(indices[2]))
+        self.widget.add_key_command(hotkeys[indices[3]], lambda: self.__jump_to_index(indices[3]))
+        self.widget.add_key_command(hotkeys[indices[4]], lambda: self.__jump_to_index(indices[4]))
+        self.widget.add_key_command(hotkeys[indices[5]], lambda: self.__jump_to_index(indices[5]))
+        self.widget.add_key_command(hotkeys[indices[6]], lambda: self.__jump_to_index(indices[6]))
+        self.widget.add_key_command(hotkeys[indices[7]], lambda: self.__jump_to_index(indices[7]))
+        self.widget.add_key_command(hotkeys[indices[8]], lambda: self.__jump_to_index(indices[8]))
+        self.widget.add_key_command(hotkeys[indices[9]], lambda: self.__jump_to_index(indices[9]))
 
     @property
     def num_of_choices(self) -> int:
@@ -461,7 +448,7 @@ class SelectionWidget(Widget):
                 Logger.instance().throw(IndexError(f"Invalid index = {self.__index} for {self.__callbacks}. "
                                                    f"Text of choices: {self.__choices}"))
             ret = self.__callbacks[self.__index]()
-        if ret is None: # move focus if nothing is returned
+        if ret is None:     # move focus if nothing is returned
             return True
         else:
             return ret

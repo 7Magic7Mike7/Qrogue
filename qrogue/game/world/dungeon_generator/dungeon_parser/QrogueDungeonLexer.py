@@ -1,11 +1,10 @@
-# Generated from D:/Documents/pycharm_workspace/Qrogue/qrogue/dungeon_editor\QrogueDungeon.g4 by ANTLR 4.9.2
+# Generated from D:/Documents/pycharm_workspace/Qrogue/qrogue/game/world/dungeon_generator\QrogueDungeon.g4 by ANTLR 4.9.2
 # encoding: utf-8
 from __future__ import print_function
-
-import sys
-from io import StringIO
-
 from antlr4 import *
+from io import StringIO
+import sys
+
 
 
 def serializedATN():
@@ -197,9 +196,9 @@ def serializedATN():
         buf.write(u"\\\3\2\2\2\u018b\u018c\7m\2\2\u018c\u018d\7g\2\2\u018d")
         buf.write(u"\u018e\7{\2\2\u018e^\3\2\2\2\u018f\u0190\7e\2\2\u0190")
         buf.write(u"\u0191\7q\2\2\u0191\u0192\7k\2\2\u0192\u0193\7p\2\2\u0193")
-        buf.write(u"`\3\2\2\2\u0194\u0195\7j\2\2\u0195\u0196\7g\2\2\u0196")
-        buf.write(u"\u0197\7c\2\2\u0197\u0198\7n\2\2\u0198\u0199\7v\2\2\u0199")
-        buf.write(u"\u019a\7j\2\2\u019ab\3\2\2\2\u019b\u019c\7i\2\2\u019c")
+        buf.write(u"`\3\2\2\2\u0194\u0195\7g\2\2\u0195\u0196\7p\2\2\u0196")
+        buf.write(u"\u0197\7g\2\2\u0197\u0198\7t\2\2\u0198\u0199\7i\2\2\u0199")
+        buf.write(u"\u019a\7{\2\2\u019ab\3\2\2\2\u019b\u019c\7i\2\2\u019c")
         buf.write(u"\u019d\7c\2\2\u019d\u019e\7v\2\2\u019e\u019f\7g\2\2\u019f")
         buf.write(u"d\3\2\2\2\u01a0\u01a1\7s\2\2\u01a1\u01a2\7w\2\2\u01a2")
         buf.write(u"\u01a3\7d\2\2\u01a3\u01a4\7k\2\2\u01a4\u01a5\7v\2\2\u01a5")
@@ -350,7 +349,7 @@ class QrogueDungeonLexer(Lexer):
     TRIGGER_LITERAL = 45
     KEY_LITERAL = 46
     COIN_LITERAL = 47
-    HEALTH_LITERAL = 48
+    ENERGY_LITERAL = 48
     GATE_LITERAL = 49
     QUBIT_LITERAL = 50
     ALTERNATIVE_LITERAL = 51
@@ -394,7 +393,7 @@ class QrogueDungeonLexer(Lexer):
             u"'visible'", u"'foggy'", u"'open'", u"'closed'", u"'locked'", 
             u"'event'", u"'permanent'", u"'Spawn'", u"'Wild'", u"'Shop'", 
             u"'Riddle'", u"'Boss'", u"'Gate'", u"'Treasure'", u"'tutorial'", 
-            u"'trigger'", u"'key'", u"'coin'", u"'health'", u"'gate'", u"'qubit'", 
+            u"'trigger'", u"'key'", u"'coin'", u"'energy'", u"'gate'", u"'qubit'", 
             u"'alternative'", u"'+'", u"'-'", u"'Qrogue<'", u"'>Qrogue'", 
             u"'Name'", u"'[Robot]'", u"'[Layout]'", u"'[Custom Rooms]'", 
             u"'[Hallways]'", u"'[StateVector Pools]'", u"'[Reward Pools]'", 
@@ -408,7 +407,7 @@ class QrogueDungeonLexer(Lexer):
             u"EVENT_LITERAL", u"PERMANENT_LITERAL", u"SPAWN_LITERAL", u"WILD_LITERAL", 
             u"SHOP_LITERAL", u"RIDDLE_LITERAL", u"BOSS_LITERAL", u"GATE_ROOM_LITERAL", 
             u"TREASURE_LITERAL", u"TUTORIAL_LITERAL", u"TRIGGER_LITERAL", 
-            u"KEY_LITERAL", u"COIN_LITERAL", u"HEALTH_LITERAL", u"GATE_LITERAL", 
+            u"KEY_LITERAL", u"COIN_LITERAL", u"ENERGY_LITERAL", u"GATE_LITERAL", 
             u"QUBIT_LITERAL", u"ALTERNATIVE_LITERAL", u"PLUS_SIGN", u"MINUS_SIGN", 
             u"HEADER", u"ENDER", u"NAME", u"ROBOT", u"LAYOUT", u"ROOMS", 
             u"HALLWAYS", u"STV_POOLS", u"REWARD_POOLS", u"MESSAGES", u"HORIZONTAL_SEPARATOR", 
@@ -427,7 +426,7 @@ class QrogueDungeonLexer(Lexer):
                   u"PERMANENT_LITERAL", u"SPAWN_LITERAL", u"WILD_LITERAL", 
                   u"SHOP_LITERAL", u"RIDDLE_LITERAL", u"BOSS_LITERAL", u"GATE_ROOM_LITERAL", 
                   u"TREASURE_LITERAL", u"TUTORIAL_LITERAL", u"TRIGGER_LITERAL", 
-                  u"KEY_LITERAL", u"COIN_LITERAL", u"HEALTH_LITERAL", u"GATE_LITERAL", 
+                  u"KEY_LITERAL", u"COIN_LITERAL", u"ENERGY_LITERAL", u"GATE_LITERAL", 
                   u"QUBIT_LITERAL", u"ALTERNATIVE_LITERAL", u"PLUS_SIGN", 
                   u"MINUS_SIGN", u"HEADER", u"ENDER", u"NAME", u"ROBOT", 
                   u"LAYOUT", u"ROOMS", u"HALLWAYS", u"STV_POOLS", u"REWARD_POOLS", 

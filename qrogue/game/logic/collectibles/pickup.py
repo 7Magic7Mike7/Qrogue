@@ -56,28 +56,6 @@ class Key(Pickup):
         return self.to_string()
 
 
-class Heart(Pickup):
-    __PRICE_MULTIPLIER = 0.65   # hearts are a bit cheaper
-
-    def __init__(self, amount: int = 1):
-        super().__init__(amount)
-
-    def name(self) -> str:
-        return "Heart"
-
-    def description(self) -> str:
-        return "A Heart gives you back some of your HP."
-
-    def default_price(self) -> int:
-        return round(Heart.__PRICE_MULTIPLIER * super(Heart, self).default_price())
-
-    def to_string(self) -> str:
-        return f"Heart ({self.amount} HP)"
-
-    def __str__(self) -> str:
-        return self.to_string()
-
-
 class Energy(Pickup):
     def __init__(self, amount: int = 10):
         super().__init__(amount)
@@ -86,10 +64,13 @@ class Energy(Pickup):
         return "Energy"
 
     def description(self) -> str:
-        return "Gives back some energy to the robot so it can stay longer in a dungeon."
+        return "Gives back some energy to the Robot so it can stay longer on a mission."
 
     def to_string(self) -> str:
         return f"Energy ({self.amount})"
+
+    def default_price(self) -> int:
+        return 2 + int(self.amount / 7)
 
     def __str__(self) -> str:
         return self.to_string()

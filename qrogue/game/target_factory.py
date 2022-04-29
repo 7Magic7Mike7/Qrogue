@@ -54,8 +54,8 @@ class TargetDifficulty:
             # if not remove:
             #     Logger.instance().throw(Exception(
             #         "this should always remove because else we would duplicate instructions"))
-            instruction = rm.get_element(instruction_pool, remove=True)
-            while instruction.use_qubit(rm.get_element(qubits, remove=True)):
+            instruction = rm.get_element(instruction_pool, remove=True, msg="TargetDiff_selectInstruction")
+            while instruction.use_qubit(rm.get_element(qubits, remove=True, msg="TargetDiff_selectQubit")):
                 pass
             instructions.append(instruction)
         return StateVector.from_gates(instructions, num_of_qubits)
@@ -86,7 +86,7 @@ class ExplicitTargetDifficulty(TargetDifficulty):
                 self.__order_index = 0
             return self.__pool[self.__order_index]
         else:
-            return rm.get_element(self.__pool)
+            return rm.get_element(self.__pool, msg="ExplicitTargetDiff_selectStv")
 
 
 class RiddleDifficulty(TargetDifficulty):
@@ -97,7 +97,7 @@ class RiddleDifficulty(TargetDifficulty):
         self.__max_attempts = max_attempts
 
     def get_attempts(self, rm: MyRandom) -> int:
-        return rm.get_int(self.__min_attempts, self.__max_attempts)
+        return rm.get_int(self.__min_attempts, self.__max_attempts, msg="RiddleDiff.get_attempts()")
 
 
 class DummyTargetDifficulty(TargetDifficulty):
@@ -115,19 +115,21 @@ class EnemyFactory:
     It is used by enemy tiles to trigger a fight.
     """
 
-    def __init__(self, start_fight_callback: Callable[[Robot, Enemy, Direction], None], difficulty: TargetDifficulty):
+    def __init__(self, start_fight_callback: Callable[[Robot, Enemy, Direction], None], difficulty: TargetDifficulty,
+                 default_flee_chance: float = 0.5):
         """
 
         :param difficulty: difficulty of the enemy we produce
         """
-        self.__difficulty = difficulty
-        self.__custom_reward_factory = None
         self.__start_fight = start_fight_callback
+        self.__difficulty = difficulty
+        self.__default_flee_chance = default_flee_chance
+        self.__custom_reward_factory = None
 
     def set_custom_reward_factory(self, factory: CollectibleFactory):
         self.__custom_reward_factory = factory
 
-    def produce(self, robot: Robot, rm: MyRandom, flee_chance: float) -> Enemy:
+    def produce(self, robot: Robot, rm: MyRandom, flee_chance: float = None) -> Enemy:
         """
         Creates an enemy based on the number of qubits the provided robot has.
 
@@ -141,6 +143,8 @@ class EnemyFactory:
             reward = self.__custom_reward_factory.produce(rm)
         else:
             reward = self.__difficulty.produce_reward(rm)
+        if flee_chance is None:
+            flee_chance = self.__default_flee_chance
         return DummyEnemy(stv, reward, flee_chance)
 
     def start(self, robot: Robot, enemy: Enemy, direction: Direction):
@@ -154,9 +158,9 @@ class ExplicitEnemyFactory(EnemyFactory):
         self.__reward_pool = reward_pool
         super().__init__(start_fight_callback, DummyTargetDifficulty())
 
-    def produce(self, robot: Robot, rm: MyRandom, flee_chance: float) -> Enemy:
-        stv = rm.get_element(self.__stv_pool)
-        reward = rm.get_element(self.__reward_pool)
+    def produce(self, robot: Robot, rm: MyRandom, flee_chance: float = None) -> Enemy:
+        stv = rm.get_element(self.__stv_pool, msg="ExplicitEnemyFactory_stv")
+        reward = rm.get_element(self.__reward_pool, msg="ExplicitEnemyFactory_reward")
         return DummyEnemy(stv, reward, flee_chance)
 
 
@@ -196,24 +200,25 @@ class BossFactory:
 
         for g in include_gates:
             gate = g.copy()
-            self.__prepare_gate(gate, qubit_count, qubits)
-            used_gates.append(gate)
+            if self.__prepare_gate(gate, qubit_count, qubits):
+                used_gates.append(gate)
 
         usable_gates = self.__robot.get_available_instructions()
         while len(usable_gates) > 0:
-            gate = self.__rm.get_element(usable_gates, remove=True)
-            self.__prepare_gate(gate, qubit_count, qubits)
-            used_gates.append(gate)
+            gate = self.__rm.get_element(usable_gates, remove=True, msg="BossFactory_selectGate")
+            if self.__prepare_gate(gate, qubit_count, qubits):
+                used_gates.append(gate)
 
-        reward = self.__rm.get_element(self.__reward_pool)
+        reward = self.__rm.get_element(self.__reward_pool, msg="BossFactory_reward")
         return Boss(StateVector.from_gates(used_gates, self.__robot.num_of_qubits), reward)
 
-    def __prepare_gate(self, gate: Instruction, qubit_count, qubits):
+    def __prepare_gate(self, gate: Instruction, qubit_count, qubits) -> bool:
         gate_qubits = qubits.copy()
-        while True:
-            qubit = self.__rm.get_element(gate_qubits, remove=True)
+        while len(gate_qubits) > 0:
+            qubit = self.__rm.get_element(gate_qubits, remove=True, msg="BossFactory_selectQubit")
             qubit_count[qubit] += 1
             if qubit_count[qubit] >= self.__robot.circuit_space:
                 qubits.remove(qubit)
             if not gate.use_qubit(qubit):
-                return
+                return True
+        return False

@@ -2,13 +2,13 @@ from enum import IntEnum
 from typing import Callable, Dict
 
 from qrogue.game.logic.actors import Robot
-from qrogue.game.logic.collectibles import GateFactory, ShopFactory, HealthPotion, Coin, Key, Heart, instruction
+from qrogue.game.logic.collectibles import GateFactory, ShopFactory, EnergyRefill, Coin, Key, instruction
 from qrogue.game.world.map import CallbackPack, LevelMap, Hallway, WildRoom, SpawnRoom, ShopRoom, RiddleRoom, BossRoom, \
     TreasureRoom, ExpeditionMap
 from qrogue.game.target_factory import TargetDifficulty, BossFactory, EnemyFactory, RiddleFactory
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.game.world.tiles import Boss, Collectible, Door, DoorOpenState
-from qrogue.util import Logger, MyRandom, RandomManager
+from qrogue.util import Logger, RandomManager
 
 
 from .generator import DungeonGenerator
@@ -101,7 +101,7 @@ class RandomLayoutGenerator:
         if width * height < RandomLayoutGenerator.__MIN_AREA:
             Logger.instance().throw(ValueError(f"width={width}, height={height} create a too small grid "
                                                f"(minimal grid area = {RandomLayoutGenerator.__MIN_AREA}). Please use bigger values!"))
-        self.__rm = MyRandom(seed)
+        self.__rm = RandomManager.create_new(seed)
         self.__width = width
         self.__height = height
         # generate empty map
@@ -174,13 +174,13 @@ class RandomLayoutGenerator:
     def __random_border(self) -> Coordinate:
         directions = Direction.values()
         while len(directions) > 0:
-            direction = self.__rm.get_element(directions, remove=True)
+            direction = self.__rm.get_element(directions, remove=True, msg="RandomGen_borderDirection")
             if direction == Direction.North or direction == Direction.South:
                 y = (self.__height - 1) * (
                             direction == Direction.South)  # for North this is 0, for South self.__height-1
                 xs = list(range(0, self.__width))
                 while len(xs) > 0:
-                    x = self.__rm.get_element(xs, remove=True)
+                    x = self.__rm.get_element(xs, remove=True, msg="RandomGen_borderX")
                     pos = Coordinate(x=x, y=y)
                     if self.__get(pos) < _Code.Blocked:
                         return pos
@@ -188,14 +188,14 @@ class RandomLayoutGenerator:
                 x = (self.__width - 1) * (direction == Direction.East)  # for North this is 0, for South self.__height-1
                 ys = list(range(0, self.__height))
                 while len(ys) > 0:
-                    y = self.__rm.get_element(ys, remove=True)
+                    y = self.__rm.get_element(ys, remove=True, msg="RandomGen_borderY")
                     pos = Coordinate(x=x, y=y)
                     if self.__get(pos) < _Code.Blocked:
                         return pos
         return None
 
     def __random_coordinate(self) -> Coordinate:
-        val = self.__rm.get()
+        val = self.__rm.get(msg="RandomDG_coordinate")
         cur_val = 0.0
         for y in range(self.__height):
             for x in range(self.__width):
@@ -243,7 +243,7 @@ class RandomLayoutGenerator:
 
         picked_rooms = []
         for i in range(num):
-            val = self.__rm.get()
+            val = self.__rm.get(msg="RandomDG_WRNeighbors")
             cur_val = 0.0
             for room in room_prios:
                 prio, rp = room_prios[room]
@@ -274,7 +274,7 @@ class RandomLayoutGenerator:
             try:
                 pos = self.__random_border()
                 self.__set(pos, code)
-                direction = self.__rm.get_element(self.__available_directions(pos, allow_wildrooms=True))
+                direction = self.__rm.get_element(self.__available_directions(pos, allow_wildrooms=True), msg="RandomGen_dirSpecialR")
                 if direction is None:
                     self.__set(pos, _Code.Blocked)  # position is not suited for a special room
                 else:
@@ -306,13 +306,13 @@ class RandomLayoutGenerator:
 
         if len(relevant_neighbors) > 0:
             # there are neighbors we can connect to
-            room = self.__rm.get_element(relevant_neighbors)
+            room = self.__rm.get_element(relevant_neighbors, msg="RandomGen_astarNeighbor")
             door = Door(room[0])
             self.__add_hallway(pos, room[2], door)
             return room[2], False
         else:
             if self.__get(pos) in _Code.special_rooms():
-                Logger.instance().debug(f"SpecialRoom marked as dead end for seed = {self.seed}")
+                Logger.instance().debug(f"SpecialRoom marked as dead end for seed = {self.seed}", from_pycui=False)
             return pos, True  # we found a dead end
 
     def __astar(self, visited: set, pos: Coordinate, target: Coordinate) -> ([Coordinate], bool):
@@ -330,7 +330,7 @@ class RandomLayoutGenerator:
             return None, True  # we found the target
 
         while neighbors:
-            room = self.__rm.get_element(neighbors, remove=True)
+            room = self.__rm.get_element(neighbors, remove=True, msg="RandomGen_astarRoom")
             if room in visited:
                 continue
             visited.add(room)
@@ -362,11 +362,11 @@ class RandomLayoutGenerator:
             return True
         dead_ends = list(dead_ends)
         while dead_ends:
-            dead_end = self.__rm.get_element(dead_ends, remove=True)
+            dead_end = self.__rm.get_element(dead_ends, remove=True, msg="RandomGen_astarDeadEnd")
             relevant_pos = self.__get_neighbors(dead_end, free_spots=True)
             # and try to place a new room to connect the dead end to the rest
             while relevant_pos:
-                direction, _, new_pos = self.__rm.get_element(relevant_pos, remove=True)
+                direction, _, new_pos = self.__rm.get_element(relevant_pos, remove=True, msg="RandomGen_astarRelevantPos")
                 self.__place_wild(dead_end, Door(direction))
                 visited.add(new_pos)
                 if self.__call_astar(visited, start_pos=new_pos, spawn_pos=spawn_pos):
@@ -446,7 +446,7 @@ class RandomLayoutGenerator:
         if spawn_pos not in self.__hallways:
             neighbors = self.__get_neighbors(spawn_pos)
             if len(neighbors) > 0:
-                direction, _, new_pos = self.__rm.get_element(neighbors)
+                direction, _, new_pos = self.__rm.get_element(neighbors, msg="RandomGen_neighbor")
                 self.__add_hallway(spawn_pos, new_pos, Door(direction))
 
         success = True
@@ -515,8 +515,8 @@ class RandomLayoutGenerator:
 
 
 class ExpeditionGenerator(DungeonGenerator):
-    __MIN_ENEMY_FACTORY_CHANCE = 0.45
-    __MAX_ENEMY_FACTORY_CHANCE = 0.7
+    __MIN_ENEMY_FACTORY_CHANCE = 0.5
+    __MAX_ENEMY_FACTORY_CHANCE = 0.8
 
     def __init__(self, seed: int, check_achievement: Callable[[str], bool], trigger_event: Callable[[str], None],
                  load_map_callback: Callable[[str], None], width: int = DungeonGenerator.WIDTH,
@@ -525,7 +525,7 @@ class ExpeditionGenerator(DungeonGenerator):
         self.__check_achievement = check_achievement
         self.__trigger_event = trigger_event
         self.__load_map = load_map_callback
-        self.__layout = RandomLayoutGenerator(self.seed, width, height)
+        self.__layout = RandomLayoutGenerator(seed, width, height)
 
     def generate(self, data: Robot) -> (LevelMap, bool):
         # Testing: seeds from 0 to 500_000 were successful
@@ -549,16 +549,16 @@ class ExpeditionGenerator(DungeonGenerator):
 
         enemy_factories = [
             EnemyFactory(CallbackPack.instance().start_fight, TargetDifficulty(
-                2, [Coin(2), Heart()]
+                2, [Coin(2), EnergyRefill()]
             )),
             EnemyFactory(CallbackPack.instance().start_fight, TargetDifficulty(
-                2, [Coin(1), Coin(2), Coin(2), Coin(3), Key(), Heart()]
+                2, [Coin(1), Coin(2), Coin(2), Coin(3), Key(), EnergyRefill(15)]
             )),
             EnemyFactory(CallbackPack.instance().start_fight, TargetDifficulty(
-                3, [Coin(1), Coin(5), Key(), Heart(), HealthPotion(2)]
+                3, [Coin(1), Coin(5), Key(), EnergyRefill(20)]
             )),
             EnemyFactory(CallbackPack.instance().start_fight, TargetDifficulty(
-                3, [Coin(1), Coin(1), HealthPotion(3)]
+                3, [Coin(1), Coin(1), EnergyRefill(3)]
             )),
         ]
         enemy_factory_priorities = [0.25, 0.35, 0.3, 0.1]
@@ -614,11 +614,13 @@ class ExpeditionGenerator(DungeonGenerator):
                                 west_hallway=room_hallways[Direction.West],
                                 )
                         elif code == _Code.Wild:
-                            enemy_factory = rm.get_element_prioritized(enemy_factories, enemy_factory_priorities)
+                            enemy_factory = rm.get_element_prioritized(enemy_factories, enemy_factory_priorities,
+                                                                       msg="RandomDG_elemPrioritized")
                             room = WildRoom(
                                 enemy_factory,
                                 chance=rm.get(ExpeditionGenerator.__MIN_ENEMY_FACTORY_CHANCE,
-                                              ExpeditionGenerator.__MAX_ENEMY_FACTORY_CHANCE),
+                                              ExpeditionGenerator.__MAX_ENEMY_FACTORY_CHANCE,
+                                              msg="RandomDG_WRPuzzleDistribution"),
                                 north_hallway=room_hallways[Direction.North],
                                 east_hallway=room_hallways[Direction.East],
                                 south_hallway=room_hallways[Direction.South],

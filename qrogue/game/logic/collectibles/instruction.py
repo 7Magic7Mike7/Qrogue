@@ -1,5 +1,6 @@
 
 from abc import ABC, abstractmethod
+from typing import Iterator
 
 import qiskit.circuit.library.standard_gates as gates
 from qiskit import QuantumCircuit
@@ -21,11 +22,15 @@ class Instruction(Collectible, ABC):
         self.__needed_qubits = needed_qubits
         self._qargs = []
         self._cargs = []
-        self.__used = False
+        self.__position = -1
 
     @property
-    def num_of_qubits(self):
+    def num_of_qubits(self) -> int:
         return self.__needed_qubits
+
+    @property
+    def position(self) -> int:
+        return self.__position
 
     def use_qubit(self, qubit: int) -> bool:
         """
@@ -39,19 +44,21 @@ class Instruction(Collectible, ABC):
         return len(self._qargs) < self.__needed_qubits
 
     def is_used(self) -> bool:
-        return self.__used
+        return self.__position >= 0
 
-    def use(self):
-        self.__used = True
+    def use(self, position: int):
+        self.__position = position
 
-    def reset(self):
-        self.__used = False
-        self._qargs = []
+    def reset(self, skip_qargs: bool = False, skip_position: bool = False):
+        if not skip_qargs:
+            self._qargs = []
+        if not skip_position:
+            self.__position = -1
 
     def append_to(self, circuit: QuantumCircuit):
         circuit.append(self.__instruction, self._qargs, self._cargs)
 
-    def qargs_iter(self) -> "Iterator":
+    def qargs_iter(self) -> Iterator[int]:
         return iter(self._qargs)
 
     def name(self) -> str:
@@ -84,6 +91,8 @@ class Instruction(Collectible, ABC):
             text += f"q{self._qargs[self.num_of_qubits - 1]})"
         else:
             text += "?)"
+        if self.is_used():
+            text += f" @{self.__position}"
         return text
 
     def preview_str(self, next_qubit: int) -> str:
@@ -236,4 +245,4 @@ class CXGate(DoubleQubitGate):
         return CXGate()
 
     def description(self) -> str:
-        return f"Applies an X Gate onto its second Qubit if its first Qubit is True."
+        return f"Applies an X Gate onto its second Qubit if its first Qubit is 1."
