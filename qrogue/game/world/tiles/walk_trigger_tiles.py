@@ -108,6 +108,10 @@ class Trigger(WalkTriggerTile):
 
 
 class Teleport(WalkTriggerTile):
+    @staticmethod
+    def Img() -> str:
+        return "t"
+
     def __init__(self, callback: Callable[[str, Coordinate], None], target_map: str, room: Coordinate):
         super().__init__(TileCode.Teleport)
         self.__callback = callback
@@ -119,7 +123,7 @@ class Teleport(WalkTriggerTile):
         return True
 
     def get_img(self):
-        return "t"
+        return Teleport.Img()
 
     def _copy(self) -> "Tile":
         return Teleport(self.__callback, self.__target_map, self.__room)

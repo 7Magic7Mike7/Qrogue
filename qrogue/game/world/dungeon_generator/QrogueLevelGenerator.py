@@ -828,6 +828,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
                     tile = tile_dic[tile_str][index].copy()
                     if index + 1 < len(tile_dic[tile_str]):
                         descriptor_indices[tile_str] = index + 1
+                elif tile_str == tiles.Teleport.Img() and room_type is rooms.AreaType.SpawnRoom:
+                    tile = tiles.Teleport(self.__teleport_callback, MapConfig.back_map_string(), None)
                 else:
                     tile = self.__get_default_tile(tile_str, enemy_dic, get_entangled_enemies,
                                                    update_entangled_room_groups)
@@ -838,10 +840,6 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
         while len(tile_matrix) < rooms.Room.INNER_HEIGHT:
             tile_matrix.append([tiles.Floor()] * rooms.Room.INNER_WIDTH)
-
-        if room_type is rooms.AreaType.SpawnRoom:
-            tile_matrix[int(rooms.Room.INNER_HEIGHT / 2)][int(rooms.Room.INNER_WIDTH / 2)] = \
-                tiles.Teleport(self.__teleport_callback, MapConfig.back_map_string(), None)
 
         # hallways will be added later
         room = rooms.CustomRoom(room_type, tile_matrix)
