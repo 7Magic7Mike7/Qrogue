@@ -11,7 +11,7 @@ Qrogue<
 
 [Rooms]
 SR (World 1; South):
-description "Spawn"
+description "Exit navigation panel and go back to the spaceship."
 teleport *back
 
 la (visible Level 1; West):
@@ -23,7 +23,7 @@ description "Location: Moon. Our first official research mission."
 teleport *l1v2
 
 lc (visible Level 3; South):
-description "Location: Moon. Our first official research mission."
+description "Location: Dark side of the Moon."
 teleport *l1v3
 
 ee (foggy Level 0; West):

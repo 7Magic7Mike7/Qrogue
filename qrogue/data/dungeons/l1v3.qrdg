@@ -201,7 +201,7 @@ default random [coin 1, coin 1, coin 1, coin 3]
 "However, now we have the chance to see something special that we couldn't previously: //03the different digits are entangled//!"
 "So, actually you can imagine stepping onto the digits as measuring their state:" 
 "- if the //03state collapses to 0// you're presented with a Puzzle"
-"- if it //collapses to 1// instead the digit will simply vanish."
+"- if it //03collapses to 1// instead the digit will simply vanish"
 "As already mentioned, 0s have a 0% chance to collapse to 1, //031s have a 10%// chance and //039s have a 90%// chance to collapse to 1. Theoretically you could picture empty spaces as 10s with a 100% chance to collapse to 1 - but that's just a side note."
 "Back to the topic: //03How are the digits entangled?// Well, all //031s share their state//, all //032s share their state// and so on. So for example if the first 7 you step onto collapses to 1 all other 7s in this room will vanish too. But if the 7 collapses to 0 all other 7s in the room will give you a Puzzle as well."
 "The fun thing about this is that this way you can always think about taking the path with the lowest or highest probability of having to solve Puzzles depending on what your current goal is. Come on, try it out!"
