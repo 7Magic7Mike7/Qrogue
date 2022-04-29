@@ -5,6 +5,7 @@ README_PATH = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'Readme.m
 with open(README_PATH) as readme_file:
 	README = readme_file.read()
 
+# https://medium.com/@joel.barmettler/how-to-upload-your-python-package-to-pypi-65edc5fe9c56
 setup(
 	name='qrogue',  # Name of package folder
 	packages=[
@@ -31,7 +32,7 @@ setup(
 	],
 	package_data={"data": ["qrogue/data"]},
 	include_package_data=True,
-	version='0.3.3',
+	version='0.3.3.2',
 	license='MIT',  # Chose a license from here: https://help.github.com/articles/licensing-a-repository
 	description='Qrogue is a modernized Quantum Computing take of the classical game Rogue.',
 	long_description=README,
@@ -54,6 +55,6 @@ setup(
 		'Programming Language :: Python :: 3.8',
 	],
 	entry_points={
-		'console_scripts': ['qrogue=qrogue.qrogue:start_game'],
+		'console_scripts': ['qrogue=qrogue.qrogue:start_qrogue'],
 	}
 )
