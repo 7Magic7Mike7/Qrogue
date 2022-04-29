@@ -96,9 +96,9 @@ class HudWidget(Widget):
             if HudConfig.ShowEnergy:
                 text += f"Energy: {self.__robot.cur_energy} / {self.__robot.max_energy}   \t"
             if HudConfig.ShowKeys:
-                text += f"{self.__robot.key_count()} keys"
+                text += f"{self.__robot.key_count()} keys  \t"
             if HudConfig.ShowCoins:
-                text += f"{self.__robot.backpack.coin_count}$"
+                text += f"{self.__robot.backpack.coin_count}$  \t"
         if HudConfig.ShowFPS and self.__render_duration:
             text += f"\t\t{self.__render_duration:.2f} ms"
         self.widget.set_title(text)
