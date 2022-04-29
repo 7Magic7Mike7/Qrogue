@@ -197,7 +197,7 @@ class SpaceshipMap:
         # elif character == SpaceshipTriggerTile.MAP_GATE_LIBRARY_REPRESENTATION:
         #    tile = SpaceshipTriggerTile(character, self.open_gate_library)
         elif character == SpaceshipTriggerTile.QUICKSTART_LEVEL:
-            if Config.debugging():
+            if Config.debugging() and False:
                 def start_test_level(direction: Direction, controllable: Controllable):
                     self.__load_map(MapConfig.test_level(), None)
                 tile = SpaceshipTriggerTile(character, start_test_level)
