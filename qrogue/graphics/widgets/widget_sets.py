@@ -800,7 +800,7 @@ class FightWidgetSet(ReachTargetWidgetSet):
                 ))
             else:
                 self._details.set_data(data=(
-                    ["Failed to flee. You lost 1 HP."],
+                    ["Failed to flee. Your Robot lost some Energy."],
                     [self._empty_callback]
                 ))
         return True
