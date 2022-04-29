@@ -20,7 +20,7 @@ class MyRandom:
         msg = f"{msg}@{self.__id}_{MyRandom.COUNTER}"
         MyRandom.COUNTER += 1
         val = min + self.__random.random() * (max - min)
-        PathConfig.write("random_debug.txt", f"{val} | {msg}\n", append=True)
+        #PathConfig.write("random_debug.txt", f"{val} | {msg}\n", append=True)
         return val
 
     def get_int(self, min: int, max: int, msg: str = str(COUNTER)) -> int:
@@ -98,7 +98,7 @@ class RandomManager(MyRandom):
             RandomManager(new_seed)
         else:
             RandomManager.__instance = RandomManager.create_new(new_seed)
-            PathConfig.write("random_debug.txt", f"RandomManager.init({new_seed})\n", append=True)
+            #PathConfig.write("random_debug.txt", f"RandomManager.init({new_seed})\n", append=True)
 
     def __init__(self, seed: int):
         if RandomManager.__instance is not None:
@@ -106,4 +106,4 @@ class RandomManager(MyRandom):
         else:
             super().__init__(seed)
             RandomManager.__instance = self
-            PathConfig.write("random_debug.txt", f"RandomManager.init({seed})\n", append=True)
+            #PathConfig.write("random_debug.txt", f"RandomManager.init({seed})\n", append=True)
