@@ -70,7 +70,7 @@ class Energy(Pickup):
         return f"Energy ({self.amount})"
 
     def default_price(self) -> int:
-        return int(self.amount / 7)
+        return 2 + int(self.amount / 7)
 
     def __str__(self) -> str:
         return self.to_string()
