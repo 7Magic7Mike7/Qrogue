@@ -3,9 +3,9 @@ from typing import Callable, List
 import py_cui
 
 from qrogue.game.world.map import SpaceshipMap
-from qrogue.game.world.navigation import Coordinate, Direction
+from qrogue.game.world.navigation import Direction
 from qrogue.graphics.rendering import ColorRules
-from qrogue.util import Controls
+from qrogue.util import Controls, Keys
 
 from qrogue.graphics.widgets import MyBaseWidget, MyWidgetSet, Renderable, Widget
 
@@ -49,6 +49,10 @@ class SpaceshipWidgetSet(MyWidgetSet):
     def init_widgets(self, controls: Controls) -> None:
         spaceship = self.add_block_label("Dynamic Spaceship", 0, 0, MyWidgetSet.NUM_OF_ROWS, MyWidgetSet.NUM_OF_COLS,
                                          center=True)
+        spaceship.add_key_command(controls.get_keys(Keys.MoveUp), self.move_up)
+        spaceship.add_key_command(controls.get_keys(Keys.MoveRight), self.move_right)
+        spaceship.add_key_command(controls.get_keys(Keys.MoveDown), self.move_down)
+        spaceship.add_key_command(controls.get_keys(Keys.MoveLeft), self.move_left)
         self.__spaceship = SpaceshipWidget(spaceship)
 
     def get_widget_list(self) -> "list of Widgets":

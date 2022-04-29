@@ -1,5 +1,5 @@
 from enum import IntEnum
-from typing import List, Tuple
+from typing import List, Tuple, Callable
 
 from py_cui.keys import *
 
@@ -36,6 +36,8 @@ class Keys(IntEnum):
     HotKey8 = Pause + 8
     HotKey9 = Pause + 9
     HotKey0 = Pause + 10
+
+    HotKeyCommit = HotKey0 + 1
 
     Render = HotKey0 + 1
     PrintScreen = Render + 1
@@ -90,7 +92,8 @@ class Keys(IntEnum):
 class Controls:
     INVALID_KEY = KEY_ALT_I     # is not allowed to be used as a valid key in the controls!
 
-    def __init__(self):
+    def __init__(self, handle_key_presses: Callable[[int], None]):
+        self.__handle_key_presses = handle_key_presses
         self.__pycui_keys = [
             # move
             [KEY_UP_ARROW, KEY_W_LOWER],
@@ -125,6 +128,7 @@ class Controls:
             [KEY_8],
             [KEY_9],
             [KEY_0, 94],    # 94 = ^
+            [KEY_C_LOWER],  # Fight: Commit
 
             [KEY_CTRL_R],  # render screen
             [KEY_CTRL_P],   # print screen
@@ -167,6 +171,10 @@ class Controls:
         if 0 <= index < len(keys):
             return keys[index]
         return keys[0]
+
+    def handle(self, key: Keys):
+        key_pressed = self.get_key(key)
+        self.__handle_key_presses(key_pressed)
 
     @property
     def action(self) -> List[int]:

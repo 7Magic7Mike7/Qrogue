@@ -39,7 +39,7 @@ class QrogueCUI(py_cui.PyCUI):
     def __init__(self, seed: int, width: int = 8, height: int = 9):
         super().__init__(width, height)
         self.set_title(f"Qrogue {Config.version()}")
-        self.__controls = Controls()
+        self.__controls = Controls(self._handle_key_presses)
         Logger(seed)
         RandomManager(seed)
         OverWorldKeyLogger().reinit(seed, "meta")
@@ -381,54 +381,16 @@ class QrogueCUI(py_cui.PyCUI):
                 widget.widget.add_key_command(self.__controls.get_keys(Keys.Pause), Pausing.pause)
                 widget.widget.add_key_command(self.__controls.get_keys(Keys.PopupReopen), Popup.reopen)
 
-        # all selections
-        selection_widgets = [
-            self.__menu.selection,
-            self.__workbench.selection, self.__workbench.upgrades,
-            self.__fight.choices, self.__fight.details,
-            self.__boss_fight.choices, self.__boss_fight.details,
-            self.__shop.inventory, self.__shop.buy,
-            self.__riddle.choices, self.__riddle.details,
-            self.__pause.choices, self.__pause.details,
-        ]
-        for my_widget in selection_widgets:
-            widget = my_widget.widget
-            widget.add_key_command(self.__controls.get_keys(Keys.SelectionUp), my_widget.up)
-            widget.add_key_command(self.__controls.get_keys(Keys.SelectionRight), my_widget.right)
-            widget.add_key_command(self.__controls.get_keys(Keys.SelectionDown), my_widget.down)
-            widget.add_key_command(self.__controls.get_keys(Keys.SelectionLeft), my_widget.left)
-
         # menu
         self.__menu.selection.widget.add_key_command(self.__controls.action, self.__use_menu_selection)
-
-        # spaceship
-        w = self.__spaceship.get_main_widget()
-        w.add_key_command(self.__controls.get_keys(Keys.MoveUp), self.__spaceship.move_up)
-        w.add_key_command(self.__controls.get_keys(Keys.MoveRight), self.__spaceship.move_right)
-        w.add_key_command(self.__controls.get_keys(Keys.MoveDown), self.__spaceship.move_down)
-        w.add_key_command(self.__controls.get_keys(Keys.MoveLeft), self.__spaceship.move_left)
 
         # workbench
         self.__workbench.selection.widget.add_key_command(self.__controls.action, self.__workbench_selection)
         self.__workbench.upgrades.widget.add_key_command(self.__controls.action, self.__workbench_upgrades)
 
-        # navigation
-        w = self.__navigation.get_main_widget()
-        w.add_key_command(self.__controls.get_keys(Keys.MoveUp), self.__navigation.move_up)
-        w.add_key_command(self.__controls.get_keys(Keys.MoveRight), self.__navigation.move_right)
-        w.add_key_command(self.__controls.get_keys(Keys.MoveDown), self.__navigation.move_down)
-        w.add_key_command(self.__controls.get_keys(Keys.MoveLeft), self.__navigation.move_left)
-
         # pause
         self.__pause.choices.widget.add_key_command(self.__controls.action, self.__pause_choices)
         self.__pause.details.widget.add_key_command(self.__controls.action, self.__pause_details)
-
-        # explore
-        w = self.__explore.get_main_widget()
-        w.add_key_command(self.__controls.get_keys(Keys.MoveUp), self.__explore.move_up)
-        w.add_key_command(self.__controls.get_keys(Keys.MoveRight), self.__explore.move_right)
-        w.add_key_command(self.__controls.get_keys(Keys.MoveDown), self.__explore.move_down)
-        w.add_key_command(self.__controls.get_keys(Keys.MoveLeft), self.__explore.move_left)
 
         # fight
         self.__fight.choices.widget.add_key_command(self.__controls.action, self.__fight_choices)
@@ -439,14 +401,14 @@ class QrogueCUI(py_cui.PyCUI):
         self.__boss_fight.details.widget.add_key_command(self.__controls.get_keys(Keys.Cancel),
                                                          self.__boss_fight_details_back)
 
-        # shop
-        self.__shop.inventory.widget.add_key_command(self.__controls.action, self.__shop_inventory)
-        self.__shop.buy.widget.add_key_command(self.__controls.action, self.__shop_buy)
-
         # riddle
         self.__riddle.choices.widget.add_key_command(self.__controls.action, self.__riddle_choices)
         self.__riddle.details.widget.add_key_command(self.__controls.action, self.__riddle_details)
         self.__riddle.details.widget.add_key_command(self.__controls.get_keys(Keys.Cancel), self.__riddle_details_back)
+
+        # shop
+        self.__shop.inventory.widget.add_key_command(self.__controls.action, self.__shop_inventory)
+        self.__shop.buy.widget.add_key_command(self.__controls.action, self.__shop_buy)
 
     def print_screen(self) -> None:
         text = ""

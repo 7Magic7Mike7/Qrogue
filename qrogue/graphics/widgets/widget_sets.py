@@ -14,7 +14,7 @@ from qrogue.game.world.navigation import Direction
 from qrogue.graphics.popups import Popup
 from qrogue.graphics.rendering import ColorRules
 from qrogue.util import CommonPopups, Config, Controls, GameplayConfig, HelpText, HelpTextType, Logger, PathConfig, \
-    RandomManager, AchievementManager
+    RandomManager, AchievementManager, Keys
 
 from qrogue.graphics.widgets import Renderable
 from .my_widgets import SelectionWidget, CircuitWidget, MapWidget, SimpleWidget, HudWidget, \
@@ -357,7 +357,7 @@ class WorkbenchWidgetSet(MyWidgetSet):
         return self.__available_upgrades
 
     def __details(self, index: int) -> bool:
-        if self.__save_data:
+        if self.__save_data:    # todo fix
             robot = self.__save_data.get_robot(index)
             if robot:
                 self.__robot_info.set_data(robot.description())
@@ -384,8 +384,12 @@ class ExploreWidgetSet(MyWidgetSet):
 
         map_widget = self.add_block_label('MAP', 1, 0, row_span=MyWidgetSet.NUM_OF_ROWS-1,
                                           column_span=MyWidgetSet.NUM_OF_COLS, center=True)
-        self.__map_widget = MapWidget(map_widget)
+        map_widget.add_key_command(controls.get_keys(Keys.MoveUp), self.move_up)
+        map_widget.add_key_command(controls.get_keys(Keys.MoveRight), self.move_right)
+        map_widget.add_key_command(controls.get_keys(Keys.MoveDown), self.move_down)
+        map_widget.add_key_command(controls.get_keys(Keys.MoveLeft), self.move_left)
         ColorRules.apply_map_rules(map_widget)
+        self.__map_widget = MapWidget(map_widget)
 
     def get_main_widget(self) -> MyBaseWidget:
         return self.__map_widget.widget
@@ -440,6 +444,10 @@ class NavigationWidgetSet(MyWidgetSet):
     def init_widgets(self, controls: Controls) -> None:
         map_widget = self.add_block_label('MAP', 1, 0, row_span=MyWidgetSet.NUM_OF_ROWS - 1,
                                           column_span=MyWidgetSet.NUM_OF_COLS, center=True)
+        map_widget.add_key_command(controls.get_keys(Keys.MoveUp), self.move_up)
+        map_widget.add_key_command(controls.get_keys(Keys.MoveRight), self.move_right)
+        map_widget.add_key_command(controls.get_keys(Keys.MoveDown), self.move_down)
+        map_widget.add_key_command(controls.get_keys(Keys.MoveLeft), self.move_left)
         self.__map_widget = MapWidget(map_widget)
         ColorRules.apply_navigation_rules(map_widget)
 
@@ -517,6 +525,17 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         details = self.add_block_label('Details', 7, 3, row_span=2, column_span=6, center=True)
         details.toggle_border()
         self._details = SelectionWidget(details, controls, columns=self.__DETAILS_COLUMNS, is_second=True)
+
+        # commit shortcut
+        def choices_commit():
+            controls.handle(Keys.HotKey1)
+            controls.handle(Keys.Action)
+
+        def details_commit():
+            controls.handle(Keys.Cancel)
+            choices_commit()
+        self._choices.widget.add_key_command(controls.get_keys(Keys.HotKeyCommit), choices_commit)
+        self._details.widget.add_key_command(controls.get_keys(Keys.HotKeyCommit), details_commit)
 
     def get_main_widget(self) -> MyBaseWidget:
         return self._choices.widget
