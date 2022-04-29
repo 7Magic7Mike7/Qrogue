@@ -74,6 +74,10 @@ def _no_space() -> str:
 
 
 class CommonPopups(Enum):
+    SavingFailed = ("Error!", "Failed to save the game. Please make sure the folder for save data still exists and try "
+                              "again.")
+    SavingSuccessful = ("Saved", "You successfully saved the game!")
+    NoSavingWithCheats = ("Cheating", "You used a cheat and therefore are not allowed to save the game!")
     LockedDoor = ("Door is locked!", _locked_door())
     EventDoor = (Config.scientist_name(), "Hmm, I think we should complete the current task first.")
     WrongDirectionDoor = (Config.scientist_name(), "We sadly cannot access the door from this direction.")

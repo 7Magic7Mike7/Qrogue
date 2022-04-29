@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Callable
 
 import py_cui.debug
 
@@ -24,36 +25,42 @@ class Logger(py_cui.debug.PyCUILogger):
             self.__message_popup = None
             self.__error_popup = None
             self.__save_file = PathConfig.new_log_file(seed)
-            self.__buffer_size = 0
             self.__buffer = [Config.get_log_head(seed)]
             Logger.__instance = self
 
-    def set_popup(self, message_popup_function: "void(str, str)", error_popup_function: "void(str, str)") -> None:
+    @property
+    def __buffer_size(self) -> int:
+        return len(self.__buffer)
+
+    def set_popup(self, message_popup_function: Callable[[str, str], None],
+                  error_popup_function: Callable[[str, str], None]) -> None:
         self.__message_popup = message_popup_function
         self.__error_popup = error_popup_function
 
     def __write(self, text) -> None:
         self.__buffer.append(text)
-        self.__buffer_size += len(text)
         if self.__buffer_size >= Logger.__BUFFER_SIZE:
             self.flush()
 
-    def info(self, message, **kwargs) -> None:
+    def info(self, message, from_pycui: bool = True, **kwargs) -> None:
         time_str = datetime.now().strftime("%H-%M-%S")
-        self.__write(f"{time_str}: {message}")
+        if from_pycui:
+            self.__write(f"{{PyCUI}}{time_str}: {message}")
+        else:
+            self.__write(f"{{Qrogue}}{time_str}: {message}")
 
-    def debug(self, msg: str, *args, **kwargs) -> None:
+    def debug(self, msg: str, from_pycui: bool = True, *args, **kwargs) -> None:
         if Config.debugging():
-            self.info(f"{{DEBUG}} |{msg}")
+            self.info(f"{{DEBUG}} |{msg}", from_pycui=from_pycui)
 
     def show_error(self, message) -> None:
         self.__error_popup("ERROR", str(message))
 
-    def error(self, message, show: bool = True, **kwargs) -> None:
+    def error(self, message, show: bool = True, from_pycui: bool = True, **kwargs) -> None:
         if show:
             self.__error_popup("ERROR", str(message))
         highlighting = "\n----------------------------------\n"
-        self.info(f"{highlighting}ERROR |{message}{highlighting}")
+        self.info(f"{highlighting}ERROR |{message}{highlighting}", from_pycui=from_pycui)
 
     def throw(self, error) -> None:
         print(error)
@@ -61,25 +68,14 @@ class Logger(py_cui.debug.PyCUILogger):
         self.flush()
         raise error
 
-    def print(self, message: str, clear: bool = False) -> None:
+    def println(self, message: str = "", clear: bool = False) -> None:
+        message = f"{message}\n"
         print(message)
         if clear:
             self.__text = message
         else:
             self.__text += message
         self.__message_popup("Logger", self.__text)
-
-    def println(self, message: str = "", clear: bool = False) -> None:
-        self.print(f"{message}\n", clear)
-
-    def print_list(self, list=[], delimiter: str = ", ") -> None:
-        sb = "["
-        for elem in list:
-            if elem is not None:
-                sb += str(elem)
-            sb += delimiter
-        sb += "]"
-        self.print(sb)
 
     def clear(self) -> None:
         self.__text = ""
@@ -91,4 +87,3 @@ class Logger(py_cui.debug.PyCUILogger):
                 text += log + "\n"
             PathConfig.write(self.__save_file, text, may_exist=True, append=True)
             self.__buffer = []
-            self.__buffer_size = 0

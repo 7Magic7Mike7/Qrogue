@@ -1,33 +1,17 @@
 import time
 
-from qrogue.dungeon_editor.generator import RandomLayoutGenerator, RandomDungeonGenerator
-from qrogue.game.world.map import CallbackPack
+import test_util
+from qrogue.game.world.dungeon_generator import DungeonGenerator
+from qrogue.game.world.dungeon_generator.random_generator import RandomLayoutGenerator, ExpeditionGenerator
 from qrogue.management.save_data import SaveData
-from qrogue.util.config import Config
-
-
-def start_gp(args):
-    print("started game")
-
-
-def start_fight(robot: Robot, enemy: Enemy, direction: Direction):
-    pass
-
-
-def start_boss_fight(robot: Robot, boss: Boss, direction: Direction):
-    pass
-
-
-def load_map(map_name: str):
-    print(f"Load map: {map_name}")
 
 
 def layout_test():
     min_duration = (1, -1)
     duration_sum = 0
     max_duration = (0, -1)
-    start_seed = 0#50000
-    end_seed = 100000
+    start_seed = 50000
+    end_seed = 55000
     failing_seeds = []
     wrong_specials_seeds = []
     # seeds that "look weird": [603]
@@ -36,9 +20,9 @@ def layout_test():
     num_of_seeds = len(seeds)
     i = 0
     for seed in seeds:
-        if i % 50000 == 0:
+        if i % 5000 == 0:
             print(f"Run {i + 1}): seed = {seed}")
-        mapgen = RandomLayoutGenerator(seed, RandomDungeonGenerator.WIDTH, RandomDungeonGenerator.HEIGHT)
+        mapgen = RandomLayoutGenerator(seed, DungeonGenerator.WIDTH, DungeonGenerator.HEIGHT)
         now_time = time.time()
         if not mapgen.generate(debug=False):
             failing_seeds.append(mapgen)
@@ -66,28 +50,41 @@ def layout_test():
     print()
 
     for mg in failing_seeds:
-        mapgen = RandomLayoutGenerator(mg.seed, RandomDungeonGenerator.WIDTH, RandomDungeonGenerator.HEIGHT)
+        mapgen = RandomLayoutGenerator(mg.seed, DungeonGenerator.WIDTH, DungeonGenerator.HEIGHT)
         mapgen.generate(debug=True)
 
 
 def dungeon_test():
+    def check_achievement(ach: str) -> bool:
+        print(f"Checking achievement: {ach}")
+        return True
+
+    def trigger_event(event: str):
+        print(f"Triggering event: {event}")
+
+    def load_map(map_name: str):
+        print(f"Loading map: {map_name}")
+
+    SaveData()
+
     min_duration = (1, -1)
     duration_sum = 0
     max_duration = (0, -1)
     start_seed = 0
-    end_seed = 50000
+    end_seed = 5000
     failing_seeds = []
     seeds = list(range(start_seed, end_seed))
     num_of_seeds = len(seeds)
     i = -1
     for seed in seeds:
+        if seed == 16:
+            debug = True
         i += 1
-        if i % 5000 == 0:
+        if i % 1000 == 0:
             print(f"Run {i + 1}): seed = {seed}")
-        save_data = SaveData()
-        generator = RandomDungeonGenerator(seed, load_map)
+        generator = ExpeditionGenerator(seed, check_achievement, trigger_event, load_map)
         start_time = time.time()
-        map, success = generator.generate(save_data.get_robot(0))
+        map, success = generator.generate(SaveData.instance().get_robot(0))
         if not success:
             failing_seeds.append((generator, seed))
             print(f"Failed for seed = {seed}")
@@ -110,12 +107,6 @@ def dungeon_test():
     print()
 
 
-return_code = Config.load()
-if return_code != 0:
-    print(f"Error #{return_code}")
-
-RandomManager(7)    # initialize RandomManager
-CallbackPack(start_gp, start_fight, start_boss_fight, start_fight, start_fight)
-
-layout_test()
-dungeon_test()
+if test_util.init_singletons(include_config=True):
+    #layout_test()
+    dungeon_test()

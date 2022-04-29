@@ -32,6 +32,9 @@ class Boss(Enemy, ABC):
     def _on_reached(self):
         self.__is_defeated = True   # todo is this really needed? can't we simply override is_reached()?
 
+    def flee_check(self) -> bool:
+        return True
+
 
 class DummyBoss(Boss):
     def __init__(self):

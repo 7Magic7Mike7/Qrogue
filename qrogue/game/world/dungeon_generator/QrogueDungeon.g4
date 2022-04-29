@@ -36,11 +36,11 @@ tile_descriptor : (trigger_descriptor | message_descriptor |
                   enemy_descriptor | collectible_descriptor | energy_descriptor | riddle_descriptor | shop_descriptor)
                   (TUTORIAL_LITERAL REFERENCE)? (TRIGGER_LITERAL REFERENCE)? ;  // winning a fight or picking up a collectible can also trigger an event
 trigger_descriptor : 't' REFERENCE ;   // reference to the event to trigger
-message_descriptor : 'm' integer REFERENCE ;    // #times displayed, reference to the text that should be shown
+message_descriptor : 'm' integer? REFERENCE ;    // #times displayed, reference to the text that should be shown
 enemy_descriptor : DIGIT REFERENCE REFERENCE?;    // enemy, id of statevector pool, id of reward pool
 collectible_descriptor : 'c' REFERENCE integer? ; // id of reward pool to draw from, number of rewards to draw (note: template pools like *key provide "normal" collectibles)
 energy_descriptor : 'e' integer ;    // amount
-riddle_descriptor : 'r' (REFERENCE | stv) (REFERENCE | collectible) ;   // stv pool id, reward pool id
+riddle_descriptor : 'r' (REFERENCE | stv) (REFERENCE | collectible) integer;   // stv pool id, reward pool id, attempts
 shop_descriptor : '$' (REFERENCE | collectibles) integer ;   // reward pool id or collectible list, num of items to draw
 
 
@@ -65,11 +65,11 @@ reward_pools : REWARD_POOLS ('custom' reward_pool+)? 'default' default_reward_po
 default_reward_pool : REFERENCE | draw_strategy? collectibles ;      // the default pool can either be an ID or a list of collectibles
 reward_pool : REFERENCE draw_strategy? collectibles ;     // id, pool of collectibles
 collectibles : '[' collectible (LIST_SEPARATOR collectible)* ']' ;
-collectible :   (KEY_LITERAL integer | COIN_LITERAL integer | HEALTH_LITERAL integer | GATE_LITERAL REFERENCE |
+collectible :   (KEY_LITERAL integer | COIN_LITERAL integer | ENERGY_LITERAL integer | GATE_LITERAL REFERENCE |
                 QUBIT_LITERAL integer?) ;
 
 messages : MESSAGES message* ;
-message : REFERENCE TEXT (EVENT_LITERAL REFERENCE ALTERNATIVE_LITERAL REFERENCE)? ;    // alternative message if a certain event already happened
+message : REFERENCE TEXT+ (EVENT_LITERAL REFERENCE ALTERNATIVE_LITERAL REFERENCE)? ;    // alternative message if a certain event already happened
 
 // TOKEN
 
@@ -118,7 +118,7 @@ TUTORIAL_LITERAL : 'tutorial' ;
 TRIGGER_LITERAL : 'trigger' ;
 KEY_LITERAL : 'key' ;
 COIN_LITERAL : 'coin' ;
-HEALTH_LITERAL : 'health' ;
+ENERGY_LITERAL : 'energy' ;
 GATE_LITERAL : 'gate' ;
 QUBIT_LITERAL : 'qubit' ;
 ALTERNATIVE_LITERAL : 'alternative' ;

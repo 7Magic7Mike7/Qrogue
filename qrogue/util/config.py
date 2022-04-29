@@ -1,9 +1,8 @@
 import enum
 import os
 import pathlib
-import shutil
 from datetime import datetime
-from typing import Callable, List
+from typing import Callable, Tuple
 
 import py_cui
 
@@ -19,36 +18,73 @@ class FileTypes(enum.Enum):
 
 
 class PathConfig:
-    __BASE_PATH = "../.."
+    __DEFAULT_GAME_DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "data")
+    __DEFAULT_USER_DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "QrogueData")
     __DATA_FOLDER = "data"
     __LOG_FOLDER = "logs"
     __KEY_LOG_FOLDER = "keylogs"
     __SCREEN_PRINTS_FOLDER = "screenprints"
     __SAVE_DATA_FOLDER = "saves"
-    __DUNGEON_FOLDER = os.path.join("data", "dungeons")
-    __TEMPLATE_ROOMS = os.path.join("data", "rooms")
-    __TEMPLATE_HALLWAYS = os.path.join("data", "hallways")
-    __TEMPLATE_STV_POOLS = os.path.join("data", "stv_pools")
-    __TEMPLATE_REWARD_POOLS = os.path.join("data", "reward_pools")
-    __TEMPLATE_FILE = f"templates{FileTypes.Templates}"
-
+    __DUNGEON_FOLDER = "dungeons"
+    __TEMPLATE_ROOMS = "rooms"
+    __TEMPLATE_HALLWAYS = "hallways"
+    __TEMPLATE_STV_POOLS = "stv_pools"
+    __TEMPLATE_REWARD_POOLS = "reward_pools"
+    __TEMPLATE_FILE = f"templates{FileTypes.Templates.value}"
+    __FRESH_SAVE_FILE = "fresh"
     __SAVE_FILE_NUMERATION_SEPARATOR = "_"
+    __NUMBER_OF_SAVE_FILES = 7    # how many save files can be present before we delete the oldest one
+
+    __Base_Path = __DEFAULT_GAME_DATA_PATH
+    __User_Data_Path = __DEFAULT_USER_DATA_PATH
 
     @staticmethod
     def __now_str() -> str:
         return datetime.now().strftime("%d%m%Y_%H%M%S")
 
     @staticmethod
-    def create_data_folder(base_path: str) -> None:
-        pathlib.Path(base_path).mkdir(parents=True, exist_ok=True)
-        data_path = os.path.join(base_path, PathConfig.__DATA_FOLDER)
-        log_path = os.path.join(base_path, PathConfig.__LOG_FOLDER)
-        key_log_path = os.path.join(base_path, PathConfig.__KEY_LOG_FOLDER)
-        screen_prints_path = os.path.join(base_path, PathConfig.__SCREEN_PRINTS_FOLDER)
-        save_data_path = os.path.join(base_path, PathConfig.__SAVE_DATA_FOLDER)
-        if not os.path.exists(data_path):
-            base_data_path = os.path.join(os.path.dirname(__file__), "..", "data")
-            shutil.copytree(base_data_path, data_path)
+    def __save_file_str(num: int) -> str:
+        return os.path.join(PathConfig.__SAVE_DATA_FOLDER,
+                            f"qrogue-save{PathConfig.__SAVE_FILE_NUMERATION_SEPARATOR}{num}{FileTypes.Save.value}")
+
+    @staticmethod
+    def __get_save_files_stats() -> Tuple[int, int]:
+        """
+
+        :return: number of available save files, number of the latest save file
+        """
+        files = os.listdir(PathConfig.user_data_path(PathConfig.__SAVE_DATA_FOLDER))
+        num = -1
+        num_of_files = 0
+        for file in files:
+            if file.endswith(FileTypes.Save.value):
+                file_ending_index = len(file) - len(FileTypes.Save.value)
+                num_of_files += 1
+                cur_num = int(file[file.rindex(PathConfig.__SAVE_FILE_NUMERATION_SEPARATOR) + 1:file_ending_index])
+                if cur_num > num:
+                    num = cur_num
+        return num_of_files, num
+
+    @staticmethod
+    def launch_config_path() -> str:
+        return os.path.join(os.path.dirname(__file__), "..", PathConfig.__DATA_FOLDER, "qrogue_launch.config")
+
+    @staticmethod
+    def default_base_path() -> str:
+        return PathConfig.__DEFAULT_GAME_DATA_PATH
+
+    @staticmethod
+    def default_user_data_path() -> str:
+        return PathConfig.__DEFAULT_USER_DATA_PATH
+
+    @staticmethod
+    def create_folder_structure(user_data_path: str) -> None:
+        pathlib.Path(user_data_path).mkdir(parents=True, exist_ok=True)
+        log_path = os.path.join(user_data_path, PathConfig.__LOG_FOLDER)
+        key_log_path = os.path.join(user_data_path, PathConfig.__KEY_LOG_FOLDER)
+        screen_prints_path = os.path.join(user_data_path, PathConfig.__SCREEN_PRINTS_FOLDER)
+        save_data_path = os.path.join(user_data_path, PathConfig.__SAVE_DATA_FOLDER)
+
         if not os.path.exists(log_path):
             os.mkdir(log_path)
         if not os.path.exists(key_log_path):
@@ -60,24 +96,54 @@ class PathConfig:
 
     @staticmethod
     def set_base_path(base_path: str):
-        PathConfig.__BASE_PATH = base_path
+        if os.path.exists(base_path):
+            PathConfig.__Base_Path = base_path
+        else:
+            raise FileNotFoundError(f"Given base path is not valid: {base_path}")
 
     @staticmethod
-    def load_base_path(config_location: str) -> bool:
-        if config_location is None:
-            config_location = os.path.join(os.path.dirname(__file__), "../..", "installer", "qrogue.config")
+    def set_user_data_path(user_data_path: str):
+        PathConfig.create_folder_structure(user_data_path)  # does nothing for existing folders
+        PathConfig.__User_Data_Path = user_data_path
+
+    @staticmethod
+    def load_paths(custom_data_path: str, custom_user_data_path: str) -> bool:
         try:
-            with open(config_location) as f:
-                content = f.readlines()
-                # ignore the last character because it is \n
-                PathConfig.set_base_path(content[1][:-1])
-            return os.path.exists(PathConfig.__BASE_PATH)
+            if custom_data_path is None or custom_user_data_path is None:
+                with open(PathConfig.launch_config_path()) as f:
+                    content = f.readlines()
+
+            if custom_data_path:
+                data_path = custom_data_path
+            else:
+                data_path = content[1]
+            if custom_user_data_path:
+                user_data_path = custom_user_data_path
+            else:
+                user_data_path = content[2]
+
+            if data_path == "\n":
+                data_path = PathConfig.default_base_path()
+            elif data_path.endswith("\n"):
+                data_path = data_path[:-1]
+            if user_data_path == "\n":
+                user_data_path = PathConfig.default_user_data_path()
+            elif user_data_path.endswith("\n"):
+                user_data_path = user_data_path[:-1]
+
+            PathConfig.set_base_path(data_path)
+            PathConfig.set_user_data_path(user_data_path)
+            return os.path.exists(PathConfig.__Base_Path) and os.path.exists(PathConfig.__User_Data_Path)
         except:
             return False
 
     @staticmethod
     def base_path(file_name: str = "") -> str:
-        return os.path.join(PathConfig.__BASE_PATH, file_name)
+        return os.path.join(PathConfig.__Base_Path, file_name)
+
+    @staticmethod
+    def user_data_path(file_name: str = "") -> str:
+        return os.path.join(PathConfig.__User_Data_Path, file_name)
 
     @staticmethod
     def new_log_file(seed: int) -> str:
@@ -85,55 +151,44 @@ class PathConfig:
         return os.path.join(PathConfig.__LOG_FOLDER, f"{now_str}_seed{seed}{FileTypes.Log.value}")
 
     @staticmethod
-    def new_key_log_file(seed) -> (str, str):
+    def new_key_log_file(seed: int, is_level: bool = True) -> str:
         now_str = PathConfig.__now_str()
-        return os.path.join(PathConfig.__KEY_LOG_FOLDER, f"{now_str}_seed{seed}{FileTypes.KeyLog.value}")
+        if is_level:
+            return os.path.join(PathConfig.__KEY_LOG_FOLDER, f"{now_str}_seed{seed}{FileTypes.KeyLog.value}")
+        else:
+            return os.path.join(PathConfig.__KEY_LOG_FOLDER, f"{now_str}_meta{seed}{FileTypes.KeyLog.value}")
 
     @staticmethod
     def new_screen_print(text: str):
         now_str = PathConfig.__now_str()
-        file_name = os.path.join(PathConfig.__SCREEN_PRINTS_FOLDER, f"{now_str}{FileTypes.ScreenPrint.value}")
-        PathConfig.write(file_name, now_str + "\n" + text, True, True)
+        path = os.path.join(PathConfig.__SCREEN_PRINTS_FOLDER, f"{now_str}{FileTypes.ScreenPrint.value}")
+        PathConfig.write(path, now_str + "\n" + text, may_exist=True, append=True)
 
     @staticmethod
     def new_save_file(text: str):
         now_str = PathConfig.__now_str()
-        num = 0
-        # todo list files of folder to find out the next number and if we delete a previous save
-        file_name = os.path.join(PathConfig.__SAVE_DATA_FOLDER,
-                                 f"qrogue-save{PathConfig.__SAVE_FILE_NUMERATION_SEPARATOR}{num}{FileTypes.Save.value}")
-        PathConfig.write(file_name, now_str + "\n" + text, False, False)
+        num_of_files, num = PathConfig.__get_save_files_stats()
+        num += 1    # increment to get the highest number for the new save file (if no save file exists yet,
+                    # -1 will be incremented to 0)
+        if num_of_files >= PathConfig.__NUMBER_OF_SAVE_FILES:
+            oldest_num = num - PathConfig.__NUMBER_OF_SAVE_FILES
+            PathConfig.delete(PathConfig.__save_file_str(oldest_num))
+        PathConfig.write(PathConfig.__save_file_str(num), now_str + "\n" + text, may_exist=False)
 
     @staticmethod
     def find_latest_save_file() -> str:
-        folder = os.path.join(PathConfig.__BASE_PATH, PathConfig.__SAVE_DATA_FOLDER)
-        files = os.listdir(folder)
-        num = 0
-        for file in files:
-            file_ending_index = file.rindex(FileTypes.Save.value)
-            cur_num = int(file[file.rindex(PathConfig.__SAVE_FILE_NUMERATION_SEPARATOR) + 1:file_ending_index])
-            if cur_num > num:
-                num = cur_num
-        return f"qrogue-save{PathConfig.__SAVE_FILE_NUMERATION_SEPARATOR}{num}{FileTypes.Save.value}"
-
-    @staticmethod
-    def write(file_name: str, text: str, may_exist: bool = True, append: bool = False):
-        path = PathConfig.base_path(file_name)
-        mode = "x"
-        if may_exist:
-            if os.path.exists(path):
-                mode = "w"
-                if append:
-                    mode = "a"
-        with open(path, mode) as file:
-            file.write(text)
+        _, num = PathConfig.__get_save_files_stats()
+        if num >= 0:
+            return PathConfig.__save_file_str(num)
+        else:
+            return PathConfig.base_path(f"{PathConfig.__FRESH_SAVE_FILE}{FileTypes.Save.value}")
 
     @staticmethod
     def read_keylog_buffered(file_name: str, in_keylog_folder: bool = True, buffer_size: int = 1024) -> str:
         if not file_name.endswith(FileTypes.KeyLog.value):
             file_name += FileTypes.KeyLog.value
         if in_keylog_folder:
-            path = PathConfig.base_path(os.path.join(PathConfig.__KEY_LOG_FOLDER, file_name))
+            path = PathConfig.user_data_path(os.path.join(PathConfig.__KEY_LOG_FOLDER, file_name))
         else:
             path = file_name
         if os.path.exists(path):
@@ -154,7 +209,7 @@ class PathConfig:
             path = PathConfig.base_path(os.path.join(PathConfig.__DUNGEON_FOLDER, file_name))
         else:
             path = file_name
-        return PathConfig.read(path, in_base_path=False)
+        return PathConfig.read(path, in_user_path=False)
 
     @staticmethod
     def read_level(file_name: str, in_dungeon_folder: bool = True):
@@ -165,25 +220,37 @@ class PathConfig:
             path = PathConfig.base_path(os.path.join(PathConfig.__DUNGEON_FOLDER, file_name))
         else:
             path = file_name
-        return PathConfig.read(path, in_base_path=False)
+        return PathConfig.read(path, in_user_path=False)
 
     @staticmethod
-    def read(file_name: str, in_base_path: bool = True) -> str:
-        if in_base_path:
-            path = PathConfig.base_path(file_name)
+    def read(file_name: str, in_user_path: bool) -> str:
+        if in_user_path:
+            path = PathConfig.user_data_path(file_name)
         else:
             path = file_name
-        content = ""
         if os.path.exists(path):
             with open(path, "r") as file:
                 content = file.read()
+            return content
         else:
             raise FileNotFoundError(f"File \"{file_name}\" could not be found!")
-        return content
+
+    @staticmethod
+    def write(path: str, text: str, in_user_path: bool = True, may_exist: bool = True, append: bool = False):
+        if in_user_path:
+            path = PathConfig.user_data_path(path)  # data in base_path is static so we can only write user data
+        mode = "x"
+        if may_exist:
+            if os.path.exists(path):
+                mode = "w"
+                if append:
+                    mode = "a"
+        with open(path, mode) as file:
+            file.write(text)
 
     @staticmethod
     def delete(file_name):
-        path = PathConfig.base_path(file_name)
+        path = PathConfig.user_data_path(file_name)     # data in base_path is static so we can only delete user data
         if os.path.exists(path):
             os.remove(path)
 
@@ -435,13 +502,18 @@ class CheatConfig:
 class GameplayConfig:
     __KEY_VALUE_SEPARATOR = "="
 
+    __AUTO_SAVE = "Auto save on exit"
     __AUTO_RESET_CIRCUIT = "Auto reset Circuit"
+    __AUTO_SWAP_GATES = "Auto swap Gates"
     __LOG_KEYS = "Log Keys"
     __SIMULATION_KEY_PAUSE = "Simulation key pause"
     __GAMEPLAY_KEY_PAUSE = "Gameplay key pause"
     __CONFIG = {
+        __AUTO_SAVE: ("True", "Automatically saves the game when you exit it."),
         __AUTO_RESET_CIRCUIT: ("True", "Automatically reset your Circuit to a clean state at the beginning of a Fight, "
                                      "Riddle, etc."),
+        __AUTO_SWAP_GATES: ("True", "Automatically swaps position of two gates if you try to move one to an occupied "
+                                    "slot."),
         __LOG_KEYS: ("True", "Stores all keys you pressed in a .qrkl-file so one can replay them (e.g. for analysing a "
                            "bug)"),
         __SIMULATION_KEY_PAUSE: ("0.2", "How long to wait before we process the next input during simulation."),
@@ -469,6 +541,10 @@ class GameplayConfig:
         return True
 
     @staticmethod
+    def auto_save() -> bool:
+        return GameplayConfig.__CONFIG[GameplayConfig.__AUTO_SAVE][0] == "True"
+
+    @staticmethod
     def auto_reset_circuit() -> bool:
         return GameplayConfig.__CONFIG[GameplayConfig.__AUTO_RESET_CIRCUIT][0] == "True"
 
@@ -489,6 +565,18 @@ class GameplayConfig:
             return float(GameplayConfig.__CONFIG[GameplayConfig.__GAMEPLAY_KEY_PAUSE][0])
         except:
             return 0.4
+
+    @staticmethod
+    def auto_swap_gates() -> bool:
+        return GameplayConfig.__CONFIG[GameplayConfig.__AUTO_SWAP_GATES][0] == "True"
+
+
+class HudConfig:
+    ShowMapName = True
+    ShowEnergy = True
+    ShowKeys = True
+    ShowCoins = True
+    ShowFPS = False
 
 
 class MapConfig:
@@ -529,12 +617,24 @@ class MapConfig:
         return "expedition"
 
     @staticmethod
+    def spaceship() -> str:
+        return "spaceship"
+
+    @staticmethod
     def hub_world() -> str:
         return "w0"
 
     @staticmethod
-    def tutorial_level() -> str:
+    def first_world() -> str:
+        return "w1"
+
+    @staticmethod
+    def intro_level() -> str:
         return "l1v1"
+
+    @staticmethod
+    def test_level() -> str:
+        return "l1v2"
 
 
 class InstructionConfig:
@@ -549,7 +649,7 @@ class ShopConfig:
 
 class Config:   # todo make singleton and handle access to other configs?
     MAX_SEED = 1000000
-    __VERSION = "v0.2.1"
+    __VERSION = "v0.3.3"
     __GAME_CONFIG = "qrogue_game.config"
     __GAMEPLAY_HEAD = "[Gameplay]\n"
     __DEBUG = False
@@ -558,6 +658,22 @@ class Config:   # todo make singleton and handle access to other configs?
     __SEED_HEAD = "Seed="
     __TIME_HEAD = "Time="
     __CONFIG_HEAD = "[Config]"
+
+    @staticmethod
+    def HEADER() -> str:
+        return Config.__HEADER
+
+    @staticmethod
+    def SEED_HEAD() -> str:
+        return Config.__SEED_HEAD
+
+    @staticmethod
+    def TIME_HEAD() -> str:
+        return Config.__TIME_HEAD
+
+    @staticmethod
+    def CONFIG_HEAD() -> str:
+        return Config.__CONFIG_HEAD
 
     @staticmethod
     def scientist_name() -> str:
@@ -581,7 +697,7 @@ class Config:   # todo make singleton and handle access to other configs?
         return head
 
     @staticmethod
-    def config_file() -> str:
+    def game_config_file() -> str:
         return Config.__GAME_CONFIG
 
     @staticmethod
@@ -598,41 +714,46 @@ class Config:   # todo make singleton and handle access to other configs?
         Config.__DEBUG = True
 
     @staticmethod
-    def create(custom_config: List[str] = None):
-        text = ""
-        text += Config.__GAMEPLAY_HEAD
-        text += GameplayConfig.to_file_text()
+    def setup_user_data(custom_path: str = None):
+        """
+        Sets up the folder structure and default game config in the specified path.
+        :param custom_path: where to store and load the user data (e.g. logs, save data)
+        :return:
+        """
 
-        if custom_config:
-            config_content = custom_config
+        if custom_path:
+            user_data_path = custom_path
         else:
-            file_path = os.path.join(os.path.dirname(__file__), "../..", "installer", "qrogue.config")
-            try:
-                config_content = PathConfig.read(file_path, False).splitlines()
-            except FileNotFoundError:
-                raise FileNotFoundError("Could not find the base config file qrogue.config\nPlease download the installer "
-                                        "folder again!")
-        PathConfig.create_data_folder(config_content[1])
-        path = os.path.join(config_content[1], Config.__GAME_CONFIG)
-        with open(path, "x") as file:
-            file.write(text)
+            user_data_path = PathConfig.user_data_path()
+
+        PathConfig.create_folder_structure(user_data_path)
+        path = os.path.join(user_data_path, Config.__GAME_CONFIG)
+        if not os.path.exists(path):
+            text = ""
+            text += Config.__GAMEPLAY_HEAD
+            text += GameplayConfig.to_file_text()
+            with open(path, "x") as file:
+                file.write(text)
 
     @staticmethod
-    def load(config_location: str):
-        if not PathConfig.load_base_path(config_location):
-            return 1
-
-        if not os.path.exists(os.path.join(PathConfig.base_path(), Config.__GAME_CONFIG)):
-            Config.create()
+    def load():
+        if not os.path.exists(PathConfig.user_data_path(Config.__GAME_CONFIG)):
+            Config.setup_user_data()
 
         try:
-            config = PathConfig.read(Config.__GAME_CONFIG)
+            config = PathConfig.read(Config.__GAME_CONFIG, in_user_path=True)
         except FileNotFoundError:
             raise FileNotFoundError("Could not load the game's config file!")
 
-        gameplay_section = config.index(Config.__GAMEPLAY_HEAD) + len(Config.__GAMEPLAY_HEAD)
-        gameplay_section = (gameplay_section, len(config))
-        if not GameplayConfig.from_log_text(config[gameplay_section[0]:gameplay_section[1]]):
+        gameplay_start = config.index(Config.__GAMEPLAY_HEAD) + len(Config.__GAMEPLAY_HEAD)
+        gameplay_end = len(config)
+        if not GameplayConfig.from_log_text(config[gameplay_start:gameplay_end]):
             return 2
 
         return 0
+
+    @staticmethod
+    def save_gameplay_config() -> bool:
+        text = f"{Config.__GAMEPLAY_HEAD}\n{GameplayConfig.to_file_text()}\n"
+        PathConfig.write(Config.game_config_file(), text, in_user_path=True, may_exist=True, append=False)
+        return True

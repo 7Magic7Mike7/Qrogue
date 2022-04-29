@@ -1,13 +1,9 @@
 # Must haves #
-- custom GameData location also for Unix!
 - automatic font size adaption
   + instead, try to start terminal maximized and print clear error message
   - research if it is feasible to make a web app out of Qrogue
-- multiple levels
 
 # Should haves #
-- PyPI upload:
-https://medium.com/@joel.barmettler/how-to-upload-your-python-package-to-pypi-65edc5fe9c56
 - implement remaining changes proposed via Feedback
 - consider space in backpack when buying from shop
 - place collectible on the ground if you cannot pack a reward in your backpack?
@@ -35,3 +31,6 @@ https://medium.com/@joel.barmettler/how-to-upload-your-python-package-to-pypi-65
 - new Hub area
 - new Tutorial based on Narrative update
 - create Rooms from file
+- custom GameData location also for Unix (via console arguments)
+- PyPI upload:
+https://medium.com/@joel.barmettler/how-to-upload-your-python-package-to-pypi-65edc5fe9c56

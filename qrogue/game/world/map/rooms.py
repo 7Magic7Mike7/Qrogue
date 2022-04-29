@@ -60,7 +60,7 @@ class Area(ABC):
         return self.__id
 
     @property
-    def _is_visible(self) -> bool:
+    def is_visible(self) -> bool:
         return self.__is_visible or CheatConfig.revealed_map()
 
     @property
@@ -68,7 +68,7 @@ class Area(ABC):
         return self.__is_visible
 
     @property
-    def _is_in_sight(self) -> bool:
+    def is_in_sight(self) -> bool:
         return self.__is_in_sight
 
     @property
@@ -97,10 +97,10 @@ class Area(ABC):
         :return: the Tile at the requested position
         """
         if 0 <= x < self.__width and 0 <= y < self.__height:
-            if self._is_visible or force:
+            if self.is_visible or force:
                 return self.__tiles[y][x]
             else:
-                if self._is_in_sight:
+                if self.is_in_sight:
                     return Area.__FOG
                 else:
                     return Area.void()
@@ -111,10 +111,10 @@ class Area(ABC):
         if row >= len(self.__tiles):
             return "".join([Invalid().get_img()] * Area.UNIT_WIDTH)
 
-        if self._is_visible:
+        if self.is_visible:
             tiles = [t.get_img() for t in self.__tiles[row]]
             return "".join(tiles)
-        elif self._is_in_sight:
+        elif self.is_in_sight:
             fog_str = Area.__FOG.get_img()
             return fog_str * self.__width
         else:
@@ -252,16 +252,19 @@ class Hallway(Area):
         if self.__room1:
             self.__room1.in_sight()
         else:
-            Logger.instance().debug("room1 is None!")
+            Logger.instance().debug("room1 is None!", from_pycui=False)
         if self.__room2:
             self.__room2.in_sight()
         else:
-            Logger.instance().debug("room2 is None!")
+            Logger.instance().debug("room2 is None!", from_pycui=False)
 
     def get_row_str(self, row: int) -> str:
         if self.__hide:
             if self.__door.check_event():
-                self.make_visible()
+                if self.__room1.is_visible or self.__room2.is_visible:
+                    self.make_visible()
+                #elif self.__room1.in_sight or self.__room2.in_sight:
+                #    self.in_sight()
                 self.__hide = False
         return super(Hallway, self).get_row_str(row)
 
@@ -482,7 +485,7 @@ class MetaRoom(CopyAbleRoom):
                 self._set(tile_list, 0, Room.INNER_MID_Y, dash_decoration)
                 self._set(tile_list,0, Room.INNER_HEIGHT - 1, num_decoration)
                 self._set(tile_list, Room.INNER_WIDTH - 1, 0, msg_tile)
-                self._set(tile_list, Room.INNER_WIDTH - 1, Room.INNER_HEIGHT - 1, msg_tile)
+                self._set(tile_list, Room.INNER_WIDTH - 1, Room.INNER_HEIGHT - 1, level_tile)
                 coordinate = Coordinate(Room.INNER_MID_X - 1, 0)
                 addition = Direction.South
 
@@ -515,7 +518,7 @@ class MetaRoom(CopyAbleRoom):
         if self._is_visible_value:
             # don't use Room's implementation but Area's
             super(CopyAbleRoom, new_room).make_visible()
-        elif self._is_in_sight:
+        elif self.is_in_sight:
             new_room.in_sight()
         return new_room
 
@@ -545,7 +548,7 @@ class CustomRoom(CopyAbleRoom):
         if self._is_visible_value:
             # don't use Room's implementation but Area's
             super(Room, new_room).make_visible()
-        elif self._is_in_sight:
+        elif self.is_in_sight:
             new_room.in_sight()
         return new_room
 
@@ -659,7 +662,7 @@ class WildRoom(BaseWildRoom):
         for y in range(Room.INNER_HEIGHT):
             available_positions += [Coordinate(x, y) for x in range(Room.INNER_WIDTH)]
         num_of_enemies = len(available_positions) * chance
-        if rm.get() < 0.5:
+        if rm.get(msg="WR_enemyPlacementRounding") < 0.5:
             num_of_enemies = math.floor(num_of_enemies)
         else:
             num_of_enemies = math.ceil(num_of_enemies)
@@ -668,17 +671,20 @@ class WildRoom(BaseWildRoom):
 
         tile_list = Room.get_empty_room_tile_list()
         for i in range(num_of_enemies):
-            id = rm.get_int(min=0, max=WildRoom.__NUM_OF_ENEMY_GROUPS + 1)
-            enemy = EnemyTile(factory, self.__get_tiles_by_id, id)
-            if id > 0:
-                self.__dictionary[id].append(enemy)
-            pos = rm.get_element(available_positions, remove=True)
+            eid = rm.get_int(min=0, max=WildRoom.__NUM_OF_ENEMY_GROUPS + 1, msg="WildRoom_eid")
+            enemy = EnemyTile(factory, self.__get_tiles_by_id, self.__update_entangled_tiles, eid)
+            if eid > 0:
+                self.__dictionary[eid].append(enemy)
+            pos = rm.get_element(available_positions, remove=True, msg="WildRoom_epos")
             tile_list[Room.coordinate_to_index(pos)] = enemy
 
         super().__init__(tile_list, self.__get_tiles_by_id, north_hallway, east_hallway, south_hallway, west_hallway)
 
-    def __get_tiles_by_id(self, id: int) -> List[EnemyTile]:
-        return self.__dictionary[id]
+    def __get_tiles_by_id(self, eid: int) -> List[EnemyTile]:
+        return self.__dictionary[eid]
+
+    def __update_entangled_tiles(self, enemy: EnemyTile):
+        self.__dictionary[enemy.eid].append(enemy)
 
 
 class DefinedWildRoom(BaseWildRoom):
