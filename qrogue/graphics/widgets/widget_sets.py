@@ -489,7 +489,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  continue_exploration_callback: "()", flee_choice: str = "Flee"):
-        self.__choice_strings = SelectionWidget.wrap_in_hotkey_str(["Add/Remove", "Commit", "Reset", "Items", "Help",
+        self.__choice_strings = SelectionWidget.wrap_in_hotkey_str(["Add/Remove", "Reset", "Help",
                                                                     flee_choice])
         super().__init__(controls, logger, root, render)
         self._continue_exploration_callback = continue_exploration_callback
@@ -518,8 +518,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self._choices = SelectionWidget(choices, controls, columns=self.__CHOICE_COLUMNS)
         self._choices.set_data(data=(
             self.__choice_strings,
-            [self.__choices_adapt, self.__choices_commit, self.__choices_reset, self.__choices_items,
-             self.__choices_help, self._choices_flee]
+            [self.__choices_adapt, self.__choices_reset, self.__choices_help, self._choices_flee]
         ))
 
         details = self.add_block_label('Details', 7, 3, row_span=2, column_span=6, center=True)
@@ -643,6 +642,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             SelectionWidget.wrap_in_hotkey_str(options) + [MyWidgetSet.BACK_STRING],
             [self.__choose_instruction]
         ))
+        self.__choices_commit()     # immediately commit on change
         self.render()
         return False
 
