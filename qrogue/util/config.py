@@ -262,6 +262,9 @@ class ColorCode(enum.Enum):
     KEY_HIGHLIGHT = "04"
     SPACESHIP_FLOOR = "70"
 
+    WRONG_AMPLITUDE = "90"
+    CORRECT_AMPLITUDE = "91"
+
     def __init__(self, code: str):
         self.__code = code
 
@@ -284,10 +287,12 @@ class ColorConfig:
     REGEX_TEXT_HIGHLIGHT = "//"     # regex recognizable version of TEXT_HIGHLIGHT (some characters need escaping)
     HIGHLIGHT_WIDTH = len(TEXT_HIGHLIGHT)
     __DIC = {
-        str(ColorCode.TILE_HIGHLIGHT): py_cui.WHITE_ON_BLACK,
-        str(ColorCode.OBJECT_HIGHLIGHT): py_cui.BLUE_ON_WHITE,
-        str(ColorCode.WORD_HIGHLIGHT): py_cui.RED_ON_WHITE,
-        str(ColorCode.KEY_HIGHLIGHT): py_cui.MAGENTA_ON_WHITE,
+        str(ColorCode.TILE_HIGHLIGHT):      py_cui.WHITE_ON_BLACK,
+        str(ColorCode.OBJECT_HIGHLIGHT):    py_cui.BLUE_ON_WHITE,
+        str(ColorCode.WORD_HIGHLIGHT):      py_cui.RED_ON_WHITE,
+        str(ColorCode.KEY_HIGHLIGHT):       py_cui.MAGENTA_ON_WHITE,
+        str(ColorCode.WRONG_AMPLITUDE):     py_cui.RED_ON_BLACK,
+        str(ColorCode.CORRECT_AMPLITUDE):   py_cui.GREEN_ON_BLACK,
     }
 
     @staticmethod
@@ -639,6 +644,11 @@ class MapConfig:
 
 class InstructionConfig:
     MAX_ABBREVIATION_LEN = 3
+
+
+class QuantumSimulationConfig:
+    DECIMALS = 3
+    TOLERANCE = 0.1
 
 
 class ShopConfig:

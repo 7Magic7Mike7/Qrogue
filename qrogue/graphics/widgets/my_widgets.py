@@ -1,14 +1,17 @@
 from abc import ABC, abstractmethod
 from typing import List, Any, Callable, Tuple, Optional
 
+from py_cui import ColorRule
 from py_cui.widgets import BlockLabel
 
-from qrogue.game.logic.actors import Robot
+from qrogue.game.logic import StateVector
+from qrogue.game.logic.actors import Robot, CircuitMatrix
 from qrogue.game.world.map import Map
 from qrogue.game.world.navigation import Direction
-from qrogue.util import ColorConfig, Controls, Keys, Logger, util_functions as uf, Config, HudConfig
+from qrogue.util import ColorConfig, Controls, Keys, Logger, Config, HudConfig
 
 from qrogue.graphics.widgets import Renderable
+from qrogue.util.config import ColorCode, QuantumSimulationConfig
 
 
 class MyBaseWidget(BlockLabel):
@@ -26,6 +29,12 @@ class MyBaseWidget(BlockLabel):
             -> None:
         super(MyBaseWidget, self).add_text_color_rule(regex, color, rule_type, match_type, region, include_whitespace,
                                                       selected_color)
+
+    def activate_individual_coloring(self):
+        regex = ColorConfig.REGEX_TEXT_HIGHLIGHT
+        self._text_color_rules.append(
+            ColorRule(f"{regex}.*?{regex}", 0, 0, "contains", "regex", [0, 1], False, Logger.instance())
+        )
 
     def add_key_command(self, keys: List[int], command: Callable[[], Any]) -> Any:
         for key in keys:
@@ -154,19 +163,19 @@ class MapWidget(Widget):
         return self.__map.move(direction)
 
 
-class TargetStateVectorWidget(Widget):
+class StateVectorWidget(Widget):
     def __init__(self, widget: MyBaseWidget, headline: str):
         super().__init__(widget)
         self.__headline = headline
-        self.__state_vector_str = None
+        self.__state_vector = None
         widget.add_text_color_rule("~.*~", ColorConfig.STV_HEADING_COLOR, 'contains', match_type='regex')
 
-    def set_data(self, state_vector_str: str) -> None:
-        self.__state_vector_str = state_vector_str
+    def set_data(self, state_vector: StateVector) -> None:
+        self.__state_vector = state_vector
 
     def render(self) -> None:
-        if self.__state_vector_str:
-            str_rep = f"~{self.__headline}~\n{self.__state_vector_str}"
+        if self.__state_vector:
+            str_rep = f"~{self.__headline}~\n{self.__state_vector.to_string()}"
             self.widget.set_title(str_rep)
 
     def render_reset(self) -> None:
@@ -177,32 +186,41 @@ class CurrentStateVectorWidget(Widget):
     def __init__(self, widget: MyBaseWidget, headline: str):
         super().__init__(widget)
         self.__headline = headline
-        self.__state_vector_str = None
-        self.__diff_vector_str = None
+        self.__stv_str_rep = None
         widget.add_text_color_rule("~.*~", ColorConfig.STV_HEADING_COLOR, 'contains', match_type='regex')
-        widget.add_text_color_rule("\(0\)", ColorConfig.CORRECT_AMPLITUDE_COLOR, "contains", match_type="regex")
-        # widget.add_text_color_rule("\(\d\)", ColorConfig.CORRECT_AMPLITUDE_COLOR, "contains", match_type="regex")
-        widget.add_text_color_rule("\([^0].*\)", ColorConfig.WRONG_AMPLITUDE_COLOR, "contains", match_type="regex")
+        widget.activate_individual_coloring()
 
-    def set_data(self, state_vector_strings: Tuple[str, str]) -> None:
-        self.__state_vector_str, self.__diff_vector_str = state_vector_strings
+    def set_data(self, state_vectors: Tuple[StateVector, StateVector], target_reached: bool = False) -> None:
+        output_stv, diff_stv = state_vectors
+        stv_rows = output_stv.to_string().split('\n')
+        for i in range(diff_stv.size):
+            if abs(diff_stv.at(i)) <= QuantumSimulationConfig.TOLERANCE: # or target_reached:
+                stv_rows[i] = ColorConfig.colorize(ColorCode.CORRECT_AMPLITUDE, stv_rows[i])
+            else:
+                stv_rows[i] = ColorConfig.colorize(ColorCode.WRONG_AMPLITUDE, stv_rows[i])
+        self.__stv_str_rep = f"~{self.__headline}~\n" + "\n".join(stv_rows)
 
     def render(self) -> None:
-        if self.__state_vector_str is not None:
-            str_rep = f"~{self.__headline}~\n"
-            stv_rows = self.__state_vector_str.split('\n')
-            diff_rows = ["(" + val + ")" for val in self.__diff_vector_str.split('\n')]
+        if self.__stv_str_rep is not None:
+            self.widget.set_title(self.__stv_str_rep)
 
-            max_stv_width = max([len(val) for val in stv_rows])
-            max_diff_width = max([len(val) for val in diff_rows])
+    def render_reset(self) -> None:
+        self.__stv_str_rep = None
+        self.widget.set_title("")
 
-            # last row is empty due to the trailing \n and therefore uninteresting to us
-            for i in range(len(stv_rows) - 1):
-                str_rep += uf.center_string(stv_rows[i], max_stv_width, uneven_left=True)
-                str_rep += "  "
-                str_rep += uf.center_string(diff_rows[i], max_diff_width, uneven_left=False)
-                str_rep += "\n"
-            self.widget.set_title(str_rep)
+
+class CircuitMatrixWidget(Widget):
+    def __init__(self, widget: MyBaseWidget):
+        super().__init__(widget)
+        self.__matrix_str_rep = None
+        widget.add_text_color_rule("~.*~", ColorConfig.STV_HEADING_COLOR, 'contains', match_type='regex')
+
+    def set_data(self, matrix: CircuitMatrix) -> None:
+        self.__matrix_str_rep = f"~Circuit Matrix~\n{matrix.to_string()}"
+
+    def render(self) -> None:
+        if self.__matrix_str_rep is not None:
+            self.widget.set_title(self.__matrix_str_rep)
 
     def render_reset(self) -> None:
         self.widget.set_title("")

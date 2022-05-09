@@ -5,16 +5,15 @@ Author: Artner Michael
 from abc import ABC
 from typing import Tuple, List, Callable
 
-from qiskit import QuantumCircuit, transpile
+from qiskit import QuantumCircuit, transpile, Aer, execute
 from qiskit.providers.aer import StatevectorSimulator
 
-from qrogue.game.logic.actors import StateVector
+from qrogue.game.logic.actors import StateVector, CircuitMatrix
 from qrogue.game.logic.actors.controllables import Controllable
+from qrogue.game.logic.actors.controllables.qubit import QubitSet, DummyQubitSet
 from qrogue.game.logic.collectibles import Coin, Collectible, Consumable, Instruction, Key, MultiCollectible, \
     Qubit, Energy
-from qrogue.util import CheatConfig, Config, Logger, InstructionConfig, GameplayConfig
-
-from .qubit import QubitSet, DummyQubitSet
+from qrogue.util import CheatConfig, Config, Logger, InstructionConfig, GameplayConfig, QuantumSimulationConfig
 
 
 # from jkq import ddsim
@@ -275,6 +274,7 @@ class Robot(Controllable, ABC):
         self.__game_over = game_over_callback
         # initialize qubit stuff (rows)
         self.__simulator = StatevectorSimulator()#ddsim.JKQProvider().get_backend('statevector_simulator')
+        self.__backend = Aer.get_backend('unitary_simulator')
         self.__stv = None
         self.__qubit_indices = []
         for i in range(0, attributes.num_of_qubits):
@@ -296,6 +296,10 @@ class Robot(Controllable, ABC):
     @property
     def state_vector(self) -> StateVector:
         return self.__stv
+
+    @property
+    def circuit_matrix(self) -> CircuitMatrix:
+        return self.__circuit_matrix
 
     @property
     def cur_energy(self) -> int:
@@ -344,6 +348,10 @@ class Robot(Controllable, ABC):
         job = self.__simulator.run(compiled_circuit, shots=1)
         result = job.result()
         self.__stv = StateVector(result.get_statevector(self.__circuit))
+
+        job = execute(self.__circuit, self.__backend)
+        result = job.result()
+        self.__circuit_matrix = CircuitMatrix(result.get_unitary(self.__circuit, decimals=QuantumSimulationConfig.DECIMALS))
 
     def __remove_instruction(self, instruction: Instruction, skip_qargs: bool = False):
         if instruction and instruction.is_used():

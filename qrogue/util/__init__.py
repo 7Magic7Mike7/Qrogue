@@ -1,6 +1,6 @@
 # exporting
 from .config import CheatConfig, ColorConfig, GameplayConfig, HudConfig, InstructionConfig, MapConfig, PathConfig, \
-    PopupConfig, Config, ShopConfig
+    PopupConfig, Config, ShopConfig, QuantumSimulationConfig
 from .controls import Controls, Keys
 from .help_texts import HelpText, HelpTextType
 from .logger import Logger

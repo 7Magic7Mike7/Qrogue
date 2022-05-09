@@ -6,6 +6,7 @@ import py_cui
 from py_cui.widget_set import WidgetSet
 
 
+from qrogue.game.logic import StateVector
 from qrogue.game.logic.actors import Boss, Enemy, Riddle, Robot
 from qrogue.game.logic.actors.puzzles import Target
 from qrogue.game.logic.collectibles import ShopItem
@@ -17,8 +18,8 @@ from qrogue.util import CommonPopups, Config, Controls, GameplayConfig, HelpText
     RandomManager, AchievementManager, Keys
 
 from qrogue.graphics.widgets import Renderable
-from .my_widgets import SelectionWidget, CircuitWidget, MapWidget, SimpleWidget, HudWidget, \
-    QubitInfoWidget, MyBaseWidget, Widget, CurrentStateVectorWidget, TargetStateVectorWidget
+from qrogue.graphics.widgets.my_widgets import SelectionWidget, CircuitWidget, MapWidget, SimpleWidget, HudWidget, \
+    MyBaseWidget, Widget, CurrentStateVectorWidget, StateVectorWidget, CircuitMatrixWidget
 
 
 class MyWidgetSet(WidgetSet, Renderable, ABC):
@@ -503,12 +504,29 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
         stv_row = 1
         row_span = 3
-        stv = self.add_block_label('Player StV', stv_row, 0, row_span=row_span, column_span=3, center=True)
-        self.__stv_robot = CurrentStateVectorWidget(stv, "Current State")
-        truth_table = self.add_block_label('Truth table', stv_row, 3, row_span=row_span, column_span=3, center=True)
-        self.__truth_table = QubitInfoWidget(truth_table)
-        stv = self.add_block_label('Target StV', stv_row, 6, row_span=row_span, column_span=3, center=True)
-        self.__stv_target = TargetStateVectorWidget(stv, "Target State")
+
+        stv = self.add_block_label('Input StV', stv_row, 0, row_span=row_span, column_span=1, center=True)
+        self.__input_stv = StateVectorWidget(stv, "Input")
+
+        multiplication = self.add_block_label('Mul sign', stv_row, 1, row_span=row_span, column_span=1, center=True)
+        self.__mul_widget = SimpleWidget(multiplication)
+
+        matrix = self.add_block_label('Circuit Matrix', stv_row, 2, row_span=row_span, column_span=3, center=True)
+        self.__circuit_matrix = CircuitMatrixWidget(matrix)
+
+        result = self.add_block_label('Eq sign', stv_row, 5, row_span=1, column_span=1, center=True)
+        self.__result_widget = SimpleWidget(result)
+
+        stv = self.add_block_label('Player StV', stv_row, 6, row_span=row_span, column_span=1, center=True)
+        self.__stv_robot = CurrentStateVectorWidget(stv, "Output State")
+
+        equality = self.add_block_label('Eq sign', stv_row, 7, row_span=1, column_span=1, center=True)
+        self.__eq_widget = SimpleWidget(equality)
+
+        stv = self.add_block_label('Target StV', stv_row, 8, row_span=row_span, column_span=1, center=True)
+        self.__stv_target = StateVectorWidget(stv, "Target State")
+
+
 
         circuit = self.add_block_label('Circuit', 6, 0, row_span=1, column_span=MyWidgetSet.NUM_OF_COLS, center=True)
         self.__circuit = CircuitWidget(circuit)
@@ -551,16 +569,23 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self.__hud.set_data((robot, None))  # don't overwrite the current map name
         self.__circuit.set_data(robot)
 
-        diff_stv = self._target.state_vector.get_diff(self._robot.state_vector)
-        self.__stv_robot.set_data((self._robot.state_vector.to_string(), diff_stv.to_string()))
-        self.__truth_table.set_data(robot.state_vector.num_of_qubits)
-        self.__stv_target.set_data(target.state_vector.to_string())
+        sign_offset = "\n" * (2**(self._robot.num_of_qubits - 1))   # 1 (headline) + middle of actual Stv
+
+        self.__input_stv.set_data(StateVector.create_zero_state_vector(self._robot.num_of_qubits))
+        self.__mul_widget.set_data(sign_offset + "x")
+        self.__result_widget.set_data(sign_offset + "=")
+        self.__update_calculation(False)
+        self.__stv_target.set_data(target.state_vector)
 
     def get_widget_list(self) -> List[Widget]:
         return [
             self.__hud,
+            self.__input_stv,
+            self.__mul_widget,
+            self.__circuit_matrix,
+            self.__result_widget,
             self.__stv_robot,
-            self.__truth_table,
+            self.__eq_widget,
             self.__stv_target,
             self.__circuit,
             self._choices,
@@ -578,6 +603,18 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
     @property
     def details(self) -> SelectionWidget:
         return self._details
+
+    def __update_calculation(self, target_reached: bool):
+        diff_stv = self._target.state_vector.get_diff(self._robot.state_vector)
+
+        self.__circuit_matrix.set_data(self._robot.circuit_matrix)
+        self.__stv_robot.set_data((self._robot.state_vector, diff_stv), target_reached=target_reached)
+
+        sign_offset = "\n" * (2**(self._robot.num_of_qubits - 1))   # 1 (headline) + middle of actual Stv
+        if diff_stv.is_zero:
+            self.__eq_widget.set_data(sign_offset + "===")
+        else:
+            self.__eq_widget.set_data(sign_offset + "=/=")
 
     def __choices_adapt(self) -> bool:
         options = [instruction.selection_str() for instruction in self._robot.backpack]
@@ -608,7 +645,6 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                         CommonPopups.NoCircuitSpace.show()
                 self.render()
             else:
-                from qrogue.util.logger import Logger
                 Logger.instance().error("Error! The selected instruction/index is out of range!")
             return False
         else:
@@ -652,17 +688,17 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             Logger.instance().error("Error! Target is not set!")
             return False
         self._robot.update_statevector()
-        diff_stv = self._target.state_vector.get_diff(self._robot.state_vector)
-        self.__stv_robot.set_data((self._robot.state_vector.to_string(), diff_stv.to_string()))
-        self.render()
-
         success, reward = self._target.is_reached(self._robot.state_vector)
+        self.__update_calculation(success)
+        self.render()
         if success:
             self._robot.give_collectible(reward)
             self._details.set_data(data=(
                 [f"Congratulations! You received: {reward.to_string()}"],
                 [self._continue_exploration_callback]
             ))
+            #Popup.generic_info("Congratulations!", f"You received: {reward.to_string()}")
+            #self._continue_exploration_callback()
             return True
         else:
             return self._on_commit_fail()
@@ -676,8 +712,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             return True
         else:
             self._robot.reset_circuit()
-            diff_stv = self._target.state_vector.get_diff(self._robot.state_vector)
-            self.__stv_robot.set_data((self._robot.state_vector.to_string(), diff_stv.to_string()))
+            self.__update_calculation(False)
             self.render()
             return False
 
