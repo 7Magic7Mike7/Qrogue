@@ -19,7 +19,7 @@ from qrogue.util import CommonPopups, Config, Controls, GameplayConfig, HelpText
 
 from qrogue.graphics.widgets import Renderable
 from qrogue.graphics.widgets.my_widgets import SelectionWidget, CircuitWidget, MapWidget, SimpleWidget, HudWidget, \
-    MyBaseWidget, Widget, CurrentStateVectorWidget, StateVectorWidget, CircuitMatrixWidget
+    MyBaseWidget, Widget, CurrentStateVectorWidget, StateVectorWidget, CircuitMatrixWidget, TargetStateVectorWidget
 
 
 class MyWidgetSet(WidgetSet, Renderable, ABC):
@@ -524,7 +524,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self.__eq_widget = SimpleWidget(equality)
 
         stv = self.add_block_label('Target StV', stv_row, 8, row_span=row_span, column_span=1, center=True)
-        self.__stv_target = StateVectorWidget(stv, "Target State")
+        self.__stv_target = TargetStateVectorWidget(stv, "Target State")
 
 
 

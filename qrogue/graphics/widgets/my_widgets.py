@@ -12,6 +12,7 @@ from qrogue.util import ColorConfig, Controls, Keys, Logger, Config, HudConfig
 
 from qrogue.graphics.widgets import Renderable
 from qrogue.util.config import ColorCode, QuantumSimulationConfig
+from qrogue.util.util_functions import center_string
 
 
 class MyBaseWidget(BlockLabel):
@@ -167,27 +168,27 @@ class StateVectorWidget(Widget):
     def __init__(self, widget: MyBaseWidget, headline: str):
         super().__init__(widget)
         self.__headline = headline
-        self.__state_vector = None
+        self._stv_str_rep = None
         widget.add_text_color_rule("~.*~", ColorConfig.STV_HEADING_COLOR, 'contains', match_type='regex')
 
+    @property
+    def _headline(self) -> str:
+        return self.__headline
+
     def set_data(self, state_vector: StateVector) -> None:
-        self.__state_vector = state_vector
+        self._stv_str_rep = f"~{self.__headline}~\n{state_vector.to_string()}"
 
     def render(self) -> None:
-        if self.__state_vector:
-            str_rep = f"~{self.__headline}~\n{self.__state_vector.to_string()}"
-            self.widget.set_title(str_rep)
+        if self._stv_str_rep:
+            self.widget.set_title(self._stv_str_rep)
 
     def render_reset(self) -> None:
         self.widget.set_title("")
 
 
-class CurrentStateVectorWidget(Widget):
+class CurrentStateVectorWidget(StateVectorWidget):
     def __init__(self, widget: MyBaseWidget, headline: str):
-        super().__init__(widget)
-        self.__headline = headline
-        self.__stv_str_rep = None
-        widget.add_text_color_rule("~.*~", ColorConfig.STV_HEADING_COLOR, 'contains', match_type='regex')
+        super().__init__(widget, headline)
         widget.activate_individual_coloring()
 
     def set_data(self, state_vectors: Tuple[StateVector, StateVector], target_reached: bool = False) -> None:
@@ -198,15 +199,19 @@ class CurrentStateVectorWidget(Widget):
                 stv_rows[i] = ColorConfig.colorize(ColorCode.CORRECT_AMPLITUDE, stv_rows[i])
             else:
                 stv_rows[i] = ColorConfig.colorize(ColorCode.WRONG_AMPLITUDE, stv_rows[i])
-        self.__stv_str_rep = f"~{self.__headline}~\n" + "\n".join(stv_rows)
+        self._stv_str_rep = f"~{self._headline}~\n" + "\n".join(stv_rows)
 
-    def render(self) -> None:
-        if self.__stv_str_rep is not None:
-            self.widget.set_title(self.__stv_str_rep)
 
-    def render_reset(self) -> None:
-        self.__stv_str_rep = None
-        self.widget.set_title("")
+class TargetStateVectorWidget(StateVectorWidget):
+    def __init__(self, widget: MyBaseWidget, headline: str):
+        super().__init__(widget, headline)
+
+    def set_data(self, state_vector: StateVector) -> None:
+        self._stv_str_rep = f"~{self._headline}~\n"
+        for i in range(state_vector.size):
+            self._stv_str_rep += center_string(StateVector.complex_to_string(state_vector.at(i)),
+                                               QuantumSimulationConfig.MAX_SPACE_PER_NUMBER)
+            self._stv_str_rep += f"  ({100 * abs(state_vector.at(i)**2)}%)\n"
 
 
 class CircuitMatrixWidget(Widget):
