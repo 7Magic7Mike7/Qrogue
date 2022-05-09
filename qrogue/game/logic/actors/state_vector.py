@@ -7,7 +7,7 @@ from qiskit.providers.aer import StatevectorSimulator
 
 from qrogue.game.logic.collectibles import Instruction
 from qrogue.util import Logger, QuantumSimulationConfig
-from qrogue.util.util_functions import is_power_of_2
+from qrogue.util.util_functions import is_power_of_2, center_string
 
 
 class StateVector:
@@ -158,11 +158,12 @@ class CircuitMatrix:
         self.__matrix = matrix
 
     def to_string(self) -> str:
-        text = "|"
+        text = "| "
         for row in self.__matrix:
             for val in row:
-                text += StateVector.complex_to_string(val)
-            text += "|\n|"
+                text += center_string(StateVector.complex_to_string(val), QuantumSimulationConfig.MAX_SPACE_PER_NUMBER)
+                text += " "
+            text += "|\n| "
         return text[:-1]    # remove the additional "|"
 
     def __str__(self) -> str:

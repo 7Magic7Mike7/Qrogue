@@ -27,3 +27,13 @@ def center_string(text: str, line_width: int, uneven_left: bool = True, characte
         return half2 * character + text + half1 * character
     else:
         return half1 * character + text + half2 * character
+
+
+def align_string(text: str, line_width: int, left: bool = True, character: str = " ") -> str:
+    if line_width <= len(text):
+        return text
+    diff = line_width - len(text)
+    if left:
+        return text + diff * character
+    else:
+        return diff * character + text

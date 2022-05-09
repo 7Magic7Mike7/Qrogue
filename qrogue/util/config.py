@@ -648,6 +648,7 @@ class InstructionConfig:
 
 class QuantumSimulationConfig:
     DECIMALS = 3
+    MAX_SPACE_PER_NUMBER = 1 + 1 + 1 + DECIMALS     # sign + "0" + "." + DECIMALS
     TOLERANCE = 0.1
 
 

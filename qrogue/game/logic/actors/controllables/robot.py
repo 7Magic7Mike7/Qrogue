@@ -506,9 +506,6 @@ class TestBot(Robot):
         backpack = Backpack(5, gates)
 
         super(TestBot, self).__init__("Testbot", attributes, backpack, game_over_callback)
-    
-    def give_collectible(self, collectible: Collectible):
-        super(TestBot, self).give_collectible(collectible)
 
     def get_img(self):
         return "T"

@@ -795,6 +795,22 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         pass
 
 
+class TrainingsWidgetSet(ReachTargetWidgetSet):
+    def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
+                 back_to_spaceship_callback: Callable[[], None]):
+        super().__init__(controls, render, logger, root, back_to_spaceship_callback)
+
+    def _on_commit_fail(self) -> bool:
+        return True
+
+    def _choices_flee(self) -> bool:
+        self._details.set_data(data=(
+            ["You return to the Spaceship!"],
+            [self._continue_exploration_callback]
+        ))
+        return True
+
+
 class FightWidgetSet(ReachTargetWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  continue_exploration_callback: Callable[[], None], game_over_callback: Callable[[], None]):
