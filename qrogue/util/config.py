@@ -1,4 +1,5 @@
 import enum
+import math
 import os
 import pathlib
 from datetime import datetime
@@ -279,7 +280,8 @@ class ColorConfig:
     STV_HEADING_COLOR = py_cui.CYAN_ON_BLACK
     CORRECT_AMPLITUDE_COLOR = py_cui.GREEN_ON_BLACK
     WRONG_AMPLITUDE_COLOR = py_cui.RED_ON_BLACK
-    CIRCUIT_COLOR = py_cui.CYAN_ON_BLACK
+    CIRCUIT_COLOR = py_cui.MAGENTA_ON_BLACK
+    CIRCUIT_LABEL_COLOR = py_cui.CYAN_ON_BLACK
     SPACESHIP_FLOOR_COLOR = py_cui.BLACK_ON_WHITE
 
     ERROR_COLOR = py_cui.RED_ON_BLUE
@@ -574,6 +576,40 @@ class GameplayConfig:
     @staticmethod
     def auto_swap_gates() -> bool:
         return GameplayConfig.__CONFIG[GameplayConfig.__AUTO_SWAP_GATES][0] == "True"
+
+
+class UIConfig:
+    WINDOW_WIDTH = 17
+    WINDOW_HEIGHT = 10
+
+    HUD_HEIGHT = 1
+    NON_HUD_HEIGHT = WINDOW_HEIGHT - HUD_HEIGHT
+    PAUSE_CHOICES_WIDTH = math.floor(WINDOW_WIDTH / 3)
+
+    MAIN_MENU_ROW = 2
+    MAIN_MENU_HEIGHT = round(WINDOW_HEIGHT / 2)
+    ASCII_ART_WIDTH = math.floor(2 * WINDOW_WIDTH / 3)
+
+    INPUT_STV_WIDTH = 1
+    OUTPUT_STV_WIDTH = 2
+    TARGET_STV_WIDTH = 3
+    STV_HEIGHT = math.floor(WINDOW_HEIGHT * 0.6)
+    DIALOG_HEIGHT = 2
+    PUZZLE_CHOICES_WIDTH = math.floor(WINDOW_WIDTH / 3)
+
+    SHOP_INVENTORY_WIDTH = 4
+    SHOP_DETAILS_HEIGHT = 1
+
+    @staticmethod
+    def stv_height(num_of_qubits: int) -> int:
+        if num_of_qubits == 1:
+            return 1
+        elif num_of_qubits == 2:
+            return 2
+        elif num_of_qubits == 3:
+            return 4
+        else:
+            return 6
 
 
 class HudConfig:

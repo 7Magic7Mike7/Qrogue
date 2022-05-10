@@ -49,6 +49,14 @@ class StateVector:
         return text
 
     @staticmethod
+    def complex_to_amplitude_percentage_string(val: complex) -> str:
+        amp = np.round(abs(val**2), QuantumSimulationConfig.DECIMALS)
+        text = str(amp * 100)
+        if text[-2:] == ".0":
+            text = text[:-2]    # remove the redundant ".0"
+        return text + "%"
+
+    @staticmethod
     def create_zero_state_vector(num_of_qubits: int) -> "StateVector":
         amplitudes = [1] + [0] * (2**num_of_qubits - 1)
         return StateVector(amplitudes)
@@ -157,14 +165,22 @@ class CircuitMatrix:
     def __init__(self, matrix: List[List[complex]]):
         self.__matrix = matrix
 
+    @property
+    def size(self) -> int:
+        return len(self.__matrix)
+
+    @property
+    def num_of_qubits(self) -> int:
+        return int(np.log2(self.size))
+
     def to_string(self) -> str:
-        text = "| "
+        text = ""
         for row in self.__matrix:
             for val in row:
                 text += center_string(StateVector.complex_to_string(val), QuantumSimulationConfig.MAX_SPACE_PER_NUMBER)
                 text += " "
-            text += "|\n| "
-        return text[:-1]    # remove the additional "|"
+            text += "\n"
+        return text
 
     def __str__(self) -> str:
         text = "CircuitMatrix("

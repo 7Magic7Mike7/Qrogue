@@ -15,11 +15,11 @@ from qrogue.game.world.navigation import Direction
 from qrogue.graphics.popups import Popup
 from qrogue.graphics.rendering import ColorRules
 from qrogue.util import CommonPopups, Config, Controls, GameplayConfig, HelpText, HelpTextType, Logger, PathConfig, \
-    RandomManager, AchievementManager, Keys
+    RandomManager, AchievementManager, Keys, UIConfig
 
 from qrogue.graphics.widgets import Renderable
 from qrogue.graphics.widgets.my_widgets import SelectionWidget, CircuitWidget, MapWidget, SimpleWidget, HudWidget, \
-    MyBaseWidget, Widget, CurrentStateVectorWidget, StateVectorWidget, CircuitMatrixWidget, TargetStateVectorWidget
+    MyBaseWidget, Widget, OutputStateVectorWidget, StateVectorWidget, CircuitMatrixWidget, TargetStateVectorWidget
 
 
 class MyWidgetSet(WidgetSet, Renderable, ABC):
@@ -27,17 +27,15 @@ class MyWidgetSet(WidgetSet, Renderable, ABC):
     Class that handles different sets of widgets so we can easily switch between different screens.
     """
 
-    NUM_OF_ROWS = 9
-    NUM_OF_COLS = 9
     BACK_STRING = "-Back-"
 
     def __init__(self, controls: Controls, logger, root: py_cui.PyCUI,
                  base_render_callback: Callable[[List[Renderable]], None]):
-        super().__init__(MyWidgetSet.NUM_OF_ROWS, MyWidgetSet.NUM_OF_COLS, logger, root)
+        super().__init__(UIConfig.WINDOW_HEIGHT, UIConfig.WINDOW_WIDTH, logger, root)
         self.init_widgets(controls)
         self.__base_render = base_render_callback
 
-    def add_block_label(self, title, row, column, row_span = 1, column_span = 1, padx = 1, pady = 0, center=True)\
+    def add_block_label(self, title, row, column, row_span=1, column_span=1, padx=1, pady=0, center=True)\
             -> MyBaseWidget:
         """Function that adds a new block label to the CUI grid
 
@@ -122,10 +120,9 @@ _ascii_art = """
             |___/             
 
 """
-class MenuWidgetSet(MyWidgetSet):
-    __MAP_WIDTH = 50
-    __MAP_HEIGHT = 14
 
+
+class MenuWidgetSet(MyWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  start_playing_callback: Callable[[], None], stop_callback: Callable[[], None],
                  start_simulation_callback: Callable[[str], None]):
@@ -136,9 +133,9 @@ class MenuWidgetSet(MyWidgetSet):
         super().__init__(controls, logger, root, render)
 
     def init_widgets(self, controls: Controls) -> None:
-        height = 5
-        width = 3
-        selection = self.add_block_label("", 2, 0, row_span=height, column_span=width, center=True)
+        width = UIConfig.WINDOW_WIDTH - UIConfig.ASCII_ART_WIDTH
+        selection = self.add_block_label("", UIConfig.MAIN_MENU_ROW, 0, row_span=UIConfig.MAIN_MENU_HEIGHT,
+                                         column_span=width, center=True)
         self.__selection = SelectionWidget(selection, controls, 1)
         if Config.debugging():
             self.__selection.set_data(data=(
@@ -151,11 +148,11 @@ class MenuWidgetSet(MyWidgetSet):
                 [self.__start_playing, self.__options, self.__exit]
             ))
 
-        seed = self.add_block_label("Seed", MyWidgetSet.NUM_OF_ROWS-1, 0, row_span=1, column_span=width, center=False)
+        seed = self.add_block_label("Seed", UIConfig.WINDOW_HEIGHT-1, 0, row_span=1, column_span=width, center=False)
         self.__seed_widget = SimpleWidget(seed)
 
-        title = self.add_block_label("Qrogue", 0, width, row_span=MyWidgetSet.NUM_OF_ROWS-1,
-                                     column_span=MyWidgetSet.NUM_OF_COLS-width, center=True)
+        title = self.add_block_label("Ascii Art", 0, width, row_span=UIConfig.WINDOW_HEIGHT-1,
+                                     column_span=UIConfig.ASCII_ART_WIDTH, center=True)
         self.__title = SimpleWidget(title)
         self.__title.set_data(_ascii_art)
 
@@ -224,19 +221,23 @@ class PauseMenuWidgetSet(MyWidgetSet):
         self.__achievement_manager = None
 
     def init_widgets(self, controls: Controls) -> None:
-        hud = self.add_block_label('HUD', 0, 0, row_span=1, column_span=MyWidgetSet.NUM_OF_COLS, center=False)
+        hud = self.add_block_label('HUD', 0, 0, row_span=UIConfig.HUD_HEIGHT, column_span=UIConfig.WINDOW_WIDTH,
+                                   center=False)
         hud.toggle_border()
         self.__hud = HudWidget(hud)
 
-        choices = self.add_block_label('Choices', 1, 0, row_span= MyWidgetSet.NUM_OF_ROWS-1, column_span=3, center=True)
+        choices = self.add_block_label('Choices', UIConfig.HUD_HEIGHT, 0,
+                                       row_span=UIConfig.NON_HUD_HEIGHT,
+                                       column_span=UIConfig.PAUSE_CHOICES_WIDTH, center=True)
         self.__choices = SelectionWidget(choices, controls, stay_selected=True)
         self.__choices.set_data(data=(
             ["Continue", "Save", "Manual", "Achievements", "Options", "Exit"],
             [self.__continue, self.__save, self.__help, self.__achievements, self.__options, self.__exit]
         ))
 
-        details = self.add_block_label('Details', 1, 3, row_span=MyWidgetSet.NUM_OF_ROWS-1,
-                                       column_span=MyWidgetSet.NUM_OF_COLS-3, center=True)
+        details = self.add_block_label('Details', UIConfig.HUD_HEIGHT, UIConfig.PAUSE_CHOICES_WIDTH,
+                                       row_span=UIConfig.WINDOW_HEIGHT-UIConfig.HUD_HEIGHT,
+                                       column_span=UIConfig.WINDOW_WIDTH-UIConfig.PAUSE_CHOICES_WIDTH, center=True)
         self.__details = SelectionWidget(details, controls, is_second=True)
 
     @property
@@ -323,7 +324,7 @@ class WorkbenchWidgetSet(MyWidgetSet):
         super().__init__(controls, logger, root, render)
 
     def init_widgets(self, controls: Controls) -> None:
-        robot_selection = self.add_block_label('Robot Selection', 0, 0, row_span=MyWidgetSet.NUM_OF_COLS, center=False)
+        robot_selection = self.add_block_label('Robot Selection', 0, 0, row_span=UIConfig.WINDOW_HEIGHT, center=False)
         self.__robot_selection = SelectionWidget(robot_selection, controls, stay_selected=True)
         self.__robot_selection.set_data((
             [robot.name for robot in self.__available_robots] + [MyWidgetSet.BACK_STRING],
@@ -379,12 +380,13 @@ class ExploreWidgetSet(MyWidgetSet):
         super().__init__(controls, logger, root, render)
 
     def init_widgets(self, controls: Controls) -> None:
-        hud = self.add_block_label('HUD', 0, 0, row_span=1, column_span=MyWidgetSet.NUM_OF_COLS, center=False)
+        hud = self.add_block_label('HUD', 0, 0, row_span=UIConfig.HUD_HEIGHT, column_span=UIConfig.WINDOW_WIDTH,
+                                   center=False)
         hud.toggle_border()
         self.__hud = HudWidget(hud)
 
-        map_widget = self.add_block_label('MAP', 1, 0, row_span=MyWidgetSet.NUM_OF_ROWS-1,
-                                          column_span=MyWidgetSet.NUM_OF_COLS, center=True)
+        map_widget = self.add_block_label('MAP', UIConfig.HUD_HEIGHT, 0, row_span=UIConfig.NON_HUD_HEIGHT,
+                                          column_span=UIConfig.WINDOW_WIDTH, center=True)
         map_widget.add_key_command(controls.get_keys(Keys.MoveUp), self.move_up)
         map_widget.add_key_command(controls.get_keys(Keys.MoveRight), self.move_right)
         map_widget.add_key_command(controls.get_keys(Keys.MoveDown), self.move_down)
@@ -443,8 +445,8 @@ class NavigationWidgetSet(MyWidgetSet):
         super().__init__(controls, logger, root, base_render_callback)
 
     def init_widgets(self, controls: Controls) -> None:
-        map_widget = self.add_block_label('MAP', 1, 0, row_span=MyWidgetSet.NUM_OF_ROWS - 1,
-                                          column_span=MyWidgetSet.NUM_OF_COLS, center=True)
+        map_widget = self.add_block_label('MAP', UIConfig.HUD_HEIGHT, 0, row_span=UIConfig.NON_HUD_HEIGHT,
+                                          column_span=UIConfig.WINDOW_WIDTH, center=True)
         map_widget.add_key_command(controls.get_keys(Keys.MoveUp), self.move_up)
         map_widget.add_key_command(controls.get_keys(Keys.MoveRight), self.move_right)
         map_widget.add_key_command(controls.get_keys(Keys.MoveDown), self.move_down)
@@ -486,52 +488,71 @@ class NavigationWidgetSet(MyWidgetSet):
 
 class ReachTargetWidgetSet(MyWidgetSet, ABC):
     __CHOICE_COLUMNS = 2
-    __DETAILS_COLUMNS = 2
+    __DETAILS_COLUMNS = 3
 
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
-                 continue_exploration_callback: "()", flee_choice: str = "Flee"):
+                 continue_exploration_callback: Callable[[], None], flee_choice: str = "Flee"):
         self.__choice_strings = SelectionWidget.wrap_in_hotkey_str(["Add/Remove", "Reset", "Help",
                                                                     flee_choice])
         super().__init__(controls, logger, root, render)
         self._continue_exploration_callback = continue_exploration_callback
         self._robot = None
         self._target = None
+        self.__controls = None
+        self.__num_of_qubits = -1   # needs to be an illegal value because we definitely want to reposition all
+        # dependent widgets for the first usage of this WidgetSet
 
     def init_widgets(self, controls: Controls) -> None:
-        hud = self.add_block_label('HUD', 0, 0, row_span=1, column_span=MyWidgetSet.NUM_OF_COLS, center=False)
+        posy = 0
+        posx = 0
+        row_span = UIConfig.stv_height(2)   # doesn't matter since we reposition the dependent widgets anyway
+        matrix_width = UIConfig.WINDOW_WIDTH - (UIConfig.INPUT_STV_WIDTH + UIConfig.OUTPUT_STV_WIDTH +
+                                                UIConfig.TARGET_STV_WIDTH + 1 * 3)  # width of the three signs
+        circuit_height = UIConfig.NON_HUD_HEIGHT - row_span - UIConfig.DIALOG_HEIGHT
+
+        hud = self.add_block_label('HUD', posy, 0, row_span=UIConfig.HUD_HEIGHT, column_span=UIConfig.WINDOW_WIDTH,
+                                   center=False)
         hud.toggle_border()
         self.__hud = HudWidget(hud)
+        posy += UIConfig.HUD_HEIGHT
 
-        stv_row = 1
-        row_span = 3
+        stv = self.add_block_label('Input StV', posy, posx, row_span, UIConfig.INPUT_STV_WIDTH, center=True)
+        self.__input_stv = StateVectorWidget(stv, "In")
+        posx += UIConfig.INPUT_STV_WIDTH
 
-        stv = self.add_block_label('Input StV', stv_row, 0, row_span=row_span, column_span=1, center=True)
-        self.__input_stv = StateVectorWidget(stv, "Input")
-
-        multiplication = self.add_block_label('Mul sign', stv_row, 1, row_span=row_span, column_span=1, center=True)
+        multiplication = self.add_block_label('Mul sign', posy, posx, row_span, column_span=1, center=True)
         self.__mul_widget = SimpleWidget(multiplication)
+        posx += 1
 
-        matrix = self.add_block_label('Circuit Matrix', stv_row, 2, row_span=row_span, column_span=3, center=True)
+        matrix = self.add_block_label('Circuit Matrix', posy, posx, row_span, column_span=matrix_width,
+                                      center=True)
         self.__circuit_matrix = CircuitMatrixWidget(matrix)
+        posx += matrix_width
 
-        result = self.add_block_label('Eq sign', stv_row, 5, row_span=1, column_span=1, center=True)
+        result = self.add_block_label('Eq sign', posy, posx, row_span, column_span=1, center=True)
         self.__result_widget = SimpleWidget(result)
+        posx += 1
 
-        stv = self.add_block_label('Player StV', stv_row, 6, row_span=row_span, column_span=1, center=True)
-        self.__stv_robot = CurrentStateVectorWidget(stv, "Output State")
+        stv = self.add_block_label('Output StV', posy, posx, row_span, UIConfig.OUTPUT_STV_WIDTH, center=True)
+        self.__stv_robot = OutputStateVectorWidget(stv, "Out")
+        posx += UIConfig.OUTPUT_STV_WIDTH
 
-        equality = self.add_block_label('Eq sign', stv_row, 7, row_span=1, column_span=1, center=True)
+        equality = self.add_block_label('Eq sign', posy, posx, row_span, column_span=1, center=True)
         self.__eq_widget = SimpleWidget(equality)
+        posx += 1
 
-        stv = self.add_block_label('Target StV', stv_row, 8, row_span=row_span, column_span=1, center=True)
-        self.__stv_target = TargetStateVectorWidget(stv, "Target State")
+        stv = self.add_block_label('Target StV', posy, posx, row_span, UIConfig.TARGET_STV_WIDTH, center=True)
+        self.__stv_target = TargetStateVectorWidget(stv, "Target")
+        posx += UIConfig.TARGET_STV_WIDTH
+        posy += row_span
 
-
-
-        circuit = self.add_block_label('Circuit', 6, 0, row_span=1, column_span=MyWidgetSet.NUM_OF_COLS, center=True)
+        circuit = self.add_block_label('Circuit', posy, 0, row_span=circuit_height,
+                                       column_span=UIConfig.WINDOW_WIDTH, center=True)
         self.__circuit = CircuitWidget(circuit)
+        posy += circuit_height
 
-        choices = self.add_block_label('Choices', 7, 0, row_span=2, column_span=3, center=True)
+        choices = self.add_block_label('Choices', posy, 0, row_span=UIConfig.WINDOW_HEIGHT - posy,
+                                       column_span=UIConfig.PUZZLE_CHOICES_WIDTH, center=True)
         choices.toggle_border()
         self._choices = SelectionWidget(choices, controls, columns=self.__CHOICE_COLUMNS)
         self._choices.set_data(data=(
@@ -539,7 +560,9 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             [self.__choices_adapt, self.__choices_reset, self.__choices_help, self._choices_flee]
         ))
 
-        details = self.add_block_label('Details', 7, 3, row_span=2, column_span=6, center=True)
+        details = self.add_block_label('Details', posy, UIConfig.PUZZLE_CHOICES_WIDTH,
+                                       row_span=UIConfig.WINDOW_HEIGHT - posy,
+                                       column_span=UIConfig.WINDOW_WIDTH - UIConfig.PUZZLE_CHOICES_WIDTH, center=True)
         details.toggle_border()
         self._details = SelectionWidget(details, controls, columns=self.__DETAILS_COLUMNS, is_second=True)
 
@@ -554,24 +577,70 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self._choices.widget.add_key_command(controls.get_keys(Keys.HotKeyCommit), choices_commit)
         self._details.widget.add_key_command(controls.get_keys(Keys.HotKeyCommit), details_commit)
 
+    def _reposition_widgets(self, num_of_qubits: int):
+        if num_of_qubits != self.__num_of_qubits:
+            self.__num_of_qubits = num_of_qubits
+
+            # adapt the height of the widgets
+            row_span = UIConfig.stv_height(num_of_qubits)
+            self.__input_stv.widget.reposition(row_span=row_span)
+            self.__mul_widget.widget.reposition(row_span=row_span)
+            self.__circuit_matrix.widget.reposition(row_span=row_span)
+            self.__result_widget.widget.reposition(row_span=row_span)
+            self.__stv_robot.widget.reposition(row_span=row_span)
+            self.__eq_widget.widget.reposition(row_span=row_span)
+            self.__stv_target.widget.reposition(row_span=row_span)
+
+            # for smaller qubit numbers we shrink the matrix and place everything closer to the middle
+            if num_of_qubits < 3:
+                shrinkage = 2   # magic number that turned out to give a good visual result
+                # window width minus width of all StVs and signs, afterwards adapted by the small-qubit-shrinkage
+                matrix_width = UIConfig.WINDOW_WIDTH - (UIConfig.INPUT_STV_WIDTH + UIConfig.OUTPUT_STV_WIDTH +
+                                                        UIConfig.TARGET_STV_WIDTH + 1 * 3) - 2 * shrinkage
+                posx = shrinkage
+                self.__input_stv.widget.reposition(column=posx)
+                posx += UIConfig.INPUT_STV_WIDTH
+                self.__mul_widget.widget.reposition(column=posx)
+                posx += 1
+                self.__circuit_matrix.widget.reposition(column=posx, column_span=matrix_width)
+                posx += matrix_width
+                self.__result_widget.widget.reposition(column=posx)
+                posx += 1
+                self.__stv_robot.widget.reposition(column=posx)
+                posx += UIConfig.OUTPUT_STV_WIDTH
+                self.__eq_widget.widget.reposition(column=posx)
+                posx += 1
+                self.__stv_target.widget.reposition(column=posx)
+
+                self.__circuit.widget.reposition(row=UIConfig.HUD_HEIGHT + row_span + shrinkage)
+            elif num_of_qubits == 4:
+
+                self.__circuit.widget.reposition(row=UIConfig.HUD_HEIGHT + row_span)
+                self._choices.widget.reposition(row=UIConfig.WINDOW_HEIGHT - 1, row_span=1)
+                self._details.widget.reposition(row=UIConfig.WINDOW_HEIGHT - 1, row_span=1)
+            else:
+                self.__circuit.widget.reposition(row=UIConfig.HUD_HEIGHT + row_span)
+
     def get_main_widget(self) -> MyBaseWidget:
         return self._choices.widget
 
     def set_data(self, robot: Robot, target: Target) -> None:
+        self._robot = robot
+        self._target = target
+
+        self._reposition_widgets(robot.num_of_qubits)
+
         # from a code readers perspective the reset would make more sense in switch_to_fight() etc. but then we would
         # have to add it to multiple locations and have the risk of forgetting to add it for new ReachTargetWidgetSets
         if GameplayConfig.auto_reset_circuit():
             robot.reset_circuit()
 
-        self._robot = robot
-        self._target = target
-
         self.__hud.set_data((robot, None))  # don't overwrite the current map name
         self.__circuit.set_data(robot)
 
-        sign_offset = "\n" * (2**(self._robot.num_of_qubits - 1))   # 1 (headline) + middle of actual Stv
+        sign_offset = "\n" * (2**(robot.num_of_qubits - 1))   # 1 (headline) + middle of actual Stv
 
-        self.__input_stv.set_data(StateVector.create_zero_state_vector(self._robot.num_of_qubits))
+        self.__input_stv.set_data(StateVector.create_zero_state_vector(robot.num_of_qubits))
         self.__mul_widget.set_data(sign_offset + "x")
         self.__result_widget.set_data(sign_offset + "=")
         self.__update_calculation(False)
@@ -882,16 +951,20 @@ class ShopWidgetSet(MyWidgetSet):
         self.__items = None
 
     def init_widgets(self, controls: Controls) -> None:
-        hud = self.add_block_label("HUD", 0, 0, row_span=1, column_span=MyWidgetSet.NUM_OF_COLS, center=False)
+        hud = self.add_block_label("HUD", 0, 0, row_span=UIConfig.HUD_HEIGHT, column_span=UIConfig.WINDOW_WIDTH,
+                                   center=False)
         self.__hud = HudWidget(hud)
 
-        inv_width = 4
-        inventory = self.add_block_label("Inventory", 1, 0, row_span=7, column_span=inv_width)
+        inv_width = UIConfig.SHOP_INVENTORY_WIDTH
+        inventory = self.add_block_label("Inventory", UIConfig.HUD_HEIGHT, 0, row_span=UIConfig.NON_HUD_HEIGHT,
+                                         column_span=inv_width)
         self.__inventory = SelectionWidget(inventory, controls, stay_selected=True)
 
-        details = self.add_block_label("Details", 1, inv_width, row_span=4, column_span=MyWidgetSet.NUM_OF_COLS - inv_width)
+        details = self.add_block_label("Details", UIConfig.HUD_HEIGHT, inv_width, row_span=UIConfig.SHOP_DETAILS_HEIGHT,
+                                       column_span=UIConfig.WINDOW_WIDTH - inv_width)
         self.__details = SimpleWidget(details)
-        buy = self.add_block_label("Buy", 4, inv_width, row_span=1, column_span=MyWidgetSet.NUM_OF_COLS - inv_width)
+        buy = self.add_block_label("Buy", UIConfig.SHOP_DETAILS_HEIGHT, inv_width, row_span=1,
+                                   column_span=UIConfig.WINDOW_WIDTH - inv_width)
         self.__buy = SelectionWidget(buy, controls, is_second=True)
 
     @property

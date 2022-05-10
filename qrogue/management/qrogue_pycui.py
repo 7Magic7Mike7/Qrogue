@@ -19,7 +19,7 @@ from qrogue.graphics.widgets import Renderable, SpaceshipWidgetSet, BossFightWid
     FightWidgetSet, MenuWidgetSet, MyWidgetSet, NavigationWidgetSet, PauseMenuWidgetSet, RiddleWidgetSet, \
     ShopWidgetSet, WorkbenchWidgetSet, TrainingsWidgetSet, ReachTargetWidgetSet
 from qrogue.management import StoryNarration
-from qrogue.util import achievements, common_messages, CheatConfig, Config, GameplayConfig, HelpText, \
+from qrogue.util import achievements, common_messages, CheatConfig, Config, GameplayConfig, UIConfig, HelpText, \
     HelpTextType, Logger, PathConfig, MapConfig, Controls, Keys, RandomManager
 from qrogue.util.config import FileTypes
 from qrogue.util.game_simulator import GameSimulator
@@ -39,7 +39,7 @@ class QrogueCUI(py_cui.PyCUI):
         except FileNotFoundError:
             Logger.instance().show_error(f"File \"{simulation_path}\" could not be found!")
 
-    def __init__(self, seed: int, width: int = 8, height: int = 9):
+    def __init__(self, seed: int, width: int = UIConfig.WINDOW_WIDTH, height: int = UIConfig.WINDOW_HEIGHT):
         super().__init__(width, height)
         self.set_title(f"Qrogue {Config.version()}")
         self.__controls = Controls(self._handle_key_presses)

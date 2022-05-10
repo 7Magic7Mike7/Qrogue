@@ -19,6 +19,16 @@ class MyBaseWidget(BlockLabel):
     def __init__(self, wid, title, grid, row, column, row_span, column_span, padx, pady, center, logger):
         super().__init__(wid, title, grid, row, column, row_span, column_span, padx, pady, center, logger)
 
+    def reposition(self, row: int = None, column: int = None, row_span: int = None, column_span: int = None):
+        if row:
+            self._row = row
+        if column:
+            self._column = column
+        if row_span:
+            self._row_span = row_span
+        if column_span:
+            self._column_span = column_span
+
     def set_title(self, title: str) -> None:
         super(MyBaseWidget, self).set_title(title)
 
@@ -121,9 +131,14 @@ class CircuitWidget(Widget):
     def __init__(self, widget: MyBaseWidget):
         super().__init__(widget)
         self.__robot = None
-        # highlight everything between {} (gates), |> (start) or <| (end)
-        widget.add_text_color_rule("(\{.*?\}|\|.*?\>|\<.*?\|)", ColorConfig.CIRCUIT_COLOR, 'contains',
-                                   match_type='regex')
+        # highlight everything between {} (gates), |> (start) or <| (end) or | | (In/Out label)
+        regex_gates = "\{.*?\}"
+        regex_start = "\|.*?\>"
+        regex_end = "\<.*?\|"
+        widget.add_text_color_rule(f"({regex_gates}|{regex_start}|{regex_end})",
+                                   ColorConfig.CIRCUIT_COLOR, 'contains', match_type='regex')
+        regex_label = "In|Out"
+        widget.add_text_color_rule(f"({regex_label})", ColorConfig.CIRCUIT_LABEL_COLOR, 'contains', match_type='regex')
 
     def set_data(self, robot: Robot) -> None:
         self.__robot = robot
@@ -186,7 +201,7 @@ class StateVectorWidget(Widget):
         self.widget.set_title("")
 
 
-class CurrentStateVectorWidget(StateVectorWidget):
+class OutputStateVectorWidget(StateVectorWidget):
     def __init__(self, widget: MyBaseWidget, headline: str):
         super().__init__(widget, headline)
         widget.activate_individual_coloring()
@@ -211,7 +226,7 @@ class TargetStateVectorWidget(StateVectorWidget):
         for i in range(state_vector.size):
             self._stv_str_rep += center_string(StateVector.complex_to_string(state_vector.at(i)),
                                                QuantumSimulationConfig.MAX_SPACE_PER_NUMBER)
-            self._stv_str_rep += f"  ({100 * abs(state_vector.at(i)**2)}%)\n"
+            self._stv_str_rep += f"  ({StateVector.complex_to_amplitude_percentage_string(state_vector.at(i))})\n"
 
 
 class CircuitMatrixWidget(Widget):
@@ -221,7 +236,14 @@ class CircuitMatrixWidget(Widget):
         widget.add_text_color_rule("~.*~", ColorConfig.STV_HEADING_COLOR, 'contains', match_type='regex')
 
     def set_data(self, matrix: CircuitMatrix) -> None:
-        self.__matrix_str_rep = f"~Circuit Matrix~\n{matrix.to_string()}"
+        self.__matrix_str_rep = f"~Circuit Matrix~\n"
+        if matrix.num_of_qubits > 3:
+            self.__matrix_str_rep += "\n" * int(0.5 * matrix.size - 1)
+            self.__matrix_str_rep += "Matrix is too big to be displayed!\n"
+            # self.__matrix_str_rep += "But you can have a look at it by opening:\n"
+            # self.__matrix_str_rep += " \"TODO\""        # todo create html file of current matrix?
+        else:
+            self.__matrix_str_rep += matrix.to_string()
 
     def render(self) -> None:
         if self.__matrix_str_rep is not None:

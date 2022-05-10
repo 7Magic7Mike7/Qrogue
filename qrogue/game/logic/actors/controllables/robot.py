@@ -487,7 +487,7 @@ class Robot(Controllable, ABC):
                             inst_str = inst_str.rjust(len(inst_str) + half_diff + 1, "-")
                     rows[q][i] = inst_str
 
-        circ_str = ""
+        circ_str = " In "
         # place qubits from top to bottom, high to low index
         for q in range(len(rows) - 1, -1, -1):
             circ_str += f"| q{q} >---"
@@ -496,7 +496,10 @@ class Robot(Controllable, ABC):
                 circ_str += row[i]
                 if i < len(row) - 1:
                     circ_str += "+"
-            circ_str += "< out |\n"
+            circ_str += f"< q'{q} |"
+            if q == len(rows) - 1:
+                circ_str += " Out "
+            circ_str += "\n"
         return circ_str
 
 
