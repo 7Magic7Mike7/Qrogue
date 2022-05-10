@@ -1,3 +1,4 @@
+import math
 from abc import ABC, abstractmethod
 from typing import List, Any, Callable, Tuple, Optional
 
@@ -12,7 +13,7 @@ from qrogue.util import ColorConfig, Controls, Keys, Logger, Config, HudConfig
 
 from qrogue.graphics.widgets import Renderable
 from qrogue.util.config import ColorCode, QuantumSimulationConfig
-from qrogue.util.util_functions import center_string
+from qrogue.util.util_functions import center_string, align_string
 
 
 class MyBaseWidget(BlockLabel):
@@ -297,7 +298,8 @@ class QubitInfoWidget(Widget):
 
 
 class SelectionWidget(Widget):
-    __COLUMN_SEPARATOR = "   "
+    __SELECTION_MARKER = "-> "
+    __SEPARATOR = " " * len(__SELECTION_MARKER)
 
     @staticmethod
     def wrap_in_hotkey_str(options: List[str]) -> List[str]:
@@ -353,6 +355,14 @@ class SelectionWidget(Widget):
         self.widget.add_key_command(hotkeys[indices[9]], lambda: self.__jump_to_index(indices[9]))
 
     @property
+    def columns(self) -> int:
+        return self.__columns
+
+    @property
+    def rows(self) -> int:
+        return math.ceil(self.num_of_choices / self.columns)
+
+    @property
     def num_of_choices(self) -> int:
         return len(self.__choices)
 
@@ -375,20 +385,24 @@ class SelectionWidget(Widget):
             self.__choices[i] = self.__choices[i].ljust(choice_length)
 
     def render(self) -> None:
-        str_rep = ""
+        rows = [""] * self.rows
+        cur_row = 0
         for i in range(self.num_of_choices):
             if i == self.__index and (self.widget.is_selected() or self.__stay_selected):
-                wrapper = "-> "
+                rows[cur_row] += SelectionWidget.__SELECTION_MARKER
             else:
-                wrapper = "   "
-            str_rep += wrapper
-            str_rep += self.__choices[i]
-            str_rep += " "
+                rows[cur_row] += SelectionWidget.__SEPARATOR
+            rows[cur_row] += self.__choices[i]
+            rows[cur_row] += " "
             if i % self.__columns == self.__columns - 1:
-                str_rep += "\n"
+                cur_row += 1
             else:
-                str_rep += self.__COLUMN_SEPARATOR
-        self.widget.set_title(str_rep)
+                rows[cur_row] += SelectionWidget.__SEPARATOR
+
+        if len(rows) > 0:   # simple validity check since some selections are dynamically created during runtime
+            max_row_len = max([len(row) for row in rows])
+            aligned_rows = [align_string(row, max_row_len) for row in rows]
+            self.widget.set_title("\n".join(aligned_rows))
 
     def render_reset(self) -> None:
         self.widget.set_title("")
