@@ -17,7 +17,7 @@ from qrogue.graphics.rendering import MultiColorRenderer
 from qrogue.graphics.popups import Popup, MultilinePopup, ConfirmationPopup
 from qrogue.graphics.widgets import Renderable, SpaceshipWidgetSet, BossFightWidgetSet, ExploreWidgetSet, \
     FightWidgetSet, MenuWidgetSet, MyWidgetSet, NavigationWidgetSet, PauseMenuWidgetSet, RiddleWidgetSet, \
-    ShopWidgetSet, WorkbenchWidgetSet, TrainingsWidgetSet, ReachTargetWidgetSet
+    ShopWidgetSet, WorkbenchWidgetSet, TrainingsWidgetSet, Widget
 from qrogue.management import StoryNarration
 from qrogue.util import achievements, common_messages, CheatConfig, Config, GameplayConfig, UIConfig, HelpText, \
     HelpTextType, Logger, PathConfig, MapConfig, Controls, Keys, RandomManager
@@ -47,6 +47,13 @@ class QrogueCUI(py_cui.PyCUI):
         RandomManager(seed)
         OverWorldKeyLogger().reinit(seed, "meta")
 
+        def move_focus(widget: py_cui.widgets.Widget, widget_set):
+            # this check is necessary for manual widget-set switches due to the call-order (the callback happens before this move_focus here)
+            if widget_set is self.__cur_widget_set:
+                super(QrogueCUI, self).move_focus(widget, auto_press_buttons=False)
+        self._auto_focus_buttons = False
+        Widget.set_move_focus_callback(move_focus)
+
         # init management
         Logger.instance().set_popup(self.show_message_popup, self.show_error_popup)
         CheatConfig.init(self.__show_message_popup, self.__show_input_popup)
@@ -54,8 +61,8 @@ class QrogueCUI(py_cui.PyCUI):
         ConfirmationPopup.update_popup_function(self.__show_confirmation_popup)
 
         Pausing(self.__pause_game)
-        CallbackPack(self.__start_level, self.__start_fight, self.__start_boss_fight,
-                           self.__open_riddle, self.__visit_shop, self.__game_over)
+        CallbackPack(self.__start_level, self.__start_fight, self.__start_boss_fight, self.__open_riddle,
+                     self.__visit_shop, self.__game_over)
         SaveData()
         MapManager(seed, self.__show_world, self.__start_level)
         Popup.update_check_achievement_function(SaveData.instance().achievement_manager.check_achievement)
@@ -143,7 +150,7 @@ class QrogueCUI(py_cui.PyCUI):
         return self.__controls
 
     def start(self):
-        self.render()
+        self.__render([self.__cur_widget_set])
         super(QrogueCUI, self).start()
 
     def __choose_simulation(self):
@@ -387,52 +394,6 @@ class QrogueCUI(py_cui.PyCUI):
                 widget.widget.add_key_command(self.__controls.get_keys(Keys.Pause), Pausing.pause)
                 widget.widget.add_key_command(self.__controls.get_keys(Keys.PopupReopen), Popup.reopen)
 
-        # menu
-        self.__menu.selection.widget.add_key_command(self.__controls.action, self.__use_menu_selection)
-
-        # workbench
-        self.__workbench.selection.widget.add_key_command(self.__controls.action, self.__workbench_selection)
-        self.__workbench.upgrades.widget.add_key_command(self.__controls.action, self.__workbench_upgrades)
-
-        # pause
-        self.__pause.choices.widget.add_key_command(self.__controls.action, self.__pause_choices)
-        self.__pause.details.widget.add_key_command(self.__controls.action, self.__pause_details)
-
-        # training
-        self.__training.choices.widget.add_key_command(self.__controls.action,
-                                                       lambda: self.__reach_target_choice(self.__training))
-        self.__training.details.widget.add_key_command(self.__controls.action,
-                                                       lambda: self.__reach_target_details(self.__training))
-        self.__training.details.widget.add_key_command(self.__controls.get_keys(Keys.Cancel),
-                                                       lambda: self.__reach_target_details_back(self.__training))
-
-        # fight
-        self.__fight.choices.widget.add_key_command(self.__controls.action,
-                                                    lambda: self.__reach_target_choice(self.__fight))
-        self.__fight.details.widget.add_key_command(self.__controls.action,
-                                                    lambda: self.__reach_target_details(self.__fight))
-        self.__fight.details.widget.add_key_command(self.__controls.get_keys(Keys.Cancel),
-                                                    lambda: self.__reach_target_details_back(self.__fight))
-
-        self.__boss_fight.choices.widget.add_key_command(self.__controls.action,
-                                                         lambda: self.__reach_target_choice(self.__boss_fight))
-        self.__boss_fight.details.widget.add_key_command(self.__controls.action,
-                                                         lambda: self.__reach_target_details(self.__boss_fight))
-        self.__boss_fight.details.widget.add_key_command(self.__controls.get_keys(Keys.Cancel),
-                                                         lambda: self.__reach_target_details_back(self.__boss_fight))
-
-        # riddle
-        self.__riddle.choices.widget.add_key_command(self.__controls.action,
-                                                     lambda: self.__reach_target_choice(self.__riddle))
-        self.__riddle.details.widget.add_key_command(self.__controls.action,
-                                                     lambda: self.__reach_target_details(self.__riddle))
-        self.__riddle.details.widget.add_key_command(self.__controls.get_keys(Keys.Cancel),
-                                                     lambda: self.__reach_target_details_back(self.__riddle))
-
-        # shop
-        self.__shop.inventory.widget.add_key_command(self.__controls.action, self.__shop_inventory)
-        self.__shop.buy.widget.add_key_command(self.__controls.action, self.__shop_buy)
-
     def print_screen(self) -> None:
         text = ""
         for my_widget in self.__cur_widget_set.get_widget_list():
@@ -604,85 +565,9 @@ class QrogueCUI(py_cui.PyCUI):
             self.__shop.set_data(player, items)
         self.apply_widget_set(self.__shop)
 
-    def render(self) -> None:
-        self.__render([self.__cur_widget_set])
-
     def __render(self, renderables: List[Renderable]):
         for r in renderables:
             r.render()
-
-    def __use_menu_selection(self) -> None:
-        if self.__menu.selection.use() and self.__cur_widget_set is self.__menu:
-            self.render()
-
-    def __workbench_selection(self) -> None:
-        if self.__workbench.selection.use() and self.__cur_widget_set is self.__workbench:
-            self.move_focus(self.__workbench.upgrades.widget, auto_press_buttons=False)
-            self.render()
-
-    def __workbench_upgrades(self) -> None:
-        if self.__workbench.upgrades.use() and self.__cur_widget_set is self.__workbench:
-            self.move_focus(self.__workbench.selection.widget, auto_press_buttons=False)
-            self.render()
-
-    def __pause_choices(self) -> None:
-        if self.__pause.choices.use() and self.__cur_widget_set is self.__pause:
-            self.move_focus(self.__pause.details.widget, auto_press_buttons=False)
-            self.__render([self.__pause.choices, self.__pause.details])
-
-    def __pause_details(self) -> None:
-        if self.__pause.details.use() and self.__cur_widget_set is self.__pause:
-            self.move_focus(self.__pause.choices.widget, auto_press_buttons=False)
-            self.__pause.details.render_reset()
-            self.render()
-
-    def __reach_target_choice(self, widget_set: ReachTargetWidgetSet):
-        if widget_set.choices.use() and self.__cur_widget_set is widget_set:
-            self.move_focus(widget_set.details.widget, auto_press_buttons=False)
-            self.__render([widget_set.choices, widget_set.details])
-
-    def __reach_target_details(self, widget_set: ReachTargetWidgetSet):
-        if widget_set.details.use():
-            self.__reach_target_details_back(widget_set)
-
-    def __reach_target_details_back(self, widget_set: ReachTargetWidgetSet):
-        if self.__cur_widget_set is widget_set:
-            self.move_focus(widget_set.choices.widget, auto_press_buttons=False)
-            widget_set.choices.validate_index()
-            widget_set.details.render_reset()
-            self.render()
-
-    def __boss_fight_choices(self) -> None:
-        if self.__boss_fight.choices.use() and self.__cur_widget_set is self.__boss_fight:
-            self.move_focus(self.__boss_fight.details.widget, auto_press_buttons=False)
-            self.__render([self.__boss_fight.choices, self.__boss_fight.details])
-
-    def __boss_fight_details_back(self) -> None:
-        if self.__cur_widget_set is self.__boss_fight:
-            self.move_focus(self.__boss_fight.choices.widget, auto_press_buttons=False)
-            self.__boss_fight.choices.validate_index()  # somehow it can happen that the index is out of bounds after
-            # coming back from details which is why we validate it now
-            self.__boss_fight.details.render_reset()
-            self.render()  # render the whole widget_set for updating the StateVectors and the circuit
-
-    def __boss_fight_details(self) -> None:
-        if self.__boss_fight.details.use():
-            self.__boss_fight_details_back()
-
-    def __shop_inventory(self) -> None:
-        if self.__shop.inventory.use() and self.__cur_widget_set is self.__shop:
-            self.move_focus(self.__shop.buy.widget, auto_press_buttons=False)
-            self.render()
-
-    def __shop_buy(self) -> None:
-        if self.__shop.buy.use() and self.__cur_widget_set is self.__shop:
-            self.move_focus(self.__shop.inventory.widget, auto_press_buttons=False)
-            self.__shop.inventory.validate_index()   # somehow it can happen that the index is out of bounds after
-                                                     # coming back from details which is why we validate it now
-            self.__shop.details.render_reset()
-            self.__shop.buy.render_reset()
-            #self.__shop.buy.clear_text() # not needed since render_reset does this for second SelectionWidgets
-            self.render()
 
 
 class State(Enum):

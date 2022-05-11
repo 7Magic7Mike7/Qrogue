@@ -7,12 +7,13 @@ from py_cui.widgets import BlockLabel
 
 from qrogue.game.logic import StateVector
 from qrogue.game.logic.actors import Robot, CircuitMatrix
+from qrogue.game.logic.collectibles import Instruction
 from qrogue.game.world.map import Map
 from qrogue.game.world.navigation import Direction
 from qrogue.util import ColorConfig, Controls, Keys, Logger, Config, HudConfig
 
 from qrogue.graphics.widgets import Renderable
-from qrogue.util.config import ColorCode, QuantumSimulationConfig
+from qrogue.util.config import ColorCode, QuantumSimulationConfig, InstructionConfig
 from qrogue.util.util_functions import center_string, align_string
 
 
@@ -54,6 +55,17 @@ class MyBaseWidget(BlockLabel):
 
 
 class Widget(Renderable, ABC):
+    __MOVE_FOCUS = None
+
+    @staticmethod
+    def set_move_focus_callback(move_focus: Callable[[MyBaseWidget, Any], None]):
+        Widget.__MOVE_FOCUS = move_focus
+
+    @staticmethod
+    def move_focus(widget: "Widget", widget_set: Any):
+        if Widget.__MOVE_FOCUS:
+            Widget.__MOVE_FOCUS(widget.widget, widget_set)
+
     def __init__(self, widget: MyBaseWidget):
         self.__widget = widget
 
@@ -146,7 +158,33 @@ class CircuitWidget(Widget):
 
     def render(self) -> None:
         if self.__robot is not None:
-            circ_str = self.__robot.get_circuit_print()
+            entry = "-" * (3 + InstructionConfig.MAX_ABBREVIATION_LEN + 3)
+            rows = [[entry] * self.__robot.circuit_space for _ in range(self.__robot.num_of_qubits)]
+            for i in range(self.__robot.circuit_space):
+                inst = self.__robot.gate_at(i)
+                if inst:
+                    for q in inst.qargs_iter():
+                        inst_str = center_string(inst.abbreviation(q), InstructionConfig.MAX_ABBREVIATION_LEN)
+                        rows[q][i] = f"--{{{inst_str}}}--"
+
+            if self.__place_holder_gate:
+                rows[self.__place_holder_qubit][self.__place_holder_pos] = \
+                    f"-- {self.__place_holder_gate.abbreviation(self.__place_holder_qubit)} --"
+
+            circ_str = " In "
+            # place qubits from top to bottom, high to low index
+            for q in range(len(rows) - 1, -1, -1):
+                circ_str += f"| q{q} >---"
+                row = rows[q]
+                for i in range(len(row)):
+                    circ_str += row[i]
+                    if i < len(row) - 1:
+                        circ_str += "+"
+                circ_str += f"< q'{q} |"
+                if q == len(rows) - 1:
+                    circ_str += " Out "
+                circ_str += "\n"
+
             self.widget.set_title(circ_str)
 
     def render_reset(self) -> None:
@@ -224,10 +262,15 @@ class TargetStateVectorWidget(StateVectorWidget):
 
     def set_data(self, state_vector: StateVector) -> None:
         self._stv_str_rep = f"~{self._headline}~\n"
+        rows = [""] * state_vector.size
         for i in range(state_vector.size):
-            self._stv_str_rep += center_string(StateVector.complex_to_string(state_vector.at(i)),
-                                               QuantumSimulationConfig.MAX_SPACE_PER_NUMBER)
-            self._stv_str_rep += f"  ({StateVector.complex_to_amplitude_percentage_string(state_vector.at(i))})\n"
+            rows[i] = center_string(StateVector.complex_to_string(state_vector.at(i)),
+                                    QuantumSimulationConfig.MAX_SPACE_PER_NUMBER)
+            rows[i] += f"  ({StateVector.complex_to_amplitude_percentage_string(state_vector.at(i))})"
+
+        max_row_len = max([len(row) for row in rows])
+        rows = [align_string(row, max_row_len) for row in rows]
+        self._stv_str_rep += "\n".join(rows)
 
 
 class CircuitMatrixWidget(Widget):

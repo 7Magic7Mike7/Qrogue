@@ -3,7 +3,7 @@ Author: Artner Michael
 13.06.2021
 """
 from abc import ABC
-from typing import Tuple, List, Callable
+from typing import Tuple, List, Callable, Optional
 
 from qiskit import QuantumCircuit, transpile, Aer, execute
 from qiskit.providers.aer import StatevectorSimulator
@@ -468,9 +468,9 @@ class Robot(Controllable, ABC):
         """
         return self.__attributes.refill_energy(amount)
 
-    def get_circuit_print(self) -> str:
-        entry = "-" * (3 + InstructionConfig.MAX_ABBREVIATION_LEN + 3)
-        rows = [[entry] * self.circuit_space for _ in range(self.num_of_qubits)]
+    def gate_at(self, index: int) -> Optional[Instruction]:
+        if 0 <= index < self.circuit_space:
+            return self.__instructions[index]
 
         for i, inst in enumerate(self.__instructions):
             if inst:

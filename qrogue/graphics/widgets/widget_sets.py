@@ -125,11 +125,11 @@ _ascii_art = """
 class MenuWidgetSet(MyWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  start_playing_callback: Callable[[], None], stop_callback: Callable[[], None],
-                 start_simulation_callback: Callable[[str], None]):
+                 choose_simulation_callback: Callable[[], None]):
         self.__seed = 0
         self.__start_playing = start_playing_callback
         self.__stop = stop_callback
-        self.__start_simulation = start_simulation_callback
+        self.__choose_simulation = choose_simulation_callback
         super().__init__(controls, logger, root, render)
 
     def init_widgets(self, controls: Controls) -> None:
@@ -139,13 +139,13 @@ class MenuWidgetSet(MyWidgetSet):
         self.__selection = SelectionWidget(selection, controls, 1)
         if Config.debugging():
             self.__selection.set_data(data=(
-                ["PLAY\n", "SIMULATOR\n", "OPTIONS\n", "EXIT\n"],
-                [self.__start_playing, self.__simulate, self.__options, self.__exit]
+                ["PLAY\n", "SIMULATOR\n", "OPTIONS\n", "EXIT\n"],  # for more space between the rows we add "\n"
+                [self.__start_playing, self.__choose_simulation, self.__options, self.__stop]
             ))
         else:
             self.__selection.set_data(data=(
-                ["PLAY\n", "OPTIONS\n", "EXIT\n"],
-                [self.__start_playing, self.__options, self.__exit]
+                ["PLAY\n", "OPTIONS\n", "EXIT\n"],  # for more space between the rows we add "\n"
+                [self.__start_playing, self.__options, self.__stop]
             ))
 
         seed = self.add_block_label("Seed", UIConfig.WINDOW_HEIGHT-1, 0, row_span=1, column_span=width, center=False)
@@ -155,6 +155,8 @@ class MenuWidgetSet(MyWidgetSet):
                                      column_span=UIConfig.ASCII_ART_WIDTH, center=True)
         self.__title = SimpleWidget(title)
         self.__title.set_data(_ascii_art)
+
+        self.__selection.widget.add_key_command(controls.action, self.__selection.use)
 
     def new_seed(self) -> None:
         self.__seed = RandomManager.instance().get_seed(msg="MenuWS.new_seed()")
@@ -179,18 +181,8 @@ class MenuWidgetSet(MyWidgetSet):
     def reset(self) -> None:
         self.__selection.render_reset()
 
-    @property
-    def selection(self) -> SelectionWidget:
-        return self.__selection
-
-    def __simulate(self) -> None:
-        self.__start_simulation()
-
     def __options(self) -> None:
         Popup.generic_info("Gameplay Config", GameplayConfig.to_file_text())
-
-    def __exit(self) -> None:
-        self.__stop()
 
 
 class PauseMenuWidgetSet(MyWidgetSet):
@@ -240,13 +232,20 @@ class PauseMenuWidgetSet(MyWidgetSet):
                                        column_span=UIConfig.WINDOW_WIDTH-UIConfig.PAUSE_CHOICES_WIDTH, center=True)
         self.__details = SelectionWidget(details, controls, is_second=True)
 
-    @property
-    def choices(self) -> SelectionWidget:
-        return self.__choices
+        # add action key commands
+        def use_choices():
+            if self.__choices.use():
+                Widget.move_focus(self.__details, self)
+                self.__choices.render()
+                self.__details.render()
+        self.__choices.widget.add_key_command(controls.action, use_choices)
 
-    @property
-    def details(self) -> SelectionWidget:
-        return self.__details
+        def use_details():
+            if self.__details.use():
+                Widget.move_focus(self.__choices, self)
+                self.__details.render_reset()
+                self.render()
+        self.__details.widget.add_key_command(controls.action, use_details)
 
     def __continue(self) -> bool:
         self.__continue_callback()
@@ -337,6 +336,20 @@ class WorkbenchWidgetSet(MyWidgetSet):
         available_upgrades = self.add_block_label('Upgrades', 4, 1, 2, 2, center=True)
         self.__available_upgrades = SelectionWidget(available_upgrades, controls, 4, is_second=True, stay_selected=False)
 
+        # init action key commands
+        def use_selection():
+            if self.__robot_selection.use():
+                Widget.move_focus(self.__available_upgrades, self)
+                self.__robot_selection.render()
+                self.__available_upgrades.render()
+        self.__robot_selection.widget.add_key_command(controls.action, use_selection)
+
+        def use_upgrades():
+            if self.__available_upgrades.use():
+                Widget.move_focus(self.__robot_selection, self)
+                self.render()
+        self.__available_upgrades.widget.add_key_command(controls.action, use_upgrades)
+
     def get_widget_list(self) -> List[Widget]:
         return [
             self.__robot_selection,
@@ -349,14 +362,6 @@ class WorkbenchWidgetSet(MyWidgetSet):
 
     def reset(self) -> None:
         pass
-
-    @property
-    def selection(self) -> SelectionWidget:
-        return self.__robot_selection
-
-    @property
-    def upgrades(self) -> SelectionWidget:
-        return self.__available_upgrades
 
     def __details(self, index: int) -> bool:
         if self.__save_data:    # todo fix
@@ -387,23 +392,41 @@ class ExploreWidgetSet(MyWidgetSet):
 
         map_widget = self.add_block_label('MAP', UIConfig.HUD_HEIGHT, 0, row_span=UIConfig.NON_HUD_HEIGHT,
                                           column_span=UIConfig.WINDOW_WIDTH, center=True)
-        map_widget.add_key_command(controls.get_keys(Keys.MoveUp), self.move_up)
-        map_widget.add_key_command(controls.get_keys(Keys.MoveRight), self.move_right)
-        map_widget.add_key_command(controls.get_keys(Keys.MoveDown), self.move_down)
-        map_widget.add_key_command(controls.get_keys(Keys.MoveLeft), self.move_left)
-        ColorRules.apply_map_rules(map_widget)
         self.__map_widget = MapWidget(map_widget)
+        ColorRules.apply_map_rules(self.__map_widget.widget)
+
+        # init movement keys
+        def move_up() -> None:
+            if self.__map_widget.move(Direction.Up):
+                self.render()
+
+        def move_right() -> None:
+            if self.__map_widget.move(Direction.Right):
+                self.render()
+
+        def move_down() -> None:
+            if self.__map_widget.move(Direction.Down):
+                self.render()
+
+        def move_left() -> None:
+            if self.__map_widget.move(Direction.Left):
+                self.render()
+
+        self.__map_widget.widget.add_key_command(controls.get_keys(Keys.MoveUp), move_up)
+        self.__map_widget.widget.add_key_command(controls.get_keys(Keys.MoveRight), move_right)
+        self.__map_widget.widget.add_key_command(controls.get_keys(Keys.MoveDown), move_down)
+        self.__map_widget.widget.add_key_command(controls.get_keys(Keys.MoveLeft), move_left)
 
     def get_main_widget(self) -> MyBaseWidget:
         return self.__map_widget.widget
 
-    def set_data(self, map: Map) -> None:
-        controllable = map.controllable_tile.controllable
+    def set_data(self, map_: Map) -> None:
+        controllable = map_.controllable_tile.controllable
         if isinstance(controllable, Robot):
-            self.__hud.set_data((controllable, map.name))
+            self.__hud.set_data((controllable, map_.name))
         else:
             self.__hud.reset_data()
-        self.__map_widget.set_data(map)
+        self.__map_widget.set_data(map_)
 
     def get_widget_list(self) -> List[Widget]:
         return [
@@ -421,22 +444,6 @@ class ExploreWidgetSet(MyWidgetSet):
     def reset(self) -> None:
         self.__map_widget.render_reset()
 
-    def move_up(self) -> None:
-        if self.__map_widget.move(Direction.Up):
-            self.render()
-
-    def move_right(self) -> None:
-        if self.__map_widget.move(Direction.Right):
-            self.render()
-
-    def move_down(self) -> None:
-        if self.__map_widget.move(Direction.Down):
-            self.render()
-
-    def move_left(self) -> None:
-        if self.__map_widget.move(Direction.Left):
-            self.render()
-
 
 class NavigationWidgetSet(MyWidgetSet):
     def __init__(self, controls: Controls, logger, root: py_cui.PyCUI,
@@ -447,18 +454,37 @@ class NavigationWidgetSet(MyWidgetSet):
     def init_widgets(self, controls: Controls) -> None:
         map_widget = self.add_block_label('MAP', UIConfig.HUD_HEIGHT, 0, row_span=UIConfig.NON_HUD_HEIGHT,
                                           column_span=UIConfig.WINDOW_WIDTH, center=True)
-        map_widget.add_key_command(controls.get_keys(Keys.MoveUp), self.move_up)
-        map_widget.add_key_command(controls.get_keys(Keys.MoveRight), self.move_right)
-        map_widget.add_key_command(controls.get_keys(Keys.MoveDown), self.move_down)
-        map_widget.add_key_command(controls.get_keys(Keys.MoveLeft), self.move_left)
         self.__map_widget = MapWidget(map_widget)
-        ColorRules.apply_navigation_rules(map_widget)
+        ColorRules.apply_navigation_rules(self.__map_widget.widget)
+
+        # init movement keys
+        def move_up() -> None:
+            # MapManager.instance().move_on_cur_map(Direction.Up)
+            if self.__map_widget.move(Direction.Up):
+                self.render()
+
+        def move_right() -> None:
+            if self.__map_widget.move(Direction.Right):
+                self.render()
+
+        def move_down() -> None:
+            if self.__map_widget.move(Direction.Down):
+                self.render()
+
+        def move_left() -> None:
+            if self.__map_widget.move(Direction.Left):
+                self.render()
+
+        self.__map_widget.widget.add_key_command(controls.get_keys(Keys.MoveUp), move_up)
+        self.__map_widget.widget.add_key_command(controls.get_keys(Keys.MoveRight), move_right)
+        self.__map_widget.widget.add_key_command(controls.get_keys(Keys.MoveDown), move_down)
+        self.__map_widget.widget.add_key_command(controls.get_keys(Keys.MoveLeft), move_left)
 
     def get_main_widget(self) -> MyBaseWidget:
         return self.__map_widget.widget
 
-    def set_data(self, map: Map) -> None:
-        self.__map_widget.set_data(map)
+    def set_data(self, map_: Map) -> None:
+        self.__map_widget.set_data(map_)
 
     def get_widget_list(self) -> List[Widget]:
         return [
@@ -467,23 +493,6 @@ class NavigationWidgetSet(MyWidgetSet):
 
     def reset(self) -> None:
         self.__map_widget.render_reset()
-
-    def move_up(self) -> None:
-        #MapManager.instance().move_on_cur_map(Direction.Up)
-        if self.__map_widget.move(Direction.Up):
-            self.render()
-
-    def move_right(self) -> None:
-        if self.__map_widget.move(Direction.Right):
-            self.render()
-
-    def move_down(self) -> None:
-        if self.__map_widget.move(Direction.Down):
-            self.render()
-
-    def move_left(self) -> None:
-        if self.__map_widget.move(Direction.Left):
-            self.render()
 
 
 class ReachTargetWidgetSet(MyWidgetSet, ABC):
@@ -517,7 +526,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         posy += UIConfig.HUD_HEIGHT
 
         stv = self.add_block_label('Input StV', posy, posx, row_span, UIConfig.INPUT_STV_WIDTH, center=True)
-        self.__input_stv = StateVectorWidget(stv, "In")
+        self.__input_stv = StateVectorWidget(stv, "In^T")
         posx += UIConfig.INPUT_STV_WIDTH
 
         multiplication = self.add_block_label('Mul sign', posy, posx, row_span, column_span=1, center=True)
@@ -566,16 +575,25 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         details.toggle_border()
         self._details = SelectionWidget(details, controls, columns=self.__DETAILS_COLUMNS, is_second=True)
 
-        # commit shortcut
-        def choices_commit():
-            controls.handle(Keys.HotKey1)
-            controls.handle(Keys.Action)
+        # init action key commands
+        def use_choices():
+            if self._choices.use():
+                Widget.move_focus(self._details, self)
+                self._choices.render()
+                self._details.render()
+        self._choices.widget.add_key_command(controls.action, use_choices)
 
-        def details_commit():
-            controls.handle(Keys.Cancel)
-            choices_commit()
-        self._choices.widget.add_key_command(controls.get_keys(Keys.HotKeyCommit), choices_commit)
-        self._details.widget.add_key_command(controls.get_keys(Keys.HotKeyCommit), details_commit)
+        def details_back():
+            Widget.move_focus(self._choices, self)
+            self._choices.validate_index()
+            self._details.render_reset()
+            self.render()
+
+        def use_details():
+            if self._details.use():
+                details_back()
+        self._details.widget.add_key_command(controls.get_keys(Keys.Cancel), details_back)
+        self._details.widget.add_key_command(controls.action, use_details)
 
     def _reposition_widgets(self, num_of_qubits: int):
         if num_of_qubits != self.__num_of_qubits:
@@ -662,16 +680,8 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         ]
 
     def reset(self) -> None:
-        self.choices.render_reset()
-        self.details.render_reset()
-
-    @property
-    def choices(self) -> SelectionWidget:
-        return self._choices
-
-    @property
-    def details(self) -> SelectionWidget:
-        return self._details
+        self._choices.render_reset()
+        self._details.render_reset()
 
     def __update_calculation(self, target_reached: bool):
         diff_stv = self._target.state_vector.get_diff(self._robot.state_vector)
@@ -699,14 +709,14 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             if self.__cur_instruction is not None:
                 if self.__cur_instruction.is_used():
                     options = [f"Position {i}" for i in range(self._robot.circuit_space)] + ["Remove"]
-                    self.details.set_data(data=(
+                    self._details.set_data(data=(
                         SelectionWidget.wrap_in_hotkey_str(options),
                         [self.__choose_position]
                     ))
                 else:
                     if self._robot.is_space_left:
                         options = [self.__cur_instruction.preview_str(i) for i in range(self._robot.num_of_qubits)]
-                        self.details.set_data(data=(
+                        self._details.set_data(data=(
                             SelectionWidget.wrap_in_hotkey_str(options),
                             [self.__choose_qubit]
                         ))
@@ -726,7 +736,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         if len(selection) > index and self.__cur_instruction.use_qubit(selection[index]):
             selection.pop(index)
             options = [self.__cur_instruction.preview_str(i) for i in selection]
-            self.details.set_data(data=(
+            self._details.set_data(data=(
                 SelectionWidget.wrap_in_hotkey_str(options),
                 [self.__choose_qubit]
             ))
@@ -867,7 +877,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 class TrainingsWidgetSet(ReachTargetWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  back_to_spaceship_callback: Callable[[], None]):
-        super().__init__(controls, render, logger, root, back_to_spaceship_callback)
+        super().__init__(controls, render, logger, root, back_to_spaceship_callback, "Done")
 
     def _on_commit_fail(self) -> bool:
         return True
@@ -944,7 +954,7 @@ class BossFightWidgetSet(FightWidgetSet):
 
 class ShopWidgetSet(MyWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
-                 continue_exploration_callback: "()"):
+                 continue_exploration_callback: Callable[[], None]):
         super().__init__(controls, logger, root, render)
         self.__continue_exploration = continue_exploration_callback
         self.__robot = None
@@ -963,21 +973,25 @@ class ShopWidgetSet(MyWidgetSet):
         details = self.add_block_label("Details", UIConfig.HUD_HEIGHT, inv_width, row_span=UIConfig.SHOP_DETAILS_HEIGHT,
                                        column_span=UIConfig.WINDOW_WIDTH - inv_width)
         self.__details = SimpleWidget(details)
-        buy = self.add_block_label("Buy", UIConfig.SHOP_DETAILS_HEIGHT, inv_width, row_span=1,
+        buy = self.add_block_label("Buy", UIConfig.HUD_HEIGHT + UIConfig.SHOP_DETAILS_HEIGHT, inv_width, row_span=1,
                                    column_span=UIConfig.WINDOW_WIDTH - inv_width)
         self.__buy = SelectionWidget(buy, controls, is_second=True)
 
-    @property
-    def inventory(self) -> SelectionWidget:
-        return self.__inventory
+        # init action key commands
+        def use_inventory():
+            if self.__inventory.use():
+                Widget.move_focus(self.__buy, self)
+                self.render()
+        self.__inventory.widget.add_key_command(controls.action, use_inventory)
 
-    @property
-    def buy(self) -> SelectionWidget:
-        return self.__buy
-
-    @property
-    def details(self) -> SimpleWidget:
-        return self.__details
+        def use_buy():
+            if self.__buy.use():
+                Widget.move_focus(self.__inventory, self)
+                self.__inventory.validate_index()
+                self.__details.render_reset()
+                self.__buy.render_reset()
+                self.render()
+        self.__buy.widget.add_key_command(controls.action, use_buy)
 
     def get_widget_list(self) -> List[Widget]:
         return [
