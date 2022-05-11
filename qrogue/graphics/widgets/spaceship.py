@@ -44,9 +44,8 @@ class SpaceshipWidget(Widget):
 class SpaceshipWidgetSet(MyWidgetSet):
     def __init__(self, controls: Controls, logger, root: py_cui.PyCUI,
                  base_render_callback: Callable[[List[Renderable]], None]):
-        super().__init__(controls, logger, root, base_render_callback)
+        super().__init__(logger, root, base_render_callback)
 
-    def init_widgets(self, controls: Controls) -> None:
         spaceship = self.add_block_label("Dynamic Spaceship", 0, 0, UIConfig.WINDOW_HEIGHT, UIConfig.WINDOW_WIDTH,
                                          center=True)
         spaceship.add_key_command(controls.get_keys(Keys.MoveUp), self.move_up)

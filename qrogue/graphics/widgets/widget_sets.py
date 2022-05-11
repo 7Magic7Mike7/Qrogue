@@ -29,62 +29,47 @@ class MyWidgetSet(WidgetSet, Renderable, ABC):
 
     BACK_STRING = "-Back-"
 
-    def __init__(self, controls: Controls, logger, root: py_cui.PyCUI,
-                 base_render_callback: Callable[[List[Renderable]], None]):
+    def __init__(self, logger, root: py_cui.PyCUI, base_render_callback: Callable[[List[Renderable]], None]):
         super().__init__(UIConfig.WINDOW_HEIGHT, UIConfig.WINDOW_WIDTH, logger, root)
-        self.init_widgets(controls)
         self.__base_render = base_render_callback
 
     def add_block_label(self, title, row, column, row_span=1, column_span=1, padx=1, pady=0, center=True)\
             -> MyBaseWidget:
         """Function that adds a new block label to the CUI grid
 
-                Parameters
-                ----------
-                title : str
-                    The title of the block label
-                row : int
-                    The row value, from the top down
-                column : int
-                    The column value from the top down
-                row_span=1 : int
-                    The number of rows to span accross
-                column_span=1 : int
-                    the number of columns to span accross
-                padx=1 : int
-                    number of padding characters in the x direction
-                pady=0 : int
-                    number of padding characters in the y direction
-                center : bool
-                    flag to tell label to be centered or left-aligned.
+        Parameters
+        ----------
+        title : str
+            The title of the block label
+        row : int
+            The row value, from the top down
+        column : int
+            The column value from the top down
+        row_span : int
+            The number of rows to span across
+        column_span : int
+            the number of columns to span across
+        padx : int
+            number of padding characters in the x direction
+        pady : int
+            number of padding characters in the y direction
+        center : bool
+            flag to tell label to be centered or left-aligned.
 
-                Returns
-                -------
-                new_widget : MyBaseWidget
-                    A reference to the created widget object.
-                """
+        Returns
+        -------
+        new_widget : MyBaseWidget
+            A reference to the created widget object.
+        """
         wid = 'Widget{}'.format(len(self._widgets.keys()))
-        new_widget = MyBaseWidget(wid,
-                                       title,
-                                       self._grid,
-                                       row,
-                                       column,
-                                       row_span,
-                                       column_span,
-                                       padx,
-                                       pady,
-                                       center,
-                                       self._logger)
+        new_widget = MyBaseWidget(wid, title, self._grid, row, column, row_span, column_span, padx, pady, center,
+                                  self._logger)
         self._widgets[wid] = new_widget
         self._logger.info('Adding widget {} w/ ID {} of type {}'.format(title, id, str(type(new_widget))))
         return new_widget
 
     def render(self) -> None:
         self.__base_render(self.get_widget_list())
-
-    @abstractmethod
-    def init_widgets(self, controls: Controls) -> None:
-        pass
 
     @abstractmethod
     def get_widget_list(self) -> List[Widget]:
@@ -130,9 +115,8 @@ class MenuWidgetSet(MyWidgetSet):
         self.__start_playing = start_playing_callback
         self.__stop = stop_callback
         self.__choose_simulation = choose_simulation_callback
-        super().__init__(controls, logger, root, render)
+        super().__init__(logger, root, render)
 
-    def init_widgets(self, controls: Controls) -> None:
         width = UIConfig.WINDOW_WIDTH - UIConfig.ASCII_ART_WIDTH
         selection = self.add_block_label("", UIConfig.MAIN_MENU_ROW, 0, row_span=UIConfig.MAIN_MENU_HEIGHT,
                                          column_span=width, center=True)
@@ -206,13 +190,12 @@ class PauseMenuWidgetSet(MyWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  continue_callback: Callable[[], None], save_callback: Callable[[], CommonPopups],
                  exit_run_callback: Callable[[], None]):
-        super().__init__(controls, logger, root, render)
+        super().__init__(logger, root, render)
         self.__continue_callback = continue_callback
         self.__save_callback = save_callback
         self.__exit_run = exit_run_callback
         self.__achievement_manager = None
 
-    def init_widgets(self, controls: Controls) -> None:
         hud = self.add_block_label('HUD', 0, 0, row_span=UIConfig.HUD_HEIGHT, column_span=UIConfig.WINDOW_WIDTH,
                                    center=False)
         hud.toggle_border()
@@ -265,7 +248,8 @@ class PauseMenuWidgetSet(MyWidgetSet):
 
     def __help_text(self, index: int = 0) -> bool:
         if index < len(PauseMenuWidgetSet.__HELP_TEXTS[0]):
-            Popup.generic_info(f"{PauseMenuWidgetSet.__HELP_TEXTS[0][index]}", PauseMenuWidgetSet.__HELP_TEXTS[1][index])
+            Popup.generic_info(f"{PauseMenuWidgetSet.__HELP_TEXTS[0][index]}",
+                               PauseMenuWidgetSet.__HELP_TEXTS[1][index])
             return False
         return True
 
@@ -320,9 +304,8 @@ class WorkbenchWidgetSet(MyWidgetSet):
                  render: Callable[[List[Renderable]], None], continue_callback: Callable[[], None]):
         self.__continue = continue_callback
         self.__available_robots = available_robots
-        super().__init__(controls, logger, root, render)
+        super().__init__(logger, root, render)
 
-    def init_widgets(self, controls: Controls) -> None:
         robot_selection = self.add_block_label('Robot Selection', 0, 0, row_span=UIConfig.WINDOW_HEIGHT, center=False)
         self.__robot_selection = SelectionWidget(robot_selection, controls, stay_selected=True)
         self.__robot_selection.set_data((
@@ -334,7 +317,8 @@ class WorkbenchWidgetSet(MyWidgetSet):
         self.__robot_info = SimpleWidget(robot_details)
 
         available_upgrades = self.add_block_label('Upgrades', 4, 1, 2, 2, center=True)
-        self.__available_upgrades = SelectionWidget(available_upgrades, controls, 4, is_second=True, stay_selected=False)
+        self.__available_upgrades = SelectionWidget(available_upgrades, controls, 4, is_second=True,
+                                                    stay_selected=False)
 
         # init action key commands
         def use_selection():
@@ -382,9 +366,8 @@ class WorkbenchWidgetSet(MyWidgetSet):
 
 class ExploreWidgetSet(MyWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI):
-        super().__init__(controls, logger, root, render)
+        super().__init__(logger, root, render)
 
-    def init_widgets(self, controls: Controls) -> None:
         hud = self.add_block_label('HUD', 0, 0, row_span=UIConfig.HUD_HEIGHT, column_span=UIConfig.WINDOW_WIDTH,
                                    center=False)
         hud.toggle_border()
@@ -448,10 +431,8 @@ class ExploreWidgetSet(MyWidgetSet):
 class NavigationWidgetSet(MyWidgetSet):
     def __init__(self, controls: Controls, logger, root: py_cui.PyCUI,
                  base_render_callback: Callable[[List[Renderable]], None]):
+        super().__init__(logger, root, base_render_callback)
 
-        super().__init__(controls, logger, root, base_render_callback)
-
-    def init_widgets(self, controls: Controls) -> None:
         map_widget = self.add_block_label('MAP', UIConfig.HUD_HEIGHT, 0, row_span=UIConfig.NON_HUD_HEIGHT,
                                           column_span=UIConfig.WINDOW_WIDTH, center=True)
         self.__map_widget = MapWidget(map_widget)
@@ -487,9 +468,7 @@ class NavigationWidgetSet(MyWidgetSet):
         self.__map_widget.set_data(map_)
 
     def get_widget_list(self) -> List[Widget]:
-        return [
-            self.__map_widget
-        ]
+        return [self.__map_widget]
 
     def reset(self) -> None:
         self.__map_widget.render_reset()
@@ -503,7 +482,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                  continue_exploration_callback: Callable[[], None], flee_choice: str = "Flee"):
         self.__choice_strings = SelectionWidget.wrap_in_hotkey_str(["Add/Remove", "Reset", "Help",
                                                                     flee_choice])
-        super().__init__(controls, logger, root, render)
+        super().__init__(logger, root, render)
         self._continue_exploration_callback = continue_exploration_callback
         self._robot = None
         self._target = None
@@ -511,7 +490,6 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self.__num_of_qubits = -1   # needs to be an illegal value because we definitely want to reposition all
         # dependent widgets for the first usage of this WidgetSet
 
-    def init_widgets(self, controls: Controls) -> None:
         posy = 0
         posx = 0
         row_span = UIConfig.stv_height(2)   # doesn't matter since we reposition the dependent widgets anyway
@@ -743,7 +721,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         else:
             options = [f"Position {i}" for i in range(self._robot.circuit_space)] + ["Remove"]
             self._details.set_data(data=(
-                SelectionWidget.wrap_in_hotkey_str(options),# + [MyWidgetSet.BACK_STRING],
+                SelectionWidget.wrap_in_hotkey_str(options),  # + [MyWidgetSet.BACK_STRING],
                 [self.__choose_position]
             ))
         self.render()
@@ -776,8 +754,8 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                 [f"Congratulations! You received: {reward.to_string()}"],
                 [self._continue_exploration_callback]
             ))
-            #Popup.generic_info("Congratulations!", f"You received: {reward.to_string()}")
-            #self._continue_exploration_callback()
+            # Popup.generic_info("Congratulations!", f"You received: {reward.to_string()}")
+            # self._continue_exploration_callback()
             return True
         else:
             return self._on_commit_fail()
@@ -955,12 +933,11 @@ class BossFightWidgetSet(FightWidgetSet):
 class ShopWidgetSet(MyWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  continue_exploration_callback: Callable[[], None]):
-        super().__init__(controls, logger, root, render)
+        super().__init__(logger, root, render)
         self.__continue_exploration = continue_exploration_callback
         self.__robot = None
         self.__items = None
 
-    def init_widgets(self, controls: Controls) -> None:
         hud = self.add_block_label("HUD", 0, 0, row_span=UIConfig.HUD_HEIGHT, column_span=UIConfig.WINDOW_WIDTH,
                                    center=False)
         self.__hud = HudWidget(hud)
