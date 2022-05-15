@@ -451,11 +451,10 @@ class SelectionWidget(Widget):
         self.widget.add_text_color_rule(f"->", ColorConfig.SELECTION_COLOR, 'contains', match_type='regex')
 
         # init keys
-        self.widget.add_key_command(controls.get_keys(Keys.SelectionUp), self.up)
-        self.widget.add_key_command(controls.get_keys(Keys.SelectionUp), self.up)
-        self.widget.add_key_command(controls.get_keys(Keys.SelectionRight), self.right)
-        self.widget.add_key_command(controls.get_keys(Keys.SelectionDown), self.down)
-        self.widget.add_key_command(controls.get_keys(Keys.SelectionLeft), self.left)
+        self.widget.add_key_command(controls.get_keys(Keys.SelectionUp), self.__up)
+        self.widget.add_key_command(controls.get_keys(Keys.SelectionRight), self.__right)
+        self.widget.add_key_command(controls.get_keys(Keys.SelectionDown), self.__down)
+        self.widget.add_key_command(controls.get_keys(Keys.SelectionLeft), self.__left)
 
         # sadly cannot use a loop here because of how lambda expressions work the index would be the same for all calls
         # instead we use a list of indices to still be flexible without changing much code
