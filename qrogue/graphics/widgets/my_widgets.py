@@ -229,7 +229,7 @@ class CircuitWidget(Widget):
                     self.__place_holder_data = gate, pos, qubit-1
                 else:
                     self.__place_holder_data = gate, pos, qubit+1
-                    self.render()
+                self.render()
                 return False
             if self.__robot.use_instruction(gate, pos):
                 self.__place_holder_data = None
