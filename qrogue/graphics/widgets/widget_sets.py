@@ -535,7 +535,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
         circuit = self.add_block_label('Circuit', posy, 0, row_span=circuit_height,
                                        column_span=UIConfig.WINDOW_WIDTH, center=True)
-        self.__circuit = CircuitWidget(circuit)
+        self.__circuit = CircuitWidget(circuit, controls)
         posy += circuit_height
 
         choices = self.add_block_label('Choices', posy, 0, row_span=UIConfig.WINDOW_HEIGHT - posy,
@@ -561,17 +561,30 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                 self._details.render()
         self._choices.widget.add_key_command(controls.action, use_choices)
 
-        def details_back():
-            Widget.move_focus(self._choices, self)
-            self._choices.validate_index()
-            self._details.render_reset()
-            self.render()
-
         def use_details():
             if self._details.use():
-                details_back()
-        self._details.widget.add_key_command(controls.get_keys(Keys.Cancel), details_back)
+                if self._details.index == self._details.num_of_choices - 1:
+                    # last selection possibility is always "Back"
+                    self.__details_back()
+                else:
+                    # else we selected a gate and we initiate the placing process
+                    Widget.move_focus(self.__circuit, self)
+        self._details.widget.add_key_command(controls.get_keys(Keys.Cancel), self.__details_back)
         self._details.widget.add_key_command(controls.action, use_details)
+
+        def use_circuit():
+            if self.__circuit.place_gate():
+                self.__choices_commit()
+                Widget.move_focus(self._details, self)
+                self._details.validate_index()
+                self.render()
+        self.__circuit.widget.add_key_command(controls.action, use_circuit)
+
+    def __details_back(self):
+        Widget.move_focus(self._choices, self)
+        self._choices.validate_index()
+        self._details.render_reset()
+        self.render()
 
     def _reposition_widgets(self, num_of_qubits: int):
         if num_of_qubits != self.__num_of_qubits:
@@ -686,6 +699,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             self.__cur_instruction = self._robot.get_instruction(index)
             if self.__cur_instruction is not None:
                 if self.__cur_instruction.is_used():
+                    # todo use grid based placement here as well
                     options = [f"Position {i}" for i in range(self._robot.circuit_space)] + ["Remove"]
                     self._details.set_data(data=(
                         SelectionWidget.wrap_in_hotkey_str(options),
@@ -693,11 +707,9 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                     ))
                 else:
                     if self._robot.is_space_left:
-                        options = [self.__cur_instruction.preview_str(i) for i in range(self._robot.num_of_qubits)]
-                        self._details.set_data(data=(
-                            SelectionWidget.wrap_in_hotkey_str(options),
-                            [self.__choose_qubit]
-                        ))
+                        self.__circuit.start_gate_placement(self.__cur_instruction)
+                        self.render()
+                        return True
                     else:
                         CommonPopups.NoCircuitSpace.show()
                 self.render()
@@ -705,7 +717,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                 Logger.instance().error("Error! The selected instruction/index is out of range!")
             return False
         else:
-            return True
+            return True     # go back to choices
 
     def __choose_qubit(self, index: int = 0):
         selection = list(range(self._robot.num_of_qubits))

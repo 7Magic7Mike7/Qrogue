@@ -141,9 +141,10 @@ class HudWidget(Widget):
 
 
 class CircuitWidget(Widget):
-    def __init__(self, widget: MyBaseWidget):
+    def __init__(self, widget: MyBaseWidget, controls: Controls):
         super().__init__(widget)
         self.__robot = None
+        self.__place_holder_data = None
         # highlight everything between {} (gates), |> (start) or <| (end) or | | (In/Out label)
         regex_gates = "\{.*?\}"
         regex_start = "\|.*?\>"
@@ -152,6 +153,89 @@ class CircuitWidget(Widget):
                                    ColorConfig.CIRCUIT_COLOR, 'contains', match_type='regex')
         regex_label = "In|Out"
         widget.add_text_color_rule(f"({regex_label})", ColorConfig.CIRCUIT_LABEL_COLOR, 'contains', match_type='regex')
+
+        widget.add_key_command(controls.get_keys(Keys.SelectionUp), self.__move_up)
+        widget.add_key_command(controls.get_keys(Keys.SelectionRight), self.__move_right)
+        widget.add_key_command(controls.get_keys(Keys.SelectionDown), self.__move_down)
+        widget.add_key_command(controls.get_keys(Keys.SelectionLeft), self.__move_left)
+        #widget.add_key_command(controls.get_keys(Keys.Cancel), self.__abort_placement)
+
+    def __move_up(self):
+        if self.__place_holder_data:
+            gate, pos, qubit = self.__place_holder_data
+            qubit += 1
+            while qubit < self.__robot.num_of_qubits:
+                if gate.can_use_qubit(qubit):
+                    self.__place_holder_data = gate, pos, qubit
+                    self.render()
+                    return
+                qubit += 1
+
+    def __move_right(self):
+        if self.__place_holder_data:
+            gate, pos, qubit = self.__place_holder_data
+            if gate.no_qubits_specified:
+                pos += 1
+                # go right until we find a free space for the circuit
+                while pos < self.__robot.circuit_space:
+                    if self.__robot.gate_at(pos) is None:
+                        self.__place_holder_data = gate, pos, qubit
+                        self.render()
+                        return
+                    pos += 1
+
+    def __move_down(self):
+        if self.__place_holder_data:
+            gate, pos, qubit = self.__place_holder_data
+            qubit -= 1
+            while qubit >= 0:
+                if gate.can_use_qubit(qubit):
+                    self.__place_holder_data = gate, pos, qubit
+                    self.render()
+                    return
+                qubit -= 1
+
+    def __move_left(self):
+        if self.__place_holder_data:
+            gate, pos, qubit = self.__place_holder_data
+            if gate.no_qubits_specified:
+                pos -= 1
+                while pos >= 0:
+                    if self.__robot.gate_at(pos) is None:
+                        self.__place_holder_data = gate, pos, qubit
+                        self.render()
+                        return
+                    pos -= 1
+
+    def __abort_placement(self):
+        if self.__place_holder_data:
+            gate, pos, qubit = self.__place_holder_data
+            # todo
+
+    def start_gate_placement(self, gate: Instruction):
+        first_free_spot = -1
+        for i in range(self.__robot.circuit_space):
+            if self.__robot.gate_at(i) is None:
+                first_free_spot = i
+                break
+        if 0 <= first_free_spot < self.__robot.circuit_space:
+            self.__place_holder_data = gate, first_free_spot, 0
+
+    def place_gate(self) -> bool:
+        if self.__place_holder_data:
+            gate, pos, qubit = self.__place_holder_data
+            if gate.use_qubit(qubit):
+                if qubit > 0:
+                    self.__place_holder_data = gate, pos, qubit-1
+                else:
+                    self.__place_holder_data = gate, pos, qubit+1
+                    self.render()
+                return False
+            if self.__robot.use_instruction(gate, pos):
+                self.__place_holder_data = None
+                return True
+            Logger.instance().error("Place_Gate() did not work correctly")
+        return False
 
     def set_data(self, robot: Robot) -> None:
         self.__robot = robot
@@ -167,9 +251,11 @@ class CircuitWidget(Widget):
                         inst_str = center_string(inst.abbreviation(q), InstructionConfig.MAX_ABBREVIATION_LEN)
                         rows[q][i] = f"--{{{inst_str}}}--"
 
-            if self.__place_holder_gate:
-                rows[self.__place_holder_qubit][self.__place_holder_pos] = \
-                    f"-- {self.__place_holder_gate.abbreviation(self.__place_holder_qubit)} --"
+            if self.__place_holder_data:
+                gate, pos, qubit = self.__place_holder_data
+                for q in gate.qargs_iter():
+                    rows[q][pos] = f"--{{{gate.abbreviation(q)}}}--"
+                rows[qubit][pos] = f"-- {gate.abbreviation(qubit)} --"
 
             circ_str = " In "
             # place qubits from top to bottom, high to low index
@@ -409,6 +495,10 @@ class SelectionWidget(Widget):
     def num_of_choices(self) -> int:
         return len(self.__choices)
 
+    @property
+    def index(self) -> int:
+        return self.__index
+
     def update_text(self, text: str, index: int):
         if 0 <= index < len(self.__choices):
             self.__choices[index] = text
@@ -472,7 +562,7 @@ class SelectionWidget(Widget):
         if self.__index < 0:
             self.__index = self.num_of_choices - 1
 
-    def up(self) -> None:
+    def __up(self) -> None:
         if self.num_of_choices <= 1:
             return
         if self.num_of_choices <= self.__columns or self.__columns == 1:
@@ -486,7 +576,7 @@ class SelectionWidget(Widget):
                 self.__index -= self.__columns
         self.render()
 
-    def right(self) -> None:
+    def __right(self) -> None:
         if self.num_of_choices <= 1:
             return
         if self.__columns == 1 or self.num_of_choices <= self.__columns:
@@ -499,7 +589,7 @@ class SelectionWidget(Widget):
                 self.__index -= self.__columns
         self.render()
 
-    def down(self) -> None:
+    def __down(self) -> None:
         if self.num_of_choices <= 1:
             return
         if self.num_of_choices <= self.__columns or self.__columns == 1:
@@ -514,7 +604,7 @@ class SelectionWidget(Widget):
                     self.__index = self.num_of_choices - 1
         self.render()
 
-    def left(self) -> None:
+    def __left(self) -> None:
         if self.num_of_choices <= 1:
             return
         if self.__columns == 1 or self.num_of_choices <= self.__columns:

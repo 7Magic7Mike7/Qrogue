@@ -472,36 +472,6 @@ class Robot(Controllable, ABC):
         if 0 <= index < self.circuit_space:
             return self.__instructions[index]
 
-        for i, inst in enumerate(self.__instructions):
-            if inst:
-                for q in inst.qargs_iter():
-                    inst_str = inst.abbreviation(q)
-                    diff_len = InstructionConfig.MAX_ABBREVIATION_LEN - len(inst_str)
-                    inst_str = f"--{{{inst_str}}}--"
-                    if diff_len > 0:
-                        half_diff = int(diff_len / 2)
-                        inst_str = inst_str.ljust(len(inst_str) + half_diff, "-")
-                        if diff_len % 2 == 0:
-                            inst_str = inst_str.rjust(len(inst_str) + half_diff, "-")
-                        else:
-                            inst_str = inst_str.rjust(len(inst_str) + half_diff + 1, "-")
-                    rows[q][i] = inst_str
-
-        circ_str = " In "
-        # place qubits from top to bottom, high to low index
-        for q in range(len(rows) - 1, -1, -1):
-            circ_str += f"| q{q} >---"
-            row = rows[q]
-            for i in range(len(row)):
-                circ_str += row[i]
-                if i < len(row) - 1:
-                    circ_str += "+"
-            circ_str += f"< q'{q} |"
-            if q == len(rows) - 1:
-                circ_str += " Out "
-            circ_str += "\n"
-        return circ_str
-
 
 class TestBot(Robot):
     def __init__(self, game_over_callback: Callable[[], None], num_of_qubits: int = 2, gates: List[Instruction] = None):
