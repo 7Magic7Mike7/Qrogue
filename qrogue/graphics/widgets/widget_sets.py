@@ -521,7 +521,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         posx += 1
 
         stv = self.add_block_label('Output StV', posy, posx, row_span, UIConfig.OUTPUT_STV_WIDTH, center=True)
-        self.__stv_robot = OutputStateVectorWidget(stv, "Out")
+        self.__stv_robot = OutputStateVectorWidget(stv, "Out^T")
         posx += UIConfig.OUTPUT_STV_WIDTH
 
         equality = self.add_block_label('Eq sign', posy, posx, row_span, column_span=1, center=True)
