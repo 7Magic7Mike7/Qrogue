@@ -291,10 +291,10 @@ class CircuitWidget(Widget):
                         rows[q][pos] = f"--{{{gate.abbreviation(q)}}}--"
                     rows[qubit][pos] = f"-- {gate.abbreviation(qubit)} --"
 
-            circ_str = " In "
+            circ_str = " In "   # for some reason the whitespace in front is needed to center the text correctly
             # place qubits from top to bottom, high to low index
             for q in range(len(rows) - 1, -1, -1):
-                circ_str += f"| q{q} >---"
+                circ_str += f"| q{q} >"
                 row = rows[q]
                 for i in range(len(row)):
                     circ_str += row[i]
@@ -302,7 +302,7 @@ class CircuitWidget(Widget):
                         circ_str += "+"
                 circ_str += f"< q'{q} |"
                 if q == len(rows) - 1:
-                    circ_str += " Out "
+                    circ_str += " Out"
                 circ_str += "\n"
 
             self.widget.set_title(circ_str)
