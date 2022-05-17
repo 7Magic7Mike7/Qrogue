@@ -551,7 +551,7 @@ class SelectionWidget(Widget):
         self.__choices = []
         self.__callbacks = []
 
-    def set_data(self, data: "tuple of list of str and list of SelectionCallbacks") -> None:
+    def set_data(self, data: "Tuple[List[str], List[Callable]]") -> None:
         self.render_reset()
         self.__choices, self.__callbacks = data
         choice_length = 0
