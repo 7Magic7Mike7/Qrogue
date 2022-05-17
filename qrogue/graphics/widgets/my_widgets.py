@@ -141,6 +141,36 @@ class HudWidget(Widget):
 
 
 class CircuitWidget(Widget):
+    class PlaceHolderData:
+        def __init__(self, gate: Optional[Instruction], pos: int = -1, qubit: int = 0):
+            self.gate = gate
+            self.pos = pos
+            self.qubit = qubit
+
+        def resolve(self) -> Tuple[int, int]:
+            return self.pos, self.qubit
+
+        def can_change_position(self) -> bool:
+            return self.gate is None or self.gate.no_qubits_specified
+
+        def is_valid_qubit(self, qubit: int) -> bool:
+            return self.gate is None or self.gate.can_use_qubit(qubit)
+
+        def is_valid_pos(self, pos: int, robot: Robot) -> bool:
+            # if gate is None we search for a occupied position (gate_at(pos) is not None)
+            # if gate is not None we search for a free position (gate_at(pos) is None)
+            # hence this xor condition
+            return (self.gate is None) != (robot.gate_at(pos) is None)
+
+        def place(self) -> bool:
+            if self.gate is not None and self.gate.use_qubit(self.qubit):
+                if self.qubit > 0:
+                    self.qubit -= 1
+                else:
+                    self.qubit += 1
+                return True
+            return False
+
     def __init__(self, widget: MyBaseWidget, controls: Controls):
         super().__init__(widget)
         self.__robot = None
@@ -162,80 +192,79 @@ class CircuitWidget(Widget):
 
     def __move_up(self):
         if self.__place_holder_data:
-            gate, pos, qubit = self.__place_holder_data
-            qubit += 1
+            qubit = self.__place_holder_data.qubit + 1
             while qubit < self.__robot.num_of_qubits:
-                if gate.can_use_qubit(qubit):
-                    self.__place_holder_data = gate, pos, qubit
+                if self.__place_holder_data.is_valid_qubit(qubit):
+                    self.__place_holder_data.qubit = qubit
                     self.render()
                     return
                 qubit += 1
 
     def __move_right(self):
         if self.__place_holder_data:
-            gate, pos, qubit = self.__place_holder_data
-            if gate.no_qubits_specified:
-                pos += 1
+            if self.__place_holder_data.can_change_position():
+                pos = self.__place_holder_data.pos + 1
                 # go right until we find a free space for the circuit
                 while pos < self.__robot.circuit_space:
-                    if self.__robot.gate_at(pos) is None:
-                        self.__place_holder_data = gate, pos, qubit
+                    if self.__place_holder_data.is_valid_pos(pos, self.__robot):
+                        self.__place_holder_data.pos = pos
                         self.render()
                         return
                     pos += 1
 
     def __move_down(self):
         if self.__place_holder_data:
-            gate, pos, qubit = self.__place_holder_data
-            qubit -= 1
+            qubit = self.__place_holder_data.qubit - 1
             while qubit >= 0:
-                if gate.can_use_qubit(qubit):
-                    self.__place_holder_data = gate, pos, qubit
+                if self.__place_holder_data.is_valid_qubit(qubit):
+                    self.__place_holder_data.qubit = qubit
                     self.render()
                     return
                 qubit -= 1
 
     def __move_left(self):
         if self.__place_holder_data:
-            gate, pos, qubit = self.__place_holder_data
-            if gate.no_qubits_specified:
-                pos -= 1
+            if self.__place_holder_data.can_change_position():
+                pos = self.__place_holder_data.pos - 1
+                # go left until we find a free space for the circuit
                 while pos >= 0:
-                    if self.__robot.gate_at(pos) is None:
-                        self.__place_holder_data = gate, pos, qubit
+                    if self.__place_holder_data.is_valid_pos(pos, self.__robot):
+                        self.__place_holder_data.pos = pos
                         self.render()
                         return
                     pos -= 1
 
     def __abort_placement(self):
         if self.__place_holder_data:
-            gate, pos, qubit = self.__place_holder_data
+            pass
+            #gate, pos, qubit = self.__place_holder_data
             # todo
 
-    def start_gate_placement(self, gate: Instruction):
-        first_free_spot = -1
-        for i in range(self.__robot.circuit_space):
-            if self.__robot.gate_at(i) is None:
-                first_free_spot = i
-                break
-        if 0 <= first_free_spot < self.__robot.circuit_space:
-            self.__place_holder_data = gate, first_free_spot, 0
+    def start_gate_placement(self, gate: Optional[Instruction], pos: int = -1, qubit: int = 0):
+        self.__place_holder_data = self.PlaceHolderData(gate, pos, qubit)
+        if pos < 0 or self.__robot.circuit_space <= pos:
+            for i in range(self.__robot.circuit_space):
+                if self.__place_holder_data.is_valid_pos(i, self.__robot):
+                    self.__place_holder_data.pos = i
+                    break
 
-    def place_gate(self) -> bool:
+    def place_gate(self) -> Tuple[bool, Optional[Instruction]]:
         if self.__place_holder_data:
-            gate, pos, qubit = self.__place_holder_data
-            if gate.use_qubit(qubit):
-                if qubit > 0:
-                    self.__place_holder_data = gate, pos, qubit-1
-                else:
-                    self.__place_holder_data = gate, pos, qubit+1
-                self.render()
-                return False
-            if self.__robot.use_instruction(gate, pos):
+            if self.__place_holder_data.gate is None:
+                gate = self.__robot.gate_at(self.__place_holder_data.pos)
+                self.__robot.remove_instruction(gate)
                 self.__place_holder_data = None
-                return True
-            Logger.instance().error("Place_Gate() did not work correctly")
-        return False
+                return True, None
+            else:
+                gate = self.__place_holder_data.gate
+                if self.__place_holder_data.place():
+                    self.render()
+                    return False, gate
+                if self.__robot.use_instruction(self.__place_holder_data.gate, self.__place_holder_data.pos):
+                    self.__place_holder_data = None
+                    return True, gate
+                Logger.instance().error("Place_Gate() did not work correctly")
+        return False, None
 
     def set_data(self, robot: Robot) -> None:
         self.__robot = robot
@@ -252,10 +281,15 @@ class CircuitWidget(Widget):
                         rows[q][i] = f"--{{{inst_str}}}--"
 
             if self.__place_holder_data:
-                gate, pos, qubit = self.__place_holder_data
-                for q in gate.qargs_iter():
-                    rows[q][pos] = f"--{{{gate.abbreviation(q)}}}--"
-                rows[qubit][pos] = f"-- {gate.abbreviation(qubit)} --"
+                gate = self.__place_holder_data.gate
+                pos = self.__place_holder_data.pos
+                qubit = self.__place_holder_data.qubit
+                if gate is None:
+                    rows[qubit][pos] = "--/   /--"
+                else:
+                    for q in gate.qargs_iter():
+                        rows[q][pos] = f"--{{{gate.abbreviation(q)}}}--"
+                    rows[qubit][pos] = f"-- {gate.abbreviation(qubit)} --"
 
             circ_str = " In "
             # place qubits from top to bottom, high to low index
@@ -436,8 +470,16 @@ class SelectionWidget(Widget):
             return options      # no explicit hotkeys if there are not multiple options
         wrapped_options = []
         for i, option in enumerate(options):
-            wrapped_options.append(f"[{i}] {option}")
+            wrapped_options.append(SelectionWidget._wrap_in_hotkey_str(option, i))
         return wrapped_options
+
+    @staticmethod
+    def _wrap_in_hotkey_str(text: str, index: int) -> str:
+        return f"[{index}] {text}"
+
+    @staticmethod
+    def _is_wrapped_in_hotkey_str(text: str, index: int) -> bool:
+        return text.startswith(f"[{index}] ")
 
     def __init__(self, widget: MyBaseWidget, controls: Controls, columns: int = 1, is_second: bool = False,
                  stay_selected: bool = False):
@@ -500,7 +542,10 @@ class SelectionWidget(Widget):
 
     def update_text(self, text: str, index: int):
         if 0 <= index < len(self.__choices):
-            self.__choices[index] = text
+            if SelectionWidget._is_wrapped_in_hotkey_str(self.__choices[index], index):
+                self.__choices[index] = SelectionWidget._wrap_in_hotkey_str(text, index)
+            else:
+                self.__choices[index] = text
 
     def clear_text(self):
         self.__choices = []

@@ -480,7 +480,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  continue_exploration_callback: Callable[[], None], flee_choice: str = "Flee"):
-        self.__choice_strings = SelectionWidget.wrap_in_hotkey_str(["Add/Remove", "Reset", "Help",
+        self.__choice_strings = SelectionWidget.wrap_in_hotkey_str(["Edit", "Reset", "Help",
                                                                     flee_choice])
         super().__init__(logger, root, render)
         self._continue_exploration_callback = continue_exploration_callback
@@ -573,10 +573,15 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self._details.widget.add_key_command(controls.action, use_details)
 
         def use_circuit():
-            if self.__circuit.place_gate():
+            success, gate = self.__circuit.place_gate()
+            if success:
                 self.__choices_commit()
                 Widget.move_focus(self._details, self)
-                self._details.validate_index()
+                if self._details.validate_index():
+                    if gate:
+                        self._details.update_text(gate.selection_str(), self._details.index)
+                    else:
+                        self.__choices_adapt()
                 self.render()
         self.__circuit.widget.add_key_command(controls.action, use_circuit)
 
@@ -689,67 +694,42 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
     def __choices_adapt(self) -> bool:
         options = [instruction.selection_str() for instruction in self._robot.backpack]
         self._details.set_data(data=(
-            SelectionWidget.wrap_in_hotkey_str(options) + [MyWidgetSet.BACK_STRING],
+            SelectionWidget.wrap_in_hotkey_str(options) + ["Remove", MyWidgetSet.BACK_STRING],
             [self.__choose_instruction]
         ))
         return True
 
-    def __choose_instruction(self, index: int):
+    def __choose_instruction(self, index: int) -> bool:
         if 0 <= index < self._robot.backpack.used_capacity:
-            self.__cur_instruction = self._robot.get_instruction(index)
-            if self.__cur_instruction is not None:
-                if self.__cur_instruction.is_used():
-                    # todo use grid based placement here as well
-                    options = [f"Position {i}" for i in range(self._robot.circuit_space)] + ["Remove"]
-                    self._details.set_data(data=(
-                        SelectionWidget.wrap_in_hotkey_str(options),
-                        [self.__choose_position]
-                    ))
+            cur_instruction = self._robot.get_instruction(index)
+            if cur_instruction is not None:
+                if cur_instruction.is_used():
+                    pos = cur_instruction.position
+                    qubit = cur_instruction.get_qubit_at(0)
+                    self._robot.remove_instruction(cur_instruction)
+                    self.__circuit.start_gate_placement(cur_instruction, pos, qubit)
+                    self.render()
+                    return True
                 else:
                     if self._robot.is_space_left:
-                        self.__circuit.start_gate_placement(self.__cur_instruction)
+                        self.__circuit.start_gate_placement(cur_instruction)
                         self.render()
                         return True
                     else:
                         CommonPopups.NoCircuitSpace.show()
                 self.render()
-            else:
-                Logger.instance().error("Error! The selected instruction/index is out of range!")
             return False
         else:
-            return True     # go back to choices
-
-    def __choose_qubit(self, index: int = 0):
-        selection = list(range(self._robot.num_of_qubits))
-        for q in self.__cur_instruction.qargs_iter():
-            selection.remove(q)
-        if len(selection) > index and self.__cur_instruction.use_qubit(selection[index]):
-            selection.pop(index)
-            options = [self.__cur_instruction.preview_str(i) for i in selection]
-            self._details.set_data(data=(
-                SelectionWidget.wrap_in_hotkey_str(options),
-                [self.__choose_qubit]
-            ))
-        else:
-            options = [f"Position {i}" for i in range(self._robot.circuit_space)] + ["Remove"]
-            self._details.set_data(data=(
-                SelectionWidget.wrap_in_hotkey_str(options),  # + [MyWidgetSet.BACK_STRING],
-                [self.__choose_position]
-            ))
-        self.render()
-        return False
-
-    def __choose_position(self, index: int = 0):
-        if not self._robot.use_instruction(self.__cur_instruction, index):
-            CommonPopups.NoCircuitSpace.show()
-        options = [instruction.selection_str() for instruction in self._robot.backpack]
-        self._details.set_data(data=(
-            SelectionWidget.wrap_in_hotkey_str(options) + [MyWidgetSet.BACK_STRING],
-            [self.__choose_instruction]
-        ))
-        self.__choices_commit()     # immediately commit on change
-        self.render()
-        return False
+            if index == self._details.num_of_choices - 1:   # "Back" is always last
+                return True     # go back to choices
+            else:   # "Remove" was chosen
+                if self._robot.has_empty_circuit:
+                    CommonPopups.NoGatePlaced.show()
+                    return False
+                else:
+                    self.__circuit.start_gate_placement(None)
+                    self.render()
+                    return True
 
     def __choices_commit(self) -> bool:
         if self._target is None:

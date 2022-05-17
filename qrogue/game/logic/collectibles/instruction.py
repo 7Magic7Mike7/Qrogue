@@ -74,6 +74,10 @@ class Instruction(Collectible, ABC):
     def qargs_iter(self) -> Iterator[int]:
         return iter(self._qargs)
 
+    def get_qubit_at(self, index: int = 0) -> int:
+        if 0 <= index < len(self._qargs):
+            return self._qargs[index]
+
     def name(self) -> str:
         return self.short_name() + " Gate"
 

@@ -13,7 +13,7 @@ from qrogue.game.logic.actors.controllables import Controllable
 from qrogue.game.logic.actors.controllables.qubit import QubitSet, DummyQubitSet
 from qrogue.game.logic.collectibles import Coin, Collectible, Consumable, Instruction, Key, MultiCollectible, \
     Qubit, Energy
-from qrogue.util import CheatConfig, Config, Logger, InstructionConfig, GameplayConfig, QuantumSimulationConfig
+from qrogue.util import CheatConfig, Config, Logger, GameplayConfig, QuantumSimulationConfig
 
 
 # from jkq import ddsim
@@ -276,6 +276,7 @@ class Robot(Controllable, ABC):
         self.__simulator = StatevectorSimulator()#ddsim.JKQProvider().get_backend('statevector_simulator')
         self.__backend = Aer.get_backend('unitary_simulator')
         self.__stv = None
+        self.__circuit_matrix = None
         self.__qubit_indices = []
         for i in range(0, attributes.num_of_qubits):
             self.__qubit_indices.append(i)
@@ -351,13 +352,18 @@ class Robot(Controllable, ABC):
 
         job = execute(self.__circuit, self.__backend)
         result = job.result()
-        self.__circuit_matrix = CircuitMatrix(result.get_unitary(self.__circuit, decimals=QuantumSimulationConfig.DECIMALS))
+        self.__circuit_matrix = CircuitMatrix(result.get_unitary(self.__circuit,
+                                                                 decimals=QuantumSimulationConfig.DECIMALS))
 
     def __remove_instruction(self, instruction: Instruction, skip_qargs: bool = False):
         if instruction and instruction.is_used():
             self.__instructions[instruction.position] = None
             self.__instruction_count -= 1
             instruction.reset(skip_qargs=skip_qargs)
+
+    def remove_instruction(self, instruction: Instruction):
+        if instruction in self.__instructions:
+            self.__remove_instruction(instruction)
 
     def __place_instruction(self, instruction: Instruction, position: int):
         if instruction.position == position:
