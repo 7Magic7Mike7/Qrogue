@@ -109,9 +109,11 @@ _ascii_art = """
 
 class MenuWidgetSet(MyWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
+                 quick_start_callback: Callable[[], None],
                  start_playing_callback: Callable[[], None], stop_callback: Callable[[], None],
                  choose_simulation_callback: Callable[[], None]):
         self.__seed = 0
+        self.__quick_start = quick_start_callback
         self.__start_playing = start_playing_callback
         self.__stop = stop_callback
         self.__choose_simulation = choose_simulation_callback
@@ -121,16 +123,13 @@ class MenuWidgetSet(MyWidgetSet):
         selection = self.add_block_label("", UIConfig.MAIN_MENU_ROW, 0, row_span=UIConfig.MAIN_MENU_HEIGHT,
                                          column_span=width, center=True)
         self.__selection = SelectionWidget(selection, controls, 1)
-        if Config.debugging():
-            self.__selection.set_data(data=(
-                ["PLAY\n", "SIMULATOR\n", "OPTIONS\n", "EXIT\n"],  # for more space between the rows we add "\n"
-                [self.__start_playing, self.__choose_simulation, self.__options, self.__stop]
-            ))
-        else:
-            self.__selection.set_data(data=(
-                ["PLAY\n", "OPTIONS\n", "EXIT\n"],  # for more space between the rows we add "\n"
-                [self.__start_playing, self.__options, self.__stop]
-            ))
+        choices = ["QUICKSTART\n", "PLAY\n", "OPTIONS\n", "EXIT\n"]  # for more space between the rows we add "\n"
+        callbacks = [self.__quick_start, self.__start_playing, self.__options, self.__stop]
+        if Config.debugging():  # add simulator option
+            simulator_position = 1
+            choices = choices[:simulator_position] + ["SIMULATOR\n"] + choices[simulator_position:]
+            callbacks = callbacks[:simulator_position] + [self.__choose_simulation] + callbacks[simulator_position:]
+        self.__selection.set_data(data=(choices, callbacks))
 
         seed = self.add_block_label("Seed", UIConfig.WINDOW_HEIGHT-1, 0, row_span=1, column_span=width, center=False)
         self.__seed_widget = SimpleWidget(seed)

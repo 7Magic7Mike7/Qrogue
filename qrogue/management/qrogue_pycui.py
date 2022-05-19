@@ -80,8 +80,10 @@ class QrogueCUI(py_cui.PyCUI):
         self.__focused_widget = None
 
         # init widget sets
-        self.__menu = MenuWidgetSet(self.__controls, self.__render, Logger.instance(), self, self.__start_playing,
-                                    self.stop, self.__choose_simulation)
+        def start_newest_level():
+            MapManager.instance().load_map(MapConfig.spaceship(), None)
+        self.__menu = MenuWidgetSet(self.__controls, self.__render, Logger.instance(), self, start_newest_level,
+                                    self.__start_playing, self.stop, self.__choose_simulation)
         self.__pause = PauseMenuWidgetSet(self.__controls, self.__render, Logger.instance(), self,
                                           self.__general_continue, SaveData.instance().save, self.switch_to_menu)
         self.__pause.set_data(None, "Qrogue", SaveData.instance().achievement_manager)
