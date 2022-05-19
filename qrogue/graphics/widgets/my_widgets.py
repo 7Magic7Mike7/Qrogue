@@ -14,12 +14,47 @@ from qrogue.util import ColorConfig, Controls, Keys, Logger, Config, HudConfig
 
 from qrogue.graphics.widgets import Renderable
 from qrogue.util.config import ColorCode, QuantumSimulationConfig, InstructionConfig
-from qrogue.util.util_functions import center_string, align_string
+from qrogue.util.util_functions import center_string, align_string, to_binary_string
 
 
-class MyBaseWidget(BlockLabel):
+class WidgetWrapper(ABC):
+    @abstractmethod
+    def is_selected(self) -> bool:
+        pass
+
+    @abstractmethod
+    def reposition(self, row: int = None, column: int = None, row_span: int = None, column_span: int = None):
+        pass
+
+    @abstractmethod
+    def set_title(self, title: str) -> None:
+        pass
+
+    @abstractmethod
+    def get_title(self) -> str:
+        pass
+
+    @abstractmethod
+    def add_text_color_rule(self, regex: str, color: int, rule_type: str, match_type: str = 'line',
+                            region: List[int] = [0, 1], include_whitespace: bool = False, selected_color = None)\
+            -> None:
+        pass
+
+    @abstractmethod
+    def activate_individual_coloring(self):
+        pass
+
+    @abstractmethod
+    def add_key_command(self, keys: List[int], command: Callable[[], Any]) -> Any:
+        pass
+
+
+class MyBaseWidget(BlockLabel, WidgetWrapper):
     def __init__(self, wid, title, grid, row, column, row_span, column_span, padx, pady, center, logger):
         super().__init__(wid, title, grid, row, column, row_span, column_span, padx, pady, center, logger)
+
+    def is_selected(self) -> bool:
+        return super(MyBaseWidget, self).is_selected()
 
     def reposition(self, row: int = None, column: int = None, row_span: int = None, column_span: int = None):
         if row:
@@ -58,7 +93,7 @@ class Widget(Renderable, ABC):
     __MOVE_FOCUS = None
 
     @staticmethod
-    def set_move_focus_callback(move_focus: Callable[[MyBaseWidget, Any], None]):
+    def set_move_focus_callback(move_focus: Callable[[WidgetWrapper, Any], None]):
         Widget.__MOVE_FOCUS = move_focus
 
     @staticmethod
@@ -66,11 +101,11 @@ class Widget(Renderable, ABC):
         if Widget.__MOVE_FOCUS:
             Widget.__MOVE_FOCUS(widget.widget, widget_set)
 
-    def __init__(self, widget: MyBaseWidget):
+    def __init__(self, widget: WidgetWrapper):
         self.__widget = widget
 
     @property
-    def widget(self) -> MyBaseWidget:
+    def widget(self) -> WidgetWrapper:
         return self.__widget
 
     @abstractmethod
@@ -87,7 +122,7 @@ class Widget(Renderable, ABC):
 
 
 class SimpleWidget(Widget):
-    def __init__(self, widget: MyBaseWidget):
+    def __init__(self, widget: WidgetWrapper):
         super().__init__(widget)
         self.__text = ""
 
@@ -103,7 +138,7 @@ class SimpleWidget(Widget):
 
 
 class HudWidget(Widget):
-    def __init__(self, widget: MyBaseWidget):
+    def __init__(self, widget: WidgetWrapper):
         super().__init__(widget)
         self.__robot = None
         self.__map_name = None
@@ -171,7 +206,7 @@ class CircuitWidget(Widget):
                 return True
             return False
 
-    def __init__(self, widget: MyBaseWidget, controls: Controls):
+    def __init__(self, widget: WidgetWrapper, controls: Controls):
         super().__init__(widget)
         self.__robot = None
         self.__place_holder_data = None
@@ -312,7 +347,7 @@ class CircuitWidget(Widget):
 
 
 class MapWidget(Widget):
-    def __init__(self, widget: MyBaseWidget):
+    def __init__(self, widget: WidgetWrapper):
         super().__init__(widget)
         self.__map = None
         self.__backup = None
@@ -339,7 +374,7 @@ class MapWidget(Widget):
 
 
 class StateVectorWidget(Widget):
-    def __init__(self, widget: MyBaseWidget, headline: str):
+    def __init__(self, widget: WidgetWrapper, headline: str):
         super().__init__(widget)
         self.__headline = headline
         self._stv_str_rep = None
@@ -361,7 +396,7 @@ class StateVectorWidget(Widget):
 
 
 class OutputStateVectorWidget(StateVectorWidget):
-    def __init__(self, widget: MyBaseWidget, headline: str):
+    def __init__(self, widget: WidgetWrapper, headline: str):
         super().__init__(widget, headline)
         widget.activate_individual_coloring()
 
@@ -377,7 +412,7 @@ class OutputStateVectorWidget(StateVectorWidget):
 
 
 class TargetStateVectorWidget(StateVectorWidget):
-    def __init__(self, widget: MyBaseWidget, headline: str):
+    def __init__(self, widget: WidgetWrapper, headline: str):
         super().__init__(widget, headline)
 
     def set_data(self, state_vector: StateVector) -> None:
@@ -394,7 +429,7 @@ class TargetStateVectorWidget(StateVectorWidget):
 
 
 class CircuitMatrixWidget(Widget):
-    def __init__(self, widget: MyBaseWidget):
+    def __init__(self, widget: WidgetWrapper):
         super().__init__(widget)
         self.__matrix_str_rep = None
         widget.add_text_color_rule("~.*~", ColorConfig.STV_HEADING_COLOR, 'contains', match_type='regex')
@@ -418,7 +453,7 @@ class CircuitMatrixWidget(Widget):
 
 
 class QubitInfoWidget(Widget):
-    def __init__(self, widget: MyBaseWidget, left_aligned: bool = True):
+    def __init__(self, widget: WidgetWrapper, left_aligned: bool = True):
         super(QubitInfoWidget, self).__init__(widget)
         self.__left_aligned = left_aligned
         self.__text = ""
@@ -481,7 +516,7 @@ class SelectionWidget(Widget):
     def _is_wrapped_in_hotkey_str(text: str, index: int) -> bool:
         return text.startswith(f"[{index}] ")
 
-    def __init__(self, widget: MyBaseWidget, controls: Controls, columns: int = 1, is_second: bool = False,
+    def __init__(self, widget: WidgetWrapper, controls: Controls, columns: int = 1, is_second: bool = False,
                  stay_selected: bool = False):
         super(SelectionWidget, self).__init__(widget)
         self.__columns = columns
@@ -493,10 +528,10 @@ class SelectionWidget(Widget):
         self.widget.add_text_color_rule(f"->", ColorConfig.SELECTION_COLOR, 'contains', match_type='regex')
 
         # init keys
-        self.widget.add_key_command(controls.get_keys(Keys.SelectionUp), self.__up)
-        self.widget.add_key_command(controls.get_keys(Keys.SelectionRight), self.__right)
-        self.widget.add_key_command(controls.get_keys(Keys.SelectionDown), self.__down)
-        self.widget.add_key_command(controls.get_keys(Keys.SelectionLeft), self.__left)
+        self.widget.add_key_command(controls.get_keys(Keys.SelectionUp), self._up)
+        self.widget.add_key_command(controls.get_keys(Keys.SelectionRight), self._right)
+        self.widget.add_key_command(controls.get_keys(Keys.SelectionDown), self._down)
+        self.widget.add_key_command(controls.get_keys(Keys.SelectionLeft), self._left)
 
         # sadly cannot use a loop here because of how lambda expressions work the index would be the same for all calls
         # instead we use a list of indices to still be flexible without changing much code
@@ -533,12 +568,22 @@ class SelectionWidget(Widget):
         return math.ceil(self.num_of_choices / self.columns)
 
     @property
+    def _width_of_last_row(self) -> int:
+        return self.num_of_choices - self._index_of_row_start(self.num_of_choices - 1)  # - start of last row
+
+    @property
     def num_of_choices(self) -> int:
         return len(self.__choices)
 
     @property
     def index(self) -> int:
         return self.__index
+
+    def _index_of_row_start(self, index: int):
+        start_of_last_row = self.columns * (self.rows - 1)
+        if index >= start_of_last_row:
+            return start_of_last_row
+        return index - (index % self.columns)
 
     def update_text(self, text: str, index: int):
         if 0 <= index < len(self.__choices):
@@ -606,7 +651,7 @@ class SelectionWidget(Widget):
         if self.__index < 0:
             self.__index = self.num_of_choices - 1
 
-    def __up(self) -> None:
+    def _up(self) -> None:
         if self.num_of_choices <= 1:
             return
         if self.num_of_choices <= self.__columns or self.__columns == 1:
@@ -614,53 +659,56 @@ class SelectionWidget(Widget):
         else:
             # special case for first line
             if self.__index < self.__columns:
-                left_most = self.num_of_choices - self.num_of_choices % self.__columns
-                self.__index = left_most + min(self.__index, self.num_of_choices % self.__columns - 1)
+                # provides either the very last element or (start of last row + column (== index if in first row))
+                self.__index = min(self._index_of_row_start(self.num_of_choices - 1) + self.__index,
+                                   self.num_of_choices - 1)
             else:
                 self.__index -= self.__columns
         self.render()
 
-    def __right(self) -> None:
+    def _right(self) -> None:
         if self.num_of_choices <= 1:
             return
         if self.__columns == 1 or self.num_of_choices <= self.__columns:
             self.__single_next()
         else:
-            self.__index += 1
-            if self.__index >= self.num_of_choices:
-                self.__index -= (self.__index % self.__columns)
-            elif self.__index % self.__columns == 0:
-                self.__index -= self.__columns
+            # special case if we are currently at the end of the last row
+            if self.__index == self.num_of_choices - 1:
+                self.__index = self._index_of_row_start(self.__index)
+            # another special case if we are at the end of any other row
+            elif self.__index % self.__columns == self.__columns - 1:
+                self.__index -= (self.__columns - 1)
+            else:
+                self.__index += 1
         self.render()
 
-    def __down(self) -> None:
+    def _down(self) -> None:
         if self.num_of_choices <= 1:
             return
         if self.num_of_choices <= self.__columns or self.__columns == 1:
             self.__single_next()
         else:
             # special case if we are currently in the last line
-            if self.__index >= self.num_of_choices - (self.num_of_choices % self.__columns):
+            if self.__index >= self._index_of_row_start(self.num_of_choices - 1):
                 self.__index = self.__index % self.__columns
             else:
-                self.__index += self.__columns
-                if self.__index >= self.num_of_choices:
-                    self.__index = self.num_of_choices - 1
+                self.__index = min(self.__index + self.__columns, self.num_of_choices - 1)
         self.render()
 
-    def __left(self) -> None:
+    def _left(self) -> None:
         if self.num_of_choices <= 1:
             return
         if self.__columns == 1 or self.num_of_choices <= self.__columns:
             self.__single_prev()
         else:
-            # special case if we are currently in the last line
-            if self.__index >= self.num_of_choices - (self.num_of_choices % self.__columns):
+            # special case if we are currently at the start of the last row
+            if self.__index == self._index_of_row_start(self.num_of_choices - 1):
                 self.__index = self.num_of_choices - 1
+            # another special case if we are at the start of any other row
+            elif self.__index % self.columns == 0:
+                self.__index += self.__columns - 1
             else:
                 self.__index -= 1
-                if self.__index < 0:
-                    self.__index += self.__columns
         self.render()
 
     def __jump_to_index(self, index: int):
