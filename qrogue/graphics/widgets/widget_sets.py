@@ -478,10 +478,10 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
     __CHOICE_COLUMNS = 2
     __DETAILS_COLUMNS = 3
     _DETAILS_INFO_THEN_EDIT = 0
-    __DETAILS_INFO_THEN_HELP = 1
-    __DETAILS_INFO_THEN_CHOICES = 2
-    __DETAILS_EDIT = 3
-    __DETAILS_HELP = 4
+    _DETAILS_INFO_THEN_HELP = 1
+    _DETAILS_INFO_THEN_CHOICES = 2
+    _DETAILS_EDIT = 3
+    _DETAILS_HELP = 4
 
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  continue_exploration_callback: Callable[[], None], flee_choice: str = "Flee"):
@@ -569,17 +569,17 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
         def use_details():
             if self._details.use():
-                if self._details_content == self.__DETAILS_INFO_THEN_CHOICES or \
+                if self._details_content == self._DETAILS_INFO_THEN_CHOICES or \
                         self._details.index == self._details.num_of_choices - 1 and \
-                        self._details_content in [self.__DETAILS_EDIT, self.__DETAILS_HELP]:
+                        self._details_content in [self._DETAILS_EDIT, self._DETAILS_HELP]:
                     # last selection possibility in edit is "Back"
                     self.__details_back()
                 elif self._details_content == self._DETAILS_INFO_THEN_EDIT:
-                    self._details_content = self.__DETAILS_EDIT
+                    self._details_content = self._DETAILS_EDIT
                     self.__choices_adapt()
                     self.render()
-                elif self._details_content == self.__DETAILS_INFO_THEN_HELP:
-                    self._details_content = self.__DETAILS_HELP
+                elif self._details_content == self._DETAILS_INFO_THEN_HELP:
+                    self._details_content = self._DETAILS_HELP
                     self.__choices_help()
                     self.render()
                 else:
@@ -713,7 +713,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             SelectionWidget.wrap_in_hotkey_str(options) + ["Remove", MyWidgetSet.BACK_STRING],
             [self.__choose_instruction]
         ))
-        self._details_content = self.__DETAILS_EDIT
+        self._details_content = self._DETAILS_EDIT
         return True
 
     def __choose_instruction(self, index: int) -> bool:
@@ -763,7 +763,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                 [f"Congratulations! You received: {reward.to_string()}"],
                 [self._continue_exploration_callback]
             ))
-            self._details_content = self.__DETAILS_INFO_THEN_CHOICES
+            self._details_content = self._DETAILS_INFO_THEN_CHOICES
             return True
         else:
             return self._on_commit_fail()
@@ -774,7 +774,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                 ["Nothing to reset"],
                 [self._empty_callback]
             ))
-            self._details_content = self.__DETAILS_INFO_THEN_CHOICES
+            self._details_content = self._DETAILS_INFO_THEN_CHOICES
             return True
         else:
             self._robot.reset_circuit()
@@ -794,7 +794,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             SelectionWidget.wrap_in_hotkey_str(options) + [MyWidgetSet.BACK_STRING],
             [show_help_popup]
         ))
-        self._details_content = self.__DETAILS_HELP
+        self._details_content = self._DETAILS_HELP
         return True
 
     @abstractmethod
@@ -815,7 +815,7 @@ class TrainingsWidgetSet(ReachTargetWidgetSet):
         super().__init__(controls, render, logger, root, back_to_spaceship_callback, "Done")
 
     def _on_commit_fail(self) -> bool:
-        self._details_content = ReachTargetWidgetSet._DETAILS_INFO_THEN_EDIT
+        self._details_content = ReachTargetWidgetSet._DETAILS_EDIT
         return True
 
     def _choices_flee(self) -> bool:
