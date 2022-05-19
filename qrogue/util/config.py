@@ -590,7 +590,7 @@ class UIConfig:
     MAIN_MENU_HEIGHT = round(WINDOW_HEIGHT / 2)
     ASCII_ART_WIDTH = math.floor(2 * WINDOW_WIDTH / 3)
 
-    INPUT_STV_WIDTH = 1
+    INPUT_STV_WIDTH = 2
     OUTPUT_STV_WIDTH = 2
     TARGET_STV_WIDTH = 3
     STV_HEIGHT = math.floor(WINDOW_HEIGHT * 0.6)
