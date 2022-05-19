@@ -5,7 +5,10 @@ from typing import List, Callable
 
 import py_cui
 
+from qrogue.game.logic import StateVector, collectibles
 from qrogue.game.logic.actors import Boss, Controllable, Enemy, Riddle, Robot
+from qrogue.game.logic.actors.controllables import LukeBot
+from qrogue.game.logic.collectibles import Energy
 from qrogue.game.world.map import CallbackPack, SpaceshipMap, WorldMap, Map
 from qrogue.game.world.navigation import Direction
 from qrogue.game.world.tiles import WalkTriggerTile, Message, Collectible
@@ -14,9 +17,9 @@ from qrogue.graphics.rendering import MultiColorRenderer
 from qrogue.graphics.popups import Popup, MultilinePopup, ConfirmationPopup
 from qrogue.graphics.widgets import Renderable, SpaceshipWidgetSet, BossFightWidgetSet, ExploreWidgetSet, \
     FightWidgetSet, MenuWidgetSet, MyWidgetSet, NavigationWidgetSet, PauseMenuWidgetSet, RiddleWidgetSet, \
-    ShopWidgetSet, WorkbenchWidgetSet
+    ShopWidgetSet, WorkbenchWidgetSet, TrainingsWidgetSet, Widget
 from qrogue.management import StoryNarration
-from qrogue.util import achievements, common_messages, CheatConfig, Config, GameplayConfig, HelpText, \
+from qrogue.util import achievements, common_messages, CheatConfig, Config, GameplayConfig, UIConfig, HelpText, \
     HelpTextType, Logger, PathConfig, MapConfig, Controls, Keys, RandomManager
 from qrogue.util.config import FileTypes
 from qrogue.util.game_simulator import GameSimulator
@@ -36,13 +39,20 @@ class QrogueCUI(py_cui.PyCUI):
         except FileNotFoundError:
             Logger.instance().show_error(f"File \"{simulation_path}\" could not be found!")
 
-    def __init__(self, seed: int, width: int = 8, height: int = 9):
+    def __init__(self, seed: int, width: int = UIConfig.WINDOW_WIDTH, height: int = UIConfig.WINDOW_HEIGHT):
         super().__init__(width, height)
         self.set_title(f"Qrogue {Config.version()}")
         self.__controls = Controls(self._handle_key_presses)
         Logger(seed)
         RandomManager(seed)
         OverWorldKeyLogger().reinit(seed, "meta")
+
+        def move_focus(widget: py_cui.widgets.Widget, widget_set):
+            # this check is necessary for manual widget-set switches due to the call-order (the callback happens before this move_focus here)
+            if widget_set is self.__cur_widget_set:
+                super(QrogueCUI, self).move_focus(widget, auto_press_buttons=False)
+        self._auto_focus_buttons = False
+        Widget.set_move_focus_callback(move_focus)
 
         # init management
         Logger.instance().set_popup(self.show_message_popup, self.show_error_popup)
@@ -51,8 +61,8 @@ class QrogueCUI(py_cui.PyCUI):
         ConfirmationPopup.update_popup_function(self.__show_confirmation_popup)
 
         Pausing(self.__pause_game)
-        CallbackPack(self.__start_level, self.__start_fight, self.__start_boss_fight,
-                           self.__open_riddle, self.__visit_shop, self.__game_over)
+        CallbackPack(self.__start_level, self.__start_fight, self.__start_boss_fight, self.__open_riddle,
+                     self.__visit_shop, self.__game_over)
         SaveData()
         MapManager(seed, self.__show_world, self.__start_level)
         Popup.update_check_achievement_function(SaveData.instance().achievement_manager.check_achievement)
@@ -77,6 +87,8 @@ class QrogueCUI(py_cui.PyCUI):
         self.__pause.set_data(None, "Qrogue", SaveData.instance().achievement_manager)
 
         self.__spaceship = SpaceshipWidgetSet(self.__controls, Logger.instance(), self, self.__render)
+        self.__training = TrainingsWidgetSet(self.__controls, self.__render, Logger.instance(), self,
+                                             self.__continue_spaceship)
         self.__workbench = WorkbenchWidgetSet(self.__controls, Logger.instance(), self,
                                               SaveData.instance().available_robots(), self.__render,
                                               self.__continue_spaceship)
@@ -108,9 +120,10 @@ class QrogueCUI(py_cui.PyCUI):
                     MapManager.instance().load_map(MapConfig.first_world(), None)
 
         scientist = NpcTile(Config.scientist_name(), Popup.npc_says, StoryNarration.scientist_text)
-        self.__spaceship_map = SpaceshipMap(seed, SaveData.instance().player, scientist,
+        self.__spaceship_map = SpaceshipMap(SaveData.instance().player, scientist,
                                             SaveData.instance().achievement_manager.check_achievement, stop_playing,
-                                            open_world_view, self.__use_workbench, MapManager.instance().load_map)
+                                            open_world_view, self.__use_workbench, MapManager.instance().load_map,
+                                            self.__start_training)
         self.__spaceship.set_data(self.__spaceship_map)
 
     def _refresh_height_width(self) -> None:
@@ -137,7 +150,7 @@ class QrogueCUI(py_cui.PyCUI):
         return self.__controls
 
     def start(self):
-        self.render()
+        self.__render([self.__cur_widget_set])
         super(QrogueCUI, self).start()
 
     def __choose_simulation(self):
@@ -375,40 +388,11 @@ class QrogueCUI(py_cui.PyCUI):
         self.__pause.get_main_widget().add_key_command(self.__controls.get_keys(Keys.CheatList), CheatConfig.cheat_list)
 
         # don't add the general keys to Menu and Pause
-        for widget_set in [self.__spaceship, self.__navigation, self.__explore, self.__fight, self.__boss_fight,
-                           self.__shop, self.__riddle]:
+        for widget_set in [self.__spaceship, self.__training, self.__navigation, self.__explore, self.__fight,
+                           self.__boss_fight, self.__shop, self.__riddle]:
             for widget in widget_set.get_widget_list():
                 widget.widget.add_key_command(self.__controls.get_keys(Keys.Pause), Pausing.pause)
                 widget.widget.add_key_command(self.__controls.get_keys(Keys.PopupReopen), Popup.reopen)
-
-        # menu
-        self.__menu.selection.widget.add_key_command(self.__controls.action, self.__use_menu_selection)
-
-        # workbench
-        self.__workbench.selection.widget.add_key_command(self.__controls.action, self.__workbench_selection)
-        self.__workbench.upgrades.widget.add_key_command(self.__controls.action, self.__workbench_upgrades)
-
-        # pause
-        self.__pause.choices.widget.add_key_command(self.__controls.action, self.__pause_choices)
-        self.__pause.details.widget.add_key_command(self.__controls.action, self.__pause_details)
-
-        # fight
-        self.__fight.choices.widget.add_key_command(self.__controls.action, self.__fight_choices)
-        self.__fight.details.widget.add_key_command(self.__controls.action, self.__fight_details)
-        self.__fight.details.widget.add_key_command(self.__controls.get_keys(Keys.Cancel), self.__fight_details_back)
-        self.__boss_fight.choices.widget.add_key_command(self.__controls.action, self.__boss_fight_choices)
-        self.__boss_fight.details.widget.add_key_command(self.__controls.action, self.__boss_fight_details)
-        self.__boss_fight.details.widget.add_key_command(self.__controls.get_keys(Keys.Cancel),
-                                                         self.__boss_fight_details_back)
-
-        # riddle
-        self.__riddle.choices.widget.add_key_command(self.__controls.action, self.__riddle_choices)
-        self.__riddle.details.widget.add_key_command(self.__controls.action, self.__riddle_details)
-        self.__riddle.details.widget.add_key_command(self.__controls.get_keys(Keys.Cancel), self.__riddle_details_back)
-
-        # shop
-        self.__shop.inventory.widget.add_key_command(self.__controls.action, self.__shop_inventory)
-        self.__shop.buy.widget.add_key_command(self.__controls.action, self.__shop_buy)
 
     def print_screen(self) -> None:
         text = ""
@@ -448,6 +432,16 @@ class QrogueCUI(py_cui.PyCUI):
     def __general_continue(self):
         self.__state_machine.change_state(self.__state_machine.prev_state, None)
 
+    def switch_to_menu(self, data=None) -> None:
+        if self.__key_logger and self.__key_logger.is_initialized:
+            self.__key_logger.flush_if_useful()
+        if data:
+            seed = data
+        else:
+            seed = RandomManager.instance().get_seed(msg="QroguePyCUI.switch_to_menu()")
+        self.__menu.set_seed(seed)
+        self.apply_widget_set(self.__menu)
+
     def __start_playing(self):
         self.__state_machine.change_state(State.Spaceship, SaveData.instance())
 
@@ -458,21 +452,24 @@ class QrogueCUI(py_cui.PyCUI):
     def __continue_spaceship(self) -> None:
         self.__state_machine.change_state(State.Spaceship, None)
 
+    def __start_training(self, direction: Direction):
+        robot = LukeBot(self.__game_over, size=2)
+        for collectible in [collectibles.XGate(), collectibles.XGate(), collectibles.HGate(), collectibles.CXGate()]:
+            robot.give_collectible(collectible)
+        enemy = Enemy(StateVector([0] * (2**robot.num_of_qubits)), Energy(), 1)
+        self.__state_machine.change_state(State.Training, (robot, enemy))
+
+    def switch_to_training(self, data=None):
+        if data:
+            robot, enemy = data
+            self.__training.set_data(robot, enemy)
+        self.apply_widget_set(self.__training)
+
     def __use_workbench(self, direction: Direction, controllable: Controllable):
         self.__state_machine.change_state(State.Workbench, SaveData.instance())
 
     def switch_to_workbench(self, data=None):
         self.apply_widget_set(self.__workbench)
-
-    def switch_to_menu(self, data=None) -> None:
-        if self.__key_logger and self.__key_logger.is_initialized:
-            self.__key_logger.flush_if_useful()
-        if data:
-            seed = data
-        else:
-            seed = RandomManager.instance().get_seed(msg="QroguePyCUI.switch_to_menu()")
-        self.__menu.set_seed(seed)
-        self.apply_widget_set(self.__menu)
 
     def __show_world(self, world: WorldMap = None) -> None:
         if world is None:
@@ -568,103 +565,9 @@ class QrogueCUI(py_cui.PyCUI):
             self.__shop.set_data(player, items)
         self.apply_widget_set(self.__shop)
 
-    def render(self) -> None:
-        self.__render([self.__cur_widget_set])
-
     def __render(self, renderables: List[Renderable]):
         for r in renderables:
             r.render()
-
-    def __use_menu_selection(self) -> None:
-        if self.__menu.selection.use() and self.__cur_widget_set is self.__menu:
-            self.render()
-
-    def __workbench_selection(self) -> None:
-        if self.__workbench.selection.use() and self.__cur_widget_set is self.__workbench:
-            self.move_focus(self.__workbench.upgrades.widget, auto_press_buttons=False)
-            self.render()
-
-    def __workbench_upgrades(self) -> None:
-        if self.__workbench.upgrades.use() and self.__cur_widget_set is self.__workbench:
-            self.move_focus(self.__workbench.selection.widget, auto_press_buttons=False)
-            self.render()
-
-    def __pause_choices(self) -> None:
-        if self.__pause.choices.use() and self.__cur_widget_set is self.__pause:
-            self.move_focus(self.__pause.details.widget, auto_press_buttons=False)
-            self.__render([self.__pause.choices, self.__pause.details])
-
-    def __pause_details(self) -> None:
-        if self.__pause.details.use() and self.__cur_widget_set is self.__pause:
-            self.move_focus(self.__pause.choices.widget, auto_press_buttons=False)
-            self.__pause.details.render_reset()
-            self.render()
-
-    def __fight_choices(self) -> None:
-        if self.__fight.choices.use() and self.__cur_widget_set is self.__fight:
-            self.move_focus(self.__fight.details.widget, auto_press_buttons=False)
-            self.__render([self.__fight.choices, self.__fight.details])
-
-    def __fight_details(self) -> None:
-        if self.__fight.details.use():
-            self.__fight_details_back()
-
-    def __fight_details_back(self) -> None:
-        if self.__cur_widget_set is self.__fight:
-            self.move_focus(self.__fight.choices.widget, auto_press_buttons=False)
-            self.__fight.choices.validate_index()   # somehow it can happen that the index is out of bounds after
-                                                    # coming back from details which is why we validate it now
-            self.__fight.details.render_reset()
-            self.render()   # render the whole widget_set for updating the StateVectors and the circuit
-
-    def __boss_fight_choices(self) -> None:
-        if self.__boss_fight.choices.use() and self.__cur_widget_set is self.__boss_fight:
-            self.move_focus(self.__boss_fight.details.widget, auto_press_buttons=False)
-            self.__render([self.__boss_fight.choices, self.__boss_fight.details])
-
-    def __boss_fight_details_back(self) -> None:
-        if self.__cur_widget_set is self.__boss_fight:
-            self.move_focus(self.__boss_fight.choices.widget, auto_press_buttons=False)
-            self.__boss_fight.choices.validate_index()  # somehow it can happen that the index is out of bounds after
-            # coming back from details which is why we validate it now
-            self.__boss_fight.details.render_reset()
-            self.render()  # render the whole widget_set for updating the StateVectors and the circuit
-
-    def __boss_fight_details(self) -> None:
-        if self.__boss_fight.details.use():
-            self.__boss_fight_details_back()
-
-    def __riddle_choices(self):
-        if self.__riddle.choices.use() and self.__cur_widget_set is self.__riddle:
-            self.move_focus(self.__riddle.details.widget, auto_press_buttons=False)
-            self.__render([self.__riddle.choices, self.__riddle.details])
-
-    def __riddle_details_back(self) -> None:
-        if self.__cur_widget_set is self.__riddle:
-            self.move_focus(self.__riddle.choices.widget, auto_press_buttons=False)
-            self.__riddle.choices.validate_index()   # somehow it can happen that the index is out of bounds after
-                                                    # coming back from details which is why we validate it now
-            self.__riddle.details.render_reset()
-            self.render()   # render the whole widget_set for updating the StateVectors and the circuit
-
-    def __riddle_details(self) -> None:
-        if self.__riddle.details.use():
-            self.__riddle_details_back()
-
-    def __shop_inventory(self) -> None:
-        if self.__shop.inventory.use() and self.__cur_widget_set is self.__shop:
-            self.move_focus(self.__shop.buy.widget, auto_press_buttons=False)
-            self.render()
-
-    def __shop_buy(self) -> None:
-        if self.__shop.buy.use() and self.__cur_widget_set is self.__shop:
-            self.move_focus(self.__shop.inventory.widget, auto_press_buttons=False)
-            self.__shop.inventory.validate_index()   # somehow it can happen that the index is out of bounds after
-                                                     # coming back from details which is why we validate it now
-            self.__shop.details.render_reset()
-            self.__shop.buy.render_reset()
-            #self.__shop.buy.clear_text() # not needed since render_reset does this for second SelectionWidgets
-            self.render()
 
 
 class State(Enum):
@@ -679,6 +582,7 @@ class State(Enum):
     Spaceship = 7
     Workbench = 8
     Navigation = 9
+    Training = 10
 
 
 class StateMachine:
@@ -716,6 +620,8 @@ class StateMachine:
 
         elif self.__cur_state == State.Spaceship:
             self.__renderer.switch_to_spaceship(data)
+        elif self.__cur_state == State.Training:
+            self.__renderer.switch_to_training(data)
         elif self.__cur_state == State.Workbench:
             self.__renderer.switch_to_workbench(data)
         elif self.__cur_state == State.Navigation:

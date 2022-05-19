@@ -6,7 +6,7 @@ import qiskit.circuit.library.standard_gates as gates
 from qiskit import QuantumCircuit
 
 from qrogue.game.logic.collectibles import Collectible, CollectibleType
-from qrogue.util import ShopConfig
+from qrogue.util import ShopConfig, Logger
 
 
 class Instruction(Collectible, ABC):
@@ -32,6 +32,13 @@ class Instruction(Collectible, ABC):
     def position(self) -> int:
         return self.__position
 
+    @property
+    def no_qubits_specified(self) -> bool:
+        return len(self._qargs) <= 0
+
+    def can_use_qubit(self, qubit: int) -> bool:
+        return qubit not in self._qargs
+
     def use_qubit(self, qubit: int) -> bool:
         """
 
@@ -40,14 +47,20 @@ class Instruction(Collectible, ABC):
         """
         if len(self._qargs) >= self.__needed_qubits:
             return False
+        if not self.can_use_qubit(qubit):
+            Logger.instance().error("Cannot use the same qubit multiple times!")
+            return True
         self._qargs.append(qubit)
         return len(self._qargs) < self.__needed_qubits
 
     def is_used(self) -> bool:
         return self.__position >= 0
 
-    def use(self, position: int):
-        self.__position = position
+    def use(self, position: int) -> bool:
+        if len(self._qargs) == self.__needed_qubits:
+            self.__position = position
+            return True
+        return False
 
     def reset(self, skip_qargs: bool = False, skip_position: bool = False):
         if not skip_qargs:
@@ -60,6 +73,10 @@ class Instruction(Collectible, ABC):
 
     def qargs_iter(self) -> Iterator[int]:
         return iter(self._qargs)
+
+    def get_qubit_at(self, index: int = 0) -> int:
+        if 0 <= index < len(self._qargs):
+            return self._qargs[index]
 
     def name(self) -> str:
         return self.short_name() + " Gate"
@@ -200,10 +217,27 @@ class HGate(SingleQubitGate):
         return HGate()
 
 
+####### Multi Qubit Gates ########
+
+
+class MultiQubitGate(Instruction, ABC):
+    def abbreviation(self, qubit: int = 0):
+        if qubit in self._qargs:
+            index = self._qargs.index(qubit)
+        else:
+            # during placement we need an abbreviation for the next qubit
+            index = len(self._qargs)
+        return self._internal_abbreviation(index)
+
+    @abstractmethod
+    def _internal_abbreviation(self, index: int):
+        pass
+
+
 ####### Double Qubit Gates #######
 
 
-class DoubleQubitGate(Instruction, ABC):
+class DoubleQubitGate(MultiQubitGate, ABC):
     def __init__(self, instruction):
         super(DoubleQubitGate, self).__init__(instruction, needed_qubits=2)
 
@@ -218,11 +252,8 @@ class SwapGate(DoubleQubitGate):
     def short_name(self) -> str:
         return "Swap"
 
-    def abbreviation(self, qubit: int = 0):
-        if qubit == self._qargs[0]:
-            return " S0 "
-        else:
-            return " S1 "
+    def _internal_abbreviation(self, index: int):
+        return [" S1 ", " S0 "][index]
 
     def copy(self) -> "Instruction":
         return SwapGate()
@@ -235,11 +266,8 @@ class CXGate(DoubleQubitGate):
     def short_name(self) -> str:
         return "CX"
 
-    def abbreviation(self, qubit: int = 0):
-        if qubit == self._qargs[0]:
-            return " C "
-        else:
-            return " X "
+    def _internal_abbreviation(self, index: int):
+        return [" C ", " X "][index]
 
     def copy(self) -> "Instruction":
         return CXGate()

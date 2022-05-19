@@ -73,6 +73,13 @@ def _no_space() -> str:
     return f"Your {circ} has {space} left. Remove a {gate} to place another one."
 
 
+def _no_gate_placed() -> str:
+    no = CC.highlight_word("no")
+    gate = CC.highlight_object("Gate")
+    circuit = CC.highlight_object("Circuit")
+    return f"Currently there is {no} {gate} in your {circuit} that you could remove!"
+
+
 class CommonPopups(Enum):
     SavingFailed = ("Error!", "Failed to save the game. Please make sure the folder for save data still exists and try "
                               "again.")
@@ -85,6 +92,7 @@ class CommonPopups(Enum):
     TutorialBlocked = ("Halt!", _tutorial_blocked())
     NotEnoughMoney = ("$$$", _not_enough_money())
     NoCircuitSpace = ("Nope", _no_space())
+    NoGatePlaced = ("Empty", _no_gate_placed())
 
     def __init__(self, title: str, text: str):
         self.__title = title

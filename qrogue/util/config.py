@@ -1,4 +1,5 @@
 import enum
+import math
 import os
 import pathlib
 from datetime import datetime
@@ -262,6 +263,9 @@ class ColorCode(enum.Enum):
     KEY_HIGHLIGHT = "04"
     SPACESHIP_FLOOR = "70"
 
+    WRONG_AMPLITUDE = "90"
+    CORRECT_AMPLITUDE = "91"
+
     def __init__(self, code: str):
         self.__code = code
 
@@ -276,7 +280,8 @@ class ColorConfig:
     STV_HEADING_COLOR = py_cui.CYAN_ON_BLACK
     CORRECT_AMPLITUDE_COLOR = py_cui.GREEN_ON_BLACK
     WRONG_AMPLITUDE_COLOR = py_cui.RED_ON_BLACK
-    CIRCUIT_COLOR = py_cui.CYAN_ON_BLACK
+    CIRCUIT_COLOR = py_cui.MAGENTA_ON_BLACK
+    CIRCUIT_LABEL_COLOR = py_cui.CYAN_ON_BLACK
     SPACESHIP_FLOOR_COLOR = py_cui.BLACK_ON_WHITE
 
     ERROR_COLOR = py_cui.RED_ON_BLUE
@@ -284,10 +289,12 @@ class ColorConfig:
     REGEX_TEXT_HIGHLIGHT = "//"     # regex recognizable version of TEXT_HIGHLIGHT (some characters need escaping)
     HIGHLIGHT_WIDTH = len(TEXT_HIGHLIGHT)
     __DIC = {
-        str(ColorCode.TILE_HIGHLIGHT): py_cui.WHITE_ON_BLACK,
-        str(ColorCode.OBJECT_HIGHLIGHT): py_cui.BLUE_ON_WHITE,
-        str(ColorCode.WORD_HIGHLIGHT): py_cui.RED_ON_WHITE,
-        str(ColorCode.KEY_HIGHLIGHT): py_cui.MAGENTA_ON_WHITE,
+        str(ColorCode.TILE_HIGHLIGHT):      py_cui.WHITE_ON_BLACK,
+        str(ColorCode.OBJECT_HIGHLIGHT):    py_cui.BLUE_ON_WHITE,
+        str(ColorCode.WORD_HIGHLIGHT):      py_cui.RED_ON_WHITE,
+        str(ColorCode.KEY_HIGHLIGHT):       py_cui.MAGENTA_ON_WHITE,
+        str(ColorCode.WRONG_AMPLITUDE):     py_cui.RED_ON_BLACK,
+        str(ColorCode.CORRECT_AMPLITUDE):   py_cui.GREEN_ON_BLACK,
     }
 
     @staticmethod
@@ -571,6 +578,40 @@ class GameplayConfig:
         return GameplayConfig.__CONFIG[GameplayConfig.__AUTO_SWAP_GATES][0] == "True"
 
 
+class UIConfig:
+    WINDOW_WIDTH = 17
+    WINDOW_HEIGHT = 10
+
+    HUD_HEIGHT = 1
+    NON_HUD_HEIGHT = WINDOW_HEIGHT - HUD_HEIGHT
+    PAUSE_CHOICES_WIDTH = math.floor(WINDOW_WIDTH / 3)
+
+    MAIN_MENU_ROW = 2
+    MAIN_MENU_HEIGHT = round(WINDOW_HEIGHT / 2)
+    ASCII_ART_WIDTH = math.floor(2 * WINDOW_WIDTH / 3)
+
+    INPUT_STV_WIDTH = 2
+    OUTPUT_STV_WIDTH = 2
+    TARGET_STV_WIDTH = 3
+    STV_HEIGHT = math.floor(WINDOW_HEIGHT * 0.6)
+    DIALOG_HEIGHT = 2
+    PUZZLE_CHOICES_WIDTH = math.floor(WINDOW_WIDTH / 3)
+
+    SHOP_INVENTORY_WIDTH = 4
+    SHOP_DETAILS_HEIGHT = 1
+
+    @staticmethod
+    def stv_height(num_of_qubits: int) -> int:
+        if num_of_qubits == 1:
+            return 1
+        elif num_of_qubits == 2:
+            return 2
+        elif num_of_qubits == 3:
+            return 4
+        else:
+            return 6
+
+
 class HudConfig:
     ShowMapName = True
     ShowEnergy = True
@@ -639,6 +680,12 @@ class MapConfig:
 
 class InstructionConfig:
     MAX_ABBREVIATION_LEN = 3
+
+
+class QuantumSimulationConfig:
+    DECIMALS = 3
+    MAX_SPACE_PER_NUMBER = 1 + 1 + 1 + DECIMALS     # sign + "0" + "." + DECIMALS
+    TOLERANCE = 0.1
 
 
 class ShopConfig:

@@ -3,18 +3,17 @@ Author: Artner Michael
 13.06.2021
 """
 from abc import ABC
-from typing import Tuple, List, Callable
+from typing import Tuple, List, Callable, Optional
 
-from qiskit import QuantumCircuit, transpile
+from qiskit import QuantumCircuit, transpile, Aer, execute
 from qiskit.providers.aer import StatevectorSimulator
 
-from qrogue.game.logic.actors import StateVector
+from qrogue.game.logic.actors import StateVector, CircuitMatrix
 from qrogue.game.logic.actors.controllables import Controllable
+from qrogue.game.logic.actors.controllables.qubit import QubitSet, DummyQubitSet
 from qrogue.game.logic.collectibles import Coin, Collectible, Consumable, Instruction, Key, MultiCollectible, \
     Qubit, Energy
-from qrogue.util import CheatConfig, Config, Logger, InstructionConfig, GameplayConfig
-
-from .qubit import QubitSet, DummyQubitSet
+from qrogue.util import CheatConfig, Config, Logger, GameplayConfig, QuantumSimulationConfig
 
 
 # from jkq import ddsim
@@ -275,7 +274,9 @@ class Robot(Controllable, ABC):
         self.__game_over = game_over_callback
         # initialize qubit stuff (rows)
         self.__simulator = StatevectorSimulator()#ddsim.JKQProvider().get_backend('statevector_simulator')
+        self.__backend = Aer.get_backend('unitary_simulator')
         self.__stv = None
+        self.__circuit_matrix = None
         self.__qubit_indices = []
         for i in range(0, attributes.num_of_qubits):
             self.__qubit_indices.append(i)
@@ -296,6 +297,10 @@ class Robot(Controllable, ABC):
     @property
     def state_vector(self) -> StateVector:
         return self.__stv
+
+    @property
+    def circuit_matrix(self) -> CircuitMatrix:
+        return self.__circuit_matrix
 
     @property
     def cur_energy(self) -> int:
@@ -345,11 +350,20 @@ class Robot(Controllable, ABC):
         result = job.result()
         self.__stv = StateVector(result.get_statevector(self.__circuit))
 
+        job = execute(self.__circuit, self.__backend)
+        result = job.result()
+        self.__circuit_matrix = CircuitMatrix(result.get_unitary(self.__circuit,
+                                                                 decimals=QuantumSimulationConfig.DECIMALS))
+
     def __remove_instruction(self, instruction: Instruction, skip_qargs: bool = False):
         if instruction and instruction.is_used():
             self.__instructions[instruction.position] = None
             self.__instruction_count -= 1
             instruction.reset(skip_qargs=skip_qargs)
+
+    def remove_instruction(self, instruction: Instruction):
+        if instruction in self.__instructions:
+            self.__remove_instruction(instruction)
 
     def __place_instruction(self, instruction: Instruction, position: int):
         if instruction.position == position:
@@ -460,36 +474,9 @@ class Robot(Controllable, ABC):
         """
         return self.__attributes.refill_energy(amount)
 
-    def get_circuit_print(self) -> str:
-        entry = "-" * (3 + InstructionConfig.MAX_ABBREVIATION_LEN + 3)
-        rows = [[entry] * self.circuit_space for _ in range(self.num_of_qubits)]
-
-        for i, inst in enumerate(self.__instructions):
-            if inst:
-                for q in inst.qargs_iter():
-                    inst_str = inst.abbreviation(q)
-                    diff_len = InstructionConfig.MAX_ABBREVIATION_LEN - len(inst_str)
-                    inst_str = f"--{{{inst_str}}}--"
-                    if diff_len > 0:
-                        half_diff = int(diff_len / 2)
-                        inst_str = inst_str.ljust(len(inst_str) + half_diff, "-")
-                        if diff_len % 2 == 0:
-                            inst_str = inst_str.rjust(len(inst_str) + half_diff, "-")
-                        else:
-                            inst_str = inst_str.rjust(len(inst_str) + half_diff + 1, "-")
-                    rows[q][i] = inst_str
-
-        circ_str = ""
-        # place qubits from top to bottom, high to low index
-        for q in range(len(rows) - 1, -1, -1):
-            circ_str += f"| q{q} >---"
-            row = rows[q]
-            for i in range(len(row)):
-                circ_str += row[i]
-                if i < len(row) - 1:
-                    circ_str += "+"
-            circ_str += "< out |\n"
-        return circ_str
+    def gate_at(self, index: int) -> Optional[Instruction]:
+        if 0 <= index < self.circuit_space:
+            return self.__instructions[index]
 
 
 class TestBot(Robot):
@@ -498,9 +485,6 @@ class TestBot(Robot):
         backpack = Backpack(5, gates)
 
         super(TestBot, self).__init__("Testbot", attributes, backpack, game_over_callback)
-    
-    def give_collectible(self, collectible: Collectible):
-        super(TestBot, self).give_collectible(collectible)
 
     def get_img(self):
         return "T"

@@ -67,7 +67,7 @@ class Achievement:
 
     def add_score(self, score: float):
         if score > 0:
-            self.__score += score
+            self.__score = min(self.score + score, self.done_score)
 
     def to_string(self) -> str:
         text = f"{self.name}{Achievement.__DATA_SEPARATOR}"
@@ -121,7 +121,10 @@ class AchievementManager:
             self.__temp_level_storage[name] = Achievement(name, AchievementType.Event, score, 1)
 
     def finished_tutorial(self, tutorial: str):
-        if tutorial not in self.__storage:
+        if tutorial in self.__storage:
+            tut = self.__storage[tutorial]
+            tut.add_score(tut.done_score)
+        else:
             self.__storage[tutorial] = Achievement(tutorial, AchievementType.Tutorial, 1, 1)
 
     def finished_level(self, level: str):

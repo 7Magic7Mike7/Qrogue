@@ -5,6 +5,30 @@ def is_power_of_2(n: int):
     return (n & (n - 1)) == 0
 
 
+def to_binary_string(num: int, digits: int = -1, msb: bool = True) -> str:
+    """
+    Converts a given integer into its binary representation as string.
+    :param num: the number we want to convert to a binary string
+    :param digits: number of digits the string should show (= length)
+    :param msb: whether to place the most or least significant bit(s) first
+    :return:
+    """
+    str_rep = ""
+    i = 0
+    while True:
+        str_rep += str(num % 2)
+        num = int(num / 2)
+        i += 1
+        if digits <= i:
+            break
+        elif digits < 0 and num <= 0:
+            break
+    if msb:
+        return str_rep[::-1]    # reverse the string
+    else:
+        return str_rep
+
+
 def center_string(text: str, line_width: int, uneven_left: bool = True, character: str = " ") -> str:
     """
     Prepends and appends the given character to the text in such a way that the text is centered as good as possible
@@ -27,3 +51,13 @@ def center_string(text: str, line_width: int, uneven_left: bool = True, characte
         return half2 * character + text + half1 * character
     else:
         return half1 * character + text + half2 * character
+
+
+def align_string(text: str, line_width: int, left: bool = True, character: str = " ") -> str:
+    if line_width <= len(text):
+        return text
+    diff = line_width - len(text)
+    if left:
+        return text + diff * character
+    else:
+        return diff * character + text

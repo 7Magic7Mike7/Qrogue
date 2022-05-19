@@ -1,10 +1,19 @@
-from typing import List
+from typing import List, Callable, Any
 
 from qrogue.game.logic.actors import Robot, Enemy, Boss, Riddle
 from qrogue.game.logic.collectibles import ShopItem
 from qrogue.game.world.map import CallbackPack
 from qrogue.game.world.navigation import Direction
-from qrogue.util import RandomManager, Config, PathConfig, Logger
+from qrogue.graphics.widgets.my_widgets import WidgetWrapper, SelectionWidget
+from qrogue.util import RandomManager, Config, PathConfig, Logger, Controls
+
+
+def true_callback() -> bool:
+    return True
+
+
+def false_callback() -> bool:
+    return False
 
 
 def start_gp(args):
@@ -49,6 +58,13 @@ def error_popup(title: str, text: str):
     print("----------------------------------------")
 
 
+def get_dummy_controls(activate_printing: bool = False) -> Controls:
+    def handle_key_presses(key: int):
+        if activate_printing:
+            print(f"{key} was pressed")
+    return Controls(handle_key_presses)
+
+
 def init_singletons(seed: int = 7, include_config: bool = False, custom_data_path: str = None,
                     custom_user_path: str = None) -> bool:
     if include_config:
@@ -68,3 +84,53 @@ def init_singletons(seed: int = 7, include_config: bool = False, custom_data_pat
     CallbackPack(start_gp, start_fight, start_boss_fight, open_riddle, visit_shop, game_over)
 
     return True
+
+
+class DummyWidget(WidgetWrapper):
+    def __init__(self):
+        self.title = ""
+        self.selected = False
+
+    def is_selected(self):
+        return self.selected
+
+    def reposition(self, row: int = None, column: int = None, row_span: int = None, column_span: int = None):
+        pass
+
+    def add_text_color_rule(self, regex: str, color: int, rule_type: str, match_type: str = 'line',
+                            region: List[int] = [0, 1], include_whitespace: bool = False, selected_color=None) -> None:
+        pass
+
+    def activate_individual_coloring(self):
+        pass
+
+    def add_key_command(self, keys: List[int], command: Callable[[], Any]) -> Any:
+        pass
+
+    def set_title(self, title: str) -> None:
+        self.title = title
+
+    def get_title(self) -> str:
+        return self.title
+
+
+class DummySelectionWidget(SelectionWidget):
+    def __init__(self, columns: int, is_second: bool = False, stay_selected: bool = False, print_keys: bool = False):
+        self.__dummy_widget = DummyWidget()
+        super(DummySelectionWidget, self).__init__(self.__dummy_widget, get_dummy_controls(print_keys), columns, is_second,
+                                                   stay_selected)
+
+    def get_dummy_widget(self) -> DummyWidget:
+        return self.__dummy_widget
+
+    def up(self):
+        self._up()
+
+    def right(self):
+        self._right()
+
+    def down(self):
+        self._down()
+
+    def left(self):
+        self._left()

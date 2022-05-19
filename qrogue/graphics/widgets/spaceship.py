@@ -5,7 +5,7 @@ import py_cui
 from qrogue.game.world.map import SpaceshipMap
 from qrogue.game.world.navigation import Direction
 from qrogue.graphics.rendering import ColorRules
-from qrogue.util import Controls, Keys
+from qrogue.util import Controls, Keys, UIConfig
 
 from qrogue.graphics.widgets import MyBaseWidget, MyWidgetSet, Renderable, Widget
 
@@ -44,10 +44,9 @@ class SpaceshipWidget(Widget):
 class SpaceshipWidgetSet(MyWidgetSet):
     def __init__(self, controls: Controls, logger, root: py_cui.PyCUI,
                  base_render_callback: Callable[[List[Renderable]], None]):
-        super().__init__(controls, logger, root, base_render_callback)
+        super().__init__(logger, root, base_render_callback)
 
-    def init_widgets(self, controls: Controls) -> None:
-        spaceship = self.add_block_label("Dynamic Spaceship", 0, 0, MyWidgetSet.NUM_OF_ROWS, MyWidgetSet.NUM_OF_COLS,
+        spaceship = self.add_block_label("Dynamic Spaceship", 0, 0, UIConfig.WINDOW_HEIGHT, UIConfig.WINDOW_WIDTH,
                                          center=True)
         spaceship.add_key_command(controls.get_keys(Keys.MoveUp), self.move_up)
         spaceship.add_key_command(controls.get_keys(Keys.MoveRight), self.move_right)
