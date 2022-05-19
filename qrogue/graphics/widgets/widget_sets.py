@@ -862,7 +862,7 @@ class FightWidgetSet(ReachTargetWidgetSet):
             damage_taken, deadly = self._robot.damage(amount=1)
             if deadly:
                 self._details.set_data(data=(
-                    ["Failed to flee. You have no more HP left and die."],
+                    ["Failed to flee. Your Robot has no more energy and lost the connection."],
                     [self.__game_over_callback]
                 ))
             else:
