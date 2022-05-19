@@ -19,7 +19,7 @@ from qrogue.util import CommonPopups, Config, Controls, GameplayConfig, HelpText
 
 from qrogue.graphics.widgets import Renderable
 from qrogue.graphics.widgets.my_widgets import SelectionWidget, CircuitWidget, MapWidget, SimpleWidget, HudWidget, \
-    MyBaseWidget, Widget, OutputStateVectorWidget, StateVectorWidget, CircuitMatrixWidget, TargetStateVectorWidget
+    MyBaseWidget, Widget, OutputStateVectorWidget, CircuitMatrixWidget, TargetStateVectorWidget, InputStateVectorWidget
 
 
 class MyWidgetSet(WidgetSet, Renderable, ABC):
@@ -504,7 +504,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         posy += UIConfig.HUD_HEIGHT
 
         stv = self.add_block_label('Input StV', posy, posx, row_span, UIConfig.INPUT_STV_WIDTH, center=True)
-        self.__input_stv = StateVectorWidget(stv, "In^T")
+        self.__input_stv = InputStateVectorWidget(stv, "In^T")
         posx += UIConfig.INPUT_STV_WIDTH
 
         multiplication = self.add_block_label('Mul sign', posy, posx, row_span, column_span=1, center=True)

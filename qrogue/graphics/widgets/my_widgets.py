@@ -395,6 +395,27 @@ class StateVectorWidget(Widget):
         self.widget.set_title("")
 
 
+class InputStateVectorWidget(StateVectorWidget):
+    def __init__(self, widget: WidgetWrapper, headline: str):
+        super().__init__(widget, headline)
+
+    def set_data(self, state_vector: StateVector) -> None:
+        rows = [""] * state_vector.size
+        for i in range(state_vector.size):
+            rows[i] = center_string(StateVector.complex_to_string(state_vector.at(i)),
+                                    QuantumSimulationConfig.MAX_SPACE_PER_NUMBER)
+            rows[i] = f"|{to_binary_string(i, state_vector.num_of_qubits)}>  {rows[i]}"
+        max_row_len = max([len(row) for row in rows])
+        rows = [align_string(row, max_row_len) for row in rows]
+
+        text = "|"
+        for i in range(state_vector.num_of_qubits - 1, -1, -1):
+            text += f"q{i}"
+        text += ">"
+
+        self._stv_str_rep = f"~{text}  {self._headline}~\n" + "\n".join(rows)
+
+
 class OutputStateVectorWidget(StateVectorWidget):
     def __init__(self, widget: WidgetWrapper, headline: str):
         super().__init__(widget, headline)
