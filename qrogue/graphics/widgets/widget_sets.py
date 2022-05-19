@@ -477,6 +477,11 @@ class NavigationWidgetSet(MyWidgetSet):
 class ReachTargetWidgetSet(MyWidgetSet, ABC):
     __CHOICE_COLUMNS = 2
     __DETAILS_COLUMNS = 3
+    _DETAILS_INFO_THEN_EDIT = 0
+    __DETAILS_INFO_THEN_HELP = 1
+    __DETAILS_INFO_THEN_CHOICES = 2
+    __DETAILS_EDIT = 3
+    __DETAILS_HELP = 4
 
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  continue_exploration_callback: Callable[[], None], flee_choice: str = "Flee"):
@@ -489,6 +494,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self.__controls = None
         self.__num_of_qubits = -1   # needs to be an illegal value because we definitely want to reposition all
         # dependent widgets for the first usage of this WidgetSet
+        self._details_content = None
 
         posy = 0
         posx = 0
@@ -563,9 +569,19 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
         def use_details():
             if self._details.use():
-                if self._details.index == self._details.num_of_choices - 1:
-                    # last selection possibility is always "Back"
+                if self._details_content == self.__DETAILS_INFO_THEN_CHOICES or \
+                        self._details.index == self._details.num_of_choices - 1 and \
+                        self._details_content in [self.__DETAILS_EDIT, self.__DETAILS_HELP]:
+                    # last selection possibility in edit is "Back"
                     self.__details_back()
+                elif self._details_content == self._DETAILS_INFO_THEN_EDIT:
+                    self._details_content = self.__DETAILS_EDIT
+                    self.__choices_adapt()
+                    self.render()
+                elif self._details_content == self.__DETAILS_INFO_THEN_HELP:
+                    self._details_content = self.__DETAILS_HELP
+                    self.__choices_help()
+                    self.render()
                 else:
                     # else we selected a gate and we initiate the placing process
                     Widget.move_focus(self.__circuit, self)
@@ -575,13 +591,13 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         def use_circuit():
             success, gate = self.__circuit.place_gate()
             if success:
-                self.__choices_commit()
-                Widget.move_focus(self._details, self)
                 if self._details.validate_index():
                     if gate:
                         self._details.update_text(gate.selection_str(), self._details.index)
                     else:
                         self.__choices_adapt()
+                self.__choices_commit()
+                Widget.move_focus(self._details, self)
                 self.render()
         self.__circuit.widget.add_key_command(controls.action, use_circuit)
 
@@ -697,6 +713,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             SelectionWidget.wrap_in_hotkey_str(options) + ["Remove", MyWidgetSet.BACK_STRING],
             [self.__choose_instruction]
         ))
+        self._details_content = self.__DETAILS_EDIT
         return True
 
     def __choose_instruction(self, index: int) -> bool:
@@ -746,8 +763,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                 [f"Congratulations! You received: {reward.to_string()}"],
                 [self._continue_exploration_callback]
             ))
-            # Popup.generic_info("Congratulations!", f"You received: {reward.to_string()}")
-            # self._continue_exploration_callback()
+            self._details_content = self.__DETAILS_INFO_THEN_CHOICES
             return True
         else:
             return self._on_commit_fail()
@@ -758,6 +774,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                 ["Nothing to reset"],
                 [self._empty_callback]
             ))
+            self._details_content = self.__DETAILS_INFO_THEN_CHOICES
             return True
         else:
             self._robot.reset_circuit()
@@ -765,71 +782,19 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             self.render()
             return False
 
-    def __choices_items(self) -> bool:
-        if self._robot.backpack.num_of_available_items > 0:
-            options = [consumable.to_string() for consumable in self._robot.backpack.pouch_iterator()]
-            self._details.set_data(data=(
-                SelectionWidget.wrap_in_hotkey_str(options) + [MyWidgetSet.BACK_STRING],
-                [self.__choose_item]
-            ))
-        else:
-            self._details.set_data(data=(
-                ["Currently you do not have any items you could use."],
-                [self._empty_callback]
-            ))
-        return True
-
-    def __continue_consuming(self) -> bool:
-        # leave if there are no more consumables left, stay if we could consume another one
-        if self._robot.backpack.num_of_available_items > 0:
-            options = [consumable.to_string() for consumable in self._robot.backpack.pouch_iterator()]
-            self._details.set_data(data=(
-                SelectionWidget.wrap_in_hotkey_str(options) + [MyWidgetSet.BACK_STRING],
-                [self.__choose_item]
-            ))
-            self._details.render()
-            return False
-        else:
-            return True
-
-    def __choose_item(self, index: int = 0) -> bool:
-        if 0 <= index < self._robot.backpack.consumables_in_pouch:
-            consumable = self._robot.backpack.get_from_pouch(index)
-            if consumable is not None:
-                if consumable.consume(self._robot):
-                    if consumable.charges_left() > 0:
-                        text = f"You partially consumed {consumable.name()} and there "
-                        if consumable.charges_left() > 1:
-                            text += f"are {consumable.charges_left()} portions "
-                        else:
-                            text += "is only 1 more portion "
-                        text += "left to consume. "
-                    else:
-                        self._robot.backpack.remove_from_pouch(consumable)
-                        text = f"You fully consumed {consumable.name()}. "
-                    text += f"\nYou gained the following effect:\n{consumable.effect_description()}"
-                    self._details.set_data(data=([text], [self.__continue_consuming]))
-                else:
-                    Popup.generic_info(consumable.name(), f"Failed to consume {consumable.name()}")
-                self.render()
-                return False
-            else:
-                Logger.instance().error("Error! The selected consumable/index is out of range!")
-        return True
-
     def __choices_help(self) -> bool:
+        def show_help_popup(index: int = 0) -> bool:
+            if 0 <= index < self._robot.backpack.used_capacity:
+                instruction = self._robot.backpack.get(index)
+                Popup.generic_info(instruction.name(), instruction.description())
+                return False
+            return True
         options = [instruction.name() for instruction in self._robot.backpack]
         self._details.set_data(data=(
             SelectionWidget.wrap_in_hotkey_str(options) + [MyWidgetSet.BACK_STRING],
-            [self.__show_help_popup]
+            [show_help_popup]
         ))
-        return True
-
-    def __show_help_popup(self, index: int = 0) -> bool:
-        if 0 <= index < self._robot.backpack.used_capacity:
-            instruction = self._robot.backpack.get(index)
-            Popup.generic_info(instruction.name(), instruction.description())
-            return False
+        self._details_content = self.__DETAILS_HELP
         return True
 
     @abstractmethod
@@ -850,6 +815,7 @@ class TrainingsWidgetSet(ReachTargetWidgetSet):
         super().__init__(controls, render, logger, root, back_to_spaceship_callback, "Done")
 
     def _on_commit_fail(self) -> bool:
+        self._details_content = ReachTargetWidgetSet._DETAILS_INFO_THEN_EDIT
         return True
 
     def _choices_flee(self) -> bool:
@@ -883,6 +849,7 @@ class FightWidgetSet(ReachTargetWidgetSet):
                 [f"Wrong, you took {damage_taken} damage. Remaining energy = {self._robot.cur_energy}"],
                 [self._empty_callback]
             ))
+        self._details_content = ReachTargetWidgetSet._DETAILS_INFO_THEN_EDIT
         return True
 
     def _choices_flee(self) -> bool:
@@ -903,6 +870,7 @@ class FightWidgetSet(ReachTargetWidgetSet):
                     ["Failed to flee. Your Robot lost some Energy."],
                     [self._empty_callback]
                 ))
+            self._details_content = ReachTargetWidgetSet._DETAILS_INFO_THEN_EDIT
         return True
 
 
