@@ -1,8 +1,8 @@
 import py_cui
-from py_cui.widgets import Widget
 
 from qrogue.game.logic.actors.controllables import ControllableType
 from qrogue.game.world.tiles import TileCode
+from qrogue.graphics.widgets.my_widgets import WidgetWrapper
 
 
 class TileColorer:
@@ -42,7 +42,7 @@ class TileColorer:
 
 class ColorRules:
     @staticmethod
-    def apply_map_rules(widget: Widget) -> None:
+    def apply_map_rules(widget: WidgetWrapper) -> None:
         for ct in ControllableType.values():
             widget.add_text_color_rule(ct.name, TileColorer.get_color(TileCode.Controllable), 'contains',
                                        match_type='regex')
@@ -53,7 +53,7 @@ class ColorRules:
         widget.add_text_color_rule('c', TileColorer.get_color(TileCode.Collectible), 'contains', match_type='regex')
 
     @staticmethod
-    def apply_spaceship_rules(widget: Widget):
+    def apply_spaceship_rules(widget: WidgetWrapper):
         widget.add_text_color_rule('\.', TileColorer.get_color(TileCode.SpaceshipWalk), 'contains', match_type='regex')
         widget.add_text_color_rule('M', TileColorer.get_color(TileCode.Controllable), 'contains', match_type='regex')
         widget.add_text_color_rule('R', TileColorer.get_color(TileCode.Npc), 'contains', match_type='regex')
@@ -61,7 +61,7 @@ class ColorRules:
                                    match_type='regex')
 
     @staticmethod
-    def apply_navigation_rules(widget: Widget):
+    def apply_navigation_rules(widget: WidgetWrapper):
         widget.add_text_color_rule('#', TileColorer.get_color(TileCode.Wall), 'contains', match_type='regex')
         widget.add_text_color_rule('M', TileColorer.get_color(TileCode.Controllable), 'contains', match_type='regex')
         widget.add_text_color_rule('t', TileColorer.get_color(TileCode.Teleport), 'contains', match_type='regex')
