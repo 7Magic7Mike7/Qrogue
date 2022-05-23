@@ -89,7 +89,7 @@ class Achievement:
 
 
 class AchievementManager:
-    __DISPLAY_STRING_IDENT = "  "
+    __DISPLAY_STRING_INDENT = "  "
 
     def __init__(self, achievements: List[Achievement]):
         self.__storage = {}
@@ -158,11 +158,11 @@ class AchievementManager:
         if len(self.__temp_level_storage) > 0:
             text += f"{AchievementType.Event.name}\n"
             for event in self.__temp_level_storage:
-                text += f"{AchievementManager.__DISPLAY_STRING_IDENT}{event.to_display_string()}\n"
+                text += f"{AchievementManager.__DISPLAY_STRING_INDENT}{event.to_display_string()}\n"
         # now add permanent the achievements
         for a_type in AchievementType.get_display_order():
             if a_type in type_text:
                 text += f"{a_type.name}\n"
                 for achievement in type_text[a_type]:
-                    text += f"{AchievementManager.__DISPLAY_STRING_IDENT}{achievement}\n"
+                    text += f"{AchievementManager.__DISPLAY_STRING_INDENT}{achievement}\n"
         return text
