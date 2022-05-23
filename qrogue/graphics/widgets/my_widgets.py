@@ -48,6 +48,10 @@ class WidgetWrapper(ABC):
     def add_key_command(self, keys: List[int], command: Callable[[], Any]) -> Any:
         pass
 
+    @abstractmethod
+    def toggle_border(self):
+        pass
+
 
 class MyBaseWidget(BlockLabel, WidgetWrapper):
     def __init__(self, wid, title, grid, row, column, row_span, column_span, padx, pady, center, logger):

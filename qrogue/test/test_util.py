@@ -113,6 +113,9 @@ class DummyWidget(WidgetWrapper):
     def get_title(self) -> str:
         return self.title
 
+    def toggle_border(self):
+        pass
+
 
 class DummySelectionWidget(SelectionWidget):
     def __init__(self, columns: int, is_second: bool = False, stay_selected: bool = False, print_keys: bool = False):
