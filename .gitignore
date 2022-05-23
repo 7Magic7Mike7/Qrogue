@@ -14,3 +14,4 @@ qrogue/test/installer/qrogue.config
 /dist/
 /qrogue.egg-info/
 /qrogue/QrogueData/
+/misc_ignore/*
