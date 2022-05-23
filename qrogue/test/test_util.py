@@ -4,7 +4,8 @@ from qrogue.game.logic.actors import Robot, Enemy, Boss, Riddle
 from qrogue.game.logic.collectibles import ShopItem
 from qrogue.game.world.map import CallbackPack
 from qrogue.game.world.navigation import Direction
-from qrogue.graphics.widgets.my_widgets import WidgetWrapper, SelectionWidget
+from qrogue.graphics import WidgetWrapper
+from qrogue.graphics.widgets.my_widgets import SelectionWidget
 from qrogue.util import RandomManager, Config, PathConfig, Logger, Controls
 
 

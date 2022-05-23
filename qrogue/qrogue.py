@@ -3,14 +3,12 @@ import random
 import sys
 from typing import Tuple, List
 
-import py_cui.errors
-
 from qrogue.game.logic.actors import Player
 from qrogue.game.world.dungeon_generator import QrogueLevelGenerator, QrogueWorldGenerator
 from qrogue.game.world.map import CallbackPack
 from qrogue.game.world.navigation import Coordinate
 from qrogue.management import SaveData, QrogueCUI
-from qrogue.util import Config, Logger, RandomManager, PathConfig, GameplayConfig, CheatConfig, Controls
+from qrogue.util import PyCuiConfig, Config, Logger, RandomManager, PathConfig, GameplayConfig, CheatConfig, Controls
 from qrogue.util.key_logger import OverWorldKeyLogger
 
 
@@ -118,7 +116,7 @@ def start_game(from_console: bool = False, debugging: bool = False, data_folder:
         print(f"[Qrogue] Starting game with seed = {seed}")
         try:
             QrogueCUI(seed).start()
-        except py_cui.errors.PyCUIOutOfBoundsError:
+        except PyCuiConfig.OutOfBoundsError:
             #print("[Qrogue] ERROR!")
             #print("Your terminal window is too small. "
             #      "Please make it bigger (i.e. maximize it) or reduce the font size.")
@@ -161,7 +159,7 @@ def simulate_game(simulation_path: str, from_console: bool = False, debugging: b
         print(f"[Qrogue] Simulating the game recorded at \"{simulation_path}\"")
         try:
             QrogueCUI.start_simulation(simulation_path)
-        except py_cui.errors.PyCUIOutOfBoundsError:
+        except PyCuiConfig.OutOfBoundsError:
             # print("[Qrogue] ERROR!")
             # print("Your terminal window is too small. "
             #      "Please make it bigger (i.e. maximize it) or reduce the font size.")

@@ -15,12 +15,13 @@ from qrogue.game.world.navigation import Direction
 from qrogue.graphics.popups import Popup
 from qrogue.graphics.rendering import ColorRules
 from qrogue.util import CommonPopups, Config, Controls, GameplayConfig, HelpText, HelpTextType, Logger, PathConfig, \
-    RandomManager, AchievementManager, Keys, UIConfig
+    RandomManager, AchievementManager, Keys, UIConfig, HudConfig
+from qrogue.util.achievements import Ach
 
-from qrogue.graphics.widgets import Renderable
+from qrogue.graphics.widgets import Renderable, Widget, MyBaseWidget
 from qrogue.graphics.widgets.my_widgets import SelectionWidget, CircuitWidget, MapWidget, SimpleWidget, HudWidget, \
-    MyBaseWidget, Widget, OutputStateVectorWidget, CircuitMatrixWidget, TargetStateVectorWidget, InputStateVectorWidget, \
-    WidgetWrapper
+    OutputStateVectorWidget, CircuitMatrixWidget, TargetStateVectorWidget, \
+    InputStateVectorWidget, WidgetWrapper
 
 
 class MyWidgetSet(WidgetSet, Renderable, ABC):

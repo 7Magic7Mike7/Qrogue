@@ -3,7 +3,8 @@ import time
 from enum import Enum
 from typing import List, Callable
 
-import py_cui
+from py_cui import PyCUI
+from py_cui import popups
 
 from qrogue.game.logic import StateVector, collectibles
 from qrogue.game.logic.actors import Boss, Controllable, Enemy, Riddle, Robot
@@ -18,9 +19,10 @@ from qrogue.graphics.popups import Popup, MultilinePopup, ConfirmationPopup
 from qrogue.graphics.widgets import Renderable, SpaceshipWidgetSet, BossFightWidgetSet, ExploreWidgetSet, \
     FightWidgetSet, MenuWidgetSet, MyWidgetSet, NavigationWidgetSet, PauseMenuWidgetSet, RiddleWidgetSet, \
     ShopWidgetSet, WorkbenchWidgetSet, TrainingsWidgetSet, Widget
+from qrogue.graphics import WidgetWrapper
 from qrogue.management import StoryNarration
 from qrogue.util import achievements, common_messages, CheatConfig, Config, GameplayConfig, UIConfig, HelpText, \
-    HelpTextType, Logger, PathConfig, MapConfig, Controls, Keys, RandomManager
+    HelpTextType, Logger, PathConfig, MapConfig, Controls, Keys, RandomManager, PyCuiConfig, PyCuiColors
 from qrogue.util.config import FileTypes
 from qrogue.util.game_simulator import GameSimulator
 from qrogue.util.key_logger import KeyLogger, OverWorldKeyLogger
@@ -28,7 +30,7 @@ from qrogue.util.key_logger import KeyLogger, OverWorldKeyLogger
 from qrogue.management import MapManager, Pausing, SaveData
 
 
-class QrogueCUI(py_cui.PyCUI):
+class QrogueCUI(PyCUI):
     @staticmethod
     def start_simulation(simulation_path: str):
         try:
@@ -47,10 +49,10 @@ class QrogueCUI(py_cui.PyCUI):
         RandomManager(seed)
         OverWorldKeyLogger().reinit(seed, "meta")
 
-        def move_focus(widget: py_cui.widgets.Widget, widget_set):
+        def move_focus(widget: WidgetWrapper, widget_set):
             # this check is necessary for manual widget-set switches due to the call-order (the callback happens before this move_focus here)
             if widget_set is self.__cur_widget_set:
-                super(QrogueCUI, self).move_focus(widget, auto_press_buttons=False)
+                self.move_focus(widget, auto_press_buttons=False)
         self._auto_focus_buttons = False
         Widget.set_move_focus_callback(move_focus)
 
@@ -131,7 +133,7 @@ class QrogueCUI(py_cui.PyCUI):
     def _refresh_height_width(self) -> None:
         try:
             super(QrogueCUI, self)._refresh_height_width()
-        except py_cui.errors.PyCUIOutOfBoundsError:
+        except PyCuiConfig.OutOfBoundsError:
             print("[Qrogue] ERROR!")
             rows, cols = self._grid.get_dimensions_absolute()
             x, y = self._grid.get_dimensions()
@@ -141,7 +143,7 @@ class QrogueCUI(py_cui.PyCUI):
                   f"Alternatively you can also reduce the font size.")
             print("If you are running it in Windows Powershell you can also try to press ALT+ENTER to change to "
                   "fullscreen mode.")
-            raise py_cui.errors.PyCUIOutOfBoundsError
+            raise PyCuiConfig.OutOfBoundsError
 
     @property
     def is_simulating(self) -> bool:
@@ -157,7 +159,7 @@ class QrogueCUI(py_cui.PyCUI):
 
     def __choose_simulation(self):
         title = f"Enter the path to the {FileTypes.KeyLog.value}-file to simulate:"
-        self.__show_input_popup(title, py_cui.WHITE_ON_CYAN, self.__start_simulation)
+        self.__show_input_popup(title, PyCuiColors.WHITE_ON_CYAN, self.__start_simulation)
 
     def __start_simulation(self, path: str):
         try:
@@ -200,11 +202,11 @@ class QrogueCUI(py_cui.PyCUI):
     def _handle_key_presses(self, key_pressed):
         if key_pressed == 0:    # skips the "empty" key press during initialization
             return
-        if key_pressed == py_cui.keys.KEY_CTRL_Q:
-            super(QrogueCUI, self)._handle_key_presses(py_cui.keys.KEY_ESCAPE)
+        if key_pressed == PyCuiConfig.KEY_CTRL_Q:
+            super(QrogueCUI, self)._handle_key_presses(PyCuiConfig.KEY_ESCAPE)
         if self.__simulator is None:
             if self._ready_for_input(key_pressed, gameplay=True):
-                if key_pressed == py_cui.keys.KEY_ESCAPE:
+                if key_pressed == PyCuiConfig.KEY_ESCAPE:
                     pass    # ignore ESC because this makes you leave the CUI
                 else:
                     if GameplayConfig.log_keys() and not self.is_simulating:
@@ -280,7 +282,7 @@ class QrogueCUI(py_cui.PyCUI):
                 if key_pressed == curses.KEY_RESIZE:
                     try:
                         self._refresh_height_width()
-                    except py_cui.errors.PyCUIOutOfBoundsError as e:
+                    except PyCuiConfig.OutOfBoundsError as e:
                         self._logger.info('Resized terminal too small')
                         self._display_window_warning(stdscr, str(e))
 
@@ -304,7 +306,7 @@ class QrogueCUI(py_cui.PyCUI):
                             in_element._handle_mouse_press(x, y, mouse_event)
 
                         # Otherwise, if not a popup, select the clicked on widget
-                        elif in_element is not None and not isinstance(in_element, py_cui.popups.Popup):
+                        elif in_element is not None and not isinstance(in_element, popups.Popup):
                             self.move_focus(in_element)
                             in_element._handle_mouse_press(x, y, mouse_event)
 
@@ -338,7 +340,7 @@ class QrogueCUI(py_cui.PyCUI):
                 except curses.error as e:
                     self._logger.error('Curses error while drawing TUI')
                     self._display_window_warning(stdscr, str(e))
-                except py_cui.errors.PyCUIOutOfBoundsError as e:
+                except PyCuiConfig.OutOfBoundsError as e:
                     self._logger.error('Resized terminal too small')
                     self._display_window_warning(stdscr, str(e))
 
@@ -375,6 +377,12 @@ class QrogueCUI(py_cui.PyCUI):
         if self._renderer is None:
             self._renderer = MultiColorRenderer(self, self._stdscr, self._logger)
         super(QrogueCUI, self)._initialize_widget_renderer()
+
+    def move_focus(self, widget: WidgetWrapper, auto_press_buttons: bool = True) -> None:
+        if isinstance(widget, PyCuiConfig.PyCuiWidget):
+            super(QrogueCUI, self).move_focus(widget, auto_press_buttons)
+        else:
+            Logger.instance().throw(f"Non-PyCUI widget used in renderer! CurWidgetSet = {self.__cur_widget_set}")
 
     def __init_keys(self) -> None:
         # debugging stuff
@@ -417,7 +425,7 @@ class QrogueCUI(py_cui.PyCUI):
 
     def __show_input_popup(self, title: str, color: int, callback: Callable[[str], None]) -> None:
         self.__focused_widget = self.get_selected_widget()
-        self._popup = py_cui.popups.TextBoxPopup(self, title, color, callback, self._renderer, False, self._logger)
+        self._popup = popups.TextBoxPopup(self, title, color, callback, self._renderer, False, self._logger)
 
     def __show_confirmation_popup(self, title: str, text: str, color: int, callback: Callable[[bool], None]):
         self.__focused_widget = self.get_selected_widget()

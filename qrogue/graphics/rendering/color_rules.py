@@ -1,31 +1,30 @@
-import py_cui
-
 from qrogue.game.logic.actors.controllables import ControllableType
 from qrogue.game.world.tiles import TileCode
-from qrogue.graphics.widgets.my_widgets import WidgetWrapper
+from qrogue.graphics import WidgetWrapper
+from qrogue.util import PyCuiColors
 
 
 class TileColorer:
     __color_manager = {
-        TileCode.Invalid: py_cui.RED_ON_BLUE,
-        TileCode.Void: py_cui.CYAN_ON_BLACK,
-        TileCode.FogOfWar: py_cui.CYAN_ON_BLACK,
+        TileCode.Invalid: PyCuiColors.RED_ON_BLUE,
+        TileCode.Void: PyCuiColors.CYAN_ON_BLACK,
+        TileCode.FogOfWar: PyCuiColors.CYAN_ON_BLACK,
 
-        TileCode.Floor: py_cui.CYAN_ON_BLACK,
-        TileCode.Wall: py_cui.BLACK_ON_WHITE,
-        TileCode.Obstacle: py_cui.BLACK_ON_WHITE,
-        TileCode.Door: py_cui.CYAN_ON_BLACK,
+        TileCode.Floor: PyCuiColors.CYAN_ON_BLACK,
+        TileCode.Wall: PyCuiColors.BLACK_ON_WHITE,
+        TileCode.Obstacle: PyCuiColors.BLACK_ON_WHITE,
+        TileCode.Door: PyCuiColors.CYAN_ON_BLACK,
 
-        TileCode.Collectible: py_cui.CYAN_ON_BLACK,
-        TileCode.Teleport: py_cui.CYAN_ON_BLACK,
-        TileCode.Message: py_cui.CYAN_ON_BLACK,
+        TileCode.Collectible: PyCuiColors.CYAN_ON_BLACK,
+        TileCode.Teleport: PyCuiColors.CYAN_ON_BLACK,
+        TileCode.Message: PyCuiColors.CYAN_ON_BLACK,
 
-        TileCode.Controllable: py_cui.GREEN_ON_BLACK,
-        TileCode.Npc: py_cui.BLUE_ON_BLACK,
-        TileCode.Enemy: py_cui.RED_ON_BLACK,
-        TileCode.Boss: py_cui.BLACK_ON_RED,
+        TileCode.Controllable: PyCuiColors.GREEN_ON_BLACK,
+        TileCode.Npc: PyCuiColors.BLUE_ON_BLACK,
+        TileCode.Enemy: PyCuiColors.RED_ON_BLACK,
+        TileCode.Boss: PyCuiColors.BLACK_ON_RED,
 
-        TileCode.SpaceshipWalk: py_cui.BLACK_ON_WHITE,
+        TileCode.SpaceshipWalk: PyCuiColors.BLACK_ON_WHITE,
     }
 
     @staticmethod

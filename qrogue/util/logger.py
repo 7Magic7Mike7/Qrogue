@@ -1,12 +1,12 @@
 from datetime import datetime
 from typing import Callable
 
-import py_cui.debug
+from py_cui.debug import PyCUILogger
 
 from qrogue.util.config import PathConfig, Config
 
 
-class Logger(py_cui.debug.PyCUILogger):
+class Logger(PyCUILogger):
     __BUFFER_SIZE = 2048
     __instance = None
 

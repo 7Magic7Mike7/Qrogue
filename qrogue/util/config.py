@@ -5,7 +5,7 @@ import pathlib
 from datetime import datetime
 from typing import Callable, Tuple
 
-import py_cui
+from qrogue.util import PyCuiColors
 
 
 class FileTypes(enum.Enum):
@@ -275,26 +275,26 @@ class ColorCode(enum.Enum):
 
 class ColorConfig:
     CODE_WIDTH = 2
-    SELECTION_COLOR = py_cui.BLACK_ON_WHITE
-    QUBIT_INFO_COLOR = py_cui.CYAN_ON_BLACK
-    STV_HEADING_COLOR = py_cui.CYAN_ON_BLACK
-    CORRECT_AMPLITUDE_COLOR = py_cui.GREEN_ON_BLACK
-    WRONG_AMPLITUDE_COLOR = py_cui.RED_ON_BLACK
-    CIRCUIT_COLOR = py_cui.MAGENTA_ON_BLACK
-    CIRCUIT_LABEL_COLOR = py_cui.CYAN_ON_BLACK
-    SPACESHIP_FLOOR_COLOR = py_cui.BLACK_ON_WHITE
+    SELECTION_COLOR = PyCuiColors.BLACK_ON_WHITE
+    QUBIT_INFO_COLOR = PyCuiColors.CYAN_ON_BLACK
+    STV_HEADING_COLOR = PyCuiColors.CYAN_ON_BLACK
+    CORRECT_AMPLITUDE_COLOR = PyCuiColors.GREEN_ON_BLACK
+    WRONG_AMPLITUDE_COLOR = PyCuiColors.RED_ON_BLACK
+    CIRCUIT_COLOR = PyCuiColors.MAGENTA_ON_BLACK
+    CIRCUIT_LABEL_COLOR = PyCuiColors.CYAN_ON_BLACK
+    SPACESHIP_FLOOR_COLOR = PyCuiColors.BLACK_ON_WHITE
 
-    ERROR_COLOR = py_cui.RED_ON_BLUE
+    ERROR_COLOR = PyCuiColors.RED_ON_BLUE
     TEXT_HIGHLIGHT = "//"
     REGEX_TEXT_HIGHLIGHT = "//"     # regex recognizable version of TEXT_HIGHLIGHT (some characters need escaping)
     HIGHLIGHT_WIDTH = len(TEXT_HIGHLIGHT)
     __DIC = {
-        str(ColorCode.TILE_HIGHLIGHT):      py_cui.WHITE_ON_BLACK,
-        str(ColorCode.OBJECT_HIGHLIGHT):    py_cui.BLUE_ON_WHITE,
-        str(ColorCode.WORD_HIGHLIGHT):      py_cui.RED_ON_WHITE,
-        str(ColorCode.KEY_HIGHLIGHT):       py_cui.MAGENTA_ON_WHITE,
-        str(ColorCode.WRONG_AMPLITUDE):     py_cui.RED_ON_BLACK,
-        str(ColorCode.CORRECT_AMPLITUDE):   py_cui.GREEN_ON_BLACK,
+        str(ColorCode.TILE_HIGHLIGHT):      PyCuiColors.WHITE_ON_BLACK,
+        str(ColorCode.OBJECT_HIGHLIGHT):    PyCuiColors.BLUE_ON_WHITE,
+        str(ColorCode.WORD_HIGHLIGHT):      PyCuiColors.RED_ON_WHITE,
+        str(ColorCode.KEY_HIGHLIGHT):       PyCuiColors.MAGENTA_ON_WHITE,
+        str(ColorCode.WRONG_AMPLITUDE):     PyCuiColors.RED_ON_BLACK,
+        str(ColorCode.CORRECT_AMPLITUDE):   PyCuiColors.GREEN_ON_BLACK,
     }
 
     @staticmethod
@@ -420,7 +420,7 @@ class ColorConfig:
 class PopupConfig:
     @staticmethod
     def default_color() -> int:
-        return py_cui.BLACK_ON_WHITE
+        return PyCuiColors.BLACK_ON_WHITE
 
 
 class CheatConfig:
@@ -474,7 +474,7 @@ class CheatConfig:
     @staticmethod
     def cheat_input():
         if Config.debugging() and CheatConfig.__input_popup is not None:
-            CheatConfig.__input_popup("Input your Cheat:", py_cui.BLACK_ON_RED, CheatConfig.__use_cheat)
+            CheatConfig.__input_popup("Input your Cheat:", PyCuiColors.BLACK_ON_RED, CheatConfig.__use_cheat)
 
     @staticmethod
     def cheat_list():

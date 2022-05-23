@@ -1,12 +1,13 @@
 from typing import Callable
 
-import py_cui.ui
 from py_cui import ColorRule
+from py_cui.popups import Popup as PyCuiPopup
+from py_cui.ui import MenuImplementation
 
 from qrogue.util import ColorConfig as CC, Keys, Logger
 
 
-class MultilinePopup(py_cui.popups.Popup, py_cui.ui.MenuImplementation):
+class MultilinePopup(PyCuiPopup, MenuImplementation):
     @staticmethod
     def __get_color_rules():
         regex = CC.REGEX_TEXT_HIGHLIGHT

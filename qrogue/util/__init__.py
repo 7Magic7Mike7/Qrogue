@@ -1,4 +1,5 @@
 # exporting
+from .py_cui_config import PyCuiConfig, PyCuiColors
 from .config import CheatConfig, ColorConfig, GameplayConfig, HudConfig, InstructionConfig, MapConfig, PathConfig, \
     PopupConfig, Config, ShopConfig, QuantumSimulationConfig, UIConfig
 from .controls import Controls, Keys
