@@ -150,6 +150,9 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             if len(row) < max_len:
                 row += [None] * (max_len - len(row))
 
+        if self.__spawn_pos is None:
+            raise SyntaxError("No SpawnRoom provided! Make sure to place 'SR' in the layout and if you defined a "
+                              "custom SpawnRoom make sure to tag it as (Spawn).")
         level = LevelMap(name, file_name, self.__seed, room_matrix, self.__robot, self.__spawn_pos,
                          self.__check_achievement, self.__trigger_event)
         return level, True
