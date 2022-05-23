@@ -19,7 +19,8 @@ from qrogue.util import CommonPopups, Config, Controls, GameplayConfig, HelpText
 
 from qrogue.graphics.widgets import Renderable
 from qrogue.graphics.widgets.my_widgets import SelectionWidget, CircuitWidget, MapWidget, SimpleWidget, HudWidget, \
-    MyBaseWidget, Widget, OutputStateVectorWidget, CircuitMatrixWidget, TargetStateVectorWidget, InputStateVectorWidget
+    MyBaseWidget, Widget, OutputStateVectorWidget, CircuitMatrixWidget, TargetStateVectorWidget, InputStateVectorWidget, \
+    WidgetWrapper
 
 
 class MyWidgetSet(WidgetSet, Renderable, ABC):
@@ -76,7 +77,7 @@ class MyWidgetSet(WidgetSet, Renderable, ABC):
         pass
 
     @abstractmethod
-    def get_main_widget(self) -> MyBaseWidget:
+    def get_main_widget(self) -> WidgetWrapper:
         pass
 
     @abstractmethod
@@ -158,7 +159,7 @@ class MenuWidgetSet(MyWidgetSet):
             self.__selection
         ]
 
-    def get_main_widget(self) -> MyBaseWidget:
+    def get_main_widget(self) -> WidgetWrapper:
         return self.__selection.widget
 
     def reset(self) -> None:
@@ -286,7 +287,7 @@ class PauseMenuWidgetSet(MyWidgetSet):
             self.__details,
         ]
 
-    def get_main_widget(self) -> MyBaseWidget:
+    def get_main_widget(self) -> WidgetWrapper:
         return self.__choices.widget
 
     def set_data(self, robot: Optional[Robot], map_name: str, achievement_manager: AchievementManager):
@@ -340,7 +341,7 @@ class WorkbenchWidgetSet(MyWidgetSet):
             self.__available_upgrades,
         ]
 
-    def get_main_widget(self) -> MyBaseWidget:
+    def get_main_widget(self) -> WidgetWrapper:
         return self.__robot_selection.widget
 
     def reset(self) -> None:
@@ -399,7 +400,7 @@ class ExploreWidgetSet(MyWidgetSet):
         self.__map_widget.widget.add_key_command(controls.get_keys(Keys.MoveDown), move_down)
         self.__map_widget.widget.add_key_command(controls.get_keys(Keys.MoveLeft), move_left)
 
-    def get_main_widget(self) -> MyBaseWidget:
+    def get_main_widget(self) -> WidgetWrapper:
         return self.__map_widget.widget
 
     def set_data(self, map_: Map) -> None:
@@ -460,7 +461,7 @@ class NavigationWidgetSet(MyWidgetSet):
         self.__map_widget.widget.add_key_command(controls.get_keys(Keys.MoveDown), move_down)
         self.__map_widget.widget.add_key_command(controls.get_keys(Keys.MoveLeft), move_left)
 
-    def get_main_widget(self) -> MyBaseWidget:
+    def get_main_widget(self) -> WidgetWrapper:
         return self.__map_widget.widget
 
     def set_data(self, map_: Map) -> None:
@@ -650,7 +651,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             else:
                 self.__circuit.widget.reposition(row=UIConfig.HUD_HEIGHT + row_span)
 
-    def get_main_widget(self) -> MyBaseWidget:
+    def get_main_widget(self) -> WidgetWrapper:
         return self._choices.widget
 
     def set_data(self, robot: Robot, target: Target) -> None:
@@ -937,7 +938,7 @@ class ShopWidgetSet(MyWidgetSet):
             self.__buy,
         ]
 
-    def get_main_widget(self) -> MyBaseWidget:
+    def get_main_widget(self) -> WidgetWrapper:
         return self.__inventory.widget
 
     def reset(self) -> None:
