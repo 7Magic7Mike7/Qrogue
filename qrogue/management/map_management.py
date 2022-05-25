@@ -99,9 +99,9 @@ class MapManager:
                     Logger.instance().error(f"Error! Unable to build map \"{world_name}\". Returning to HubWorld")
         return self.__world_memory[MapConfig.hub_world()]
 
-    def __load_map(self, map_name: str, room: Coordinate, map_seed: int = None):
+    def __load_map(self, map_name: str, room: Optional[Coordinate], map_seed: int = None):
         if map_name == MapConfig.spaceship():
-            next_map = get_next(MapConfig.spaceship())
+            next_map = get_next(map_name)
             if next_map is None:
                 next_map = MapConfig.hub_world()
             self.load_map(next_map, None)
@@ -211,7 +211,7 @@ class MapManager:
                 CommonQuestions.ProceedToNextMap.ask(self.__proceed)
         SaveData.instance().achievement_manager.trigger_level_event(event_id)
 
-    def load_map(self, map_name: str, spawn_room: Coordinate, map_seed: int = None):
+    def load_map(self, map_name: str, spawn_room: Optional[Coordinate], map_seed: int = None):
         if map_name.lower() == MapConfig.next_map_string():
             self.__load_next()
         else:
