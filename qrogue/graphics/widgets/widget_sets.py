@@ -14,20 +14,27 @@ from qrogue.game.world.map import Map
 from qrogue.game.world.navigation import Direction
 from qrogue.graphics.popups import Popup
 from qrogue.graphics.rendering import ColorRules
+from qrogue.graphics.widget_base import WidgetWrapper
 from qrogue.util import CommonPopups, Config, Controls, GameplayConfig, HelpText, HelpTextType, Logger, PathConfig, \
     RandomManager, AchievementManager, Keys, UIConfig, HudConfig
 from qrogue.util.achievements import Ach
 
 from qrogue.graphics.widgets import Renderable, Widget, MyBaseWidget
 from qrogue.graphics.widgets.my_widgets import SelectionWidget, CircuitWidget, MapWidget, SimpleWidget, HudWidget, \
-    OutputStateVectorWidget, CircuitMatrixWidget, TargetStateVectorWidget, \
-    InputStateVectorWidget, WidgetWrapper
+    OutputStateVectorWidget, CircuitMatrixWidget, TargetStateVectorWidget, InputStateVectorWidget
 
 
 class MyWidgetSet(WidgetSet, Renderable, ABC):
     """
     Class that handles different sets of widgets so we can easily switch between different screens.
     """
+
+    @staticmethod
+    def create_hud_row(widget_set: "MyWidgetSet") -> HudWidget:
+        hud = widget_set.add_block_label('HUD', 0, 0, row_span=UIConfig.HUD_HEIGHT, column_span=UIConfig.WINDOW_WIDTH,
+                                         center=False)
+        hud.toggle_border()
+        return HudWidget(hud)
 
     BACK_STRING = "-Back-"
 
@@ -224,10 +231,7 @@ class PauseMenuWidgetSet(MyWidgetSet):
         self.__exit_run = exit_run_callback
         self.__achievement_manager = None
 
-        hud = self.add_block_label('HUD', 0, 0, row_span=UIConfig.HUD_HEIGHT, column_span=UIConfig.WINDOW_WIDTH,
-                                   center=False)
-        hud.toggle_border()
-        self.__hud = HudWidget(hud)
+        self.__hud = MyWidgetSet.create_hud_row(self)
 
         choices = self.add_block_label('Choices', UIConfig.HUD_HEIGHT, 0,
                                        row_span=UIConfig.NON_HUD_HEIGHT,
@@ -395,11 +399,7 @@ class WorkbenchWidgetSet(MyWidgetSet):
 class ExploreWidgetSet(MyWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI):
         super().__init__(logger, root, render)
-
-        hud = self.add_block_label('HUD', 0, 0, row_span=UIConfig.HUD_HEIGHT, column_span=UIConfig.WINDOW_WIDTH,
-                                   center=False)
-        hud.toggle_border()
-        self.__hud = HudWidget(hud)
+        self.__hud = MyWidgetSet.create_hud_row(self)
 
         map_widget = self.add_block_label('MAP', UIConfig.HUD_HEIGHT, 0, row_span=UIConfig.NON_HUD_HEIGHT,
                                           column_span=UIConfig.WINDOW_WIDTH, center=True)
@@ -530,10 +530,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                                                 UIConfig.TARGET_STV_WIDTH + 1 * 3)  # width of the three signs
         circuit_height = UIConfig.NON_HUD_HEIGHT - row_span - UIConfig.DIALOG_HEIGHT
 
-        hud = self.add_block_label('HUD', posy, 0, row_span=UIConfig.HUD_HEIGHT, column_span=UIConfig.WINDOW_WIDTH,
-                                   center=False)
-        hud.toggle_border()
-        self.__hud = HudWidget(hud)
+        self.__hud = MyWidgetSet.create_hud_row(self)
         posy += UIConfig.HUD_HEIGHT
 
         stv = self.add_block_label('Input StV', posy, posx, row_span, UIConfig.INPUT_STV_WIDTH, center=True)
@@ -935,9 +932,7 @@ class ShopWidgetSet(MyWidgetSet):
         self.__robot = None
         self.__items = None
 
-        hud = self.add_block_label("HUD", 0, 0, row_span=UIConfig.HUD_HEIGHT, column_span=UIConfig.WINDOW_WIDTH,
-                                   center=False)
-        self.__hud = HudWidget(hud)
+        self.__hud = MyWidgetSet.create_hud_row(self)
 
         inv_width = UIConfig.SHOP_INVENTORY_WIDTH
         inventory = self.add_block_label("Inventory", UIConfig.HUD_HEIGHT, 0, row_span=UIConfig.NON_HUD_HEIGHT,
