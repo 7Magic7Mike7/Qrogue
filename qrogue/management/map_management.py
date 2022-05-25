@@ -58,7 +58,7 @@ class MapManager:
                                              SaveData.instance().achievement_manager.check_achievement,
                                              SaveData.instance().achievement_manager.add_to_achievement,
                                              self.load_map)
-            hub_world, success = generator.generate("worlds")
+            hub_world, success = generator.generate(MapConfig.hub_world())
             if not success:
                 Logger.instance().throw(RuntimeError("Unable to build world map! Please download again and make sure "
                                                      "to not edit game data."))

@@ -663,7 +663,7 @@ class MapConfig:
 
     @staticmethod
     def hub_world() -> str:
-        return "w0"
+        return "worlds"
 
     @staticmethod
     def first_world() -> str:
