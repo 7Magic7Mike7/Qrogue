@@ -175,7 +175,7 @@ class QrogueCUI(PyCUI):
         simulator.set_controls(self.controls)
 
         if simulator.simulates_over_world:
-            self.__menu.set_seed(simulator.seed)
+            self.__menu.set_data(simulator.seed)
         else:
             MapManager.instance().load_map(simulator.map_name, None, simulator.seed)
 
@@ -451,7 +451,7 @@ class QrogueCUI(PyCUI):
             seed = data
         else:
             seed = RandomManager.instance().get_seed(msg="QroguePyCUI.switch_to_menu()")
-        self.__menu.set_seed(seed)
+        self.__menu.set_data(seed)
         self.apply_widget_set(self.__menu)
 
     def __start_playing(self):
