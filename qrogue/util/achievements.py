@@ -8,21 +8,51 @@ CompletedExpedition = "CompletedExpedition"
 UnlockedWorkbench = "UnlockedWorkbench"
 
 
+class Ach:
+    @staticmethod
+    def story() -> str:
+        return "Story"
+
+    @staticmethod
+    def story_exam_phase1() -> str:
+        return "StoryExam1"
+
+    @staticmethod
+    def story_exam_phase2() -> str:
+        return "StoryExam2"
+
+    @staticmethod
+    def story_exam_completed() -> str:
+        return "StoryExamCompleted"
+
+    @staticmethod
+    def completed_exam_phase1(progress: int) -> bool:
+        return progress > 1
+
+    @staticmethod
+    def completed_exam_phase2(progress: int) -> bool:
+        return progress > 2
+
+    @staticmethod
+    def completed_exam_phaseX(progress: int) -> bool:
+        return progress > 10000 # todo
+
+
 class AchievementType(enum.Enum):
     World = 0
     Level = 1
-    Gate = 2
+    Misc = 2
     Secret = 3  # is not shown until unlocked (therefore also needs to be done in one go, i.e. done_score = 1)
-    Tutorial = 4
+    Story = 4
     Event = 5    # in-level event
     Expedition = 6
 
     @staticmethod
     def get_display_order() -> "List[AchievementType]":
         return [
-            AchievementType.Secret, AchievementType.Gate,
+            AchievementType.Secret, AchievementType.Misc,
             AchievementType.Expedition, AchievementType.World, AchievementType.Level,
-            AchievementType.Tutorial,
+            AchievementType.Story,
         ]
 
 
@@ -65,9 +95,11 @@ class Achievement:
     def is_done(self) -> bool:
         return self.score >= self.done_score
 
-    def add_score(self, score: float):
-        if score > 0:
+    def add_score(self, score: float) -> bool:
+        if score > 0 and not self.is_done():
             self.__score = min(self.score + score, self.done_score)
+            return True
+        return False
 
     def to_string(self) -> str:
         text = f"{self.name}{Achievement.__DATA_SEPARATOR}"
@@ -98,6 +130,10 @@ class AchievementManager:
         for achievement in achievements:
             self.__storage[achievement.name] = achievement
 
+    @property
+    def story_progress(self) -> float:
+        return self.__storage[Ach.story()].score
+
     def check_achievement(self, name: str) -> bool:
         if name in self.__temp_level_storage:
             achievement = self.__temp_level_storage[name]
@@ -120,17 +156,19 @@ class AchievementManager:
         else:
             self.__temp_level_storage[name] = Achievement(name, AchievementType.Event, score, 1)
 
-    def finished_tutorial(self, tutorial: str):
-        if tutorial in self.__storage:
-            tut = self.__storage[tutorial]
+    def progressed_in_story(self, progress: str):
+        if progress in self.__storage:
+            tut = self.__storage[progress]
             tut.add_score(tut.done_score)
         else:
-            self.__storage[tutorial] = Achievement(tutorial, AchievementType.Tutorial, 1, 1)
+            self.__storage[progress] = Achievement(progress, AchievementType.Story, 1, 1)
+        if self.__storage[progress].is_done():
+            self.__storage[Ach.story()].add_score(1)    # add one step to the story achievement
 
     def finished_level(self, level: str):
         self.__storage[level] = Achievement(level, AchievementType.Level, 1, 1)
-        if not self.check_achievement(FinishedTutorial):
-            self.finished_tutorial(FinishedTutorial)
+        #if not self.check_achievement(FinishedTutorial):
+        #    self.progressed_in_story(FinishedTutorial)
 
     def finished_world(self, world: str):
         self.__storage[world] = Achievement(world, AchievementType.World, 1, 1)

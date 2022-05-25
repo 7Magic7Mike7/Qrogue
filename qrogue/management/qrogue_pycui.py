@@ -23,6 +23,7 @@ from qrogue.graphics import WidgetWrapper
 from qrogue.management import StoryNarration
 from qrogue.util import achievements, common_messages, CheatConfig, Config, GameplayConfig, UIConfig, HelpText, \
     HelpTextType, Logger, PathConfig, MapConfig, Controls, Keys, RandomManager, PyCuiConfig, PyCuiColors
+from qrogue.util.achievements import Ach
 from qrogue.util.config import FileTypes
 from qrogue.util.game_simulator import GameSimulator
 from qrogue.util.key_logger import KeyLogger, OverWorldKeyLogger
@@ -113,7 +114,7 @@ class QrogueCUI(PyCUI):
 
         # init spaceship
         def stop_playing(direction: Direction, controllable: Controllable):
-            if SaveData.instance().achievement_manager.finished_tutorial(achievements.FinishedTutorial):
+            if SaveData.instance().achievement_manager.progressed_in_story(achievements.FinishedTutorial):
                 self.switch_to_menu(None)
 
         def open_world_view(direction: Direction, controllable: Controllable):
@@ -417,6 +418,7 @@ class QrogueCUI(PyCUI):
         super().apply_widget_set(new_widget_set)
         self.__cur_widget_set = new_widget_set
         self.move_focus(self.__cur_widget_set.get_main_widget(), auto_press_buttons=False)
+        self.__cur_widget_set.update_story_progress(int(SaveData.instance().achievement_manager.story_progress))
         self.__cur_widget_set.render()
 
     def __show_message_popup(self, title: str, text: str, color: int) -> None:
@@ -453,7 +455,12 @@ class QrogueCUI(PyCUI):
         self.apply_widget_set(self.__menu)
 
     def __start_playing(self):
-        self.__state_machine.change_state(State.Spaceship, SaveData.instance())
+        if Ach.completed_exam_phaseX(int(SaveData.instance().achievement_manager.story_progress)):
+            self.__state_machine.change_state(State.Spaceship, SaveData.instance())
+        else:
+            # load the newest level (exam phase) by
+            self.__state_machine.change_state(State.Explore, MapManager.instance().load_map(MapConfig.next_map_string(),
+                                                                                   None))
 
     def switch_to_spaceship(self, data=None):
         StoryNarration.returned_to_spaceship()
@@ -525,7 +532,7 @@ class QrogueCUI(PyCUI):
         self.__state_machine.change_state(State.Pause, None)
         if not SaveData.instance().achievement_manager.check_achievement(achievements.EnteredPauseMenu):
             Popup.generic_info("Pause", HelpText.get(HelpTextType.Pause))
-            SaveData.instance().achievement_manager.finished_tutorial(achievements.EnteredPauseMenu)
+            SaveData.instance().achievement_manager.add_to_achievement(achievements.EnteredPauseMenu, 1)
 
     def switch_to_explore(self, data) -> None:
         if data is not None:

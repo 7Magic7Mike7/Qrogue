@@ -34,6 +34,11 @@ class MyWidgetSet(WidgetSet, Renderable, ABC):
     def __init__(self, logger, root: py_cui.PyCUI, base_render_callback: Callable[[List[Renderable]], None]):
         super().__init__(UIConfig.WINDOW_HEIGHT, UIConfig.WINDOW_WIDTH, logger, root)
         self.__base_render = base_render_callback
+        self.__progress = 0
+
+    @property
+    def _progress(self) -> int:
+        return self.__progress
 
     def add_block_label(self, title, row, column, row_span=1, column_span=1, padx=1, pady=0, center=True)\
             -> MyBaseWidget:
@@ -69,6 +74,15 @@ class MyWidgetSet(WidgetSet, Renderable, ABC):
         self._widgets[wid] = new_widget
         self._logger.info('Adding widget {} w/ ID {} of type {}'.format(title, id, str(type(new_widget))))
         return new_widget
+
+    def update_story_progress(self, progress: int):
+        self.__progress = progress
+        # globally update HUD based on the progress
+        HudConfig.ShowMapName = True
+        if Ach.completed_exam_phase1(progress):
+            HudConfig.ShowEnergy = True
+        if Ach.completed_exam_phase2(progress):
+            HudConfig.ShowKeys = True
 
     def render(self) -> None:
         self.__base_render(self.get_widget_list())
@@ -125,13 +139,7 @@ class MenuWidgetSet(MyWidgetSet):
         selection = self.add_block_label("", UIConfig.MAIN_MENU_ROW, 0, row_span=UIConfig.MAIN_MENU_HEIGHT,
                                          column_span=width, center=True)
         self.__selection = SelectionWidget(selection, controls, 1)
-        choices = ["QUICKSTART\n", "PLAY\n", "OPTIONS\n", "EXIT\n"]  # for more space between the rows we add "\n"
-        callbacks = [self.__quick_start, self.__start_playing, self.__options, self.__stop]
-        if Config.debugging():  # add simulator option
-            simulator_position = 1
-            choices = choices[:simulator_position] + ["SIMULATOR\n"] + choices[simulator_position:]
-            callbacks = callbacks[:simulator_position] + [self.__choose_simulation] + callbacks[simulator_position:]
-        self.__selection.set_data(data=(choices, callbacks))
+        self.__update_selection()
 
         seed = self.add_block_label("Seed", UIConfig.WINDOW_HEIGHT-1, 0, row_span=1, column_span=width, center=False)
         self.__seed_widget = SimpleWidget(seed)
@@ -143,6 +151,24 @@ class MenuWidgetSet(MyWidgetSet):
 
         self.__selection.widget.add_key_command(controls.action, self.__selection.use)
 
+    def __update_selection(self):
+        choices = []
+        callbacks = []
+        if Ach.completed_exam_phase1(self._progress):
+            choices.append("CONTINUE\n")
+            callbacks.append(self.__quick_start)
+            choices.append("PLAY\n")
+            callbacks.append(self.__start_playing)
+            if Config.debugging():  # add simulator option
+                choices.append("SIMULATOR\n")
+                callbacks.append(self.__choose_simulation)
+        else:
+            choices.append("START YOUR JOURNEY\n")
+            callbacks.append(self.__start_playing)
+        choices += ["OPTIONS\n", "EXIT\n"]  # for more space between the rows we add "\n"
+        callbacks += [self.__options, self.__stop]
+        self.__selection.set_data(data=(choices, callbacks))
+
     def new_seed(self) -> None:
         self.__seed = RandomManager.instance().get_seed(msg="MenuWS.new_seed()")
         self.__seed_widget.set_data(f"Seed: {self.__seed}")
@@ -152,7 +178,8 @@ class MenuWidgetSet(MyWidgetSet):
         self.__seed = new_seed
         RandomManager.force_seed(new_seed)
         self.__seed_widget.set_data(f"Seed: {self.__seed}")
-        self.__seed_widget.render()
+        #self.__seed_widget.render()
+        self.__update_selection()
 
     def get_widget_list(self) -> List[Widget]:
         return [
@@ -486,9 +513,8 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  continue_exploration_callback: Callable[[], None], flee_choice: str = "Flee"):
-        self.__choice_strings = SelectionWidget.wrap_in_hotkey_str(["Edit", "Reset", "Help",
-                                                                    flee_choice])
         super().__init__(logger, root, render)
+        self.__flee_choice = flee_choice
         self._continue_exploration_callback = continue_exploration_callback
         self._robot = None
         self._target = None
@@ -549,10 +575,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                                        column_span=UIConfig.PUZZLE_CHOICES_WIDTH, center=True)
         choices.toggle_border()
         self._choices = SelectionWidget(choices, controls, columns=self.__CHOICE_COLUMNS)
-        self._choices.set_data(data=(
-            self.__choice_strings,
-            [self.__choices_adapt, self.__choices_reset, self.__choices_help, self._choices_flee]
-        ))
+        self.__init_choices()
 
         details = self.add_block_label('Details', posy, UIConfig.PUZZLE_CHOICES_WIDTH,
                                        row_span=UIConfig.WINDOW_HEIGHT - posy,
@@ -601,6 +624,18 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                 Widget.move_focus(self._details, self)
                 self.render()
         self.__circuit.widget.add_key_command(controls.action, use_circuit)
+
+    def __init_choices(self):
+        if Ach.completed_exam_phaseX(self._progress):
+            self._choices.set_data(data=(
+                SelectionWidget.wrap_in_hotkey_str(["Edit", "Reset", "Help", self.__flee_choice]),
+                [self.__choices_adapt, self.__choices_reset, self.__choices_help, self._choices_flee]
+            ))
+        else:
+            self._choices.set_data(data=(
+                SelectionWidget.wrap_in_hotkey_str(["Edit", "Help"]),
+                [self.__choices_adapt, self.__choices_help]
+            ))
 
     def __details_back(self):
         Widget.move_focus(self._choices, self)
@@ -676,6 +711,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self.__result_widget.set_data(sign_offset + "=")
         self.__update_calculation(False)
         self.__stv_target.set_data(target.state_vector)
+        self.__init_choices()
 
     def get_widget_list(self) -> List[Widget]:
         return [

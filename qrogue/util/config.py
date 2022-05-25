@@ -613,10 +613,10 @@ class UIConfig:
 
 
 class HudConfig:
-    ShowMapName = True
-    ShowEnergy = True
-    ShowKeys = True
-    ShowCoins = True
+    ShowMapName = False
+    ShowEnergy = False
+    ShowKeys = False
+    ShowCoins = False
     ShowFPS = False
 
 
