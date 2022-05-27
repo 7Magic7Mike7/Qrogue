@@ -420,7 +420,7 @@ class ColorConfig:
 class PopupConfig:
     __TOP_POS = 3
     __LEFT_POS = 3
-    __BOT_POS = 15
+    __BOT_POS = 22
 
     @staticmethod
     def default_color() -> int:
