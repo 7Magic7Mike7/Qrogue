@@ -761,6 +761,19 @@ class Config:   # todo make singleton and handle access to other configs?
         return "Mike"
 
     @staticmethod
+    def get_name(value: int) -> str:
+        if value == 0:
+            return Config.examiner_name()
+        if value == 1:
+            return Config.scientist_name()
+        if value == 2:
+            return Config.system_name()
+        if value == 3:
+            return Config.player_name()
+
+        return Config.system_name()     # default if nothing valid was specified
+
+    @staticmethod
     def version() -> str:
         return Config.__VERSION
 

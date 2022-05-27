@@ -144,6 +144,8 @@ def parse_message(ctx) -> Message:
     m_id = normalize_reference(ctx.REFERENCE(0).getText())
     if ctx.MSG_SPEAKER():
         title = text_to_str(ctx, 0)
+        if title.isdigit():
+            title = Config.get_name(int(title[0]))
         start = 1
     else:
         title = Config.examiner_name()  # todo but later in the game it should default to scientist_name()
