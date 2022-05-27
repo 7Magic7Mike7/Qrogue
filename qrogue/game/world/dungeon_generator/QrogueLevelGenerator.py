@@ -15,7 +15,6 @@ from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.util import Config, HelpText, MapConfig, PathConfig, Logger, CommonQuestions, RandomManager
 
 from . import parser_util
-from .parser_util import QrogueBasics
 from .generator import DungeonGenerator
 from .dungeon_parser.QrogueDungeonLexer import QrogueDungeonLexer
 from .dungeon_parser.QrogueDungeonParser import QrogueDungeonParser
@@ -232,7 +231,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         if reference in self.__reward_pools:
             return self.__reward_pools[reference]
 
-        ref = self.__normalize_reference(reference)
+        ref = parser_util.normalize_reference(reference)
         if ref in ['coin', 'coins']:
             pool = [pickup.Coin(1)]
         elif ref in ['key', 'keys']:
@@ -254,7 +253,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             return self.__default_target_difficulty
 
     def __load_gate(self, reference: str) -> instruction.Instruction:
-        ref = self.__normalize_reference(reference)
+        ref = parser_util.normalize_reference(reference)
         if ref in ['x', 'xgate']:
             return instruction.XGate()
         elif ref in ['y', 'ygate']:
@@ -291,7 +290,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
     def __load_message(self, reference: str) -> Message:
         if reference in self.__messages:
             return self.__messages[reference]
-        norm_ref = self.__normalize_reference(reference)
+        norm_ref = parser_util.normalize_reference(reference)
         if norm_ref in self.__messages:
             return self.__messages[norm_ref]
         elif norm_ref.startswith("helptext"):
@@ -348,11 +347,11 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
     ##### General area
 
     def visitInteger(self, ctx: QrogueDungeonParser.IntegerContext) -> int:
-        return QrogueBasics.parse_integer(ctx)
+        return parser_util.parse_integer(ctx)
 
     def visitComplex_number(self, ctx: QrogueDungeonParser.Complex_numberContext) -> complex:
         test = ctx.integer()
-        return QrogueBasics.parse_complex(ctx)
+        return parser_util.parse_complex(ctx)
 
     def visitDraw_strategy(self, ctx: QrogueDungeonParser.Draw_strategyContext) -> bool:
         """
@@ -365,16 +364,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
     ##### Message area ######
 
     def visitMessage(self, ctx: QrogueDungeonParser.MessageContext) -> Message:
-        m_id = self.__normalize_reference(ctx.REFERENCE(0).getText())
-        msg = ""
-        for text in ctx.TEXT():
-            msg += text.getText()[1:-1] + "\n"
-        if ctx.MSG_EVENT():
-            event = self.__normalize_reference(ctx.REFERENCE(1).getText())
-            msg_ref = self.__normalize_reference(ctx.REFERENCE(2).getText())
-            return Message(m_id, Config.examiner_name(), msg, event, msg_ref) # todo add title to grammar
-        else:
-            return Message.create_with_title(m_id, Config.examiner_name(), msg)
+        return parser_util.parse_message(ctx)
 
     def visitMessages(self, ctx: QrogueDungeonParser.MessagesContext):
         self.__messages.clear()
@@ -524,7 +514,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             open_state = tiles.DoorOpenState.KeyLocked
         elif ctx.EVENT_LITERAL():
             if ctx.REFERENCE(ref_index):
-                event_id = self.__normalize_reference(ctx.REFERENCE(ref_index).getText())
+                event_id = parser_util.normalize_reference(ctx.REFERENCE(ref_index).getText())
                 open_state = tiles.DoorOpenState.EventLocked
                 ref_index += 1
             else:
@@ -547,7 +537,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             door.set_explanation(message)
             ref_index += 1
         if ctx.TRIGGER_LITERAL():
-            event_to_trigger = self.__normalize_reference(ctx.REFERENCE(ref_index).getText())
+            event_to_trigger = parser_util.normalize_reference(ctx.REFERENCE(ref_index).getText())
             door.set_event(event_to_trigger)
         return door
 
@@ -704,7 +694,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
                 ref_index += 1
             if ctx.TILE_EVENT_LITERAL():
                 ref = ctx.REFERENCE(ref_index).getText()
-                event_id = self.__normalize_reference(ref)
+                event_id = parser_util.normalize_reference(ref)
                 tile.set_event(event_id)
         return tile
 
@@ -909,7 +899,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
     def visitStart(self, ctx: QrogueDungeonParser.StartContext) -> Tuple[str, List[List[rooms.Room]]]:
         if ctx.TEXT():
-            name = ctx.TEXT().getText()[1:-1]
+            name = parser_util.text_to_str(ctx)
         else:
             name = None
 

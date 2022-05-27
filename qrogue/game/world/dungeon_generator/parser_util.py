@@ -2,6 +2,7 @@ from typing import Dict, Optional
 
 from antlr4.error.ErrorListener import ErrorListener
 
+from qrogue.game.logic import Message
 from qrogue.game.world.map import Hallway
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.util import MapConfig, Logger, Config
@@ -23,7 +24,7 @@ FLOOR_TILE = " "
 
 
 def warning(text: str):
-    Logger.instance().println(f"Warning: {text}")
+    Logger.instance().println("Warning: " + text)
     if Config.debugging():
         print("Warning", text)
 
@@ -53,7 +54,7 @@ def direction_from_string(dir_str: str) -> Direction:
 
 
 def get_hallways(hallway_dictionary: Dict[Coordinate, Dict[Direction, Hallway]], hallways, pos: Coordinate) \
-        -> Dict[Direction, Hallway]:
+        -> Optional[Dict[Direction, Hallway]]:
     if pos in hallways:
         hallways = hallways[pos]
         if hallways:
@@ -94,48 +95,74 @@ def get_hallways(hallway_dictionary: Dict[Coordinate, Dict[Direction, Hallway]],
     return None
 
 
-class QrogueBasics:
-    @staticmethod
-    def parse_integer(ctx) -> Optional[int]:
-        if ctx.DIGIT():
-            return int(ctx.DIGIT().getText())
-        elif ctx.HALLWAY_ID():
-            return int(ctx.HALLWAY_ID().getText())
-        elif ctx.INTEGER():
-            return int(ctx.INTEGER().getText())
+def text_to_str(ctx_text, index: int = None) -> str:
+    if index is None:
+        text = ctx_text.TEXT()
+    else:
+        text = ctx_text.TEXT(index)
+    return text.getText()[1:-1]
+
+
+def parse_integer(ctx) -> Optional[int]:
+    if ctx.DIGIT():
+        return int(ctx.DIGIT().getText())
+    elif ctx.HALLWAY_ID():
+        return int(ctx.HALLWAY_ID().getText())
+    elif ctx.INTEGER():
+        return int(ctx.INTEGER().getText())
+    else:
+        return None
+
+
+def parse_complex(ctx) -> complex:
+    if ctx.SIGN(0):
+        first_sign = ctx.SIGN(0).symbol.text
+    else:
+        first_sign = "+"
+
+    integer_ = ctx.integer()
+    float_ = ctx.FLOAT()
+    imag_ = ctx.IMAG_NUMBER()
+
+    complex_number = first_sign
+    if integer_ or float_:
+        if integer_:
+            num = str(parse_integer(integer_))
         else:
-            return None
+            num = float_.getText()
+        complex_number += num
 
-    @staticmethod
-    def parse_complex(ctx) -> complex:
-        if ctx.SIGN(0):
-            first_sign = ctx.SIGN(0).symbol.text
-        else:
-            first_sign = "+"
+        if ctx.SIGN(1):
+            complex_number += ctx.SIGN(1).symbol.text + str(imag_)
+    else:
+        complex_number += str(imag_)
 
-        integer_ = ctx.integer()
-        float_ = ctx.FLOAT()
-        imag_ = ctx.IMAG_NUMBER()
+    return complex(complex_number)
 
-        complex_number = first_sign
-        if integer_ or float_:
-            if integer_:
-                num = str(QrogueBasics.parse_integer(integer_))
-            else:
-                num = float_.getText()
-            complex_number += num
 
-            if ctx.SIGN(1):
-                complex_number += ctx.SIGN(1).symbol.text + str(imag_)
-        else:
-            complex_number += str(imag_)
+def parse_message(ctx) -> Message:
+    m_id = normalize_reference(ctx.REFERENCE(0).getText())
+    if ctx.MSG_SPEAKER():
+        title = text_to_str(ctx, 0)
+        start = 1
+    else:
+        title = Config.examiner_name()  # todo but later in the game it should default to scientist_name()
+        start = 0
+    msg = ""
+    for i in range(start, len(ctx.TEXT())):
+        msg += text_to_str(ctx, i) + "\n"
 
-        return complex(complex_number)
+    if ctx.MSG_EVENT():
+        event = normalize_reference(ctx.REFERENCE(1).getText())
+        msg_ref = normalize_reference(ctx.REFERENCE(2).getText())
+        return Message(m_id, title, msg, event, msg_ref)
+    else:
+        return Message.create_with_title(m_id, title, msg)
 
 
 class MyErrorListener(ErrorListener):
     def syntaxError(self, recognizer, offendingSymbol, line, column, msg, e):
-        #print(f"Syntax Error: \"{offendingSymbol}\" at line {line}, column {column} - {msg}")
+        # print(f"Syntax Error: \"{offendingSymbol}\" at line {line}, column {column} - {msg}")
         raise SyntaxError(msg)
 
     def reportAmbiguity(self, recognizer, dfa, startIndex, stopIndex, exact, ambigAlts, configs):
@@ -146,5 +173,3 @@ class MyErrorListener(ErrorListener):
 
     def reportContextSensitivity(self, recognizer, dfa, startIndex, stopIndex, prediction, configs):
         Config.debug_print("Context sensitivity")
-
-
