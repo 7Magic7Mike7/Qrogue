@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, Tuple
 
 from py_cui import ColorRule
 from py_cui.popups import Popup as PyCuiPopup
@@ -72,12 +72,18 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
         return split_text
 
     def __init__(self, root, title, text, color, renderer, logger, controls,
-                 confirmation_callback: Callable[[bool], None] = None):
+                 confirmation_callback: Callable[[bool], None] = None, pos: Tuple[int, int] = None):
         super().__init__(root, title, text, color, renderer, logger)
         self.__controls = controls
         self.__confirmation_callback = confirmation_callback
         self._top_view = 0
         self.__lines = MultilinePopup.__split_text(text, self._width - 6, logger)  # 6: based on PyCUI "padding" I think
+
+        if pos:
+            if pos[0] is not None:
+                self._start_x = pos[0]
+            if pos[1] is not None:
+                self._start_y = pos[1]
 
         if self._is_question:
             self.__lines.append("-" * self._width + "\n")

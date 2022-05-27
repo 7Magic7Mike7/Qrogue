@@ -3,7 +3,7 @@ import math
 import os
 import pathlib
 from datetime import datetime
-from typing import Callable, Tuple
+from typing import Callable, Tuple, Optional
 
 from qrogue.util import PyCuiColors
 
@@ -418,9 +418,31 @@ class ColorConfig:
 
 
 class PopupConfig:
+    __TOP_POS = 3
+    __LEFT_POS = 3
+    __BOT_POS = 15
+
     @staticmethod
     def default_color() -> int:
         return PyCuiColors.BLACK_ON_WHITE
+
+    @staticmethod
+    def position_top_left() -> Optional[Tuple[Optional[int], Optional[int]]]:
+        return PopupConfig.__LEFT_POS, PopupConfig.__TOP_POS
+
+    @staticmethod
+    def position_top() -> Optional[Tuple[Optional[int], Optional[int]]]:
+        return None, PopupConfig.__TOP_POS
+
+    @staticmethod
+    def position_mid() -> Optional[Tuple[Optional[int], Optional[int]]]:
+        return None
+
+    @staticmethod
+    def position_bottom() -> Optional[Tuple[Optional[int], Optional[int]]]:
+        return None, PopupConfig.__BOT_POS
+
+    # sizes don't work as easy as positions somehow
 
 
 class CheatConfig:
