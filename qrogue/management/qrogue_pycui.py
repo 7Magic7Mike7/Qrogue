@@ -24,7 +24,7 @@ from qrogue.management import StoryNarration
 from qrogue.util import achievements, common_messages, CheatConfig, Config, GameplayConfig, UIConfig, HelpText, \
     HelpTextType, Logger, PathConfig, MapConfig, Controls, Keys, RandomManager, PyCuiConfig, PyCuiColors
 from qrogue.util.achievements import Ach
-from qrogue.util.config import FileTypes
+from qrogue.util.config import FileTypes, PopupConfig
 from qrogue.util.game_simulator import GameSimulator
 from qrogue.util.key_logger import KeyLogger, OverWorldKeyLogger
 
@@ -543,7 +543,7 @@ class QrogueCUI(PyCUI):
             # we cannot do this in the same if because we need to apply the widget set first otherwise the focus will
             # be on the wrong widget after closing the popup
             if not StoryNarration.unlocked_navigation():
-                Popup.scientist_says(HelpText.get(HelpTextType.FirstLevelIntroduction))
+                Popup.examiner_says(HelpText.get(HelpTextType.FirstLevelIntroduction))
 
     def __continue_explore(self) -> None:
         self.__state_machine.change_state(State.Explore, None)

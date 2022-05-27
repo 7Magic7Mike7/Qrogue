@@ -745,8 +745,16 @@ class Config:   # todo make singleton and handle access to other configs?
         return Config.__CONFIG_HEAD
 
     @staticmethod
+    def examiner_name() -> str:
+        return "Examiner"   # for things the scientist says during the exam
+
+    @staticmethod
     def scientist_name() -> str:
         return "Robb"
+
+    @staticmethod
+    def system_name() -> str:
+        return "System"     # for things the robot's system tells us
 
     @staticmethod
     def player_name() -> str:

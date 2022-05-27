@@ -297,7 +297,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             help_text_type = norm_ref[len("helptext"):]
             help_text = HelpText.load(help_text_type)
             if help_text:
-                return Message.create_simple(norm_ref, help_text)
+                return Message.create_with_title(norm_ref, Config.system_name(), help_text)
         self.warning(f"Unknown text reference: {reference}. Returning \"Message not found!\"")
         return Message.error("Message not found!")
 
@@ -402,9 +402,9 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         if ctx.EVENT_LITERAL():
             event = self.__normalize_reference(ctx.REFERENCE(1).getText())
             msg_ref = self.__normalize_reference(ctx.REFERENCE(2).getText())
-            return Message(m_id, Config.scientist_name(), msg, event, msg_ref)
+            return Message(m_id, Config.examiner_name(), msg, event, msg_ref) # todo add title to grammar
         else:
-            return Message.create_simple(m_id, msg)
+            return Message.create_with_title(m_id, Config.examiner_name(), msg)
 
     def visitMessages(self, ctx: QrogueDungeonParser.MessagesContext):
         self.__messages.clear()

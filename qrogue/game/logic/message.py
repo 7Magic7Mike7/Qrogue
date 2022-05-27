@@ -12,10 +12,6 @@ class Message:
         return Message(f"Error_{Message.__err_count}", "Error", text, None, None)
 
     @staticmethod
-    def create_simple(m_id: str, text: str) -> "Message":
-        return Message(m_id, Config.scientist_name(), text, None, None)
-
-    @staticmethod
     def create_with_title(m_id: str, title: str, text: str) -> "Message":
         return Message(m_id, title, text, None, None)
 

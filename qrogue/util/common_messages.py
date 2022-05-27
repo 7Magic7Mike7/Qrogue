@@ -85,14 +85,14 @@ class CommonPopups(Enum):
                               "again.")
     SavingSuccessful = ("Saved", "You successfully saved the game!")
     NoSavingWithCheats = ("Cheating", "You used a cheat and therefore are not allowed to save the game!")
-    LockedDoor = ("Door is locked!", _locked_door())
-    EventDoor = (Config.scientist_name(), "Hmm, I think we should complete the current task first.")
-    WrongDirectionDoor = (Config.scientist_name(), "We sadly cannot access the door from this direction.")
-    EntangledDoor = ("Door is entangled!", _entangled_door())
+    LockedDoor = (Config.system_name(), _locked_door())
+    EventDoor = (Config.system_name(), "Access denied. Permission requirements not yet fulfilled.")
+    WrongDirectionDoor = (Config.system_name(), "Access denied. Door cannot be accessed from this side.")
+    EntangledDoor = (Config.system_name(), _entangled_door())
     TutorialBlocked = ("Halt!", _tutorial_blocked())
-    NotEnoughMoney = ("$$$", _not_enough_money())
-    NoCircuitSpace = ("Nope", _no_space())
-    NoGatePlaced = ("Empty", _no_gate_placed())
+    NotEnoughMoney = (Config.system_name(), _not_enough_money())
+    NoCircuitSpace = (Config.system_name(), _no_space())
+    NoGatePlaced = (Config.system_name(), _no_gate_placed())
 
     def __init__(self, title: str, text: str):
         self.__title = title
@@ -105,6 +105,7 @@ class CommonPopups(Enum):
 class CommonQuestions(Enum):
     __ask = None
 
+    # todo implement with title? -> more flexible between system and scientist questions
     GoingBack = "We are not done yet. \nDo you really want to go back to the spaceship?"
     ProceedToNextMap = "Looks like we cleared this map. Shall we proceed directly to the next one?"
 

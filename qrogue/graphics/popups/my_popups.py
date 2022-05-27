@@ -44,6 +44,10 @@ class Popup:
         Popup.message(title, text, reopen=False)
 
     @staticmethod
+    def examiner_says(text: str):
+        Popup.message(Config.examiner_name(), text, reopen=True)
+
+    @staticmethod
     def scientist_says(text: str):
         Popup.message(Config.scientist_name(), text, reopen=True)
 
