@@ -5,7 +5,7 @@ from qrogue.game.world.map import Map, WorldMap, MapType
 from qrogue.game.world.navigation import Coordinate
 from qrogue.graphics.popups import Popup
 from qrogue.management import StoryNarration
-from qrogue.util import CommonQuestions, Config, Logger, MapConfig, achievements, RandomManager
+from qrogue.util import CommonQuestions, Logger, MapConfig, achievements, RandomManager
 
 from qrogue.management.save_data import SaveData
 
@@ -17,6 +17,8 @@ __MAP_ORDER = {
     "l1v2": "l1v3",
     "l1v3": "l1v4",
     "l1v4": "w2",
+
+    MapConfig.hub_world(): "l1v4",  # first level is currently number 4
 }
 
 
