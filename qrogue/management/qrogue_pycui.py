@@ -423,15 +423,23 @@ class QrogueCUI(PyCUI):
 
     def __show_message_popup(self, title: str, text: str, color: int) -> None:
         self.__focused_widget = self.get_selected_widget()
-        self._popup = MultilinePopup(self, title, text, color, self._renderer, self._logger, self.__controls)
 
-    def __show_input_popup(self, title: str, color: int, callback: Callable[[str], None]) -> None:
-        self.__focused_widget = self.get_selected_widget()
-        self._popup = popups.TextBoxPopup(self, title, color, callback, self._renderer, False, self._logger)
+        position = RandomManager.instance().get_element([
+            PopupConfig.position_top_left(),
+            PopupConfig.position_top(),
+            PopupConfig.position_mid(),
+            PopupConfig.position_bottom(),
+        ])
+        self._popup = MultilinePopup(self, title + f"___{position}", text, color, self._renderer,
+                                     self._logger, self.__controls, pos=position)
 
     def __show_confirmation_popup(self, title: str, text: str, color: int, callback: Callable[[bool], None]):
         self.__focused_widget = self.get_selected_widget()
         self._popup = MultilinePopup(self, title, text, color, self._renderer, self._logger, self.__controls, callback)
+
+    def __show_input_popup(self, title: str, color: int, callback: Callable[[str], None]) -> None:
+        self.__focused_widget = self.get_selected_widget()
+        self._popup = popups.TextBoxPopup(self, title, color, callback, self._renderer, False, self._logger)
 
     def close_popup(self) -> None:
         super(QrogueCUI, self).close_popup()
