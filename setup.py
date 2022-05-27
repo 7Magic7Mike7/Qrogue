@@ -45,7 +45,7 @@ setup(
 	install_requires=[
 		'py-cui==0.1.4',
 		'qiskit==0.34.2',
-		'antlr4-python3-runtime==4.9.3',
+		'antlr4-python3-runtime==4.10',
 	],
 	classifiers=[
 		'Development Status :: 3 - Alpha',  # Chose either "3 - Alpha", "4 - Beta" or "5 - Production/Stable"

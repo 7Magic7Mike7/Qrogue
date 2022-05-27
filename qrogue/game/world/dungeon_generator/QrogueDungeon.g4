@@ -49,7 +49,7 @@ hallways : HALLWAYS hallway*;
 hallway : HALLWAY_ID h_attributes ;
 h_attributes : '(' (OPEN_LITERAL | CLOSED_LITERAL | LOCKED_LITERAL | EVENT_LITERAL REFERENCE)
                 ('one way' DIRECTION PERMANENT_LITERAL?)?
-                ('entangled' '[' HALLWAY_ID (LIST_SEPARATOR HALLWAY_ID)* ']')? ')'
+                ('entangled' '[' HALLWAY_ID (LIST_SEPARATOR HALLWAY_ID)* ']')? ')'  // (ENTANGLED_LITERAL)? ')'
                 (TUTORIAL_LITERAL REFERENCE)? (TRIGGER_LITERAL REFERENCE)? ;
 
 // how to draw an element from a pool
@@ -105,6 +105,7 @@ CLOSED_LITERAL : 'closed' ;
 LOCKED_LITERAL : 'locked' ;
 EVENT_LITERAL : 'event' ;
 PERMANENT_LITERAL: 'permanent' ;
+ENTANGLED_LITERAL: 'entangled' ;
 
 SPAWN_LITERAL : 'Spawn' ;
 WILD_LITERAL : 'Wild' ;

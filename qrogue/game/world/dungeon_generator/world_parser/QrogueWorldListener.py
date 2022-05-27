@@ -1,4 +1,4 @@
-# Generated from D:/Documents/pycharm_workspace/Qrogue/qrogue/dungeon_editor\QrogueWorld.g4 by ANTLR 4.9.2
+# Generated from D:/Documents/pycharm_workspace/Qrogue/qrogue/game/world/dungeon_generator\QrogueWorld.g4 by ANTLR 4.10.1
 from antlr4 import *
 
 # This class defines a complete listener for a parse tree produced by QrogueWorldParser.
