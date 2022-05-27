@@ -159,8 +159,8 @@ class XGate(SingleQubitGate):
         return " X "
 
     def description(self) -> str:
-        return "An X Gate rotates the Qubit along the x-axis. This defines a swap of the amplitudes of |0> and |1> - " \
-               "in the classical world this would describe an Inverter."
+        return "In the classical world an X Gate corresponds to an inverter. It swaps the amplitudes of |0> and |1>, " \
+               "hence describing a 180° rotation along the x-axis."
 
     def copy(self) -> "Instruction":
         return XGate()
