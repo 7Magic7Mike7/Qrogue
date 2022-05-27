@@ -158,13 +158,7 @@ class HelpText:
             f"Now close this dialog and start playing by pressing {_HL.space}.",
 
         HelpTextType.FirstLevelIntroduction:
-            f"Alright, let's have a look at the {_HL.display}.\n"
-            f"The HUD is at the very top and shows you the current {_HL.location}, the {_HL.energy} of the "
-            f"{_HL.robot} and the number of {_HL.keys} it is carrying. Always keep an eye on your "
-            f"current energy as {_HL.zero_energy} means we can no longer control the {_HL.robot} and have to "
-            f"{_HL.abort} the {_HL.mission}.\n"
-            f"The rest of the screen shows a {_HL.map_} of the area our Robot's currently in. Next try to move the "
-            f"Robot to the top left corner of the current room.",
+            f"Move around by using {_HL.arrow_keys} or {_HL.wasd}.",
 
         HelpTextType.Controls:
             f"That's the {_HL.manual}. You can always reopen it from the pause menu. Have a look at it and don't "
@@ -183,36 +177,10 @@ class HelpText:
             "will still save everything so it is the preferred option over simply closing the window!]",
 
         HelpTextType.Fight:
-            f"Now let me tell you how to solve {_HL.puzzles}:\n"
-            f"{_HL.one_parenthesis} Below the HUD you can see three columns. "
-            f"The right one ({_HL.target_state}) is constant and shows the {_HL.puzzle} we want to solve while the "
-            f"left one ({_HL.current_state}) corresponds to the output of your {_HL.circuit} (more on that later) and "
-            f"also shows the difference to the target state. The Puzzle is solved as soon as the current state matches "
-            f"the target state and therefore the difference is 0. The column in the middle shows to which qubit "
-            f"configuration each row of the states belong to.\n"
-        
-            f"{_HL.two_parenthesis} Underneath the States (also called StateVectors) is the "
-            f"{_HL.circuit}. Currently we have 1 {_HL.qubit} q0 and 0 out of 3 {_HL.gates} applied to them. The "
-            f"before mentioned {_HL.current_state} reflects the output (out) of the {_HL.circuit} and depends on the "
-            f"{_HL.gates} we applied.\n"
-            
-            f"{_HL.three_parenthesis} On the bottom left you can choose the {_HL.action} you want to take: \n"
-            f"{_HL.add_remove} - Change your {_HL.circuit} with the {_HL.gates} available to you (selection to the "
-            f"right). After selecting a {_HL.gate} you have to define where to place it - so on which {_HL.qubit_s} "
-            f"and on which {_HL.position}. If you select an already placed Gate you can either move it to a different "
-            f"position or remove it from the Circuit.\n"
-            f"{_HL.commit} - Commit your changes and update your Current State accordingly. If the updated difference "
-            f"is {_HL.not_zero} the Robot {_HL.loses_energy}.\n"
-            f"{_HL.items} - Use one of your Items to make the Puzzle {_HL.easier} (you don't have any Items yet).\n"
-            f"{_HL.flee} - Try to flee from having to solve the Puzzle. This is {_HL.chance_based} and the Robot will "
-            f"lose some {_HL.energy} if it fails. Luckily, this 0 seems to always allow us to flee!\n"
-            
-            f"{_HL.four_parenthesis} The bottom right {_HL.display_details} based on the action you chose on the left "
-            f"side. E.g. you can select the {_HL.gate} you want to use in your {_HL.circuit}.\n"
-            
-            f"{_HL.five_parenthesis} Use your {_HL.arrow_keys} to {_HL.navigate} between your available options at the "
-            f"bottom and press {_HL.space} to {_HL.use} the selected one. Again, your goal now is to reach the "
-            f"{_HL.target_state} of the {_HL.puzzle}. If you succeed, you will get a {_HL.reward}!",
+            "Basically Quantum Computing is just a lot of complex matrix vector multiplications. There's an input "
+            "state vector that is multiplied with the circuit matrix to result in a output state vector. Your goal is "
+            "to make the latter equal to the target state vector. The input state vector is always the same, so you "
+            "can only change the circuit matrix by editing the circuit.",
 
         HelpTextType.Riddle:
             f"{_HL.riddles} are very similar to {_HL.puzzles}. You have a {_HL.target_state} you need to reach "
