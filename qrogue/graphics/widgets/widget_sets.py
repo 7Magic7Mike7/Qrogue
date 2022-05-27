@@ -625,12 +625,12 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
     def __init_choices(self):
         if Ach.completed_exam_phaseX(self._progress):
             self._choices.set_data(data=(
-                SelectionWidget.wrap_in_hotkey_str(["Edit", "Reset", "Help", self.__flee_choice]),
+                SelectionWidget.wrap_in_hotkey_str(["Edit", "Reset", "Gate Guide", self.__flee_choice]),
                 [self.__choices_adapt, self.__choices_reset, self.__choices_help, self._choices_flee]
             ))
         else:
             self._choices.set_data(data=(
-                SelectionWidget.wrap_in_hotkey_str(["Edit", "Help"]),
+                SelectionWidget.wrap_in_hotkey_str(["Edit", "Gate Guide"]),
                 [self.__choices_adapt, self.__choices_help]
             ))
 
