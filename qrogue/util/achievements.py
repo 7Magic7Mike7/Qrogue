@@ -96,6 +96,11 @@ class Achievement:
         return self.score >= self.done_score
 
     def add_score(self, score: float) -> bool:
+        """
+
+        :param score: how much score points we want to add
+        :return: True if we changed the score, False otherwise
+        """
         if score > 0 and not self.is_done():
             self.__score = min(self.score + score, self.done_score)
             return True
@@ -157,13 +162,12 @@ class AchievementManager:
             self.__temp_level_storage[name] = Achievement(name, AchievementType.Event, score, 1)
 
     def progressed_in_story(self, progress: str):
-        if progress in self.__storage:
-            tut = self.__storage[progress]
-            tut.add_score(tut.done_score)
-        else:
-            self.__storage[progress] = Achievement(progress, AchievementType.Story, 1, 1)
-        if self.__storage[progress].is_done():
-            self.__storage[Ach.story()].add_score(1)    # add one step to the story achievement
+        if progress not in self.__storage:
+            self.__storage[progress] = Achievement(progress, AchievementType.Story, 0, 1)
+        tut = self.__storage[progress]
+        if tut.add_score(tut.done_score):
+            # add one step to the story achievement since we completed the current progress
+            self.__storage[Ach.story()].add_score(1)
 
     def finished_level(self, level: str):
         self.__storage[level] = Achievement(level, AchievementType.Level, 1, 1)
