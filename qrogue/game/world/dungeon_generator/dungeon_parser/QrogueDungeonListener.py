@@ -13,24 +13,6 @@ class QrogueDungeonListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by QrogueDungeonParser#integer.
-    def enterInteger(self, ctx):
-        pass
-
-    # Exit a parse tree produced by QrogueDungeonParser#integer.
-    def exitInteger(self, ctx):
-        pass
-
-
-    # Enter a parse tree produced by QrogueDungeonParser#complex_number.
-    def enterComplex_number(self, ctx):
-        pass
-
-    # Exit a parse tree produced by QrogueDungeonParser#complex_number.
-    def exitComplex_number(self, ctx):
-        pass
-
-
     # Enter a parse tree produced by QrogueDungeonParser#robot.
     def enterRobot(self, ctx):
         pass
@@ -40,75 +22,12 @@ class QrogueDungeonListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by QrogueDungeonParser#layout.
-    def enterLayout(self, ctx):
+    # Enter a parse tree produced by QrogueDungeonParser#room_content.
+    def enterRoom_content(self, ctx):
         pass
 
-    # Exit a parse tree produced by QrogueDungeonParser#layout.
-    def exitLayout(self, ctx):
-        pass
-
-
-    # Enter a parse tree produced by QrogueDungeonParser#l_room_row.
-    def enterL_room_row(self, ctx):
-        pass
-
-    # Exit a parse tree produced by QrogueDungeonParser#l_room_row.
-    def exitL_room_row(self, ctx):
-        pass
-
-
-    # Enter a parse tree produced by QrogueDungeonParser#l_hallway_row.
-    def enterL_hallway_row(self, ctx):
-        pass
-
-    # Exit a parse tree produced by QrogueDungeonParser#l_hallway_row.
-    def exitL_hallway_row(self, ctx):
-        pass
-
-
-    # Enter a parse tree produced by QrogueDungeonParser#rooms.
-    def enterRooms(self, ctx):
-        pass
-
-    # Exit a parse tree produced by QrogueDungeonParser#rooms.
-    def exitRooms(self, ctx):
-        pass
-
-
-    # Enter a parse tree produced by QrogueDungeonParser#room.
-    def enterRoom(self, ctx):
-        pass
-
-    # Exit a parse tree produced by QrogueDungeonParser#room.
-    def exitRoom(self, ctx):
-        pass
-
-
-    # Enter a parse tree produced by QrogueDungeonParser#r_attributes.
-    def enterR_attributes(self, ctx):
-        pass
-
-    # Exit a parse tree produced by QrogueDungeonParser#r_attributes.
-    def exitR_attributes(self, ctx):
-        pass
-
-
-    # Enter a parse tree produced by QrogueDungeonParser#r_visibility.
-    def enterR_visibility(self, ctx):
-        pass
-
-    # Exit a parse tree produced by QrogueDungeonParser#r_visibility.
-    def exitR_visibility(self, ctx):
-        pass
-
-
-    # Enter a parse tree produced by QrogueDungeonParser#r_type.
-    def enterR_type(self, ctx):
-        pass
-
-    # Exit a parse tree produced by QrogueDungeonParser#r_type.
-    def exitR_type(self, ctx):
+    # Exit a parse tree produced by QrogueDungeonParser#room_content.
+    def exitRoom_content(self, ctx):
         pass
 
 
@@ -199,33 +118,6 @@ class QrogueDungeonListener(ParseTreeListener):
 
     # Exit a parse tree produced by QrogueDungeonParser#shop_descriptor.
     def exitShop_descriptor(self, ctx):
-        pass
-
-
-    # Enter a parse tree produced by QrogueDungeonParser#hallways.
-    def enterHallways(self, ctx):
-        pass
-
-    # Exit a parse tree produced by QrogueDungeonParser#hallways.
-    def exitHallways(self, ctx):
-        pass
-
-
-    # Enter a parse tree produced by QrogueDungeonParser#hallway.
-    def enterHallway(self, ctx):
-        pass
-
-    # Exit a parse tree produced by QrogueDungeonParser#hallway.
-    def exitHallway(self, ctx):
-        pass
-
-
-    # Enter a parse tree produced by QrogueDungeonParser#h_attributes.
-    def enterH_attributes(self, ctx):
-        pass
-
-    # Exit a parse tree produced by QrogueDungeonParser#h_attributes.
-    def exitH_attributes(self, ctx):
         pass
 
 
@@ -325,6 +217,123 @@ class QrogueDungeonListener(ParseTreeListener):
 
     # Exit a parse tree produced by QrogueDungeonParser#collectible.
     def exitCollectible(self, ctx):
+        pass
+
+
+    # Enter a parse tree produced by QrogueDungeonParser#integer.
+    def enterInteger(self, ctx):
+        pass
+
+    # Exit a parse tree produced by QrogueDungeonParser#integer.
+    def exitInteger(self, ctx):
+        pass
+
+
+    # Enter a parse tree produced by QrogueDungeonParser#complex_number.
+    def enterComplex_number(self, ctx):
+        pass
+
+    # Exit a parse tree produced by QrogueDungeonParser#complex_number.
+    def exitComplex_number(self, ctx):
+        pass
+
+
+    # Enter a parse tree produced by QrogueDungeonParser#layout.
+    def enterLayout(self, ctx):
+        pass
+
+    # Exit a parse tree produced by QrogueDungeonParser#layout.
+    def exitLayout(self, ctx):
+        pass
+
+
+    # Enter a parse tree produced by QrogueDungeonParser#l_room_row.
+    def enterL_room_row(self, ctx):
+        pass
+
+    # Exit a parse tree produced by QrogueDungeonParser#l_room_row.
+    def exitL_room_row(self, ctx):
+        pass
+
+
+    # Enter a parse tree produced by QrogueDungeonParser#l_hallway_row.
+    def enterL_hallway_row(self, ctx):
+        pass
+
+    # Exit a parse tree produced by QrogueDungeonParser#l_hallway_row.
+    def exitL_hallway_row(self, ctx):
+        pass
+
+
+    # Enter a parse tree produced by QrogueDungeonParser#rooms.
+    def enterRooms(self, ctx):
+        pass
+
+    # Exit a parse tree produced by QrogueDungeonParser#rooms.
+    def exitRooms(self, ctx):
+        pass
+
+
+    # Enter a parse tree produced by QrogueDungeonParser#room.
+    def enterRoom(self, ctx):
+        pass
+
+    # Exit a parse tree produced by QrogueDungeonParser#room.
+    def exitRoom(self, ctx):
+        pass
+
+
+    # Enter a parse tree produced by QrogueDungeonParser#r_attributes.
+    def enterR_attributes(self, ctx):
+        pass
+
+    # Exit a parse tree produced by QrogueDungeonParser#r_attributes.
+    def exitR_attributes(self, ctx):
+        pass
+
+
+    # Enter a parse tree produced by QrogueDungeonParser#r_visibility.
+    def enterR_visibility(self, ctx):
+        pass
+
+    # Exit a parse tree produced by QrogueDungeonParser#r_visibility.
+    def exitR_visibility(self, ctx):
+        pass
+
+
+    # Enter a parse tree produced by QrogueDungeonParser#r_type.
+    def enterR_type(self, ctx):
+        pass
+
+    # Exit a parse tree produced by QrogueDungeonParser#r_type.
+    def exitR_type(self, ctx):
+        pass
+
+
+    # Enter a parse tree produced by QrogueDungeonParser#hallways.
+    def enterHallways(self, ctx):
+        pass
+
+    # Exit a parse tree produced by QrogueDungeonParser#hallways.
+    def exitHallways(self, ctx):
+        pass
+
+
+    # Enter a parse tree produced by QrogueDungeonParser#hallway.
+    def enterHallway(self, ctx):
+        pass
+
+    # Exit a parse tree produced by QrogueDungeonParser#hallway.
+    def exitHallway(self, ctx):
+        pass
+
+
+    # Enter a parse tree produced by QrogueDungeonParser#h_attributes.
+    def enterH_attributes(self, ctx):
+        pass
+
+    # Exit a parse tree produced by QrogueDungeonParser#h_attributes.
+    def exitH_attributes(self, ctx):
         pass
 
 

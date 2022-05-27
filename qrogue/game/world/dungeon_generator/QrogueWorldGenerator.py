@@ -117,8 +117,8 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
         if ctx.OPEN_LITERAL():
             open_state = DoorOpenState.Open
         elif ctx.EVENT_LITERAL():
-            if ctx.REFERENCE():
-                event_id = parser_util.normalize_reference(ctx.REFERENCE().getText())
+            if ctx.REFERENCE(0):
+                event_id = parser_util.normalize_reference(ctx.REFERENCE(0).getText())
 
                 def door_check():
                     return self.__check_achievement(event_id)
@@ -144,13 +144,19 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
 
     ##### Room area #####
 
-    def visitR_type(self, ctx: QrogueWorldParser.R_typeContext) -> str:
+    def visitR_type(self, ctx: QrogueWorldParser.R_typeContext) -> Tuple[str, int, Direction]:
+        num = 0
+        for digit in ctx.DIGIT():
+            num *= 10
+            d = int(digit.getText())
+            num += d
+        direction = parser_util.direction_from_string(ctx.DIRECTION().getText())
         if ctx.WORLD_LITERAL():
-            return "W"
+            return "W", num, direction
         elif ctx.LEVEL_LITERAL():
-            return "L"
+            return "L", num, direction
         else:
-            raise ValueError(f"Invalid r_type: {ctx.getText()}")
+            raise ValueError("Invalid r_type: " + ctx.getText())
 
     def visitR_visibility(self, ctx: QrogueWorldParser.R_visibilityContext) -> Tuple[bool, bool]:
         visible = False
@@ -164,24 +170,22 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
     def visitR_attributes(self, ctx: QrogueWorldParser.R_attributesContext) \
             -> Tuple[Tuple[bool, bool], bool, int, Direction]:
         visibility = self.visit(ctx.r_visibility())
-        rtype = self.visit(ctx.r_type())
-        num = 0
-        for digit in ctx.DIGIT():
-            num *= 10
-            d = int(digit.getText())
-            num += d
-        direction = parser_util.direction_from_string(ctx.DIRECTION().getText())
+        rtype, num, direction = self.visit(ctx.r_type())
         return visibility, rtype, num, direction
+
+    def visitRoom_content(self, ctx) -> Tuple[str, str]:
+        msg = ctx.TEXT().getText()[1:-1]  # strip encapsulating \"
+        level_to_load = parser_util.normalize_reference(ctx.REFERENCE().getText())
+        return msg, level_to_load
 
     def visitRoom(self, ctx: QrogueWorldParser.RoomContext) -> Tuple[str, MetaRoom]:
         room_id = ctx.ROOM_ID().getText()
-        msg = ctx.TEXT().getText()[1:-1]  # strip encapsulating \"
-        level_to_load = parser_util.normalize_reference(ctx.REFERENCE().getText())
+        msg, level_to_load = self.visit(ctx.room_content())
         visibility, m_type, num, orientation = self.visit(ctx.r_attributes())
 
-        alt_message = Message.create_with_title(f"load{room_id}Done", f"{level_to_load} - done", msg)
+        alt_message = Message.create_with_title("load" + room_id + "Done", level_to_load + " - done", msg)
         # the (internal) level name is also the name of the event that describes whether the level was completed or not
-        message = Message.create_with_alternative(f"load{room_id}", level_to_load, msg, level_to_load, alt_message)
+        message = Message.create_with_alternative("load" + room_id, level_to_load, msg, level_to_load, alt_message)
         # hallways will be added later
         if self.is_spawn_room(room_id):
             room = MetaRoom(self.__load_map, orientation, message, level_to_load, m_type, num, is_spawn=True)
@@ -262,7 +266,7 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
     ##### Start area #####
 
     def visitStart(self, ctx: QrogueWorldParser.StartContext) -> Tuple[str, List[List[Room]]]:
-        if ctx.NAME():
+        if ctx.TEXT():
             name = ctx.TEXT().getText()[1:-1]
         else:
             name = None

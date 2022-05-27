@@ -10,58 +10,13 @@ class QrogueDungeonVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by QrogueDungeonParser#integer.
-    def visitInteger(self, ctx):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by QrogueDungeonParser#complex_number.
-    def visitComplex_number(self, ctx):
-        return self.visitChildren(ctx)
-
-
     # Visit a parse tree produced by QrogueDungeonParser#robot.
     def visitRobot(self, ctx):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by QrogueDungeonParser#layout.
-    def visitLayout(self, ctx):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by QrogueDungeonParser#l_room_row.
-    def visitL_room_row(self, ctx):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by QrogueDungeonParser#l_hallway_row.
-    def visitL_hallway_row(self, ctx):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by QrogueDungeonParser#rooms.
-    def visitRooms(self, ctx):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by QrogueDungeonParser#room.
-    def visitRoom(self, ctx):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by QrogueDungeonParser#r_attributes.
-    def visitR_attributes(self, ctx):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by QrogueDungeonParser#r_visibility.
-    def visitR_visibility(self, ctx):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by QrogueDungeonParser#r_type.
-    def visitR_type(self, ctx):
+    # Visit a parse tree produced by QrogueDungeonParser#room_content.
+    def visitRoom_content(self, ctx):
         return self.visitChildren(ctx)
 
 
@@ -112,21 +67,6 @@ class QrogueDungeonVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by QrogueDungeonParser#shop_descriptor.
     def visitShop_descriptor(self, ctx):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by QrogueDungeonParser#hallways.
-    def visitHallways(self, ctx):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by QrogueDungeonParser#hallway.
-    def visitHallway(self, ctx):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by QrogueDungeonParser#h_attributes.
-    def visitH_attributes(self, ctx):
         return self.visitChildren(ctx)
 
 
@@ -182,6 +122,71 @@ class QrogueDungeonVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by QrogueDungeonParser#collectible.
     def visitCollectible(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueDungeonParser#integer.
+    def visitInteger(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueDungeonParser#complex_number.
+    def visitComplex_number(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueDungeonParser#layout.
+    def visitLayout(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueDungeonParser#l_room_row.
+    def visitL_room_row(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueDungeonParser#l_hallway_row.
+    def visitL_hallway_row(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueDungeonParser#rooms.
+    def visitRooms(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueDungeonParser#room.
+    def visitRoom(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueDungeonParser#r_attributes.
+    def visitR_attributes(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueDungeonParser#r_visibility.
+    def visitR_visibility(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueDungeonParser#r_type.
+    def visitR_type(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueDungeonParser#hallways.
+    def visitHallways(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueDungeonParser#hallway.
+    def visitHallway(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueDungeonParser#h_attributes.
+    def visitH_attributes(self, ctx):
         return self.visitChildren(ctx)
 
 

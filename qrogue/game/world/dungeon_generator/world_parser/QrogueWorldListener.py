@@ -13,6 +13,42 @@ class QrogueWorldListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by QrogueWorldParser#room_content.
+    def enterRoom_content(self, ctx):
+        pass
+
+    # Exit a parse tree produced by QrogueWorldParser#room_content.
+    def exitRoom_content(self, ctx):
+        pass
+
+
+    # Enter a parse tree produced by QrogueWorldParser#r_type.
+    def enterR_type(self, ctx):
+        pass
+
+    # Exit a parse tree produced by QrogueWorldParser#r_type.
+    def exitR_type(self, ctx):
+        pass
+
+
+    # Enter a parse tree produced by QrogueWorldParser#integer.
+    def enterInteger(self, ctx):
+        pass
+
+    # Exit a parse tree produced by QrogueWorldParser#integer.
+    def exitInteger(self, ctx):
+        pass
+
+
+    # Enter a parse tree produced by QrogueWorldParser#complex_number.
+    def enterComplex_number(self, ctx):
+        pass
+
+    # Exit a parse tree produced by QrogueWorldParser#complex_number.
+    def exitComplex_number(self, ctx):
+        pass
+
+
     # Enter a parse tree produced by QrogueWorldParser#layout.
     def enterLayout(self, ctx):
         pass
@@ -73,15 +109,6 @@ class QrogueWorldListener(ParseTreeListener):
 
     # Exit a parse tree produced by QrogueWorldParser#r_visibility.
     def exitR_visibility(self, ctx):
-        pass
-
-
-    # Enter a parse tree produced by QrogueWorldParser#r_type.
-    def enterR_type(self, ctx):
-        pass
-
-    # Exit a parse tree produced by QrogueWorldParser#r_type.
-    def exitR_type(self, ctx):
         pass
 
 

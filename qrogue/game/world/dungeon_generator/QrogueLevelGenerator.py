@@ -1,4 +1,4 @@
-from typing import Callable, List, Tuple, Dict
+from typing import Callable, List, Tuple, Dict, Optional
 
 from antlr4 import InputStream, CommonTokenStream
 from antlr4.tree.Tree import TerminalNodeImpl
@@ -15,6 +15,7 @@ from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.util import Config, HelpText, MapConfig, PathConfig, Logger, CommonQuestions, RandomManager
 
 from . import parser_util
+from .parser_util import QrogueBasics
 from .generator import DungeonGenerator
 from .dungeon_parser.QrogueDungeonLexer import QrogueDungeonLexer
 from .dungeon_parser.QrogueDungeonParser import QrogueDungeonParser
@@ -56,7 +57,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             return tiles.TileCode.Invalid
 
     @staticmethod
-    def __tile_code_to_str(tile_code: tiles.TileCode) -> str:
+    def __tile_code_to_str(tile_code: tiles.TileCode) -> Optional[str]:
         if tile_code is tiles.TileCode.Enemy:
             # todo print warning?
             return "0"
@@ -80,7 +81,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
     def __init__(self, seed: int, check_achievement: Callable[[str], bool], trigger_event: Callable[[str], None],
                  load_map_callback: Callable[[str, Coordinate], None]):
-        super().__init__(seed, 0, 0)
+        super(QrogueLevelGenerator, self).__init__(seed, 0, 0)
         self.__seed = seed
         self.__check_achievement = check_achievement
         self.__trigger_event = trigger_event
@@ -124,7 +125,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         parser_util.warning(text)
         self.__warnings += 1
 
-    def generate(self, file_name: str, in_dungeon_folder: bool = True) -> Tuple[LevelMap, bool]:
+    def generate(self, file_name: str, in_dungeon_folder: bool = True) -> Tuple[Optional[LevelMap], bool]:
         map_data = PathConfig.read_level(file_name, in_dungeon_folder)
 
         input_stream = InputStream(map_data)
@@ -347,42 +348,11 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
     ##### General area
 
     def visitInteger(self, ctx: QrogueDungeonParser.IntegerContext) -> int:
-        if ctx.DIGIT():
-            return int(ctx.DIGIT().getText())
-        elif ctx.HALLWAY_ID():
-            return int(ctx.HALLWAY_ID().getText())
-        elif ctx.INTEGER():
-            return int(ctx.INTEGER().getText())
-        else:
-            return None
+        return QrogueBasics.parse_integer(ctx)
 
     def visitComplex_number(self, ctx: QrogueDungeonParser.Complex_numberContext) -> complex:
-        if ctx.SIGN(0):
-            if ctx.SIGN(0).symbol.type is QrogueDungeonParser.PLUS_SIGN:
-                first_sign = "+"
-            else:
-                first_sign = "-"
-        else:
-            first_sign = "+"
-
-        integer_ = ctx.integer()
-        float_ = ctx.FLOAT()
-        imag_ = ctx.IMAG_NUMBER()
-
-        complex_number = first_sign
-        if integer_ or float_:
-            if integer_:
-                num = str(self.visit(integer_))
-            else:
-                num = float_.getText()
-            complex_number += num
-
-            if ctx.SIGN(1):
-                complex_number += ctx.SIGN(1).symbol.text + str(imag_)
-        else:
-            complex_number += str(imag_)
-
-        return complex(complex_number)
+        test = ctx.integer()
+        return QrogueBasics.parse_complex(ctx)
 
     def visitDraw_strategy(self, ctx: QrogueDungeonParser.Draw_strategyContext) -> bool:
         """
@@ -398,8 +368,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         m_id = self.__normalize_reference(ctx.REFERENCE(0).getText())
         msg = ""
         for text in ctx.TEXT():
-            msg += f"{text.getText()[1:-1]}\n"
-        if ctx.EVENT_LITERAL():
+            msg += text.getText()[1:-1] + "\n"
+        if ctx.MSG_EVENT():
             event = self.__normalize_reference(ctx.REFERENCE(1).getText())
             msg_ref = self.__normalize_reference(ctx.REFERENCE(2).getText())
             return Message(m_id, Config.examiner_name(), msg, event, msg_ref) # todo add title to grammar
@@ -417,7 +387,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
                 try:
                     message.resolve_message_ref(alt_message)
                 except ValueError as ve:
-                    self.warning(f"Message-cycle found: {ve}")
+                    self.warning("Message-cycle found: " + str(ve))
 
     ##### Reward Pool area #####
 
@@ -727,12 +697,12 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
         if isinstance(tile, tiles.WalkTriggerTile):
             ref_index = 0
-            if ctx.TUTORIAL_LITERAL():
+            if ctx.TILE_MESSAGE_LITERAL():
                 ref = ctx.REFERENCE(ref_index).getText()
                 msg = self.__load_message(ref)
                 tile.set_explanation(msg)
                 ref_index += 1
-            if ctx.TRIGGER_LITERAL():
+            if ctx.TILE_EVENT_LITERAL():
                 ref = ctx.REFERENCE(ref_index).getText()
                 event_id = self.__normalize_reference(ref)
                 tile.set_event(event_id)
@@ -781,10 +751,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         rtype = self.visit(ctx.r_type())
         return visibility, rtype
 
-    def visitRoom(self, ctx: QrogueDungeonParser.RoomContext) -> Tuple[str, rooms.CustomRoom]:
-        self.__cur_room_id = ctx.ROOM_ID().getText()
-        visibility, room_type = self.visit(ctx.r_attributes())
-
+    def visitRoom_content(self, ctx) -> Tuple[List[str], Dict[str, List[tiles.Tile]]]:
         # place the tiles correctly in the room
         rows = []
         for row in ctx.r_row():
@@ -800,6 +767,13 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
                 tile_dic[tile_str].append(tile)
             else:
                 tile_dic[tile_str] = [tile]
+        return rows, tile_dic
+
+    def visitRoom(self, ctx: QrogueDungeonParser.RoomContext) -> Tuple[str, rooms.CustomRoom]:
+        self.__cur_room_id = ctx.ROOM_ID().getText()
+        visibility, room_type = self.visit(ctx.r_attributes())
+
+        rows, tile_dic = self.visit(ctx.room_content())
 
         # this local method is needed here for not explicitly defined enemies
         # but since we are already in a room we don't have to reference to global data
@@ -934,7 +908,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
     ##### Start area #####
 
     def visitStart(self, ctx: QrogueDungeonParser.StartContext) -> Tuple[str, List[List[rooms.Room]]]:
-        if ctx.NAME():
+        if ctx.TEXT():
             name = ctx.TEXT().getText()[1:-1]
         else:
             name = None

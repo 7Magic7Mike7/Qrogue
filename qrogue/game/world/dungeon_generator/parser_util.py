@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Optional
 
 from antlr4.error.ErrorListener import ErrorListener
 
@@ -92,6 +92,45 @@ def get_hallways(hallway_dictionary: Dict[Coordinate, Dict[Direction, Hallway]],
                 room_hallways[direction] = hallway
             return room_hallways
     return None
+
+
+class QrogueBasics:
+    @staticmethod
+    def parse_integer(ctx) -> Optional[int]:
+        if ctx.DIGIT():
+            return int(ctx.DIGIT().getText())
+        elif ctx.HALLWAY_ID():
+            return int(ctx.HALLWAY_ID().getText())
+        elif ctx.INTEGER():
+            return int(ctx.INTEGER().getText())
+        else:
+            return None
+
+    @staticmethod
+    def parse_complex(ctx) -> complex:
+        if ctx.SIGN(0):
+            first_sign = ctx.SIGN(0).symbol.text
+        else:
+            first_sign = "+"
+
+        integer_ = ctx.integer()
+        float_ = ctx.FLOAT()
+        imag_ = ctx.IMAG_NUMBER()
+
+        complex_number = first_sign
+        if integer_ or float_:
+            if integer_:
+                num = str(QrogueBasics.parse_integer(integer_))
+            else:
+                num = float_.getText()
+            complex_number += num
+
+            if ctx.SIGN(1):
+                complex_number += ctx.SIGN(1).symbol.text + str(imag_)
+        else:
+            complex_number += str(imag_)
+
+        return complex(complex_number)
 
 
 class MyErrorListener(ErrorListener):

@@ -10,6 +10,26 @@ class QrogueWorldVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by QrogueWorldParser#room_content.
+    def visitRoom_content(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueWorldParser#r_type.
+    def visitR_type(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueWorldParser#integer.
+    def visitInteger(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueWorldParser#complex_number.
+    def visitComplex_number(self, ctx):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by QrogueWorldParser#layout.
     def visitLayout(self, ctx):
         return self.visitChildren(ctx)
@@ -42,11 +62,6 @@ class QrogueWorldVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by QrogueWorldParser#r_visibility.
     def visitR_visibility(self, ctx):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by QrogueWorldParser#r_type.
-    def visitR_type(self, ctx):
         return self.visitChildren(ctx)
 
 
