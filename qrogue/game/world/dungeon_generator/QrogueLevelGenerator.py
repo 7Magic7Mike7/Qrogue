@@ -352,7 +352,6 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         return parser_util.parse_integer(ctx)
 
     def visitComplex_number(self, ctx: QrogueDungeonParser.Complex_numberContext) -> complex:
-        test = ctx.integer()
         return parser_util.parse_complex(ctx)
 
     def visitDraw_strategy(self, ctx: QrogueDungeonParser.Draw_strategyContext) -> bool:
@@ -383,7 +382,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
     ##### Reward Pool area #####
 
-    def visitCollectible(self, ctx: QrogueDungeonParser.CollectibleContext) -> Collectible:
+    def visitCollectible(self, ctx: QrogueDungeonParser.CollectibleContext) -> Optional[Collectible]:
         if ctx.KEY_LITERAL():
             val = self.visit(ctx.integer())
             return pickup.Key(val)
@@ -635,10 +634,10 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         else:
             raise NotImplementedError()     # todo better check
 
-        def get_entangled_tiles(id: int) -> List[tiles.Enemy]:
+        def get_entangled_tiles(id_: int) -> List[tiles.Enemy]:
             if room_id in self.__enemy_groups_by_room:
                 room_dic = self.__enemy_groups_by_room[room_id]
-                return room_dic[id]
+                return room_dic[id_]
             else:
                 return [enemy]
 

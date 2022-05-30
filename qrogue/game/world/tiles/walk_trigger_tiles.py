@@ -1,6 +1,6 @@
 
 from abc import abstractmethod
-from typing import List, Callable, Any
+from typing import List, Callable, Any, Optional
 
 from qrogue.game.logic import Message as LogicalMessage
 from qrogue.game.logic.actors import Controllable, Riddle
@@ -112,21 +112,22 @@ class Teleport(WalkTriggerTile):
     def Img() -> str:
         return "t"
 
-    def __init__(self, callback: Callable[[str, Coordinate], None], target_map: str, room: Coordinate):
+    def __init__(self, load_map: Callable[[str, Optional[Coordinate]], None], target_map: str,
+                 room: Optional[Coordinate]):
         super().__init__(TileCode.Teleport)
-        self.__callback = callback
+        self.__load_map = load_map
         self.__target_map = target_map
         self.__room = room
 
     def _on_walk(self, direction: Direction, controllable: Controllable) -> bool:
-        self.__callback(self.__target_map, self.__room)
+        self.__load_map(self.__target_map, self.__room)
         return True
 
     def get_img(self):
         return Teleport.Img()
 
     def _copy(self) -> "Tile":
-        return Teleport(self.__callback, self.__target_map, self.__room)
+        return Teleport(self.__load_map, self.__target_map, self.__room)
 
 
 class Message(WalkTriggerTile):
