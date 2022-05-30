@@ -203,7 +203,8 @@ class MapManager:
             if self.__cur_map.get_type() is MapType.World:
                 SaveData.instance().achievement_manager.finished_world(self.__cur_map.internal_name)
             elif self.__cur_map.get_type() is MapType.Level:
-                SaveData.instance().achievement_manager.finished_level(self.__cur_map.internal_name)
+                SaveData.instance().achievement_manager.finished_level(self.__cur_map.internal_name,
+                                                                       self.__cur_map.name)
             elif self.__cur_map.get_type() is MapType.Expedition:
                 SaveData.instance().achievement_manager.add_to_achievement(achievements.CompletedExpedition, 1)
 
