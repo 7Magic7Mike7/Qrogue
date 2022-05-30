@@ -1,15 +1,15 @@
 import math
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Dict, List, Callable
+from typing import Dict, List, Callable, Optional
 
 from qrogue.game.logic import Message
 from qrogue.game.logic.actors import Robot, Riddle
 from qrogue.game import target_factory
 from qrogue.game.logic.collectibles import Instruction
 from qrogue.game.world.navigation import Coordinate, Direction
-from qrogue.game.world.tiles import Enemy as EnemyTile, Tile, Floor, Decoration, Teleport, FogOfWar, Void, Invalid, Door, \
-    Wall, HallwayEntrance, Riddler, ShopKeeper, Boss, Collectible, Message as MessageTile
+from qrogue.game.world.tiles import Enemy as EnemyTile, Tile, Floor, Decoration, Teleport, FogOfWar, Void, Invalid, \
+    Door, Wall, HallwayEntrance, Riddler, ShopKeeper, Boss, Collectible, Message as MessageTile
 from qrogue.util import CommonQuestions, MapConfig, Logger, CheatConfig, RandomManager
 
 
@@ -586,17 +586,18 @@ class SpecialRoom(Room, ABC):
 
 
 class SpawnRoom(Room):
-    def __init__(self, load_map_callback: Callable[[str, Coordinate], None], tile_dic: Dict[Coordinate, Tile] = None,
-                 north_hallway: Hallway = None, east_hallway: Hallway = None, south_hallway: Hallway = None,
-                 west_hallway: Hallway = None):
+    def __init__(self, load_map_callback: Callable[[str, Optional[Coordinate]], None],
+                 tile_dic: Dict[Coordinate, Tile] = None, north_hallway: Hallway = None, east_hallway: Hallway = None,
+                 south_hallway: Hallway = None, west_hallway: Hallway = None, place_teleporter: bool = True):
         room_mid = Coordinate(Room.INNER_MID_X, Room.INNER_MID_Y)
         if tile_dic:
-            if room_mid in tile_dic:
+            if room_mid in tile_dic and place_teleporter:
                 Logger.instance().error("Specified tile_dic with non-empty room-center for SpawnRoom. Overriding it "
                                         "with Teleporter.", show=False)
         else:
             tile_dic = {}
-        tile_dic[room_mid] = Teleport(self.__teleport_callback, MapConfig.back_map_string(), None)
+        if place_teleporter:
+            tile_dic[room_mid] = Teleport(self.__teleport_callback, MapConfig.back_map_string(), None)
         tile_list = Room.dic_to_tile_list(tile_dic)
         super().__init__(AreaType.SpawnRoom, tile_list, north_hallway, east_hallway, south_hallway, west_hallway)
         self.__load_map = load_map_callback
