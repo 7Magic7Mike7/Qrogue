@@ -37,6 +37,12 @@ class Ach:
     def completed_exam_phaseX(progress: int) -> bool:
         return progress > 10000 # todo
 
+    @staticmethod
+    def is_story_mission(level_name: str) -> bool:
+        return level_name in [
+            "l1v1", "l1v2", "l1v3",
+        ]
+
 
 class AchievementType(enum.Enum):
     World = 0
@@ -139,6 +145,13 @@ class AchievementManager:
     def story_progress(self) -> float:
         return self.__storage[Ach.story()].score
 
+    def __on_achievement_completion(self, achievement: Achievement):
+        assert achievement.is_done()
+
+        if achievement.type is AchievementType.Story:
+            # add one step to the story achievement since we completed the latest progress
+            self.__storage[Ach.story()].add_score(1)
+
     def check_achievement(self, name: str) -> bool:
         if name in self.__temp_level_storage:
             achievement = self.__temp_level_storage[name]
@@ -164,22 +177,34 @@ class AchievementManager:
     def progressed_in_story(self, progress: str):
         if progress not in self.__storage:
             self.__storage[progress] = Achievement(progress, AchievementType.Story, 0, 1)
-        tut = self.__storage[progress]
-        if tut.add_score(tut.done_score):
-            # add one step to the story achievement since we completed the current progress
-            self.__storage[Ach.story()].add_score(1)
+        achievement = self.__storage[progress]
+        if achievement.add_score(achievement.done_score):
+            self.__on_achievement_completion(achievement)
 
-    def finished_level(self, level: str):
-        self.__storage[level] = Achievement(level, AchievementType.Level, 1, 1)
-        #if not self.check_achievement(FinishedTutorial):
-        #    self.progressed_in_story(FinishedTutorial)
+    def finished_level(self, level: str, display_name: str = None):
+        already_finished = False
+        if level in self.__storage:
+            already_finished = self.__storage[level].is_done()
+
+        if not already_finished:
+            self.__storage[level] = Achievement(level, AchievementType.Level, 1, 1)
+            if Ach.is_story_mission(level):
+                if display_name is None:
+                    self.progressed_in_story(f"{level}_done")
+                else:
+                    self.progressed_in_story(display_name)
+            else:
+                self.__on_achievement_completion(self.__storage[level])
 
     def finished_world(self, world: str):
-        self.__storage[world] = Achievement(world, AchievementType.World, 1, 1)
+        if world not in self.__storage:
+            self.__storage[world] = Achievement(world, AchievementType.World, 1, 1)
+            self.__on_achievement_completion(self.__storage[world])
 
     def uncovered_secret(self, name: str):
         if name not in self.__storage:
             self.__storage[name] = Achievement(name, AchievementType.Secret, 1, 1)
+            self.__on_achievement_completion(self.__storage[name])
 
     def to_string(self) -> str:
         text = ""
