@@ -27,11 +27,11 @@ class Ach:
 
     @staticmethod
     def completed_exam_phase1(progress: int) -> bool:
-        return progress > 1
+        return progress >= 1
 
     @staticmethod
     def completed_exam_phase2(progress: int) -> bool:
-        return progress > 2
+        return progress >= 2
 
     @staticmethod
     def completed_exam_phaseX(progress: int) -> bool:
