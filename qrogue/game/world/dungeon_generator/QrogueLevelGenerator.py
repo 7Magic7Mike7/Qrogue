@@ -85,6 +85,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         self.__check_achievement = check_achievement
         self.__trigger_event = trigger_event
         self.__load_map = load_map_callback
+        self.__place_sr_teleporter = True
 
         self.__warnings = 0
         self.__robot = None
@@ -301,7 +302,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         self.warning(f"Unknown text reference: {reference}. Returning \"Message not found!\"")
         return Message.error("Message not found!")
 
-    def __load_hallway(self, reference: str) -> tiles.Door:
+    def __load_hallway(self, reference: str) -> Optional[tiles.Door]:
         if reference in self.__hallways_by_id:
             return self.__hallways_by_id[reference]
         elif reference == parser_util.EMPTY_HALLWAY_CODE:
@@ -324,7 +325,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             return room.copy(hw_dic)
         elif reference == self.__SPAWN_ROOM_ID:
             room = rooms.SpawnRoom(self.__load_map, None, hw_dic[Direction.North], hw_dic[Direction.East],
-                                   hw_dic[Direction.South], hw_dic[Direction.West])
+                                   hw_dic[Direction.South], hw_dic[Direction.West],
+                                   place_teleporter=self.__place_sr_teleporter)
             if self.__spawn_pos:
                 self.warning("A second SpawnRoom was defined! Ignoring the first one and using this one as "
                              "SpawnRoom.")
@@ -893,15 +895,39 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
                 continue
             gates.append(self.__load_gate(ref.getText()))  # todo what about pickups?
 
-        self.__robot = TestBot(CallbackPack.instance().game_over, num_of_qubits, gates)
+        integer_index = 0
+        circuit_space, backpack_space = None, None
+        max_energy, start_energy = None, None
 
-    ##### Start area #####
+        if ctx.CIRCUIT_SPACE():
+            circuit_space = parser_util.parse_integer(ctx.integer(integer_index))
+            integer_index += 1
+        if ctx.BACKPACK_SPACE():
+            backpack_space = parser_util.parse_integer(ctx.integer(integer_index))
+            integer_index += 1
 
-    def visitStart(self, ctx: QrogueDungeonParser.StartContext) -> Tuple[str, List[List[rooms.Room]]]:
+        if ctx.MAX_ENERGY():
+            max_energy = parser_util.parse_integer(ctx.integer(integer_index))
+            integer_index += 1
+            if ctx.START_ENERGY():
+                start_energy = parser_util.parse_integer(ctx.integer(integer_index))
+
+        self.__robot = TestBot(CallbackPack.instance().game_over, num_of_qubits, gates, circuit_space, backpack_space,
+                               max_energy, start_energy)
+
+    ##### Meta area #####
+
+    def visitMeta(self, ctx: QrogueDungeonParser.MetaContext) -> Tuple[Optional[str], bool]:
         if ctx.TEXT():
             name = parser_util.text_to_str(ctx)
         else:
             name = None
+        return name, ctx.NO_TELEPORTER() is None
+
+    ##### Start area #####
+
+    def visitStart(self, ctx: QrogueDungeonParser.StartContext) -> Tuple[str, List[List[rooms.Room]]]:
+        name, self.__place_sr_teleporter = self.visit(ctx.meta())
 
         # prepare the robot
         self.visit(ctx.robot())

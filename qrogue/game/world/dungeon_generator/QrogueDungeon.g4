@@ -4,11 +4,15 @@ import QrogueBasics, QrogueAreas, QrogueMessage;
 
 // RULES
 
-start  :    HEADER ('Name' '=' TEXT)?
+start  :    HEADER meta
             robot layout rooms hallways stv_pools reward_pools messages
             ENDER;
 
-robot: ROBOT DIGIT 'qubits' '[' REFERENCE (LIST_SEPARATOR REFERENCE)* ']' ;
+meta : ('Name' '=' TEXT)? (NO_TELEPORTER | WITH_TELEPORTER)? ;
+
+robot : ROBOT DIGIT 'qubits' '[' REFERENCE (LIST_SEPARATOR REFERENCE)* ']'
+        (CIRCUIT_SPACE '=' integer)? (BACKPACK_SPACE '=' integer)?
+        (MAX_ENERGY '=' integer (START_ENERGY '=' integer)?)? ;
 
 // building the non-template rooms used in the layout (note: template rooms are pre-defined rooms)
 room_content : WALL* r_row+ WALL* tile_descriptor* ;
@@ -46,10 +50,21 @@ collectible :   (KEY_LITERAL integer | COIN_LITERAL integer | ENERGY_LITERAL int
 
 // TOKEN
 
+// meta literals
+SR_TELEPORTER : ('spawnroom' | 'SPAWNROOM' | 'sr' | 'SR' '_'?)?  ('teleporter' | 'TELEPORTER') ;
+NO_TELEPORTER : ('exclude' | 'EXCLUDE') '_'? SR_TELEPORTER ;
+WITH_TELEPORTER : ('include' | 'INCLUDE') '_'? SR_TELEPORTER ;
+
 // headlines (encapsulated in '[' ']')
 ROBOT : '[Robot]' ;
 STV_POOLS : '[StateVector Pools]' ;
 REWARD_POOLS : '[Reward Pools]' ;
+
+// robot literals
+MAX_ENERGY : ('max' | 'MAX') '_'? ('energy' | 'ENERGY') ;
+START_ENERGY : ('start' | 'START') '_'? ('energy' | 'ENERGY') ;
+CIRCUIT_SPACE : ('circuit' | 'CIRCUIT') '_'? ('space' | 'SPACE') ;
+BACKPACK_SPACE : ('backpack' | 'BACKPACK') '_'? ('space' | 'SPACE') ;
 
 // Tile descriptor literals
 TILE_MESSAGE_LITERAL : TUTORIAL_LITERAL ; //'tutorial' ;

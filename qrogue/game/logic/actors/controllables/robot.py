@@ -21,21 +21,39 @@ from qrogue.util import CheatConfig, Config, Logger, GameplayConfig, QuantumSimu
 
 class _Attributes:
     __DAMAGE_TO_ENERGY = 10
+    __DEFAULT_SPACE = 3
+    __MIN_INIT_ENERGY = 10  # during initialization neither max_energy nor cur_energy must be below this value
+    __DEFAULT_MAX_ENERGY = 100
 
     """
     Is used as storage for a bunch of attributes of the robot
     """
 
-    def __init__(self, qubits: QubitSet = DummyQubitSet(), space: int = 3):
+    def __init__(self, qubits: QubitSet = DummyQubitSet(), space: int = __DEFAULT_SPACE,
+                 max_energy: int = __DEFAULT_MAX_ENERGY, start_energy: int = None):
         """
 
         :param qubits: the set of qubits the robot is currently using
         :param space: how many instructions the robot can put on their circuit
+        :param max_energy: how much energy the robot can store at most
+        :param start_energy: with how much energy the robot starts. If it is bigger than max_energy, max_energy will be
+                             used instead of the specified number
         """
-        self.__space = space
+        if space is None:
+            space = _Attributes.__DEFAULT_SPACE
+        if max_energy is None:
+            max_energy = _Attributes.__DEFAULT_MAX_ENERGY
+        if start_energy is None:
+            start_energy = max_energy
+
+        assert space > 0
+        assert max_energy > _Attributes.__MIN_INIT_ENERGY
+        assert start_energy > _Attributes.__MIN_INIT_ENERGY
+
         self.__qubits = qubits
-        self.__cur_energy = 1000
-        self.__max_energy = 1000
+        self.__space = space
+        self.__max_energy = max_energy
+        self.__cur_energy = min(start_energy, max_energy)
 
     @property
     def is_alive(self) -> bool:
@@ -96,6 +114,9 @@ class Backpack:
         :param capacity: how many Instructions can be stored in this Backpack
         :param content: initially stored Instructions
         """
+        if capacity is None:
+            capacity = Backpack.__CAPACITY
+
         self.__capacity = capacity
         if content:
             #self.__capacity = max(len(content), capacity)
@@ -461,10 +482,14 @@ class Robot(Controllable, ABC):
 
     def on_move(self):
         _, died = self.__attributes.decrease_energy(amount=1)
-        return died
+        if died:
+            self.__game_over()
 
     def damage(self, amount: int = 1) -> Tuple[int, bool]:
-        return self.__attributes.damage(amount)
+        amount, died = self.__attributes.damage(amount)
+        if died:
+            self.__game_over()
+        return amount, died
 
     def regenerate(self, amount: int = 1) -> int:
         """
@@ -480,10 +505,11 @@ class Robot(Controllable, ABC):
 
 
 class TestBot(Robot):
-    def __init__(self, game_over_callback: Callable[[], None], num_of_qubits: int = 2, gates: List[Instruction] = None):
-        attributes = _Attributes(DummyQubitSet(num_of_qubits))
-        backpack = Backpack(5, gates)
-
+    def __init__(self, game_over_callback: Callable[[], None], num_of_qubits: int = 2, gates: List[Instruction] = None,
+                 circuit_space: int = None, backpack_space: int = None, max_energy: int = None,
+                 start_energy: int = None):
+        attributes = _Attributes(DummyQubitSet(num_of_qubits), circuit_space, max_energy, start_energy)
+        backpack = Backpack(backpack_space, gates)
         super(TestBot, self).__init__("Testbot", attributes, backpack, game_over_callback)
 
     def get_img(self):

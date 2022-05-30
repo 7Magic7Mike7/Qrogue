@@ -10,6 +10,11 @@ class QrogueDungeonVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by QrogueDungeonParser#meta.
+    def visitMeta(self, ctx):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by QrogueDungeonParser#robot.
     def visitRobot(self, ctx):
         return self.visitChildren(ctx)
