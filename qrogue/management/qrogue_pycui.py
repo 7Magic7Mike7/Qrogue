@@ -70,7 +70,7 @@ class QrogueCUI(PyCUI):
         MapManager(seed, self.__show_world, self.__start_level)
         Popup.update_check_achievement_function(SaveData.instance().achievement_manager.check_achievement)
         common_messages.set_show_callback(Popup.generic_info)
-        common_messages.set_ask_callback(ConfirmationPopup.ask)
+        common_messages.set_ask_callback(ConfirmationPopup.scientist_asks)
         WalkTriggerTile.set_show_explanation_callback(Popup.from_message)
         Message.set_show_callback(Popup.from_message)
         Collectible.set_pickup_message_callback(Popup.generic_info)
@@ -523,9 +523,15 @@ class QrogueCUI(PyCUI):
             Logger.instance().throw(ValueError(f"Tried to start a level with a non-Robot: {robot}"))
 
     def __game_over(self) -> None:
-        Popup.generic_info("Game Over!", "You Robot was out of energy so your mission failed. You will return to the "
-                                    "Spaceship now.")
-        self.__state_machine.change_state(State.Spaceship, None)
+        def callback(confirmed: bool):
+            if confirmed:
+                MapManager.instance().reload()
+            elif StoryNarration.completed_tutorial():
+                self.__state_machine.change_state(State.Spaceship, None)
+            else:
+                self.__state_machine.change_state(State.Menu, None)
+        ConfirmationPopup.ask(Config.system_name(), "Your Robot is out of energy. Do you want to restart or abort the "
+                                                    "current level?", callback)
 
     def __start_fight(self, robot: Robot, enemy: Enemy, direction: Direction) -> None:
         self.__state_machine.change_state(State.Fight, (robot, enemy))

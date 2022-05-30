@@ -218,3 +218,6 @@ class MapManager:
             self.__load_next()
         else:
             self.__load_map(map_name, spawn_room, map_seed)
+
+    def reload(self):
+        self.__load_map(self.__cur_map.internal_name, None, self.__cur_map.seed)

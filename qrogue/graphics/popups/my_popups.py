@@ -114,7 +114,11 @@ class ConfirmationPopup(Popup):
         ConfirmationPopup.__show_popup = show_popup_callback
 
     @staticmethod
-    def ask(text: str, callback: Callable[[bool], None]):
+    def ask(title: str, text: str, callback: Callable[[bool], None]):
+        ConfirmationPopup(title, text, callback)
+
+    @staticmethod
+    def scientist_asks(text: str, callback: Callable[[bool], None]):
         ConfirmationPopup(Config.scientist_name(), text, callback)
 
     def __init__(self, title: str, text: str, callback: Callable[[bool], None],
