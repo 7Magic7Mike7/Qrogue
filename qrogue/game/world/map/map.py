@@ -163,9 +163,6 @@ class Map(ABC):
         :param direction: in which direction the robot should move
         :return: True if the robot was able to move, False otherwise
         """
-        robot = self.__controllable_tile.controllable
-        if isinstance(robot, Robot):
-            robot.on_move()
 
         new_pos = self.__controllable_pos + direction
         if new_pos.y < 0 or self.full_height <= new_pos.y or \
@@ -173,7 +170,11 @@ class Map(ABC):
             return False
 
         area, tile = self.__get_area(new_pos.x, new_pos.y)
-        if tile.is_walkable(direction, self.__controllable_tile.controllable):
+        if tile.is_walkable(direction, self.controllable_tile.controllable):
+            robot = self.controllable_tile.controllable
+            if isinstance(robot, Robot):
+                robot.on_move()
+
             if area != self.__cur_area:
                 self.__cur_area.leave(direction)
                 self.__cur_area = area
