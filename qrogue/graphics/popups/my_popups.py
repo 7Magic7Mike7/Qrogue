@@ -38,8 +38,9 @@ class Popup:
             Popup.__last_popup.show()
 
     @staticmethod
-    def message(title: str, text: str, reopen: bool, color: int = PopupConfig.default_color(), overwrite: bool = False):
-        Popup(title, text, color, reopen=reopen, show=True, overwrite=overwrite)
+    def message(title: str, text: str, reopen: bool, color: int = PopupConfig.default_color(), overwrite: bool = False,
+                on_close_callback: Callable[[], None] = None):
+        Popup(title, text, color, reopen=reopen, show=True, overwrite=overwrite, on_close_callback=on_close_callback)
 
     @staticmethod
     def generic_info(title: str, text: str):
