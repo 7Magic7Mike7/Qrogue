@@ -5,16 +5,19 @@ from py_cui.keys import *
 
 
 class Keys(IntEnum):
+    # 0 - 3
     MoveUp = 0
     MoveRight = MoveUp + 1
     MoveDown = MoveUp + 2
     MoveLeft = MoveUp + 3
 
+    # 4 - 7
     SelectionUp = MoveLeft + 1
     SelectionRight = SelectionUp + 1
     SelectionDown = SelectionUp + 2
     SelectionLeft = SelectionUp + 3
 
+    # 8 - 13
     PopupClose = SelectionLeft + 1
     PopupScrollUp = PopupClose + 1
     PopupScrollDown = PopupClose + 2
@@ -22,27 +25,32 @@ class Keys(IntEnum):
     PopupScrollDownFast = PopupClose + 4
     PopupReopen = PopupClose + 5
 
+    # 14 - 16
     Action = PopupReopen + 1
     Cancel = Action + 1
     Pause = Cancel + 1
 
+    # 17 - 26
     HotKey1 = Pause + 1
-    HotKey2 = Pause + 2
-    HotKey3 = Pause + 3
-    HotKey4 = Pause + 4
-    HotKey5 = Pause + 5
-    HotKey6 = Pause + 6
-    HotKey7 = Pause + 7
-    HotKey8 = Pause + 8
-    HotKey9 = Pause + 9
-    HotKey0 = Pause + 10
+    HotKey2 = HotKey1 + 1
+    HotKey3 = HotKey1 + 2
+    HotKey4 = HotKey1 + 3
+    HotKey5 = HotKey1 + 4
+    HotKey6 = HotKey1 + 5
+    HotKey7 = HotKey1 + 6
+    HotKey8 = HotKey1 + 7
+    HotKey9 = HotKey1 + 8
+    HotKey0 = HotKey1 + 9
 
+    # 27
     HotKeyCommit = HotKey0 + 1
 
-    Render = HotKey0 + 1
+    # 28 - 30
+    Render = HotKeyCommit + 1
     PrintScreen = Render + 1
     StopSimulator = PrintScreen + 1
 
+    # 31 - 32
     CheatInput = StopSimulator + 1
     CheatList = CheatInput + 1
 
@@ -95,29 +103,29 @@ class Controls:
     def __init__(self, handle_key_presses: Callable[[int], None]):
         self.__handle_key_presses = handle_key_presses
         self.__pycui_keys = [
-            # move
+            # move: 0 - 3
             [KEY_UP_ARROW, KEY_W_LOWER],
             [KEY_RIGHT_ARROW, KEY_D_LOWER],
             [KEY_DOWN_ARROW, KEY_S_LOWER],
             [KEY_LEFT_ARROW, KEY_A_LOWER],
-            # select
+            # select: 4 - 7
             [KEY_UP_ARROW, KEY_W_LOWER],
             [KEY_RIGHT_ARROW, KEY_D_LOWER],
             [KEY_DOWN_ARROW, KEY_S_LOWER],
             [KEY_LEFT_ARROW, KEY_A_LOWER],
-            # popups
+            # popups: 8 - 13
             [KEY_SPACE, KEY_ENTER, KEY_ESCAPE],     # KEY_ESCAPE is not allowed to be at the first position because then the simulator would stop itself
             [KEY_UP_ARROW, KEY_W_LOWER],
             [KEY_DOWN_ARROW, KEY_S_LOWER],
             [KEY_RIGHT_ARROW, KEY_D_LOWER],
             [KEY_LEFT_ARROW, KEY_A_LOWER],
             [KEY_H_LOWER],
-
+            # 14 - 16
             [KEY_SPACE, KEY_ENTER],     # action
             [KEY_BACKSPACE, KEY_A_UPPER, KEY_SHIFT_LEFT],  # cancel/back
             [KEY_P_LOWER, KEY_TAB],  # pause    (Escape doesn't work here due to its special purpose for the engine)
 
-            # special purpose hotkeys
+            # special purpose hotkeys: 17 - 27
             [KEY_1],  # Fight: Adapt (Add/Remove)
             [KEY_2],  # Fight: Commit
             [KEY_3],  # Fight: Reset
@@ -129,10 +137,11 @@ class Controls:
             [KEY_9],
             [KEY_0, 94],    # 94 = ^
             [KEY_C_LOWER],  # Fight: Commit
-
+            # debugging keys: 28 - 30
             [KEY_CTRL_R],  # render screen
             [KEY_CTRL_P],   # print screen
             [KEY_ESCAPE],   # stop simulator
+            # cheat keys: 31 - 32
             [KEY_CTRL_I],   # cheat input
             [KEY_CTRL_L],   # cheat list
         ]
