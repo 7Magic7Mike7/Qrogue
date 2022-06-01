@@ -463,12 +463,15 @@ class QrogueCUI(PyCUI):
         self.apply_widget_set(self.__menu)
 
     def __start_playing(self):
-        if Ach.completed_exam_phaseX(int(SaveData.instance().achievement_manager.story_progress)):
+        progress = int(SaveData.instance().achievement_manager.story_progress)
+        if Ach.completed_exam_phaseX(progress):
             self.__state_machine.change_state(State.Spaceship, SaveData.instance())
         else:
             # load the newest level (exam phase) by
             self.__state_machine.change_state(State.Explore, MapManager.instance().load_map(MapConfig.next_map_string(),
-                                                                                   None))
+                                                                                            None))
+            if not Ach.completed_exam_phase1(progress):
+                Popup.examiner_says(HelpText.get(HelpTextType.FirstLevelIntroduction))
 
     def switch_to_spaceship(self, data=None):
         StoryNarration.returned_to_spaceship()
@@ -553,11 +556,6 @@ class QrogueCUI(PyCUI):
             map = data
             self.__explore.set_data(map)
         self.apply_widget_set(self.__explore)
-        if data is not None:
-            # we cannot do this in the same if because we need to apply the widget set first otherwise the focus will
-            # be on the wrong widget after closing the popup
-            if not StoryNarration.unlocked_navigation():
-                Popup.examiner_says(HelpText.get(HelpTextType.FirstLevelIntroduction))
 
     def __continue_explore(self) -> None:
         self.__state_machine.change_state(State.Explore, None)

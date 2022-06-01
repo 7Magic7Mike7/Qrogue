@@ -12,13 +12,12 @@ from qrogue.management.save_data import SaveData
 
 __MAP_ORDER = {
     MapConfig.spaceship(): MapConfig.intro_level(),
-    MapConfig.intro_level(): "w1",  # "hacky" fix to the problem that the player might use quickstart instead of
-                                    # navigation during MoonMission
+    MapConfig.intro_level(): "l1v2",
     "l1v2": "l1v3",
     "l1v3": "l1v4",
-    "l1v4": "w2",
+    "l1v4": "l1v5",
 
-    MapConfig.hub_world(): "l1v4",  # first level is currently number 4
+    MapConfig.hub_world(): "l1v1",
 }
 
 
@@ -208,10 +207,10 @@ class MapManager:
             elif self.__cur_map.get_type() is MapType.Expedition:
                 SaveData.instance().achievement_manager.add_to_achievement(achievements.CompletedExpedition, 1)
 
-            if self.__cur_map.internal_name == MapConfig.intro_level():
-                self.__show_world(None)     # go back to the spaceship
-            else:
+            if StoryNarration.completed_tutorial():
                 CommonQuestions.ProceedToNextMap.ask(self.__proceed)
+            else:
+                self.__proceed()
         SaveData.instance().achievement_manager.trigger_level_event(event_id)
 
     def load_map(self, map_name: str, spawn_room: Optional[Coordinate], map_seed: int = None):

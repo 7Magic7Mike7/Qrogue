@@ -3,7 +3,8 @@ from typing import List
 
 from qrogue.graphics.popups import Popup
 from qrogue.management import SaveData
-from qrogue.util import ColorConfig, MapConfig, HudConfig
+from qrogue.util import ColorConfig
+from qrogue.util.achievements import Ach
 from qrogue.util.help_texts import StoryText, StoryTextType, TutorialText, TutorialTextType
 
 
@@ -27,39 +28,28 @@ class _StoryProgress(enum.Enum):
 
 
 class StoryNarration:
+
+    # TODO: Incorporate into new level structure
+
     @staticmethod
     def __check_achievement(achievement: str) -> bool:
         return SaveData.instance().achievement_manager.check_achievement(achievement)
 
     @staticmethod
-    def __get_story_progress() -> _StoryProgress:
-        progress = _StoryProgress.RobotShowcase
-
-        HudConfig.ShowCoins = False  # todo implement more elegant
-        if StoryNarration.__check_achievement("l1v2"):
-            progress = _StoryProgress.DarkSideOfMoon
-            HudConfig.ShowCoins = True  # todo implement more elegant
-        elif StoryNarration.__check_achievement(MapConfig.intro_level()):
-            progress = _StoryProgress.MoonMission
-        return progress
+    def __get_story_progress() -> int:
+        return int(SaveData.instance().achievement_manager.story_progress)
 
     @staticmethod
     def unlocked_navigation() -> bool:
-        progress = StoryNarration.__get_story_progress()
-        ordered_progress = _StoryProgress.progress_order()
-        return ordered_progress.index(progress) >= ordered_progress.index(_StoryProgress.MoonMission)
+        return Ach.completed_exam_phaseX(StoryNarration.__get_story_progress())
 
     @staticmethod
     def completed_tutorial() -> bool:
-        progress = StoryNarration.__get_story_progress()
-        ordered_progress = _StoryProgress.progress_order()
-        return ordered_progress.index(progress) >= ordered_progress.index(_StoryProgress.DarkSideOfMoon)
+        return Ach.completed_exam_phaseX(StoryNarration.__get_story_progress())
 
     @staticmethod
     def unlocked_free_navigation() -> bool:
-        progress = StoryNarration.__get_story_progress()
-        ordered_progress = _StoryProgress.progress_order()
-        return ordered_progress.index(progress) >= ordered_progress.index(_StoryProgress.NewHorizons)
+        return Ach.completed_exam_phaseX(StoryNarration.__get_story_progress())
 
     @staticmethod
     def entered_navigation():
