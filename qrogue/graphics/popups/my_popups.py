@@ -21,6 +21,8 @@ class Popup:
 
     @staticmethod
     def on_close() -> bool:
+        if Popup.__cur_popup:
+            Popup.__cur_popup.on_close_callback()
         if Popup.__cur_popup and Popup.__cur_popup.is_reopenable:
             Popup.__last_popup = Popup.__cur_popup
         Popup.__cur_popup = None
@@ -58,18 +60,28 @@ class Popup:
     @staticmethod
     def from_message(message: Message, overwrite: bool = False):
         if Popup.__check_achievement:
-            ret = message.get(Popup.__check_achievement)
+            ret = message.get(Popup.__check_achievement)    # resolve possible alternative messages
             if ret:
                 title, text = ret
                 # the message is reopen-able because we explicitly defined it
                 Popup.message(title, text, reopen=True, overwrite=overwrite)
 
+    @staticmethod
+    def from_message_trigger(message: Message, on_close_callback: Callable[[], None]):
+        if Popup.__check_achievement:
+            ret = message.get(Popup.__check_achievement)    # resolve possible alternative messages
+            if ret:
+                title, text = ret
+                # the message is reopen-able because we explicitly defined it
+                Popup.message(title, text, reopen=True, on_close_callback=on_close_callback)
+
     def __init__(self, title: str, text: str, color: int = PopupConfig.default_color(), show: bool = True,
-                 overwrite: bool = False, reopen: bool = True):
+                 overwrite: bool = False, reopen: bool = True, on_close_callback: Callable[[], None] = None):
         self.__title = title
         self.__text = text
         self.__color = color
         self.__reopen = reopen    # whether this popup should be reopen-able or not
+        self.__on_close_callback = on_close_callback
         if show:
             self.show(overwrite)
 
@@ -88,6 +100,10 @@ class Popup:
     @property
     def is_reopenable(self) -> bool:
         return self.__reopen
+
+    def on_close_callback(self):
+        if self.__on_close_callback:
+            self.__on_close_callback()
 
     def _base_show(self):
         Popup.__show_popup(self.__title, self.__text, self.__color)

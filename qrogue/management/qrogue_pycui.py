@@ -72,7 +72,7 @@ class QrogueCUI(PyCUI):
         common_messages.set_show_callback(Popup.generic_info)
         common_messages.set_ask_callback(ConfirmationPopup.scientist_asks)
         WalkTriggerTile.set_show_explanation_callback(Popup.from_message)
-        Message.set_show_callback(Popup.from_message)
+        Message.set_show_callback(Popup.from_message_trigger)
         Collectible.set_pickup_message_callback(Popup.generic_info)
 
         self.__key_logger = KeyLogger()

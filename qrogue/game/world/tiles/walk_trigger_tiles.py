@@ -12,7 +12,7 @@ from qrogue.util import Logger
 
 
 class WalkTriggerTile(Tile):
-    __show_explanation = None
+    __show_explanation: Callable[[LogicalMessage, bool], None] = None
 
     @staticmethod
     def set_show_explanation_callback(show_explanation: Callable[[LogicalMessage, bool], None]):
@@ -132,10 +132,10 @@ class Teleport(WalkTriggerTile):
 
 class Message(WalkTriggerTile):
     __msg_counter = 0
-    __show = None
+    __show: Callable[[LogicalMessage, Callable[[], None]], None] = None
 
     @staticmethod
-    def set_show_callback(show: Callable[[LogicalMessage], None]):
+    def set_show_callback(show: Callable[[LogicalMessage, Callable[[], None]], None]):
         Message.__show = show
 
     @staticmethod
@@ -162,10 +162,10 @@ class Message(WalkTriggerTile):
         self.__times -= 1
         if self.__times >= 0:
             if Message.__show:
-                Message.__show(self.__message)
+                Message.__show(self.__message, self._explicit_trigger)
             else:
                 Logger.instance().error("Message's show is None!")
-            return True
+            return False
         return False
 
     def _copy(self) -> "Tile":
