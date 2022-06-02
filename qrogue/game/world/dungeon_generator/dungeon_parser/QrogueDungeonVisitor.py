@@ -100,6 +100,11 @@ class QrogueDungeonVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by QrogueDungeonParser#stv_ref.
+    def visitStv_ref(self, ctx):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by QrogueDungeonParser#stv.
     def visitStv(self, ctx):
         return self.visitChildren(ctx)

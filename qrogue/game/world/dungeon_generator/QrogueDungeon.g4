@@ -38,7 +38,8 @@ draw_strategy : RANDOM_DRAW | ORDERED_DRAW ;    // default is random draw, becau
 stv_pools : STV_POOLS ('custom' stv_pool+)? 'default' default_stv_pool ;    // default pools are for enemies without defined pools
 default_stv_pool : REFERENCE | draw_strategy? stvs ;
 stv_pool : REFERENCE draw_strategy? stvs ('default' 'rewards' ':' REFERENCE)?;     // id of pool, list of statevectors, id of default reward pool
-stvs : '[' stv (LIST_SEPARATOR stv)* ']' ;
+stvs : '[' stv_ref (LIST_SEPARATOR stv_ref)* ']' ;
+stv_ref: stv | REFERENCE ;
 stv :  '[' complex_number (LIST_SEPARATOR complex_number)* ']';
 
 reward_pools : REWARD_POOLS ('custom' reward_pool+)? 'default' default_reward_pool ;    // default pools are for enemies without defined pools

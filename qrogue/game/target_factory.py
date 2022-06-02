@@ -88,6 +88,9 @@ class ExplicitTargetDifficulty(TargetDifficulty):
         else:
             return rm.get_element(self.__pool, msg="ExplicitTargetDiff_selectStv")
 
+    def copy_pool(self) -> List[StateVector]:
+        return self.__pool.copy()
+
 
 class RiddleDifficulty(TargetDifficulty):
     def __init__(self, num_of_instructions: int, reward_pool: "list of Collectibles", min_attempts: int = 1,

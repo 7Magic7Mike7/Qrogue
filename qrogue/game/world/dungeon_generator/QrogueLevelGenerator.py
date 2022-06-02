@@ -8,7 +8,7 @@ from qrogue.game.logic.actors import Controllable, Riddle
 from qrogue.game.logic.actors.controllables import TestBot
 from qrogue.game.logic.collectibles import Collectible, pickup, instruction, MultiCollectible, Qubit, ShopItem, \
     CollectibleFactory, OrderedCollectibleFactory
-from qrogue.game.target_factory import EnemyFactory, ExplicitTargetDifficulty, TargetDifficulty
+from qrogue.game.target_factory import EnemyFactory, ExplicitTargetDifficulty
 from qrogue.game.world import tiles
 from qrogue.game.world.map import CallbackPack, LevelMap, rooms
 from qrogue.game.world.navigation import Coordinate, Direction
@@ -245,13 +245,15 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             return self.__default_reward_factory
         return CollectibleFactory(pool)
 
-    def __load_stv_pool(self, reference: str) -> TargetDifficulty:
+    def __load_stv_pool(self, reference: str, allow_default: bool = True) -> Optional[ExplicitTargetDifficulty]:
         if reference in self.__stv_pools:
             return self.__stv_pools[reference]
-        else:
+        elif allow_default:
             # todo implement imports
             self.warning(f"Imports not yet supported: {reference}. Choosing from default_stv_pool!")
             return self.__default_target_difficulty
+        else:
+            return None
 
     def __load_gate(self, reference: str) -> instruction.Instruction:
         ref = parser_util.normalize_reference(reference)
@@ -449,13 +451,25 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             amplitudes = [1] + [0] * (2 ** self.__robot.num_of_qubits - 1)
         return StateVector(amplitudes)
 
+    def visitStv_ref(self, ctx: QrogueDungeonParser.Stv_refContext) -> List[StateVector]:
+        if ctx.stv():
+            return [self.visit(ctx.stv())]
+        else:
+            pool_id = ctx.REFERENCE().getText
+            difficulty = self.__load_stv_pool(pool_id, allow_default=False)
+            if difficulty:
+                return difficulty.copy_pool()
+            else:
+                self.warning(f"Illegal pool_id: {pool_id}. Make sure to only reference previously defined pool ids!")
+                return []
+
     def visitStvs(self, ctx: QrogueDungeonParser.StvsContext) -> List[StateVector]:
         stvs = []
-        for stv in ctx.stv():
-            stvs.append(self.visit(stv))
+        for stv_ref in ctx.stv_ref():
+            stvs += self.visit(stv_ref)
         return stvs
 
-    def visitStv_pool(self, ctx: QrogueDungeonParser.Stv_poolContext) -> Tuple[str, TargetDifficulty]:
+    def visitStv_pool(self, ctx: QrogueDungeonParser.Stv_poolContext) -> Tuple[str, ExplicitTargetDifficulty]:
         pool_id = ctx.REFERENCE(0).getText()
         ordered = self.__get_draw_strategy(ctx.draw_strategy())
         stvs = self.visit(ctx.stvs())
@@ -468,7 +482,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
         return pool_id, ExplicitTargetDifficulty(stvs, reward_factory, ordered)
 
-    def visitDefault_stv_pool(self, ctx: QrogueDungeonParser.Default_stv_poolContext) -> TargetDifficulty:
+    def visitDefault_stv_pool(self, ctx: QrogueDungeonParser.Default_stv_poolContext) -> ExplicitTargetDifficulty:
         if ctx.REFERENCE():  # implicit definition
             pool_id = ctx.REFERENCE().getText()
             return self.__load_stv_pool(pool_id)
@@ -652,22 +666,29 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
         enemy_id = int(ctx.DIGIT().getText())
 
+        # reward factory is needed to create the enemy factory so we have to create it first and find out where to look
+        if ctx.stv():
+            # since a state vector was defined instead of referenced, a reward factory reference can only be the first
+            ref_index = 0       # reference occurrence
+        else:
+            # otherwise a stv was referenced and therefore, a reward factory can only be the second reference
+            ref_index = 1
+
         if ctx.collectible():
             reward = self.visit(ctx.collectible())
             reward_factory = CollectibleFactory([reward])
+        elif ctx.REFERENCE(ref_index):
+            pool_id = ctx.REFERENCE(ref_index).getText()
+            reward_factory = self.__load_collectible_factory(pool_id)
         else:
-            # reward factory is needed to create the enemy factory so we have to create it first and do this check
-            if ctx.stv():
-                pool_id = ctx.REFERENCE(0).getText()
-            else:
-                pool_id = ctx.REFERENCE(1).getText()
-            reward_factory = self.__load_reward_pool(pool_id)
+            # if neither a collectible nor a reference to a reward_factory is given we use the default one
+            reward_factory = self.__default_reward_factory
 
         if ctx.stv():
             stv = self.visit(ctx.stv())
             difficulty = ExplicitTargetDifficulty([stv], reward_factory)
         else:
-            pool_id = ctx.REFERENCE(0).getText()
+            pool_id = ctx.REFERENCE(0).getText()    # don't use ref_index here because it will always be 0 if present
             difficulty = self.__load_stv_pool(pool_id)
 
         enemy_factory = EnemyFactory(self.__cbp.start_fight, difficulty, 1)

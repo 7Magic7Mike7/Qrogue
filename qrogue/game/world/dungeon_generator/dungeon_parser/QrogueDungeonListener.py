@@ -175,6 +175,15 @@ class QrogueDungeonListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by QrogueDungeonParser#stv_ref.
+    def enterStv_ref(self, ctx):
+        pass
+
+    # Exit a parse tree produced by QrogueDungeonParser#stv_ref.
+    def exitStv_ref(self, ctx):
+        pass
+
+
     # Enter a parse tree produced by QrogueDungeonParser#stv.
     def enterStv(self, ctx):
         pass
