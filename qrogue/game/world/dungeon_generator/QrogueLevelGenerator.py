@@ -649,19 +649,26 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             self.__enemy_groups_by_room[room_id][enemy_id].append(new_enemy)
 
         enemy_id = int(ctx.DIGIT().getText())
-        pool_id = ctx.REFERENCE(0).getText()
-        if pool_id in self.__stv_pools:
-            difficulty = self.__stv_pools[pool_id]
-            enemy_factory = EnemyFactory(self.__cbp.start_fight, difficulty, 1)
-            if ctx.REFERENCE(1):
-                pool_id = ctx.REFERENCE(1).getText()
-                if pool_id in self.__reward_pools:
-                    reward_factory = self.__reward_pools[pool_id]
-                    enemy_factory.set_custom_reward_factory(reward_factory)
-        else:
-            self.warning("Imports not yet supported! Choosing from default_stv_pool")
-            enemy_factory = self.__default_enemy_factory
 
+        if ctx.collectible():
+            reward = self.visit(ctx.collectible())
+            reward_factory = CollectibleFactory([reward])
+        else:
+            # reward factory is needed to create the enemy factory so we have to create it first and do this check
+            if ctx.stv():
+                pool_id = ctx.REFERENCE(0).getText()
+            else:
+                pool_id = ctx.REFERENCE(1).getText()
+            reward_factory = self.__load_reward_pool(pool_id)
+
+        if ctx.stv():
+            stv = self.visit(ctx.stv())
+            difficulty = ExplicitTargetDifficulty([stv], reward_factory)
+        else:
+            pool_id = ctx.REFERENCE(0).getText()
+            difficulty = self.__load_stv_pool(pool_id)
+
+        enemy_factory = EnemyFactory(self.__cbp.start_fight, difficulty, 1)
         enemy = tiles.Enemy(enemy_factory, get_entangled_tiles, update_entangled_room_groups, enemy_id)
         #   update_entangled_room_groups(enemy) # by commenting this the original (copied from) tile is not in the list
         return enemy
