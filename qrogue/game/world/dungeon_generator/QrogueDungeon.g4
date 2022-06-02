@@ -28,8 +28,8 @@ message_descriptor : 'm' integer? REFERENCE ;    // #times displayed, reference 
 enemy_descriptor : DIGIT (REFERENCE | stv) (REFERENCE | collectible)? ;    // enemy, id of statevector pool, id of reward pool
 collectible_descriptor : 'c' REFERENCE integer? ; // id of reward pool to draw from, number of rewards to draw (note: template pools like *key provide "normal" collectibles)
 energy_descriptor : 'e' integer ;    // amount
-riddle_descriptor : 'r' (REFERENCE | stv) (REFERENCE | collectible) integer;   // stv pool id, reward pool id, attempts
-shop_descriptor : '$' (REFERENCE | collectibles) integer ;   // reward pool id or collectible list, num of items to draw
+riddle_descriptor : 'r' integer (REFERENCE | stv) (REFERENCE | collectible) ;   // attempts, stv pool id, reward pool id
+shop_descriptor : '$' integer (REFERENCE | collectibles) ;   // num of items to draw, reward pool id or collectible list
 
 
 // how to draw an element from a pool

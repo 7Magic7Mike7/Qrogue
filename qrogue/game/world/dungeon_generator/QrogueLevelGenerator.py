@@ -565,24 +565,27 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
     ##### Room area #####
 
     def visitShop_descriptor(self, ctx: QrogueDungeonParser.Shop_descriptorContext) -> tiles.ShopKeeper:
+        num_of_items = self.visit(ctx.integer())
+
         if ctx.REFERENCE():
             pool_id = ctx.REFERENCE().getText()
             item_pool = self.__load_reward_pool(pool_id)
         else:
             item_pool = self.visit(ctx.collectibles())
 
-        num_of_items = self.visit(ctx.integer())
         shop_factory = CollectibleFactory(item_pool)
         items = shop_factory.produce_multiple(self.__rm, num_of_items)
         return tiles.ShopKeeper(self.__cbp.visit_shop, [ShopItem(item) for item in items])
 
     def visitRiddle_descriptor(self, ctx: QrogueDungeonParser.Riddle_descriptorContext) -> tiles.Riddler:
+        attempts = self.visit(ctx.integer())
+
         ref_index = 0
         if ctx.stv():
             stv = self.visit(ctx.stv())
         else:
             pool_id = ctx.REFERENCE(ref_index).getText()
-            ref_index = 1
+            ref_index += 1
             difficulty = self.__load_stv_pool(pool_id)
             stv = difficulty.create_statevector(self.__robot, self.__rm)
 
@@ -593,7 +596,6 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             reward_pool = self.__load_reward_pool(pool_id)
             reward = reward_pool.produce(self.__rm)
 
-        attempts = self.visit(ctx.integer())
         riddle = Riddle(stv, reward, attempts)
         return tiles.Riddler(self.__cbp.open_riddle, riddle)
 
