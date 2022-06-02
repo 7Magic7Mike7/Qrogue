@@ -51,9 +51,9 @@ collectible :   (KEY_LITERAL integer | COIN_LITERAL integer | ENERGY_LITERAL int
 // TOKEN
 
 // meta literals
-SR_TELEPORTER : ('spawnroom' | 'SPAWNROOM' | 'sr' | 'SR' '_'?)?  ('teleporter' | 'TELEPORTER') ;
-NO_TELEPORTER : ('exclude' | 'EXCLUDE') '_'? SR_TELEPORTER ;
-WITH_TELEPORTER : ('include' | 'INCLUDE') '_'? SR_TELEPORTER ;
+SR_TELEPORTER : (('spawnroom' | 'SPAWNROOM' | 'sr' | 'SR' )'_'?)?  ('teleporter' | 'TELEPORTER') ;
+NO_TELEPORTER : ('exclude' | 'EXCLUDE' | 'no' | 'NO') '_'? SR_TELEPORTER ;
+WITH_TELEPORTER : ('include' | 'INCLUDE' | 'with' | 'WITH') '_'? SR_TELEPORTER ;
 
 // headlines (encapsulated in '[' ']')
 ROBOT : '[Robot]' ;
