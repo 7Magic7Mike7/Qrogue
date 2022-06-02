@@ -64,7 +64,7 @@ class TargetDifficulty:
 class ExplicitTargetDifficulty(TargetDifficulty):
     """
     A TargetDifficulty that doesn't create StateVectors based on a Robot's possibilities but by choosing from a pool
-    of explicitely provided StateVectors
+    of explicitly provided StateVectors
     """
 
     def __init__(self, stv_pool: List[StateVector], reward_factory: CollectibleFactory, ordered: bool = False):
