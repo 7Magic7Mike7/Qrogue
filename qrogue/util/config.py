@@ -422,6 +422,9 @@ class PopupConfig:
     __LEFT_POS = 3
     __BOT_POS = 22
 
+    PADDING_X = 2
+    PADDING_Y = 2
+
     @staticmethod
     def default_color() -> int:
         return PyCuiColors.BLACK_ON_WHITE
