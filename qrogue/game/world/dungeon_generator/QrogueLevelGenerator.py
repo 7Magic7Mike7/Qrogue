@@ -240,9 +240,9 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         elif ref in ['energy']:
             pool = [pickup.Energy()]
         else:
-            self.warning(f"Imports not yet supported: {reference}")
-            # todo load from somewhere else?
-            pool = [pickup.Key(0)]
+            self.warning(f"Imports not yet supported: {reference}. Choosing from default_reward_factory!")
+            # todo implement imports
+            return self.__default_reward_factory
         return CollectibleFactory(pool)
 
     def __load_stv_pool(self, reference: str) -> TargetDifficulty:
@@ -250,7 +250,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             return self.__stv_pools[reference]
         else:
             # todo implement imports
-
+            self.warning(f"Imports not yet supported: {reference}. Choosing from default_stv_pool!")
             return self.__default_target_difficulty
 
     def __load_gate(self, reference: str) -> instruction.Instruction:
