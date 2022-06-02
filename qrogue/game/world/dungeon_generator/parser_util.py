@@ -5,6 +5,7 @@ from antlr4.error.ErrorListener import ErrorListener
 from qrogue.game.logic import Message
 from qrogue.game.world.map import Hallway
 from qrogue.game.world.navigation import Coordinate, Direction
+from qrogue.game.world.tiles import Door
 from qrogue.util import MapConfig, Logger, Config
 
 DEFAULT_HALLWAY_STR = "=="
@@ -53,22 +54,23 @@ def direction_from_string(dir_str: str) -> Direction:
     return direction
 
 
-def get_hallways(hallway_dictionary: Dict[Coordinate, Dict[Direction, Hallway]], hallways, pos: Coordinate) \
+def get_hallways(hallway_dict: Dict[Coordinate, Dict[Direction, Hallway]],
+                 door_dict: Dict[Coordinate, Dict[Coordinate, Door]], pos: Coordinate) \
         -> Optional[Dict[Direction, Hallway]]:
-    if pos in hallways:
-        hallways = hallways[pos]
-        if hallways:
+    if pos in door_dict:
+        doors = door_dict[pos]
+        if doors:
             room_hallways = {
                 Direction.North: None, Direction.East: None, Direction.South: None, Direction.West: None,
             }
-            for neighbor in hallways:
+            for neighbor in doors:
                 direction = Direction.from_coordinates(pos, neighbor)
                 opposite = direction.opposite()
                 # get hallway from neighbor if it exists, otherwise create it
-                if neighbor in hallway_dictionary and opposite in hallway_dictionary[neighbor]:
-                    hallway = hallway_dictionary[neighbor][opposite]
+                if neighbor in hallway_dict and opposite in hallway_dict[neighbor]:
+                    hallway = hallway_dict[neighbor][opposite]
                 else:
-                    door = hallways[neighbor]
+                    door = doors[neighbor]
                     # always make a copy so we don't run into problems if we use a simple hallway multiple times
                     if door.is_one_way:
                         if door.direction not in [direction, direction.opposite()]:
@@ -81,15 +83,15 @@ def get_hallways(hallway_dictionary: Dict[Coordinate, Dict[Direction, Hallway]],
                     else:
                         door = door.copy_and_adapt(direction)
                     hallway = Hallway(door)
-                    if neighbor in hallway_dictionary:
-                        hallway_dictionary[neighbor][opposite] = hallway
+                    if neighbor in hallway_dict:
+                        hallway_dict[neighbor][opposite] = hallway
                     else:
-                        hallway_dictionary[neighbor] = {opposite: hallway}
+                        hallway_dict[neighbor] = {opposite: hallway}
 
                 # store the hallway so the neighbors can find it if necessary
-                if pos not in hallway_dictionary:
-                    hallway_dictionary[pos] = {}
-                hallway_dictionary[pos][direction] = hallway
+                if pos not in hallway_dict:
+                    hallway_dict[pos] = {}
+                hallway_dict[pos][direction] = hallway
                 room_hallways[direction] = hallway
             return room_hallways
     return None

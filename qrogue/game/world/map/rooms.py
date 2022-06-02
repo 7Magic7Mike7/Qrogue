@@ -188,7 +188,7 @@ class Placeholder:
 
     @staticmethod
     def empty_room(north_hallway: "Hallway" = None, east_hallway: "Hallway" = None, south_hallway: "Hallway" = None,
-                   west_hallway: "Hallway" = None) -> "Room":
+                   west_hallway: "Hallway" = None) -> "CopyAbleRoom":
         return EmptyRoom(north_hallway, east_hallway, south_hallway, west_hallway)
 
 
@@ -554,7 +554,7 @@ class CustomRoom(CopyAbleRoom):
         return new_room
 
 
-class EmptyRoom(Room):
+class EmptyRoom(CopyAbleRoom):
     def __init__(self, north_hallway: Hallway = None, east_hallway: Hallway = None, south_hallway: Hallway = None,
                  west_hallway: Hallway = None):
         tile_list = Room.get_empty_room_tile_list()
@@ -563,6 +563,10 @@ class EmptyRoom(Room):
 
     def abbreviation(self) -> str:
         return "ER"
+
+    def copy(self, hw_dic: Dict[Direction, Hallway]) -> "CopyAbleRoom":
+        return EmptyRoom(hw_dic[Direction.North], hw_dic[Direction.East], hw_dic[Direction.South],
+                         hw_dic[Direction.West])
 
 
 class SpecialRoom(Room, ABC):
@@ -586,7 +590,7 @@ class SpecialRoom(Room, ABC):
                 super(SpecialRoom, self).__init__(type_, tile_list, north_hallway=hallway)
 
 
-class SpawnRoom(Room):
+class SpawnRoom(CopyAbleRoom):
     def __init__(self, load_map_callback: Callable[[str, Optional[Coordinate]], None],
                  tile_dic: Dict[Coordinate, Tile] = None, north_hallway: Hallway = None, east_hallway: Hallway = None,
                  south_hallway: Hallway = None, west_hallway: Hallway = None, place_teleporter: bool = True):
@@ -599,6 +603,7 @@ class SpawnRoom(Room):
             tile_dic = {}
         if place_teleporter:
             tile_dic[room_mid] = Teleport(self.__teleport_callback, MapConfig.back_map_string(), None)
+        self.__tile_dic = tile_dic
         tile_list = Room.dic_to_tile_list(tile_dic)
         super().__init__(AreaType.SpawnRoom, tile_list, north_hallway, east_hallway, south_hallway, west_hallway)
         self.__load_map = load_map_callback
@@ -622,6 +627,11 @@ class SpawnRoom(Room):
     def __conditional_going_back(self, confirmed: bool):
         if confirmed:
             self.__load_map(MapConfig.back_map_string(), None)
+
+    def copy(self, hw_dic: Dict[Direction, Hallway]) -> "CopyAbleRoom":
+        # don't place a teleporter because it's already in tile_dic if it should be placed
+        return SpawnRoom(self.__load_map, self.__tile_dic, hw_dic[Direction.North], hw_dic[Direction.East],
+                         hw_dic[Direction.South], hw_dic[Direction.West], place_teleporter=False)
 
 
 class BaseWildRoom(Room):
