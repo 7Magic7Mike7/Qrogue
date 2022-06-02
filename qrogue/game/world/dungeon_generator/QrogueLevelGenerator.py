@@ -107,9 +107,6 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         self.__doors: Dict[Coordinate, Dict[Coordinate, tiles.Door]] = {}   # for later hallway generation
         self.__entanglement_locks: Set[str] = set()     # stores hw_id of activated entanglement_locks
 
-        #self.__template_events = PathConfig.read()
-        self.__events = []
-
         self.__enemy_groups_by_room: Dict[str, Dict[int, List[tiles.Enemy]]] = {}    # room_id -> Dict[1-9] -> enemies
         self.__cur_room_id: Optional[str] = None   # needed for enemy groups
         self.__rooms: Dict[str, rooms.CopyAbleRoom] = {}
@@ -288,7 +285,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
         # todo implement
         def callback(direction: Direction, controllable: Controllable):
-            #Popup.message("Trigger", str(reference))
+            # Popup.message("Trigger", str(reference))
             pass
 
         return tiles.Trigger(callback)
@@ -543,7 +540,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             open_state = tiles.DoorOpenState.Closed
             self.warning("Invalid hallway attribute: it is neither locked nor opened nor closed!")
         # due to antlr4 version mismatch we currently cannot use the adapted grammar
-        entangled = len(ctx.HALLWAY_ID()) > 0 #ctx.ENTANGLED_LITERAL() is not None
+        entangled = len(ctx.HALLWAY_ID()) > 0  # ctx.ENTANGLED_LITERAL() is not None
 
         def door_check():
             return self.__check_achievement(event_id)
