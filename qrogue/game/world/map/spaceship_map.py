@@ -1,5 +1,5 @@
 import random
-from typing import Callable, List
+from typing import Callable, List, Optional
 
 from qrogue.game.logic.actors import Robot, Controllable, Player
 from qrogue.game.world.navigation import Direction, Coordinate
@@ -151,7 +151,7 @@ class SpaceshipMap:
                  stop_playing: Callable[[Direction, Controllable], None],
                  open_world_view: Callable[[Direction, Controllable], None],
                  use_workbench: Callable[[Direction, Controllable], None],
-                 load_map: Callable[[str, Coordinate], None], start_training: Callable[[Direction], None]):
+                 load_map: Callable[[str, Optional[Coordinate]], None], start_training: Callable[[Direction], None]):
         self.__player = player
         self.__scientist = scientist
         self.__check_achievement = check_achievement
