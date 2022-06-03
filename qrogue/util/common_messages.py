@@ -3,9 +3,10 @@ from typing import Callable
 
 from qrogue.util import Config, ColorConfig as CC, Logger
 
+
 class _CallbackHandler:
-    __show = None
-    __ask = None
+    __show: Callable[[str, str], None] = None
+    __ask: Callable[[str, str, Callable[[bool], None]], None] = None
 
     @staticmethod
     def show(title: str, text: str):
@@ -19,14 +20,14 @@ class _CallbackHandler:
         _CallbackHandler.__show = show
 
     @staticmethod
-    def ask(text: str, callback: Callable[[bool], None]):
+    def ask(title: str, text: str, callback: Callable[[bool], None]):
         if _CallbackHandler.__ask:
-            _CallbackHandler.__ask(text, callback)
+            _CallbackHandler.__ask(title, text, callback)
         else:
             Logger.instance().error("CommonMessages' ask is None!")
 
     @staticmethod
-    def set_ask_callback(ask: Callable[[str, Callable[[bool], None]], None]):
+    def set_ask_callback(ask: Callable[[str, str, Callable[[bool], None]], None]):
         _CallbackHandler.__ask = ask
 
 
@@ -34,7 +35,7 @@ def set_show_callback(show: Callable[[str, str], None]):
     _CallbackHandler.set_show_callback(show)
 
 
-def set_ask_callback(ask: Callable[[str, Callable[[bool], None]], None]):
+def set_ask_callback(ask: Callable[[str, str, Callable[[bool], None]], None]):
     _CallbackHandler.set_ask_callback(ask)
 
 
@@ -103,14 +104,13 @@ class CommonPopups(Enum):
 
 
 class CommonQuestions(Enum):
-    __ask = None
+    GoingBack = (Config.scientist_name(), "We are not done yet. \nDo you really want to go back to the spaceship?")
+    ProceedToNextMap = (Config.scientist_name(), "Looks like we cleared this map. Shall we proceed directly to the " 
+                                                 "next one?")
 
-    # todo implement with title? -> more flexible between system and scientist questions
-    GoingBack = "We are not done yet. \nDo you really want to go back to the spaceship?"
-    ProceedToNextMap = "Looks like we cleared this map. Shall we proceed directly to the next one?"
-
-    def __init__(self, text: str):
+    def __init__(self, title: str, text: str):
+        self.__title = title
         self.__text = text
 
     def ask(self, callback: Callable[[bool], None]):
-        _CallbackHandler.ask(self.__text, callback)
+        _CallbackHandler.ask(self.__title, self.__text, callback)

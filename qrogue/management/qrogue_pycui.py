@@ -70,7 +70,7 @@ class QrogueCUI(PyCUI):
         MapManager(seed, self.__show_world, self.__start_level)
         Popup.update_check_achievement_function(SaveData.instance().achievement_manager.check_achievement)
         common_messages.set_show_callback(Popup.generic_info)
-        common_messages.set_ask_callback(ConfirmationPopup.scientist_asks)
+        common_messages.set_ask_callback(ConfirmationPopup.ask)
         WalkTriggerTile.set_show_explanation_callback(Popup.from_message)
         Message.set_show_callback(Popup.from_message_trigger)
         Collectible.set_pickup_message_callback(Popup.generic_info)
