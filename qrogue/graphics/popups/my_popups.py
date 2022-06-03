@@ -124,7 +124,7 @@ class Popup:
 
 
 class ConfirmationPopup(Popup):
-    __show_popup = None
+    __show_popup: Callable[[str, str, int, Callable[[bool], None]], None] = None
 
     @staticmethod
     def update_popup_function(show_popup_callback: Callable[[str, str, int, Callable[[bool], None]], None]):
@@ -140,14 +140,14 @@ class ConfirmationPopup(Popup):
 
     def __init__(self, title: str, text: str, callback: Callable[[bool], None],
                  color: int = PopupConfig.default_color(), show: bool = True, overwrite: bool = False):
-        self.__callback = callback
-        super().__init__(title, text, color, show, overwrite, reopen=False)
+        def on_close_callback():
+            callback(self.__confirmed)
+        super().__init__(title, text, color, show, overwrite, reopen=False, on_close_callback=on_close_callback)
+        self.__confirmed = None
 
-    @property
-    def _callback(self) -> Callable[[bool], None]:
-        return self.__callback
+    def __set_confirmation(self, confirmed: bool):
+        # by setting confirmed here we determine the parameter of the callback called after closing
+        self.__confirmed = confirmed
 
     def _base_show(self) -> None:
-        ConfirmationPopup.__show_popup(self._title, self._text, self._color, self._callback)
-
-
+        ConfirmationPopup.__show_popup(self._title, self._text, self._color, self.__set_confirmation)
