@@ -21,17 +21,17 @@ __MAP_ORDER = {
 }
 
 
-def get_next(cur_level: str) -> str:
-    if cur_level == MapConfig.spaceship():
-        next_level = __MAP_ORDER[cur_level]
-        while SaveData.instance().achievement_manager.check_achievement(next_level):
-            if next_level in __MAP_ORDER:
-                next_level = __MAP_ORDER[next_level]
+def get_next(cur_map: str) -> Optional[str]:
+    if cur_map == MapConfig.spaceship():    # next of spaceship is always the newest uncleared level
+        next_map = __MAP_ORDER[cur_map]
+        while SaveData.instance().achievement_manager.check_achievement(next_map):
+            if next_map in __MAP_ORDER:
+                next_map = __MAP_ORDER[next_map]
             else:
                 break
-        return next_level
-    elif cur_level in __MAP_ORDER:
-        return __MAP_ORDER[cur_level]
+        return next_map
+    elif cur_map in __MAP_ORDER:
+        return __MAP_ORDER[cur_map]
     return None
 
 
@@ -218,6 +218,10 @@ class MapManager:
             self.__load_next()
         else:
             self.__load_map(map_name, spawn_room, map_seed)
+
+    def load_first_uncleared_map(self) -> None:
+        map_name = get_next(MapConfig.spaceship())
+        self.__load_map(map_name, None)
 
     def reload(self):
         self.__load_map(self.__cur_map.internal_name, None, self.__cur_map.seed)

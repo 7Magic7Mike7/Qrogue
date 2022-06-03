@@ -83,9 +83,8 @@ class QrogueCUI(PyCUI):
         self.__focused_widget = None
 
         # init widget sets
-        def start_newest_level():
-            MapManager.instance().load_map(MapConfig.spaceship(), None)
-        self.__menu = MenuWidgetSet(self.__controls, self.__render, Logger.instance(), self, start_newest_level,
+        self.__menu = MenuWidgetSet(self.__controls, self.__render, Logger.instance(), self,
+                                    MapManager.instance().load_first_uncleared_map,
                                     self.__start_playing, self.stop, self.__choose_simulation)
         self.__pause = PauseMenuWidgetSet(self.__controls, self.__render, Logger.instance(), self,
                                           self.__general_continue, SaveData.instance().save, self.switch_to_menu)
@@ -468,8 +467,8 @@ class QrogueCUI(PyCUI):
             self.__state_machine.change_state(State.Spaceship, SaveData.instance())
         else:
             # load the newest level (exam phase) by
-            self.__state_machine.change_state(State.Explore, MapManager.instance().load_map(MapConfig.next_map_string(),
-                                                                                            None))
+            MapManager.instance().load_first_uncleared_map()
+            self.__state_machine.change_state(State.Explore, None)
             if not Ach.completed_exam_phase1(progress):
                 Popup.examiner_says(HelpText.get(HelpTextType.FirstLevelIntroduction))
 
