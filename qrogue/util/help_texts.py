@@ -178,7 +178,7 @@ class HelpText:
 
         HelpTextType.Fight:
             "Basically Quantum Computing is just a lot of complex matrix vector multiplications. There's an input "
-            "state vector that is multiplied with the circuit matrix to result in a output state vector. Your goal is "
+            "state vector that is multiplied with the circuit matrix to result in an output state vector. Your goal is "
             "to make the latter equal to the target state vector. The input state vector is always the same, so you "
             "can only change the circuit matrix by editing the circuit.",
 
