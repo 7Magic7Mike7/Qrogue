@@ -686,16 +686,22 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             reward_factory = self.__load_collectible_factory(factory_id)
         else:
             # if neither a collectible nor a reference to a reward_factory is given we use the default one
-            reward_factory = self.__default_collectible_factory
+            reward_factory = None
 
         if ctx.stv():
             stv = self.visit(ctx.stv())
+            if reward_factory is None:
+                reward_factory = self.__default_collectible_factory    # set reward factory here to not set a custom one
             difficulty = ExplicitTargetDifficulty([stv], reward_factory)
         else:
             diff_id = ctx.REFERENCE(0).getText()    # don't use ref_index here because it will always be 0 if present
             difficulty = self.__load_target_difficulty(diff_id)
 
         enemy_factory = EnemyFactory(self.__cbp.start_fight, difficulty, 1)
+        if reward_factory:  # if a reward pool was specified we use it
+            enemy_factory.set_custom_reward_factory(reward_factory)
+        # else we use the default one either of the loaded difficulty or it already is default_collectible_factory
+
         enemy = tiles.Enemy(enemy_factory, get_entangled_tiles, update_entangled_room_groups, enemy_id)
         #   update_entangled_room_groups(enemy) # by commenting this the original (copied from) tile is not in the list
         return enemy
