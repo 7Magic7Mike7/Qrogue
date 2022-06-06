@@ -1,7 +1,5 @@
 from typing import Optional, Callable, Tuple
 
-from qrogue.util import Config
-
 
 class Message:
     __err_count = 0
@@ -44,7 +42,7 @@ class Message:
         return self.__m_id
 
     @property
-    def alt_message_ref(self) -> str:
+    def alt_message_ref(self) -> Optional[str]:
         if self.__alt_ref:
             return self.__alt_ref
         else:

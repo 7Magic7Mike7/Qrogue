@@ -132,9 +132,8 @@ _ascii_art = """
 
 class MenuWidgetSet(MyWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
-                 quick_start_callback: Callable[[], None],
-                 start_playing_callback: Callable[[], None], stop_callback: Callable[[], None],
-                 choose_simulation_callback: Callable[[], None]):
+                 quick_start_callback: Callable[[], None], start_playing_callback: Callable[[], None],
+                 stop_callback: Callable[[], None], choose_simulation_callback: Callable[[], None]):
         self.__seed = 0
         self.__quick_start = quick_start_callback
         self.__start_playing = start_playing_callback
