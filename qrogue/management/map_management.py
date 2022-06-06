@@ -5,7 +5,7 @@ from qrogue.game.world.map import Map, WorldMap, MapType
 from qrogue.game.world.navigation import Coordinate
 from qrogue.graphics.popups import Popup
 from qrogue.management import StoryNarration
-from qrogue.util import CommonQuestions, Logger, MapConfig, achievements, RandomManager
+from qrogue.util import CommonQuestions, Logger, MapConfig, achievements, RandomManager, Config
 
 from qrogue.management.save_data import SaveData
 
@@ -221,8 +221,11 @@ class MapManager:
             self.__load_map(map_name, spawn_room, map_seed)
 
     def load_first_uncleared_map(self) -> None:
-        map_name = get_next(MapConfig.spaceship())
-        self.__load_map(map_name, None)
+        if Config.debugging() and True:
+            self.__load_map(MapConfig.test_level(), None)
+        else:
+            map_name = get_next(MapConfig.spaceship())
+            self.__load_map(map_name, None)
 
     def reload(self):
         self.__load_map(self.__cur_map.internal_name, None, self.__cur_map.seed)

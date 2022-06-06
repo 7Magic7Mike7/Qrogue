@@ -127,7 +127,7 @@ class QrogueCUI(PyCUI):
         self.__spaceship_map = SpaceshipMap(SaveData.instance().player, scientist,
                                             SaveData.instance().achievement_manager.check_achievement, stop_playing,
                                             open_world_view, self.__use_workbench, MapManager.instance().load_map,
-                                            self.__start_training)
+                                            MapManager.instance().load_first_uncleared_map, self.__start_training)
         self.__spaceship.set_data(self.__spaceship_map)
 
     def _refresh_height_width(self) -> None:
