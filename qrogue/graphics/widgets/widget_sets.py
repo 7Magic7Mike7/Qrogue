@@ -161,17 +161,24 @@ class MenuWidgetSet(MyWidgetSet):
     def __update_selection(self):
         choices = []
         callbacks = []
-        if Ach.completed_exam_phase1(self._progress):
+        if Ach.completed_exam_phaseX(self._progress):
             choices.append("CONTINUE\n")
             callbacks.append(self.__quick_start)
             choices.append("PLAY\n")
             callbacks.append(self.__start_playing)
+
             if Config.debugging():  # add simulator option
                 choices.append("SIMULATOR\n")
                 callbacks.append(self.__choose_simulation)
+
+        elif Ach.completed_exam_phase1(self._progress):
+            choices.append("CONTINUE\n")
+            callbacks.append(self.__quick_start)
+
         else:
             choices.append("START YOUR JOURNEY\n")
             callbacks.append(self.__start_playing)
+
         choices += ["OPTIONS\n", "EXIT\n"]  # for more space between the rows we add "\n"
         callbacks += [self.__options, self.__stop]
         self.__selection.set_data(data=(choices, callbacks))
