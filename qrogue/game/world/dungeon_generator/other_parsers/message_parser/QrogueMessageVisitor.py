@@ -15,6 +15,11 @@ class QrogueMessageVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by QrogueMessageParser#message_body.
+    def visitMessage_body(self, ctx):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by QrogueMessageParser#integer.
     def visitInteger(self, ctx):
         return self.visitChildren(ctx)

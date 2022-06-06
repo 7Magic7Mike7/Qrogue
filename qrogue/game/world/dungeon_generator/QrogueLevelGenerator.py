@@ -10,7 +10,7 @@ from qrogue.game.logic.collectibles import Collectible, pickup, instruction, Mul
     CollectibleFactory, OrderedCollectibleFactory
 from qrogue.game.target_factory import EnemyFactory, ExplicitTargetDifficulty
 from qrogue.game.world import tiles
-from qrogue.game.world.map import CallbackPack, LevelMap, rooms
+from qrogue.game.world.map import CallbackPack, LevelMap, rooms, MapMetaData
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.util import Config, HelpText, MapConfig, PathConfig, Logger, CommonQuestions, RandomManager
 
@@ -79,13 +79,15 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             return None
 
     def __init__(self, seed: int, check_achievement: Callable[[str], bool], trigger_event: Callable[[str], None],
-                 load_map_callback: Callable[[str, Coordinate], None]):
+                 load_map_callback: Callable[[str, Coordinate], None],
+                 show_message_callback: Callable[[str, str], None]):
         super(QrogueLevelGenerator, self).__init__(seed, 0, 0)
         self.__seed = seed
         self.__check_achievement = check_achievement
         self.__trigger_event = trigger_event
         self.__load_map = load_map_callback
-        self.__place_sr_teleporter = True
+        self.__show_message = show_message_callback
+        self.__meta_data = MapMetaData(None, None, True, self.__show_description)
 
         self.__warnings = 0
         self.__robot: Optional[TestBot] = None
@@ -120,6 +122,11 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
     def __cbp(self) -> CallbackPack:
         return CallbackPack.instance()
 
+    def __show_description(self):
+        if self.__meta_data.description:
+            title, text = self.__meta_data.description.get(self.__check_achievement)
+            self.__show_message(title, text)
+
     def warning(self, text: str):
         parser_util.warning(text)
         self.__warnings += 1
@@ -134,9 +141,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         parser.addErrorListener(parser_util.MyErrorListener())
 
         try:
-            name, room_matrix = self.visit(parser.start())
-            if name is None:
-                name = file_name
+            meta_data, room_matrix = self.visit(parser.start())
         except SyntaxError as se:
             Logger.instance().error(str(se))
             return None, False
@@ -153,7 +158,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         if self.__spawn_pos is None:
             raise SyntaxError("No SpawnRoom provided! Make sure to place 'SR' in the layout and if you defined a "
                               "custom SpawnRoom make sure to tag it as (Spawn).")
-        level = LevelMap(name, file_name, self.__seed, room_matrix, self.__robot, self.__spawn_pos,
+        level = LevelMap(meta_data, file_name, self.__seed, room_matrix, self.__robot, self.__spawn_pos,
                          self.__check_achievement, self.__trigger_event)
         return level, True
 
@@ -290,10 +295,11 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
         return tiles.Trigger(callback)
 
-    def __load_message(self, reference: str) -> Message:
-        if reference in self.__messages:
-            return self.__messages[reference]
-        norm_ref = parser_util.normalize_reference(reference)
+    def __load_message(self, reference: QrogueDungeonParser.REFERENCE) -> Message:
+        ref = reference.getText()
+        if ref in self.__messages:
+            return self.__messages[ref]
+        norm_ref = parser_util.normalize_reference(ref)
         if norm_ref in self.__messages:
             return self.__messages[norm_ref]
         elif norm_ref.startswith("helptext"):
@@ -301,7 +307,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             help_text = HelpText.load(help_text_type)
             if help_text:
                 return Message.create_with_title(norm_ref, Config.system_name(), help_text)
-        self.warning(f"Unknown text reference: {reference}. Returning \"Message not found!\"")
+        self.warning(f"Unknown text reference: {ref}. Returning \"Message not found!\"")
         return Message.error("Message not found!")
 
     def __load_hallway(self, reference: str) -> Optional[tiles.Door]:
@@ -328,7 +334,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         elif reference == self.__SPAWN_ROOM_ID:
             room = rooms.SpawnRoom(self.__load_map, None, hw_dic[Direction.North], hw_dic[Direction.East],
                                    hw_dic[Direction.South], hw_dic[Direction.West],
-                                   place_teleporter=self.__place_sr_teleporter)
+                                   place_teleporter=self.__meta_data.has_teleporter)
             if self.__spawn_pos:
                 self.warning("A second SpawnRoom was defined! Ignoring the first one and using this one as "
                              "SpawnRoom.")
@@ -548,7 +554,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
         # todo move tutorial and trigger from attributes to hallway?
         if ctx.TUTORIAL_LITERAL():
-            message = self.__load_message(ctx.REFERENCE(ref_index).getText())
+            message = self.__load_message(ctx.REFERENCE(ref_index))
             door.set_explanation(message)
             ref_index += 1
         if ctx.TRIGGER_LITERAL():
@@ -625,8 +631,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             times = self.visit(ctx.integer())
         else:
             times = -1      # = always show
-        reference = ctx.REFERENCE().getText()
-        message = self.__load_message(reference)
+        message = self.__load_message(ctx.REFERENCE())
         return tiles.Message(message, times)
 
     def visitCollectible_descriptor(self, ctx: QrogueDungeonParser.Collectible_descriptorContext) -> tiles.Collectible:
@@ -718,13 +723,11 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         if isinstance(tile, tiles.WalkTriggerTile):
             ref_index = 0
             if ctx.TILE_MESSAGE_LITERAL():
-                ref = ctx.REFERENCE(ref_index).getText()
-                msg = self.__load_message(ref)
+                msg = self.__load_message(ctx.REFERENCE(ref_index))
                 tile.set_explanation(msg)
                 ref_index += 1
             if ctx.TILE_EVENT_LITERAL():
-                ref = ctx.REFERENCE(ref_index).getText()
-                event_id = parser_util.normalize_reference(ref)
+                event_id = parser_util.normalize_reference(ctx.REFERENCE(ref_index).getText())
                 tile.set_event(event_id)
         return tile
 
@@ -945,23 +948,31 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
     ##### Meta area #####
 
-    def visitMeta(self, ctx: QrogueDungeonParser.MetaContext) -> Tuple[Optional[str], bool]:
+    def visitMeta(self, ctx: QrogueDungeonParser.MetaContext) -> MapMetaData:
         if ctx.TEXT():
             name = parser_util.text_to_str(ctx)
         else:
             name = None
-        return name, ctx.NO_TELEPORTER() is None
+        if ctx.message_body():
+            title, msg = parser_util.parse_message_body(ctx.message_body())
+            message = Message.create_with_title("_map_description", title, msg)
+        elif ctx.REFERENCE():
+            message = self.__load_message(ctx.REFERENCE())
+        else:
+            message = None
+        return MapMetaData(name, message, ctx.NO_TELEPORTER() is None, self.__show_description)
 
     ##### Start area #####
 
-    def visitStart(self, ctx: QrogueDungeonParser.StartContext) -> Tuple[str, List[List[rooms.Room]]]:
-        name, self.__place_sr_teleporter = self.visit(ctx.meta())
+    def visitStart(self, ctx: QrogueDungeonParser.StartContext) -> Tuple[MapMetaData, List[List[rooms.Room]]]:
+        # prepare messages (needs to be done first since meta data might reference it
+        self.visit(ctx.messages())
+
+        # retrieve the map's meta data
+        self.__meta_data = self.visit(ctx.meta())
 
         # prepare the robot
         self.visit(ctx.robot())
-
-        # prepare messages
-        self.visit(ctx.messages())
 
         # prepare reward pools first because they are standalone
         self.visit(ctx.reward_pools())
@@ -974,4 +985,4 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         self.visit(ctx.rooms())
 
         # for the last step we retrieve the room matrix from layout
-        return name, self.visit(ctx.layout())
+        return self.__meta_data, self.visit(ctx.layout())

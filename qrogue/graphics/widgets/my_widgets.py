@@ -318,11 +318,18 @@ class CircuitWidget(Widget):
 class MapWidget(Widget):
     def __init__(self, widget: WidgetWrapper):
         super().__init__(widget)
+        self.__map_started = False
         self.__map = None
         self.__backup = None
 
     def set_data(self, map_: Map) -> None:
         self.__map = map_
+        self.__map_started = False
+
+    def try_to_start_map(self):
+        if not self.__map_started:
+            self.__map.start()
+            self.__map_started = True
 
     def render(self) -> None:
         if self.__map is not None:

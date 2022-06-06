@@ -438,12 +438,17 @@ class ExploreWidgetSet(MyWidgetSet):
         else:
             self.__hud.reset_data()
         self.__map_widget.set_data(map_)
+        # map_.start()  # we cannot start the map here because the widget_set has not been applied yet
 
     def get_widget_list(self) -> List[Widget]:
         return [
             self.__hud,
             self.__map_widget
         ]
+
+    def update_story_progress(self, progress: int):
+        super(ExploreWidgetSet, self).update_story_progress(progress)
+        self.__map_widget.try_to_start_map()
 
     def render(self) -> None:
         start = time.time()
@@ -497,6 +502,10 @@ class NavigationWidgetSet(MyWidgetSet):
 
     def get_widget_list(self) -> List[Widget]:
         return [self.__map_widget]
+
+    def update_story_progress(self, progress: int):
+        super(NavigationWidgetSet, self).update_story_progress(progress)
+        self.__map_widget.try_to_start_map()
 
     def reset(self) -> None:
         self.__map_widget.render_reset()

@@ -16,9 +16,11 @@ def generation_test(file_name: str, world: bool = False):
     check_achievement = SaveData.instance().achievement_manager.check_achievement
     trigger_event = SaveData.instance().achievement_manager.trigger_level_event
     if world:
-        generator = QrogueWorldGenerator(7, player, check_achievement, trigger_event, test_util.load_map)
+        generator = QrogueWorldGenerator(7, player, check_achievement, trigger_event, test_util.load_map,
+                                         test_util.message_popup)
     else:
-        generator = QrogueLevelGenerator(7, check_achievement, trigger_event, test_util.load_map)
+        generator = QrogueLevelGenerator(7, check_achievement, trigger_event, test_util.load_map,
+                                         test_util.message_popup)
     map, success = generator.generate(file_name, True)
     if success:
         print(map)

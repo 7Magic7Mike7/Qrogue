@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 
 from antlr4.error.ErrorListener import ErrorListener
 
@@ -144,6 +144,18 @@ def parse_complex(ctx) -> complex:
 
 def parse_message(ctx) -> Message:
     m_id = normalize_reference(ctx.REFERENCE(0).getText())
+
+    title, msg = parse_message_body(ctx.message_body())
+
+    if ctx.MSG_EVENT():
+        event = normalize_reference(ctx.REFERENCE(1).getText())
+        msg_ref = normalize_reference(ctx.REFERENCE(2).getText())
+        return Message(m_id, title, msg, event, msg_ref)
+    else:
+        return Message.create_with_title(m_id, title, msg)
+
+
+def parse_message_body(ctx) -> Tuple[str, str]:
     if ctx.MSG_SPEAKER():
         title = text_to_str(ctx, 0)
         if title.isdigit():
@@ -156,12 +168,7 @@ def parse_message(ctx) -> Message:
     for i in range(start, len(ctx.TEXT())):
         msg += text_to_str(ctx, i) + "\n"
 
-    if ctx.MSG_EVENT():
-        event = normalize_reference(ctx.REFERENCE(1).getText())
-        msg_ref = normalize_reference(ctx.REFERENCE(2).getText())
-        return Message(m_id, title, msg, event, msg_ref)
-    else:
-        return Message.create_with_title(m_id, title, msg)
+    return title, msg
 
 
 class MyErrorListener(ErrorListener):

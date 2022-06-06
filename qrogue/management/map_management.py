@@ -58,7 +58,7 @@ class MapManager:
             generator = QrogueWorldGenerator(seed, SaveData.instance().player,
                                              SaveData.instance().achievement_manager.check_achievement,
                                              SaveData.instance().achievement_manager.add_to_achievement,
-                                             self.load_map)
+                                             self.load_map, Popup.npc_says)
             hub_world, success = generator.generate(MapConfig.hub_world())
             if not success:
                 Logger.instance().throw(RuntimeError("Unable to build world map! Please download again and make sure "
@@ -91,7 +91,7 @@ class MapManager:
                     SaveData.instance().achievement_manager.add_to_achievement(name, 1)
                 check_achievement = SaveData.instance().achievement_manager.check_achievement
                 generator = QrogueWorldGenerator(self.__base_seed, SaveData.instance().player, check_achievement,
-                                                 trigger_achievement, self.load_map)
+                                                 trigger_achievement, self.load_map, Popup.npc_says)
                 world, success = generator.generate(world_name)
                 if success:
                     self.__world_memory[world_name] = world
@@ -116,7 +116,7 @@ class MapManager:
             trigger_event = self.trigger_level_event  # SaveData.instance().achievement_manager.trigger_level_event
 
             generator = QrogueWorldGenerator(self.__base_seed, player, check_achievement, trigger_event,
-                                             self.load_map)
+                                             self.load_map, Popup.npc_says)
             try:
                 world, success = generator.generate(map_name)
                 if success:
@@ -134,7 +134,8 @@ class MapManager:
             # todo maybe levels should be able to have arbitrary names aside from "w..." or "back"?
             check_achievement = SaveData.instance().achievement_manager.check_achievement
             trigger_event = self.trigger_level_event
-            generator = QrogueLevelGenerator(map_seed, check_achievement, trigger_event, self.load_map)
+            generator = QrogueLevelGenerator(map_seed, check_achievement, trigger_event, self.load_map,
+                                             Popup.npc_says)
             try:
                 level, success = generator.generate(map_name)
                 if success:

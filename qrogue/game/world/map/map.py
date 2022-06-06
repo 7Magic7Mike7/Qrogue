@@ -1,8 +1,9 @@
 import enum
 from abc import ABC, abstractmethod
-from typing import List, Callable
+from typing import List, Callable, Optional
 
 import qrogue.game.world.tiles as tiles
+from qrogue.game.logic import Message
 from qrogue.game.logic.actors import Controllable, Robot
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.util import Logger, MapConfig
@@ -14,6 +15,18 @@ class MapType(enum.Enum):
     World = 0
     Level = 1
     Expedition = 2
+
+
+class MapMetaData:
+    def __init__(self, name: Optional[str], description: Optional[Message], has_teleporter: bool,
+                 show_description: Callable[[], None]):
+        self.name = name
+        self.description = description
+        self.has_teleporter = has_teleporter
+        self.__show_description = show_description
+
+    def show_description(self):
+        self.__show_description()
 
 
 class Map(ABC):
@@ -31,10 +44,10 @@ class Map(ABC):
         y = pos_of_room.y * (Area.UNIT_HEIGHT + 1) + pos_in_room.y
         return Coordinate(x, y)
 
-    def __init__(self, name: str, internal_name: str, seed: int, rooms: List[List[Room]], controllable: Controllable,
-                 spawn_room: Coordinate, check_achievement: Callable[[str], bool],
+    def __init__(self, meta_data: MapMetaData, internal_name: str, seed: int, rooms: List[List[Room]],
+                 controllable: Controllable, spawn_room: Coordinate, check_achievement: Callable[[str], bool],
                  trigger_event: Callable[[str], None]):
-        self.__name = name
+        self.__meta_data = meta_data
         self.__internal_name = internal_name
         self.__seed = seed
         self.__rooms = rooms
@@ -52,7 +65,8 @@ class Map(ABC):
         if isinstance(self.__cur_area, SpawnRoom):
             self.__cur_area.set_is_done_callback(self.__is_done)
         elif not isinstance(self.__cur_area, MetaRoom) and self.__cur_area.type is not AreaType.SpawnRoom:
-            Logger.instance().error(f"{name} starts in area that is not a SpawnRoom! cur_area = {self.__cur_area}")
+            Logger.instance().error(f"{meta_data.name} starts in area that is not a SpawnRoom! cur_area = "
+                                    f"{self.__cur_area}")
 
     @property
     def name(self) -> str:
@@ -61,7 +75,9 @@ class Map(ABC):
         Can be the same as its internal name.
         :return: name of the Map that is shown in-game
         """
-        return self.__name
+        if self.__meta_data.name is None:   # show the internal name if no display name was specified
+            return self.__internal_name
+        return self.__meta_data.name
 
     @property
     def internal_name(self) -> str:
@@ -102,6 +118,9 @@ class Map(ABC):
     @abstractmethod
     def get_type(self) -> MapType:
         pass
+
+    def start(self):
+        self.__meta_data.show_description()
 
     def __get_area(self, x: int, y: int) -> (Area, tiles.Tile):
         """

@@ -8,7 +8,9 @@ start  :    HEADER meta
             robot layout rooms hallways stv_pools reward_pools messages
             ENDER;
 
-meta : ('Name' '=' TEXT)? (NO_TELEPORTER | WITH_TELEPORTER)? ;
+meta :  ('Name' '=' TEXT)?
+        ('Description' '=' (message_body | REFERENCE))?
+        (NO_TELEPORTER | WITH_TELEPORTER)? ;
 
 robot : ROBOT DIGIT 'qubits' '[' REFERENCE (LIST_SEPARATOR REFERENCE)* ']'
         (CIRCUIT_SPACE '=' integer)? (BACKPACK_SPACE '=' integer)?

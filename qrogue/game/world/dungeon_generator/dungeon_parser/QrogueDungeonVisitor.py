@@ -210,3 +210,8 @@ class QrogueDungeonVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by QrogueDungeonParser#message_body.
+    def visitMessage_body(self, ctx):
+        return self.visitChildren(ctx)
+
+

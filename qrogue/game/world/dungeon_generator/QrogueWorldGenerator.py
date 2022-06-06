@@ -1,4 +1,4 @@
-from typing import List, Tuple, Callable
+from typing import List, Tuple, Callable, Optional
 
 from antlr4 import InputStream, CommonTokenStream
 from antlr4.tree.Tree import TerminalNodeImpl
@@ -23,12 +23,14 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
 
     def __init__(self, seed: int, player: Player, check_achievement_callback: Callable[[str], bool],
                  trigger_achievement_callback: Callable[[str], None],
-                 load_map_callback: Callable[[str, Coordinate], None]):
+                 load_map_callback: Callable[[str, Optional[Coordinate]], None],
+                 show_message_callback: Callable[[str, str], None]):
         self.__seed = seed
         self.__player = player
         self.__check_achievement = check_achievement_callback
         self.__trigger_achievement = trigger_achievement_callback
         self.__load_map = load_map_callback
+        self.__show_message = show_message_callback
 
         self.__hallways_by_id = {}
         self.__created_hallways = {}
@@ -48,7 +50,7 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
             else:
                 self.__hallways[room2] = {room1: door}
 
-    def generate(self, file_name: str, in_dungeon_folder: bool = True) -> Tuple[WorldMap, bool]:
+    def generate(self, file_name: str, in_dungeon_folder: bool = True) -> Tuple[Optional[WorldMap], bool]:
         map_data = PathConfig.read_world(file_name, in_dungeon_folder)
 
         input_stream = InputStream(map_data)
@@ -75,7 +77,7 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
                 row += [None] * (max_len - len(row))
 
         world = WorldMap(name, file_name, self.__seed, room_matrix, self.__player, self.__spawn_pos,
-                         self.__check_achievement, self.__trigger_achievement)
+                         self.__check_achievement, self.__trigger_achievement, self.__show_message)
         return world, True
 
     def __load_next(self):
@@ -83,7 +85,7 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
 
     ##### loading #####
 
-    def __load_hallway(self, reference: str) -> Door:
+    def __load_hallway(self, reference: str) -> Optional[Door]:
         if reference in self.__hallways_by_id:
             return self.__hallways_by_id[reference]
         elif reference == parser_util.EMPTY_HALLWAY_CODE:

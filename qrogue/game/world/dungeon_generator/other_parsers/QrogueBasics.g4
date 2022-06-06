@@ -52,7 +52,7 @@ TEXT : '"' .*? '"' ;
 // ids
 ROOM_ID : ('_' | CHARACTER) CHARACTER ;
 HALLWAY_ID : '==' | ('_' | DIGIT) DIGIT ;   // '==' default (closed, no entanglement), same as _1 but with better visuals
-REFERENCE : '*' (CHARACTER | DIGIT)+ ;
+REFERENCE : '*' (CHARACTER | DIGIT)+ ;      // ids/references starting with "_" can be used for generated stuff without possible name collisions
 
 // ignored characters (whitespace and comments)
 WS : [ \t\r\n]+ -> skip ;

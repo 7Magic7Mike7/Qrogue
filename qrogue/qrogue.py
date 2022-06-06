@@ -208,11 +208,14 @@ def validate_map(path: str, is_level: bool = True, in_base_path: bool = True) ->
     def load_map(map_name: str, spawn_pos: Coordinate):
         pass
 
+    def show_message(title: str, text: str):
+        pass
+
     if is_level:
-        generator = QrogueLevelGenerator(seed, check_achievement, trigger_event, load_map)
+        generator = QrogueLevelGenerator(seed, check_achievement, trigger_event, load_map, show_message)
     else:
         player = Player()
-        generator = QrogueWorldGenerator(seed, player, check_achievement, trigger_event, load_map)
+        generator = QrogueWorldGenerator(seed, player, check_achievement, trigger_event, load_map, show_message)
 
     try:
         error_occurred = False

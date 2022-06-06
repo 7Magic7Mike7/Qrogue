@@ -7,22 +7,23 @@ import sys
 
 def serializedATN():
     return [
-        4,1,29,48,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,1,0,1,0,5,0,11,8,0,10,
-        0,12,0,14,9,0,1,1,1,1,1,1,3,1,19,8,1,1,1,4,1,22,8,1,11,1,12,1,23,
-        1,1,1,1,1,1,1,1,3,1,30,8,1,1,2,1,2,1,3,3,3,35,8,3,1,3,1,3,1,3,3,
-        3,40,8,3,1,3,1,3,3,3,44,8,3,3,3,46,8,3,1,3,0,0,4,0,2,4,6,0,1,2,0,
-        14,15,24,24,51,0,8,1,0,0,0,2,15,1,0,0,0,4,31,1,0,0,0,6,34,1,0,0,
-        0,8,12,5,1,0,0,9,11,3,2,1,0,10,9,1,0,0,0,11,14,1,0,0,0,12,10,1,0,
-        0,0,12,13,1,0,0,0,13,1,1,0,0,0,14,12,1,0,0,0,15,18,5,25,0,0,16,17,
-        5,4,0,0,17,19,5,22,0,0,18,16,1,0,0,0,18,19,1,0,0,0,19,21,1,0,0,0,
-        20,22,5,22,0,0,21,20,1,0,0,0,22,23,1,0,0,0,23,21,1,0,0,0,23,24,1,
-        0,0,0,24,29,1,0,0,0,25,26,5,2,0,0,26,27,5,25,0,0,27,28,5,3,0,0,28,
-        30,5,25,0,0,29,25,1,0,0,0,29,30,1,0,0,0,30,3,1,0,0,0,31,32,7,0,0,
-        0,32,5,1,0,0,0,33,35,5,18,0,0,34,33,1,0,0,0,34,35,1,0,0,0,35,45,
-        1,0,0,0,36,46,5,17,0,0,37,40,3,4,2,0,38,40,5,16,0,0,39,37,1,0,0,
-        0,39,38,1,0,0,0,40,43,1,0,0,0,41,42,5,18,0,0,42,44,5,17,0,0,43,41,
-        1,0,0,0,43,44,1,0,0,0,44,46,1,0,0,0,45,36,1,0,0,0,45,39,1,0,0,0,
-        46,7,1,0,0,0,8,12,18,23,29,34,39,43,45
+        4,1,29,51,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,1,0,1,0,5,0,13,
+        8,0,10,0,12,0,16,9,0,1,1,1,1,1,1,1,1,1,1,1,1,3,1,24,8,1,1,2,1,2,
+        3,2,28,8,2,1,2,4,2,31,8,2,11,2,12,2,32,1,3,1,3,1,4,3,4,38,8,4,1,
+        4,1,4,1,4,3,4,43,8,4,1,4,1,4,3,4,47,8,4,3,4,49,8,4,1,4,0,0,5,0,2,
+        4,6,8,0,1,2,0,14,15,24,24,53,0,10,1,0,0,0,2,17,1,0,0,0,4,27,1,0,
+        0,0,6,34,1,0,0,0,8,37,1,0,0,0,10,14,5,1,0,0,11,13,3,2,1,0,12,11,
+        1,0,0,0,13,16,1,0,0,0,14,12,1,0,0,0,14,15,1,0,0,0,15,1,1,0,0,0,16,
+        14,1,0,0,0,17,18,5,25,0,0,18,23,3,4,2,0,19,20,5,2,0,0,20,21,5,25,
+        0,0,21,22,5,3,0,0,22,24,5,25,0,0,23,19,1,0,0,0,23,24,1,0,0,0,24,
+        3,1,0,0,0,25,26,5,4,0,0,26,28,5,22,0,0,27,25,1,0,0,0,27,28,1,0,0,
+        0,28,30,1,0,0,0,29,31,5,22,0,0,30,29,1,0,0,0,31,32,1,0,0,0,32,30,
+        1,0,0,0,32,33,1,0,0,0,33,5,1,0,0,0,34,35,7,0,0,0,35,7,1,0,0,0,36,
+        38,5,18,0,0,37,36,1,0,0,0,37,38,1,0,0,0,38,48,1,0,0,0,39,49,5,17,
+        0,0,40,43,3,6,3,0,41,43,5,16,0,0,42,40,1,0,0,0,42,41,1,0,0,0,43,
+        46,1,0,0,0,44,45,5,18,0,0,45,47,5,17,0,0,46,44,1,0,0,0,46,47,1,0,
+        0,0,47,49,1,0,0,0,48,39,1,0,0,0,48,42,1,0,0,0,49,9,1,0,0,0,8,14,
+        23,27,32,37,42,46,48
     ]
 
 class QrogueMessageParser ( Parser ):
@@ -50,10 +51,12 @@ class QrogueMessageParser ( Parser ):
 
     RULE_messages = 0
     RULE_message = 1
-    RULE_integer = 2
-    RULE_complex_number = 3
+    RULE_message_body = 2
+    RULE_integer = 3
+    RULE_complex_number = 4
 
-    ruleNames =  [ u"messages", u"message", u"integer", u"complex_number" ]
+    ruleNames =  [ u"messages", u"message", u"message_body", u"integer", 
+                   u"complex_number" ]
 
     EOF = Token.EOF
     MESSAGES=1
@@ -138,15 +141,15 @@ class QrogueMessageParser ( Parser ):
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 8
+            self.state = 10
             self.match(QrogueMessageParser.MESSAGES)
-            self.state = 12
+            self.state = 14
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             while _la==QrogueMessageParser.REFERENCE:
-                self.state = 9
+                self.state = 11
                 self.message()
-                self.state = 14
+                self.state = 16
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
 
@@ -171,14 +174,9 @@ class QrogueMessageParser ( Parser ):
             else:
                 return self.getToken(QrogueMessageParser.REFERENCE, i)
 
-        def MSG_SPEAKER(self):
-            return self.getToken(QrogueMessageParser.MSG_SPEAKER, 0)
+        def message_body(self):
+            return self.getTypedRuleContext(QrogueMessageParser.Message_bodyContext,0)
 
-        def TEXT(self, i=None):
-            if i is None:
-                return self.getTokens(QrogueMessageParser.TEXT)
-            else:
-                return self.getToken(QrogueMessageParser.TEXT, i)
 
         def MSG_EVENT(self):
             return self.getToken(QrogueMessageParser.MSG_EVENT, 0)
@@ -213,43 +211,96 @@ class QrogueMessageParser ( Parser ):
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 15
+            self.state = 17
             self.match(QrogueMessageParser.REFERENCE)
             self.state = 18
+            self.message_body()
+            self.state = 23
+            self._errHandler.sync(self)
+            _la = self._input.LA(1)
+            if _la==QrogueMessageParser.MSG_EVENT:
+                self.state = 19
+                self.match(QrogueMessageParser.MSG_EVENT)
+                self.state = 20
+                self.match(QrogueMessageParser.REFERENCE)
+                self.state = 21
+                self.match(QrogueMessageParser.MSG_ALTERNATIVE)
+                self.state = 22
+                self.match(QrogueMessageParser.REFERENCE)
+
+
+        except RecognitionException as re:
+            localctx.exception = re
+            self._errHandler.reportError(self, re)
+            self._errHandler.recover(self, re)
+        finally:
+            self.exitRule()
+        return localctx
+
+
+    class Message_bodyContext(ParserRuleContext):
+
+        def __init__(self, parser, parent=None, invokingState=-1):
+            super(QrogueMessageParser.Message_bodyContext, self).__init__(parent, invokingState)
+            self.parser = parser
+
+        def MSG_SPEAKER(self):
+            return self.getToken(QrogueMessageParser.MSG_SPEAKER, 0)
+
+        def TEXT(self, i=None):
+            if i is None:
+                return self.getTokens(QrogueMessageParser.TEXT)
+            else:
+                return self.getToken(QrogueMessageParser.TEXT, i)
+
+        def getRuleIndex(self):
+            return QrogueMessageParser.RULE_message_body
+
+        def enterRule(self, listener):
+            if hasattr(listener, "enterMessage_body"):
+                listener.enterMessage_body(self)
+
+        def exitRule(self, listener):
+            if hasattr(listener, "exitMessage_body"):
+                listener.exitMessage_body(self)
+
+        def accept(self, visitor):
+            if hasattr(visitor, "visitMessage_body"):
+                return visitor.visitMessage_body(self)
+            else:
+                return visitor.visitChildren(self)
+
+
+
+
+    def message_body(self):
+
+        localctx = QrogueMessageParser.Message_bodyContext(self, self._ctx, self.state)
+        self.enterRule(localctx, 4, self.RULE_message_body)
+        self._la = 0 # Token type
+        try:
+            self.enterOuterAlt(localctx, 1)
+            self.state = 27
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             if _la==QrogueMessageParser.MSG_SPEAKER:
-                self.state = 16
+                self.state = 25
                 self.match(QrogueMessageParser.MSG_SPEAKER)
-                self.state = 17
+                self.state = 26
                 self.match(QrogueMessageParser.TEXT)
 
 
-            self.state = 21 
+            self.state = 30 
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             while True:
-                self.state = 20
+                self.state = 29
                 self.match(QrogueMessageParser.TEXT)
-                self.state = 23 
+                self.state = 32 
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
                 if not (_la==QrogueMessageParser.TEXT):
                     break
-
-            self.state = 29
-            self._errHandler.sync(self)
-            _la = self._input.LA(1)
-            if _la==QrogueMessageParser.MSG_EVENT:
-                self.state = 25
-                self.match(QrogueMessageParser.MSG_EVENT)
-                self.state = 26
-                self.match(QrogueMessageParser.REFERENCE)
-                self.state = 27
-                self.match(QrogueMessageParser.MSG_ALTERNATIVE)
-                self.state = 28
-                self.match(QrogueMessageParser.REFERENCE)
-
 
         except RecognitionException as re:
             localctx.exception = re
@@ -298,11 +349,11 @@ class QrogueMessageParser ( Parser ):
     def integer(self):
 
         localctx = QrogueMessageParser.IntegerContext(self, self._ctx, self.state)
-        self.enterRule(localctx, 4, self.RULE_integer)
+        self.enterRule(localctx, 6, self.RULE_integer)
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 31
+            self.state = 34
             _la = self._input.LA(1)
             if not((((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << QrogueMessageParser.DIGIT) | (1 << QrogueMessageParser.INTEGER) | (1 << QrogueMessageParser.HALLWAY_ID))) != 0)):
                 self._errHandler.recoverInline(self)
@@ -363,47 +414,47 @@ class QrogueMessageParser ( Parser ):
     def complex_number(self):
 
         localctx = QrogueMessageParser.Complex_numberContext(self, self._ctx, self.state)
-        self.enterRule(localctx, 6, self.RULE_complex_number)
+        self.enterRule(localctx, 8, self.RULE_complex_number)
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 34
+            self.state = 37
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             if _la==QrogueMessageParser.SIGN:
-                self.state = 33
+                self.state = 36
                 self.match(QrogueMessageParser.SIGN)
 
 
-            self.state = 45
+            self.state = 48
             self._errHandler.sync(self)
             token = self._input.LA(1)
             if token in [QrogueMessageParser.IMAG_NUMBER]:
-                self.state = 36
+                self.state = 39
                 self.match(QrogueMessageParser.IMAG_NUMBER)
                 pass
             elif token in [QrogueMessageParser.DIGIT, QrogueMessageParser.INTEGER, QrogueMessageParser.FLOAT, QrogueMessageParser.HALLWAY_ID]:
-                self.state = 39
+                self.state = 42
                 self._errHandler.sync(self)
                 token = self._input.LA(1)
                 if token in [QrogueMessageParser.DIGIT, QrogueMessageParser.INTEGER, QrogueMessageParser.HALLWAY_ID]:
-                    self.state = 37
+                    self.state = 40
                     self.integer()
                     pass
                 elif token in [QrogueMessageParser.FLOAT]:
-                    self.state = 38
+                    self.state = 41
                     self.match(QrogueMessageParser.FLOAT)
                     pass
                 else:
                     raise NoViableAltException(self)
 
-                self.state = 43
+                self.state = 46
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
                 if _la==QrogueMessageParser.SIGN:
-                    self.state = 41
+                    self.state = 44
                     self.match(QrogueMessageParser.SIGN)
-                    self.state = 42
+                    self.state = 45
                     self.match(QrogueMessageParser.IMAG_NUMBER)
 
 

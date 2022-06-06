@@ -22,6 +22,15 @@ class QrogueMessageListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by QrogueMessageParser#message_body.
+    def enterMessage_body(self, ctx):
+        pass
+
+    # Exit a parse tree produced by QrogueMessageParser#message_body.
+    def exitMessage_body(self, ctx):
+        pass
+
+
     # Enter a parse tree produced by QrogueMessageParser#integer.
     def enterInteger(self, ctx):
         pass
