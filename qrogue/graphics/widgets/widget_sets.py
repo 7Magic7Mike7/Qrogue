@@ -86,10 +86,11 @@ class MyWidgetSet(WidgetSet, Renderable, ABC):
         self.__progress = progress
         # globally update HUD based on the progress
         HudConfig.ShowMapName = True
+        HudConfig.ShowKeys = True
         if Ach.completed_exam_phase1(progress):
             HudConfig.ShowEnergy = True
-        if Ach.completed_exam_phase2(progress):
-            HudConfig.ShowKeys = True
+        #if Ach.completed_exam_phase2(progress):
+        #    HudConfig.ShowKeys = True
 
     def render(self) -> None:
         self.__base_render(self.get_widget_list())
