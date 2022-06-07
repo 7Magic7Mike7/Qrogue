@@ -179,14 +179,6 @@ class CircuitWidget(Widget):
         super().__init__(widget)
         self.__robot = None
         self.__place_holder_data = None
-        # highlight everything between {} (gates), |> (start) or <| (end) or | | (In/Out label)
-        regex_gates = "\{.*?\}"
-        regex_start = "\|.*?\>"
-        regex_end = "\<.*?\|"
-        widget.add_text_color_rule(f"({regex_gates}|{regex_start}|{regex_end})",
-                                   ColorConfig.CIRCUIT_COLOR, 'contains', match_type='regex')
-        regex_label = "In|Out"
-        widget.add_text_color_rule(f"({regex_label})", ColorConfig.CIRCUIT_LABEL_COLOR, 'contains', match_type='regex')
 
         widget.add_key_command(controls.get_keys(Keys.SelectionUp), self.__move_up)
         widget.add_key_command(controls.get_keys(Keys.SelectionRight), self.__move_right)

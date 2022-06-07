@@ -581,6 +581,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
         circuit = self.add_block_label('Circuit', posy, 0, row_span=circuit_height,
                                        column_span=UIConfig.WINDOW_WIDTH, center=True)
+        ColorRules.apply_circuit_rules(circuit)
         self.__circuit = CircuitWidget(circuit, controls)
         posy += circuit_height
 

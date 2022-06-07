@@ -259,8 +259,9 @@ class PathConfig:
 class ColorCode(enum.Enum):
     TILE_HIGHLIGHT = "01"
     OBJECT_HIGHLIGHT = "02"
-    WORD_HIGHLIGHT = "03"
+    ACTION_HIGHLIGHT = "03"
     KEY_HIGHLIGHT = "04"
+    WORD_HIGHLIGHT = "05"
     SPACESHIP_FLOOR = "70"
 
     WRONG_AMPLITUDE = "90"
@@ -290,9 +291,11 @@ class ColorConfig:
     HIGHLIGHT_WIDTH = len(TEXT_HIGHLIGHT)
     __DIC = {
         str(ColorCode.TILE_HIGHLIGHT):      PyCuiColors.WHITE_ON_BLACK,
-        str(ColorCode.OBJECT_HIGHLIGHT):    PyCuiColors.BLUE_ON_WHITE,
-        str(ColorCode.WORD_HIGHLIGHT):      PyCuiColors.RED_ON_WHITE,
+        str(ColorCode.OBJECT_HIGHLIGHT):    PyCuiColors.GREEN_ON_WHITE,
+        str(ColorCode.ACTION_HIGHLIGHT):    PyCuiColors.RED_ON_WHITE,
         str(ColorCode.KEY_HIGHLIGHT):       PyCuiColors.MAGENTA_ON_WHITE,
+        str(ColorCode.WORD_HIGHLIGHT):      PyCuiColors.BLUE_ON_WHITE,
+
         str(ColorCode.WRONG_AMPLITUDE):     PyCuiColors.RED_ON_BLACK,
         str(ColorCode.CORRECT_AMPLITUDE):   PyCuiColors.GREEN_ON_BLACK,
     }
@@ -388,13 +391,13 @@ class ColorConfig:
         return ColorConfig.colorize(ColorCode.OBJECT_HIGHLIGHT, obj)
 
     @staticmethod
-    def highlight_word(word: str) -> str:
+    def highlight_action(action: str) -> str:
         """
-        Highlights special words that explain gameplay but are not encountered in the game themselves.
-        :param word:
+        Highlights action words that explain what you can do in the game.
+        :param action:
         :return:
         """
-        return ColorConfig.colorize(ColorCode.WORD_HIGHLIGHT, word)
+        return ColorConfig.colorize(ColorCode.ACTION_HIGHLIGHT, action)
 
     @staticmethod
     def highlight_key(key: str) -> str:
@@ -404,6 +407,15 @@ class ColorConfig:
         :return:
         """
         return ColorConfig.colorize(ColorCode.KEY_HIGHLIGHT, key)
+
+    @staticmethod
+    def highlight_word(word: str) -> str:
+        """
+        Highlights miscellaneous words that should be highlighted.
+        :param word:
+        :return:
+        """
+        return ColorConfig.colorize(ColorCode.WORD_HIGHLIGHT, word)
 
     @staticmethod
     def get(char: str) -> int:

@@ -33,23 +33,19 @@ class _HL:
     state_vectors = CC.highlight_object("StateVectors")
     target_state = CC.highlight_object("Target State")
 
+    # actions
+    buy = CC.highlight_action("buy")
+
     # words
-    abort = CC.highlight_word("abort")
-    action = CC.highlight_word("action")
-    add_remove = CC.highlight_word("Add/Remove")
     attempt = CC.highlight_word("Attempt")
     bell = CC.highlight_word("Bell, the Master of Entanglement")
     both0 = CC.highlight_word("both 0")
     both1 = CC.highlight_word("both 1")
-    buy = CC.highlight_word("buy")
 
-    cannot_flee = CC.highlight_word("cannot flee")
     chance_based = CC.highlight_word("chance based")
-    commit = CC.highlight_word("Commit")
     continue_ = CC.highlight_word("Continue")
     details = CC.highlight_word("details")
     difference = CC.highlight_word("Difference")
-    display = CC.highlight_word("display")
     display_details = CC.highlight_word("displays details")
     easier = CC.highlight_word("easier")
     enemy = CC.highlight_object("Enemy")

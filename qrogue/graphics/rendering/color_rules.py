@@ -1,7 +1,7 @@
 from qrogue.game.logic.actors.controllables import ControllableType
 from qrogue.game.world.tiles import TileCode
 from qrogue.graphics import WidgetWrapper
-from qrogue.util import PyCuiColors
+from qrogue.util import PyCuiColors, ColorConfig
 
 
 class TileColorer:
@@ -65,3 +65,14 @@ class ColorRules:
         widget.add_text_color_rule('M', TileColorer.get_color(TileCode.Controllable), 'contains', match_type='regex')
         widget.add_text_color_rule('t', TileColorer.get_color(TileCode.Teleport), 'contains', match_type='regex')
         widget.add_text_color_rule('\.', TileColorer.get_color(TileCode.Message), 'contains', match_type='regex')
+
+    @staticmethod
+    def apply_circuit_rules(widget: WidgetWrapper):
+        # highlight everything between {} (gates), |> (start) or <| (end) or | | (In/Out label)
+        regex_gates = "\{.*?\}"
+        regex_start = "\|.*?\>"
+        regex_end = "\<.*?\|"
+        widget.add_text_color_rule(f"({regex_gates}|{regex_start}|{regex_end})", ColorConfig.CIRCUIT_COLOR, 'contains',
+                                   match_type='regex')
+        regex_label = "In|Out"
+        widget.add_text_color_rule(f"({regex_label})", ColorConfig.CIRCUIT_LABEL_COLOR, 'contains', match_type='regex')
