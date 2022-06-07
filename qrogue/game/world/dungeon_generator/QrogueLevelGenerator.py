@@ -404,8 +404,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             val = self.visit(ctx.integer())
             return pickup.Energy(val)
         elif ctx.GATE_LITERAL():
-            reference = ctx.REFERENCE().getText()
-            return self.__load_gate(reference)
+            return self.__load_gate(ctx.REFERENCE())
         elif ctx.QUBIT_LITERAL():
             if ctx.integer():
                 return Qubit(self.visit(ctx.integer()))
