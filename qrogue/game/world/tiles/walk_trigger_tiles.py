@@ -8,7 +8,7 @@ from qrogue.game.logic.collectibles import Collectible as LogicalCollectible, En
 from qrogue.game.world.navigation import Coordinate, Direction
 
 from qrogue.game.world.tiles.tiles import Tile, TileCode
-from qrogue.util import Logger
+from qrogue.util import Logger, ColorConfig
 
 
 class WalkTriggerTile(Tile):
@@ -221,10 +221,14 @@ class ShopKeeper(WalkTriggerTile):
 
 
 class Collectible(WalkTriggerTile):
-    __pickup_message = None
+    __pickup_message: Callable[["Collectible"], None] = None
 
     @staticmethod
-    def set_pickup_message_callback(pickup_message: Callable[[str, str], None]):
+    def set_pickup_message_callback(pickup_message_callback: Callable[[str, str], None]):
+        def pickup_message(collectible: LogicalCollectible):
+            name = collectible.name()
+            desc = collectible.description()
+            pickup_message_callback("Collectible", f"You picked up: {ColorConfig.highlight_object(name)}\n{desc}")
         Collectible.__pickup_message = pickup_message
 
     def __init__(self, collectible: LogicalCollectible):
@@ -245,9 +249,7 @@ class Collectible(WalkTriggerTile):
         if self.__active:
             if not self.has_explanation:
                 if Collectible.__pickup_message:
-                    name = self.__collectible.name()
-                    desc = self.__collectible.description()
-                    Collectible.__pickup_message(self.__collectible.name(), f"You picked up: {name}\n{desc}")
+                    Collectible.__pickup_message(self.__collectible)
                 else:
                     Logger.instance().error("Collectible's pickup message callback is None!")
             controllable.give_collectible(self.__collectible)
