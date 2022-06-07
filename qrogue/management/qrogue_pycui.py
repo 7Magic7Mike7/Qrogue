@@ -532,8 +532,11 @@ class QrogueCUI(PyCUI):
                 self.__state_machine.change_state(State.Spaceship, None)
             else:
                 self.__state_machine.change_state(State.Menu, None)
-        ConfirmationPopup.ask(Config.system_name(), "Your Robot is out of energy. Do you want to restart or abort the "
-                                                    "current level?", callback)
+        if StoryNarration.completed_tutorial():
+            ConfirmationPopup.ask(Config.system_name(), "Your Robot is out of energy. Connection lost...", callback)
+        else:
+            ConfirmationPopup.ask(Config.system_name(), "Your Robot is out of energy. Do you want to restart the "
+                                                        "current lesson?", callback)
 
     def __start_fight(self, robot: Robot, enemy: Enemy, direction: Direction) -> None:
         self.__state_machine.change_state(State.Fight, (robot, enemy))
