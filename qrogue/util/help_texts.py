@@ -7,6 +7,7 @@ class _HL:
     # objects
     boss = CC.highlight_object("Boss")
     circuit = CC.highlight_object("Circuit")
+    circuit_matrix = CC.highlight_object("Circuit Matrix")
     coins = CC.highlight_object("Coins")
     collec = CC.highlight_object("Collectibles")
     current_state = CC.highlight_object("Current State")
@@ -14,9 +15,11 @@ class _HL:
     enemies = CC.highlight_object("Enemies")
     energy = CC.highlight_object("Energy")
     gates = CC.highlight_object("Gates")
+    input_stv = CC.highlight_object("Input State Vector")
     key = CC.highlight_object("Key")
     keys = CC.highlight_object("Keys")
 
+    output_stv = CC.highlight_object("Output State Vector")
     puzzle = CC.highlight_object("Puzzle")
     puzzles = CC.highlight_object("Puzzles")
     quantum_circuit = CC.highlight_object("Quantum Circuit")
@@ -32,9 +35,12 @@ class _HL:
     state = CC.highlight_object("State")
     state_vectors = CC.highlight_object("StateVectors")
     target_state = CC.highlight_object("Target State")
+    target_stv = CC.highlight_object("Target State Vector")
 
     # actions
     buy = CC.highlight_action("buy")
+    change = CC.highlight_action("change")
+    editing = CC.highlight_action("editing")
 
     # words
     attempt = CC.highlight_word("Attempt")
@@ -50,6 +56,7 @@ class _HL:
     easier = CC.highlight_word("easier")
     enemy = CC.highlight_object("Enemy")
     entanglement = CC.highlight_word("Entanglement")
+    equal = CC.highlight_word("equal")
     exam = CC.highlight_word("Exam")
     exit_ = CC.highlight_word("Exit")
     expedition = CC.highlight_word("Expedition")
@@ -70,6 +77,7 @@ class _HL:
     loses_energy = CC.highlight_word("loses some Energy")
     map_ = CC.highlight_word("map")
     manual = CC.highlight_word("Manual")
+    mat_vec_mul = CC.highlight_word("Matrix Vector Multiplication")
     mission = CC.highlight_word("Mission")
     moon = CC.highlight_word("Moon")
     moon_mission = CC.highlight_word("Moon Mission")
@@ -173,10 +181,10 @@ class HelpText:
             "will still save everything so it is the preferred option over simply closing the window!]",
 
         HelpTextType.Fight:
-            "Basically Quantum Computing is just a lot of complex matrix vector multiplications. There's an input "
-            "state vector that is multiplied with the circuit matrix to result in an output state vector. Your goal is "
-            "to make the latter equal to the target state vector. The input state vector is always the same, so you "
-            "can only change the circuit matrix by editing the circuit.",
+            f"Basically {_HL.quantum_computing} is just a lot of complex {_HL.mat_vec_mul}. There's an {_HL.input_stv} "
+            f"that is multiplied with the {_HL.circuit_matrix} to result in an {_HL.output_stv}. Your goal is "
+            f"to make the latter {_HL.equal} to the {_HL.target_stv}. The input state vector is always the same, so "
+            f"you can only {_HL.change} the circuit matrix by {_HL.editing} the circuit.",
 
         HelpTextType.Riddle:
             f"{_HL.riddles} are very similar to {_HL.puzzles}. You have a {_HL.target_state} you need to reach "
