@@ -32,7 +32,7 @@ class SaveData:
             try:
                 content = PathConfig.read(path, in_user_path=True).splitlines()
             except FileNotFoundError:
-                Logger.instance().error(NotImplementedError("This line should not be reachable! Please send us the log "
+                Logger.instance().throw(NotImplementedError("This line should not be reachable! Please send us the log "
                                                             "files so we can fix the issue as soon as possible. "
                                                             "Thank you!"))
             index = content.index(SaveData.__ACHIEVEMENT_SECTION)
