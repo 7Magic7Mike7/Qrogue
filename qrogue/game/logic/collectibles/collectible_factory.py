@@ -7,7 +7,7 @@ from qrogue.util import Logger, MyRandom, RandomManager, ShopConfig
 class CollectibleFactory:
     def __init__(self, pool: List[Collectible]) -> None:
         if pool is None or len(pool) < 1:
-            Logger.instance().throw(f"invalid pool for CollectibleFactory: {pool}")
+            Logger.instance().throw(Exception(f"invalid pool for CollectibleFactory: {pool}"))
         self.__pool = pool.copy()
         self.__rm = RandomManager.create_new()
         self.__order_index = -1

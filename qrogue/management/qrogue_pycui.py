@@ -382,7 +382,8 @@ class QrogueCUI(PyCUI):
         if isinstance(widget, PyCuiConfig.PyCuiWidget):
             super(QrogueCUI, self).move_focus(widget, auto_press_buttons)
         else:
-            Logger.instance().throw(f"Non-PyCUI widget used in renderer! CurWidgetSet = {self.__cur_widget_set}")
+            Logger.instance().throw(Exception(
+                f"Non-PyCUI widget used in renderer! CurWidgetSet = {self.__cur_widget_set}"))
 
     def __init_keys(self) -> None:
         # debugging stuff
@@ -419,6 +420,14 @@ class QrogueCUI(PyCUI):
         self.move_focus(self.__cur_widget_set.get_main_widget(), auto_press_buttons=False)
         self.__cur_widget_set.update_story_progress(int(SaveData.instance().achievement_manager.story_progress))
         self.__cur_widget_set.render()
+
+    def show_message_popup(self, title: str, text: str, color: int = PyCuiColors.WHITE_ON_BLACK) -> None:
+        self.__focused_widget = self.get_selected_widget()
+        super(QrogueCUI, self).show_message_popup(title, text, color)
+
+    def show_error_popup(self, title: str, text: str) -> None:
+        self.__focused_widget = self.get_selected_widget()
+        super(QrogueCUI, self).show_error_popup(title, text)
 
     def __show_message_popup(self, title: str, text: str, color: int) -> None:
         self.__focused_widget = self.get_selected_widget()

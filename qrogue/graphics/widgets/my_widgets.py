@@ -320,6 +320,9 @@ class MapWidget(Widget):
 
     def try_to_start_map(self):
         if not self.__map_started:
+            if self.__map is None:
+                Logger.instance().throw(RuntimeError("self.__map is None! Most likely this means that the map could "
+                                                     "not be loaded."))
             self.__map.start()
             self.__map_started = True
 
