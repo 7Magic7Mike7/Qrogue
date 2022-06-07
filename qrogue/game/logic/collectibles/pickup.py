@@ -47,10 +47,12 @@ class Key(Pickup):
         return "Key"
 
     def description(self) -> str:
-        return "A Key is useful for opening locked doors."
+        return "Keys are useful for opening locked doors."
 
     def to_string(self):
-        return f"{self.amount} key(s)"
+        if self.amount > 1:
+            return f"{self.amount} keys"
+        return f"{self.amount} key"
 
     def __str__(self) -> str:
         return self.to_string()
