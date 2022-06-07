@@ -7,12 +7,12 @@ import sys
 
 def serializedATN():
     return [
-        4,1,25,21,2,0,7,0,2,1,7,1,1,0,1,0,1,1,3,1,8,8,1,1,1,1,1,1,1,3,1,
-        13,8,1,1,1,1,1,3,1,17,8,1,3,1,19,8,1,1,1,0,0,2,0,2,0,1,2,0,10,11,
-        20,20,22,0,4,1,0,0,0,2,7,1,0,0,0,4,5,7,0,0,0,5,1,1,0,0,0,6,8,5,14,
-        0,0,7,6,1,0,0,0,7,8,1,0,0,0,8,18,1,0,0,0,9,19,5,13,0,0,10,13,3,0,
-        0,0,11,13,5,12,0,0,12,10,1,0,0,0,12,11,1,0,0,0,13,16,1,0,0,0,14,
-        15,5,14,0,0,15,17,5,13,0,0,16,14,1,0,0,0,16,17,1,0,0,0,17,19,1,0,
+        4,1,27,21,2,0,7,0,2,1,7,1,1,0,1,0,1,1,3,1,8,8,1,1,1,1,1,1,1,3,1,
+        13,8,1,1,1,1,1,3,1,17,8,1,3,1,19,8,1,1,1,0,0,2,0,2,0,1,2,0,12,13,
+        22,22,22,0,4,1,0,0,0,2,7,1,0,0,0,4,5,7,0,0,0,5,1,1,0,0,0,6,8,5,16,
+        0,0,7,6,1,0,0,0,7,8,1,0,0,0,8,18,1,0,0,0,9,19,5,15,0,0,10,13,3,0,
+        0,0,11,13,5,14,0,0,12,10,1,0,0,0,12,11,1,0,0,0,13,16,1,0,0,0,14,
+        15,5,16,0,0,15,17,5,15,0,0,16,14,1,0,0,0,16,17,1,0,0,0,17,19,1,0,
         0,0,18,9,1,0,0,0,18,12,1,0,0,0,19,3,1,0,0,0,4,7,12,16,18
     ]
 
@@ -26,15 +26,16 @@ class QrogueBasicsParser ( Parser ):
 
     sharedContextCache = PredictionContextCache()
 
-    literalNames = [ u"<INVALID>", u"<INVALID>", u"'Qrogue<'", u"'>Qrogue'", 
-                     u"'~'", u"'|'", u"','", u"'#'", u"'..'", u"'__'" ]
+    literalNames = [ u"<INVALID>", u"<INVALID>", u"'tutorial'", u"'trigger'", 
+                     u"'Qrogue<'", u"'>Qrogue'", u"'~'", u"'|'", u"','", 
+                     u"'#'", u"'..'", u"'__'" ]
 
-    symbolicNames = [ u"<INVALID>", u"DIRECTION", u"HEADER", u"ENDER", u"HORIZONTAL_SEPARATOR", 
-                      u"VERTICAL_SEPARATOR", u"LIST_SEPARATOR", u"WALL", 
-                      u"EMPTY_HALLWAY", u"EMPTY_ROOM", u"DIGIT", u"INTEGER", 
-                      u"FLOAT", u"IMAG_NUMBER", u"SIGN", u"CHARACTER_LOW", 
-                      u"CHARACTER_UP", u"CHARACTER", u"TEXT", u"ROOM_ID", 
-                      u"HALLWAY_ID", u"REFERENCE", u"WS", u"UNIVERSAL_SEPARATOR", 
+    symbolicNames = [ u"<INVALID>", u"DIRECTION", u"TUTORIAL_LITERAL", u"TRIGGER_LITERAL", 
+                      u"HEADER", u"ENDER", u"HORIZONTAL_SEPARATOR", u"VERTICAL_SEPARATOR", 
+                      u"LIST_SEPARATOR", u"WALL", u"EMPTY_HALLWAY", u"EMPTY_ROOM", 
+                      u"DIGIT", u"INTEGER", u"FLOAT", u"IMAG_NUMBER", u"SIGN", 
+                      u"CHARACTER_LOW", u"CHARACTER_UP", u"CHARACTER", u"TEXT", 
+                      u"ROOM_ID", u"HALLWAY_ID", u"REFERENCE", u"WS", u"UNIVERSAL_SEPARATOR", 
                       u"COMMENT", u"LINE_COMMENT" ]
 
     RULE_integer = 0
@@ -44,30 +45,32 @@ class QrogueBasicsParser ( Parser ):
 
     EOF = Token.EOF
     DIRECTION=1
-    HEADER=2
-    ENDER=3
-    HORIZONTAL_SEPARATOR=4
-    VERTICAL_SEPARATOR=5
-    LIST_SEPARATOR=6
-    WALL=7
-    EMPTY_HALLWAY=8
-    EMPTY_ROOM=9
-    DIGIT=10
-    INTEGER=11
-    FLOAT=12
-    IMAG_NUMBER=13
-    SIGN=14
-    CHARACTER_LOW=15
-    CHARACTER_UP=16
-    CHARACTER=17
-    TEXT=18
-    ROOM_ID=19
-    HALLWAY_ID=20
-    REFERENCE=21
-    WS=22
-    UNIVERSAL_SEPARATOR=23
-    COMMENT=24
-    LINE_COMMENT=25
+    TUTORIAL_LITERAL=2
+    TRIGGER_LITERAL=3
+    HEADER=4
+    ENDER=5
+    HORIZONTAL_SEPARATOR=6
+    VERTICAL_SEPARATOR=7
+    LIST_SEPARATOR=8
+    WALL=9
+    EMPTY_HALLWAY=10
+    EMPTY_ROOM=11
+    DIGIT=12
+    INTEGER=13
+    FLOAT=14
+    IMAG_NUMBER=15
+    SIGN=16
+    CHARACTER_LOW=17
+    CHARACTER_UP=18
+    CHARACTER=19
+    TEXT=20
+    ROOM_ID=21
+    HALLWAY_ID=22
+    REFERENCE=23
+    WS=24
+    UNIVERSAL_SEPARATOR=25
+    COMMENT=26
+    LINE_COMMENT=27
 
     def __init__(self, input, output=sys.stdout):
         super(QrogueBasicsParser, self).__init__(input, output=output)

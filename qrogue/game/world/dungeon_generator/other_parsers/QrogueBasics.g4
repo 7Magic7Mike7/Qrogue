@@ -23,6 +23,9 @@ DIRECTION : 'North' | 'East' | 'South' | 'West' ;
 // ;        optical separation, e.g. can be use to separate things without a new line
 // *        marks the beginning of a pool id (inspired by pointers)
 
+// literals
+TUTORIAL_LITERAL : 'tutorial' ;
+TRIGGER_LITERAL : 'trigger' ;
 
 // headlines
 HEADER : 'Qrogue<' ;

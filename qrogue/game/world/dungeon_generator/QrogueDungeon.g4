@@ -24,7 +24,7 @@ tile :  'o' | 't' | 'm' | DIGIT | 'c' | 'e' | 'r' | '$' | '_' ;    // obstacle, 
 // further describing the tiles used in the room
 tile_descriptor : (trigger_descriptor | message_descriptor |
                   enemy_descriptor | collectible_descriptor | energy_descriptor | riddle_descriptor | shop_descriptor)
-                  (TILE_MESSAGE_LITERAL REFERENCE)? (TILE_EVENT_LITERAL REFERENCE)? ;  // winning a fight or picking up a collectible can also trigger an event
+                  (TUTORIAL_LITERAL REFERENCE)? (TRIGGER_LITERAL REFERENCE)? ;  // winning a fight or picking up a collectible can also trigger an event
 trigger_descriptor : 't' REFERENCE ;   // reference to the event to trigger
 message_descriptor : 'm' integer? REFERENCE ;    // #times displayed, reference to the text that should be shown
 enemy_descriptor : DIGIT (REFERENCE | stv) (REFERENCE | collectible)? ;    // enemy, id of statevector pool, id of reward pool
@@ -68,10 +68,6 @@ MAX_ENERGY : ('max' | 'MAX') '_'? ('energy' | 'ENERGY') ;
 START_ENERGY : ('start' | 'START') '_'? ('energy' | 'ENERGY') ;
 CIRCUIT_SPACE : ('circuit' | 'CIRCUIT') '_'? ('space' | 'SPACE') ;
 BACKPACK_SPACE : ('backpack' | 'BACKPACK') '_'? ('space' | 'SPACE') ;
-
-// Tile descriptor literals
-TILE_MESSAGE_LITERAL : TUTORIAL_LITERAL ; //'tutorial' ;
-TILE_EVENT_LITERAL : TRIGGER_LITERAL ; // 'trigger' ;
 
 // tiles (token used for easier identification in generator)
 KEY_LITERAL : 'key' ;

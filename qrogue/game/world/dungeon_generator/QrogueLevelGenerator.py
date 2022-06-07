@@ -728,11 +728,11 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
         if isinstance(tile, tiles.WalkTriggerTile):
             ref_index = 0
-            if ctx.TILE_MESSAGE_LITERAL():
+            if ctx.TUTORIAL_LITERAL():
                 msg = self.__load_message(ctx.REFERENCE(ref_index))
                 tile.set_explanation(msg)
                 ref_index += 1
-            if ctx.TILE_EVENT_LITERAL():
+            if ctx.TRIGGER_LITERAL():
                 event_id = parser_util.normalize_reference(ctx.REFERENCE(ref_index).getText())
                 tile.set_event(event_id)
         return tile

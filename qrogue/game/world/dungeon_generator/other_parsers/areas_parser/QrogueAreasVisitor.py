@@ -65,3 +65,13 @@ class QrogueAreasVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by QrogueAreasParser#integer.
+    def visitInteger(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueAreasParser#complex_number.
+    def visitComplex_number(self, ctx):
+        return self.visitChildren(ctx)
+
+

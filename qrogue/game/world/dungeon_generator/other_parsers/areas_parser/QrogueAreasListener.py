@@ -112,3 +112,21 @@ class QrogueAreasListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by QrogueAreasParser#integer.
+    def enterInteger(self, ctx):
+        pass
+
+    # Exit a parse tree produced by QrogueAreasParser#integer.
+    def exitInteger(self, ctx):
+        pass
+
+
+    # Enter a parse tree produced by QrogueAreasParser#complex_number.
+    def enterComplex_number(self, ctx):
+        pass
+
+    # Exit a parse tree produced by QrogueAreasParser#complex_number.
+    def exitComplex_number(self, ctx):
+        pass
+
+

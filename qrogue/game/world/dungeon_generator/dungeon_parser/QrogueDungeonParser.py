@@ -7,7 +7,7 @@ import sys
 
 def serializedATN():
     return [
-        4,1,91,495,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,
+        4,1,89,495,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,
         6,2,7,7,7,2,8,7,8,2,9,7,9,2,10,7,10,2,11,7,11,2,12,7,12,2,13,7,13,
         2,14,7,14,2,15,7,15,2,16,7,16,2,17,7,17,2,18,7,18,2,19,7,19,2,20,
         7,20,2,21,7,21,2,22,7,22,2,23,7,23,2,24,7,24,2,25,7,25,2,26,7,26,
@@ -51,7 +51,7 @@ def serializedATN():
         3,41,488,8,41,1,41,4,41,491,8,41,11,41,12,41,492,1,41,0,0,42,0,2,
         4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,44,46,48,
         50,52,54,56,58,60,62,64,66,68,70,72,74,76,78,80,82,0,8,1,0,23,24,
-        2,0,7,14,50,50,1,0,39,40,2,0,50,51,60,60,2,0,49,49,59,59,2,0,48,
+        2,0,7,14,50,50,1,0,37,38,2,0,50,51,60,60,2,0,49,49,59,59,2,0,48,
         48,60,60,1,0,69,70,1,0,73,79,527,0,84,1,0,0,0,2,98,1,0,0,0,4,111,
         1,0,0,0,6,147,1,0,0,0,8,167,1,0,0,0,10,175,1,0,0,0,12,184,1,0,0,
         0,14,194,1,0,0,0,16,197,1,0,0,0,18,203,1,0,0,0,20,212,1,0,0,0,22,
@@ -92,8 +92,8 @@ def serializedATN():
         0,179,185,3,18,9,0,180,185,3,20,10,0,181,185,3,22,11,0,182,185,3,
         24,12,0,183,185,3,26,13,0,184,177,1,0,0,0,184,178,1,0,0,0,184,179,
         1,0,0,0,184,180,1,0,0,0,184,181,1,0,0,0,184,182,1,0,0,0,184,183,
-        1,0,0,0,185,188,1,0,0,0,186,187,5,32,0,0,187,189,5,61,0,0,188,186,
-        1,0,0,0,188,189,1,0,0,0,189,192,1,0,0,0,190,191,5,33,0,0,191,193,
+        1,0,0,0,185,188,1,0,0,0,186,187,5,40,0,0,187,189,5,61,0,0,188,186,
+        1,0,0,0,188,189,1,0,0,0,189,192,1,0,0,0,190,191,5,41,0,0,191,193,
         5,61,0,0,192,190,1,0,0,0,192,193,1,0,0,0,193,13,1,0,0,0,194,195,
         5,8,0,0,195,196,5,61,0,0,196,15,1,0,0,0,197,199,5,9,0,0,198,200,
         3,52,26,0,199,198,1,0,0,0,199,200,1,0,0,0,200,201,1,0,0,0,201,202,
@@ -135,9 +135,9 @@ def serializedATN():
         5,5,0,0,320,325,3,50,25,0,321,322,5,46,0,0,322,324,3,50,25,0,323,
         321,1,0,0,0,324,327,1,0,0,0,325,323,1,0,0,0,325,326,1,0,0,0,326,
         328,1,0,0,0,327,325,1,0,0,0,328,329,5,6,0,0,329,49,1,0,0,0,330,331,
-        5,34,0,0,331,343,3,52,26,0,332,333,5,35,0,0,333,343,3,52,26,0,334,
-        335,5,36,0,0,335,343,3,52,26,0,336,337,5,37,0,0,337,343,5,61,0,0,
-        338,340,5,38,0,0,339,341,3,52,26,0,340,339,1,0,0,0,340,341,1,0,0,
+        5,32,0,0,331,343,3,52,26,0,332,333,5,33,0,0,333,343,3,52,26,0,334,
+        335,5,34,0,0,335,343,3,52,26,0,336,337,5,35,0,0,337,343,5,61,0,0,
+        338,340,5,36,0,0,339,341,3,52,26,0,340,339,1,0,0,0,340,341,1,0,0,
         0,341,343,1,0,0,0,342,330,1,0,0,0,342,332,1,0,0,0,342,334,1,0,0,
         0,342,336,1,0,0,0,342,338,1,0,0,0,343,51,1,0,0,0,344,345,7,3,0,0,
         345,53,1,0,0,0,346,348,5,54,0,0,347,346,1,0,0,0,347,348,1,0,0,0,
@@ -168,20 +168,20 @@ def serializedATN():
         1,0,0,0,433,439,5,19,0,0,434,440,5,80,0,0,435,440,5,81,0,0,436,440,
         5,82,0,0,437,438,5,83,0,0,438,440,5,61,0,0,439,434,1,0,0,0,439,435,
         1,0,0,0,439,436,1,0,0,0,439,437,1,0,0,0,440,446,1,0,0,0,441,442,
-        5,21,0,0,442,444,5,41,0,0,443,445,5,84,0,0,444,443,1,0,0,0,444,445,
+        5,21,0,0,442,444,5,39,0,0,443,445,5,84,0,0,444,443,1,0,0,0,444,445,
         1,0,0,0,445,447,1,0,0,0,446,441,1,0,0,0,446,447,1,0,0,0,447,459,
         1,0,0,0,448,449,5,85,0,0,449,450,5,5,0,0,450,455,5,60,0,0,451,452,
         5,46,0,0,452,454,5,60,0,0,453,451,1,0,0,0,454,457,1,0,0,0,455,453,
         1,0,0,0,455,456,1,0,0,0,456,458,1,0,0,0,457,455,1,0,0,0,458,460,
         5,6,0,0,459,448,1,0,0,0,459,460,1,0,0,0,460,461,1,0,0,0,461,464,
-        5,20,0,0,462,463,5,86,0,0,463,465,5,61,0,0,464,462,1,0,0,0,464,465,
-        1,0,0,0,465,468,1,0,0,0,466,467,5,87,0,0,467,469,5,61,0,0,468,466,
-        1,0,0,0,468,469,1,0,0,0,469,77,1,0,0,0,470,474,5,88,0,0,471,473,
+        5,20,0,0,462,463,5,40,0,0,463,465,5,61,0,0,464,462,1,0,0,0,464,465,
+        1,0,0,0,465,468,1,0,0,0,466,467,5,41,0,0,467,469,5,61,0,0,468,466,
+        1,0,0,0,468,469,1,0,0,0,469,77,1,0,0,0,470,474,5,86,0,0,471,473,
         3,80,40,0,472,471,1,0,0,0,473,476,1,0,0,0,474,472,1,0,0,0,474,475,
         1,0,0,0,475,79,1,0,0,0,476,474,1,0,0,0,477,478,5,61,0,0,478,483,
-        3,82,41,0,479,480,5,89,0,0,480,481,5,61,0,0,481,482,5,90,0,0,482,
+        3,82,41,0,479,480,5,87,0,0,480,481,5,61,0,0,481,482,5,88,0,0,482,
         484,5,61,0,0,483,479,1,0,0,0,483,484,1,0,0,0,484,81,1,0,0,0,485,
-        486,5,91,0,0,486,488,5,58,0,0,487,485,1,0,0,0,487,488,1,0,0,0,488,
+        486,5,89,0,0,486,488,5,58,0,0,487,485,1,0,0,0,487,488,1,0,0,0,488,
         490,1,0,0,0,489,491,5,58,0,0,490,489,1,0,0,0,491,492,1,0,0,0,492,
         490,1,0,0,0,492,493,1,0,0,0,493,83,1,0,0,0,64,98,104,106,109,120,
         127,132,140,142,147,153,158,164,171,184,188,192,199,206,210,215,
@@ -207,10 +207,10 @@ class QrogueDungeonParser ( Parser ):
                      u"'one way'", u"<INVALID>", u"<INVALID>", u"<INVALID>", 
                      u"'[Robot]'", u"'[StateVector Pools]'", u"'[Reward Pools]'", 
                      u"<INVALID>", u"<INVALID>", u"<INVALID>", u"<INVALID>", 
-                     u"<INVALID>", u"<INVALID>", u"'key'", u"'coin'", u"'energy'", 
-                     u"'gate'", u"'qubit'", u"'ordered'", u"'random'", u"<INVALID>", 
-                     u"'Qrogue<'", u"'>Qrogue'", u"'~'", u"'|'", u"','", 
-                     u"'#'", u"'..'", u"'__'", u"<INVALID>", u"<INVALID>", 
+                     u"'key'", u"'coin'", u"'energy'", u"'gate'", u"'qubit'", 
+                     u"'ordered'", u"'random'", u"<INVALID>", u"'tutorial'", 
+                     u"'trigger'", u"'Qrogue<'", u"'>Qrogue'", u"'~'", u"'|'", 
+                     u"','", u"'#'", u"'..'", u"'__'", u"<INVALID>", u"<INVALID>", 
                      u"<INVALID>", u"<INVALID>", u"<INVALID>", u"<INVALID>", 
                      u"<INVALID>", u"<INVALID>", u"<INVALID>", u"<INVALID>", 
                      u"<INVALID>", u"<INVALID>", u"<INVALID>", u"<INVALID>", 
@@ -219,7 +219,7 @@ class QrogueDungeonParser ( Parser ):
                      u"'Level'", u"'Spawn'", u"'Wild'", u"'Shop'", u"'Riddle'", 
                      u"'Boss'", u"'Gate'", u"'Treasure'", u"'open'", u"'closed'", 
                      u"'locked'", u"'event'", u"'permanent'", u"'entangled'", 
-                     u"'tutorial'", u"'trigger'", u"'[Messages]'", u"'when'" ]
+                     u"'[Messages]'", u"'when'" ]
 
     symbolicNames = [ u"<INVALID>", u"<INVALID>", u"<INVALID>", u"<INVALID>", 
                       u"<INVALID>", u"<INVALID>", u"<INVALID>", u"<INVALID>", 
@@ -229,13 +229,13 @@ class QrogueDungeonParser ( Parser ):
                       u"<INVALID>", u"<INVALID>", u"SR_TELEPORTER", u"NO_TELEPORTER", 
                       u"WITH_TELEPORTER", u"ROBOT", u"STV_POOLS", u"REWARD_POOLS", 
                       u"MAX_ENERGY", u"START_ENERGY", u"CIRCUIT_SPACE", 
-                      u"BACKPACK_SPACE", u"TILE_MESSAGE_LITERAL", u"TILE_EVENT_LITERAL", 
-                      u"KEY_LITERAL", u"COIN_LITERAL", u"ENERGY_LITERAL", 
-                      u"GATE_LITERAL", u"QUBIT_LITERAL", u"ORDERED_DRAW", 
-                      u"RANDOM_DRAW", u"DIRECTION", u"HEADER", u"ENDER", 
-                      u"HORIZONTAL_SEPARATOR", u"VERTICAL_SEPARATOR", u"LIST_SEPARATOR", 
-                      u"WALL", u"EMPTY_HALLWAY", u"EMPTY_ROOM", u"DIGIT", 
-                      u"INTEGER", u"FLOAT", u"IMAG_NUMBER", u"SIGN", u"CHARACTER_LOW", 
+                      u"BACKPACK_SPACE", u"KEY_LITERAL", u"COIN_LITERAL", 
+                      u"ENERGY_LITERAL", u"GATE_LITERAL", u"QUBIT_LITERAL", 
+                      u"ORDERED_DRAW", u"RANDOM_DRAW", u"DIRECTION", u"TUTORIAL_LITERAL", 
+                      u"TRIGGER_LITERAL", u"HEADER", u"ENDER", u"HORIZONTAL_SEPARATOR", 
+                      u"VERTICAL_SEPARATOR", u"LIST_SEPARATOR", u"WALL", 
+                      u"EMPTY_HALLWAY", u"EMPTY_ROOM", u"DIGIT", u"INTEGER", 
+                      u"FLOAT", u"IMAG_NUMBER", u"SIGN", u"CHARACTER_LOW", 
                       u"CHARACTER_UP", u"CHARACTER", u"TEXT", u"ROOM_ID", 
                       u"HALLWAY_ID", u"REFERENCE", u"WS", u"UNIVERSAL_SEPARATOR", 
                       u"COMMENT", u"LINE_COMMENT", u"LAYOUT", u"ROOMS", 
@@ -245,8 +245,7 @@ class QrogueDungeonParser ( Parser ):
                       u"BOSS_LITERAL", u"GATE_ROOM_LITERAL", u"TREASURE_LITERAL", 
                       u"OPEN_LITERAL", u"CLOSED_LITERAL", u"LOCKED_LITERAL", 
                       u"EVENT_LITERAL", u"PERMANENT_LITERAL", u"ENTANGLED_LITERAL", 
-                      u"TUTORIAL_LITERAL", u"TRIGGER_LITERAL", u"MESSAGES", 
-                      u"MSG_EVENT", u"MSG_ALTERNATIVE", u"MSG_SPEAKER" ]
+                      u"MESSAGES", u"MSG_EVENT", u"MSG_ALTERNATIVE", u"MSG_SPEAKER" ]
 
     RULE_start = 0
     RULE_meta = 1
@@ -335,16 +334,16 @@ class QrogueDungeonParser ( Parser ):
     START_ENERGY=29
     CIRCUIT_SPACE=30
     BACKPACK_SPACE=31
-    TILE_MESSAGE_LITERAL=32
-    TILE_EVENT_LITERAL=33
-    KEY_LITERAL=34
-    COIN_LITERAL=35
-    ENERGY_LITERAL=36
-    GATE_LITERAL=37
-    QUBIT_LITERAL=38
-    ORDERED_DRAW=39
-    RANDOM_DRAW=40
-    DIRECTION=41
+    KEY_LITERAL=32
+    COIN_LITERAL=33
+    ENERGY_LITERAL=34
+    GATE_LITERAL=35
+    QUBIT_LITERAL=36
+    ORDERED_DRAW=37
+    RANDOM_DRAW=38
+    DIRECTION=39
+    TUTORIAL_LITERAL=40
+    TRIGGER_LITERAL=41
     HEADER=42
     ENDER=43
     HORIZONTAL_SEPARATOR=44
@@ -389,12 +388,10 @@ class QrogueDungeonParser ( Parser ):
     EVENT_LITERAL=83
     PERMANENT_LITERAL=84
     ENTANGLED_LITERAL=85
-    TUTORIAL_LITERAL=86
-    TRIGGER_LITERAL=87
-    MESSAGES=88
-    MSG_EVENT=89
-    MSG_ALTERNATIVE=90
-    MSG_SPEAKER=91
+    MESSAGES=86
+    MSG_EVENT=87
+    MSG_ALTERNATIVE=88
+    MSG_SPEAKER=89
 
     def __init__(self, input, output=sys.stdout):
         super(QrogueDungeonParser, self).__init__(input, output=output)
@@ -1026,8 +1023,8 @@ class QrogueDungeonParser ( Parser ):
             return self.getTypedRuleContext(QrogueDungeonParser.Shop_descriptorContext,0)
 
 
-        def TILE_MESSAGE_LITERAL(self):
-            return self.getToken(QrogueDungeonParser.TILE_MESSAGE_LITERAL, 0)
+        def TUTORIAL_LITERAL(self):
+            return self.getToken(QrogueDungeonParser.TUTORIAL_LITERAL, 0)
 
         def REFERENCE(self, i=None):
             if i is None:
@@ -1035,8 +1032,8 @@ class QrogueDungeonParser ( Parser ):
             else:
                 return self.getToken(QrogueDungeonParser.REFERENCE, i)
 
-        def TILE_EVENT_LITERAL(self):
-            return self.getToken(QrogueDungeonParser.TILE_EVENT_LITERAL, 0)
+        def TRIGGER_LITERAL(self):
+            return self.getToken(QrogueDungeonParser.TRIGGER_LITERAL, 0)
 
         def getRuleIndex(self):
             return QrogueDungeonParser.RULE_tile_descriptor
@@ -1102,9 +1099,9 @@ class QrogueDungeonParser ( Parser ):
             self.state = 188
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            if _la==QrogueDungeonParser.TILE_MESSAGE_LITERAL:
+            if _la==QrogueDungeonParser.TUTORIAL_LITERAL:
                 self.state = 186
-                self.match(QrogueDungeonParser.TILE_MESSAGE_LITERAL)
+                self.match(QrogueDungeonParser.TUTORIAL_LITERAL)
                 self.state = 187
                 self.match(QrogueDungeonParser.REFERENCE)
 
@@ -1112,9 +1109,9 @@ class QrogueDungeonParser ( Parser ):
             self.state = 192
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            if _la==QrogueDungeonParser.TILE_EVENT_LITERAL:
+            if _la==QrogueDungeonParser.TRIGGER_LITERAL:
                 self.state = 190
-                self.match(QrogueDungeonParser.TILE_EVENT_LITERAL)
+                self.match(QrogueDungeonParser.TRIGGER_LITERAL)
                 self.state = 191
                 self.match(QrogueDungeonParser.REFERENCE)
 
@@ -1313,7 +1310,7 @@ class QrogueDungeonParser ( Parser ):
                 self.state = 209
                 self.collectible()
                 pass
-            elif token in [QrogueDungeonParser.T__7, QrogueDungeonParser.T__8, QrogueDungeonParser.T__9, QrogueDungeonParser.T__10, QrogueDungeonParser.T__11, QrogueDungeonParser.T__12, QrogueDungeonParser.TILE_MESSAGE_LITERAL, QrogueDungeonParser.TILE_EVENT_LITERAL, QrogueDungeonParser.DIGIT, QrogueDungeonParser.ROOM_ID, QrogueDungeonParser.HALLWAYS]:
+            elif token in [QrogueDungeonParser.T__7, QrogueDungeonParser.T__8, QrogueDungeonParser.T__9, QrogueDungeonParser.T__10, QrogueDungeonParser.T__11, QrogueDungeonParser.T__12, QrogueDungeonParser.TUTORIAL_LITERAL, QrogueDungeonParser.TRIGGER_LITERAL, QrogueDungeonParser.DIGIT, QrogueDungeonParser.ROOM_ID, QrogueDungeonParser.HALLWAYS]:
                 pass
             else:
                 pass

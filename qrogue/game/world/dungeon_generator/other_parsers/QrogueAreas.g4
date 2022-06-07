@@ -59,6 +59,3 @@ EVENT_LITERAL : 'event' ;
 
 PERMANENT_LITERAL: 'permanent' ;
 ENTANGLED_LITERAL: 'entangled' ;
-
-TUTORIAL_LITERAL : 'tutorial' ;
-TRIGGER_LITERAL : 'trigger' ;
