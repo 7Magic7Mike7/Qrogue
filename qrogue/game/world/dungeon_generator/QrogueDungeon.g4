@@ -28,7 +28,7 @@ tile_descriptor : (trigger_descriptor | message_descriptor |
 trigger_descriptor : 't' REFERENCE ;   // reference to the event to trigger
 message_descriptor : 'm' integer? REFERENCE ;    // #times displayed, reference to the text that should be shown
 enemy_descriptor : DIGIT (REFERENCE | stv) (REFERENCE | collectible)? ;    // enemy, id of statevector pool, id of reward pool
-collectible_descriptor : 'c' REFERENCE integer? ; // id of reward pool to draw from, number of rewards to draw (note: template pools like *key provide "normal" collectibles)
+collectible_descriptor : 'c' ((REFERENCE integer?) | collectible) ; // id of reward pool to draw from, number of rewards to draw (note: template pools like *key provide "normal" collectibles)
 energy_descriptor : 'e' integer ;    // amount
 riddle_descriptor : 'r' integer (REFERENCE | stv) (REFERENCE | collectible) ;   // attempts, stv pool id, reward pool id
 shop_descriptor : '$' integer (REFERENCE | collectibles) ;   // num of items to draw, reward pool id or collectible list

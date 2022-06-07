@@ -631,15 +631,20 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         return tiles.Message(message, times)
 
     def visitCollectible_descriptor(self, ctx: QrogueDungeonParser.Collectible_descriptorContext) -> tiles.Collectible:
-        collectible_factory = self.__load_collectible_factory(ctx.REFERENCE())
-
-        times = 1
-        if ctx.integer():
-            times = self.visit(ctx.integer())
-        if times > 1:
-            collectible = MultiCollectible(collectible_factory.produce_multiple(self.__rm, times))
+        if ctx.REFERENCE():
+            collectible_factory = self.__load_collectible_factory(ctx.REFERENCE())
+            times = 1
+            if ctx.integer():
+                times = self.visit(ctx.integer())
+            if times > 1:
+                collectible = MultiCollectible(collectible_factory.produce_multiple(self.__rm, times))
+            else:
+                collectible = collectible_factory.produce(self.__rm)
         else:
-            collectible = collectible_factory.produce(self.__rm)
+            collectible = self.visit(ctx.collectible())
+            if collectible is None:
+                self.warning("Wrongly described collectible! Creating one of the default pool instead.")
+                collectible = self.__default_collectible_factory.produce(self.__rm)
         return tiles.Collectible(collectible)
 
     def visitEnemy_descriptor(self, ctx: QrogueDungeonParser.Enemy_descriptorContext) -> tiles.Enemy:
