@@ -16,6 +16,9 @@ __MAP_ORDER = {
     "l1v2": "l1v3",
     "l1v3": "l1v4",
     "l1v4": "l1v5",
+    "l1v5": "l1v6",
+    "l1v6": "l1v7",
+    "l1v7": "l1v8",
 
     MapConfig.hub_world(): "l1v1",
 }
