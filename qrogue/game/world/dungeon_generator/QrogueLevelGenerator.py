@@ -506,7 +506,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
     ##### Hallway area #####
 
-    def visitH_attributes(self, ctx: QrogueDungeonParser.H_attributesContext) -> tiles.Door:
+    def visitH_attributes(self, ctx: QrogueDungeonParser.H_attributesContext) -> Tuple[tiles.Door, List[str]]:
         direction = Direction.North  # todo adapt
         one_way_state = tiles.DoorOneWayState.NoOneWay
         if ctx.DIRECTION():
@@ -544,12 +544,13 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         else:
             open_state = tiles.DoorOpenState.Closed
             self.warning("Invalid hallway attribute: it is neither locked nor opened nor closed!")
-        # due to antlr4 version mismatch we currently cannot use the adapted grammar
-        entangled = len(ctx.HALLWAY_ID()) > 0  # ctx.ENTANGLED_LITERAL() is not None
+        entangled_ids = []
+        for hw_id in ctx.HALLWAY_ID():
+            entangled_ids.append(hw_id.symbol.text)
 
         def door_check():
             return self.__check_achievement(event_id)
-        door = tiles.Door(direction, open_state, one_way_state, door_check, entangled)
+        door = tiles.Door(direction, open_state, one_way_state, door_check)
 
         # todo move tutorial and trigger from attributes to hallway?
         if ctx.TUTORIAL_LITERAL():
@@ -559,19 +560,23 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         if ctx.TRIGGER_LITERAL():
             event_to_trigger = parser_util.normalize_reference(ctx.REFERENCE(ref_index).getText())
             door.set_event(event_to_trigger)
-        return door
+        return door, entangled_ids  # ctx.ENTANGLED_LITERAL() is not None
 
     def visitHallway(self, ctx: QrogueDungeonParser.HallwayContext) -> Tuple[str, rooms.Hallway]:
         hw_id = ctx.HALLWAY_ID().getText()
-        door = self.visit(ctx.h_attributes())
+        door, entangled_ids = self.visit(ctx.h_attributes())
 
-        if door.is_entangled:
+        if len(entangled_ids) > 0:
             def check_entanglement_lock() -> bool:
-                if hw_id in self.__entanglement_locks:
-                    return True
-                else:
-                    self.__entanglement_locks.add(hw_id)
-                    return False
+                """
+
+                :return: True if this door is locked via entanglement, False otherwise
+                """
+                for eid in entangled_ids:
+                    if eid in self.__entanglement_locks:
+                        return True
+                self.__entanglement_locks.add(hw_id)
+                return False
             door.set_entanglement(check_entanglement_lock)
 
         return hw_id, door
