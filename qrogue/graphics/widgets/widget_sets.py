@@ -549,25 +549,25 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self.__hud = MyWidgetSet.create_hud_row(self)
         posy += UIConfig.HUD_HEIGHT
 
-        stv = self.add_block_label('Input StV', posy, posx, row_span, UIConfig.INPUT_STV_WIDTH, center=True)
-        self.__input_stv = InputStateVectorWidget(stv, "In^T")
-        posx += UIConfig.INPUT_STV_WIDTH
+        matrix = self.add_block_label('Circuit Matrix', posy, posx, row_span, column_span=matrix_width,
+                                      center=True)
+        self.__circuit_matrix = CircuitMatrixWidget(matrix)
+        posx += matrix_width
 
         multiplication = self.add_block_label('Mul sign', posy, posx, row_span, column_span=1, center=True)
         self.__mul_widget = SimpleWidget(multiplication)
         posx += 1
 
-        matrix = self.add_block_label('Circuit Matrix', posy, posx, row_span, column_span=matrix_width,
-                                      center=True)
-        self.__circuit_matrix = CircuitMatrixWidget(matrix)
-        posx += matrix_width
+        stv = self.add_block_label('Input StV', posy, posx, row_span, UIConfig.INPUT_STV_WIDTH, center=True)
+        self.__input_stv = InputStateVectorWidget(stv, "In")
+        posx += UIConfig.INPUT_STV_WIDTH
 
         result = self.add_block_label('Eq sign', posy, posx, row_span, column_span=1, center=True)
         self.__result_widget = SimpleWidget(result)
         posx += 1
 
         stv = self.add_block_label('Output StV', posy, posx, row_span, UIConfig.OUTPUT_STV_WIDTH, center=True)
-        self.__stv_robot = OutputStateVectorWidget(stv, "Out^T")
+        self.__stv_robot = OutputStateVectorWidget(stv, "Out")
         posx += UIConfig.OUTPUT_STV_WIDTH
 
         equality = self.add_block_label('Eq sign', posy, posx, row_span, column_span=1, center=True)
@@ -679,12 +679,12 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                 matrix_width = UIConfig.WINDOW_WIDTH - (UIConfig.INPUT_STV_WIDTH + UIConfig.OUTPUT_STV_WIDTH +
                                                         UIConfig.TARGET_STV_WIDTH + 1 * 3) - 2 * shrinkage
                 posx = shrinkage
-                self.__input_stv.widget.reposition(column=posx)
-                posx += UIConfig.INPUT_STV_WIDTH
-                self.__mul_widget.widget.reposition(column=posx)
-                posx += 1
                 self.__circuit_matrix.widget.reposition(column=posx, column_span=matrix_width)
                 posx += matrix_width
+                self.__mul_widget.widget.reposition(column=posx)
+                posx += 1
+                self.__input_stv.widget.reposition(column=posx)
+                posx += UIConfig.INPUT_STV_WIDTH
                 self.__result_widget.widget.reposition(column=posx)
                 posx += 1
                 self.__stv_robot.widget.reposition(column=posx)
@@ -773,6 +773,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             cur_instruction = self._robot.get_instruction(index)
             if cur_instruction is not None:
                 if cur_instruction.is_used():
+                    # move the instruction
                     pos = cur_instruction.position
                     qubit = cur_instruction.get_qubit_at(0)
                     self._robot.remove_instruction(cur_instruction)

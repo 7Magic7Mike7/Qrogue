@@ -381,12 +381,7 @@ class InputStateVectorWidget(StateVectorWidget):
         max_row_len = max([len(row) for row in rows])
         rows = [align_string(row, max_row_len) for row in rows]
 
-        text = "|"
-        for i in range(state_vector.num_of_qubits - 1, -1, -1):
-            text += f"q{i}"
-        text += ">"
-
-        self._stv_str_rep = f"~{text}  {self._headline}~\n" + "\n".join(rows)
+        self._stv_str_rep = f"~{self._headline}~\n" + "\n".join(rows)
 
 
 class OutputStateVectorWidget(StateVectorWidget):
