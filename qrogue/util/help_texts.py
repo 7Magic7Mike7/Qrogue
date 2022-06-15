@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Optional
 
 from qrogue.util.config import ColorConfig as CC
 
@@ -41,6 +42,7 @@ class _HL:
     buy = CC.highlight_action("buy")
     change = CC.highlight_action("change")
     editing = CC.highlight_action("editing")
+    edits = CC.highlight_action("edits")
 
     # words
     attempt = CC.highlight_word("Attempt")
@@ -187,13 +189,10 @@ class HelpText:
             f"you can only {_HL.change} the circuit matrix by {_HL.editing} the circuit.",
 
         HelpTextType.Riddle:
-            f"{_HL.riddles} are very similar to {_HL.puzzles}. You have a {_HL.target_state} you need to reach "
-            f"(difference is zero) "
-            f"by adapting your {_HL.circuit}. The main difference is that you {_HL.hp} if you fail but instead 1 "
-            f"{_HL.attempt} for solving the Riddle. When you have no more attempts left the Riddle {_HL.vanishes} "
-            "together with its reward - which is usually much better than the ones from Puzzles. Also fleeing (or in "
-            f"this case {_HL.give_up}) will always work but obviously cost you your current {_HL.attempt} which is "
-            f"why you are notified if this would lead to 0 attempts left.",
+            f"{_HL.riddles} are very similar to {_HL.puzzles}: There is a {_HL.target_state} you need to reach "
+            f"by adapting your {_HL.circuit}. The main difference is that there's a predefined maximum number of "
+            f"{_HL.edits} for solving it. When you have no more attempts left the Riddle {_HL.vanishes} "
+            f"together with its {_HL.reward} - which is often much better than the ones from Puzzles.",
 
         HelpTextType.Shop:
             f"In the {_HL.shop} you can exchange {_HL.coins} you got (e.g. from solving Puzzles) for various "
@@ -237,9 +236,9 @@ class HelpText:
         return HelpText.__DIC[type]
 
     @staticmethod
-    def load(type: str) -> str:
+    def load(type_: str) -> Optional[str]:
         for key in HelpText.__DIC.keys():
-            if key.name.lower() == type.lower():
+            if key.name.lower() == type_.lower():
                 return HelpText.__DIC[key]
         return None
 
