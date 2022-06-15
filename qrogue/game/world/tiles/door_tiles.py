@@ -155,10 +155,10 @@ class Door(WalkTriggerTile):
 
         if self.__event_check is None:
             Logger.instance().error("Tried to enter event-locked door with event_check still uninitialized!")
-            self.__open_state = DoorOpenState.Open
+            self.__open_state = DoorOpenState.Closed
             return True
         if self.__event_check():
-            self.__open_state = DoorOpenState.Open
+            self.__open_state = DoorOpenState.Closed
             return True
         return False
 
