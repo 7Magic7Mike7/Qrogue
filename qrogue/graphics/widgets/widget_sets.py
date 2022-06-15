@@ -16,7 +16,7 @@ from qrogue.graphics.popups import Popup
 from qrogue.graphics.rendering import ColorRules
 from qrogue.graphics.widget_base import WidgetWrapper
 from qrogue.util import CommonPopups, Config, Controls, GameplayConfig, HelpText, HelpTextType, Logger, PathConfig, \
-    RandomManager, AchievementManager, Keys, UIConfig, HudConfig
+    RandomManager, AchievementManager, Keys, UIConfig, HudConfig, ColorConfig
 from qrogue.util.achievements import Ach
 
 from qrogue.graphics.widgets import Renderable, Widget, MyBaseWidget
@@ -595,6 +595,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                                        row_span=UIConfig.WINDOW_HEIGHT - posy,
                                        column_span=UIConfig.WINDOW_WIDTH - UIConfig.PUZZLE_CHOICES_WIDTH, center=True)
         details.toggle_border()
+        details.activate_individual_coloring()  # TODO: current reward highlight version is not satisfying
         self._details = SelectionWidget(details, controls, columns=self.__DETAILS_COLUMNS, is_second=True)
 
         # init action key commands
@@ -799,9 +800,8 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                     self.render()
                     return True
 
-    def __choices_commit(self) -> bool:
+    def __choices_commit(self):
         if self._target is None:
-            from qrogue.util.logger import Logger
             Logger.instance().error("Error! Target is not set!")
             return False
         self._robot.update_statevector()
@@ -809,15 +809,16 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self.__update_calculation(success)
         self.render()
         if success:
-            self._robot.give_collectible(reward)
+            def give_reward_and_continue():
+                self._robot.give_collectible(reward)
+                self._continue_exploration_callback()
             self._details.set_data(data=(
-                [f"Congratulations! You received: {reward.to_string()}"],
-                [self._continue_exploration_callback]
+                [f"Congratulations! Your reward: {ColorConfig.highlight_object(reward.to_string())}"],
+                [give_reward_and_continue]
             ))
             self._details_content = self._DETAILS_INFO_THEN_CHOICES
-            return True
         else:
-            return self._on_commit_fail()
+            self._on_commit_fail()
 
     def __choices_reset(self) -> bool:
         if self._robot.has_empty_circuit:
