@@ -20,9 +20,8 @@ from qrogue.util import CheatConfig, Config, Logger, GameplayConfig, QuantumSimu
 
 
 class _Attributes:
-    __DAMAGE_TO_ENERGY = 1
     __DEFAULT_SPACE = 3
-    __MIN_INIT_ENERGY = 10  # during initialization neither max_energy nor cur_energy must be below this value
+    __MIN_INIT_ENERGY = 1  # during initialization neither max_energy nor cur_energy must be below this value
     __DEFAULT_MAX_ENERGY = 100
 
     """
@@ -56,10 +55,6 @@ class _Attributes:
         self.__cur_energy = min(start_energy, max_energy)
 
     @property
-    def is_alive(self) -> bool:
-        return self.__cur_energy >= 0
-
-    @property
     def num_of_qubits(self) -> int:
         return self.__qubits.size
 
@@ -90,15 +85,12 @@ class _Attributes:
             self.__cur_energy = self.__max_energy
         return amount
 
-    def decrease_energy(self, amount: int) -> Tuple[int, bool]:
+    def decrease_energy(self, amount: int) -> int:
         self.__cur_energy -= amount
         if self.__cur_energy < 0:
             amount += self.__cur_energy     # e.g. if we got 6 damage and cur_energy is now -2, we actually got 4 damage
             self.__cur_energy = -1
-        return amount, not self.is_alive
-
-    def damage(self, amount: int) -> Tuple[int, bool]:
-        return self.decrease_energy(amount * _Attributes.__DAMAGE_TO_ENERGY)
+        return amount
 
 
 class Backpack:
@@ -346,6 +338,12 @@ class Robot(Controllable, ABC):
     def is_space_left(self) -> bool:
         return self.__instruction_count < self.circuit_space
 
+    def game_over_check(self) -> bool:
+        if self.__attributes.cur_energy <= 0:
+            self.__game_over()
+            return True
+        return False
+
     def __apply_instructions(self):
         circuit = QuantumCircuit(self.__attributes.num_of_qubits, self.__attributes.num_of_qubits)
         for inst in self.__instructions:
@@ -364,6 +362,9 @@ class Robot(Controllable, ABC):
         Compiles and simulates the current circuit and saves and returns the resulting StateVector
         :return: an updated StateVector corresponding to the current circuit
         """
+        if self.game_over_check():
+            return
+
         self.__apply_instructions()
         compiled_circuit = transpile(self.__circuit, self.__simulator)
         job = self.__simulator.run(compiled_circuit, shots=1)
@@ -483,15 +484,12 @@ class Robot(Controllable, ABC):
             Logger.instance().error(f"Received uncovered collectible: {collectible}")
 
     def on_move(self):
-        _, died = self.__attributes.decrease_energy(amount=1)
-        if died:
-            self.__game_over()
+        self.__attributes.decrease_energy(amount=1)
 
     def damage(self, amount: int = 1) -> Tuple[int, bool]:
-        amount, died = self.__attributes.damage(amount)
-        if died:
-            self.__game_over()
-        return amount, died
+        if self.game_over_check():
+            return amount, True
+        return self.__attributes.decrease_energy(amount), False
 
     def regenerate(self, amount: int = 1) -> int:
         """

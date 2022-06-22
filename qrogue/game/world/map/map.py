@@ -182,6 +182,8 @@ class Map(ABC):
         :param direction: in which direction the robot should move
         :return: True if the robot was able to move, False otherwise
         """
+        if self.controllable_tile.controllable.game_over_check():
+            return False
 
         new_pos = self.__controllable_pos + direction
         if new_pos.y < 0 or self.full_height <= new_pos.y or \
