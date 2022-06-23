@@ -1,90 +1,75 @@
 Qrogue<
-Name = "1-1: Exam"
+// DONE
+Name = "Lesson 0: Zeros and Ones"
+Description = Speaker "0" "Welcome to the //05'Mission Quniverse' Trainings Program//!"
+"We will teach you how to //03control// the newest //02Quantum Circuit Robots// - or //02Qubots// for short - and how to //03utilize// their //05Quantum Computing// capabilities. At the end of the program an //05Examination Challenge// will await you and the //05Winner// will receive a formidable //05Prize//. So give it your all!" ""
+"But first things first:" "//03Move// the //02Qubot// with //04WASD// or //04Arrow Keys//. You can //03close// this message with //04Enter// or //04Space//. //03Reopen// it with //04H// if you get stuck."
+NO_TELEPORTER
+
+// Introduced Concepts:
+// Moving, Keys, Locked Doors, Puzzles
 
 [Robot]
-1 qubits [ *xgate ]
+1 qubits [ *xgate ] 
+circuit_space = 1
+maxenergy = 100000 // it should not be possible to run out of energy in this level
 
 [Layout]
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-| SR 10 aa 11 bb 11 cc .. __ .. __ .. __ |
-| ..    14    12    ..    ..    ..    .. |
-| __ .. ff 13 dd 11 ee .. __ .. __ .. __ |
+| __ .. __ .. __ .. __ .. __ .. __ .. __ |
+| ..    ..    ..    ..    ..    ..    .. |
+| __ .. SR == zz == aa 11 bb 11 cc .. __ |
 | ..    ..    ..    ..    ..    ..    .. |
 | __ .. __ .. __ .. __ .. __ .. __ .. __ |
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 [Custom Rooms]
+
 SR (Spawn):
 #############
-# m _ _ _ _ #
+# _ _ _ _ _ #
 # _ _ _ _ _ #
 # _ _ _ _ m #
 # _ _ _ _ _ #
 # _ _ _ _ _ #
 #############
-m *helpTextControls trigger *sawManual
-m *goToManual
+m 1 *movingDone
 
-aa (foggy Wild):
+zz (Wild):
 #############
-# c _ _ 0 _ #
-# o o o _ o #
-# m _ o _ m #
-# o _ o o _ #
-# _ _ _ _ _ #
+# _ _ _ o _ #
+# _ o _ _ _ #
+# _ o _ o _ #
+# _ o _ _ _ #
+# _ _ _ o _ #
 #############
-m 1 *puzzle1
-m 1 *lockedDoorTutorial trigger *sawLockedDoor
-// enemy_id, state vector pool, reward pool, tutorial message, event trigger
-0 *base1 tutorial *helptextFight trigger *enemy1
-c *key 1 tutorial *foundKeyLockUnknown trigger *pickedUpKey
+
+aa (Wild):
+#############
+# o _ _ _ _ #
+# _ _ o o _ #
+# m o _ _ _ #
+# o o o o _ #
+# c _ _ _ _ #
+#############
+m *lockedDoor
+c *key
 
 bb (Wild):
 #############
-# o o c o o #
-# o o _ o o #
-# _ _ 0 _ _ #
-# o o _ o o #
-# o o _ o o #
+# o m _ _ o #
+# o 0 o m _ #
+# _ o o o _ #
+# _ m o m _ #
+# o _ _ _ o #
 #############
-0 *base0 *key tutorial *emptyPuzzle
-c *bigEnergy
+0 *base1 tutorial *helptextFight trigger *solvedPuzzle 
+m 1 *puzzle4
+m *puzzle3
+m *puzzle1
+m *puzzle2
 
-
-cc (Treasure):
-#############
-# _ _ _ _ _ #
-# _ _ _ _ _ #
-# _ _ c _ _ #
-# _ _ _ _ _ #
-# _ _ _ _ _ #
-#############
-c *qubit 1 tutorial *newQubit trigger *twoQubits
-
-dd (Wild):
-#############
-# _ _ _ _ _ #
-# _ _ 0 _ _ #
-# _ _ c _ _ #
-# _ 0 _ 0 _ #
-# _ _ _ _ _ #
-#############
-0 *base01 *twoXs
-0 *base10 *twoXs
-0 *base11 tutorial *twoXgates trigger *twoXgatesDone
-c *bigEnergy
-
-ee (Gate):
-#############
-# _ _ _ _ _ #
-# _ _ _ _ _ #
-# _ _ c _ _ #
-# _ _ _ _ _ #
-# _ _ _ _ _ #
-#############
-c *xgate trigger *pickedUpSecondXgate
-
-ff (Gate):
+cc (Wild):
 #############
 # _ _ _ _ _ #
 # _ _ _ _ _ #
@@ -92,64 +77,40 @@ ff (Gate):
 # _ _ _ _ _ #
 # _ _ _ _ _ #
 #############
-//c *hgate tutorial *receivedHgate trigger *done
-m *finishedLevel trigger *done
+m *doneMsg trigger *done
+
+
 
 [Hallways]
-10 (event *sawManual; ; )
-11 (locked; ; )
-12 (event *twoQubits; ; )
-13 (event *twoXgatesDone; ; )
-14 (event *done; ; )
+11 (locked; ; ) trigger *sawLockedDoor
 
 [StateVector Pools]
 custom
-//*myStvPool [ [0j, -0j, -1j, +0], [0.5, -.5j, +.5, 0.5j ] ];
-//            default rewards: random *energy
-*base0 [ [1, 0] ]
 *base1 [ [0, 1] ]
-*base00 [ [1, 0, 0, 0] ]
-*base01 [ [0, 1, 0, 0] ]
-*base10 [ [0, 0, 1, 0] ]
-*base11 [ [0, 0, 0, 1] ]
 
-default random [ [.707, +0, -0 + 0j, .707j] ]
+default *base1
 
 [Reward Pools]
 custom
 *key [key 1]
-*xgate [gate *x]
-*hgate [gate *h]
-*qubit [qubit 1]
-*energy [energy 10]
 
-*twoXs ordered [energy 5, key 1]
-*bigEnergy [energy 25]
-
-default *energy
+default *key
 
 [Messages]
-// highlight text by encapsulating it in "//02abcd//" where "abcd" is the text to highlight and "02" one of the available styles: 01 is for tiles, 02 is for game objects, 03 for words and 04 for keys on the keyboard
-*goToManual "Wait, you should go to the //03manual// in the top left corner first." event *sawManual alternative *movingDone
-*movingDone "Great! You're ready to enter the next room to the right."
+// highlight text by encapsulating it in "//02abcd//" where "abcd" is the text to highlight and "02" one of the available styles: 01 is for tiles, 02 is for game objects, 03 for actions, 04 for keys on the keyboard and 05 for other words
+// speaker: 0 = Examiner, 1 = Scientist, 2 = System, 3 = Player
 
-*puzzle1 "Look, the //010// over there is a puzzle! Let's try to solve it. And the //01c// is a //02Collectible// that might come in handy later."
+*movingDone Speaker "0" "Next: //03Move// through the //02Door//."
 
-*lockedDoorTutorial "The door to our right is locked. Maybe we can find a //02Key// somewhere." event *pickedUpKey alternative *lockedDoorDone
-*lockedDoorDone "Oh the //02Door// is //03locked//. Luckily we've already found a //02Key// to open it!"
+*lockedDoor Speaker "0" "A small hint:" "Some //02Doors// don't open by simply //03moving// onto them. Just //03try// it and you will see!"
 
-*foundKeyLockUnknown "Cool, that's a //02Key//. It will be very useful should we encounter a locked //02Door//." event *sawLockedDoor alternative *foundKeyLockKnown
-*foundKeyLockKnown "Here we go, exactly what we were searching for: a //02Key// for opening locked //02Doors//!"
+*puzzle1 Speaker "0" "The red //010// is a //02Quantum Puzzle//. It will challenge you to reach a certain //02Quantum State//." when *solvedPuzzle then *wrongDirection
+*puzzle2 Speaker "0" "For this you can //03add//, //03move// or //03remove// //02Quantum Gates//. Right now, you only have //05one// //02X Gate// and one slot for placing a gate." when *solvedPuzzle then *wrongDirection
+*puzzle3 Speaker "0" "No worries. At the beginning we will stay in the //05Classical World// of 0s and 1s. Here an //02X Gate// acts like a //05Not Gate//." when *solvedPuzzle then *puzzleDone
+*puzzle4 Speaker "0" "Now //03step// onto the //010// and try your best."
+*puzzleDone Speaker "0" "Now you have a //02Key// to //03open// the next //02Door//."
+*wrongDirection Speaker "0" "You're moving in the //05wrong direction//."
 
-*emptyPuzzle "Alright, this should be easy. We could even solve this without our //03X gate// ;)"
-
-*newQubit "You found a second Qubit! This means we can now solve more complex puzzles."
-
-*twoXgates "I'm afraid you need //03two X gates// for this. Let's see if we can find a second one somewhere in here." event *pickedUpSecondXgate alternative *twoXgatesAlt
-*twoXgatesAlt "So for this we need //03two X gates//. Luckily we already managed to get a second one!"
-
-*receivedHgate "WOW! A Hadamard gate! This gives us so many new possibilities. We can use it to bring a //02Qubit// into //03Superposition//."
-
-*finishedLevel "Great, you did it!"
+*doneMsg "Alright, you successfully //03finished// the //05first// lesson. Now onwards to the //05second// one."
 
 >Qrogue

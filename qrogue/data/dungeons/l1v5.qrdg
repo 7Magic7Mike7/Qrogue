@@ -1,0 +1,183 @@
+Qrogue<
+Name = "Lesson 4: Running in Circles"
+Description = Speaker "0" "This lesson will show you new kinds of //02Doors//. You've already seen //05locked// and //05'normal'// ones."
+"The //01>// you see on the left side of this room is a //02One-way Door//. You can only move through it from //05one side//."
+NO_TELEPORTER
+
+// Introduced Concepts:
+// open doors, one way doors, event doors (triggered locally in room)
+
+[Robot]
+2 qubits [ *xgate, *xgate ]
+circuit_space = 2
+maxenergy = 100
+
+[Layout]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+| __ .. __ .. gg 17 SR 01 aa .. __ .. __ |
+| ..    ..    16    22    12    ..    .. |
+| __ .. __ .. ff .. hh .. bb .. __ .. __ |
+| ..    ..    15    ..    12    ..    .. |
+| __ .. __ .. ee 14 dd 13 cc .. __ .. __ |
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[Custom Rooms]
+
+SR (Spawn):
+#############
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ m #
+# o _ _ _ o #
+# o o _ o o #
+#############
+m 1 *srMsg
+
+aa (Wild):
+#############
+# o o 0 o o #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+#############
+0 [0, 0, 1, 0] energy 5
+
+bb (Wild):
+#############
+# o o _ 5 o #
+# o _ 2 o o #
+# _ 0 o o o #
+# o _ 4 o o #
+# o o _ 7 o #
+#############
+0 [0, 0, 1, 0] key 1
+
+cc (Wild):
+#############
+# _ _ 3 _ _ #
+# _ _ 6 _ _ #
+# 1 m 8 _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ 9 #
+#############
+m *temporaryOWDs
+
+dd (Wild):
+#############
+# o o _ o o #
+# o _ m _ o #
+# _ _ o _ _ #
+# c o o o c #
+# o o o o o #
+#############
+m 1 *permVsTemp
+c energy 10
+c energy 10
+
+ee (Wild):
+#############
+# _ _ m o o #
+# _ o _ o o #
+# _ o _ _ _ #
+# _ o o o o #
+# _ _ _ _ c #
+#############
+m *deadEnd
+c energy 25 trigger *eventDoorIntro
+
+ff (Wild):
+#############
+# o 1 _ o o #
+# o o 9 _ o #
+# o o o 0 5 #
+# o o 8 _ o #
+# o 2 _ o o #
+#############
+0 *base11
+1 *reach2X
+2 *reach2X
+5 *reach2X
+8 *reach2X
+9 *reach2X
+
+gg (Wild):
+#############
+# _ _ _ _ _ #
+# _ 2 0 4 _ #
+# _ 0 c 0 _ #
+# _ 6 0 8 _ #
+# _ _ m _ _ #
+#############
+m 1 *lockedOWD
+c key 1 tutorial *joking
+0 *base11
+2 *reach2X
+4 *reach2X
+6 *reach2X
+8 *reach2X
+
+hh (Wild):
+#############
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ m _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+#############
+m *doneMsg trigger *done
+
+
+[Hallways]
+01 (open; ; )
+12 (closed; one way South permanent; )
+13 (closed; one way West; )
+14 (closed; one way West permanent; )
+15 (event *eventDoorIntro; one way North permanent; )
+16 (locked; one way North permanent; )
+17 (closed; one way East; )
+
+22 (locked; ; )
+
+[StateVector Pools]
+custom
+
+*base01 [ [0, 1, 0, 0] ]
+*base10 [ [0, 0, 1, 0] ]
+*base11 [ [0, 0, 0, 1] ]
+
+*reach1X [ *base01, *base10 ]
+*reach2X [ *reach1X, [0, 0, 0, 1] ]
+
+default *reach2X
+
+[Reward Pools]
+custom 
+*key [key 1]
+*energySmall [energy 10]
+*energyBig [energy 20]
+
+default *energySmall
+
+
+[Messages]
+// highlight text by encapsulating it in "//02abcd//" where "abcd" is the text to highlight and "02" one of the available styles: 01 is for tiles, 02 is for game objects, 03 for actions, 04 for keys on the keyboard and 05 for other words
+// speaker: 0 = Examiner, 1 = Scientist, 2 = System, 3 = Player
+*srMsg Speaker "0" "Technically this here is also a new kind of //02Door//. It's simply an //02Open Door//. Not really anything special about it. Just treat it like a //02Normal Door//."
+
+
+*temporaryOWDs Speaker "0" "The //02One-way Doors// you have seen now were all //05permanent//. You //03walked// through them but you //05couldn't go back//. But there are also //05temporary// ones. Once you //03walked// through them they are //05open forever//."
+
+*permVsTemp Speaker "0" "Note that there is //05no visual difference// between //05permanent// and //05temporary// //02One-way Doors//. You only get to know one's type by walking through it." 
+"During the lessons we //05won't trap you// but on real //05missions// you sometimes have to consider the //05risk//."
+
+*deadEnd Speaker "0" "Looks like a //05dead end//." "But is it reall one? Or is it just some new kind of //02Door// playing with you?" when *eventDoorIntro then *eventDoors
+*eventDoors Speaker "0" "Maybe you already guessed it, but this is indeed an //02Event Door//. It's usually //05invisible// but as soon as it is //05triggered// (e.g. by //03picking up// a //02Collectible// or //03solving// a //02Puzzle//) it will //05open//."
+
+*lockedOWD Speaker "0" "Did you see that? This //02One-way Door// was //05locked// in addition to its //05one-way// properties. That means you just used the one and only //02Key// you received..."
+
+*joking Speaker "0" "AHAHA, what a luck! There was actually another //02Key//. Now you can finally //03open// the //02Locked Door// in the starting room."
+
+*doneMsg Speaker "0" "Hopefully you weren't too shocked the two times we made you believe you have to redo the lesson. But yeah, you made it. So let's move on!"
+
+>Qrogue

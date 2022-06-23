@@ -1,207 +1,138 @@
 Qrogue<
-Name = "1-2: Moon"
+// DONE
+Name = "Lesson 1: Energy Savings"
+Description = Speaker "0" "In this lesson you will learn how to //03stir// a //02Qubot// //05efficiently// because every action it takes //05costs// //02Energy//."
+"In the //05top left// of the screen you can see its //02Current Energy Level// and its //02Maximum Energy Capacity//. If the Qubot is out of energy it will //05shut down// and we lose the connection to it." 
+"In this controlled training environment this is not a problem but for the exam and real missions this is crucial."
+NO_TELEPORTER
+
+// Introduced Concepts:
+// Energy, Rewards
 
 [Robot]
-2 qubits [ *xgate, *xgate, *hgate ]
+1 qubits [ *xgate ] 
+circuit_space = 1
+maxenergy = 30; startenergy = 27
 
 [Layout]
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-| __ .. __ .. ad 12 aa 13 ab .. __ .. __ |
-| ..    ..    11    ==    11    ..    .. |
-| __ .. __ .. dd == SR == bb 11 ee .. __ |
-| ..    ..    ..    15    ..    ..    .. |
-| __ .. __ .. __ .. cc 16 cd 11 zz .. __ |
+| __ .. __ .. __ .. aa == bb == cc .. __ |
+| ..    ..    ..    ==    ..    ==    .. |
+| __ .. __ .. __ .. SR .. ea == dd .. __ |
+| ..    ..    ..    ..    ==    ==    .. |
+| __ .. __ .. __ .. ff == ee == eb .. __ |
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 [Custom Rooms]
-SR (Spawn):
+aa (Wild):
 #############
 # _ _ _ _ _ #
 # _ o o o _ #
-# _ o _ o _ #
-# _ _ 0 _ _ #
+# _ _ c o _ #
+# _ o _ o o #
 # _ _ _ _ _ #
 #############
-0 *superPos0 *rewAB tutorial *tutSuperPos
-
-aa (Wild):
-#############
-# c _ _ o o #
-# _ _ o o _ #
-# m o o _ _ #
-# o o _ _ _ #
-# o _ _ _ _ #
-#############
-c *key trigger *usedHiddenPassage
-m 1 *tempOneWay
-// m 1 *oneway5 trigger *sawOneWay
+c *energyTiny
 
 bb (Wild):
 #############
-# o o _ o o #
-# o _ _ o o #
-# _ _ _ 0 _ #
-# o _ _ o o #
-# o o _ o o #
+# c _ _ _ _ #
+# o o _ o _ #
+# m _ _ o _ #
+# o o 0 o _ #
+# _ _ _ _ _ #
 #############
-0 *superPos *rewCD
+m *energyReward
+0 *simplePool *energyBig 
+c *key
 
 cc (Wild):
 #############
-# _ _ m _ _ #
-# _ _ _ _ _ #
-# _ o r _ _ #
-# _ o o o _ #
-# _ _ _ _ _ #
+# c _ o 0 _ #
+# o _ _ _ o #
+# _ o _ _ _ #
+# _ _ _ o _ #
+# _ o _ _ _ #
 #############
-m 1 *riddleMsg trigger *sawRiddle
-r *superPos *key 7 tutorial *helpTextRiddle trigger *solvedRiddle
+0 *simplePool *energyTiny
+c *energyHuge
 
 dd (Wild):
 #############
-# 0 0 _ 0 0 #
-# 0 0 _ 0 0 #
-# 0 0 _ _ _ #
-# 0 0 0 0 0 #
-# 0 0 0 0 0 #
+# _ _ _ _ _ #
+# _ o o o _ #
+# _ o _ _ _ #
+# _ o _ o o #
+# _ _ _ _ _ #
 #############
-0 *oneX *rewDD
+
+ea (Wild):
+#############
+# o _ _ _ _ #
+# _ _ o o _ #
+# _ o _ _ _ #
+# _ o o o c #
+# _ _ _ o o #
+#############
+c *energyBig
+
+eb (Wild):
+#############
+# _ o _ _ _ #
+# _ o o _ _ #
+# _ o _ _ _ #
+# _ o _ _ 0 #
+# _ _ _ _ _ #
+#############
+0 *simplePool *energyBig
 
 ee (Wild):
 #############
-# _ _ _ _ c #
 # _ _ _ _ _ #
-# _ _ _ _ 0 #
-# _ _ _ _ _ #
-# _ _ _ _ c #
-#############
-c *energyBig
-c *key
-0 *superPos *rewCD
-
-ab (Wild):
-#############
-# 8 _ _ _ 6 #
-# _ 0 o 1 _ #
-# m o o o _ #
-# _ 2 o 3 _ #
-# 9 _ m _ 7 #
-#############
-0 *oneX *rewAB
-1 *oneX *rewAB
-2 *oneX *rewAB
-3 *oneX *rewAB
-6 *oneX *rewAB
-7 *oneX *rewAB
-8 *oneX *rewAB
-9 *oneX *rewAB
-m 1 *oneway3 trigger *sawOneWay
-m 1 *diffNumbers trigger *sawDiffNumbers
-
-ad (Wild):
-#############
-# _ _ _ _ _ #
-# _ _ _ _ _ #
-# _ _ 0 _ m #
-# _ _ _ _ _ #
-# _ _ _ _ _ #
-#############
-//r [0, 0, 0, 1] *hgate 4 tutorial *helpTextRiddle trigger *receivedHadamard
-0 *superPos *rewCD
-m 1 *oneway1 trigger *sawOneWay
-//m 1 *riddleMsg trigger *sawRiddle
-
-cd (Wild):
-#############
 # o o o o _ #
-# o o o _ _ #
-# 0 0 0 0 _ #
-# o o o _ _ #
-# o o o o _ #
+# _ _ 0 o _ #
+# _ o o o _ #
+# _ _ _ _ _ #
 #############
-0 *superPosRand *rewCD
+0 [0, 1] key 1
 
-zz (Wild):
+ff (Wild):
 #############
-# _ _ _ _ _ #
-# _ _ _ _ _ #
-# _ _ 0 _ _ #
-# _ _ _ _ _ #
-# _ _ _ _ _ #
+# o o o _ _ #
+# o o _ _ _ #
+# o m _ _ c #
+# o o _ _ _ #
+# o o o _ _ #
 #############
-0 *boss *energy trigger *done
-
+m *levelDone trigger *done
+c *energyHuge
 
 [Hallways]
 11 (locked; ; )
-12 (closed; one way East; ) trigger *oneWayTemp
-13 (closed; one way West permanent; ) trigger *oneWayPermanent
-14 (event *sawOneWay; ; )
-15 (event *sawDiffNumbers; ; )
-16 (event *solvedRiddle; ; )
-17 (event *usedHiddenPassage; ; )
 
 [StateVector Pools]
 custom
-//            default rewards: random *coin
+*simplePool [ [0, 1] ]
 
-*superPos0 [ [0.707, 0.707, 0, 0] ]
-*superPos ordered [ [0.707, 0.707, 0, 0], [0.707, 0, 0.707, 0], [0.707, -0.707, 0, 0], [0.707, 0, -0.707, 0] ]
-*superPosRand [ [0.707, 0.707, 0, 0], [0.707, 0, 0.707, 0], [0.707, -0.707, 0, 0], [0.707, 0, -0.707, 0] ]
-
-*roomBB [ [0, 0, 0, 1] ]
-*oneX [ [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [1, 0, 0, 0] ]
-
-
-*boss [ [0, 0, 0.707, -0.707] ]
-
-default *roomAB
+default *simplePool
 
 [Reward Pools]
-custom
+custom 
 *key [key 1]
-*energy [energy 5]
-*hgate [gate *h]
+*energyTiny [energy 5]
+*energySmall [energy 10]
+*energyMedium [energy 15]
+*energyBig [energy 20]
+*energyHuge [energy 30]
 
-*energyBig [energy 30]
-
-*rewAB ordered [energy 10]
-*rewDD ordered [energy 5, energy 5, key 1, energy 5, energy 5, energy 5, energy 5, energy 5, energy 5, energy 5, energy 5, energy 5, energy 5, energy 5, energy 5, key 1, energy 5, energy 5, energy 5]
-*rewCD ordered [energy 10, energy 5, energy 20, key 1]
-
-default *energy
+default *key
 
 [Messages]
-// highlight text by encapsulating it in "//02abcd//" where "abcd" is the text to highlight and "02" one of the available styles: 01 is for tiles, 02 is for game objects, 03 for words and 04 for keys on the keyboard
-//*wondering "Hmm, I wonder how we can reach the south side of these obstacles..." event *foundHiddenTreasure alternative *noMoreWondering
-*diffNumbers "As you can see also //03other digits// aside from //010// exist and represent //02Puzzles//. However, there is a small difference between them:"
-"//011//s have a //0310% chance not to trigger// which means they vanish together with their rewards without us getting the chance to solve them. //012//s have a 20% chance for this and so on until //019//s with a 90% chance not to trigger." 
-"But if they do trigger and you decide to flee it might fail with the same probability. So there's a 10% chance that you cannot flee and just lose some energy for a //011// up to 90% again for a //019//."
-"Likewise the same is true for the //010//s we already know. But a 0% chance means they will always trigger and fleeing will always work."
+// highlight text by encapsulating it in "//02abcd//" where "abcd" is the text to highlight and "02" one of the available styles: 01 is for tiles, 02 is for game objects, 03 for actions, 04 for keys on the keyboard and 05 for other words
+// speaker: 0 = Examiner, 1 = Scientist, 2 = System, 3 = Player
 
-*riddleMsg "Look, the //01?// ahead is a //02Riddle//. It is similar to a //02Puzzle// but we only have a //03fixed number of attempts// to solve it. However, it usually has a //03great reward// to make up for this!" event *sawRiddle alternative *riddleAgain
-*riddleAgain "There's another riddle!"
+*energyReward Speaker "0" "You can also get //02Energy// as a //02Reward// from //03solving// a //02Quantum Puzzle//."
 
-*oneway1 "To the right you can see a //02One-way Door//. As the name suggests, we can only //03walk through// it from //03one side// - in this particular case from left to right."
-"Actually, there are //03two kinds// of one-way Doors but you cannot see any difference in their appearance. Some will block your way //03permanently// from one side while others are only //03temporary// and will vanish after you walked through them once." 
-"I hope this one will only be temporary... else it would trap us!" event *sawOneWay alternative *oneway2
-*oneway2 "Here's a //02One-way Door// again. "
-*tempOneWay "Puh, luckily it was a temporary one."
-
-*oneway3 "To the left you can see a //02One-way Door//. As the name suggests, we can only //03walk through// it from //03one side// - in this particular case from right to left."
-"Actually, there are //03two kinds// of one-way Doors but you cannot see any difference in their appearance. Some will block your way //03permanently// from one side while others are only //03temporary// and will vanish after you walked through them once."
-"I wonder of what kind this one will be." event *sawOneWay alternative *oneway4
-*oneway4 "We can check out this //02One-way Door// from this side."
-
-*oneway5 "To the right you can see a //02One-way Door//. As the name suggests, we can only //03walk through// it from //03one side// - in this particular case from right to left."
-"Actually, there are //03two kinds// of one-way Doors but you cannot see any difference in their appearance. Some will block your way //03permanently// from one side while others are only //03temporary// and will vanish after you walked through them once."
-"I wonder of what kind this one will be." event *sawOneWay alternative *oneway6
-*oneway6 "We definitely cannot go through this //02One-way Door// from this side." event *oneWayPermanent alternative *oneway7
-*oneway7 "Ok, seems like this one is permanent."
-
-*tutSuperPos "Exciting, that's our first //03non-deterministic// //02StateVector//! As you can see it //03doesn't have one 1// and the rest 0 as all the others before - the first two entries are 0.707 which means that //03q0 is in Superposition//. Therefore it is both 0 and 1 at the same time!" 
-"And if we take a closer look specifically at q0 it will turn to a //030 with a 50%// chance and also to a //031 with 50%//. Why? Because //030.707 squared is 0.5// which corresponds to 50%."
-"Basically the same as previously where we tried to have 100% for the desired outcome and 0% for all others."
-"There is a special gate called //02Hadamard Gate// that produces exactly the kind of Superposition we need here. I added one to the Robots inventory while we were travelling."
+*levelDone "//05Great//!" "This lesson was specifically designed to bring the //02Qubot// to its energy limits. Usually it won't be that harsh and a misstep doesn't mean the end of a mission. Nonetheless the remaining energy is something you should always keep in mind."
 
 >Qrogue
