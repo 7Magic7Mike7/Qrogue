@@ -891,15 +891,9 @@ class FightWidgetSet(ReachTargetWidgetSet):
         self.__flee_check = target.flee_check
 
     def _on_commit_fail(self) -> bool:
-        damage_taken, deadly = self._robot.damage()
-        if deadly:
+        if not self._robot.game_over_check():
             self._details.set_data(data=(
-                [f"Oh no, you took {damage_taken} damage and died!"],
-                [self.__game_over_callback]
-            ))
-        else:
-            self._details.set_data(data=(
-                [f"Wrong, you took {damage_taken} damage. Remaining energy = {self._robot.cur_energy}"],
+                [f"That's not yet the correct solution."],
                 [self._empty_callback]
             ))
         self._details_content = ReachTargetWidgetSet._DETAILS_INFO_THEN_EDIT

@@ -384,11 +384,9 @@ class Robot(Controllable, ABC):
             self.__instruction_count -= 1
             instruction.reset(skip_qargs=skip_qargs)
 
-    def remove_instruction(self, instruction: Instruction, update_stv: bool = False):
+    def remove_instruction(self, instruction: Instruction):
         if instruction in self.__instructions:
             self.__remove_instruction(instruction)
-            if update_stv:
-                self.update_statevector(use_energy=True)
 
     def __place_instruction(self, instruction: Instruction, position: int):
         if instruction.position == position:

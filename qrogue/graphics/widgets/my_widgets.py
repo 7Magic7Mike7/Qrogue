@@ -249,7 +249,7 @@ class CircuitWidget(Widget):
             if self.__place_holder_data.gate is None:
                 # remove the instruction
                 gate = self.__robot.gate_at(self.__place_holder_data.pos)
-                self.__robot.remove_instruction(gate, update_stv=True)
+                self.__robot.remove_instruction(gate)
                 self.__place_holder_data = None
                 self.render()
                 return True, None
