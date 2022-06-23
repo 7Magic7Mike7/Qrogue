@@ -51,7 +51,7 @@ class Enemy(WalkTriggerTile):
             if controllable.backpack.used_capacity > 0:
                 return super(Enemy, self).is_walkable(direction, controllable)
             else:
-                controllable.damage(1)
+                # noting happens in case the robot doesn't have any gates
                 return False
         else:
             Logger.instance().error(f"Error! Non-Robot walked over Enemy: {controllable}")
