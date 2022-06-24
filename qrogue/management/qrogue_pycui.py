@@ -477,7 +477,6 @@ class QrogueCUI(PyCUI):
         else:
             # load the newest level (exam phase) by
             MapManager.instance().load_first_uncleared_map()
-            self.__state_machine.change_state(State.Explore, None)
 
     def switch_to_spaceship(self, data=None):
         StoryNarration.returned_to_spaceship()
