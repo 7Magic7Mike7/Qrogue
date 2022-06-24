@@ -187,9 +187,8 @@ class Placeholder:
         return Placeholder.__ROOM
 
     @staticmethod
-    def empty_room(north_hallway: "Hallway" = None, east_hallway: "Hallway" = None, south_hallway: "Hallway" = None,
-                   west_hallway: "Hallway" = None) -> "CopyAbleRoom":
-        return EmptyRoom(north_hallway, east_hallway, south_hallway, west_hallway)
+    def empty_room(hw_dic: Dict[Direction, "Hallway"]) -> "CopyAbleRoom":
+        return EmptyRoom(hw_dic)
 
 
 class Hallway(Area):
@@ -555,8 +554,23 @@ class CustomRoom(CopyAbleRoom):
 
 
 class EmptyRoom(CopyAbleRoom):
-    def __init__(self, north_hallway: Hallway = None, east_hallway: Hallway = None, south_hallway: Hallway = None,
-                 west_hallway: Hallway = None):
+    def __init__(self, hw_dic: Dict[Direction, Hallway]):
+        north_hallway = None
+        if Direction.North in hw_dic:
+            north_hallway = hw_dic[Direction.North]
+
+        east_hallway = None
+        if Direction.East in hw_dic:
+            east_hallway = hw_dic[Direction.East]
+
+        south_hallway = None
+        if Direction.South in hw_dic:
+            south_hallway = hw_dic[Direction.South]
+
+        west_hallway = None
+        if Direction.West in hw_dic:
+            west_hallway = hw_dic[Direction.West]
+
         tile_list = Room.get_empty_room_tile_list()
         super(EmptyRoom, self).__init__(AreaType.EmptyRoom, tile_list, north_hallway, east_hallway, south_hallway,
                                         west_hallway)
@@ -565,8 +579,7 @@ class EmptyRoom(CopyAbleRoom):
         return "ER"
 
     def copy(self, hw_dic: Dict[Direction, Hallway]) -> "CopyAbleRoom":
-        return EmptyRoom(hw_dic[Direction.North], hw_dic[Direction.East], hw_dic[Direction.South],
-                         hw_dic[Direction.West])
+        return EmptyRoom(hw_dic)
 
 
 class SpecialRoom(Room, ABC):

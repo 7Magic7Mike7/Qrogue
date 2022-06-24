@@ -14,9 +14,12 @@ from qrogue.util import MapConfig, PathConfig, Logger
 from .world_parser.QrogueWorldLexer import QrogueWorldLexer
 from .world_parser.QrogueWorldParser import QrogueWorldParser
 from .world_parser.QrogueWorldVisitor import QrogueWorldVisitor
+from ..map.rooms import Placeholder
 
 
 class QrogueWorldGenerator(QrogueWorldVisitor):
+    CONNECTING_ROOM_ID = "_"
+
     @staticmethod
     def is_spawn_room(room_id: str) -> bool:
         return room_id.lower() == 'sr'
@@ -97,7 +100,7 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
 
     def __load_room(self, reference: str, x: int, y: int) -> Room:
         if reference in self.__rooms:
-            if str.lower(reference) == 'sr':
+            if reference.lower() == 'sr':
                 if self.__spawn_pos:
                     parser_util.warning("A second SpawnRoom was defined! Ignoring the first one "
                                         "and using this one as SpawnRoom.")
@@ -105,6 +108,9 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
             room = self.__rooms[reference]
             hw_dic = parser_util.get_hallways(self.__created_hallways, self.__hallways, Coordinate(x, y))
             return room.copy(hw_dic)
+        elif reference.startswith(QrogueWorldGenerator.CONNECTING_ROOM_ID):
+            hw_dic = parser_util.get_hallways(self.__created_hallways, self.__hallways, Coordinate(x, y))
+            return Placeholder.empty_room(hw_dic)
         else:
             parser_util.warning(f"room_id \"{reference}\" not specified and imports not supported for worlds! "
                                 "Placing an empty room instead.")
@@ -180,7 +186,7 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
         level_to_load = parser_util.normalize_reference(ctx.REFERENCE().getText())
         return msg, level_to_load
 
-    def visitRoom(self, ctx: QrogueWorldParser.RoomContext) -> Tuple[str, MetaRoom]:
+    def visitRoom(self, ctx: QrogueWorldParser.RoomContext) -> Tuple[str, Room]:
         room_id = ctx.ROOM_ID().getText()
         msg, level_to_load = self.visit(ctx.room_content())
         visibility, m_type, num, orientation = self.visit(ctx.r_attributes())
