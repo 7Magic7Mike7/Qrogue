@@ -36,8 +36,8 @@ HORIZONTAL_SEPARATOR : '~' ;
 VERTICAL_SEPARATOR : '|' ;
 LIST_SEPARATOR : ',' ;
 WALL : '#' ;
-EMPTY_HALLWAY : '..' ;
-EMPTY_ROOM : '__' ;
+EMPTY_HALLWAY : '..' ;  // "empty" here means "non-existent"
+EMPTY_ROOM : '__' ;     // "empty" here means "non-existent"
 
 // mathematical token
 DIGIT : [0-9] ;
