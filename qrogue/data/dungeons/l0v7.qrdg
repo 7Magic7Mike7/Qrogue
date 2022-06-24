@@ -267,6 +267,6 @@ default *energySmall
 
 *lockedForever Speaker "0" "The two rooms in the right as well as the two rooms in the left corner were only accessible through //02Entangled Doors//. So, depending on the path you chose you are not able to find out what the other two rooms contained. Only if you would be able to retry this lesson you could experience what another path has to offer." "This is the reason why real //02Quantum Algorithms// are usually not executed once but rather a lot of times. We cannot know exactly which paths the //02Qubits// take so we simply try to give the correct one the highest probability."
 
-*doneMsg Speaker "0" "You're ready now."
+*doneMsg Speaker "0" "You finally made it! Congratulations on successfully completing the //05'Mission Quniverse' Trainings Program//. Now you should be ready for the //05Exam//."
 
 >Qrogue

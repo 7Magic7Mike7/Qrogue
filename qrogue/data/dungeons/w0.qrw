@@ -1,0 +1,60 @@
+Qrogue<
+
+[Layout]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+| __ .. __ .. SR == ex .. lh == lg .. __ |
+| ..    ..    ==    ..    ==    ==    .. |
+| __ .. __ .. la == _a == _a == lf .. __ |
+| ..    ..    ==    ==    ==    ==    .. |
+| __ .. __ .. lb == lc == ld == le .. __ |
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[Rooms]
+SR (World 0; North):
+description "Exit navigation panel and go back to the spaceship."
+teleport *back
+
+ex (visible Level 8; East):
+description "Exam to have a chance at being part of //05Mission Quniverse//."
+teleport *l1v9
+
+la (visible Level 0; West):
+description "Lesson 0: Basics of //03moving// a //02Qubot// and //03solving// //02Puzzles//."
+teleport *l0v0
+
+lb (visible Level 1; South):
+description "Lesson 1: Learning how to save //02Energy// when //03stirring// a //02Qubot//."
+teleport *l0v1
+
+lc (visible Level 2; South):
+description "Lesson 2: Introduction to more //02Qubits// and more //02Quantum Gates//."
+teleport *l0v2
+
+ld (visible Level 3; South):
+description "Lesson 3: Showcase of different //02Digits// and their //05indeterministic behaviour//."
+teleport *l0v3
+
+le (visible Level 4; South):
+description "Lesson 4: Explaning the different kind of //02Doors//."
+teleport *l0v4
+
+lf (visible Level 5; East):
+description "Lesson 5: Presenting a new kind of //02Puzzle// and the multi-qubit //02CX Gate//."
+teleport *l0v5
+
+lg (visible Level 6; North):
+description "Lesson 6: Diving into the quantum world with //02Superposition// and //02H Gate//."
+teleport *l0v6
+
+lh (visible Level 7; North):
+description "Lesson 7: Interacting with //02Entanglement// via //02Digits//, new //02Doors// and //02Circuits//."
+teleport *l0v7
+
+// just an example level for easier copying of map parts
+tu (Level 9; East):
+description "just an example level for easier copying of map parts"
+teleport *fullTemplate
+
+[Hallways]
+
+>Qrogue
