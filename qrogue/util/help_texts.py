@@ -41,8 +41,10 @@ class _HL:
     # actions
     buy = CC.highlight_action("buy")
     change = CC.highlight_action("change")
+    choose = CC.highlight_action("choose")
     editing = CC.highlight_action("editing")
     edits = CC.highlight_action("edits")
+    position = CC.highlight_action("position")
 
     # words
     attempt = CC.highlight_word("Attempt")
@@ -90,7 +92,6 @@ class _HL:
     one_parenthesis = CC.highlight_word("1)")
     options = CC.highlight_word("Options")
 
-    position = CC.highlight_word("Position")
     quantum_computing = CC.highlight_word("Quantum Computing")
     quantum_algorithm = CC.highlight_word("Quantum Algorithm")
     reenter = CC.highlight_word("re-enter")
@@ -107,20 +108,14 @@ class _HL:
     zeros = CC.highlight_word("zeros")
 
     # keys
-    arrow_keys = CC.highlight_key("Arrow Keys")
-    backspace = CC.highlight_key("Backspace")
-    ctrl_q = CC.highlight_key("CTRL+Q")
-    h = CC.highlight_key("H")
-    enter = CC.highlight_key("Enter")
-    escape = CC.highlight_key("ESC")
-    p = CC.highlight_key("P")
-    q = CC.highlight_key("Q")
-    shift_a = CC.highlight_key("Shift+A")
-    shift_left = CC.highlight_key("Shift+Left")
+    action_keys = CC.highlight_key("Space") + " or " + CC.highlight_key("Enter")
+    cancel_keys = CC.highlight_key("Backspace") + " or " + CC.highlight_key("Shift+A") + " or " + \
+        CC.highlight_key("Shift+Left")
+    help_keys = CC.highlight_key("H")
+    navigation_keys = CC.highlight_key("WASD") + " or " + CC.highlight_key("Arrow Keys")
+    pause_keys = CC.highlight_key("P") + " or " + CC.highlight_key("TAB")
     shortcuts = CC.highlight_key("0") + ", " + CC.highlight_key("1") + ", ... , " + CC.highlight_key("9")
-    space = CC.highlight_key("Space")
-    tab = CC.highlight_key("TAB")
-    wasd = CC.highlight_key("WASD")
+    shutdown_keys = CC.highlight_key("CTRL+Q") + " followed by " + CC.highlight_key("Q")
 
     # tiles
     door_tile = CC.highlight_tile("-")
@@ -158,35 +153,37 @@ class HelpText:
             f"{_HL.special_rooms} in the Dungeon or guarded "
             f"by a {_HL.boss} - a special Enemy that wants to see a "
             f"{_HL.quantum_algorithm} from you...\n"
-            f"Now let's start! Try to move around with the {_HL.arrow_keys} and "
+            f"Now let's start! Try to move around with {_HL.navigation_keys} and "
             f"go to the {_HL.door} ({_HL.door_tile}) at the bottom!"
             f"\nThe fields with a {_HL.msg_tile} will show you the next steps. "
-            f"Now close this dialog and start playing by pressing {_HL.space}.",
+            f"Now close this dialog and start playing by pressing {_HL.action_keys}.",
 
         HelpTextType.FirstLevelIntroduction:
-            f"Move around by using {_HL.arrow_keys} or {_HL.wasd}.",
+            f"Move around by using {_HL.navigation_keys}.",
 
         HelpTextType.Controls:
             f"That's the {_HL.manual}. You can always reopen it from the pause menu. Have a look at it and don't "
             f"forget to scroll down to see everything!\n"
-            f"Move                  -   {_HL.arrow_keys}, {_HL.wasd}\n"
-            f"Navigate menus        -   {_HL.arrow_keys}, {_HL.wasd}\n"
-            f"Confirm               -   {_HL.enter}, {_HL.space}\n"
-            f"Cancel/Back           -   {_HL.backspace}, {_HL.shift_a}, {_HL.shift_left}\n"
-            f"Scroll in message     -   {_HL.arrow_keys}, {_HL.wasd}\n"
-            f"Close message         -   {_HL.enter}, {_HL.space}\n"  # let's not mention ESC since it could lead to bugs
-            f"Reopen last message   -   {_HL.h}\n"
-            f"Pause                 -   {_HL.p}, {_HL.tab}\n"
+            f"Move                  -   {_HL.navigation_keys}\n"
+            f"Navigate menus        -   {_HL.navigation_keys}\n"
+            f"Confirm               -   {_HL.action_keys}\n"
+            f"Cancel/Back           -   {_HL.cancel_keys}\n"
+            f"Scroll in message     -   {_HL.navigation_keys}\n"
+            f"Close message         -   {_HL.action_keys}\n"  # let's not mention ESC since it could lead to bugs
+            f"Reopen last message   -   {_HL.help_keys}\n"
+            f"Pause                 -   {_HL.pause_keys}\n"
             f"Selection shortcuts   -   {_HL.shortcuts}\n"
             #"\n"
-            f"[Should you ever get stuck you can force-quit the game by pressing {_HL.ctrl_q} and then {_HL.q}. This "
+            f"[Should you ever get stuck you can force-quit the game by pressing {_HL.shutdown_keys}. This "
             "will still save everything so it is the preferred option over simply closing the window!]",
 
         HelpTextType.Fight:
             f"Basically {_HL.quantum_computing} is just a lot of complex {_HL.mat_vec_mul}. There's an {_HL.input_stv} "
             f"that is multiplied with the {_HL.circuit_matrix} to result in an {_HL.output_stv}. Your goal is "
             f"to make the latter {_HL.equal} to the {_HL.target_stv}. The input state vector is always the same, so "
-            f"you can only {_HL.change} the circuit matrix by {_HL.editing} the circuit.",
+            f"you can only {_HL.change} the circuit matrix by {_HL.editing} the circuit.\n"
+            f"First you have to {_HL.choose} and then {_HL.position} a {_HL.gate}. Even though there is currently only "
+            f"one position available to you, you still have to confirm placement by pressing {_HL.action_keys}.",
 
         HelpTextType.Riddle:
             f"{_HL.riddles} are very similar to {_HL.puzzles}: There is a {_HL.target_state} you need to reach "
@@ -197,8 +194,8 @@ class HelpText:
         HelpTextType.Shop:
             f"In the {_HL.shop} you can exchange {_HL.coins} you got (e.g. from solving Puzzles) for various "
             f"{_HL.collec}. On the left side is a {_HL.list_} of everything you can {_HL.buy}. Navigate as usual with "
-            f"your {_HL.arrow_keys} and select something with {_HL.space} to see more {_HL.details} on the right side. "
-            f"There you can also buy it.\n"
+            f"{_HL.navigation_keys} and select something with {_HL.action_keys} to see more {_HL.details} on the right "
+            f"side. There you can also buy it.\n"
             f"{_HL.leave} obviously makes you leave the {_HL.shop}. You can always {_HL.reenter} it later if you want!",
 
         HelpTextType.BossFight:  # todo make more generic
@@ -254,8 +251,8 @@ class StoryText:
     __DIC = {
         StoryTextType.Intro:
             f"Hey Mike, the time has {_HL.finally_} come! Quick, join me over here!\n\n"
-            f"[Move to the blue {_HL.robb_tile} with {_HL.arrow_keys} or {_HL.wasd} and close this dialog with "
-            f"{_HL.space} or {_HL.enter}]",
+            f"[Move to the blue {_HL.robb_tile} with {_HL.navigation_keys} and close this dialog with "
+            f"{_HL.action_keys}]",
         StoryTextType.Exam:
             f"Alright, this will be the official and final {_HL.exam} before you can join the {_HL.moon_mission}. I "
             "hope you're ready for it!\n"
