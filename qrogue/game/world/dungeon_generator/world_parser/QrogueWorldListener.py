@@ -139,3 +139,30 @@ class QrogueWorldListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by QrogueWorldParser#messages.
+    def enterMessages(self, ctx):
+        pass
+
+    # Exit a parse tree produced by QrogueWorldParser#messages.
+    def exitMessages(self, ctx):
+        pass
+
+
+    # Enter a parse tree produced by QrogueWorldParser#message.
+    def enterMessage(self, ctx):
+        pass
+
+    # Exit a parse tree produced by QrogueWorldParser#message.
+    def exitMessage(self, ctx):
+        pass
+
+
+    # Enter a parse tree produced by QrogueWorldParser#message_body.
+    def enterMessage_body(self, ctx):
+        pass
+
+    # Exit a parse tree produced by QrogueWorldParser#message_body.
+    def exitMessage_body(self, ctx):
+        pass
+
+

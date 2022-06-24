@@ -80,3 +80,18 @@ class QrogueWorldVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by QrogueWorldParser#messages.
+    def visitMessages(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueWorldParser#message.
+    def visitMessage(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueWorldParser#message_body.
+    def visitMessage_body(self, ctx):
+        return self.visitChildren(ctx)
+
+

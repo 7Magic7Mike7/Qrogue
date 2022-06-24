@@ -9,7 +9,7 @@ from qrogue.game.logic.actors import Player
 from qrogue.game.world.map import Room, MetaRoom, SpawnRoom, WorldMap
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.game.world.tiles import Door, DoorOneWayState, DoorOpenState
-from qrogue.util import MapConfig, PathConfig, Logger
+from qrogue.util import MapConfig, PathConfig, Logger, Config
 
 from .world_parser.QrogueWorldLexer import QrogueWorldLexer
 from .world_parser.QrogueWorldParser import QrogueWorldParser
@@ -181,8 +181,8 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
         rtype, num, direction = self.visit(ctx.r_type())
         return visibility, rtype, num, direction
 
-    def visitRoom_content(self, ctx) -> Tuple[str, str]:
-        msg = ctx.TEXT().getText()[1:-1]  # strip encapsulating \"
+    def visitRoom_content(self, ctx: QrogueWorldParser.Room_contentContext) -> Tuple[str, str]:
+        _, msg = parser_util.parse_message_body(ctx.message_body())
         level_to_load = parser_util.normalize_reference(ctx.REFERENCE().getText())
         return msg, level_to_load
 
@@ -191,9 +191,10 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
         msg, level_to_load = self.visit(ctx.room_content())
         visibility, m_type, num, orientation = self.visit(ctx.r_attributes())
 
-        alt_message = Message.create_with_title("load" + room_id + "Done", level_to_load + " - done", msg)
+        alt_message = Message.create_with_title("load" + room_id + "Done", Config.system_name(), "[DONE]\n" + msg)
         # the (internal) level name is also the name of the event that describes whether the level was completed or not
-        message = Message.create_with_alternative("load" + room_id, level_to_load, msg, level_to_load, alt_message)
+        message = Message.create_with_alternative("load" + room_id, Config.system_name(), msg, level_to_load,
+                                                  alt_message)
         # hallways will be added later
         if self.is_spawn_room(room_id):
             room = MetaRoom(self.__load_map, orientation, message, level_to_load, m_type, num, is_spawn=True)
