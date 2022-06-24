@@ -506,8 +506,12 @@ class QrogueCUI(PyCUI):
 
     def __show_world(self, world: WorldMap = None) -> None:
         if world is None:
-            self.__state_machine.change_state(State.Spaceship, None)
-            self.__pause.set_data(None, "Spaceship", SaveData.instance().achievement_manager)
+            if StoryNarration.completed_tutorial():
+                self.__state_machine.change_state(State.Spaceship, None)
+                self.__pause.set_data(None, "Spaceship", SaveData.instance().achievement_manager)
+            else:
+                # return to the main screen if the Spaceship is not yet unlocked
+                self.__state_machine.change_state(State.Menu, None)
         else:
             self.__state_machine.change_state(State.Navigation, world)
             self.__pause.set_data(None, world.name, SaveData.instance().achievement_manager)

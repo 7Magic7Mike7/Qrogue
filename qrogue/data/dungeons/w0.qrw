@@ -11,7 +11,7 @@ Qrogue<
 
 [Rooms]
 SR (World 0; North):
-description "Exit navigation panel and go back to the spaceship."
+description "Exit Mission Quniverse Trainings Program."
 teleport *back
 
 ex (visible Level 8; East):

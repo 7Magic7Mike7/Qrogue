@@ -12,15 +12,18 @@ from qrogue.management.save_data import SaveData
 
 __MAP_ORDER = {
     MapConfig.spaceship(): MapConfig.intro_level(),
-    MapConfig.intro_level(): "l1v2",
-    "l1v2": "l1v3",
-    "l1v3": "l1v4",
-    "l1v4": "l1v5",
-    "l1v5": "l1v6",
-    "l1v6": "l1v7",
-    "l1v7": "l1v8",
+    MapConfig.intro_level(): "l0v1",
+    "l0v1": "l0v2",
+    "l0v2": "l0v3",
+    "l0v3": "l0v4",
+    "l0v4": "l0v5",
+    "l0v5": "l0v6",
+    "l0v6": "l0v7",
+    "l0v7": "w0",
+    "l0v8": MapConfig.spaceship(),
+    "w0": MapConfig.spaceship(),
 
-    MapConfig.hub_world(): "l1v1",
+    MapConfig.hub_world(): "l0v0",
 }
 
 
@@ -184,12 +187,8 @@ class MapManager:
             self.__in_level = False
             self.__show_world(self.__get_world(self.__cur_map.internal_name))
         elif self.__cur_map is self.__hub_world or not StoryNarration.unlocked_free_navigation():
-            # we return to the spaceship if we are currently in the hub-world or haven't unlocked it yet
-            if StoryNarration.completed_tutorial():
-                self.__show_world(None)
-            else:
-                # if we haven't completed the tutorial yet, we are not allowed to go back manually
-                Popup.scientist_says("No no, we should do the moon mission now. Let's head over to the next room!")
+            # we return to the default world if we are currently in the hub-world or haven't unlocked it yet
+            self.__show_world(None)
         else:
             # if we are currently in a world we return to the hub-world
             self.__cur_map = self.__hub_world
