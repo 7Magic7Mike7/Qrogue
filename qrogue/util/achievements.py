@@ -146,7 +146,7 @@ class Achievement:
     def is_done(self) -> bool:
         return self.score >= self.done_score
 
-    def add_score(self, score: float) -> bool:
+    def add_score(self, score: float) -> bool:  # todo change name to increase_score and make score default to 1?
         """
 
         :param score: how much score points we want to add
@@ -209,7 +209,7 @@ class AchievementManager:
     def reset_level_events(self):
         self.__temp_level_storage.clear()
 
-    def add_to_achievement(self, name: str, score: float):
+    def add_to_achievement(self, name: str, score: float):  # todo maybe default score to 1?
         if name in self.__storage:
             self.__storage[name].add_score(score)
 

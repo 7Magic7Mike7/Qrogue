@@ -338,6 +338,7 @@ class PauseMenuWidgetSet(MyWidgetSet):
         return self.__choices.widget
 
     def set_data(self, robot: Optional[Robot], map_name: str, achievement_manager: AchievementManager):
+        # todo maybe needs some overhaul?
         self.__hud.set_data((robot, map_name))
         self.__achievement_manager = achievement_manager
 
