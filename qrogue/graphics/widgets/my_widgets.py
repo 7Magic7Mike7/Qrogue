@@ -91,9 +91,9 @@ class Widget(Renderable, ABC):
 
 
 class SimpleWidget(Widget):
-    def __init__(self, widget: WidgetWrapper):
+    def __init__(self, widget: WidgetWrapper, initial_text: str = ""):
         super().__init__(widget)
-        self.__text = ""
+        self.__text = initial_text
 
     def set_data(self, data) -> None:
         self.__text = str(data)
