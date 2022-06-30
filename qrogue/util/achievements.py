@@ -45,7 +45,7 @@ class Ach:
     def is_story_mission(level_name: str) -> bool:
         # check if level_name is from one of the tutorial lessons
         if level_name.startswith(MapConfig.tutorial_lesson_prefix()) and \
-                0 <= int(level_name[len(MapConfig.tutorial_lesson_prefix()):]) <= MapConfig.num_of_lessons():
+                0 <= int(level_name[len(MapConfig.tutorial_lesson_prefix()):]) < MapConfig.num_of_lessons():
             return True
         return level_name in [
             MapConfig.exam(),
@@ -68,9 +68,9 @@ class Ach:
             return progress > 0     # Lesson 0 completed
 
         elif unlock is Unlocks.CircuitReset:
-            return progress > MapConfig.num_of_lessons()    # all lessons completed
+            return progress >= MapConfig.num_of_lessons()    # all lessons completed
         elif unlock is Unlocks.PuzzleFlee:
-            return progress > MapConfig.num_of_lessons()
+            return progress >= MapConfig.num_of_lessons()
 
         elif unlock is Unlocks.ProceedChoice:
             # instead of automatically proceeding to the next level we now have a choice

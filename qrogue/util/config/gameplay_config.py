@@ -7,7 +7,7 @@ from qrogue.util.config import PopupConfig
 class MapConfig:
     @staticmethod
     def num_of_lessons() -> int:
-        return 7
+        return 8    # Lesson 0 to 7
 
     @staticmethod
     def max_width() -> int:
