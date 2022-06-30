@@ -86,6 +86,14 @@ class MapManager:
     def in_level(self) -> bool:
         return self.__cur_map.get_type() is MapType.Level
 
+    def get_restart_message(self) -> str:
+        # todo maybe should be handled differently. I'm not satisfied by this approach but for now it works and is
+        #  straight forward.
+        if self.__get_world(self.__cur_map.internal_name) == MapConfig.tutorial_world():
+            return "Do you want to restart the current lesson?"
+        else:
+            return "Connection lost..."
+
     def __get_world(self, level_name: str) -> WorldMap:
         if level_name[0] == "l" and level_name[1].isdigit():
             world_name = "w" + level_name[1]

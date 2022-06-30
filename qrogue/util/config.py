@@ -717,6 +717,10 @@ class MapConfig:
         return "worlds"
 
     @staticmethod
+    def tutorial_world() -> str:
+        return "w0"
+
+    @staticmethod
     def first_world() -> str:
         return "w1"
 

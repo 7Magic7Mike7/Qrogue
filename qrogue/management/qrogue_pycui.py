@@ -542,11 +542,8 @@ class QrogueCUI(PyCUI):
                 self.__state_machine.change_state(State.Spaceship, None)
             else:
                 self.__state_machine.change_state(State.Menu, None)
-        if Ach.check_unlocks(Unlocks.Spaceship, SaveData.instance().story_progress):
-            ConfirmationPopup.ask(Config.system_name(), "Your Robot is out of energy. Connection lost...", callback)
-        else:
-            ConfirmationPopup.ask(Config.system_name(), "Your Robot is out of energy. Do you want to restart the "
-                                                        "current lesson?", callback)
+        ConfirmationPopup.ask(Config.system_name(), f"Your Robot is out of energy. "
+                                                    f"{MapManager.instance().get_restart_message()}", callback)
 
     def __start_fight(self, robot: Robot, enemy: Enemy, direction: Direction) -> None:
         self.__state_machine.change_state(State.Fight, (robot, enemy))
