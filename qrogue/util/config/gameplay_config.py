@@ -243,6 +243,16 @@ class GameplayConfig:
         return GameplayConfig.__CONFIG[GameplayConfig.__AUTO_SWAP_GATES][0] == "True"
 
 
+class PuzzleConfig:
+    @staticmethod
+    def calculate_appearance_chance(eid: int) -> float:
+        return 0.1 * (10 - eid)   # the lower the id the higher the chance of a puzzle to appear
+
+    @staticmethod
+    def calculate_flee_chance(eid: int) -> float:
+        return PuzzleConfig.calculate_appearance_chance(eid)
+
+
 class QuantumSimulationConfig:
     DECIMALS = 3
     MAX_SPACE_PER_NUMBER = 1 + 1 + 1 + DECIMALS  # sign + "0" + "." + DECIMALS
