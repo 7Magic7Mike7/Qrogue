@@ -2,7 +2,7 @@ from typing import List, Callable
 
 from qrogue.game.logic.actors import StateVector
 from qrogue.game.logic.actors.controllables import Robot
-from qrogue.game.logic.actors.puzzles import DummyEnemy, Enemy, Target, Riddle, Boss
+from qrogue.game.logic.actors.puzzles import Enemy, Target, Riddle, Boss
 from qrogue.game.logic.collectibles import Collectible, CollectibleFactory, Instruction, CXGate, SwapGate, HGate, \
     XGate, Coin, Key
 from qrogue.game.world.navigation import Direction
@@ -148,7 +148,7 @@ class EnemyFactory:
             reward = self.__difficulty.produce_reward(rm)
         if flee_chance is None:
             flee_chance = self.__default_flee_chance
-        return DummyEnemy(stv, reward, flee_chance)
+        return Enemy(stv, reward, flee_chance)
 
     def start(self, robot: Robot, enemy: Enemy, direction: Direction):
         self.__start_fight(robot, enemy, direction)
@@ -164,7 +164,7 @@ class ExplicitEnemyFactory(EnemyFactory):
     def produce(self, robot: Robot, rm: MyRandom, flee_chance: float = None) -> Enemy:
         stv = rm.get_element(self.__stv_pool, msg="ExplicitEnemyFactory_stv")
         reward = rm.get_element(self.__reward_pool, msg="ExplicitEnemyFactory_reward")
-        return DummyEnemy(stv, reward, flee_chance)
+        return Enemy(stv, reward, flee_chance)
 
 
 class RiddleFactory:

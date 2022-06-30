@@ -34,11 +34,3 @@ class Enemy(Target):
 
     def __str__(self):
         return "Enemy " + super(Enemy, self).__str__()
-
-
-class DummyEnemy(Enemy):
-    def __init__(self, target: StateVector, reward: Collectible, flee_chance: float):
-        super(DummyEnemy, self).__init__(target, reward, flee_chance)
-
-    def _on_reached(self):
-        pass
