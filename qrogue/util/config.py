@@ -812,6 +812,13 @@ class Config:   # todo make singleton and handle access to other configs?
         return Config.__GAME_CONFIG
 
     @staticmethod
+    def forbid_saving() -> bool:
+        if Config.debugging():
+            # in debugging we saving is never forbidden
+            return False
+        return CheatConfig.did_cheat()
+
+    @staticmethod
     def debugging() -> bool:
         return Config.__DEBUG
 

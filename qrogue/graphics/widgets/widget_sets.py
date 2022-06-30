@@ -1,6 +1,6 @@
 import time
 from abc import abstractmethod, ABC
-from typing import List, Callable, Optional
+from typing import List, Callable, Optional, Tuple
 
 import py_cui
 from py_cui.widget_set import WidgetSet
@@ -230,7 +230,7 @@ class PauseMenuWidgetSet(MyWidgetSet):
     )
 
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
-                 continue_callback: Callable[[], None], save_callback: Callable[[], CommonPopups],
+                 continue_callback: Callable[[], None], save_callback: Callable[[], Tuple[bool, CommonPopups]],
                  exit_run_callback: Callable[[], None]):
         super().__init__(logger, root, render)
         self.__continue_callback = continue_callback
@@ -274,7 +274,7 @@ class PauseMenuWidgetSet(MyWidgetSet):
         return False
 
     def __save(self) -> bool:
-        common_popup = self.__save_callback()
+        _, common_popup = self.__save_callback()
         common_popup.show()
         return False
 

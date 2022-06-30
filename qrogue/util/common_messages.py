@@ -99,6 +99,14 @@ class CommonPopups(Enum):
         self.__title = title
         self.__text = text
 
+    @property
+    def title(self) -> str:
+        return self.__title
+
+    @property
+    def text(self) -> str:
+        return self.__text
+
     def show(self):
         _CallbackHandler.show(self.__title, self.__text)
 

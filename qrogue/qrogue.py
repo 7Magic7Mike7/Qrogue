@@ -124,11 +124,12 @@ def start_game(from_console: bool = False, debugging: bool = False, data_folder:
             exit(1)
 
         # flush after the player stopped playing
-        if GameplayConfig.auto_save() and not CheatConfig.did_cheat():
-            if SaveData.instance().save():
+        if GameplayConfig.auto_save():
+            success, message = SaveData.instance().save()
+            if success:
                 print("[Qrogue] Successfully saved the game!")
             else:
-                Logger.instance().error("Failed to save the game.", show=False)
+                Logger.instance().error(f"Failed to save the game: {message.text}", show=False)
         Logger.instance().flush()
         OverWorldKeyLogger.instance().flush_if_useful()
         print("[Qrogue] Successfully flushed all logs and shut down the game without any problems. See you next time!")
@@ -167,11 +168,12 @@ def simulate_game(simulation_path: str, from_console: bool = False, debugging: b
             exit(1)
 
         # flush after the player stopped playing
-        if GameplayConfig.auto_save() and not CheatConfig.did_cheat():
-            if SaveData.instance().save():
+        if GameplayConfig.auto_save():
+            success, message = SaveData.instance().save()
+            if success:
                 print("[Qrogue] Successfully saved the game!")
             else:
-                Logger.instance().error("Failed to save the game.", show=False)
+                Logger.instance().error(f"Failed to save the game: {message.text}", show=False)
         Logger.instance().flush()
         OverWorldKeyLogger.instance().flush_if_useful()
         print("[Qrogue] Successfully flushed all logs and shut down the game without any problems. See you next time!")
