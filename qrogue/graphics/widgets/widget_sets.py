@@ -145,13 +145,19 @@ class MenuWidgetSet(MyWidgetSet):
         self.__selection = SelectionWidget(selection, controls, 1)
         self.__update_selection()
 
-        seed = self.add_block_label("Seed", UIConfig.WINDOW_HEIGHT-1, 0, row_span=1, column_span=width, center=False)
-        self.__seed_widget = SimpleWidget(seed)
+        show_controls = self.add_block_label("Show Controls", UIConfig.WINDOW_HEIGHT-2, 0, row_span=2,
+                                             column_span=width, center=False)
+        self.__show_controls = SimpleWidget(show_controls)
+        self.__show_controls.set_data("Select with WASD\nConfirm selection with Space or Enter")
 
         title = self.add_block_label("Ascii Art", 0, width, row_span=UIConfig.WINDOW_HEIGHT-1,
                                      column_span=UIConfig.ASCII_ART_WIDTH, center=True)
         self.__title = SimpleWidget(title)
         self.__title.set_data(_ascii_art)
+
+        seed = self.add_block_label("Seed", UIConfig.WINDOW_HEIGHT-1, width, row_span=1,
+                                    column_span=UIConfig.ASCII_ART_WIDTH, center=True)
+        self.__seed_widget = SimpleWidget(seed)
 
         self.__selection.widget.add_key_command(controls.action, self.__selection.use)
 
@@ -194,8 +200,10 @@ class MenuWidgetSet(MyWidgetSet):
 
     def get_widget_list(self) -> List[Widget]:
         return [
+            self.__selection,
+            self.__show_controls,
             self.__title,
-            self.__selection
+            self.__seed_widget,
         ]
 
     def get_main_widget(self) -> WidgetWrapper:
