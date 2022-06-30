@@ -62,7 +62,7 @@ class Enemy(WalkTriggerTile):
         return False
 
     def get_img(self):
-        if self._state == _EnemyState.DEAD :
+        if self._state == _EnemyState.DEAD:
             return self._invisible
         elif self._state == _EnemyState.FLED:
             return self._invisible
