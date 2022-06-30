@@ -355,10 +355,10 @@ class StateVectorWidget(Widget):
 
     @property
     def _headline(self) -> str:
-        return self.__headline
+        return f"~{self.__headline}~\n\n"
 
     def set_data(self, state_vector: StateVector) -> None:
-        self._stv_str_rep = f"~{self.__headline}~\n{state_vector.to_string()}"
+        self._stv_str_rep = self._headline + state_vector.to_string()
 
     def render(self) -> None:
         if self._stv_str_rep:
@@ -373,15 +373,8 @@ class InputStateVectorWidget(StateVectorWidget):
         super().__init__(widget, headline)
 
     def set_data(self, state_vector: StateVector) -> None:
-        rows = [""] * state_vector.size
-        for i in range(state_vector.size):
-            rows[i] = center_string(StateVector.complex_to_string(state_vector.at(i)),
-                                    QuantumSimulationConfig.MAX_SPACE_PER_NUMBER)
-            rows[i] = f"|{to_binary_string(i, state_vector.num_of_qubits)}>  {rows[i]}"
-        max_row_len = max([len(row) for row in rows])
-        rows = [align_string(row, max_row_len) for row in rows]
-
-        self._stv_str_rep = f"~{self._headline}~\n" + "\n".join(rows)
+        # here we only need 1 space per value because every value is either 1 or 0
+        self._stv_str_rep = self._headline + state_vector.to_string(space_per_value=1)
 
 
 class OutputStateVectorWidget(StateVectorWidget):
@@ -391,13 +384,12 @@ class OutputStateVectorWidget(StateVectorWidget):
 
     def set_data(self, state_vectors: Tuple[StateVector, StateVector], target_reached: bool = False) -> None:
         output_stv, diff_stv = state_vectors
-        stv_rows = output_stv.to_string().split('\n')
-        for i in range(diff_stv.size):
-            if abs(diff_stv.at(i)) <= QuantumSimulationConfig.TOLERANCE: # or target_reached:
-                stv_rows[i] = ColorConfig.colorize(ColorCode.CORRECT_AMPLITUDE, stv_rows[i])
-            else:
-                stv_rows[i] = ColorConfig.colorize(ColorCode.WRONG_AMPLITUDE, stv_rows[i])
-        self._stv_str_rep = f"~{self._headline}~\n" + "\n".join(stv_rows)
+        self._stv_str_rep = self._headline
+        for i in range(output_stv.size):
+            correct_amplitude = abs(diff_stv.at(i)) <= QuantumSimulationConfig.TOLERANCE
+            self._stv_str_rep += StateVector.wrap_in_qubit_conf(output_stv, i, coloring=True,
+                                                                correct_amplitude=correct_amplitude)
+            self._stv_str_rep += "\n"
 
 
 class TargetStateVectorWidget(StateVectorWidget):
@@ -405,16 +397,10 @@ class TargetStateVectorWidget(StateVectorWidget):
         super().__init__(widget, headline)
 
     def set_data(self, state_vector: StateVector) -> None:
-        self._stv_str_rep = f"~{self._headline}~\n"
-        rows = [""] * state_vector.size
+        self._stv_str_rep = self._headline
         for i in range(state_vector.size):
-            rows[i] = center_string(StateVector.complex_to_string(state_vector.at(i)),
-                                    QuantumSimulationConfig.MAX_SPACE_PER_NUMBER)
-            rows[i] += f"  ({StateVector.complex_to_amplitude_percentage_string(state_vector.at(i))})"
-
-        max_row_len = max([len(row) for row in rows])
-        rows = [align_string(row, max_row_len) for row in rows]
-        self._stv_str_rep += "\n".join(rows)
+            self._stv_str_rep += StateVector.wrap_in_qubit_conf(state_vector, i, show_percentage=True)
+            self._stv_str_rep += "\n"
 
 
 class CircuitMatrixWidget(Widget):

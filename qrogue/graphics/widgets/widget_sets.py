@@ -660,6 +660,11 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self._details.render_reset()
         self.render()
 
+    @property
+    def _sign_offset(self) -> str:
+        return "\n" * (1 + 2 ** (self._robot.num_of_qubits - 1))  # 1 (headline) + middle of actual Stv
+
+
     def _reposition_widgets(self, num_of_qubits: int):
         if num_of_qubits != self.__num_of_qubits:
             self.__num_of_qubits = num_of_qubits
@@ -721,11 +726,9 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self.__hud.set_data((robot, None))  # don't overwrite the current map name
         self.__circuit.set_data(robot)
 
-        sign_offset = "\n" * (2**(robot.num_of_qubits - 1))   # 1 (headline) + middle of actual Stv
-
         self.__input_stv.set_data(StateVector.create_zero_state_vector(robot.num_of_qubits))
-        self.__mul_widget.set_data(sign_offset + "x")
-        self.__result_widget.set_data(sign_offset + "=")
+        self.__mul_widget.set_data(self._sign_offset + "x")
+        self.__result_widget.set_data(self._sign_offset + "=")
         self.__update_calculation(False)
         self.__stv_target.set_data(target.state_vector)
         self.__init_choices()
@@ -755,11 +758,10 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self.__circuit_matrix.set_data(self._robot.circuit_matrix)
         self.__stv_robot.set_data((self._robot.state_vector, diff_stv), target_reached=target_reached)
 
-        sign_offset = "\n" * (2**(self._robot.num_of_qubits - 1))   # 1 (headline) + middle of actual Stv
         if diff_stv.is_zero:
-            self.__eq_widget.set_data(sign_offset + "===")
+            self.__eq_widget.set_data(self._sign_offset + "===")
         else:
-            self.__eq_widget.set_data(sign_offset + "=/=")
+            self.__eq_widget.set_data(self._sign_offset + "=/=")
 
     def __choices_adapt(self) -> bool:
         options = [instruction.selection_str() for instruction in self._robot.backpack]

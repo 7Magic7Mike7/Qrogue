@@ -7,7 +7,8 @@ from qiskit.providers.aer import StatevectorSimulator
 
 from qrogue.game.logic.collectibles import Instruction
 from qrogue.util import Logger, QuantumSimulationConfig
-from qrogue.util.util_functions import is_power_of_2, center_string
+from qrogue.util.config import ColorCode, ColorConfig
+from qrogue.util.util_functions import is_power_of_2, center_string, to_binary_string, align_string
 
 
 class StateVector:
@@ -55,6 +56,21 @@ class StateVector:
         if text[-2:] == ".0":
             text = text[:-2]    # remove the redundant ".0"
         return text + "%"
+
+    @staticmethod
+    def wrap_in_qubit_conf(state_vector: "StateVector", index: int,
+                           space_per_value: int = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER, coloring: bool = False,
+                           correct_amplitude: bool = False, show_percentage: bool = False):
+        qubit_conf = f"|{to_binary_string(index, state_vector.num_of_qubits)}>"
+        value = f"{center_string(StateVector.complex_to_string(state_vector.at(index)), space_per_value)}"
+        if coloring:
+            if correct_amplitude:
+                value = ColorConfig.colorize(ColorCode.CORRECT_AMPLITUDE, value)
+            else:
+                value = ColorConfig.colorize(ColorCode.WRONG_AMPLITUDE, value)
+        if show_percentage:
+            value += f"  ({StateVector.complex_to_amplitude_percentage_string(state_vector.at(index))})"
+        return f"{qubit_conf}  {value}"
 
     @staticmethod
     def create_zero_state_vector(num_of_qubits: int) -> "StateVector":
@@ -125,10 +141,10 @@ class StateVector:
             raise ValueError("Cannot calculate the difference between StateVectors of different size! "
                              f"self = {self}, other = {other}")
 
-    def to_string(self) -> str:
+    def to_string(self, space_per_value: int = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER) -> str:
         text = ""
-        for val in self.__amplitudes:
-            text += StateVector.complex_to_string(val)
+        for i in range(self.size):
+            text += StateVector.wrap_in_qubit_conf(self, i, space_per_value)
             text += "\n"
         return text
 
@@ -173,11 +189,15 @@ class CircuitMatrix:
     def num_of_qubits(self) -> int:
         return int(np.log2(self.size))
 
-    def to_string(self) -> str:
-        text = ""
-        for row in self.__matrix:
+    def to_string(self, space_per_value: int = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER) -> str:
+        text = " " * (1 + self.num_of_qubits + 1)   # we need to pad the rows' |qubits> prefix
+        for i in range(self.size):
+            text += center_string(f"|{to_binary_string(i, self.num_of_qubits)}>", space_per_value)
+        text += "\n"
+        for i, row in enumerate(self.__matrix):
+            text += f"|{to_binary_string(i, self.num_of_qubits)}> "
             for val in row:
-                text += center_string(StateVector.complex_to_string(val), QuantumSimulationConfig.MAX_SPACE_PER_NUMBER)
+                text += center_string(StateVector.complex_to_string(val), space_per_value)
                 text += " "
             text += "\n"
         return text
