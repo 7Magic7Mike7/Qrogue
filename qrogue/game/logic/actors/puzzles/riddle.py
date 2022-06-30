@@ -19,7 +19,7 @@ class Riddle(Target):
     def is_active(self) -> bool:
         return super(Riddle, self).is_active and self.attempts > 0
 
-    def is_reached(self, state_vector: StateVector) -> Tuple[bool, Collectible]:
+    def is_reached(self, state_vector: StateVector) -> Tuple[bool, Optional[Collectible]]:
         success, reward = super(Riddle, self).is_reached(state_vector)
         if success:
             assert reward is not None  # riddles always need to give a reward
