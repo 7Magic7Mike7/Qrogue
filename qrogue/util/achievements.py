@@ -217,7 +217,7 @@ class AchievementManager:
         if name in self.__temp_level_storage:
             self.__temp_level_storage[name].add_score(score)
         else:
-            self.__temp_level_storage[name] = Achievement(name, AchievementType.Event, score, 1)
+            self.__temp_level_storage[name] = Achievement(name, AchievementType.Event, score, score)
 
     def progressed_in_story(self, progress: str):
         if progress not in self.__storage:
