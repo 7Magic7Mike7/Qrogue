@@ -1,7 +1,5 @@
 # exporting
-from .py_cui_config import PyCuiConfig, PyCuiColors
-from .config import CheatConfig, ColorConfig, GameplayConfig, HudConfig, InstructionConfig, MapConfig, PathConfig, \
-    PopupConfig, Config, ShopConfig, QuantumSimulationConfig, UIConfig
+from .config import *
 from .controls import Controls, Keys
 from .help_texts import HelpText, HelpTextType
 from .logger import Logger

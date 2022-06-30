@@ -59,7 +59,7 @@ class QrogueCUI(PyCUI):
 
         # init management
         Logger.instance().set_popup(self.show_message_popup, self.show_error_popup)
-        CheatConfig.init(self.__show_message_popup, self.__show_input_popup)
+        CheatConfig.init(self.__show_message_popup, self.__show_input_popup, deactivate_cheats=not Config.debugging())
         Popup.update_popup_functions(self.__show_message_popup)
         ConfirmationPopup.update_popup_function(self.__show_confirmation_popup)
 
