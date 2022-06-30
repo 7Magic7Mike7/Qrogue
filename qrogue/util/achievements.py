@@ -187,8 +187,8 @@ class AchievementManager:
             self.__storage[achievement.name] = achievement
 
     @property
-    def story_progress(self) -> float:
-        return self.__storage[Ach.story()].score
+    def story_progress(self) -> int:
+        return int(self.__storage[Ach.story()].score)
 
     def __on_achievement_completion(self, achievement: Achievement):
         assert achievement.is_done()

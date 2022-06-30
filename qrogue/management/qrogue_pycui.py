@@ -418,7 +418,7 @@ class QrogueCUI(PyCUI):
         super().apply_widget_set(new_widget_set)
         self.__cur_widget_set = new_widget_set
         self.move_focus(self.__cur_widget_set.get_main_widget(), auto_press_buttons=False)
-        self.__cur_widget_set.update_story_progress(int(SaveData.instance().achievement_manager.story_progress))
+        self.__cur_widget_set.update_story_progress(SaveData.instance().story_progress)
         self.__cur_widget_set.render()
 
     def show_message_popup(self, title: str, text: str, color: int = PyCuiColors.WHITE_ON_BLACK) -> None:
@@ -471,8 +471,7 @@ class QrogueCUI(PyCUI):
         self.apply_widget_set(self.__menu)
 
     def __start_playing(self):
-        progress = int(SaveData.instance().achievement_manager.story_progress)
-        if Ach.check_unlocks(Unlocks.Spaceship, progress):
+        if Ach.check_unlocks(Unlocks.Spaceship, SaveData.instance().story_progress):
             self.__state_machine.change_state(State.Spaceship, SaveData.instance())
         else:
             # load the newest level (exam phase) by
