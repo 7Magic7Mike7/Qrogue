@@ -191,12 +191,15 @@ class MenuWidgetSet(MyWidgetSet):
         self.__seed_widget.set_data(f"Seed: {self.__seed}")
         self.__seed_widget.render()
 
+    def update_story_progress(self, progress: int):
+        super(MenuWidgetSet, self).update_story_progress(progress)
+        self.__update_selection()
+
     def set_data(self, new_seed: int):
         self.__seed = new_seed
         RandomManager.force_seed(new_seed)
         self.__seed_widget.set_data(f"Seed: {self.__seed}")
         #self.__seed_widget.render()
-        self.__update_selection()
 
     def get_widget_list(self) -> List[Widget]:
         return [
@@ -720,6 +723,10 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
     def get_main_widget(self) -> WidgetWrapper:
         return self._choices.widget
 
+    def update_story_progress(self, progress: int):
+        super(ReachTargetWidgetSet, self).update_story_progress(progress)
+        self.__init_choices()
+
     def set_data(self, robot: Robot, target: Target) -> None:
         self._robot = robot
         self._target = target
@@ -739,7 +746,6 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self.__result_widget.set_data(self._sign_offset + "=")
         self.__update_calculation(False)
         self.__stv_target.set_data(target.state_vector)
-        self.__init_choices()
 
     def get_widget_list(self) -> List[Widget]:
         return [
