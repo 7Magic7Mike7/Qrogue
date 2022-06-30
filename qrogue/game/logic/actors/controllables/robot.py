@@ -491,12 +491,13 @@ class Robot(Controllable, ABC):
             return amount, True
         return self.__attributes.decrease_energy(amount), False
 
-    def regenerate(self, amount: int = 1) -> int:
+    def increase_energy(self, amount: int = 1) -> int:
         """
 
         :param amount: how much energy to regenerate
         :return: how much was actually regenerated (e.g. cannot exceed max health)
         """
+        assert amount > 0   # todo maybe == 0 is also okay?
         return self.__attributes.refill_energy(amount)
 
     def gate_at(self, index: int) -> Optional[Instruction]:
