@@ -828,13 +828,20 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self.__update_calculation(success)
         self.render()
         if success:
-            def give_reward_and_continue():
-                self._robot.give_collectible(reward)
-                self._continue_exploration_callback()
-            self._details.set_data(data=(
-                [f"Congratulations! Your reward: {ColorConfig.highlight_object(reward.to_string())}"],
-                [give_reward_and_continue]
-            ))
+            if reward is None:
+                self._details.set_data(data=(
+                    ["Congratulations! Sadly there is no reward..."],   # todo think about a better message?
+                    [self._continue_exploration_callback]
+                ))
+            else:
+                def give_reward_and_continue():
+                    self._robot.give_collectible(reward)
+                    self._continue_exploration_callback()
+                self._details.set_data(data=(
+                    [f"Congratulations! Your reward: {ColorConfig.highlight_object(reward.to_string())}"],
+                    [give_reward_and_continue]
+                ))
+
             self._details_content = self._DETAILS_INFO_THEN_CHOICES
         else:
             self._on_commit_fail()

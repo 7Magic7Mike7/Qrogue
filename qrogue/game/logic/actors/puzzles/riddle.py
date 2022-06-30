@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, Optional
 
 from qrogue.game.logic.actors import StateVector
 from qrogue.game.logic.collectibles import Collectible
@@ -21,7 +21,9 @@ class Riddle(Target):
 
     def is_reached(self, state_vector: StateVector) -> Tuple[bool, Collectible]:
         success, reward = super(Riddle, self).is_reached(state_vector)
-        if not success:
+        if success:
+            assert reward is not None  # riddles always need to give a reward
+        else:
             self.__attempts -= 1
         return success, reward
 
