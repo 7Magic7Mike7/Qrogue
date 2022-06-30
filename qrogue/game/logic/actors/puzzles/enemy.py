@@ -22,6 +22,10 @@ class Enemy(Target):
         self.__id = eid
         self.__rm = RandomManager.create_new()
 
+    @property
+    def flee_energy(self) -> int:
+        return PuzzleConfig.calculate_flee_energy(self.__id)
+
     def _on_reached(self):
         """
         Nothing to do here.
