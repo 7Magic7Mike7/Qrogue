@@ -252,6 +252,10 @@ class PuzzleConfig:
     def calculate_flee_chance(eid: int) -> float:
         return PuzzleConfig.calculate_appearance_chance(eid)
 
+    @staticmethod
+    def calculate_flee_energy(eid: int) -> int:
+        return max(1, eid * 2)
+
 
 class QuantumSimulationConfig:
     DECIMALS = 3

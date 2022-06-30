@@ -489,7 +489,7 @@ class QrogueCUI(PyCUI):
         robot = LukeBot(self.__game_over, size=2)
         for collectible in [collectibles.XGate(), collectibles.XGate(), collectibles.HGate(), collectibles.CXGate()]:
             robot.give_collectible(collectible)
-        enemy = Enemy(StateVector([0] * (2**robot.num_of_qubits)), Energy(), 1)
+        enemy = Enemy(eid=0, target=StateVector([0] * (2**robot.num_of_qubits)), reward=Energy())
         self.__state_machine.change_state(State.Training, (robot, enemy))
 
     def switch_to_training(self, data=None):
