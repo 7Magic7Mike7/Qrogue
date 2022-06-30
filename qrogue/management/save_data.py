@@ -58,6 +58,10 @@ class SaveData:
     def player(self) -> Player:
         return self.__player
 
+    @property
+    def story_progress(self) -> int:
+        return int(self.achievement_manager.story_progress)
+
     def get_expedition_seed(self) -> int:
         return RandomManager.instance().get_seed(msg="SaveData.get_expedition_seed()")  #7    # todo implement
 

@@ -1,6 +1,8 @@
 import enum
 from typing import List
 
+from qrogue.util import MapConfig
+
 FinishedTutorial = "CompletedTutorial"
 EnteredPauseMenu = "EnteredPauseMenu"
 FirstDoorUnlocked = "UnlockedDoor"
@@ -8,40 +10,83 @@ CompletedExpedition = "CompletedExpedition"
 UnlockedWorkbench = "UnlockedWorkbench"
 
 
+class Unlocks(enum.Enum):
+    # global unlocks
+    Saving = 0
+
+    # menu unlocks
+    MainMenuContinue = 10
+    MainMenuPlay = 11
+
+    # hud unlocks
+    ShowEnergy = 30
+
+    # puzzle unlocks
+    CircuitReset = 50
+    PuzzleFlee = 51
+
+    # level unlocks
+    ProceedChoice = 90
+
+    # spaceship unlocks
+    Spaceship = 100
+    Navigation = 130
+    FreeNavigation = 131
+
+
 class Ach:
+    __EXAM_DONE_PROGRESS = 10   # todo check
+
     @staticmethod
     def story() -> str:
         return "Story"
 
     @staticmethod
-    def story_exam_phase1() -> str:
-        return "StoryExam1"
-
-    @staticmethod
-    def story_exam_phase2() -> str:
-        return "StoryExam2"
-
-    @staticmethod
-    def story_exam_completed() -> str:
-        return "StoryExamCompleted"
-
-    @staticmethod
-    def completed_exam_phase1(progress: int) -> bool:
-        return progress >= 1
-
-    @staticmethod
-    def completed_exam_phase2(progress: int) -> bool:
-        return progress >= 2
-
-    @staticmethod
-    def completed_exam_phaseX(progress: int) -> bool:
-        return progress > 10000 # todo
-
-    @staticmethod
     def is_story_mission(level_name: str) -> bool:
+        # check if level_name is from one of the tutorial lessons
+        if level_name.startswith(MapConfig.tutorial_lesson_prefix()) and \
+                0 <= int(level_name[len(MapConfig.tutorial_lesson_prefix()):]) <= MapConfig.num_of_lessons():
+            return True
         return level_name in [
-            "l1v1", "l1v2", "l1v3",
+            MapConfig.exam(),
         ]
+
+    @staticmethod
+    def check_unlocks(unlock: Unlocks, progress: int) -> bool:
+        if unlock is Unlocks.Saving:
+            # there is something we can save
+            return progress > 0
+
+        elif unlock is Unlocks.MainMenuContinue:
+            # something was already completed so continue is no longer the same than a fresh start
+            return progress > 0
+        elif unlock is Unlocks.MainMenuPlay:
+            # from now on we can choose with which level we want to to continue
+            return progress > Ach.__EXAM_DONE_PROGRESS
+
+        elif unlock is Unlocks.ShowEnergy:
+            return progress > 0     # Lesson 0 completed
+
+        elif unlock is Unlocks.CircuitReset:
+            return progress > MapConfig.num_of_lessons()    # all lessons completed
+        elif unlock is Unlocks.PuzzleFlee:
+            return progress > MapConfig.num_of_lessons()
+
+        elif unlock is Unlocks.ProceedChoice:
+            # instead of automatically proceeding to the next level we now have a choice
+            return progress > Ach.__EXAM_DONE_PROGRESS
+
+        elif unlock is Unlocks.Spaceship:
+            # we can now use the spaceship
+            return progress > Ach.__EXAM_DONE_PROGRESS
+        elif unlock is Unlocks.Navigation:
+            # we can now freely choose between levels in the current world
+            return progress > Ach.__EXAM_DONE_PROGRESS
+        elif unlock is Unlocks.FreeNavigation:
+            # we can now choose between worlds and not only levels in a given world
+            return False    # todo implement
+
+        raise NotImplementedError(f"Unlock \"{unlock}\" not implemented yet!")
 
 
 class AchievementType(enum.Enum):

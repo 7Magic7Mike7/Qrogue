@@ -4,11 +4,10 @@ from qrogue.game.world.dungeon_generator import ExpeditionGenerator, QrogueLevel
 from qrogue.game.world.map import Map, WorldMap, MapType
 from qrogue.game.world.navigation import Coordinate
 from qrogue.graphics.popups import Popup
-from qrogue.management import StoryNarration
 from qrogue.util import CommonQuestions, Logger, MapConfig, achievements, RandomManager, Config
 
 from qrogue.management.save_data import SaveData
-
+from qrogue.util.achievements import Ach, Unlocks
 
 __MAP_ORDER = {
     MapConfig.spaceship(): MapConfig.intro_level(),
@@ -186,7 +185,8 @@ class MapManager:
             # if we are currently in a level we return to the current world
             self.__in_level = False
             self.__show_world(self.__get_world(self.__cur_map.internal_name))
-        elif self.__cur_map is self.__hub_world or not StoryNarration.unlocked_free_navigation():
+        elif self.__cur_map is self.__hub_world or \
+                not Ach.check_unlocks(Unlocks.FreeNavigation, SaveData.instance().story_progress):
             # we return to the default world if we are currently in the hub-world or haven't unlocked it yet
             self.__show_world(None)
         else:
@@ -210,7 +210,7 @@ class MapManager:
             elif self.__cur_map.get_type() is MapType.Expedition:
                 SaveData.instance().achievement_manager.add_to_achievement(achievements.CompletedExpedition, 1)
 
-            if StoryNarration.completed_tutorial():
+            if Ach.check_unlocks(Unlocks.ProceedChoice, SaveData.instance().story_progress):
                 CommonQuestions.ProceedToNextMap.ask(self.__proceed)
             else:
                 self.__proceed()

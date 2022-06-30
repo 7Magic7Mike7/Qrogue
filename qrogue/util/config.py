@@ -665,6 +665,10 @@ class HudConfig:
 
 class MapConfig:
     @staticmethod
+    def num_of_lessons() -> int:
+        return 7
+
+    @staticmethod
     def max_width() -> int:
         return 7
 
@@ -701,6 +705,10 @@ class MapConfig:
         return "expedition"
 
     @staticmethod
+    def tutorial_lesson_prefix() -> str:
+        return "l0v"
+
+    @staticmethod
     def spaceship() -> str:
         return "spaceship"
 
@@ -714,7 +722,11 @@ class MapConfig:
 
     @staticmethod
     def intro_level() -> str:
-        return "l1v1"
+        return f"{MapConfig.tutorial_lesson_prefix()}0"
+
+    @staticmethod
+    def exam() -> str:
+        return "l0exam"
 
     @staticmethod
     def test_level() -> str:

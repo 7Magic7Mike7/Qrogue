@@ -17,7 +17,7 @@ from qrogue.graphics.rendering import ColorRules
 from qrogue.graphics.widget_base import WidgetWrapper
 from qrogue.util import CommonPopups, Config, Controls, GameplayConfig, HelpText, HelpTextType, Logger, PathConfig, \
     RandomManager, AchievementManager, Keys, UIConfig, HudConfig, ColorConfig
-from qrogue.util.achievements import Ach
+from qrogue.util.achievements import Ach, Unlocks
 
 from qrogue.graphics.widgets import Renderable, Widget, MyBaseWidget
 from qrogue.graphics.widgets.my_widgets import SelectionWidget, CircuitWidget, MapWidget, SimpleWidget, HudWidget, \
@@ -87,10 +87,7 @@ class MyWidgetSet(WidgetSet, Renderable, ABC):
         # globally update HUD based on the progress
         HudConfig.ShowMapName = True
         HudConfig.ShowKeys = True
-        if Ach.completed_exam_phase1(progress):
-            HudConfig.ShowEnergy = True
-        #if Ach.completed_exam_phase2(progress):
-        #    HudConfig.ShowKeys = True
+        HudConfig.ShowEnergy = Ach.check_unlocks(Unlocks.ShowEnergy, progress)
 
     def render(self) -> None:
         self.__base_render(self.get_widget_list())
@@ -161,7 +158,7 @@ class MenuWidgetSet(MyWidgetSet):
     def __update_selection(self):
         choices = []
         callbacks = []
-        if Ach.completed_exam_phaseX(self._progress):
+        if Ach.check_unlocks(Unlocks.MainMenuPlay, self._progress):
             choices.append("CONTINUE\n")
             callbacks.append(self.__quick_start)
             choices.append("PLAY\n")
@@ -171,7 +168,7 @@ class MenuWidgetSet(MyWidgetSet):
                 choices.append("SIMULATOR\n")
                 callbacks.append(self.__choose_simulation)
 
-        elif Ach.completed_exam_phase1(self._progress):
+        elif Ach.check_unlocks(Unlocks.MainMenuContinue, self._progress):
             choices.append("CONTINUE\n")
             callbacks.append(self.__quick_start)
 
@@ -641,16 +638,21 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self.__circuit.widget.add_key_command(controls.action, use_circuit)
 
     def __init_choices(self):
-        if Ach.completed_exam_phaseX(self._progress):
-            self._choices.set_data(data=(
-                SelectionWidget.wrap_in_hotkey_str(["Edit", "Reset", "Gate Guide", self.__flee_choice]),
-                [self.__choices_adapt, self.__choices_reset, self.__choices_help, self._choices_flee]
-            ))
-        else:
-            self._choices.set_data(data=(
-                SelectionWidget.wrap_in_hotkey_str(["Edit", "Gate Guide"]),
-                [self.__choices_adapt, self.__choices_help]
-            ))
+        texts = ["Edit"]
+        callbacks = [self.__choices_adapt]
+
+        if Ach.check_unlocks(Unlocks.CircuitReset, self._progress):
+            texts.append("Reset")
+            callbacks.append(self.__choices_reset)
+
+        texts.append("Gate Guide")
+        callbacks.append(self.__choices_help)
+
+        if Ach.check_unlocks(Unlocks.PuzzleFlee, self._progress):
+            texts.append(self.__flee_choice)
+            callbacks.append(self._choices_flee)
+
+        self._choices.set_data(data=(texts, callbacks))
 
     def __details_back(self):
         Widget.move_focus(self._choices, self)

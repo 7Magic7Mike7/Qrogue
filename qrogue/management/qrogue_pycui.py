@@ -23,7 +23,7 @@ from qrogue.graphics import WidgetWrapper
 from qrogue.management import StoryNarration
 from qrogue.util import achievements, common_messages, CheatConfig, Config, GameplayConfig, UIConfig, HelpText, \
     HelpTextType, Logger, PathConfig, MapConfig, Controls, Keys, RandomManager, PyCuiConfig, PyCuiColors
-from qrogue.util.achievements import Ach
+from qrogue.util.achievements import Ach, Unlocks
 from qrogue.util.config import FileTypes, PopupConfig
 from qrogue.util.game_simulator import GameSimulator
 from qrogue.util.key_logger import KeyLogger, OverWorldKeyLogger
@@ -117,8 +117,8 @@ class QrogueCUI(PyCUI):
                 self.switch_to_menu(None)
 
         def open_world_view(direction: Direction, controllable: Controllable):
-            if StoryNarration.unlocked_navigation():
-                if StoryNarration.unlocked_free_navigation():
+            if Ach.check_unlocks(Unlocks.Navigation, SaveData.instance().story_progress):
+                if Ach.check_unlocks(Unlocks.FreeNavigation, SaveData.instance().story_progress):
                     MapManager.instance().load_map(MapConfig.hub_world(), None)
                 else:
                     MapManager.instance().load_map(MapConfig.first_world(), None)
@@ -472,7 +472,7 @@ class QrogueCUI(PyCUI):
 
     def __start_playing(self):
         progress = int(SaveData.instance().achievement_manager.story_progress)
-        if Ach.completed_exam_phaseX(progress):
+        if Ach.check_unlocks(Unlocks.Spaceship, progress):
             self.__state_machine.change_state(State.Spaceship, SaveData.instance())
         else:
             # load the newest level (exam phase) by
@@ -506,7 +506,7 @@ class QrogueCUI(PyCUI):
 
     def __show_world(self, world: WorldMap = None) -> None:
         if world is None:
-            if StoryNarration.completed_tutorial():
+            if Ach.check_unlocks(Unlocks.Spaceship, SaveData.instance().story_progress):
                 self.__state_machine.change_state(State.Spaceship, None)
                 self.__pause.set_data(None, "Spaceship", SaveData.instance().achievement_manager)
             else:
@@ -538,11 +538,11 @@ class QrogueCUI(PyCUI):
         def callback(confirmed: bool):
             if confirmed:
                 MapManager.instance().reload()
-            elif StoryNarration.completed_tutorial():
+            elif Ach.check_unlocks(Unlocks.Spaceship, SaveData.instance().story_progress):
                 self.__state_machine.change_state(State.Spaceship, None)
             else:
                 self.__state_machine.change_state(State.Menu, None)
-        if StoryNarration.completed_tutorial():
+        if Ach.check_unlocks(Unlocks.Spaceship, SaveData.instance().story_progress):
             ConfirmationPopup.ask(Config.system_name(), "Your Robot is out of energy. Connection lost...", callback)
         else:
             ConfirmationPopup.ask(Config.system_name(), "Your Robot is out of energy. Do you want to restart the "

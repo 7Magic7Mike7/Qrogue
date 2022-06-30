@@ -1,10 +1,8 @@
 import enum
-from typing import List
 
 from qrogue.graphics.popups import Popup
 from qrogue.management import SaveData
 from qrogue.util import ColorConfig
-from qrogue.util.achievements import Ach
 from qrogue.util.help_texts import StoryText, StoryTextType, TutorialText, TutorialTextType
 
 
@@ -14,17 +12,7 @@ class _StoryProgress(enum.Enum):
     DarkSideOfMoon = 2
     FirstExpedition = 3
 
-    NewHorizons = 10    # w1 done, now we can travel to new solar systems (other worlds)
-
-    @staticmethod
-    def progress_order() -> List["_StoryProgress"]:
-        return [
-            _StoryProgress.RobotShowcase, _StoryProgress.MoonMission,
-            _StoryProgress.DarkSideOfMoon,
-            _StoryProgress.FirstExpedition,
-
-            _StoryProgress.NewHorizons,
-        ]
+    NewHorizons = 10    # w0 done, now we can travel to new solar systems (other worlds)
 
 
 class StoryNarration:
@@ -32,28 +20,8 @@ class StoryNarration:
     # TODO: Incorporate into new level structure
 
     @staticmethod
-    def __check_achievement(achievement: str) -> bool:
-        return SaveData.instance().achievement_manager.check_achievement(achievement)
-
-    @staticmethod
-    def __get_story_progress() -> int:
-        return int(SaveData.instance().achievement_manager.story_progress)
-
-    @staticmethod
-    def unlocked_navigation() -> bool:
-        return Ach.completed_exam_phaseX(StoryNarration.__get_story_progress())
-
-    @staticmethod
-    def completed_tutorial() -> bool:
-        return Ach.completed_exam_phaseX(StoryNarration.__get_story_progress())
-
-    @staticmethod
-    def unlocked_free_navigation() -> bool:
-        return Ach.completed_exam_phaseX(StoryNarration.__get_story_progress())
-
-    @staticmethod
     def entered_navigation():
-        progress = StoryNarration.__get_story_progress()
+        progress = SaveData.instance().story_progress
 
         if progress is _StoryProgress.MoonMission:
             Popup.scientist_says(TutorialText.get(TutorialTextType.Navigation))
@@ -63,7 +31,7 @@ class StoryNarration:
 
     @staticmethod
     def returned_to_spaceship():
-        progress = StoryNarration.__get_story_progress()
+        progress = SaveData.instance().story_progress
 
         if progress is _StoryProgress.RobotShowcase:
             Popup.scientist_says(StoryText.get(StoryTextType.Intro))
@@ -78,7 +46,7 @@ class StoryNarration:
 
     @staticmethod
     def scientist_text() -> str:
-        progress = StoryNarration.__get_story_progress()
+        progress = SaveData.instance().story_progress
 
         if progress is _StoryProgress.RobotShowcase:
             return StoryText.get(StoryTextType.Exam)
