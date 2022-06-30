@@ -67,9 +67,9 @@ def start_qrogue() -> None:
     __TEST_LEVEL_ARGUMENT = ["--test-level", "-tl"]
     __GAME_DATA_PATH_ARGUMENT = ["--game-data", "-gd"]  # path argument
     __USER_DATA_PATH_ARGUMENT = ["--user-data", "-ud"]  # path argument
-    #__CONTROLS_ARGUMENT = ["--controls", "-c"]          # int argument
+    # __CONTROLS_ARGUMENT = ["--controls", "-c"]          # int argument
     __SIMULATION_FILE_ARGUMENT = ["--simulation-path", "-sp"]   # path argument
-    __VALIDATE_MAP_ARGUMENT = ["--validate-map", "-vm"] # path argument
+    __VALIDATE_MAP_ARGUMENT = ["--validate-map", "-vm"]     # path argument
 
     from_console, _ = __parse_argument(__CONSOLE_ARGUMENT)
     debugging, _ = __parse_argument(__DEBUG_ARGUMENT)

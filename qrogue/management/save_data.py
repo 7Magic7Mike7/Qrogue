@@ -68,7 +68,7 @@ class SaveData:
     def available_robots(self) -> iter:
         return iter(self.__available_robots)
 
-    def get_robot(self, index: int) -> Robot:
+    def get_robot(self, index: int) -> Optional[Robot]:
         if 0 <= index < len(self.__available_robots):
             return self.__available_robots[index]
         return None

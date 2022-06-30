@@ -133,7 +133,7 @@ class StateVector:
             Logger.instance().info("Requested difference between StateVectors of different sizes! "
                                    f"self = {self}, other = {other}; padding self with the needed number of 0s",
                                    from_pycui=False)
-            diff = [0] * other.size
+            diff: List[complex] = [0] * other.size
             for i in range(self.size):
                 diff[i] = self.__amplitudes[i] - other.__amplitudes[i]
             return StateVector(diff)
