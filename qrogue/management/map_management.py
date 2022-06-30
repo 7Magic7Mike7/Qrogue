@@ -223,7 +223,7 @@ class MapManager:
             self.__load_map(map_name, spawn_room, map_seed)
 
     def load_first_uncleared_map(self) -> None:
-        if Config.debugging() and True:
+        if Config.test_level(ignore_debugging=False):
             self.__load_map(MapConfig.test_level(), None)
         else:
             map_name = get_next(MapConfig.spaceship())

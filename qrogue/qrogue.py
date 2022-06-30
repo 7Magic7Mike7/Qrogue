@@ -64,6 +64,7 @@ def __parse_argument(argument: List[str], has_value: bool = False) -> Tuple[bool
 def start_qrogue() -> None:
     __CONSOLE_ARGUMENT = ["--from-console", "-fc"]
     __DEBUG_ARGUMENT = ["--debug", "-d"]
+    __TEST_LEVEL_ARGUMENT = ["--test-level", "-tl"]
     __GAME_DATA_PATH_ARGUMENT = ["--game-data", "-gd"]  # path argument
     __USER_DATA_PATH_ARGUMENT = ["--user-data", "-ud"]  # path argument
     #__CONTROLS_ARGUMENT = ["--controls", "-c"]          # int argument
@@ -72,6 +73,7 @@ def start_qrogue() -> None:
 
     from_console, _ = __parse_argument(__CONSOLE_ARGUMENT)
     debugging, _ = __parse_argument(__DEBUG_ARGUMENT)
+    test_level, _ = __parse_argument(__TEST_LEVEL_ARGUMENT)
     _, data_folder = __parse_argument(__GAME_DATA_PATH_ARGUMENT, has_value=True)
     _, user_data_folder = __parse_argument(__USER_DATA_PATH_ARGUMENT, has_value=True)
     _, simulation_path = __parse_argument(__SIMULATION_FILE_ARGUMENT, has_value=True)
@@ -83,7 +85,7 @@ def start_qrogue() -> None:
         if simulation_path:
             simulate_game(simulation_path, from_console, debugging, data_folder, user_data_folder)
         else:
-            start_game(from_console, debugging, data_folder, user_data_folder)
+            start_game(from_console, debugging, test_level, data_folder, user_data_folder)
 
 
 def setup_game(game_data_path: str = "", user_data_path: str = "") -> None:
@@ -102,15 +104,15 @@ def setup_game(game_data_path: str = "", user_data_path: str = "") -> None:
     PathConfig.write(path, data, in_user_path=False, may_exist=True, append=False)
 
 
-def start_game(from_console: bool = False, debugging: bool = False, data_folder: str = None,
-               user_data_folder: str = None):
+def start_game(from_console: bool = False, debugging: bool = False, test_level: bool = False,
+               data_folder: str = None, user_data_folder: str = None):
     if PathConfig.load_paths(data_folder, user_data_folder):
         return_code = Config.load()  # NEEDS TO BE THE FIRST THING WE DO!
     else:
         return_code = 1
     if return_code == 0:
         if debugging:
-            Config.activate_debugging()
+            Config.activate_debugging(test_level)
 
         seed = random.randint(0, Config.MAX_SEED)
         print(f"[Qrogue] Starting game with seed = {seed}")

@@ -743,6 +743,7 @@ class Config:   # todo make singleton and handle access to other configs?
     __GAME_CONFIG = "qrogue_game.config"
     __GAMEPLAY_HEAD = "[Gameplay]\n"
     __DEBUG = False
+    __TEST_LEVEL = False
 
     __HEADER = "Qrogue "
     __SEED_HEAD = "Seed="
@@ -823,13 +824,18 @@ class Config:   # todo make singleton and handle access to other configs?
         return Config.__DEBUG
 
     @staticmethod
+    def test_level(ignore_debugging: bool = False) -> bool:
+        return Config.__TEST_LEVEL and (Config.debugging() or ignore_debugging)
+
+    @staticmethod
     def debug_print(text: str):
         if Config.debugging():
             print(text)
 
     @staticmethod
-    def activate_debugging():
+    def activate_debugging(test_level: bool = False):
         Config.__DEBUG = True
+        Config.__TEST_LEVEL = test_level
 
     @staticmethod
     def setup_user_data(custom_path: str = None):
