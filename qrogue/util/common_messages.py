@@ -81,6 +81,14 @@ def _no_gate_placed() -> str:
     return f"Currently there is {no} {gate} in your {circuit} that you could remove!"
 
 
+def _not_enough_energy_to_flee() -> str:
+    denied = CC.highlight_word("Denied")
+    not_possible = CC.highlight_word("not possible")
+    robots = CC.highlight_object("Robot's")
+    energy = CC.highlight_object("Energy")
+    return f"{denied}. Fleeing {not_possible} because it would cost all of the {robots} remaining {energy}."
+
+
 class CommonPopups(Enum):
     SavingFailed = ("Error!", "Failed to save the game. Please make sure the folder for save data still exists and try "
                               "again.")
@@ -94,6 +102,7 @@ class CommonPopups(Enum):
     NotEnoughMoney = (Config.system_name(), _not_enough_money())
     NoCircuitSpace = (Config.system_name(), _no_space())
     NoGatePlaced = (Config.system_name(), _no_gate_placed())
+    NotEnoughEnergyToFlee = (Config.system_name(), _not_enough_energy_to_flee())
 
     def __init__(self, title: str, text: str):
         self.__title = title

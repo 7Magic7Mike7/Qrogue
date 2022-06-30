@@ -376,7 +376,7 @@ class Robot(Controllable, ABC):
         self.__circuit_matrix = CircuitMatrix(result.get_unitary(self.__circuit,
                                                                  decimals=QuantumSimulationConfig.DECIMALS))
         if use_energy:
-            self.damage(amount=1)
+            self.decrease_energy(amount=1)
 
     def __remove_instruction(self, instruction: Instruction, skip_qargs: bool = False):
         if instruction and instruction.is_used():
@@ -484,7 +484,9 @@ class Robot(Controllable, ABC):
     def on_move(self):
         self.__attributes.decrease_energy(amount=1)
 
-    def damage(self, amount: int = 1) -> Tuple[int, bool]:
+    def decrease_energy(self, amount: int = 1) -> Tuple[int, bool]:
+        assert amount > 0   # todo maybe == 0 is also okay?
+
         if self.game_over_check():
             return amount, True
         return self.__attributes.decrease_energy(amount), False

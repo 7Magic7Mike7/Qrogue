@@ -37,6 +37,10 @@ class Target(ABC):
         """
         return self.__is_active
 
+    @property
+    def flee_energy(self) -> int:
+        return 1
+
     def is_reached(self, state_vector: StateVector) -> Tuple[bool, Collectible]:
         """
         Checks if the given StateVector is equal to the Target's StateVector. If so, Target is set inactive and will

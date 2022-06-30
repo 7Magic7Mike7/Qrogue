@@ -918,25 +918,23 @@ class FightWidgetSet(ReachTargetWidgetSet):
         return True
 
     def _choices_flee(self) -> bool:
-        if self.__flee_check():
-            self._details.set_data(data=(
-                ["You successfully fled!"],
-                [self._continue_exploration_callback]
-            ))
-        else:
-            damage_taken, deadly = self._robot.damage(amount=1)
-            if deadly:
+        if self._robot.cur_energy > self._target.flee_energy:
+            damage_taken, _ = self._robot.decrease_energy(amount=self._target.flee_energy)
+            if self.__flee_check():
                 self._details.set_data(data=(
-                    ["Failed to flee. Your Robot has no more energy and lost the connection."],
-                    [self.__game_over_callback]
+                    ["You successfully fled!"],
+                    [self._continue_exploration_callback]
                 ))
             else:
                 self._details.set_data(data=(
                     ["Failed to flee. Your Robot lost some Energy."],
                     [self._empty_callback]
                 ))
-            self._details_content = ReachTargetWidgetSet._DETAILS_INFO_THEN_EDIT
-        return True
+                self._details_content = ReachTargetWidgetSet._DETAILS_INFO_THEN_EDIT
+            return True
+        else:
+            CommonPopups.NotEnoughEnergyToFlee.show()
+            return False    # don't switch to details widget
 
 
 class BossFightWidgetSet(FightWidgetSet):
