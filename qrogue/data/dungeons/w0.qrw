@@ -2,7 +2,7 @@ Qrogue<
 
 [Layout]
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-| __ .. __ .. SR == ex .. lh == lg .. __ |
+| __ .. ex == SR == tt .. lh == lg .. __ |
 | ..    ..    ==    ..    ==    ==    .. |
 | __ .. __ .. la == _a == _a == lf .. __ |
 | ..    ..    ==    ==    ==    ==    .. |
@@ -14,9 +14,9 @@ SR (World 0; North):
 description "Exit Mission Quniverse Trainings Program."
 teleport *back
 
-ex (visible Level 8; East):
+ex (visible Level 9; West):
 description "Exam to have a chance at being part of //05Mission Quniverse//."
-teleport *l1v9
+teleport *l0exam
 
 la (visible Level 0; West):
 description "Lesson 0: Basics of //03moving// a //02Qubot// and //03solving// //02Puzzles//."
@@ -50,10 +50,9 @@ lh (visible Level 7; North):
 description "Lesson 7: Interacting with //02Entanglement// via //02Digits//, new //02Doors// and //02Circuits//."
 teleport *l0v7
 
-// just an example level for easier copying of map parts
-tu (Level 9; East):
-description "just an example level for easier copying of map parts"
-teleport *fullTemplate
+tt (visible Level 8; East):
+description "A simple trainings environment to practive everything you learned."
+teleport *l0training
 
 [Hallways]
 
