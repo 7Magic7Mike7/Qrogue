@@ -30,6 +30,7 @@ def warning(text: str):
     if Config.debugging():
         print("Warning", text)
 
+
 def error(text: str):
     Logger.instance().error(text, show=False, from_pycui=False)
     raise SyntaxError(text)

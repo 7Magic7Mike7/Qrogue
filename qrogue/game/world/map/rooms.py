@@ -678,7 +678,7 @@ class WildRoom(BaseWildRoom):
 
         tile_list = Room.get_empty_room_tile_list()
         for i in range(num_of_enemies):
-            eid = rm.get_int(min=0, max=WildRoom.__NUM_OF_ENEMY_GROUPS + 1, msg="WildRoom_eid")
+            eid = rm.get_int(min_=0, max_=WildRoom.__NUM_OF_ENEMY_GROUPS + 1, msg="WildRoom_eid")
             enemy = EnemyTile(factory, self.__get_tiles_by_id, self.__update_entangled_tiles, eid)
             if eid > 0:
                 self.__dictionary[eid].append(enemy)

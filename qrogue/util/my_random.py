@@ -16,29 +16,30 @@ class MyRandom:
         self.__id = MyRandom.__Next_Id
         MyRandom.__Next_Id += 1
 
-    def get(self, min: float = 0.0, max: float = 1.0, msg: str = ""):
-        msg = f"{msg}@{self.__id}_{MyRandom.COUNTER}"
+    def get(self, min_: float = 0.0, max_: float = 1.0, msg: str = ""):
         MyRandom.COUNTER += 1
-        val = min + self.__random.random() * (max - min)
-        #PathConfig.write("random_debug.txt", f"{val} | {msg}\n", append=True)
+        val = min_ + self.__random.random() * (max_ - min_)
+        # msg = f"{msg}@{self.__id}_{MyRandom.COUNTER}"
+        # PathConfig.write("random_debug.txt", f"{val} | {msg}\n", append=True)
         return val
 
-    def get_int(self, min: int, max: int, msg: str = str(COUNTER)) -> int:
+    def get_int(self, min_: int, max_: int, msg: str = str(COUNTER)) -> int:
         """
         Random integer in the interval [min, max[
-        :param min: minimum possible int (inclusive)
-        :param max: maximum possible int (exclusive)
+        :param msg: a message describing the usage of this method (e.g. caller)
+        :param min_: minimum possible int (inclusive)
+        :param max_: maximum possible int (exclusive)
         :return: random int in the given range
         """
-        return min + int(self.get(msg=msg) * (max - min))
+        return min_ + int(self.get(msg=msg) * (max_ - min_))
 
     def get_seed(self, msg: str = str(COUNTER)) -> int:
-        return self.get_int(min=0, max=Config.MAX_SEED, msg=msg)
+        return self.get_int(min_=0, max_=Config.MAX_SEED, msg=msg)
 
     def get_element(self, iterable, remove: bool = False, msg: str = str(COUNTER)):
         if len(iterable) == 0:
             return None
-        index = self.get_int(min=0, max=len(iterable), msg=msg)
+        index = self.get_int(min_=0, max_=len(iterable), msg=msg)
         elem = iterable[index]
         if remove:
             try:
@@ -99,7 +100,7 @@ class RandomManager(MyRandom):
             RandomManager(new_seed)
         else:
             RandomManager.__instance = RandomManager.create_new(new_seed)
-            #PathConfig.write("random_debug.txt", f"RandomManager.init({new_seed})\n", append=True)
+            # PathConfig.write("random_debug.txt", f"RandomManager.init({new_seed})\n", append=True)
 
     def __init__(self, seed: int):
         if RandomManager.__instance is not None:
@@ -107,4 +108,4 @@ class RandomManager(MyRandom):
         else:
             super().__init__(seed)
             RandomManager.__instance = self
-            #PathConfig.write("random_debug.txt", f"RandomManager.init({seed})\n", append=True)
+            # PathConfig.write("random_debug.txt", f"RandomManager.init({seed})\n", append=True)
