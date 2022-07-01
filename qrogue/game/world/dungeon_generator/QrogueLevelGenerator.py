@@ -872,15 +872,15 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             self.__visitL_hallway_row(hw_row, y)
 
         room_matrix = []
-        for y in range(MapConfig.max_height()):
+        for y in range(MapConfig.map_height()):
             row_ctx = ctx.l_room_row(y)
             if row_ctx:
                 room_matrix.append(self.__visitL_room_row(row_ctx, y))
             else:
                 break
-        if ctx.l_room_row(MapConfig.max_height()):
-            self.warning(f"Too much room rows specified. Only maps of size ({MapConfig.max_width()}, "
-                         f"{MapConfig.max_height()}) supported. Ignoring over-specified rows.")
+        if ctx.l_room_row(MapConfig.map_height()):
+            self.warning(f"Too much room rows specified. Only maps of size ({MapConfig.map_width()}, "
+                         f"{MapConfig.map_height()}) supported. Ignoring over-specified rows.")
 
         return room_matrix
 
@@ -890,8 +890,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             if parser_util.check_for_overspecified_columns(x, child.symbol.type,
                                                            QrogueDungeonParser.VERTICAL_SEPARATOR):
                 self.warning(
-                    f"Too much room columns specified. Only maps of size ({MapConfig.max_width()}, "
-                    f"{MapConfig.max_height()}) supported. Ignoring over-specified columns.")
+                    f"Too much room columns specified. Only maps of size ({MapConfig.map_width()}, "
+                    f"{MapConfig.map_height()}) supported. Ignoring over-specified columns.")
                 break
             if child.symbol.type == QrogueDungeonParser.HALLWAY_ID:
                 hw_id = child.symbol.text
@@ -912,8 +912,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         for child in ctx.children:
             if parser_util.check_for_overspecified_columns(x, child.symbol.type,
                                                            QrogueDungeonParser.VERTICAL_SEPARATOR):
-                self.warning(f"Too much room columns specified. Only maps of size ({MapConfig.max_width()}, "
-                             f"{MapConfig.max_height()}) supported. Ignoring over-specified columns.")
+                self.warning(f"Too much room columns specified. Only maps of size ({MapConfig.map_width()}, "
+                             f"{MapConfig.map_height()}) supported. Ignoring over-specified columns.")
                 break
 
             if child.symbol.type == QrogueDungeonParser.ROOM_ID:

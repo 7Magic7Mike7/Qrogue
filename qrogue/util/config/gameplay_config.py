@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, Tuple
 
 from qrogue.util.config import PyCuiColors
 from qrogue.util.config import PopupConfig
@@ -7,15 +7,35 @@ from qrogue.util.config import PopupConfig
 class MapConfig:
     @staticmethod
     def num_of_lessons() -> int:
-        return 8    # Lesson 0 to 7
+        return 8  # Lesson 0 to 7
 
     @staticmethod
-    def max_width() -> int:
+    def map_width() -> int:
         return 7
 
     @staticmethod
-    def max_height() -> int:
+    def map_height() -> int:
         return 3
+
+    @staticmethod
+    def room_width() -> int:
+        return 7
+
+    @staticmethod
+    def room_height() -> int:
+        return MapConfig.room_width()
+
+    @staticmethod
+    def room_mid_x() -> int:
+        return int(MapConfig.room_width() / 2)
+
+    @staticmethod
+    def room_mid_y() -> int:
+        return int(MapConfig.room_height() / 2)
+
+    @staticmethod
+    def room_mid() -> Tuple[int, int]:
+        return MapConfig.room_mid_x(), MapConfig.room_mid_y()
 
     @staticmethod
     def done_event_id() -> str:

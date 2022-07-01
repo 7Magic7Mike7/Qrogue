@@ -220,16 +220,16 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
             self.__visitL_hallway_row(hw_row, y)
 
         room_matrix = []
-        for y in range(MapConfig.max_height()):
+        for y in range(MapConfig.map_height()):
             row_ctx = ctx.l_room_row(y)
             if row_ctx:
                 room_matrix.append(self.__visitL_room_row(row_ctx, y))
             else:
                 break
-        if ctx.l_room_row(MapConfig.max_height()):
+        if ctx.l_room_row(MapConfig.map_height()):
             parser_util.warning(
-                f"Too much room rows specified. Only maps of size ({MapConfig.max_width()}, "
-                f"{MapConfig.max_height()}) supported. Ignoring over-specified rows.")
+                f"Too much room rows specified. Only maps of size ({MapConfig.map_width()}, "
+                f"{MapConfig.map_height()}) supported. Ignoring over-specified rows.")
 
         return room_matrix
 
@@ -238,8 +238,8 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
         for child in ctx_children:
             if parser_util.check_for_overspecified_columns(x, child.symbol.type, QrogueWorldParser.VERTICAL_SEPARATOR):
                 parser_util.warning(
-                    f"Too much room columns specified. Only maps of size ({MapConfig.max_width()}, "
-                    f"{MapConfig.max_height()}) supported. Ignoring over-specified columns.")
+                    f"Too much room columns specified. Only maps of size ({MapConfig.map_width()}, "
+                    f"{MapConfig.map_height()}) supported. Ignoring over-specified columns.")
                 break
             if child.symbol.type == QrogueWorldParser.HALLWAY_ID:
                 hw_id = child.symbol.text
@@ -259,8 +259,8 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
         x = 0
         for child in ctx.children:
             if parser_util.check_for_overspecified_columns(x, child.symbol.type, QrogueWorldParser.VERTICAL_SEPARATOR):
-                parser_util.warning(f"Too much room columns specified. Only maps of size ({MapConfig.max_width()}, "
-                                    f"{MapConfig.max_height()}) supported. Ignoring over-specified columns.")
+                parser_util.warning(f"Too much room columns specified. Only maps of size ({MapConfig.map_width()}, "
+                                    f"{MapConfig.map_height()}) supported. Ignoring over-specified columns.")
                 break
 
             if child.symbol.type == QrogueWorldParser.ROOM_ID:

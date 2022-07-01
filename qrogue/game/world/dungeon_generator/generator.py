@@ -6,8 +6,8 @@ from qrogue.util import MapConfig
 
 
 class DungeonGenerator(ABC):
-    WIDTH = MapConfig.max_width()
-    HEIGHT = MapConfig.max_height()
+    WIDTH = MapConfig.map_width()
+    HEIGHT = MapConfig.map_height()
 
     def __init__(self, seed: int, width: int = WIDTH, height: int = HEIGHT):
         self.__seed = seed

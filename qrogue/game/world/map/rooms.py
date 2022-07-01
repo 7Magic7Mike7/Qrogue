@@ -33,10 +33,10 @@ class Area(ABC):
     __ID = 1
     __FOG = FogOfWar()
     __VOID = Void()
-    UNIT_WIDTH = 7
-    UNIT_HEIGHT = 7
-    MID_X = int(UNIT_WIDTH / 2)
-    MID_Y = int(UNIT_HEIGHT / 2)
+    UNIT_WIDTH = MapConfig.room_width()     # todo change visibility of UNIT_WIDTH?
+    UNIT_HEIGHT = MapConfig.room_height()
+    MID_X = MapConfig.room_mid_x()
+    MID_Y = MapConfig.room_mid_y()
 
     @staticmethod
     def void() -> Void:

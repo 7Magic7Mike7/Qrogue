@@ -31,7 +31,7 @@ def warning(text: str):
 
 
 def check_for_overspecified_columns(x: int, symbol_type, ref_type):
-    return x == MapConfig.max_width() and symbol_type != ref_type or x > MapConfig.max_width()
+    return x == MapConfig.map_width() and symbol_type != ref_type or x > MapConfig.map_width()
 
 
 def normalize_reference(reference: str) -> str:
