@@ -1,6 +1,6 @@
 import enum
 from abc import ABC, abstractmethod
-from typing import List, Callable, Optional
+from typing import List, Callable, Optional, Tuple
 
 import qrogue.game.world.tiles as tiles
 from qrogue.game.logic import Message
@@ -122,9 +122,9 @@ class Map(ABC):
     def start(self):
         self.__meta_data.show_description()
 
-    def __get_area(self, x: int, y: int) -> (Area, tiles.Tile):
+    def __get_area(self, x: int, y: int) -> Tuple[Optional[Area], tiles.Tile]:
         """
-        Calculates and returns the Room and in-room Coordinates of the given Map position.
+        Calculates and returns the Room and in-room Coordinates of the given Map position (globally, not room position!).
         :param x: x position on the Map
         :param y: y position on the Map
         :return: Room or Hallway and their Tile at the given position
@@ -166,7 +166,7 @@ class Map(ABC):
         else:
             return room, room.at(x_mod, y_mod)
 
-    def __room_at(self, x: int, y: int) -> Room:
+    def __room_at(self, x: int, y: int) -> Optional[Room]:
         """
         Returns the Room at the given position or None if either x or y are out of bounds.
         :param x: x-Coordinate of the room we want to get
@@ -175,6 +175,7 @@ class Map(ABC):
         """
         if 0 <= x < self.width and 0 <= y < self.height:
             return self.__rooms[y][x]
+        return None
 
     def move(self, direction: Direction) -> bool:
         """
