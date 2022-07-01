@@ -40,13 +40,16 @@ def __init_singletons(seed: int):
     def open_riddle(robot, riddle):
         pass
 
+    def open_challenge(robot, challenge):
+        pass
+
     def visit_shop(robot, shop_item_list):
         pass
 
     def game_over():
         pass
 
-    CallbackPack(start_level, start_fight, start_boss_fight, open_riddle, visit_shop, game_over)
+    CallbackPack(start_level, start_fight, start_boss_fight, open_riddle, open_challenge, visit_shop, game_over)
 
 
 def __parse_argument(argument: List[str], has_value: bool = False) -> Tuple[bool, str]:
