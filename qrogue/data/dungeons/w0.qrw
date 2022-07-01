@@ -2,7 +2,7 @@ Qrogue<
 
 [Layout]
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-| __ .. ex == SR == tt .. lh == lg .. __ |
+| __ .. ex 22 SR == tt .. lh == lg .. __ |
 | ..    ..    ==    ..    ==    ==    .. |
 | __ .. __ .. la == _a == _a == lf .. __ |
 | ..    ..    ==    ==    ==    ==    .. |
@@ -14,7 +14,7 @@ SR (World 0; North):
 description "Exit Mission Quniverse Trainings Program."
 teleport *back
 
-ex (visible Level 9; West):
+ex (Level 9; West):
 description "Exam to have a chance at being part of //05Mission Quniverse//."
 teleport *l0exam
 
@@ -55,5 +55,6 @@ description "A simple trainings environment to practive everything you learned."
 teleport *l0training
 
 [Hallways]
+22 (event *learnedAboutFleeing; ; )
 
 >Qrogue

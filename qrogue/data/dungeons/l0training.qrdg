@@ -2,7 +2,6 @@ Qrogue<
 Name = "Trainings environment"
 Description = Speaker "0" "In this trainings environment you will start with 2 //02Qubits//, 5 //02Slots// for you //02Circuit// and one //02CX Gate//."
 "In the northern rooms you can pick up other //02Gates//. Other rooms mostly contain random //02Puzzles// and //02Energy//."
-INCLUDE_TELEPORTER
 
 
 [Robot]
@@ -20,6 +19,20 @@ maxenergy = 100
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 [Custom Rooms]
+
+SR (Spawn):
+#############
+# _ _ _ _ _ #
+# _ _ t _ _ #
+# _ t t t _ #
+# _ _ t _ _ #
+# _ _ _ _ _ #
+#############
+t GlobalAchievement *learnedAboutFleeing
+t GlobalAchievement *learnedAboutFleeing
+t teleport *back
+t GlobalAchievement *learnedAboutFleeing
+t GlobalAchievement *learnedAboutFleeing
 
 tr (Wild):
 #############
