@@ -123,7 +123,7 @@ class MapManager:
             self.__cur_map = self.__world_memory[map_name]
             self.__in_level = False
             self.__show_world(self.__cur_map)
-        elif map_name[0].lower().startswith(MapConfig.world_map_prefix()): # and map_name[1].isdigit():
+        elif map_name[0].lower().startswith(MapConfig.world_map_prefix()):
             player = SaveData.instance().player
             check_achievement = SaveData.instance().achievement_manager.check_achievement
             generator = QrogueWorldGenerator(self.__base_seed, player, check_achievement, self.__trigger_event,
