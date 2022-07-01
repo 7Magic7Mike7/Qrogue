@@ -295,7 +295,7 @@ class Robot(Controllable, ABC):
             self.__qubit_indices.append(i)
 
         # initialize gate stuff (columns)
-        self.__instruction_count = 0
+        self.__instruction_count: int = 0   # how many instructions are currently placed on the circuit
 
         # apply gates/instructions, create the circuit
         self.__circuit = None
@@ -369,7 +369,7 @@ class Robot(Controllable, ABC):
         compiled_circuit = transpile(self.__circuit, self.__simulator)
         job = self.__simulator.run(compiled_circuit, shots=1)
         result = job.result()
-        self.__stv = StateVector(result.get_statevector(self.__circuit))
+        self.__stv = StateVector(result.get_statevector(self.__circuit), num_of_used_gates=self.__instruction_count)
 
         job = execute(self.__circuit, self.__backend)
         result = job.result()
