@@ -9,6 +9,7 @@ from py_cui import popups
 from qrogue.game.logic import StateVector, collectibles
 from qrogue.game.logic.actors import Boss, Controllable, Enemy, Riddle, Robot
 from qrogue.game.logic.actors.controllables import LukeBot
+from qrogue.game.logic.actors.puzzles import Challenge
 from qrogue.game.logic.collectibles import Energy
 from qrogue.game.world.map import CallbackPack, SpaceshipMap, WorldMap, Map
 from qrogue.game.world.navigation import Direction
@@ -19,7 +20,7 @@ from qrogue.graphics.popups import Popup, MultilinePopup, ConfirmationPopup
 from qrogue.graphics.rendering import MultiColorRenderer
 from qrogue.graphics.widgets import Renderable, SpaceshipWidgetSet, BossFightWidgetSet, ExploreWidgetSet, \
     FightWidgetSet, MenuWidgetSet, MyWidgetSet, NavigationWidgetSet, PauseMenuWidgetSet, RiddleWidgetSet, \
-    ShopWidgetSet, WorkbenchWidgetSet, TrainingsWidgetSet, Widget
+    ChallengeWidgetSet, ShopWidgetSet, WorkbenchWidgetSet, TrainingsWidgetSet, Widget
 from qrogue.util import achievements, common_messages, CheatConfig, Config, GameplayConfig, UIConfig, HelpText, \
     HelpTextType, Logger, PathConfig, MapConfig, Controls, Keys, RandomManager, PyCuiConfig, PyCuiColors
 from qrogue.util.achievements import Ach, Unlocks
@@ -64,7 +65,7 @@ class QrogueCUI(PyCUI):
 
         Pausing(self.__pause_game)
         CallbackPack(self.__start_level, self.__start_fight, self.__start_boss_fight, self.__open_riddle,
-                     self.__visit_shop, self.__game_over)
+                     self.__open_challenge, self.__visit_shop, self.__game_over)
         SaveData()
         MapManager(seed, self.__show_world, self.__start_level)
         Popup.update_check_achievement_function(SaveData.instance().achievement_manager.check_achievement)
@@ -103,6 +104,8 @@ class QrogueCUI(PyCUI):
         self.__boss_fight = BossFightWidgetSet(self.__controls, self.__render, Logger.instance(), self,
                                                self.__continue_explore, self.__game_over)
         self.__riddle = RiddleWidgetSet(self.__controls, self.__render, Logger.instance(), self, self.__continue_explore)
+        self.__challenge = ChallengeWidgetSet(self.__controls, self.__render, Logger.instance(), self,
+                                              self.__continue_explore)
         self.__shop = ShopWidgetSet(self.__controls, self.__render, Logger.instance(), self, self.__continue_explore)
 
         self.__cur_widget_set = None
@@ -591,6 +594,16 @@ class QrogueCUI(PyCUI):
             self.__riddle.set_data(player, riddle)
         self.apply_widget_set(self.__riddle)
 
+    def __open_challenge(self, robot: Robot, challenge: Challenge):
+        self.__state_machine.change_state(State.Challenge, (robot, challenge))
+
+    def switch_to_challenge(self, data) -> None:
+        if data is not None:
+            robot = data[0]
+            challenge = data[1]
+            self.__challenge.set_data(robot, challenge)
+        self.apply_widget_set(self.__challenge)
+
     def __visit_shop(self, robot: Robot, items: "list of ShopItems"):
         self.__state_machine.change_state(State.Shop, (robot, items))
 
@@ -620,6 +633,8 @@ class State(Enum):
     Navigation = 9
     Training = 10
 
+    Challenge = 11
+
 
 class StateMachine:
     def __init__(self, renderer: QrogueCUI):
@@ -647,6 +662,8 @@ class StateMachine:
             self.__renderer.switch_to_fight(data)
         elif self.__cur_state == State.Riddle:
             self.__renderer.switch_to_riddle(data)
+        elif self.__cur_state == State.Challenge:
+            self.__renderer.switch_to_challenge(data)
         elif self.__cur_state == State.Shop:
             self.__renderer.switch_to_shop(data)
         elif self.__cur_state == State.BossFight:

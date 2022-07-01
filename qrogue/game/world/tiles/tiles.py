@@ -34,6 +34,7 @@ class TileCode(Enum):
     Riddler = 51
     ShopKeeper = 52
     Energy = 53
+    Challenger = 54
 
     SpaceshipBlock = 70
     SpaceshipWalk = 71

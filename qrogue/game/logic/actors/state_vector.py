@@ -1,5 +1,5 @@
 from collections import Iterator
-from typing import List
+from typing import List, Optional
 
 import numpy as np
 from qiskit import transpile, QuantumCircuit
@@ -18,17 +18,6 @@ class StateVector:
             amp_sum = sum([c.real**2 + c.imag**2 for c in amplitudes])
             return 1 - QuantumSimulationConfig.TOLERANCE <= amp_sum <= 1 + QuantumSimulationConfig.TOLERANCE
         return False
-
-    @staticmethod
-    def from_gates(gates: List[Instruction], num_of_qubits: int) -> "StateVector":
-        circuit = QuantumCircuit(num_of_qubits, num_of_qubits)
-        for instruction in gates:
-            instruction.append_to(circuit)
-        simulator = StatevectorSimulator()
-        compiled_circuit = transpile(circuit, simulator)
-        # We only do 1 shot since we don't need any measurement but the StateVector
-        job = simulator.run(compiled_circuit, shots=1)
-        return StateVector(job.result().get_statevector())
 
     @staticmethod
     def complex_to_string(val: complex) -> str:
@@ -77,8 +66,20 @@ class StateVector:
         amplitudes = [1] + [0] * (2**num_of_qubits - 1)
         return StateVector(amplitudes)
 
-    def __init__(self, amplitudes: List[complex]):
+    @staticmethod
+    def from_gates(gates: List[Instruction], num_of_qubits: int) -> "StateVector":
+        circuit = QuantumCircuit(num_of_qubits, num_of_qubits)
+        for instruction in gates:
+            instruction.append_to(circuit)
+        simulator = StatevectorSimulator()
+        compiled_circuit = transpile(circuit, simulator)
+        # We only do 1 shot since we don't need any measurement but the StateVector
+        job = simulator.run(compiled_circuit, shots=1)
+        return StateVector(job.result().get_statevector(), num_of_used_gates=len(gates))
+
+    def __init__(self, amplitudes: List[complex], num_of_used_gates: Optional[int] = None):
         self.__amplitudes = amplitudes
+        self.__num_of_used_gates = num_of_used_gates
 
     @property
     def size(self) -> int:
@@ -94,6 +95,10 @@ class StateVector:
             if abs(val) > QuantumSimulationConfig.TOLERANCE:
                 return False
         return True
+
+    @property
+    def num_of_used_gates(self) -> int:
+        return self.__num_of_used_gates
 
     def at(self, index: int) -> complex:
         if 0 <= index < self.size:

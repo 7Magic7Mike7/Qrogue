@@ -1092,3 +1092,31 @@ class RiddleWidgetSet(ReachTargetWidgetSet):
                 [self._continue_exploration_callback, self._empty_callback]
             ))
         return True
+
+
+class ChallengeWidgetSet(ReachTargetWidgetSet):
+    def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
+                 continue_exploration_callback: Callable[[], None]):
+        super().__init__(controls, render, logger, root, continue_exploration_callback)
+
+    def _on_commit_fail(self) -> bool:
+        # todo check if it's because the circuit is wrong or the constraints are not fulfilled
+        if not self._robot.game_over_check():
+            self._details.set_data(data=(
+                [f"That's not yet the correct solution."],
+                [self._empty_callback]
+            ))
+        self._details_content = ReachTargetWidgetSet._DETAILS_INFO_THEN_EDIT
+        return True
+
+    def _choices_flee(self) -> bool:
+        if self._robot.cur_energy > self._target.flee_energy:
+            damage_taken, _ = self._robot.decrease_energy(amount=self._target.flee_energy)
+            self._details.set_data(data=(
+                ["You successfully fled!"],
+                [self._continue_exploration_callback]
+            ))
+            return True
+        else:
+            CommonPopups.NotEnoughEnergyToFlee.show()
+            return False  # don't switch to details widget

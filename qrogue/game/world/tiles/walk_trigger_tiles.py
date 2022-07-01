@@ -4,6 +4,7 @@ from typing import List, Callable, Any, Optional
 
 from qrogue.game.logic import Message as LogicalMessage
 from qrogue.game.logic.actors import Controllable, Riddle
+from qrogue.game.logic.actors.puzzles import Challenge
 from qrogue.game.logic.collectibles import Collectible as LogicalCollectible, Energy as LogicalEnergy
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.util import Logger, ColorConfig, CommonQuestions, MapConfig
@@ -216,6 +217,36 @@ class Riddler(WalkTriggerTile):
 
     def _copy(self) -> "Tile":
         return Riddler(self.__open_riddle, self.__riddle)
+
+
+class Challenger(WalkTriggerTile):
+    def __init__(self, open_challenge_callback: Callable[[Controllable, Challenge], None], challenge: Challenge):
+        super().__init__(TileCode.Challenger)
+        self.__open_challenge = open_challenge_callback
+        self.__challenge = challenge
+        self.__is_active = True
+
+    @property
+    def _is_active(self) -> bool:
+        if self.__is_active:
+            if not self.__challenge.is_active:
+                self._explicit_trigger()
+                self.__is_active = False
+        return self.__is_active
+
+    def _on_walk(self, direction: Direction, controllable: Controllable) -> bool:
+        if self._is_active:
+            self.__open_challenge(controllable, self.__challenge)
+        return False
+
+    def _copy(self) -> "WalkTriggerTile":
+        return Challenger(self.__open_challenge, self.__challenge)
+
+    def get_img(self):
+        if self._is_active:
+            return "!"
+        else:
+            return self._invisible
 
 
 class ShopKeeper(WalkTriggerTile):

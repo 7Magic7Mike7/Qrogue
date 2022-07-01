@@ -1,6 +1,7 @@
 from typing import List, Callable, Any
 
 from qrogue.game.logic.actors import Robot, Enemy, Boss, Riddle
+from qrogue.game.logic.actors.puzzles import Challenge
 from qrogue.game.logic.collectibles import ShopItem
 from qrogue.game.world.map import CallbackPack
 from qrogue.game.world.navigation import Direction
@@ -30,6 +31,10 @@ def start_boss_fight(robot: Robot, boss: Boss, direction: Direction):
 
 
 def open_riddle(robot: Robot, riddle: Riddle):
+    pass
+
+
+def open_challenge(robot: Robot, challenge: Challenge):
     pass
 
 
@@ -82,7 +87,7 @@ def init_singletons(seed: int = 7, include_config: bool = False, custom_data_pat
     Logger(seed)
     Logger.instance().set_popup(message_popup, error_popup)
     RandomManager(seed)  # initialize RandomManager
-    CallbackPack(start_gp, start_fight, start_boss_fight, open_riddle, visit_shop, game_over)
+    CallbackPack(start_gp, start_fight, start_boss_fight, open_riddle, open_challenge, visit_shop, game_over)
 
     return True
 
