@@ -14,11 +14,11 @@ from qrogue.game.world.map import CallbackPack, LevelMap, rooms, MapMetaData
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.util import Config, HelpText, MapConfig, PathConfig, Logger, CommonQuestions, RandomManager
 
-from . import parser_util
-from .generator import DungeonGenerator
-from .dungeon_parser.QrogueDungeonLexer import QrogueDungeonLexer
-from .dungeon_parser.QrogueDungeonParser import QrogueDungeonParser
-from .dungeon_parser.QrogueDungeonVisitor import QrogueDungeonVisitor
+from qrogue.game.world.dungeon_generator import parser_util
+from qrogue.game.world.dungeon_generator.dungeon_parser.QrogueDungeonLexer import QrogueDungeonLexer
+from qrogue.game.world.dungeon_generator.dungeon_parser.QrogueDungeonParser import QrogueDungeonParser
+from qrogue.game.world.dungeon_generator.dungeon_parser.QrogueDungeonVisitor import QrogueDungeonVisitor
+from qrogue.game.world.dungeon_generator.generator import DungeonGenerator
 
 
 class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):

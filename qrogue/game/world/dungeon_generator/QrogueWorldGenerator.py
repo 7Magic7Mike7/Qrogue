@@ -3,18 +3,18 @@ from typing import List, Tuple, Callable, Optional
 from antlr4 import InputStream, CommonTokenStream
 from antlr4.tree.Tree import TerminalNodeImpl
 
-from qrogue.game.world.dungeon_generator import parser_util
 from qrogue.game.logic import Message
 from qrogue.game.logic.actors import Player
+from qrogue.game.world.dungeon_generator import parser_util
 from qrogue.game.world.map import Room, MetaRoom, SpawnRoom, WorldMap
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.game.world.tiles import Door, DoorOneWayState, DoorOpenState
 from qrogue.util import MapConfig, PathConfig, Logger, Config
 
-from .world_parser.QrogueWorldLexer import QrogueWorldLexer
-from .world_parser.QrogueWorldParser import QrogueWorldParser
-from .world_parser.QrogueWorldVisitor import QrogueWorldVisitor
-from ..map.rooms import Placeholder
+from qrogue.game.world.dungeon_generator.world_parser.QrogueWorldLexer import QrogueWorldLexer
+from qrogue.game.world.dungeon_generator.world_parser.QrogueWorldParser import QrogueWorldParser
+from qrogue.game.world.dungeon_generator.world_parser.QrogueWorldVisitor import QrogueWorldVisitor
+from qrogue.game.world.map.rooms import Placeholder
 
 
 class QrogueWorldGenerator(QrogueWorldVisitor):

@@ -1,7 +1,7 @@
 import random
 from typing import List
 
-from qrogue.util.config import Config, PathConfig
+from qrogue.util.config import Config
 from qrogue.util.logger import Logger
 
 

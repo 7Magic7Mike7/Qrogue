@@ -1,9 +1,11 @@
 # Generated from D:/Documents/pycharm_workspace/Qrogue/qrogue/game/world/dungeon_generator\QrogueWorld.g4 by ANTLR 4.10.1
 # encoding: utf-8
 from __future__ import print_function
-from antlr4 import *
-from io import StringIO
+
 import sys
+
+from antlr4 import *
+
 
 def serializedATN():
     return [

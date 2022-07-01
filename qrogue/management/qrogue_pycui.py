@@ -14,13 +14,12 @@ from qrogue.game.world.map import CallbackPack, SpaceshipMap, WorldMap, Map
 from qrogue.game.world.navigation import Direction
 from qrogue.game.world.tiles import WalkTriggerTile, Message, Collectible
 from qrogue.game.world.tiles.tiles import NpcTile
-from qrogue.graphics.rendering import MultiColorRenderer
+from qrogue.graphics import WidgetWrapper
 from qrogue.graphics.popups import Popup, MultilinePopup, ConfirmationPopup
+from qrogue.graphics.rendering import MultiColorRenderer
 from qrogue.graphics.widgets import Renderable, SpaceshipWidgetSet, BossFightWidgetSet, ExploreWidgetSet, \
     FightWidgetSet, MenuWidgetSet, MyWidgetSet, NavigationWidgetSet, PauseMenuWidgetSet, RiddleWidgetSet, \
     ShopWidgetSet, WorkbenchWidgetSet, TrainingsWidgetSet, Widget
-from qrogue.graphics import WidgetWrapper
-from qrogue.management import StoryNarration
 from qrogue.util import achievements, common_messages, CheatConfig, Config, GameplayConfig, UIConfig, HelpText, \
     HelpTextType, Logger, PathConfig, MapConfig, Controls, Keys, RandomManager, PyCuiConfig, PyCuiColors
 from qrogue.util.achievements import Ach, Unlocks
@@ -28,7 +27,7 @@ from qrogue.util.config import FileTypes, PopupConfig
 from qrogue.util.game_simulator import GameSimulator
 from qrogue.util.key_logger import KeyLogger, OverWorldKeyLogger
 
-from qrogue.management import MapManager, Pausing, SaveData
+from qrogue.management import MapManager, Pausing, SaveData, StoryNarration
 
 
 class QrogueCUI(PyCUI):

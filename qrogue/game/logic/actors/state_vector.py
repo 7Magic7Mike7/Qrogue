@@ -8,7 +8,7 @@ from qiskit.providers.aer import StatevectorSimulator
 from qrogue.game.logic.collectibles import Instruction
 from qrogue.util import Logger, QuantumSimulationConfig
 from qrogue.util.config import ColorCode, ColorConfig
-from qrogue.util.util_functions import is_power_of_2, center_string, to_binary_string, align_string
+from qrogue.util.util_functions import is_power_of_2, center_string, to_binary_string
 
 
 class StateVector:

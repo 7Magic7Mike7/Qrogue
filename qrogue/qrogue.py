@@ -8,7 +8,7 @@ from qrogue.game.world.dungeon_generator import QrogueLevelGenerator, QrogueWorl
 from qrogue.game.world.map import CallbackPack
 from qrogue.game.world.navigation import Coordinate
 from qrogue.management import SaveData, QrogueCUI
-from qrogue.util import PyCuiConfig, Config, Logger, RandomManager, PathConfig, GameplayConfig, CheatConfig, Controls
+from qrogue.util import PyCuiConfig, Config, Logger, RandomManager, PathConfig, GameplayConfig
 from qrogue.util.key_logger import OverWorldKeyLogger
 
 

@@ -1,10 +1,9 @@
-from qrogue.test.test_util import DummySelectionWidget
 from qrogue.test import test_util as tu
 
 
 def test():
     options = ["X Gate", "H Gate", "X Gate", "CX Gate",]# "Remove", "-Back-"]
-    sel = DummySelectionWidget(2, True, False)
+    sel = tu.DummySelectionWidget(2, True, False)
     sel.set_data(data=(
         options,
         [tu.true_callback] * len(options)

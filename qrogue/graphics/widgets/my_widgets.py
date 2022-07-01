@@ -10,12 +10,12 @@ from qrogue.game.logic.actors import Robot, CircuitMatrix
 from qrogue.game.logic.collectibles import Instruction
 from qrogue.game.world.map import Map
 from qrogue.game.world.navigation import Direction
-from qrogue.graphics.rendering import ColorRules
 from qrogue.util import ColorConfig, Controls, Keys, Logger, Config, HudConfig
-from qrogue.util.config import ColorCode, QuantumSimulationConfig, InstructionConfig
-from qrogue.util.util_functions import center_string, align_string, to_binary_string
+from qrogue.util.config import QuantumSimulationConfig, InstructionConfig
+from qrogue.util.util_functions import center_string, align_string
 
 from qrogue.graphics import WidgetWrapper
+from qrogue.graphics.rendering import ColorRules
 from qrogue.graphics.widgets import Renderable
 
 

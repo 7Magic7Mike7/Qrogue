@@ -4,8 +4,6 @@ import sys
 from qrogue.game.world.dungeon_generator import QrogueWorldGenerator, QrogueLevelGenerator
 from qrogue.management.save_data import SaveData
 from qrogue.test import test_util
-from qrogue.util.config import FileTypes
-
 
 BASE_PATH = os.path.join("D:\\", "Documents", "Studium", "Master", "3. Semester", "Qrogue", "QrogueData", "data")
 

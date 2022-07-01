@@ -6,9 +6,9 @@ from qrogue.game.logic import Message as LogicalMessage
 from qrogue.game.logic.actors import Controllable, Riddle
 from qrogue.game.logic.collectibles import Collectible as LogicalCollectible, Energy as LogicalEnergy
 from qrogue.game.world.navigation import Coordinate, Direction
+from qrogue.util import Logger, ColorConfig, CommonQuestions, MapConfig
 
 from qrogue.game.world.tiles.tiles import Tile, TileCode
-from qrogue.util import Logger, ColorConfig, CommonQuestions, MapConfig
 
 
 class WalkTriggerTile(Tile):

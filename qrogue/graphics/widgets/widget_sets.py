@@ -5,7 +5,6 @@ from typing import List, Callable, Optional, Tuple
 import py_cui
 from py_cui.widget_set import WidgetSet
 
-
 from qrogue.game.logic import StateVector
 from qrogue.game.logic.actors import Boss, Enemy, Riddle, Robot
 from qrogue.game.logic.actors.puzzles import Target

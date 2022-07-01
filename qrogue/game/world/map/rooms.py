@@ -3,9 +3,9 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Dict, List, Callable, Optional
 
+from qrogue.game import target_factory
 from qrogue.game.logic import Message
 from qrogue.game.logic.actors import Robot, Riddle
-from qrogue.game import target_factory
 from qrogue.game.logic.collectibles import Instruction
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.game.world.tiles import Enemy as EnemyTile, Tile, Floor, Decoration, Teleport, FogOfWar, Void, Invalid, \

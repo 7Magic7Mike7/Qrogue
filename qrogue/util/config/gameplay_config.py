@@ -1,7 +1,6 @@
 from typing import Callable, Tuple
 
-from qrogue.util.config import PyCuiColors
-from qrogue.util.config import PopupConfig
+from qrogue.util.config import PopupConfig, PyCuiColors
 
 
 class MapConfig:
