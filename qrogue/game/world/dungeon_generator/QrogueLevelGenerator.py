@@ -194,13 +194,6 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         elif tile_code is tiles.TileCode.Collectible:
             return tiles.Collectible(self.__default_collectible_factory.produce(self.__rm))
 
-        elif tile_code is tiles.TileCode.Trigger:
-            return self.__load_trigger("*defaultTrigger")
-
-        elif tile_code is tiles.TileCode.Message:
-            # todo is it okay to print this?
-            return tiles.Message.create("Hmm, I don't know what to say.", Config.scientist_name())
-
         elif tile_code is tiles.TileCode.Energy:
             return tiles.Collectible(pickup.Energy())
 
@@ -286,23 +279,6 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         elif ref not in ['i', 'igate']:
             self.warning(f"Unknown gate reference: {reference}. Returning I Gate instead.")
         return instruction.IGate()
-
-    def __load_trigger(self, reference: QrogueDungeonParser.REFERENCE) -> tiles.Trigger:
-        reference = reference.getText()
-        if reference.startswith("tp"):
-            # teleport trigger
-            ref = reference[2:]
-            if ref.startswith("l"):
-                level = ref[1:]
-            elif ref.startswith("w"):
-                world = ref[1:]
-
-        # todo implement
-        def callback(direction: Direction, controllable: Controllable):
-            # Popup.message("Trigger", str(reference))
-            pass
-
-        return tiles.Trigger(callback)
 
     def __load_message(self, reference: QrogueDungeonParser.REFERENCE) -> Message:
         ref = reference.getText()
