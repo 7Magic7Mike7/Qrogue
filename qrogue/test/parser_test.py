@@ -14,7 +14,7 @@ def generation_test(file_name: str, world: bool = False):
     SaveData()
     player = SaveData.instance().player
     check_achievement = SaveData.instance().achievement_manager.check_achievement
-    trigger_event = SaveData.instance().achievement_manager.trigger_level_event
+    trigger_event = SaveData.instance().achievement_manager.trigger_event
     if world:
         generator = QrogueWorldGenerator(7, player, check_achievement, trigger_event, test_util.load_map,
                                          test_util.message_popup)

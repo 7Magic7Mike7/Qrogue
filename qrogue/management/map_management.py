@@ -126,9 +126,7 @@ class MapManager:
         elif map_name[0].lower().startswith(MapConfig.world_map_prefix()): # and map_name[1].isdigit():
             player = SaveData.instance().player
             check_achievement = SaveData.instance().achievement_manager.check_achievement
-            trigger_event = self.trigger_level_event  # SaveData.instance().achievement_manager.trigger_level_event
-
-            generator = QrogueWorldGenerator(self.__base_seed, player, check_achievement, trigger_event,
+            generator = QrogueWorldGenerator(self.__base_seed, player, check_achievement, self.__trigger_event,
                                              self.load_map, Popup.npc_says)
             try:
                 world, success = generator.generate(map_name)
@@ -146,8 +144,7 @@ class MapManager:
 
             # todo maybe levels should be able to have arbitrary names aside from "w..." or "back"?
             check_achievement = SaveData.instance().achievement_manager.check_achievement
-            trigger_event = self.trigger_level_event
-            generator = QrogueLevelGenerator(map_seed, check_achievement, trigger_event, self.load_map,
+            generator = QrogueLevelGenerator(map_seed, check_achievement, self.__trigger_event, self.load_map,
                                              Popup.npc_says)
             try:
                 level, success = generator.generate(map_name)
@@ -166,8 +163,7 @@ class MapManager:
             difficulty = int(map_name[len(MapConfig.expedition_map_prefix()):])
             robot = SaveData.instance().get_robot(0)
             check_achievement = SaveData.instance().achievement_manager.check_achievement
-            trigger_event = self.trigger_level_event #SaveData.instance().achievement_manager.trigger_level_event
-            generator = ExpeditionGenerator(map_seed, check_achievement, trigger_event, self.load_map)
+            generator = ExpeditionGenerator(map_seed, check_achievement, self.__trigger_event, self.load_map)
             expedition, success = generator.generate(robot)
             if success:
                 self.__cur_map = expedition
@@ -207,7 +203,7 @@ class MapManager:
         if confirmed:
             self.__load_next()
 
-    def trigger_level_event(self, event_id: str):
+    def __trigger_event(self, event_id: str):
         if event_id.lower() == MapConfig.done_event_id():
             event_id = MapConfig.specific_done_event_id(self.__cur_map.internal_name)
             if self.__cur_map.get_type() is MapType.World:
@@ -222,7 +218,7 @@ class MapManager:
                 CommonQuestions.ProceedToNextMap.ask(self.__proceed)
             else:
                 self.__proceed()
-        SaveData.instance().achievement_manager.trigger_level_event(event_id)
+        SaveData.instance().achievement_manager.trigger_event(event_id)
 
     def load_map(self, map_name: str, spawn_room: Optional[Coordinate], map_seed: int = None):
         if map_name.lower() == MapConfig.next_map_string():

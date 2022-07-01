@@ -223,7 +223,7 @@ class AchievementManager:
         if name in self.__storage:
             self.__storage[name].add_score(score)
 
-    def trigger_level_event(self, name: str, score: float = 1):
+    def trigger_event(self, name: str, score: float = 1):
         if name.startswith(MapConfig.global_event_prefix()):
             name = name[len(MapConfig.global_event_prefix()):]  # remove prefix
             storage = self.__storage
