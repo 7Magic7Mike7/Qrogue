@@ -19,23 +19,26 @@ robot : ROBOT DIGIT 'qubits' '[' REFERENCE (LIST_SEPARATOR REFERENCE)* ']'
 // building the non-template rooms used in the layout (note: template rooms are pre-defined rooms)
 room_content : WALL* r_row+ WALL* tile_descriptor* ;
 r_row : WALL tile+ WALL ;
-tile :  'o' | 't' | 'm' | DIGIT | 'c' | 'e' | 'r' | '$' | '_' ;    // obstacle, trigger, message, enemy, collectible,
-                                                                   // energy, riddle, shop, floor
+tile :  'o' | 't' | 'm' | DIGIT | 'c' | 'e' | 'r' | '!' | '$' | '_' ;    // obstacle, trigger, message, enemy, collectible,
+                                                                         // energy, riddle, challenge, shop, floor
 // further describing the tiles used in the room
 tile_descriptor : (t_descriptor | message_descriptor |
-                  enemy_descriptor | collectible_descriptor | energy_descriptor | riddle_descriptor | shop_descriptor)
+                  enemy_descriptor | collectible_descriptor | energy_descriptor | riddle_descriptor |
+                  challenge_descriptor | shop_descriptor)
                   (TUTORIAL_LITERAL REFERENCE)? (TRIGGER_LITERAL REFERENCE)? ;  // winning a fight or picking up a collectible can also trigger an event
 t_descriptor : 't' (trigger_descriptor | teleport_descriptor) ;
 trigger_descriptor : (LEVEL_EVENT | GLOBAL_ACHIEVEMENT)? REFERENCE ;
 teleport_descriptor : (LOCAL_TUNNEL ROOM_ID integer?) |     // no integer given equals middle of room
                       (GLOBAL_TELEPORT REFERENCE) ;
 message_descriptor : 'm' integer? REFERENCE ;    // #times displayed, reference to the text that should be shown
-enemy_descriptor : DIGIT (REFERENCE | stv) (REFERENCE | collectible)? ;    // enemy, id of statevector pool, id of reward pool
 collectible_descriptor : 'c' ((REFERENCE integer?) | collectible) ; // id of reward pool to draw from, number of rewards to draw (note: template pools like *key provide "normal" collectibles)
 energy_descriptor : 'e' integer ;    // amount
-riddle_descriptor : 'r' integer (REFERENCE | stv) (REFERENCE | collectible) ;   // attempts, stv pool id, reward pool id
 shop_descriptor : '$' integer (REFERENCE | collectibles) ;   // num of items to draw, reward pool id or collectible list
 
+enemy_descriptor : DIGIT (REFERENCE | stv) (REFERENCE | collectible)? ;    // enemy, id of statevector pool, id of reward pool
+riddle_descriptor : 'r' integer puzzle_parameter ;   // attempts, stv pool id, reward pool id
+challenge_descriptor : '!' integer integer? puzzle_parameter ;
+puzzle_parameter : (REFERENCE | stv) (REFERENCE | collectible) ;
 
 // how to draw an element from a pool
 draw_strategy : RANDOM_DRAW | ORDERED_DRAW ;    // default is random draw, because mostly we don't want to have to explicitely define it

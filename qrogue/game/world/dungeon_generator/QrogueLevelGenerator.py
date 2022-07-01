@@ -6,6 +6,7 @@ from antlr4.tree.Tree import TerminalNodeImpl
 from qrogue.game.logic import Message, StateVector
 from qrogue.game.logic.actors import Controllable, Riddle
 from qrogue.game.logic.actors.controllables import TestBot
+from qrogue.game.logic.actors.puzzles import Challenge
 from qrogue.game.logic.collectibles import Collectible, pickup, instruction, MultiCollectible, Qubit, ShopItem, \
     CollectibleFactory, OrderedCollectibleFactory
 from qrogue.game.target_factory import EnemyFactory, ExplicitTargetDifficulty
@@ -72,6 +73,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             return parser_util.ENERGY_TILE
         elif tile_code is tiles.TileCode.Riddler:
             return parser_util.RIDDLER_TILE
+        elif tile_code is tiles.TileCode.Challenger:
+            return parser_util.CHALLENGER_TILE
         elif tile_code is tiles.TileCode.ShopKeeper:
             return parser_util.SHOP_KEEPER_TILE
         elif tile_code is tiles.TileCode.Floor:
@@ -580,9 +583,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         items = shop_factory.produce_multiple(self.__rm, num_of_items)
         return tiles.ShopKeeper(self.__cbp.visit_shop, [ShopItem(item) for item in items])
 
-    def visitRiddle_descriptor(self, ctx: QrogueDungeonParser.Riddle_descriptorContext) -> tiles.Riddler:
-        attempts = self.visit(ctx.integer())
-
+    def visitPuzzle_parameter(self, ctx: QrogueDungeonParser.Puzzle_parameterContext) -> Tuple[StateVector, Collectible]:
         ref_index = 0
         if ctx.stv():
             stv = self.visit(ctx.stv())
@@ -596,9 +597,24 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         else:
             reward_factory = self.__load_collectible_factory(ctx.REFERENCE(ref_index))
             reward = reward_factory.produce(self.__rm)
+        return stv, reward
 
+    def visitRiddle_descriptor(self, ctx: QrogueDungeonParser.Riddle_descriptorContext) -> tiles.Riddler:
+        attempts = self.visit(ctx.integer())
+        stv, reward = self.visit(ctx.puzzle_parameter())
         riddle = Riddle(stv, reward, attempts)
         return tiles.Riddler(self.__cbp.open_riddle, riddle)
+
+    def visitChallenge_descriptor(self, ctx: QrogueDungeonParser.Challenge_descriptorContext) -> tiles.Challenger:
+        min_gates = self.visit(ctx.integer(0))
+        if ctx.integer(1):
+            max_gates = self.visit(ctx.integer(1))
+        else:
+            max_gates = min_gates
+
+        stv, reward = self.visit(ctx.puzzle_parameter())
+        challenge = Challenge(stv, reward, min_gates, max_gates)
+        return tiles.Challenger(self.__cbp.open_challenge, challenge)
 
     def visitEnergy_descriptor(self, ctx: QrogueDungeonParser.Energy_descriptorContext) -> tiles.Tile:
         amount = self.visit(ctx.integer())
@@ -733,6 +749,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             tile = self.visit(ctx.energy_descriptor())
         elif ctx.riddle_descriptor():
             tile = self.visit(ctx.riddle_descriptor())
+        elif ctx.challenge_descriptor():
+            tile = self.visit(ctx.challenge_descriptor())
         elif ctx.shop_descriptor():
             tile = self.visit(ctx.shop_descriptor())
         elif ctx.message_descriptor():

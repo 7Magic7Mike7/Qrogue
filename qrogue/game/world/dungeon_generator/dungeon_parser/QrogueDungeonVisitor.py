@@ -60,11 +60,6 @@ class QrogueDungeonVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by QrogueDungeonParser#enemy_descriptor.
-    def visitEnemy_descriptor(self, ctx):
-        return self.visitChildren(ctx)
-
-
     # Visit a parse tree produced by QrogueDungeonParser#collectible_descriptor.
     def visitCollectible_descriptor(self, ctx):
         return self.visitChildren(ctx)
@@ -75,13 +70,28 @@ class QrogueDungeonVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by QrogueDungeonParser#shop_descriptor.
+    def visitShop_descriptor(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueDungeonParser#enemy_descriptor.
+    def visitEnemy_descriptor(self, ctx):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by QrogueDungeonParser#riddle_descriptor.
     def visitRiddle_descriptor(self, ctx):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by QrogueDungeonParser#shop_descriptor.
-    def visitShop_descriptor(self, ctx):
+    # Visit a parse tree produced by QrogueDungeonParser#challenge_descriptor.
+    def visitChallenge_descriptor(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueDungeonParser#puzzle_parameter.
+    def visitPuzzle_parameter(self, ctx):
         return self.visitChildren(ctx)
 
 

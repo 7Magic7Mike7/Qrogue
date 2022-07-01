@@ -103,15 +103,6 @@ class QrogueDungeonListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by QrogueDungeonParser#enemy_descriptor.
-    def enterEnemy_descriptor(self, ctx):
-        pass
-
-    # Exit a parse tree produced by QrogueDungeonParser#enemy_descriptor.
-    def exitEnemy_descriptor(self, ctx):
-        pass
-
-
     # Enter a parse tree produced by QrogueDungeonParser#collectible_descriptor.
     def enterCollectible_descriptor(self, ctx):
         pass
@@ -130,6 +121,24 @@ class QrogueDungeonListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by QrogueDungeonParser#shop_descriptor.
+    def enterShop_descriptor(self, ctx):
+        pass
+
+    # Exit a parse tree produced by QrogueDungeonParser#shop_descriptor.
+    def exitShop_descriptor(self, ctx):
+        pass
+
+
+    # Enter a parse tree produced by QrogueDungeonParser#enemy_descriptor.
+    def enterEnemy_descriptor(self, ctx):
+        pass
+
+    # Exit a parse tree produced by QrogueDungeonParser#enemy_descriptor.
+    def exitEnemy_descriptor(self, ctx):
+        pass
+
+
     # Enter a parse tree produced by QrogueDungeonParser#riddle_descriptor.
     def enterRiddle_descriptor(self, ctx):
         pass
@@ -139,12 +148,21 @@ class QrogueDungeonListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by QrogueDungeonParser#shop_descriptor.
-    def enterShop_descriptor(self, ctx):
+    # Enter a parse tree produced by QrogueDungeonParser#challenge_descriptor.
+    def enterChallenge_descriptor(self, ctx):
         pass
 
-    # Exit a parse tree produced by QrogueDungeonParser#shop_descriptor.
-    def exitShop_descriptor(self, ctx):
+    # Exit a parse tree produced by QrogueDungeonParser#challenge_descriptor.
+    def exitChallenge_descriptor(self, ctx):
+        pass
+
+
+    # Enter a parse tree produced by QrogueDungeonParser#puzzle_parameter.
+    def enterPuzzle_parameter(self, ctx):
+        pass
+
+    # Exit a parse tree produced by QrogueDungeonParser#puzzle_parameter.
+    def exitPuzzle_parameter(self, ctx):
         pass
 
 
