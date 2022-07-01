@@ -67,12 +67,30 @@ class QrogueDungeonListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by QrogueDungeonParser#t_descriptor.
+    def enterT_descriptor(self, ctx):
+        pass
+
+    # Exit a parse tree produced by QrogueDungeonParser#t_descriptor.
+    def exitT_descriptor(self, ctx):
+        pass
+
+
     # Enter a parse tree produced by QrogueDungeonParser#trigger_descriptor.
     def enterTrigger_descriptor(self, ctx):
         pass
 
     # Exit a parse tree produced by QrogueDungeonParser#trigger_descriptor.
     def exitTrigger_descriptor(self, ctx):
+        pass
+
+
+    # Enter a parse tree produced by QrogueDungeonParser#teleport_descriptor.
+    def enterTeleport_descriptor(self, ctx):
+        pass
+
+    # Exit a parse tree produced by QrogueDungeonParser#teleport_descriptor.
+    def exitTeleport_descriptor(self, ctx):
         pass
 
 

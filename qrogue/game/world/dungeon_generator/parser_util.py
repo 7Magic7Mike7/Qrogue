@@ -17,6 +17,7 @@ OBSTACLE_TILE = "o"
 PLACE_HOLDER_TILE = "_"
 COLLECTIBLE_TILE = "c"
 TRIGGER_TILE = "t"
+TELEPORT_TILE = "t"
 MESSAGE_TILE = "m"
 ENERGY_TILE = "e"
 RIDDLER_TILE = "r"
@@ -28,6 +29,10 @@ def warning(text: str):
     Logger.instance().println("Warning: " + text)
     if Config.debugging():
         print("Warning", text)
+
+def error(text: str):
+    Logger.instance().error(text, show=False, from_pycui=False)
+    raise SyntaxError(text)
 
 
 def check_for_overspecified_columns(x: int, symbol_type, ref_type):

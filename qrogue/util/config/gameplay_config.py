@@ -46,6 +46,10 @@ class MapConfig:
         return f"{completed_map}{MapConfig.done_event_id()}"
 
     @staticmethod
+    def global_event_prefix() -> str:
+        return "globalEvent_"
+
+    @staticmethod
     def next_map_string() -> str:
         return "next"
 

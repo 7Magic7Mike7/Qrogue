@@ -40,8 +40,18 @@ class QrogueDungeonVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by QrogueDungeonParser#t_descriptor.
+    def visitT_descriptor(self, ctx):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by QrogueDungeonParser#trigger_descriptor.
     def visitTrigger_descriptor(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueDungeonParser#teleport_descriptor.
+    def visitTeleport_descriptor(self, ctx):
         return self.visitChildren(ctx)
 
 

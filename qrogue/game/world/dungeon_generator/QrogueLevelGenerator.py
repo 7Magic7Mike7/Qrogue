@@ -64,6 +64,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             return parser_util.COLLECTIBLE_TILE
         elif tile_code is tiles.TileCode.Trigger:
             return parser_util.TRIGGER_TILE
+        elif tile_code is tiles.TileCode.Teleport:
+            return parser_util.TELEPORT_TILE
         elif tile_code is tiles.TileCode.Message:
             return parser_util.MESSAGE_TILE
         elif tile_code is tiles.TileCode.Energy:
@@ -90,6 +92,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         self.__meta_data = MapMetaData(None, None, True, self.__show_description)
 
         self.__warnings = 0
+        self.__level: Optional[LevelMap] = None
         self.__robot: Optional[TestBot] = None
         self.__rm = RandomManager.create_new(seed)
 
@@ -158,9 +161,9 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         if self.__spawn_pos is None:
             raise SyntaxError("No SpawnRoom provided! Make sure to place 'SR' in the layout and if you defined a "
                               "custom SpawnRoom make sure to tag it as (Spawn).")
-        level = LevelMap(meta_data, file_name, self.__seed, room_matrix, self.__robot, self.__spawn_pos,
-                         self.__check_achievement, self.__trigger_event)
-        return level, True
+        self.__level = LevelMap(meta_data, file_name, self.__seed, room_matrix, self.__robot, self.__spawn_pos,
+                                self.__check_achievement, self.__trigger_event)
+        return self.__level, True
 
     def _add_hallway(self, room1: Coordinate, room2: Coordinate, door: tiles.Door):
         if door:    # for simplicity door could be null so we check it here
@@ -229,6 +232,9 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             if confirm:
                 self.__load_map(map_name, spawn_pos)
         CommonQuestions.GoingBack.ask(cb)
+
+    def __tunnel_callback(self, room_id: str, pos_in_room: Coordinate):
+        self.__level.tunnel(self.__spawn_pos, pos_in_room)  # todo implement correctly
 
     ##### load from references #####
 
@@ -352,8 +358,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         else:
             self.warning(f"room_id \"{room_id}\" not specified and imports not yet supported! "
                          "Placing an empty room instead.")
-            room = rooms.Placeholder.empty_room(hw_dic[Direction.North], hw_dic[Direction.East],
-                                                hw_dic[Direction.South], hw_dic[Direction.West])
+            room = rooms.Placeholder.empty_room(hw_dic)
             self.__rooms[room_id] = room
             return room
 
@@ -613,7 +618,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         if ctx.collectible():
             reward = self.visit(ctx.collectible())
         else:
-            reward_factory = self.__load_collectible_factory( ctx.REFERENCE(ref_index))
+            reward_factory = self.__load_collectible_factory(ctx.REFERENCE(ref_index))
             reward = reward_factory.produce(self.__rm)
 
         riddle = Riddle(stv, reward, attempts)
@@ -624,7 +629,39 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         return tiles.Energy(amount)
 
     def visitTrigger_descriptor(self, ctx: QrogueDungeonParser.Trigger_descriptorContext) -> tiles.Trigger:
-        return self.__load_trigger(ctx.REFERENCE())
+        if ctx.GLOBAL_ACHIEVEMENT():
+            ref = MapConfig.global_event_prefix() + parser_util.normalize_reference(ctx.REFERENCE().getText())
+        else:   # ctx.LEVEL_ACHIEVEMENT() is the default value so we don't have to check for it
+            ref = parser_util.normalize_reference(ctx.REFERENCE().getText())
+
+        def callback(_: Direction, __: Controllable):
+            self.__trigger_event(ref)
+
+        return tiles.Trigger(callback)
+
+    def visitTeleport_descriptor(self, ctx: QrogueDungeonParser.Teleport_descriptorContext) -> tiles.Teleport:
+        if ctx.GLOBAL_TELEPORT():
+            ref = parser_util.normalize_reference(ctx.REFERENCE().getText())
+            return tiles.Teleport(self.__load_map, ref, None)
+        elif ctx.LOCAL_TUNNEL():
+            room_id = ctx.ROOM_ID().getText()
+            if ctx.integer():
+                num = self.visit(ctx.integer())
+                x = num % MapConfig.room_width()
+                y = int(num / MapConfig.room_height())
+            else:
+                x, y = MapConfig.room_mid()
+            return tiles.Tunnel(self.__tunnel_callback, room_id, Coordinate(x, y))
+        else:
+            parser_util.error("Invalid Teleport description!")
+
+    def visitT_descriptor(self, ctx: QrogueDungeonParser.T_descriptorContext) -> tiles.Tile:
+        if ctx.trigger_descriptor():
+            return self.visit(ctx.trigger_descriptor())
+        elif ctx.teleport_descriptor():
+            return self.visit(ctx.teleport_descriptor())
+        else:
+            parser_util.error("Invalid T-descriptor! Neither trigger nor teleporter was provided")
 
     def visitMessage_descriptor(self, ctx: QrogueDungeonParser.Message_descriptorContext) -> tiles.Message:
         if ctx.integer():
@@ -710,8 +747,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         return enemy
 
     def visitTile_descriptor(self, ctx: QrogueDungeonParser.Tile_descriptorContext) -> tiles.Tile:
-        if ctx.trigger_descriptor():
-            tile = self.visit(ctx.trigger_descriptor())
+        if ctx.t_descriptor():
+            tile = self.visit(ctx.t_descriptor())
         elif ctx.enemy_descriptor():
             tile = self.visit(ctx.enemy_descriptor())
         elif ctx.collectible_descriptor():

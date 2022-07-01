@@ -22,10 +22,13 @@ r_row : WALL tile+ WALL ;
 tile :  'o' | 't' | 'm' | DIGIT | 'c' | 'e' | 'r' | '$' | '_' ;    // obstacle, trigger, message, enemy, collectible,
                                                                    // energy, riddle, shop, floor
 // further describing the tiles used in the room
-tile_descriptor : (trigger_descriptor | message_descriptor |
+tile_descriptor : (t_descriptor | message_descriptor |
                   enemy_descriptor | collectible_descriptor | energy_descriptor | riddle_descriptor | shop_descriptor)
                   (TUTORIAL_LITERAL REFERENCE)? (TRIGGER_LITERAL REFERENCE)? ;  // winning a fight or picking up a collectible can also trigger an event
-trigger_descriptor : 't' REFERENCE ;   // reference to the event to trigger
+t_descriptor : 't' (trigger_descriptor | teleport_descriptor) ;
+trigger_descriptor : (LEVEL_EVENT | GLOBAL_ACHIEVEMENT)? REFERENCE ;
+teleport_descriptor : (LOCAL_TUNNEL ROOM_ID integer?) |     // no integer given equals middle of room
+                      (GLOBAL_TELEPORT REFERENCE) ;
 message_descriptor : 'm' integer? REFERENCE ;    // #times displayed, reference to the text that should be shown
 enemy_descriptor : DIGIT (REFERENCE | stv) (REFERENCE | collectible)? ;    // enemy, id of statevector pool, id of reward pool
 collectible_descriptor : 'c' ((REFERENCE integer?) | collectible) ; // id of reward pool to draw from, number of rewards to draw (note: template pools like *key provide "normal" collectibles)
@@ -69,12 +72,20 @@ START_ENERGY : ('start' | 'START') '_'? ('energy' | 'ENERGY') ;
 CIRCUIT_SPACE : ('circuit' | 'CIRCUIT') '_'? ('space' | 'SPACE') ;
 BACKPACK_SPACE : ('backpack' | 'BACKPACK') '_'? ('space' | 'SPACE') ;
 
-// tiles (token used for easier identification in generator)
+// collectible tiles (token used for easier identification in generator)
 KEY_LITERAL : 'key' ;
 COIN_LITERAL : 'coin' ;
 ENERGY_LITERAL : 'energy' ;
 GATE_LITERAL : 'gate' ;
 QUBIT_LITERAL : 'qubit' ;
+
+// trigger tiles
+LEVEL_EVENT : 'LevelEvent' ;
+GLOBAL_ACHIEVEMENT : 'GlobalAchievement' ;
+
+// teleport tiles
+LOCAL_TUNNEL : 'tunnel' ;
+GLOBAL_TELEPORT : 'teleport' ;
 
 // draw strategies (token used for easier identification in generator)
 ORDERED_DRAW : 'ordered' ;

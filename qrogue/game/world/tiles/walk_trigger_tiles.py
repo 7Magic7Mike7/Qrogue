@@ -8,7 +8,7 @@ from qrogue.game.logic.collectibles import Collectible as LogicalCollectible, En
 from qrogue.game.world.navigation import Coordinate, Direction
 
 from qrogue.game.world.tiles.tiles import Tile, TileCode
-from qrogue.util import Logger, ColorConfig
+from qrogue.util import Logger, ColorConfig, CommonQuestions, MapConfig
 
 
 class WalkTriggerTile(Tile):
@@ -120,7 +120,13 @@ class Teleport(WalkTriggerTile):
         self.__room = room
 
     def _on_walk(self, direction: Direction, controllable: Controllable) -> bool:
-        self.__load_map(self.__target_map, self.__room)
+        def callback(confirm: bool = True):
+            if confirm:
+                self.__load_map(self.__target_map, self.__room)
+        if self.__target_map == MapConfig.back_map_string():
+            CommonQuestions.GoingBack.ask(callback)
+        else:
+            CommonQuestions.UseTeleporter.ask(callback)
         return True
 
     def get_img(self):
@@ -128,6 +134,15 @@ class Teleport(WalkTriggerTile):
 
     def _copy(self) -> "Tile":
         return Teleport(self.__load_map, self.__target_map, self.__room)
+
+
+class Tunnel(Teleport):
+    """
+    Like Teleport but locally. So no map is loaded, just the position of the player changes
+    """
+    def __init__(self, load_room: Callable[[str, Optional[Coordinate]], None], target_room: str,
+                 pos: Coordinate):
+        super().__init__(load_room, target_room, pos)
 
 
 class Message(WalkTriggerTile):

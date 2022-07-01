@@ -209,6 +209,23 @@ class Map(ABC):
         else:
             return False
 
+    def tunnel(self, pos_of_room: Coordinate, pos_in_room: Optional[Coordinate]) -> bool:
+        if pos_in_room is None:
+            _x, _y = MapConfig.room_mid()
+            pos_in_room = Coordinate(_x, _y)
+
+        room = self.__room_at(pos_of_room.x, pos_of_room.y)
+        if room is None:
+            return False
+
+        target_pos = Map.__calculate_pos(pos_of_room, pos_in_room)
+        direction = Direction.from_coordinates(self.__controllable_pos, target_pos)
+        destination_tile = room.at(pos_in_room.x, pos_in_room.y, force=True)
+        if destination_tile.is_walkable(direction, self.controllable_tile.controllable):
+            self.__controllable_pos = target_pos
+            return True
+        return False
+
     def __is_done(self) -> bool:
         return self.__check_achievement(MapConfig.done_event_id())
 

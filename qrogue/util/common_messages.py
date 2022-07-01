@@ -124,6 +124,7 @@ class CommonQuestions(Enum):
     GoingBack = (Config.scientist_name(), "We are not done yet. \nDo you really want to go back to the spaceship?")
     ProceedToNextMap = (Config.scientist_name(), "Looks like we cleared this map. Shall we proceed directly to the " 
                                                  "next one?")
+    UseTeleporter = (Config.system_name(), "Do you want to use this Teleporter?")
 
     def __init__(self, title: str, text: str):
         self.__title = title

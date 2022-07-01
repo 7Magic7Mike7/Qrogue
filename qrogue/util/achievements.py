@@ -214,10 +214,15 @@ class AchievementManager:
             self.__storage[name].add_score(score)
 
     def trigger_level_event(self, name: str, score: float = 1):
-        if name in self.__temp_level_storage:
-            self.__temp_level_storage[name].add_score(score)
+        if name.startswith(MapConfig.global_event_prefix()):
+            name = name[len(MapConfig.global_event_prefix()):]  # remove prefix
+            storage = self.__storage
         else:
-            self.__temp_level_storage[name] = Achievement(name, AchievementType.Event, score, score)
+            storage = self.__temp_level_storage
+        if name in storage:
+            storage[name].add_score(score)
+        else:
+            storage[name] = Achievement(name, AchievementType.Event, score, score)
 
     def progressed_in_story(self, progress: str):
         if progress not in self.__storage:
