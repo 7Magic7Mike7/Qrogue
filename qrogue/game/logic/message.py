@@ -63,7 +63,7 @@ class Message:
         return False
 
     def get(self, check_achievement: Callable[[str], bool]) -> Tuple[str, str]:
-        if check_achievement(self.__event):
+        if self.__event is not None and check_achievement(self.__event):
             if self.__alt_message:
                 return self.__alt_message.get(check_achievement)
         else:
