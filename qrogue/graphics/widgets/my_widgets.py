@@ -10,6 +10,7 @@ from qrogue.game.logic.actors import Robot, CircuitMatrix
 from qrogue.game.logic.collectibles import Instruction
 from qrogue.game.world.map import Map
 from qrogue.game.world.navigation import Direction
+from qrogue.graphics.rendering import ColorRules
 from qrogue.util import ColorConfig, Controls, Keys, Logger, Config, HudConfig
 from qrogue.util.config import ColorCode, QuantumSimulationConfig, InstructionConfig
 from qrogue.util.util_functions import center_string, align_string, to_binary_string
@@ -351,7 +352,8 @@ class StateVectorWidget(Widget):
         super().__init__(widget)
         self.__headline = headline
         self._stv_str_rep = None
-        widget.add_text_color_rule("~.*~", ColorConfig.STV_HEADING_COLOR, 'contains', match_type='regex')
+        ColorRules.apply_heading_rules(widget)
+        ColorRules.apply_qubit_config_rules(widget)
 
     @property
     def _headline(self) -> str:
@@ -407,7 +409,8 @@ class CircuitMatrixWidget(Widget):
     def __init__(self, widget: WidgetWrapper):
         super().__init__(widget)
         self.__matrix_str_rep = None
-        widget.add_text_color_rule("~.*~", ColorConfig.STV_HEADING_COLOR, 'contains', match_type='regex')
+        ColorRules.apply_heading_rules(widget)
+        ColorRules.apply_qubit_config_rules(widget)
 
     def set_data(self, matrix: CircuitMatrix) -> None:
         self.__matrix_str_rep = f"~Circuit Matrix~\n"

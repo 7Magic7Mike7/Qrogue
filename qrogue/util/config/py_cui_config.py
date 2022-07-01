@@ -31,3 +31,5 @@ class PyCuiColors:
 
     WHITE_ON_BLACK = py_cui.WHITE_ON_BLACK
     WHITE_ON_CYAN = py_cui.WHITE_ON_CYAN
+
+    YELLOW_ON_BLACK = py_cui.YELLOW_ON_BLACK

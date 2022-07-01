@@ -76,3 +76,11 @@ class ColorRules:
                                    match_type='regex')
         regex_label = "In|Out"
         widget.add_text_color_rule(f"({regex_label})", ColorConfig.CIRCUIT_LABEL_COLOR, 'contains', match_type='regex')
+
+    @staticmethod
+    def apply_heading_rules(widget: WidgetWrapper):
+        widget.add_text_color_rule("~.*~", ColorConfig.STV_HEADING_COLOR, 'contains', match_type='regex')
+
+    @staticmethod
+    def apply_qubit_config_rules(widget: WidgetWrapper):
+        widget.add_text_color_rule("\|.*>", ColorConfig.QUBIT_CONFIG_COLOR, 'contains', match_type='regex')
