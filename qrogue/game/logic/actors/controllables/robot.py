@@ -214,7 +214,7 @@ class Backpack:
                 return True
         if Config.debugging():
             Logger.instance().error("Reached a line in Backpack.remove() that I think should not be reachable "
-                                    "(although it has no game-consequences if I'm wrong.")
+                                    "(although it has no game-consequences if I'm wrong.", from_pycui=False)
         try:
             self.__storage.remove(instruction)
             return True
@@ -479,7 +479,7 @@ class Robot(Controllable, ABC):
             for c in collectible.iterator():
                 self.give_collectible(c)
         else:
-            Logger.instance().error(f"Received uncovered collectible: {collectible}")
+            Logger.instance().error(f"Received uncovered collectible: {collectible}", from_pycui=False)
 
     def on_move(self):
         self.__attributes.decrease_energy(amount=1)

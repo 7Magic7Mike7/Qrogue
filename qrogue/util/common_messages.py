@@ -13,7 +13,7 @@ class _CallbackHandler:
         if _CallbackHandler.__show:
             _CallbackHandler.__show(title, text)
         else:
-            Logger.instance().error("CommonMessages' show is None!")
+            Logger.instance().error("CommonMessages' show is None!", from_pycui=False)
 
     @staticmethod
     def set_show_callback(show: Callable[[str, str], None]):
@@ -24,7 +24,7 @@ class _CallbackHandler:
         if _CallbackHandler.__ask:
             _CallbackHandler.__ask(title, text, callback)
         else:
-            Logger.instance().error("CommonMessages' ask is None!")
+            Logger.instance().error("CommonMessages' ask is None!", from_pycui=False)
 
     @staticmethod
     def set_ask_callback(ask: Callable[[str, str, Callable[[bool], None]], None]):

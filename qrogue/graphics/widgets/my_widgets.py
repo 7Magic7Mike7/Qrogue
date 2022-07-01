@@ -262,7 +262,7 @@ class CircuitWidget(Widget):
                 if self.__robot.use_instruction(self.__place_holder_data.gate, self.__place_holder_data.pos):
                     self.__place_holder_data = None
                     return True, gate
-                Logger.instance().error("Place_Gate() did not work correctly")
+                Logger.instance().error("Place_Gate() did not work correctly", from_pycui=False)
         return False, None
 
     def set_data(self, robot: Robot) -> None:

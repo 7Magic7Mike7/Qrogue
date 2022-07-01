@@ -146,7 +146,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         try:
             meta_data, room_matrix = self.visit(parser.start())
         except SyntaxError as se:
-            Logger.instance().error(str(se))
+            Logger.instance().error(str(se), from_pycui=False)
             return None, False
 
         # add empty rooms if rows don't have the same width

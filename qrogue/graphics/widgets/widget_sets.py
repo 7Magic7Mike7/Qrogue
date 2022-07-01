@@ -822,7 +822,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
     def __choices_commit(self):
         if self._target is None:
-            Logger.instance().error("Error! Target is not set!")
+            Logger.instance().error("Error! Target is not set!", from_pycui=False)
             return False
         self._robot.update_statevector()
         success, reward = self._target.is_reached(self._robot.state_vector)

@@ -23,7 +23,7 @@ class WalkTriggerTile(Tile):
         if WalkTriggerTile.__show_explanation:
             WalkTriggerTile.__show_explanation(msg, overwrite)
         else:
-            Logger.instance().error("WalkTriggerTile's show_explanation is None!")
+            Logger.instance().error("WalkTriggerTile's show_explanation is None!", from_pycui=False)
 
     def __init__(self, code: TileCode):
         super().__init__(code)
@@ -179,7 +179,7 @@ class Message(WalkTriggerTile):
             if Message.__show:
                 Message.__show(self.__message, self._explicit_trigger)
             else:
-                Logger.instance().error("Message's show is None!")
+                Logger.instance().error("Message's show is None!", from_pycui=False)
             return False
         return False
 
@@ -266,7 +266,7 @@ class Collectible(WalkTriggerTile):
                 if Collectible.__pickup_message:
                     Collectible.__pickup_message(self.__collectible)
                 else:
-                    Logger.instance().error("Collectible's pickup message callback is None!")
+                    Logger.instance().error("Collectible's pickup message callback is None!", from_pycui=False)
             controllable.give_collectible(self.__collectible)
             self.__active = False
             return True

@@ -45,7 +45,7 @@ class MyRandom:
                 iterable.pop(index)
             except ValueError:
                 from qrogue.util.logger import Logger
-                Logger.instance().error(f"{iterable} doesn't contain {elem}")
+                Logger.instance().error(f"{iterable} doesn't contain {elem}", from_pycui=False)
         return elem
 
     def get_element_prioritized(self, iterable, priorities: List[float], msg: str = str(COUNTER)):
@@ -56,7 +56,8 @@ class MyRandom:
         try:
             prio_sum = sum(priorities)
         except:
-            Logger.instance().error("No valid priorities provided! Returning a random element to avoid crashing.")
+            Logger.instance().error("No valid priorities provided! Returning a random element to avoid crashing.",
+                                    from_pycui=False)
             return self.get_element(iterable, remove=False, msg=msg)
         # elements without a given priority will be less than the minimum given priority by the number of prioritized
         # elements divided by the number of all elements, e.g. [1, 2, 1], 4 elements -> 3/4

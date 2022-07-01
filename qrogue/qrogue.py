@@ -131,7 +131,7 @@ def start_game(from_console: bool = False, debugging: bool = False, test_level: 
             if success:
                 print("[Qrogue] Successfully saved the game!")
             else:
-                Logger.instance().error(f"Failed to save the game: {message.text}", show=False)
+                Logger.instance().error(f"Failed to save the game: {message.text}", show=False, from_pycui=False)
         Logger.instance().flush()
         OverWorldKeyLogger.instance().flush_if_useful()
         print("[Qrogue] Successfully flushed all logs and shut down the game without any problems. See you next time!")
@@ -175,7 +175,7 @@ def simulate_game(simulation_path: str, from_console: bool = False, debugging: b
             if success:
                 print("[Qrogue] Successfully saved the game!")
             else:
-                Logger.instance().error(f"Failed to save the game: {message.text}", show=False)
+                Logger.instance().error(f"Failed to save the game: {message.text}", show=False, from_pycui=False)
         Logger.instance().flush()
         OverWorldKeyLogger.instance().flush_if_useful()
         print("[Qrogue] Successfully flushed all logs and shut down the game without any problems. See you next time!")

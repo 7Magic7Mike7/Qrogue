@@ -396,7 +396,7 @@ class Room(Area):
             return self.__hallways[direction]
         elif throw_error:
             dic = [(str(self.__hallways[k]) + "\n") for k in self.__hallways]
-            Logger.instance().error(f"Invalid hallway access for {self}:\n{direction} not in {dic}")
+            Logger.instance().error(f"Invalid hallway access for {self}:\n{direction} not in {dic}", from_pycui=False)
         return None
 
     def make_visible(self):
@@ -611,7 +611,7 @@ class SpawnRoom(CopyAbleRoom):
         if tile_dic:
             if room_mid in tile_dic and place_teleporter:
                 Logger.instance().error("Specified tile_dic with non-empty room-center for SpawnRoom. Overriding it "
-                                        "with Teleporter.", show=False)
+                                        "with Teleporter.", show=False, from_pycui=False)
         else:
             tile_dic = {}
         if place_teleporter:
@@ -635,7 +635,7 @@ class SpawnRoom(CopyAbleRoom):
             else:
                 CommonQuestions.GoingBack.ask(self.__conditional_going_back)
         else:
-            Logger.instance().error("is_done_callback not set yet!")
+            Logger.instance().error("is_done_callback not set yet!", from_pycui=False)
 
     def __conditional_going_back(self, confirmed: bool):
         if confirmed:

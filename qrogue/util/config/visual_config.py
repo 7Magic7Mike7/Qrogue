@@ -111,7 +111,7 @@ class ColorConfig:
                 else:
                     logger.error(f"Illegal start index = {highlight_index} for \"{paragraph}\". Make sure no text"
                                  f" contains \"{ColorConfig.TEXT_HIGHLIGHT}\" or a 2 or more digit number directly"
-                                 f" after a highlighting (space in-between is okay)!")
+                                 f" after a highlighting (space in-between is okay)!", from_pycui=False)
             else:
                 character_removals += ColorConfig.HIGHLIGHT_WIDTH
                 start = True

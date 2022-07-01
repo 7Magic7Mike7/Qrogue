@@ -48,7 +48,7 @@ class Instruction(Collectible, ABC):
         if len(self._qargs) >= self.__needed_qubits:
             return False
         if not self.can_use_qubit(qubit):
-            Logger.instance().error("Cannot use the same qubit multiple times!")
+            Logger.instance().error("Cannot use the same qubit multiple times!", from_pycui=False)
             return True
         self._qargs.append(qubit)
         return len(self._qargs) < self.__needed_qubits

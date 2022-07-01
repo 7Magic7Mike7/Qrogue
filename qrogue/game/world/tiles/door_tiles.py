@@ -108,9 +108,10 @@ class Door(WalkTriggerTile):
             if isinstance(controllable, Robot):
                 if not controllable.use_key():
                     Logger.instance().error(f"Error! Walked on a door without having enough keys!\n#keys="
-                                            f"{controllable.key_count()}, dir={direction}")
+                                            f"{controllable.key_count()}, dir={direction}", from_pycui=False)
             else:
-                Logger.instance().error(f"Error! Non-Robot walked through a locked door: {controllable}")
+                Logger.instance().error(f"Error! Non-Robot walked through a locked door: {controllable}",
+                                        from_pycui=False)
         self.__open_state = DoorOpenState.Open
         return True
 
@@ -154,7 +155,8 @@ class Door(WalkTriggerTile):
             return True
 
         if self.__event_check is None:
-            Logger.instance().error("Tried to enter event-locked door with event_check still uninitialized!")
+            Logger.instance().error("Tried to enter event-locked door with event_check still uninitialized!",
+                                    from_pycui=False)
             self.__open_state = DoorOpenState.Closed
             return True
         if self.__event_check():

@@ -110,7 +110,8 @@ class MapManager:
                     self.__world_memory[world_name] = world
                     return world
                 else:
-                    Logger.instance().error(f"Error! Unable to build map \"{world_name}\". Returning to HubWorld")
+                    Logger.instance().error(f"Error! Unable to build map \"{world_name}\". Returning to HubWorld",
+                                            from_pycui=False)
         return self.__world_memory[MapConfig.hub_world()]
 
     def __load_map(self, map_name: str, room: Optional[Coordinate], map_seed: int = None):
@@ -135,9 +136,9 @@ class MapManager:
                     self.__in_level = False
                     self.__show_world(self.__cur_map)
                 else:
-                    Logger.instance().error(f"Could not load world \"{map_name}\"!")
+                    Logger.instance().error(f"Could not load world \"{map_name}\"!", from_pycui=False)
             except FileNotFoundError:
-                Logger.instance().error(f"Failed to open the specified world-file: {map_name}")
+                Logger.instance().error(f"Failed to open the specified world-file: {map_name}", from_pycui=False)
         elif map_name.lower().startswith(MapConfig.level_map_prefix()):
             if map_seed is None:
                 map_seed = self.__rm.get_seed(msg="MapMngr_seedForLevel")
@@ -153,9 +154,9 @@ class MapManager:
                     self.__in_level = True
                     self.__start_level(map_seed, self.__cur_map)
                 else:
-                    Logger.instance().error(f"Could not load level \"{map_name}\"!")
+                    Logger.instance().error(f"Could not load level \"{map_name}\"!", from_pycui=False)
             except FileNotFoundError:
-                Logger.instance().error(f"Failed to open the specified level-file: {map_name}")
+                Logger.instance().error(f"Failed to open the specified level-file: {map_name}", from_pycui=False)
         elif map_name.lower().startswith(MapConfig.expedition_map_prefix()):
             if map_seed is None:
                 map_seed = self.__rm.get_seed(msg="MapMngr_seedForExpedition")
@@ -170,11 +171,11 @@ class MapManager:
                 self.__in_level = True
                 self.__start_level(map_seed, self.__cur_map)
             else:
-                Logger.instance().error(f"Could not create expedition with seed = {map_seed}")
+                Logger.instance().error(f"Could not create expedition with seed = {map_seed}", from_pycui=False)
         elif map_name == MapConfig.back_map_string():
             self.__load_back()
         else:
-            Logger.instance().error(f"Invalid map to load: {map_name}")
+            Logger.instance().error(f"Invalid map to load: {map_name}", from_pycui=False)
 
     def __load_next(self):
         next_map = get_next(self.__cur_map.internal_name)

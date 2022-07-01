@@ -66,7 +66,7 @@ class Map(ABC):
             self.__cur_area.set_is_done_callback(self.__is_done)
         elif not isinstance(self.__cur_area, MetaRoom) and self.__cur_area.type is not AreaType.SpawnRoom:
             Logger.instance().error(f"{meta_data.name} starts in area that is not a SpawnRoom! cur_area = "
-                                    f"{self.__cur_area}")
+                                    f"{self.__cur_area}", from_pycui=False)
 
     @property
     def name(self) -> str:
@@ -138,7 +138,8 @@ class Map(ABC):
         if x_mod == Area.UNIT_WIDTH:
             if y_mod == Area.UNIT_HEIGHT:
                 # there are a few points on the map that are surrounded by Hallways and don't belong to any Room
-                Logger.instance().error(f"Error! You should not be able to move outside of Hallways: {x}|{y}")
+                Logger.instance().error(f"Error! You should not be able to move outside of Hallways: {x}|{y}",
+                                        from_pycui=False)
                 return None, tiles.Invalid()
             x -= 1
             x_mod -= 1
@@ -152,7 +153,7 @@ class Map(ABC):
         room_y = int(y / height)
         room = self.__rooms[room_y][room_x]
         if room is None:
-            Logger.instance().error(f"Error! Invalid position: {x}|{y}")
+            Logger.instance().error(f"Error! Invalid position: {x}|{y}", from_pycui=False)
             return None, tiles.Invalid()
 
         if in_hallway:
