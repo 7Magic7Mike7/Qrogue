@@ -33,6 +33,10 @@ class Unlocks(enum.Enum):
     Navigation = 130
     FreeNavigation = 131
 
+    @staticmethod
+    def in_map_reference() -> str:
+        return "unlocks"
+
 
 class Ach:
     __EXAM_DONE_PROGRESS = 10   # todo check
@@ -204,6 +208,12 @@ class AchievementManager:
         elif name in self.__storage:
             achievement = self.__storage[name]
             return achievement.is_done()
+        elif name.startswith(Unlocks.in_map_reference()):   # so we can check for unlocks in levels and worlds if needed
+            unlock_name = name[len(Unlocks.in_map_reference()):].lower()
+            for val in Unlocks.__members__.values():
+                if val.name.lower() == unlock_name:
+                    return Ach.check_unlocks(val, self.story_progress)
+            return False
         return False
 
     def reset_level_events(self):
