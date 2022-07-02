@@ -1,4 +1,5 @@
-from typing import Callable, Tuple
+from enum import Enum
+from typing import Callable, Tuple, List, Dict, Any
 
 from qrogue.util.config import PopupConfig, PyCuiColors
 
@@ -194,41 +195,136 @@ class CheatConfig:
         return ret
 
 
+def _get_boolean_callback() -> Callable[[int], str]:
+    def get(index: int) -> str:
+        if index % 2 == 1:
+            return "yes"
+        else:
+            return "no"
+    return get
+
+
+def _get_float_callback(min_: float, max_: float, steps: int) -> Callable[[int], str]:
+    assert min_ < max_
+    assert steps > 0
+    range_ = max_ - min_
+    step_size = range_ / steps
+
+    def get(index: int) -> str:
+        val = min_ + step_size * index
+        return str(val)
+    return get
+
+
+class Options(Enum):
+    auto_save = ("Auto Save", _get_boolean_callback(), 2, 1,
+                 "Whether to automatically save the game on exit or not.")
+    auto_reset_circuit = ("Auto Reset Circuit", _get_boolean_callback(), 2, 1,
+                          "Automatically reset your Circuit to a clean state at the beginning of a Puzzle, Riddle, "
+                          "etc.")
+    auto_swap_gates = ("Auto Swap Gates", _get_boolean_callback(), 2, 1,
+                       "Automatically swaps position of two gates if you try to move one to an occupied slot.")
+    log_keys = ("Log Keys", _get_boolean_callback(), 2, 1,
+                "Stores all keys you pressed in a .qrkl-file so one can replay them (e.g. for analysing a bug)")
+
+    gameplay_key_pause = ("Gameplay Key Pause", _get_float_callback(0.1, 1.0, 9), 9, 0,
+                          "How long to wait before we process the next input during gameplay.")
+    simulation_key_pause = ("Simulation Key Pause", _get_float_callback(0.05, 1.0, 19), 19, 3,
+                            "How long to wait before we process the next input during simulation.")
+
+    def __init__(self, name: str, get_value: Callable[[int], str], num_of_values: int, default_index: int,
+                 description: str):
+        self.__name = name
+        self.__get_value = get_value
+        self.__num_of_values = num_of_values
+        self.__default_index = default_index
+        self.__description = description
+
+    @property
+    def name(self) -> str:
+        return self.__name
+
+    @property
+    def num_of_values(self) -> int:
+        return self.__num_of_values
+
+    @property
+    def default_index(self) -> int:
+        return self.__default_index
+
+    @property
+    def description(self) -> str:
+        return self.__name
+
+    def get_value(self, cur_index: int) -> str:
+        return self.__get_value(cur_index)
+
+
 class GameplayConfig:
     __KEY_VALUE_SEPARATOR = "="
+    __OPTIONS: Dict[Options, int] = {
+        Options.auto_save: Options.auto_save.default_index,
+        Options.auto_reset_circuit: Options.auto_reset_circuit.default_index,
+        Options.auto_swap_gates: Options.auto_swap_gates.default_index,
+        Options.log_keys: Options.log_keys.default_index,
 
-    __AUTO_SAVE = "Auto save on exit"
-    __AUTO_RESET_CIRCUIT = "Auto reset Circuit"
-    __AUTO_SWAP_GATES = "Auto swap Gates"
-    __LOG_KEYS = "Log Keys"
-    __SIMULATION_KEY_PAUSE = "Simulation key pause"
-    __GAMEPLAY_KEY_PAUSE = "Gameplay key pause"
-    __CONFIG = {
-        __AUTO_SAVE: ("True", "Automatically saves the game when you exit it."),
-        __AUTO_RESET_CIRCUIT: ("True", "Automatically reset your Circuit to a clean state at the beginning of a Fight, "
-                                       "Riddle, etc."),
-        __AUTO_SWAP_GATES: ("True", "Automatically swaps position of two gates if you try to move one to an occupied "
-                                    "slot."),
-        __LOG_KEYS: ("True", "Stores all keys you pressed in a .qrkl-file so one can replay them (e.g. for analysing a "
-                             "bug)"),
-        __SIMULATION_KEY_PAUSE: ("0.2", "How long to wait before we process the next input during simulation."),
-        __GAMEPLAY_KEY_PAUSE: ("0.1", "How long to wait before we process the next input during gameplay."),
+        Options.gameplay_key_pause: Options.gameplay_key_pause.default_index,
+        Options.simulation_key_pause: Options.simulation_key_pause.default_index,
     }
+
+    @staticmethod
+    def get_options() -> List[Tuple[Options, Callable[[Options], str]]]:
+        """
+
+        :return: list of [Option, Function to proceed to next value] for all gameplay config options
+        """
+        def next_(option: Options) -> str:
+            # first increment the current index
+            next_index = GameplayConfig.__OPTIONS[option] + 1
+            if next_index >= option.num_of_values:
+                next_index = 0
+            GameplayConfig.__OPTIONS[option] = next_index
+            # then return the corresponding new value
+            return option.get_value(next_index)
+        return [(option, next_) for option in GameplayConfig.__OPTIONS]
+
+    @staticmethod
+    def get_option_value(option: Options) -> str:
+        cur_index = GameplayConfig.__OPTIONS[option]
+        return option.get_value(cur_index)
+
+    @staticmethod
+    def get_option_value_converted(option: Options, convert: Callable[[str], Any]) -> Any:
+        value = GameplayConfig.get_option_value(option)
+        try:
+            return convert(value)
+        except:
+            raise Exception(f"Failed to convert \"{value}\" with \"{convert}\"!")
 
     @staticmethod
     def to_file_text() -> str:
         text = ""
-        for conf in GameplayConfig.__CONFIG:
-            text += f"{conf}{GameplayConfig.__KEY_VALUE_SEPARATOR}{GameplayConfig.__CONFIG[conf][0]}"
+        for option in GameplayConfig.__OPTIONS:
+            cur_index = GameplayConfig.__OPTIONS[option]
+            text += f"{option.name}{GameplayConfig.__KEY_VALUE_SEPARATOR}{cur_index}"
             text += "\n"
         return text
 
     @staticmethod
     def from_log_text(log_text: str) -> bool:
+        def normalize(text: str) -> str:
+            return text.lower().strip(" ")
+
         for line in log_text.splitlines():
-            split = line.split(GameplayConfig.__KEY_VALUE_SEPARATOR)
+            if len(line.strip(" ")) == 0:
+                continue
             try:
-                GameplayConfig.__CONFIG[split[0]] = [split[1]]
+                name, index = line.split(GameplayConfig.__KEY_VALUE_SEPARATOR)
+                name = normalize(name)
+                for val in Options.__members__.values():
+                    if normalize(val.name) == name:     # compare the normalized names
+                        GameplayConfig.__OPTIONS[val] = int(index)
+                        break
             except IndexError:
                 return False
             except KeyError:
@@ -237,33 +333,19 @@ class GameplayConfig:
 
     @staticmethod
     def auto_save() -> bool:
-        return GameplayConfig.__CONFIG[GameplayConfig.__AUTO_SAVE][0] == "True"
+        return GameplayConfig.get_option_value(Options.auto_save) == "yes"
 
     @staticmethod
     def auto_reset_circuit() -> bool:
-        return GameplayConfig.__CONFIG[GameplayConfig.__AUTO_RESET_CIRCUIT][0] == "True"
+        return GameplayConfig.get_option_value(Options.auto_reset_circuit) == "yes"
 
     @staticmethod
     def log_keys() -> bool:
-        return GameplayConfig.__CONFIG[GameplayConfig.__LOG_KEYS][0] == "True"
-
-    @staticmethod
-    def simulation_key_pause() -> float:
-        try:
-            return float(GameplayConfig.__CONFIG[GameplayConfig.__SIMULATION_KEY_PAUSE][0])
-        except :
-            return 0.2
-
-    @staticmethod
-    def gameplay_key_pause() -> float:
-        try:
-            return float(GameplayConfig.__CONFIG[GameplayConfig.__GAMEPLAY_KEY_PAUSE][0])
-        except:
-            return 0.4
+        return GameplayConfig.get_option_value(Options.log_keys) == "yes"
 
     @staticmethod
     def auto_swap_gates() -> bool:
-        return GameplayConfig.__CONFIG[GameplayConfig.__AUTO_SWAP_GATES][0] == "True"
+        return GameplayConfig.get_option_value(Options.auto_swap_gates) == "yes"
 
 
 class PuzzleConfig:

@@ -271,10 +271,13 @@ class PauseMenuWidgetSet(MyWidgetSet):
 
         def use_details():
             if self.__details.use():
-                Widget.move_focus(self.__choices, self)
-                self.__details.render_reset()
-                self.render()
+                self.__focus_choices()
         self.__details.widget.add_key_command(controls.action, use_details)
+
+    def __focus_choices(self):
+        Widget.move_focus(self.__choices, self)
+        self.__details.render_reset()
+        self.render()
 
     def __continue(self) -> bool:
         self.__continue_callback()
@@ -308,9 +311,41 @@ class PauseMenuWidgetSet(MyWidgetSet):
         return False
 
     def __options(self) -> bool:
+        options = GameplayConfig.get_options()
+        texts = []
+        for op_tup in options:
+            option, _ = op_tup
+            texts.append(f"{option.name}: {GameplayConfig.get_option_value(option)}")
+
+        def callback(index: int) -> bool:
+            if 0 <= index < len(options):
+                option, next_ = options[index]
+                new_title = f"{option.name}: {next_(option)}"
+                self.__details.update_text(new_title, index)
+                self.__details.render()
+                return False  # don't change widget focus
+
+            if index == len(options):
+                # save was selected
+                if Config.save_gameplay_config():
+                    # we cannot go back directly since we want to inform the user that saving was successful
+                    # therefore we go back after closing the Popup
+                    Popup.message(CommonPopups.OptionsSaved.title, CommonPopups.OptionsSaved.text, reopen=False,
+                                  on_close_callback=self.__focus_choices)
+                else:
+                    CommonPopups.OptionsNotSaved.show()
+                return False
+            else:
+                # reset changes
+                try:
+                    Config.load_gameplay_config()   # todo error message or is the file exception good enough?
+                except FileNotFoundError as error:
+                    Logger.instance().throw(error)
+                return True     # index out of range and no special case -> go back
+
         self.__details.set_data(data=(
-            ["Gameplay Config", MyWidgetSet.BACK_STRING],
-            [self.__options_text]
+            texts + ["-Save-", MyWidgetSet.BACK_STRING],
+            [callback]
         ))
         return True
 

@@ -22,7 +22,7 @@ from qrogue.graphics.widgets import Renderable, SpaceshipWidgetSet, BossFightWid
     FightWidgetSet, MenuWidgetSet, MyWidgetSet, NavigationWidgetSet, PauseMenuWidgetSet, RiddleWidgetSet, \
     ChallengeWidgetSet, ShopWidgetSet, WorkbenchWidgetSet, TrainingsWidgetSet, Widget
 from qrogue.util import achievements, common_messages, CheatConfig, Config, GameplayConfig, UIConfig, HelpText, \
-    HelpTextType, Logger, PathConfig, MapConfig, Controls, Keys, RandomManager, PyCuiConfig, PyCuiColors
+    HelpTextType, Logger, PathConfig, MapConfig, Controls, Keys, RandomManager, PyCuiConfig, PyCuiColors, Options
 from qrogue.util.achievements import Ach, Unlocks
 from qrogue.util.config import FileTypes, PopupConfig
 from qrogue.util.game_simulator import GameSimulator
@@ -192,9 +192,9 @@ class QrogueCUI(PyCUI):
             return True
 
         if gameplay:
-            pause = GameplayConfig.gameplay_key_pause()
+            pause = GameplayConfig.get_option_value_converted(Options.gameplay_key_pause, convert=float)
         else:
-            pause = GameplayConfig.simulation_key_pause()
+            pause = GameplayConfig.get_option_value_converted(Options.simulation_key_pause, convert=float)
         now_time = time.time()
         if now_time - self.__last_input >= pause:
             self.__last_input = now_time

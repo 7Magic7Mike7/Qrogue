@@ -131,17 +131,21 @@ class Config:   # todo make singleton and handle access to other configs?
         if not os.path.exists(PathConfig.user_data_path(Config.__GAME_CONFIG)):
             Config.setup_user_data()
 
-        try:
-            config = PathConfig.read(Config.__GAME_CONFIG, in_user_path=True)
-        except FileNotFoundError:
-            raise FileNotFoundError("Could not load the game's config file!")
-
-        gameplay_start = config.index(Config.__GAMEPLAY_HEAD) + len(Config.__GAMEPLAY_HEAD)
-        gameplay_end = len(config)
-        if not GameplayConfig.from_log_text(config[gameplay_start:gameplay_end]):
+        if not Config.load_gameplay_config():
             return 2
 
         return 0
+
+    @staticmethod
+    def load_gameplay_config() -> bool:
+        try:
+            content = PathConfig.read(Config.game_config_file(), in_user_path=True)
+            gameplay_start = content.index(Config.__GAMEPLAY_HEAD) + len(Config.__GAMEPLAY_HEAD)
+            if GameplayConfig.from_log_text(content[gameplay_start:len(content)]):
+                return True
+        except FileNotFoundError:
+            raise FileNotFoundError("Could not load the game's config file!")
+        return False
 
     @staticmethod
     def save_gameplay_config() -> bool:
