@@ -962,12 +962,12 @@ class FightWidgetSet(ReachTargetWidgetSet):
             damage_taken, _ = self._robot.decrease_energy(amount=self._target.flee_energy)
             if self.__flee_check():
                 self._details.set_data(data=(
-                    ["You successfully fled!"],
+                    [f"Fled successfully. Your Qubot lost {self._target.flee_energy} energy."],
                     [self._continue_exploration_callback]
                 ))
             else:
                 self._details.set_data(data=(
-                    ["Failed to flee. Your Robot lost some Energy."],
+                    [f"Failed to flee. Your Qubot lost {self._target.flee_energy} energy."],
                     [self._empty_callback]
                 ))
                 self._details_content = ReachTargetWidgetSet._DETAILS_INFO_THEN_EDIT
