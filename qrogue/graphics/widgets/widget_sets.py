@@ -575,9 +575,8 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         super().__init__(logger, root, render)
         self.__flee_choice = flee_choice
         self._continue_exploration_callback = continue_exploration_callback
-        self._robot = None
-        self._target = None
-        self.__controls = None
+        self._robot: Optional[Robot] = None
+        self._target: Optional[Target] = None
         self.__num_of_qubits = -1   # needs to be an illegal value because we definitely want to reposition all
         # dependent widgets for the first usage of this WidgetSet
         self._details_content = None
@@ -709,7 +708,6 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
     @property
     def _sign_offset(self) -> str:
         return "\n" * (1 + 2 ** (self._robot.num_of_qubits - 1))  # 1 (headline) + middle of actual Stv
-
 
     def _reposition_widgets(self, num_of_qubits: int):
         if num_of_qubits != self.__num_of_qubits:
