@@ -20,7 +20,7 @@ from qrogue.util.achievements import Ach, Unlocks
 
 from qrogue.graphics.widgets import Renderable, Widget, MyBaseWidget
 from qrogue.graphics.widgets.my_widgets import SelectionWidget, CircuitWidget, MapWidget, SimpleWidget, HudWidget, \
-    OutputStateVectorWidget, CircuitMatrixWidget, TargetStateVectorWidget, InputStateVectorWidget
+    OutputStateVectorWidget, CircuitMatrixWidget, TargetStateVectorWidget, InputStateVectorWidget, MyMultiWidget
 
 
 class MyWidgetSet(WidgetSet, Renderable, ABC):
@@ -30,10 +30,14 @@ class MyWidgetSet(WidgetSet, Renderable, ABC):
 
     @staticmethod
     def create_hud_row(widget_set: "MyWidgetSet") -> HudWidget:
-        hud = widget_set.add_block_label('HUD', 0, 0, row_span=UIConfig.HUD_HEIGHT, column_span=UIConfig.WINDOW_WIDTH,
+        hud = widget_set.add_block_label('HUD', 0, 0, row_span=UIConfig.HUD_HEIGHT, column_span=UIConfig.HUD_WIDTH,
                                          center=False)
         hud.toggle_border()
-        return HudWidget(hud)
+
+        situational_hud = widget_set.add_block_label('Situational', 0, UIConfig.HUD_WIDTH, row_span=UIConfig.HUD_HEIGHT,
+                                                     column_span=UIConfig.WINDOW_WIDTH-UIConfig.HUD_WIDTH, center=False)
+        situational_hud.toggle_border()
+        return HudWidget(MyMultiWidget([hud, situational_hud]))
 
     BACK_STRING = "-Back-"
 
@@ -373,7 +377,7 @@ class PauseMenuWidgetSet(MyWidgetSet):
 
     def set_data(self, robot: Optional[Robot], map_name: str, achievement_manager: AchievementManager):
         # todo maybe needs some overhaul?
-        self.__hud.set_data((robot, map_name))
+        self.__hud.set_data((robot, map_name, None))
         self.__achievement_manager = achievement_manager
 
     def reset(self) -> None:
@@ -484,7 +488,7 @@ class ExploreWidgetSet(MyWidgetSet):
     def set_data(self, map_: Map) -> None:
         controllable = map_.controllable_tile.controllable
         if isinstance(controllable, Robot):
-            self.__hud.set_data((controllable, map_.name))
+            self.__hud.set_data((controllable, map_.name, "TEST"))
         else:
             self.__hud.reset_data()
         self.__map_widget.set_data(map_)
@@ -588,7 +592,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                                                 UIConfig.TARGET_STV_WIDTH + 1 * 3)  # width of the three signs
         circuit_height = UIConfig.NON_HUD_HEIGHT - row_span - UIConfig.DIALOG_HEIGHT
 
-        self.__hud = MyWidgetSet.create_hud_row(self)
+        self._hud = MyWidgetSet.create_hud_row(self)
         posy += UIConfig.HUD_HEIGHT
 
         matrix = self.add_block_label('Circuit Matrix', posy, posx, row_span, column_span=matrix_width,
@@ -771,7 +775,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         if GameplayConfig.auto_reset_circuit():
             robot.reset_circuit()
 
-        self.__hud.set_data((robot, None))  # don't overwrite the current map name
+        self._hud.set_data((robot, None, None))  # don't overwrite the current map name
         self.__circuit.set_data(robot)
 
         self.__input_stv.set_data(StateVector.create_zero_state_vector(robot.num_of_qubits))
@@ -782,7 +786,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
     def get_widget_list(self) -> List[Widget]:
         return [
-            self.__hud,
+            self._hud,
             self.__input_stv,
             self.__mul_widget,
             self.__circuit_matrix,
@@ -1099,6 +1103,7 @@ class RiddleWidgetSet(ReachTargetWidgetSet):
 
     def set_data(self, robot: Robot, target: Riddle) -> None:
         super(RiddleWidgetSet, self).set_data(robot, target)
+        self._hud.set_data((robot, None, f"Remaining attempts: {self._target.attempts}"))
 
     def _on_commit_fail(self) -> bool:
         if self._target.attempts <= 0:
@@ -1111,6 +1116,7 @@ class RiddleWidgetSet(ReachTargetWidgetSet):
                 [f"Wrong! Remaining attempts: {self._target.attempts}"],
                 [self._empty_callback]
             ))
+        self._hud.update_situational(f"Remaining attempts: {self._target.attempts}")
         return True
 
     def _choices_flee(self) -> bool:
@@ -1131,6 +1137,10 @@ class ChallengeWidgetSet(ReachTargetWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  continue_exploration_callback: Callable[[], None]):
         super().__init__(controls, render, logger, root, continue_exploration_callback)
+
+    def set_data(self, robot: Robot, target: Target) -> None:
+        super(ChallengeWidgetSet, self).set_data(robot, target)
+        self._hud.update_situational(f"Flee energy: {self._target.flee_energy}")
 
     def _on_commit_fail(self) -> bool:
         # todo check if it's because the circuit is wrong or the constraints are not fulfilled

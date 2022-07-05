@@ -1,4 +1,4 @@
-from typing import List, Callable, Any
+from typing import List, Callable, Any, Tuple
 
 from qrogue.game.logic.actors import Robot, Enemy, Boss, Riddle
 from qrogue.game.logic.actors.puzzles import Challenge
@@ -96,6 +96,12 @@ class DummyWidget(WidgetWrapper):
     def __init__(self):
         self.title = ""
         self.selected = False
+
+    def get_pos(self) -> Tuple[int, int]:
+        return 0, 0
+
+    def get_size(self) -> Tuple[int, int]:
+        return 1, 1
 
     def is_selected(self):
         return self.selected

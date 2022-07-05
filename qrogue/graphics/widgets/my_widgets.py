@@ -23,6 +23,12 @@ class MyBaseWidget(BlockLabel, WidgetWrapper):
     def __init__(self, wid, title, grid, row, column, row_span, column_span, padx, pady, center, logger):
         super().__init__(wid, title, grid, row, column, row_span, column_span, padx, pady, center, logger)
 
+    def get_pos(self) -> Tuple[int, int]:
+        return self._column, self._row
+
+    def get_size(self) -> Tuple[int, int]:
+        return self._column_span, self._row_span
+
     def is_selected(self) -> bool:
         return super(MyBaseWidget, self).is_selected()
 
@@ -57,6 +63,163 @@ class MyBaseWidget(BlockLabel, WidgetWrapper):
     def add_key_command(self, keys: List[int], command: Callable[[], Any]) -> Any:
         for key in keys:
             super(MyBaseWidget, self).add_key_command(key, command)
+
+
+class MyMultiWidget(WidgetWrapper):
+    @staticmethod
+    def get_title_separator() -> str:
+        return ">$%<"
+
+    def __init__(self, widgets: List[WidgetWrapper]):
+        self.__widgets = widgets
+        x = min([w.get_pos()[0] for w in self.__widgets])
+        y = min([w.get_pos()[1] for w in self.__widgets])
+        # the minimal (left-top most) position is where this widget starts (like casting a rectangle around all widgets)
+        self.__pos = x, y
+
+        widths = {}     # find out width of the longest row
+        heights = {}    # and height of biggest column
+        for w in self.__widgets:
+            col, row = w.get_pos()
+            width, height = w.get_size()
+            if row not in widths or col + width > widths[row]:
+                widths[row] = col + width
+            if col not in heights or row + height > heights[col]:
+                heights[col] = row + height
+        self.__size = max(widths), max(heights)
+
+    def get_pos(self) -> Tuple[int, int]:
+        """
+        Column of the left most widget, row of the top most widget. There will not necessarily be a real widget at
+        exactly this position.
+        :return: x, y / column, row
+        """
+        return self.__pos
+
+    def get_size(self) -> Tuple[int, int]:
+        """
+        Width of the widest row and height of the highest column. You can imagine it like fitting the smallest possible
+        rectangle around all its widgets.
+        :return: width, height
+        """
+        return self.__size
+
+    def is_selected(self) -> bool:
+        """
+
+        :return: True if one of its widgets is selected
+        """
+        for w in self.__widgets:
+            if w.is_selected():
+                return True
+        return False
+
+    def reposition(self, row: int = None, column: int = None, row_span: int = None, column_span: int = None):
+        if column is None:
+            col_diff = None
+        else:
+            col_diff = column - self.__pos[0]
+        if row is None:
+            row_diff = None
+        else:
+            row_diff = row - self.__pos[1]
+
+        if column_span is None:
+            width_diff = None
+        else:
+            width_diff = column_span - self.__size[0]
+        if row_span is None:
+            height_diff = None
+        else:
+            height_diff = row_span - self.__size[1]
+
+        old_width, old_height = self.__size
+        width_changes = 0
+        height_changes = 0
+        for i, w in enumerate(self.__widgets):
+            w_col, w_row = w.get_pos()
+            w_width, w_height = w.get_size()
+
+            new_row = None
+            if row_diff is not None:
+                new_row = w_row + row_diff
+
+            new_col = None
+            if col_diff is not None:
+                new_col = w_col + col_diff
+
+            new_row_span = None
+            if height_diff is not None:
+                h_mul = height_diff * w_height / old_height  # try to keep the same widget_height / whole_height ratio
+                height_change = round(w_height * h_mul)
+                height_changes += height_change
+
+                if i < len(self.__widgets) - 1 and height_changes < height_diff:
+                    new_row_span = w_height + height_change
+                else:
+                    # give the widget the remaining space
+                    new_row_span = height_diff - (height_changes - height_change)
+
+            new_column_span = None
+            if width_diff is not None:
+                w_mul = width_diff * w_width / old_width    # try to keep the same widget_width / whole_width ratio
+                width_change = round(w_width * w_mul)
+                width_changes += width_change
+                if width_changes < width_diff:
+                    new_column_span = w_width + width_change
+
+            # todo definitely needs detailed testing
+            w.reposition(row=new_row, column=new_col, row_span=new_row_span, column_span=new_column_span)
+
+        # update to the new values
+        self.__pos = column, row
+        self.__size = column_span, row_span
+
+    def set_title(self, title: str) -> None:
+        self.set_titles(title.split(MyMultiWidget.get_title_separator()))
+
+    def set_titles(self, titles: List[str]):
+        for i, t in enumerate(titles):
+            if i < len(self.__widgets):
+                self.__widgets[i].set_title(t)
+
+    def get_title(self) -> str:
+        titles = self.get_titles()
+        return MyMultiWidget.get_title_separator().join(titles)
+
+    def get_titles(self) -> List[str]:
+        titles = []
+        for w in self.__widgets:
+            titles.append(w.get_title())
+        return titles
+
+    def add_text_color_rule(self, regex: str, color: int, rule_type: str, match_type: str = 'line',
+                            region: List[int] = [0, 1], include_whitespace: bool = False, selected_color=None) -> None:
+        """
+        Applies the color rule to all of its widgets
+        :param regex:
+        :param color:
+        :param rule_type:
+        :param match_type:
+        :param region:
+        :param include_whitespace:
+        :param selected_color:
+        :return:
+        """
+        for w in self.__widgets:
+            w.add_text_color_rule(regex, color, rule_type, match_type, region, include_whitespace, selected_color)
+
+    def activate_individual_coloring(self):
+        for w in self.__widgets:
+            w.activate_individual_coloring()
+
+    def add_key_command(self, keys: List[int], command: Callable[[], Any]) -> Any:
+        for w in self.__widgets:
+            w.add_key_command(keys, command)
+
+    def toggle_border(self):
+        for w in self.__widgets:
+            w.toggle_border()
 
 
 class Widget(Renderable, ABC):
@@ -108,19 +271,29 @@ class SimpleWidget(Widget):
 
 
 class HudWidget(Widget):
-    def __init__(self, widget: WidgetWrapper):
+    def __init__(self, widget: MyMultiWidget):
         super().__init__(widget)
         self.__robot = None
         self.__map_name = None
+        self.__details = None
         self.__render_duration = None
 
-    def set_data(self, data: Tuple[Robot, Optional[str]]) -> None:
+    def set_data(self, data: Tuple[Robot, Optional[str], Optional[str]]) -> None:
         self.__robot = data[0]
         if data[1]:
             self.__map_name = data[1]
+        if data[2]:
+            self.__details = data[2]
+        else:
+            self.__details = ""
+
+    def update_situational(self, data: str):
+        self.__details = data
 
     def reset_data(self) -> None:
         self.__robot = None
+        self.__map_name = None
+        self.__details = None
 
     def update_render_duration(self, duration: float):
         if Config.debugging():
@@ -139,7 +312,7 @@ class HudWidget(Widget):
                 text += f"{self.__robot.backpack.coin_count}$  \t"
         if HudConfig.ShowFPS and self.__render_duration:
             text += f"\t\t{self.__render_duration:.2f} ms"
-        self.widget.set_title(text)
+        self.widget.set_title(f"{text}{MyMultiWidget.get_title_separator()}{self.__details}")
 
     def render_reset(self) -> None:
         self.widget.set_title("")

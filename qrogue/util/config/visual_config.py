@@ -215,6 +215,7 @@ class UIConfig:
     WINDOW_HEIGHT = 10
 
     HUD_HEIGHT = 1
+    HUD_WIDTH = math.floor(WINDOW_WIDTH / 2)
     NON_HUD_HEIGHT = WINDOW_HEIGHT - HUD_HEIGHT
     PAUSE_CHOICES_WIDTH = math.floor(WINDOW_WIDTH / 3)
 

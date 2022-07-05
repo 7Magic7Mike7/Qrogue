@@ -1,8 +1,24 @@
 from abc import ABC, abstractmethod
-from typing import List, Callable, Any
+from typing import List, Callable, Any, Tuple
 
 
 class WidgetWrapper(ABC):
+    @abstractmethod
+    def get_pos(self) -> Tuple[int, int]:
+        """
+
+        :return: x, y / column, row
+        """
+        pass
+
+    @abstractmethod
+    def get_size(self) -> Tuple[int, int]:
+        """
+
+        :return: width, height
+        """
+        pass
+
     @abstractmethod
     def is_selected(self) -> bool:
         pass
