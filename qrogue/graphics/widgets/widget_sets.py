@@ -7,7 +7,7 @@ from py_cui.widget_set import WidgetSet
 
 from qrogue.game.logic import StateVector
 from qrogue.game.logic.actors import Boss, Enemy, Riddle, Robot
-from qrogue.game.logic.actors.puzzles import Target
+from qrogue.game.logic.actors.puzzles import Target, Challenge
 from qrogue.game.logic.collectibles import ShopItem
 from qrogue.game.world.map import Map
 from qrogue.game.world.navigation import Direction
@@ -1138,9 +1138,13 @@ class ChallengeWidgetSet(ReachTargetWidgetSet):
                  continue_exploration_callback: Callable[[], None]):
         super().__init__(controls, render, logger, root, continue_exploration_callback)
 
-    def set_data(self, robot: Robot, target: Target) -> None:
+    def set_data(self, robot: Robot, target: Challenge) -> None:
         super(ChallengeWidgetSet, self).set_data(robot, target)
-        self._hud.update_situational(f"Flee energy: {self._target.flee_energy}")
+        if target.min_gates == target.max_gates:
+            constraints = f"Constraints: Use exactly {target.min_gates} gates."
+        else:
+            constraints = f"Constraints: Use between {target.min_gates} and {target.max_gates} gates."
+        self._hud.update_situational(f"Flee energy: {self._target.flee_energy}\n{constraints}")
 
     def _on_commit_fail(self) -> bool:
         # todo check if it's because the circuit is wrong or the constraints are not fulfilled
