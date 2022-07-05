@@ -1,7 +1,11 @@
 Qrogue<
 Name = "Trainings environment"
 Description = Speaker "0" "In this trainings environment you will start with 2 //02Qubits//, 5 //02Slots// for you //02Circuit// and one //02CX Gate//."
-"In the northern rooms you can pick up other //02Gates//. Other rooms mostly contain random //02Puzzles// and //02Energy//."
+"In the northern rooms you can pick up additional //02Gates//. Other rooms mostly contain random //02Puzzles// and //02Energy//. "
+"One more thing: We enhanced your //02Qubot// with two new features."
+"1) You can now remove all //02Gates// from your //02Curcuit// by //05resetting// it instead of removing everyone individually."
+"2) You can now //03flee// from //02Puzzles//. This costs //02Energy// (the bigger the digit the higher the costs) but might still be worth it if you just can't find the solution or haven't found the //02Gates// needed to solve it yet. You can always try again later and still get a reward."
+"With that said you now know everything you need. Check out the trainings environment as you like and then you can go back to do the exam."
 
 
 [Robot]
@@ -23,12 +27,12 @@ maxenergy = 100
 SR (Spawn):
 #############
 # _ _ _ _ _ #
-# _ _ t _ _ #
+# _ _ m _ _ #
 # _ t t t _ #
 # _ _ t _ _ #
 # _ _ _ _ _ #
 #############
-t GlobalAchievement *learnedAboutFleeing
+m 1 *tutTeleporter trigger *learnedAboutFleeing
 t GlobalAchievement *learnedAboutFleeing
 t teleport *back
 t GlobalAchievement *learnedAboutFleeing
@@ -37,17 +41,15 @@ t GlobalAchievement *learnedAboutFleeing
 tr (Wild):
 #############
 # c o c o c #
-# m _ m _ m #
+# _ m _ m _ #
 # _ _ _ _ _ #
-# m _ _ _ m #
+# _ m _ m _ #
 # c o _ o c #
 #############
 c gate *x
-m *pickupX
+m *pickupXCX
 c gate *cx
-m *pickupCX
-c gate *h
-m *pickupH
+m *pickupCXH
 c gate *x
 m *pickupX
 c gate *h
@@ -56,44 +58,40 @@ m *pickupH
 ts (Wild):
 #############
 # c o c o c #
-# m _ m _ m #
+# _ m _ m _ #
 # _ _ _ _ _ #
-# m _ m _ m #
+# _ m _ m _ #
 # c o c o c #
 #############
 c gate *x
-m *pickupX
+m *pickupXCX
 c gate *cx
-m *pickupCX
+m *pickupCXH
 c gate *h
-m *pickupH
 c gate *x
-m *pickupX
+m *pickupXCX
 c gate *cx
-m *pickupCX
+m *pickupCXH
 c gate *h
-m *pickupH
 
 tt (Wild):
 #############
 # c o c o c #
-# m _ m _ m #
+# _ m _ m _ #
 # _ _ _ _ _ #
-# m _ m _ m #
+# _ m _ m _ #
 # c o c o c #
 #############
 c gate *x
-m *pickupX
+m *pickupXCX
 c gate *cx
-m *pickupCX
+m *pickupCXH
 c gate *h
-m *pickupH
 c gate *x
-m *pickupX
+m *pickupXCX
 c gate *cx
-m *pickupCX
+m *pickupCXH
 c gate *h
-m *pickupH
 
 
 aa (Wild):
@@ -293,8 +291,11 @@ default *energyFull
 // highlight text by encapsulating it in "//02abcd//" where "abcd" is the text to highlight and "02" one of the available styles: 01 is for tiles, 02 is for game objects, 03 for actions, 04 for keys on the keyboard and 05 for other words
 // speaker: 0 = Examiner, 1 = Scientist, 2 = System, 3 = Player
 
-*pickupX Speaker "2" "Here you can pickup an //02X Gate//."
-*pickupCX Speaker "2" "Here you can pickup an //02CX Gate//."
-*pickupH Speaker "2" "Here you can pickup an //02H Gate//."
+*tutTeleporter Speaker "0" "Stepping back onto the //01t// in the middle of the room will give you the possibility to leave the trainings environment again. Unlike in the lessons, there is no final room you need to go to and you cannot complete this 'level'."
+
+*pickupXCX Speaker "2" "To the //05left// you can pickup an //02X Gate//." "To the //05right// you can pickup an //02CX Gate//."
+*pickupCXH Speaker "2" "To the //05left// you can pickup an //02CX Gate//." "To the //05right// you can pickup an //02H Gate//."
+*pickupX Speaker "2" "To the //05left// you can pickup an //02X Gate//."
+*pickupH Speaker "2" "To the //05right// you can pickup an //02H Gate//."
 
 >Qrogue
