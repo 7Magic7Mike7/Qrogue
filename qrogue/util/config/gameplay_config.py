@@ -99,7 +99,7 @@ class MapConfig:
 
     @staticmethod
     def test_level() -> str:
-        return "l1v2"
+        return "l0training"
 
 
 class CheatConfig:
