@@ -687,15 +687,12 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self.__circuit.widget.add_key_command(controls.action, use_circuit)
 
     def __init_choices(self):
-        texts = ["Edit"]
-        callbacks = [self.__choices_adapt]
+        texts = ["Edit", "Gate Guide"]
+        callbacks = [self.__choices_adapt, self.__choices_help]
 
         if Ach.check_unlocks(Unlocks.CircuitReset, self._progress):
             texts.append("Reset")
             callbacks.append(self.__choices_reset)
-
-        texts.append("Gate Guide")
-        callbacks.append(self.__choices_help)
 
         if Ach.check_unlocks(Unlocks.PuzzleFlee, self._progress):
             texts.append(self.__flee_choice)
