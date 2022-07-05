@@ -1,7 +1,6 @@
 For upcoming v0.4
 
 # Must haves #
-- show attempts for Riddle in HUD
 - template email, gather contacts, website text
 
 # Should haves #
@@ -14,7 +13,6 @@ For upcoming v0.4
   - research if it is feasible to make a web app out of Qrogue
 
 # For v0.5 #
-- Constraint based Puzzles (= "Challenges")
 - Popup overhaul
   - provide different positions like Top, Left, Right, Bot, Center, ...
   - tweak padding
@@ -55,3 +53,5 @@ https://medium.com/@joel.barmettler/how-to-upload-your-python-package-to-pypi-65
 - split tutorial into multiple small levels (w0 = exam on earth)
 - show qubits in circuit and stv
 - adapt "damaging" messages
+- show attempts for Riddle in HUD
+- Constraint based Puzzles (= "Challenges")
