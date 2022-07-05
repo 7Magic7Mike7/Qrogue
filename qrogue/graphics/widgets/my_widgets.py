@@ -302,7 +302,7 @@ class HudWidget(Widget):
     def render(self) -> None:
         text = ""
         if HudConfig.ShowMapName and self.__map_name:
-            text += f"{self.__map_name}\t"
+            text += f"{self.__map_name}\n"
         if self.__robot:
             if HudConfig.ShowEnergy:
                 text += f"Energy: {self.__robot.cur_energy} / {self.__robot.max_energy}   \t"
