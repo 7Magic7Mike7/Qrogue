@@ -93,14 +93,15 @@ dd (Wild):
 #############
 # 1 _ 0 _ 2 #
 # _ _ _ _ _ #
-# 0 _ 0 _ 0 #
+# ! _ 0 _ ! #
 # _ _ _ _ _ #
-# _ _ _ _ _ #
+# _ _ m _ _ #
 #############
+m 1 *tutChallenges
+! 2 *H0X0 *ddPool tutorial *tutHnXn
+! 2 *H1X1 *ddPool tutorial *tutHnXn
 0 *H1X0 *ddPool
-0 *H0X0 *ddPool tutorial *tutHnXn		// todo =2-gate constraint
 0 *H0X1 *ddPool
-0 *H1X1 *ddPool tutorial *tutHnXn
 1 *superPos
 2 *superPos
 
@@ -193,6 +194,8 @@ default *energySmall
 *tutHnXn Speaker "0" "You already know this //02Target State//. You can reach it with a single //02H Gate//. But let's try to also use an //02X Gate//."
 *tutHXAgain Speaker "0" "Again, try to also place your //02X Gate//."
 *tutMinus Speaker "0" "Look, the //02Target State// contains a //05negative number//. What a refreshing change!"
+
+*tutChallenges Speaker "0" "The //01!// is a new kind of //02Puzzle//: a //02Challenge//." "It is basically just like a normal //02Puzzle// but with additional constraints like a minimum number of //02Gates// you //05have to use// or a maximum number you are allowed to use."
 
 *doneMsg Speaker "0" "You've now seen the //02H Gate// alone and in combination with an //02X Gate//." "What do you think will happen if you combine it with an //02CX Gate//?" "Find out in the next lesson!"
 
