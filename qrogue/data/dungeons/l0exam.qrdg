@@ -12,7 +12,7 @@ maxenergy = 100
 
 [Layout]
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-| __ .. nn 33 oo 34 pp == pp 11 qq .. __ |
+| __ .. nn 33 oo 34 pp == pp 11 qq 44 fi |
 | ..    33    ==    ..    ..    ..    .. |
 | __ .. ea 12 SR == aa 21 bb .. __ .. __ |
 | ..    13    12    22    ==    ..    .. |
@@ -96,11 +96,11 @@ r 4 *entangledPos gate *h trigger *miniBossDone
 
 nn (Wild):
 #############
-# _ _ _ _ _ #
-# _ _ _ _ _ #
-# _ _ _ _ _ #
-# _ _ _ _ _ #
-# _ _ _ _ _ #
+# 0 7 8 9 _ #
+# 7 o o o _ #
+# 8 o _ o _ #
+# 9 o o o o #
+# _ _ _ o _ #
 #############
 
 oo (Wild):
@@ -116,22 +116,32 @@ r 2 *base10 energy10
 
 pp (Wild):
 #############
-# _ _ _ _ _ #
-# _ _ _ _ _ #
-# _ _ _ _ _ #
-# _ _ _ _ _ #
-# _ _ _ _ _ #
+# 0 0 4 0 0 #
+# _ o c o _ #
+# _ o o o _ #
+# _ o 3 o _ #
+# 9 9 3 9 9 #
 #############
 
 qq (Wild):
 #############
-# _ _ _ _ _ #
-# _ _ _ _ _ #
-# _ _ _ _ _ #
-# _ _ _ _ _ #
-# _ _ _ _ _ #
+# o o o o o #
+# _ o _ o _ #
+# _ _ ! _ _ #
+# _ o _ o _ #
+# o o o o o #
 #############
+! 3 [1, 0, 0, 0] energy 2 trigger *bossDone
 
+fi (Wild):
+#############
+# _ o _ o _ #
+# o _ o _ o #
+# _ _ m o _ #
+# o _ o _ o #
+# _ o _ o _ #
+#############
+m *doneMsg trigger *done
 
 
 [Hallways]
@@ -143,6 +153,7 @@ qq (Wild):
 23 (closed; one way West; )
 33 (event *miniBossDone; ; )
 34 (event *secondEntanglement; ; )
+44 (event *bossDone; ; )
 
 [StateVector Pools]
 custom
@@ -195,5 +206,8 @@ default *energySmall
 [Messages]
 // highlight text by encapsulating it in "//02abcd//" where "abcd" is the text to highlight and "02" one of the available styles: 01 is for tiles, 02 is for game objects, 03 for actions, 04 for keys on the keyboard and 05 for other words
 // speaker: 0 = Examiner, 1 = Scientist, 2 = System, 3 = Player
+
+*doneMsg Speaker "0" "Congratulations, you successfully finished the //05Exam//." "" 
+"That's currently it for Qrogue!" "Thanks for playing. There are //05more updates to come//, so keep an eye out! Also feel free to //05share your feedback//. We'd be happy to know what you think of Qrogue!"
 
 >Qrogue
