@@ -374,7 +374,7 @@ class Robot(Controllable, ABC):
         job = execute(self.__circuit, self.__backend)
         result = job.result()
         self.__circuit_matrix = CircuitMatrix(result.get_unitary(self.__circuit,
-                                                                 decimals=QuantumSimulationConfig.DECIMALS))
+                                                                 decimals=QuantumSimulationConfig.DECIMALS).data)
         if use_energy:
             self.decrease_energy(amount=1)
 
