@@ -3,15 +3,14 @@ from typing import Callable, Dict
 
 from qrogue.game.logic.actors import Robot
 from qrogue.game.logic.collectibles import GateFactory, ShopFactory, EnergyRefill, Coin, Key, instruction
+from qrogue.game.target_factory import TargetDifficulty, BossFactory, EnemyFactory, RiddleFactory
 from qrogue.game.world.map import CallbackPack, LevelMap, Hallway, WildRoom, SpawnRoom, ShopRoom, RiddleRoom, BossRoom, \
     TreasureRoom, ExpeditionMap
-from qrogue.game.target_factory import TargetDifficulty, BossFactory, EnemyFactory, RiddleFactory
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.game.world.tiles import Boss, Collectible, Door, DoorOpenState
 from qrogue.util import Logger, RandomManager
 
-
-from .generator import DungeonGenerator
+from qrogue.game.world.dungeon_generator.generator import DungeonGenerator
 
 
 class _Code(IntEnum):
@@ -238,7 +237,7 @@ class RandomLayoutGenerator:
         if prio_sum == 0:
             Logger.instance().error(f"Illegal prio_sum for seed = {self.seed} in generator.py\nThis should not be "
                                     "possible to occur but aside from the randomness during layout generation this "
-                                    "doesn't break anything. Please consider reporting!")
+                                    "doesn't break anything. Please consider reporting!", from_pycui=False)
             prio_sum = -1.0
 
         picked_rooms = []
@@ -288,7 +287,7 @@ class RandomLayoutGenerator:
                         self.__place_wild(pos, Door(direction, DoorOpenState.KeyLocked))
                         return pos
             except NotImplementedError:
-                Logger.instance().error("Unimplemented case happened!")
+                Logger.instance().error("Unimplemented case happened!", from_pycui=False)
 
     def __astar_connect_neighbors(self, visited: set, pos: Coordinate) -> (Coordinate, bool):
         """

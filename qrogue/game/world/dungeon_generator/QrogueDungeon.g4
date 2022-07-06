@@ -1,56 +1,44 @@
 grammar QrogueDungeon;
 
+import QrogueBasics, QrogueAreas, QrogueMessage;
+
 // RULES
 
-start  :    HEADER (NAME '=' TEXT)?
+start  :    HEADER meta
             robot layout rooms hallways stv_pools reward_pools messages
             ENDER;
 
-integer : DIGIT | HALLWAY_ID | INTEGER ;
-complex_number : SIGN? (IMAG_NUMBER | (integer | FLOAT) (SIGN IMAG_NUMBER)?) ;
+meta :  ('Name' '=' TEXT)?
+        ('Description' '=' (message_body | REFERENCE))?
+        (NO_TELEPORTER | WITH_TELEPORTER)? ;
 
-robot: ROBOT DIGIT 'qubits' '[' REFERENCE (LIST_SEPARATOR REFERENCE)* ']' ;
-
-// building the layout of the dungeon
-layout : LAYOUT HORIZONTAL_SEPARATOR* l_room_row (l_hallway_row l_room_row)* HORIZONTAL_SEPARATOR* ;
-l_room_row :    VERTICAL_SEPARATOR
-                (ROOM_ID | EMPTY_ROOM)  ((HALLWAY_ID | EMPTY_HALLWAY)   (ROOM_ID | EMPTY_ROOM))*
-                VERTICAL_SEPARATOR ;
-l_hallway_row : VERTICAL_SEPARATOR
-                (HALLWAY_ID | EMPTY_HALLWAY)+
-                VERTICAL_SEPARATOR ;
+robot : ROBOT DIGIT 'qubits' '[' REFERENCE (LIST_SEPARATOR REFERENCE)* ']'
+        (CIRCUIT_SPACE '=' integer)? (BACKPACK_SPACE '=' integer)?
+        (MAX_ENERGY '=' integer (START_ENERGY '=' integer)?)? ;
 
 // building the non-template rooms used in the layout (note: template rooms are pre-defined rooms)
-rooms : ROOMS room* ;
-room : ROOM_ID r_attributes ':' WALL* r_row+ WALL* tile_descriptor* ;
-r_attributes : '(' r_visibility r_type ')' ;  // visibile/in sight, type
-r_visibility : (VISIBLE_LITERAL | FOGGY_LITERAL)? ;
-r_type :    (SPAWN_LITERAL | BOSS_LITERAL | WILD_LITERAL | SHOP_LITERAL | RIDDLE_LITERAL | GATE_ROOM_LITERAL |
-            TREASURE_LITERAL) ;
+room_content : WALL* r_row+ WALL* tile_descriptor* ;
 r_row : WALL tile+ WALL ;
-tile :  'o' | 't' | 'm' | DIGIT | 'c' | 'e' | 'r' | '$' | '_' ;    // obstacle, trigger, message, enemy, collectible,
-                                                                   // energy, riddle, shop, floor
-
+tile :  'o' | 't' | 'm' | DIGIT | 'c' | 'e' | 'r' | '!' | '$' | '_' ;    // obstacle, trigger, message, enemy, collectible,
+                                                                         // energy, riddle, challenge, shop, floor
 // further describing the tiles used in the room
-tile_descriptor : (trigger_descriptor | message_descriptor |
-                  enemy_descriptor | collectible_descriptor | energy_descriptor | riddle_descriptor | shop_descriptor)
+tile_descriptor : (t_descriptor | message_descriptor |
+                  enemy_descriptor | collectible_descriptor | energy_descriptor | riddle_descriptor |
+                  challenge_descriptor | shop_descriptor)
                   (TUTORIAL_LITERAL REFERENCE)? (TRIGGER_LITERAL REFERENCE)? ;  // winning a fight or picking up a collectible can also trigger an event
-trigger_descriptor : 't' REFERENCE ;   // reference to the event to trigger
+t_descriptor : 't' (trigger_descriptor | teleport_descriptor) ;
+trigger_descriptor : (LEVEL_EVENT | GLOBAL_ACHIEVEMENT)? REFERENCE ;
+teleport_descriptor : (LOCAL_TUNNEL ROOM_ID integer?) |     // no integer given equals middle of room
+                      (GLOBAL_TELEPORT REFERENCE) ;
 message_descriptor : 'm' integer? REFERENCE ;    // #times displayed, reference to the text that should be shown
-enemy_descriptor : DIGIT REFERENCE REFERENCE?;    // enemy, id of statevector pool, id of reward pool
-collectible_descriptor : 'c' REFERENCE integer? ; // id of reward pool to draw from, number of rewards to draw (note: template pools like *key provide "normal" collectibles)
+collectible_descriptor : 'c' ((REFERENCE integer?) | collectible) ; // id of reward pool to draw from, number of rewards to draw (note: template pools like *key provide "normal" collectibles)
 energy_descriptor : 'e' integer ;    // amount
-riddle_descriptor : 'r' (REFERENCE | stv) (REFERENCE | collectible) integer;   // stv pool id, reward pool id, attempts
-shop_descriptor : '$' (REFERENCE | collectibles) integer ;   // reward pool id or collectible list, num of items to draw
+shop_descriptor : '$' integer (REFERENCE | collectibles) ;   // num of items to draw, reward pool id or collectible list
 
-
-// describing the hallways used in the layout (except for the default one '==')
-hallways : HALLWAYS hallway*;
-hallway : HALLWAY_ID h_attributes ;
-h_attributes : '(' (OPEN_LITERAL | CLOSED_LITERAL | LOCKED_LITERAL | EVENT_LITERAL REFERENCE)
-                ('one way' DIRECTION PERMANENT_LITERAL?)?
-                ('entangled' '[' HALLWAY_ID (LIST_SEPARATOR HALLWAY_ID)* ']')? ')'
-                (TUTORIAL_LITERAL REFERENCE)? (TRIGGER_LITERAL REFERENCE)? ;
+enemy_descriptor : DIGIT (REFERENCE | stv) (REFERENCE | collectible)? ;    // enemy, id of statevector pool, id of reward pool
+riddle_descriptor : 'r' integer puzzle_parameter ;   // attempts, stv pool id, reward pool id
+challenge_descriptor : '!' integer integer? puzzle_parameter ;
+puzzle_parameter : (REFERENCE | stv) (REFERENCE | collectible) ;
 
 // how to draw an element from a pool
 draw_strategy : RANDOM_DRAW | ORDERED_DRAW ;    // default is random draw, because mostly we don't want to have to explicitely define it
@@ -58,7 +46,8 @@ draw_strategy : RANDOM_DRAW | ORDERED_DRAW ;    // default is random draw, becau
 stv_pools : STV_POOLS ('custom' stv_pool+)? 'default' default_stv_pool ;    // default pools are for enemies without defined pools
 default_stv_pool : REFERENCE | draw_strategy? stvs ;
 stv_pool : REFERENCE draw_strategy? stvs ('default' 'rewards' ':' REFERENCE)?;     // id of pool, list of statevectors, id of default reward pool
-stvs : '[' stv (LIST_SEPARATOR stv)* ']' ;
+stvs : '[' stv_ref (LIST_SEPARATOR stv_ref)* ']' ;
+stv_ref: stv | REFERENCE ;
 stv :  '[' complex_number (LIST_SEPARATOR complex_number)* ']';
 
 reward_pools : REWARD_POOLS ('custom' reward_pool+)? 'default' default_reward_pool ;    // default pools are for enemies without defined pools
@@ -68,96 +57,39 @@ collectibles : '[' collectible (LIST_SEPARATOR collectible)* ']' ;
 collectible :   (KEY_LITERAL integer | COIN_LITERAL integer | ENERGY_LITERAL integer | GATE_LITERAL REFERENCE |
                 QUBIT_LITERAL integer?) ;
 
-messages : MESSAGES message* ;
-message : REFERENCE TEXT+ (EVENT_LITERAL REFERENCE ALTERNATIVE_LITERAL REFERENCE)? ;    // alternative message if a certain event already happened
-
 // TOKEN
 
-// Characters implicitely used for special purposes:
-// [ ]      for highlighting headlines and grouping lists
-// < >      to mark the beginning and the end of the dungeon
-// _        single: Floor-tile | double: to mark the use of predefined template rooms or hallways
-// .        double: is used for an empty field in the map layout, in combination with digits or characters as comma for floats or tile descriptor
-// =        double: is used for the non-existing hallway
-// ~ | #    separators for Layout and Rooms for visual indications
-// :        to mark the beginning of a room's content
-// + -      signs for numbers
-// ;        optical separation, e.g. can be use to separate things without a new line
-// *        marks the beginning of a pool id (inspired by pointers)
+// meta literals
+SR_TELEPORTER : (('spawnroom' | 'SPAWNROOM' | 'sr' | 'SR' )'_'?)?  ('teleporter' | 'TELEPORTER') ;
+NO_TELEPORTER : ('exclude' | 'EXCLUDE' | 'no' | 'NO') '_'? SR_TELEPORTER ;
+WITH_TELEPORTER : ('include' | 'INCLUDE' | 'with' | 'WITH') '_'? SR_TELEPORTER ;
 
-// general token
-DIGIT : [0-9] ;
-INTEGER : DIGIT DIGIT DIGIT+ ;
-FLOAT : DIGIT? '.' DIGIT+ ;
-IMAG_NUMBER : (DIGIT* | FLOAT) 'j' ;
-SIGN : PLUS_SIGN | MINUS_SIGN ;
-CHARACTER_LOW : [a-z] ;
-CHARACTER_UP : [A-Z] ;
-CHARACTER : CHARACTER_LOW | CHARACTER_UP ;
-TEXT : '"' .*? '"' ;
+// headlines (encapsulated in '[' ']')
+ROBOT : '[Robot]' ;
+STV_POOLS : '[StateVector Pools]' ;
+REWARD_POOLS : '[Reward Pools]' ;
 
-// literals
-VISIBLE_LITERAL : 'visible' ;
-FOGGY_LITERAL : 'foggy' ;
+// robot literals
+MAX_ENERGY : ('max' | 'MAX') '_'? ('energy' | 'ENERGY') ;
+START_ENERGY : ('start' | 'START') '_'? ('energy' | 'ENERGY') ;
+CIRCUIT_SPACE : ('circuit' | 'CIRCUIT') '_'? ('space' | 'SPACE') ;
+BACKPACK_SPACE : ('backpack' | 'BACKPACK') '_'? ('space' | 'SPACE') ;
 
-OPEN_LITERAL : 'open' ;
-CLOSED_LITERAL : 'closed' ;
-LOCKED_LITERAL : 'locked' ;
-EVENT_LITERAL : 'event' ;
-PERMANENT_LITERAL: 'permanent' ;
-
-SPAWN_LITERAL : 'Spawn' ;
-WILD_LITERAL : 'Wild' ;
-SHOP_LITERAL : 'Shop' ;
-RIDDLE_LITERAL : 'Riddle' ;
-BOSS_LITERAL : 'Boss' ;
-GATE_ROOM_LITERAL : 'Gate' ;
-TREASURE_LITERAL : 'Treasure' ;
-
-TUTORIAL_LITERAL : 'tutorial' ;
-TRIGGER_LITERAL : 'trigger' ;
+// collectible tiles (token used for easier identification in generator)
 KEY_LITERAL : 'key' ;
 COIN_LITERAL : 'coin' ;
 ENERGY_LITERAL : 'energy' ;
 GATE_LITERAL : 'gate' ;
 QUBIT_LITERAL : 'qubit' ;
-ALTERNATIVE_LITERAL : 'alternative' ;
 
-PLUS_SIGN : '+' ;
-MINUS_SIGN : '-' ;
+// trigger tiles
+LEVEL_EVENT : 'LevelEvent' ;
+GLOBAL_ACHIEVEMENT : 'GlobalAchievement' ;
 
-// headline token
-HEADER : 'Qrogue<' ;
-ENDER : '>Qrogue' ;
-NAME : 'Name' ;
-ROBOT : '[Robot]' ;
-LAYOUT : '[Layout]' ;
-ROOMS : '[Custom Rooms]' ;
-HALLWAYS : '[Hallways]' ;
-STV_POOLS : '[StateVector Pools]' ;
-REWARD_POOLS : '[Reward Pools]' ;
-MESSAGES : '[Messages]' ;
+// teleport tiles
+LOCAL_TUNNEL : 'tunnel' ;
+GLOBAL_TELEPORT : 'teleport' ;
 
-// optical separators
-HORIZONTAL_SEPARATOR : '~' ;
-VERTICAL_SEPARATOR : '|' ;
-LIST_SEPARATOR : ',' ;
-WALL : '#' ;
-EMPTY_HALLWAY : '..' ;
-EMPTY_ROOM : '__' ;
-
-// keywords
-DIRECTION : 'North' | 'East' | 'South' | 'West' ;
+// draw strategies (token used for easier identification in generator)
 ORDERED_DRAW : 'ordered' ;
 RANDOM_DRAW : 'random' ;
-
-// ids
-ROOM_ID : ('_' | CHARACTER) CHARACTER ;
-HALLWAY_ID : '==' | ('_' | DIGIT) DIGIT ;   // '==' default (closed, no entanglement), same as _1 but with better visuals
-REFERENCE : '*' (CHARACTER | DIGIT)+ ;
-
-// ignored characters (whitespace and comments)
-WS : [ \t\r\n]+ -> skip ;
-UNIVERSAL_SEPARATOR : ';'+ -> skip ;
-COMMENT : '/*' .*? '*/' -> skip ;
-LINE_COMMENT : '//' ~[\r\n]* -> skip ;

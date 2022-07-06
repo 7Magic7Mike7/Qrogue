@@ -1,0 +1,143 @@
+Qrogue<
+Name = "Lesson 2: Twos everywhere"
+Description = Speaker "0" "Lesson 2 will take the //05complexity// to a new level. Previously your Qubot's //02Circuit// had //05one// //02Qubit// and //05one// //02Slot// for a //02Quantum Gate//. Now we //05extended// the circuit to have //05two// //02Slots// and //05two// //02Qubits//. It's still //05normal// vector matrix multiplication though."
+NO_TELEPORTER
+
+// Introduced Concepts:
+// 2nd slot, 2nd Qubit, 2nd (X-) Gate
+
+[Robot]
+2 qubits [ *xgate ]
+circuit_space = 2
+maxenergy = 64; startenergy = 32
+
+[Layout]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+| __ .. __ .. SR == aa .. __ .. __ .. __ |
+| ..    ..    ==    ==    ..    ..    .. |
+| __ .. __ .. cc == bb == ff .. __ .. __ |
+| ..    ..    ..    ==    11    ..    .. |
+| __ .. __ .. __ .. dd 11 ee .. __ .. __ |
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[Custom Rooms]
+
+aa (Wild):
+#############
+# _ _ 0 _ _ #
+# _ o _ o _ #
+# 0 _ c _ 0 #
+# _ o _ o _ #
+# _ _ 0 _ _ #
+#############
+c energy 5
+0 *reach1X energy 10 tutorial *selectQubit trigger *solvedSecondPuzzle		// first occurrence in room
+0 [0, 1, 0, 0] energy 10 tutorial *firstPuzzle trigger *solvedFirstPuzzle	// second one is the first one we step on
+0 *reach1X energy 10 tutorial *selectQubit trigger *solvedSecondPuzzle
+
+bb (Wild):
+#############
+# o o _ o o #
+# o o _ o o #
+# _ _ c _ _ #
+# o o _ o o #
+# o o _ o o #
+#############
+c gate *x
+
+cc (Wild):
+#############
+# o _ _ _ o #
+# _ o 0 o _ #
+# _ 0 c 0 _ #
+# _ o 0 o _ #
+# o _ _ _ o #
+#############
+c energy 10
+0 [0, 1, 0, 0] energy 5 tutorial *firstPuzzle trigger *solvedFirstPuzzle
+0 *reach1X energy 5 tutorial *selectQubit trigger *solvedSecondPuzzle
+
+dd (Wild):
+#############
+# o _ 0 _ c #
+# o o _ 0 _ #
+# o o o _ 0 #
+# o o o o _ #
+# o o o o o #
+#############
+c energy 10
+0 *reach1X *rewDD
+0 *base11 *rewDD
+0 *reach2X *rewDD
+
+ee (Wild):
+#############
+# c _ _ o o #
+# _ _ _ o o #
+# _ _ 0 0 o #
+# o o 0 0 _ #
+# o o o _ m #
+#############
+c energy 20
+0 *reach2X energy 5
+m *doneMsg trigger *done
+
+ff (Wild):
+#############
+# o o o o o #
+# _ o o o o #
+# 0 _ o o o #
+# _ 0 _ o o #
+# c _ 0 _ o #
+#############
+c energy 10
+0 *reach1X *rewFF
+0 *base11 *rewFF
+0 *reach2X *rewFF
+
+
+[Hallways]
+11 (locked; ; )
+
+[StateVector Pools]
+custom
+*base01 [ [0, 1, 0, 0] ]
+*base10 [ [0, 0, 1, 0] ]
+*base11 [ [0, 0, 0, 1] ]
+
+*reach1X [ *base01, *base10 ]
+*reach2X [ *reach1X, [0, 0, 0, 1] ]
+
+default *reach1X
+
+[Reward Pools]
+custom 
+
+*key [key 1]
+*energyTiny [energy 5]
+*energySmall [energy 10]
+*energyMedium [energy 15]
+*energyBig [energy 20]
+*energyHuge [energy 30]
+
+*rewDD ordered [energy 5, energy 5, key 1]
+*rewFF ordered [energy 5, energy 5, key 1]
+
+default *energySmall
+
+
+[Messages]
+// highlight text by encapsulating it in "//02abcd//" where "abcd" is the text to highlight and "02" one of the available styles: 01 is for tiles, 02 is for game objects, 03 for actions, 04 for keys on the keyboard and 05 for other words
+// speaker: 0 = Examiner, 1 = Scientist, 2 = System, 3 = Player
+*None Speaker "TODO" "Implement the 'invisible' message."
+
+*firstPuzzle Speaker "0" "As already mentionened, we extended the //02Circuit Space// of your //02Qubot// to //02two// //02Slots//. So you could place up to two //02Quantum Gates// now - well, if you would have more than a single //02X Gate// that is ;)"
+"As you have only //05one// gate it //05doesn't matter// in which slot you //03position// it. Nonetheless, you can //03choose// with //04AD// or //04Left// and //04Right Arrow Keys//."
+"You should already be familiar with this //02Puzzle//. It's //05basically the same// as the previous ones but now with //05two// Qubits." when *solvedFirstPuzzle then *None
+
+*selectQubit Speaker "0" "Just like you can //03choose// the //02Slot// with left and right you can also //03select// the //02Qubit// you want to //03apply// the //02Gate// to with up and down - so, //04WS// or //04Up// and //04Down Arrow Keys//."
+"But whether you need to //03change// the //02Qubit// for this //02Puzzle// or not will remain a secret you have to uncover yourself. Good Luck." when *solvedSecondPuzzle then *None
+
+*doneMsg Speaker "0" "No words needed. Ready for the next lesson?"
+
+>Qrogue

@@ -1,0 +1,109 @@
+Qrogue<
+Name = "Lesson 3: From Zero to Nine"
+Description = Speaker "0" "What if we tell you there are //05not only// //010//s?" "Until now //05everytime// you //03stepped// onto a digit a //02Puzzle// was presented to you. But what if that's just because the //010// represents a //050%// chance to //05not contain// a //02Puzzle//?"
+NO_TELEPORTER
+
+// Introduced Concepts:
+// different digits, collapsing, short mention of Superposition
+
+[Robot]
+2 qubits [ *xgate, *xgate ]
+circuit_space = 2
+maxenergy = 100
+
+[Layout]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+| __ .. __ .. bb .. cc == dd .. __ .. __ |
+| ..    ..    ==    11    ..    ..    .. |
+| __ .. __ .. aa == SR .. __ .. __ .. __ |
+| ..    ..    ..    ..    ..    ..    .. |
+| __ .. __ .. __ .. __ .. __ .. __ .. __ |
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[Custom Rooms]
+
+aa (Wild):
+#############
+# _ _ 1 _ _ #
+# _ _ o o o #
+# 3 _ m 0 _ #
+# _ _ o o o #
+# _ _ 2 _ _ #
+#############
+m 1 *newDigits
+
+bb (Wild):
+#############
+# o o o o o #
+# _ 9 c 8 _ #
+# _ 5 6 7 _ #
+# _ _ 4 _ _ #
+# _ _ m _ _ #
+#############
+m 1 *remainingDigits
+c key 1
+
+cc (Wild):
+#############
+# o _ _ _ o #
+# _ 1 2 3 _ #
+# _ 4 0 5 _ #
+# _ 6 7 8 _ #
+# o _ m _ o #
+#############
+m 1 *tutCollapse
+
+dd (Wild):
+#############
+# _ _ _ _ 2 #
+# _ _ 4 9 o #
+# _ _ 5 0 m #
+# _ _ 6 1 o #
+# _ _ _ _ 8 #
+#############
+m *doneMsg trigger *done
+
+
+[Hallways]
+11 (locked; ; )
+
+[StateVector Pools]
+custom
+
+*base01 [ [0, 1, 0, 0] ]
+*base10 [ [0, 0, 1, 0] ]
+*base11 [ [0, 0, 0, 1] ]
+
+*reach1X [ *base01, *base10 ]
+*reach2X [ *reach1X, [0, 0, 0, 1] ]
+
+default *reach2X
+
+[Reward Pools]
+custom 
+
+*key [key 1]
+*energyTiny [energy 5]
+*energySmall [energy 10]
+*energyMedium [energy 15]
+*energyBig [energy 20]
+*energyHuge [energy 30]
+
+*xgate [gate *x]
+
+default *energySmall
+
+[Messages]
+// highlight text by encapsulating it in "//02abcd//" where "abcd" is the text to highlight and "02" one of the available styles: 01 is for tiles, 02 is for game objects, 03 for actions, 04 for keys on the keyboard and 05 for other words
+// speaker: 0 = Examiner, 1 = Scientist, 2 = System, 3 = Player
+
+*newDigits Speaker "0" "Could a //013// maybe have a //0530%// chance to not contain a //02Puzzle//?"
+
+*remainingDigits Speaker "0" "Of course we're talking about //05chances// here. So it is absolutely possible that e.g. a //011// does not contain a //02Puzzle// while a //019// does. In //02Quantum Computing// we call this //05undeterministic// behaviour //02Superposition//."
+
+*tutCollapse Speaker "0" "By //03stepping// on a digit you make it //05collapse//. This means it will either show you a //02Puzzle// or not. This can also be //05interpreted// as either //05collapsing to 1// (show a puzzle) or //05collapsing to 0// (don't show a puzzle). And as already mentioned a //010// has a //050%//, a //015// a //0550%// and a //019// a //0590%// chance to //05collapse to 0//." 
+"That's also why there is no //0110//. It wouldn't make sense to //05never show// a //02Puzzle//, hence //05always collapsing to 0//."
+
+*doneMsg Speaker "0" "Nice, seems like you're slowly getting familiar with Quantum Computing."
+
+>Qrogue

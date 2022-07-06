@@ -2,7 +2,7 @@ from typing import List, Callable
 
 from qrogue.game.logic.actors import StateVector
 from qrogue.game.logic.actors.controllables import Robot
-from qrogue.game.logic.actors.puzzles import DummyEnemy, Enemy, Target, Riddle, Boss
+from qrogue.game.logic.actors.puzzles import Enemy, Target, Riddle, Boss
 from qrogue.game.logic.collectibles import Collectible, CollectibleFactory, Instruction, CXGate, SwapGate, HGate, \
     XGate, Coin, Key
 from qrogue.game.world.navigation import Direction
@@ -64,7 +64,7 @@ class TargetDifficulty:
 class ExplicitTargetDifficulty(TargetDifficulty):
     """
     A TargetDifficulty that doesn't create StateVectors based on a Robot's possibilities but by choosing from a pool
-    of explicitely provided StateVectors
+    of explicitly provided StateVectors
     """
 
     def __init__(self, stv_pool: List[StateVector], reward_factory: CollectibleFactory, ordered: bool = False):
@@ -87,6 +87,9 @@ class ExplicitTargetDifficulty(TargetDifficulty):
             return self.__pool[self.__order_index]
         else:
             return rm.get_element(self.__pool, msg="ExplicitTargetDiff_selectStv")
+
+    def copy_pool(self) -> List[StateVector]:
+        return self.__pool.copy()
 
 
 class RiddleDifficulty(TargetDifficulty):
@@ -129,13 +132,13 @@ class EnemyFactory:
     def set_custom_reward_factory(self, factory: CollectibleFactory):
         self.__custom_reward_factory = factory
 
-    def produce(self, robot: Robot, rm: MyRandom, flee_chance: float = None) -> Enemy:
+    def produce(self, robot: Robot, rm: MyRandom, eid: int) -> Enemy:
         """
         Creates an enemy based on the number of qubits the provided robot has.
 
         :param robot:
         :param rm:
-        :param flee_chance: chance of the robot to flee from the fight
+        :param eid: id in [0, 9] to calculate certain properties
         :return: a freshly created enemy
         """
         stv = self.__difficulty.create_statevector(robot, rm)
@@ -143,9 +146,7 @@ class EnemyFactory:
             reward = self.__custom_reward_factory.produce(rm)
         else:
             reward = self.__difficulty.produce_reward(rm)
-        if flee_chance is None:
-            flee_chance = self.__default_flee_chance
-        return DummyEnemy(stv, reward, flee_chance)
+        return Enemy(eid, stv, reward)
 
     def start(self, robot: Robot, enemy: Enemy, direction: Direction):
         self.__start_fight(robot, enemy, direction)
@@ -158,10 +159,10 @@ class ExplicitEnemyFactory(EnemyFactory):
         self.__reward_pool = reward_pool
         super().__init__(start_fight_callback, DummyTargetDifficulty())
 
-    def produce(self, robot: Robot, rm: MyRandom, flee_chance: float = None) -> Enemy:
+    def produce(self, robot: Robot, rm: MyRandom, eid: int) -> Enemy:
         stv = rm.get_element(self.__stv_pool, msg="ExplicitEnemyFactory_stv")
         reward = rm.get_element(self.__reward_pool, msg="ExplicitEnemyFactory_reward")
-        return DummyEnemy(stv, reward, flee_chance)
+        return Enemy(eid, stv, reward)
 
 
 class RiddleFactory:

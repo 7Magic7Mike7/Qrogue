@@ -1,4 +1,4 @@
-# Generated from D:/Documents/pycharm_workspace/Qrogue/qrogue/game/world/dungeon_generator\QrogueDungeon.g4 by ANTLR 4.9.2
+# Generated from D:/Documents/pycharm_workspace/Qrogue/qrogue/game/world/dungeon_generator\QrogueDungeon.g4 by ANTLR 4.10.1
 from antlr4 import *
 
 # This class defines a complete generic visitor for a parse tree produced by QrogueDungeonParser.
@@ -10,6 +10,151 @@ class QrogueDungeonVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by QrogueDungeonParser#meta.
+    def visitMeta(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueDungeonParser#robot.
+    def visitRobot(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueDungeonParser#room_content.
+    def visitRoom_content(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueDungeonParser#r_row.
+    def visitR_row(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueDungeonParser#tile.
+    def visitTile(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueDungeonParser#tile_descriptor.
+    def visitTile_descriptor(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueDungeonParser#t_descriptor.
+    def visitT_descriptor(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueDungeonParser#trigger_descriptor.
+    def visitTrigger_descriptor(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueDungeonParser#teleport_descriptor.
+    def visitTeleport_descriptor(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueDungeonParser#message_descriptor.
+    def visitMessage_descriptor(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueDungeonParser#collectible_descriptor.
+    def visitCollectible_descriptor(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueDungeonParser#energy_descriptor.
+    def visitEnergy_descriptor(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueDungeonParser#shop_descriptor.
+    def visitShop_descriptor(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueDungeonParser#enemy_descriptor.
+    def visitEnemy_descriptor(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueDungeonParser#riddle_descriptor.
+    def visitRiddle_descriptor(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueDungeonParser#challenge_descriptor.
+    def visitChallenge_descriptor(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueDungeonParser#puzzle_parameter.
+    def visitPuzzle_parameter(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueDungeonParser#draw_strategy.
+    def visitDraw_strategy(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueDungeonParser#stv_pools.
+    def visitStv_pools(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueDungeonParser#default_stv_pool.
+    def visitDefault_stv_pool(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueDungeonParser#stv_pool.
+    def visitStv_pool(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueDungeonParser#stvs.
+    def visitStvs(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueDungeonParser#stv_ref.
+    def visitStv_ref(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueDungeonParser#stv.
+    def visitStv(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueDungeonParser#reward_pools.
+    def visitReward_pools(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueDungeonParser#default_reward_pool.
+    def visitDefault_reward_pool(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueDungeonParser#reward_pool.
+    def visitReward_pool(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueDungeonParser#collectibles.
+    def visitCollectibles(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueDungeonParser#collectible.
+    def visitCollectible(self, ctx):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by QrogueDungeonParser#integer.
     def visitInteger(self, ctx):
         return self.visitChildren(ctx)
@@ -17,11 +162,6 @@ class QrogueDungeonVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by QrogueDungeonParser#complex_number.
     def visitComplex_number(self, ctx):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by QrogueDungeonParser#robot.
-    def visitRobot(self, ctx):
         return self.visitChildren(ctx)
 
 
@@ -65,56 +205,6 @@ class QrogueDungeonVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by QrogueDungeonParser#r_row.
-    def visitR_row(self, ctx):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by QrogueDungeonParser#tile.
-    def visitTile(self, ctx):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by QrogueDungeonParser#tile_descriptor.
-    def visitTile_descriptor(self, ctx):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by QrogueDungeonParser#trigger_descriptor.
-    def visitTrigger_descriptor(self, ctx):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by QrogueDungeonParser#message_descriptor.
-    def visitMessage_descriptor(self, ctx):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by QrogueDungeonParser#enemy_descriptor.
-    def visitEnemy_descriptor(self, ctx):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by QrogueDungeonParser#collectible_descriptor.
-    def visitCollectible_descriptor(self, ctx):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by QrogueDungeonParser#energy_descriptor.
-    def visitEnergy_descriptor(self, ctx):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by QrogueDungeonParser#riddle_descriptor.
-    def visitRiddle_descriptor(self, ctx):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by QrogueDungeonParser#shop_descriptor.
-    def visitShop_descriptor(self, ctx):
-        return self.visitChildren(ctx)
-
-
     # Visit a parse tree produced by QrogueDungeonParser#hallways.
     def visitHallways(self, ctx):
         return self.visitChildren(ctx)
@@ -130,61 +220,6 @@ class QrogueDungeonVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by QrogueDungeonParser#draw_strategy.
-    def visitDraw_strategy(self, ctx):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by QrogueDungeonParser#stv_pools.
-    def visitStv_pools(self, ctx):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by QrogueDungeonParser#default_stv_pool.
-    def visitDefault_stv_pool(self, ctx):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by QrogueDungeonParser#stv_pool.
-    def visitStv_pool(self, ctx):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by QrogueDungeonParser#stvs.
-    def visitStvs(self, ctx):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by QrogueDungeonParser#stv.
-    def visitStv(self, ctx):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by QrogueDungeonParser#reward_pools.
-    def visitReward_pools(self, ctx):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by QrogueDungeonParser#default_reward_pool.
-    def visitDefault_reward_pool(self, ctx):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by QrogueDungeonParser#reward_pool.
-    def visitReward_pool(self, ctx):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by QrogueDungeonParser#collectibles.
-    def visitCollectibles(self, ctx):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by QrogueDungeonParser#collectible.
-    def visitCollectible(self, ctx):
-        return self.visitChildren(ctx)
-
-
     # Visit a parse tree produced by QrogueDungeonParser#messages.
     def visitMessages(self, ctx):
         return self.visitChildren(ctx)
@@ -192,6 +227,11 @@ class QrogueDungeonVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by QrogueDungeonParser#message.
     def visitMessage(self, ctx):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueDungeonParser#message_body.
+    def visitMessage_body(self, ctx):
         return self.visitChildren(ctx)
 
 

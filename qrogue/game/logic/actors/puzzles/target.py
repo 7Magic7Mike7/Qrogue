@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Tuple
+from typing import Tuple, Optional
 
 from qrogue.game.logic.actors import StateVector
 from qrogue.game.logic.collectibles import Collectible
@@ -37,7 +37,11 @@ class Target(ABC):
         """
         return self.__is_active
 
-    def is_reached(self, state_vector: StateVector) -> Tuple[bool, Collectible]:
+    @property
+    def flee_energy(self) -> int:
+        return 1
+
+    def is_reached(self, state_vector: StateVector) -> Tuple[bool, Optional[Collectible]]:
         """
         Checks if the given StateVector is equal to the Target's StateVector. If so, Target is set inactive and will
         provide its reward.

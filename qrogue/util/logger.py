@@ -1,12 +1,13 @@
 from datetime import datetime
-from typing import Callable
+from typing import Callable, Optional, List
 
-import py_cui.debug
+from py_cui.debug import PyCUILogger
 
+from qrogue.util import PyCuiColors
 from qrogue.util.config import PathConfig, Config
 
 
-class Logger(py_cui.debug.PyCUILogger):
+class Logger(PyCUILogger):
     __BUFFER_SIZE = 2048
     __instance = None
 
@@ -22,17 +23,17 @@ class Logger(py_cui.debug.PyCUILogger):
             self.throw(Exception("This class is a singleton!"))
         else:
             self.__text = ""
-            self.__message_popup = None
-            self.__error_popup = None
+            self.__message_popup: Optional[Callable[[str, str, int], None]] = None
+            self.__error_popup: Optional[Callable[[str, str], None]] = None
             self.__save_file = PathConfig.new_log_file(seed)
-            self.__buffer = [Config.get_log_head(seed)]
+            self.__buffer: List[str] = [Config.get_log_head(seed)]
             Logger.__instance = self
 
     @property
     def __buffer_size(self) -> int:
         return len(self.__buffer)
 
-    def set_popup(self, message_popup_function: Callable[[str, str], None],
+    def set_popup(self, message_popup_function: Callable[[str, str, int], None],
                   error_popup_function: Callable[[str, str], None]) -> None:
         self.__message_popup = message_popup_function
         self.__error_popup = error_popup_function
@@ -62,7 +63,7 @@ class Logger(py_cui.debug.PyCUILogger):
         highlighting = "\n----------------------------------\n"
         self.info(f"{highlighting}ERROR |{message}{highlighting}", from_pycui=from_pycui)
 
-    def throw(self, error) -> None:
+    def throw(self, error: BaseException) -> None:
         print(error)
         self.__write(f"[ERROR] {error}")
         self.flush()
@@ -75,7 +76,7 @@ class Logger(py_cui.debug.PyCUILogger):
             self.__text = message
         else:
             self.__text += message
-        self.__message_popup("Logger", self.__text)
+        self.__message_popup("Logger", self.__text, PyCuiColors.WHITE_ON_CYAN)
 
     def clear(self) -> None:
         self.__text = ""

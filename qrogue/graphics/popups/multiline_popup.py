@@ -1,12 +1,13 @@
-from typing import Callable
+from typing import Callable, Tuple, List
 
-import py_cui.ui
 from py_cui import ColorRule
+from py_cui.popups import Popup as PyCuiPopup
+from py_cui.ui import MenuImplementation
 
-from qrogue.util import ColorConfig as CC, Keys, Logger
+from qrogue.util import ColorConfig as CC, Keys, Logger, PopupConfig
 
 
-class MultilinePopup(py_cui.popups.Popup, py_cui.ui.MenuImplementation):
+class MultilinePopup(PyCuiPopup, MenuImplementation):
     @staticmethod
     def __get_color_rules():
         regex = CC.REGEX_TEXT_HIGHLIGHT
@@ -16,13 +17,15 @@ class MultilinePopup(py_cui.popups.Popup, py_cui.ui.MenuImplementation):
         ]
 
     @staticmethod
-    def __split_text(text: str, width: int, logger) -> "list of str":
+    def __split_text(text: str, width: int, padding: int, logger) -> List[str]:
         """
 
         :param text: text to split into multiple lines
         :param width: the maximum width of one line
+        :param padding: how much spaces we should place at the start and end of each line
         :return: list of text parts with a maximum of #width characters
         """
+        width -= padding * 2    # remove the space needed for padding
         split_text = []
         for paragraph in text.splitlines():
             index = 0
@@ -68,15 +71,23 @@ class MultilinePopup(py_cui.popups.Popup, py_cui.ui.MenuImplementation):
                 split_text.append(prepend + paragraph[index:].strip())
             else:
                 split_text.append(paragraph[index:].strip())
-        return split_text
+        return [" " * padding + line + " " * padding for line in split_text]
 
     def __init__(self, root, title, text, color, renderer, logger, controls,
-                 confirmation_callback: Callable[[bool], None] = None):
+                 confirmation_callback: Callable[[bool], None] = None, pos: Tuple[int, int] = None):
         super().__init__(root, title, text, color, renderer, logger)
         self.__controls = controls
         self.__confirmation_callback = confirmation_callback
         self._top_view = 0
-        self.__lines = MultilinePopup.__split_text(text, self._width - 6, logger)  # 6: based on PyCUI "padding" I think
+
+        #self._pady = PopupConfig.PADDING_Y
+        self.__lines = MultilinePopup.__split_text(text, self._width - 6, PopupConfig.PADDING_X, logger)  # 6: based on PyCUI "padding" I think
+
+        if pos:
+            if pos[0] is not None:
+                self._start_x = pos[0]
+            if pos[1] is not None:
+                self._start_y = pos[1]
 
         if self._is_question:
             self.__lines.append("-" * self._width + "\n")

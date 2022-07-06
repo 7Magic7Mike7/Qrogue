@@ -1,0 +1,130 @@
+Qrogue<
+Name = "Lesson 5: Riddling CX?"
+Description = Speaker "0" "Now we're getting mysterious!" 
+"This lesson will show you a //05new// kind of //02Puzzle// as well as a //05new// kind of //02Gate//."
+NO_TELEPORTER
+
+// Introduced Concepts:
+// event doors (triggered in different room), Riddle, CX Gate (2 Qubit Gate)
+
+[Robot]
+2 qubits [ *xgate ]
+circuit_space = 2
+maxenergy = 100
+
+[Layout]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+| __ .. __ .. __ .. ee .. __ .. __ .. __ |
+| ..    ..    ..    11    ..    ..    .. |
+| __ .. __ .. bb 22 SR == aa .. __ .. __ |
+| ..    ..    ..    32    31    ..    .. |
+| __ .. __ .. __ .. dd == cc .. __ .. __ |
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[Custom Rooms]
+
+aa (Wild):
+#############
+# _ _ _ _ 3 #
+# _ _ _ 1 _ #
+# _ _ 0 _ 0 #
+# _ _ _ 2 _ #
+# _ _ _ _ 4 #
+#############
+0 [0, 0, 1, 0] energy 5 tutorial *tutSingleX trigger *didPuzzle
+0 *reach1X
+
+bb (Wild):
+#############
+# _ _ _ 0 _ #
+# _ _ _ _ _ #
+# _ r _ _ m #
+# _ _ _ _ _ #
+# _ _ _ 0 _ #
+#############
+m 1 *riddleNote
+r 3 [0, 1, 0, 0] energy 10 trigger *didRiddle
+
+cc (Wild):
+#############
+# o o _ _ _ #
+# o o o 0 _ #
+# 0 o o o 7 #
+# _ 0 o o _ #
+# _ _ 8 _ c #
+#############
+c gate *cx tutorial *tutCXGate
+0 *reach1X
+0 *reach1X
+0 *base11
+
+dd (Wild):
+#############
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ r _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+#############
+r 5 *base11 key 1 tutorial *riddle2
+
+
+ee (Wild):
+#############
+# _ _ _ _ _ #
+# _ _ m _ _ #
+# o o r o o #
+# _ _ 0 _ _ #
+# _ _ _ _ _ #
+#############
+m *doneMsg trigger *done
+r 3 *base10 energy 10
+0 *base11
+
+
+[Hallways]
+11 (locked; ; )
+22 (event *didPuzzle; ; )
+31 (event *didRiddle; ; )
+32 (event *didRiddle; one way North permanent; )
+
+[StateVector Pools]
+custom
+
+*base00 [ [1, 0, 0, 0] ]
+*base01 [ [0, 1, 0, 0] ]
+*base10 [ [0, 0, 1, 0] ]
+*base11 [ [0, 0, 0, 1] ]
+
+*reach1X [ *base01, *base10 ]
+*reach2X [ *reach1X, *base11 ]
+
+default *reach1X
+
+[Reward Pools]
+custom 
+*key [key 1]
+*energyTiny [energy 5]
+*energySmall [energy 10]
+*energyMedium [energy 15]
+*energyBig [energy 20]
+*energyHuge [energy 30]
+
+default *energySmall
+
+
+[Messages]
+// highlight text by encapsulating it in "//02abcd//" where "abcd" is the text to highlight and "02" one of the available styles: 01 is for tiles, 02 is for game objects, 03 for actions, 04 for keys on the keyboard and 05 for other words
+// speaker: 0 = Examiner, 1 = Scientist, 2 = System, 3 = Player
+
+*tutSingleX Speaker "0" "One more thing:" "We took one of your //02X Gates//. You will later see why."
+
+*riddleNote Speaker "0" "The //01?// you see on the left is a //02Riddle//. It's very similar to a //02Puzzle//, yet a bit different. It also shows you a //02Target State// you need to //03reach// to solve it but you //05cannot// //03try// it arbitrary //05often//. Instead, it has a predefined //05number of times// you can //03edit// your //02Circuit// before it vanishes together with its //02Reward// - which is often //05better// than for //02Puzzles//."
+
+*tutCXGate Speaker "0" "You picked up: //02CX Gate//" "//02CX Gate// is short for //02Controlled X Gate//. In contrast to the normal //02X Gate// which is placed on //05one qubit// - hence, a //02Single Qubit Gate// - this one is a //02Multi Qubit Gate//. To be precice: it needs to be placed on //05two qubits//. First you have to //03place// the //05C// part. It controls whether the //05X// part is active or not. So if the //02Qubit// of //05C// is //051// the //02Qubit// of //05X// will be //05adapted// accordingly. Else it won't do anything."
+
+*riddle2 Speaker "0" "Another //02Riddle//! Your //05new// //02Gate// might come in handy."
+
+*doneMsg Speaker "0" "Nice, seems like you're slowly getting familiar with Quantum Computing!"
+
+>Qrogue

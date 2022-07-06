@@ -1,18 +1,18 @@
 import random
-from typing import Callable, List
+from typing import Callable, List, Optional
 
 from qrogue.game.logic.actors import Robot, Controllable, Player
 from qrogue.game.world.navigation import Direction, Coordinate
 from qrogue.game.world.tiles import Tile, TileCode, WalkTriggerTile
 from qrogue.game.world.tiles.tiles import NpcTile
-from qrogue.util import Config, MapConfig, achievements, RandomManager
+from qrogue.util import Config, achievements
 
 SCIENTIST_TILE_REPRESENTATION = Config.scientist_name()[0]
 ascii_spaceship = \
     r"                                                                                              " + "\n" \
     r"                                    X---------------X                                         " + "\n" \
     r"                                   /ööööööööööööööööö)>                                       " + "\n" \
-    r"                                  /öööööööBöööööööööö)>                           /)          " + "\n" \
+    r"                                  /öTöööööBöööööööööö)>                           /)          " + "\n" \
     r"                                 /ööööööööööööööööööö)>                          /ö|          " + "\n" \
     r"                                |öööööööööööööööööööö)>                         /öö|          " + "\n" \
     r"                                |öööööööööööööööööööö)>                        /ööö|          " + "\n" \
@@ -96,6 +96,7 @@ class SpaceshipTriggerTile(WalkTriggerTile):
     MAP_WORKBENCH_REPRESENTATION = "W"
     MAP_GATE_LIBRARY_REPRESENTATION = "G"
     QUICKSTART_LEVEL = "Q"      # Quickstart
+    TRAININGS_ROOM = "T"
 
     def __init__(self, character: str, callback: Callable[[Direction, Robot], None]):
         super().__init__(TileCode.SpaceshipTrigger)
@@ -146,11 +147,12 @@ class SpaceshipMap:
     HEIGHT = ascii_spaceship.count("\n")
     SPAWN_POS = Coordinate(x=25, y=16)
 
-    def __init__(self, seed: int, player: Player, scientist: NpcTile, check_achievement: Callable[[str], bool],
+    def __init__(self, player: Player, scientist: NpcTile, check_achievement: Callable[[str], bool],
                  stop_playing: Callable[[Direction, Controllable], None],
                  open_world_view: Callable[[Direction, Controllable], None],
                  use_workbench: Callable[[Direction, Controllable], None],
-                 load_map: Callable[[str, Coordinate], None]):
+                 load_map: Callable[[str, Optional[Coordinate]], None], load_newest_map: Callable[[], None],
+                 start_training: Callable[[Direction], None]):
         self.__player = player
         self.__scientist = scientist
         self.__check_achievement = check_achievement
@@ -158,6 +160,8 @@ class SpaceshipMap:
         self.__open_world_view = open_world_view
         self.__use_workbench_callback = use_workbench
         self.__load_map = load_map
+        self.__load_newest_map = load_newest_map
+        self.__start_training = start_training
         self.__tiles = []
         row = []
         for character in ascii_spaceship:
@@ -197,14 +201,11 @@ class SpaceshipMap:
         # elif character == SpaceshipTriggerTile.MAP_GATE_LIBRARY_REPRESENTATION:
         #    tile = SpaceshipTriggerTile(character, self.open_gate_library)
         elif character == SpaceshipTriggerTile.QUICKSTART_LEVEL:
-            if Config.debugging():
-                def start_test_level(direction: Direction, controllable: Controllable):
-                    self.__load_map(MapConfig.test_level(), None)
-                tile = SpaceshipTriggerTile(character, start_test_level)
-            else:
-                def start_newest_level(direction: Direction, controllable: Controllable):
-                    self.__load_map(MapConfig.spaceship(), None)
-                tile = SpaceshipTriggerTile(character, start_newest_level)
+            tile = SpaceshipTriggerTile(character, self.__load_newest_map)
+        elif character == SpaceshipTriggerTile.TRAININGS_ROOM:
+            def start_training(direction: Direction, controllable: Controllable):
+                self.__start_training(direction)
+            tile = SpaceshipTriggerTile(character, start_training)
         else:
             tile = SpaceshipWallTile(character)
         return tile

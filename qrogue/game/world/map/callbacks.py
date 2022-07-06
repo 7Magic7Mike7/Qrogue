@@ -1,10 +1,9 @@
 from typing import Callable, List
 
 from qrogue.game.logic.actors import Boss, Enemy, Robot
+from qrogue.game.world.map import LevelMap
 from qrogue.game.world.navigation import Direction
 from qrogue.util import Logger
-
-from qrogue.game.world.map import LevelMap
 
 
 class CallbackPack:
@@ -20,6 +19,7 @@ class CallbackPack:
                  start_fight: "Callable[[Robot, Enemy, Direction], None]",
                  start_boss_fight: "Callable[[Robot, Boss, Direction], None]",
                  open_riddle: "Callable[[Robot, Riddle], None]",
+                 open_challenge: "Callable[[Robot, Challenge], None]",
                  visit_shop: "Callable[[Robot, List[ShopItem]], None]",
                  game_over: "Callable[[], None]"):
         if CallbackPack.__instance is not None:
@@ -29,6 +29,7 @@ class CallbackPack:
             self.__start_fight = start_fight
             self.__start_boss_fight = start_boss_fight
             self.__open_riddle = open_riddle
+            self.__open_challenge = open_challenge
             self.__visit_shop = visit_shop
             self.__game_over = game_over
 
@@ -49,6 +50,10 @@ class CallbackPack:
     @property
     def open_riddle(self):
         return self.__open_riddle
+
+    @property
+    def open_challenge(self):
+        return self.__open_challenge
 
     @property
     def visit_shop(self):

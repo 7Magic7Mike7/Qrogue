@@ -1,0 +1,301 @@
+Qrogue<
+Name = "Trainings environment"
+Description = Speaker "0" "In this trainings environment you will start with 2 //02Qubits//, 5 //02Slots// for you //02Circuit// and one //02CX Gate//."
+"In the northern rooms you can pick up additional //02Gates//. Other rooms mostly contain random //02Puzzles// and //02Energy//. "
+"One more thing: We enhanced your //02Qubot// with two new features."
+"1) You can now remove all //02Gates// from your //02Curcuit// by //05resetting// it instead of removing everyone individually."
+"2) You can now //03flee// from //02Puzzles//. This costs //02Energy// (the bigger the digit the higher the costs) but might still be worth it if you just can't find the solution or haven't found the //02Gates// needed to solve it yet. You can always try again later and still get a reward."
+"With that said you now know everything you need. Check out the trainings environment as you like and then you can go back to do the exam."
+
+
+[Robot]
+2 qubits [ *cxgate ]
+circuit_space = 5
+maxenergy = 100
+
+[Layout]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+| ee .. __ .. ts == tr == tt .. __ .. ff |
+| 11    ..    ..    ==    ..    ..    11 |
+| ac == ab == aa 21 SR 22 ba == bb == bc |
+| ==    ==    ..    ..    ..    ==    == |
+| ad == ae == af == cc == bf == be == bd |
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[Custom Rooms]
+
+SR (Spawn):
+#############
+# _ _ _ _ _ #
+# _ _ m _ _ #
+# _ t t t _ #
+# _ _ t _ _ #
+# _ _ _ _ _ #
+#############
+m 1 *tutTeleporter trigger *learnedAboutFleeing
+t GlobalAchievement *learnedAboutFleeing
+t teleport *back
+t GlobalAchievement *learnedAboutFleeing
+t GlobalAchievement *learnedAboutFleeing
+
+tr (Wild):
+#############
+# c o c o c #
+# _ m _ m _ #
+# _ _ _ _ _ #
+# _ m _ m _ #
+# c o _ o c #
+#############
+c gate *x
+m *pickupXCX
+c gate *cx
+m *pickupCXH
+c gate *x
+m *pickupX
+c gate *h
+m *pickupH
+
+ts (Wild):
+#############
+# c o c o c #
+# _ m _ m _ #
+# _ _ _ _ _ #
+# _ m _ m _ #
+# c o c o c #
+#############
+c gate *x
+m *pickupXCX
+c gate *cx
+m *pickupCXH
+c gate *h
+c gate *x
+m *pickupXCX
+c gate *cx
+m *pickupCXH
+c gate *h
+
+tt (Wild):
+#############
+# c o c o c #
+# _ m _ m _ #
+# _ _ _ _ _ #
+# _ m _ m _ #
+# c o c o c #
+#############
+c gate *x
+m *pickupXCX
+c gate *cx
+m *pickupCXH
+c gate *h
+c gate *x
+m *pickupXCX
+c gate *cx
+m *pickupCXH
+c gate *h
+
+
+aa (Wild):
+#############
+# 0 0 0 0 0 #
+# 0 0 0 0 0 #
+# _ _ _ _ _ #
+# c c c c c #
+# c c c c c #
+#############
+
+ab (Wild):
+#############
+# 0 0 0 0 0 #
+# 0 0 0 0 0 #
+# _ _ _ _ _ #
+# c c _ c c #
+# c c _ c c #
+#############
+
+ac (Wild):
+#############
+# 0 0 _ _ c #
+# 0 0 _ _ _ #
+# 0 0 _ _ _ #
+# 0 0 _ 0 0 #
+# 0 0 _ 0 0 #
+#############
+c key 1
+
+ad (Wild):
+#############
+# 0 0 _ c c #
+# 0 0 _ c c #
+# _ _ _ _ _ #
+# 0 0 0 0 0 #
+# 0 0 0 0 0 #
+#############
+
+ae (Wild):
+#############
+# c c _ c c #
+# c c _ c c #
+# _ _ _ _ _ #
+# 0 0 0 0 0 #
+# 0 0 0 0 0 #
+#############
+
+af (Wild):
+#############
+# 0 0 0 0 0 #
+# 0 0 0 0 0 #
+# _ _ _ _ _ #
+# c c c c c #
+# c c c c c #
+#############
+
+ba (Wild):
+#############
+# 0 0 0 0 0 #
+# 0 0 0 0 0 #
+# _ _ _ _ _ #
+# c c c c c #
+# c c c c c #
+#############
+
+bb (Wild):
+#############
+# 0 0 0 0 0 #
+# 0 0 0 0 0 #
+# _ _ _ _ _ #
+# c c _ c c #
+# c c _ c c #
+#############
+
+bc (Wild):
+#############
+# c _ _ 0 0 #
+# _ _ _ 0 0 #
+# _ _ _ _ _ #
+# 0 0 _ 0 0 #
+# 0 0 _ 0 0 #
+#############
+c key 1
+
+bd (Wild):
+#############
+# c c _ 0 0 #
+# c c _ 0 0 #
+# _ _ _ _ _ #
+# 0 0 0 0 0 #
+# 0 0 0 0 0 #
+#############
+
+be (Wild):
+#############
+# c c _ c c #
+# c c _ c c #
+# _ _ _ _ _ #
+# 0 0 0 0 0 #
+# 0 0 0 0 0 #
+#############
+
+bf (Wild):
+#############
+# 0 0 0 0 0 #
+# 0 0 0 0 0 #
+# _ _ _ _ _ #
+# c c c c c #
+# c c c c c #
+#############
+
+cc (Wild):
+#############
+# 0 0 0 0 0 #
+# 0 0 0 0 0 #
+# _ _ _ _ _ #
+# 0 0 0 0 0 #
+# 0 0 0 0 0 #
+#############
+
+ee (Wild):
+#############
+# 1 1 1 8 8 #
+# 7 4 5 6 3 #
+# 7 4 5 6 3 #
+# 7 4 5 6 3 #
+# 2 2 9 9 9 #
+#############
+
+ff (Wild):
+#############
+# 1 1 1 8 8 #
+# 7 4 5 6 3 #
+# 7 4 5 6 3 #
+# 7 4 5 6 3 #
+# 2 2 9 9 9 #
+#############
+
+
+
+[Hallways]
+11 (locked; ; )
+21 (closed; ; entangled [22])
+22 (closed; ; entangled [21])
+
+
+[StateVector Pools]
+custom
+
+*base00 [ [1, 0, 0, 0] ]	// reachable with only CX Gate
+*base01 [ [0, 1, 0, 0] ]
+*base10 [ [0, 0, 1, 0] ]
+*base11 [ [0, 0, 0, 1] ]
+
+*reach1X [ *base01, *base10 ]
+*reach2X [ *reach1X, [0, 0, 0, 1] ]
+
+*superPos0 [ [0.707, 0.707, 0, 0] ]
+*superPos1 [ [0.707, 0, 0.707, 0] ]
+*superPos [ *superPos0, *superPos1 ]
+
+*H0X1 [ [0, 0, 0.707, 0.707] ]
+*H1X0 [ [0, 0.707, 0, 0.707] ]
+*H0X0 [ *superPos0 ]
+*H1X1 [ *superPos1 ]
+*X0H0 [ [0.707, -0.707, 0, 0] ]
+*X1H1 [ [0.707, 0, -0.707, 0] ]
+*HX [ *X0H0, *H0X0, *H0X1, *H1X0, *H1X1, *X1H1 ]
+
+*HH [ [0.5, 0.5, 0.5, 0.5] ]
+
+*reachHX [ *reach1X, *HX ]
+*basicHXCX [ *reach2X, *HX ]
+
+*entangledPos [ [0.707, 0, 0, 0.707] ]
+*entangledNeg [ [0, 0.707, 0.707, 0] ]
+*entangleds [ *entangledPos, *entangledNeg ]
+
+*introXCXH ordered [ *base01, *superPos0, *base11, *H0X1, *X0H0 ]
+
+*indeterministic [ *HX, *entangleds ]
+
+*reachable [ *reach2X, *HX, *entangleds ]
+
+default *reachable
+
+[Reward Pools]
+custom 
+*energySmall [energy 10]
+*energyFull [energy 100]
+
+default *energyFull
+
+
+[Messages]
+// highlight text by encapsulating it in "//02abcd//" where "abcd" is the text to highlight and "02" one of the available styles: 01 is for tiles, 02 is for game objects, 03 for actions, 04 for keys on the keyboard and 05 for other words
+// speaker: 0 = Examiner, 1 = Scientist, 2 = System, 3 = Player
+
+*tutTeleporter Speaker "0" "Stepping back onto the //01t// in the middle of the room will give you the possibility to leave the trainings environment again. Unlike in the lessons, there is no final room you need to go to and you cannot complete this 'level'."
+
+*pickupXCX Speaker "2" "To the //05left// you can pickup an //02X Gate//." "To the //05right// you can pickup an //02CX Gate//."
+*pickupCXH Speaker "2" "To the //05left// you can pickup an //02CX Gate//." "To the //05right// you can pickup an //02H Gate//."
+*pickupX Speaker "2" "To the //05left// you can pickup an //02X Gate//."
+*pickupH Speaker "2" "To the //05right// you can pickup an //02H Gate//."
+
+>Qrogue

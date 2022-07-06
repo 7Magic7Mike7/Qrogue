@@ -1,4 +1,5 @@
 # exporting
+from .widget_base import WidgetWrapper
 import qrogue.graphics.rendering
 import qrogue.graphics.popups
 import qrogue.graphics.widgets

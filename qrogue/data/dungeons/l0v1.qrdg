@@ -1,0 +1,138 @@
+Qrogue<
+// DONE
+Name = "Lesson 1: Energy Savings"
+Description = Speaker "0" "In this lesson you will learn how to //03stir// a //02Qubot// //05efficiently// because every action it takes //05costs// //02Energy//."
+"In the //05top left// of the screen you can see its //02Current Energy Level// and its //02Maximum Energy Capacity//. If the Qubot is out of energy it will //05shut down// and we lose the connection to it." 
+"In this controlled training environment this is not a problem but for the exam and real missions this is crucial."
+NO_TELEPORTER
+
+// Introduced Concepts:
+// Energy, Rewards
+
+[Robot]
+1 qubits [ *xgate ] 
+circuit_space = 1
+maxenergy = 30; startenergy = 27
+
+[Layout]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+| __ .. __ .. __ .. aa == bb == cc .. __ |
+| ..    ..    ..    ==    ..    ==    .. |
+| __ .. __ .. __ .. SR .. ea == dd .. __ |
+| ..    ..    ..    ..    ==    ==    .. |
+| __ .. __ .. __ .. ff == ee == eb .. __ |
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[Custom Rooms]
+aa (Wild):
+#############
+# _ _ _ _ _ #
+# _ o o o _ #
+# _ _ c o _ #
+# _ o _ o o #
+# _ _ _ _ _ #
+#############
+c *energyTiny
+
+bb (Wild):
+#############
+# c _ _ _ _ #
+# o o _ o _ #
+# m _ _ o _ #
+# o o 0 o _ #
+# _ _ _ _ _ #
+#############
+m *energyReward
+0 *simplePool *energyBig 
+c *key
+
+cc (Wild):
+#############
+# c _ o 0 _ #
+# o _ _ _ o #
+# _ o _ _ _ #
+# _ _ _ o _ #
+# _ o _ _ _ #
+#############
+0 *simplePool *energyTiny
+c *energyHuge
+
+dd (Wild):
+#############
+# _ _ _ _ _ #
+# _ o o o _ #
+# _ o _ _ _ #
+# _ o _ o o #
+# _ _ _ _ _ #
+#############
+
+ea (Wild):
+#############
+# o _ _ _ _ #
+# _ _ o o _ #
+# _ o _ _ _ #
+# _ o o o c #
+# _ _ _ o o #
+#############
+c *energyBig
+
+eb (Wild):
+#############
+# _ o _ _ _ #
+# _ o o _ _ #
+# _ o _ _ _ #
+# _ o _ _ 0 #
+# _ _ _ _ _ #
+#############
+0 *simplePool *energyBig
+
+ee (Wild):
+#############
+# _ _ _ _ _ #
+# o o o o _ #
+# _ _ 0 o _ #
+# _ o o o _ #
+# _ _ _ _ _ #
+#############
+0 [0, 1] key 1
+
+ff (Wild):
+#############
+# o o o _ _ #
+# o o _ _ _ #
+# o m _ _ c #
+# o o _ _ _ #
+# o o o _ _ #
+#############
+m *levelDone trigger *done
+c *energyHuge
+
+[Hallways]
+11 (locked; ; )
+
+[StateVector Pools]
+custom
+*simplePool [ [0, 1] ]
+
+default *simplePool
+
+[Reward Pools]
+custom 
+*key [key 1]
+*energyTiny [energy 5]
+*energySmall [energy 10]
+*energyMedium [energy 15]
+*energyBig [energy 20]
+*energyHuge [energy 30]
+
+default *key
+
+[Messages]
+// highlight text by encapsulating it in "//02abcd//" where "abcd" is the text to highlight and "02" one of the available styles: 01 is for tiles, 02 is for game objects, 03 for actions, 04 for keys on the keyboard and 05 for other words
+// speaker: 0 = Examiner, 1 = Scientist, 2 = System, 3 = Player
+
+*energyReward Speaker "0" "You can also get //02Energy// as a //02Reward// from //03solving// a //02Quantum Puzzle//."
+
+*levelDone "//05Great//!" "This lesson was specifically designed to bring the //02Qubot// to its energy limits. Usually it won't be that harsh and a misstep doesn't mean the end of a mission. Nonetheless the remaining energy is something you should always keep in mind."
+
+>Qrogue
