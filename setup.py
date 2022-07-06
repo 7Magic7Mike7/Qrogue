@@ -34,7 +34,7 @@ setup(
 	],
 	package_data={"data": ["qrogue/data"]},
 	include_package_data=True,
-	version='0.4',
+	version='0.4.1.0',
 	license='MIT',  # Chose a license from here: https://help.github.com/articles/licensing-a-repository
 	description='Qrogue is a modernized Quantum Computing take of the classical game Rogue.',
 	long_description=README,
