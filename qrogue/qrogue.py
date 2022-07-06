@@ -186,8 +186,8 @@ def simulate_game(simulation_path: str, from_console: bool = False, debugging: b
         print(f"[Qrogue] Error #{return_code}:")
         if return_code == 1:
             print("qrogue.config is invalid. Please check if the second line describes a valid path (the path "
-                  "to your save files). Using special characters in the path could also cause this error so if the path is "
-                  "valid please consider using another one without special characters.")
+                  "to your save files). Using special characters in the path could also cause this error so if the "
+                  "path is valid please consider using another one without special characters.")
 
     if not from_console:
         print()
