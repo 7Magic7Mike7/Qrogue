@@ -4,7 +4,7 @@ from typing import Callable, List
 from qrogue.game.logic.actors import Controllable, Robot, Boss as BossActor
 from qrogue.game.target_factory import EnemyFactory
 from qrogue.game.world.navigation import Direction
-from qrogue.util import RandomManager, Logger, CheatConfig
+from qrogue.util import RandomManager, Logger, CheatConfig, PuzzleConfig
 
 from qrogue.game.world.tiles import Tile, TileCode, WalkTriggerTile
 
@@ -26,17 +26,12 @@ class Enemy(WalkTriggerTile):
         self.__get_entangled_tiles = get_entangled_tiles
         self.__update_entangled_groups = update_entangled_groups
         self.__id = e_id
-        self.__amplitude = 0.1 * (10 - e_id)        # the lower the id the higher the chance of a fight
         self.__rm = RandomManager.create_new()
         self.__enemy = None
 
     @property
     def eid(self) -> int:
         return self.__id
-
-    @property
-    def amplitude(self) -> float:
-        return self.__amplitude
 
     @property
     def _state(self) -> _EnemyState:
@@ -51,10 +46,10 @@ class Enemy(WalkTriggerTile):
             if controllable.backpack.used_capacity > 0:
                 return super(Enemy, self).is_walkable(direction, controllable)
             else:
-                controllable.damage(1)
+                # noting happens in case the robot doesn't have any gates
                 return False
         else:
-            Logger.instance().error(f"Error! Non-Robot walked over Enemy: {controllable}")
+            Logger.instance().error(f"Error! Non-Robot walked over Enemy: {controllable}", from_pycui=False)
 
     def _on_walk(self, direction: Direction, controllable: Controllable) -> bool:
         if isinstance(controllable, Robot):
@@ -67,7 +62,7 @@ class Enemy(WalkTriggerTile):
         return False
 
     def get_img(self):
-        if self._state == _EnemyState.DEAD :
+        if self._state == _EnemyState.DEAD:
             return self._invisible
         elif self._state == _EnemyState.FLED:
             return self._invisible
@@ -92,7 +87,8 @@ class Enemy(WalkTriggerTile):
             entangled_tiles = [self]
 
         # first do the randomness check because otherwise cheating could mess with some overall randomness
-        if self.__rm.get(msg="Target.__measure()") >= self.amplitude or CheatConfig.is_scared_rabbit():
+        if self.__rm.get(msg="Target.__measure()") >= PuzzleConfig.calculate_appearance_chance(self.__id) \
+                or CheatConfig.is_scared_rabbit():
             state = _EnemyState.FLED
         else:
             state = _EnemyState.FIGHT
@@ -104,7 +100,7 @@ class Enemy(WalkTriggerTile):
     def __fight(self, robot: Robot, direction: Direction):
         if self.__enemy is None:
             # the higher the amplitude the easier it should be to flee
-            self.__enemy = self.__factory.produce(robot, self.__rm, self.__amplitude)
+            self.__enemy = self.__factory.produce(robot, self.__rm, self.__id)
         self.__factory.start(robot, self.__enemy, direction)
 
     def _copy(self) -> "Tile":
@@ -136,7 +132,7 @@ class Boss(WalkTriggerTile):
             if self._is_active:
                 self.__on_walk_callback(controllable, self.__boss, direction)
         else:
-            Logger.instance().error(f"Non-Robot walked on Boss! controllable = {controllable}")
+            Logger.instance().error(f"Non-Robot walked on Boss! controllable = {controllable}", from_pycui=False)
         return False
 
     def get_img(self):

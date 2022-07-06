@@ -1,18 +1,19 @@
 
 from abc import abstractmethod
-from typing import List, Callable, Any
+from typing import List, Callable, Any, Optional
 
 from qrogue.game.logic import Message as LogicalMessage
 from qrogue.game.logic.actors import Controllable, Riddle
+from qrogue.game.logic.actors.puzzles import Challenge
 from qrogue.game.logic.collectibles import Collectible as LogicalCollectible, Energy as LogicalEnergy
 from qrogue.game.world.navigation import Coordinate, Direction
+from qrogue.util import Logger, ColorConfig, CommonQuestions, MapConfig
 
 from qrogue.game.world.tiles.tiles import Tile, TileCode
-from qrogue.util import Logger
 
 
 class WalkTriggerTile(Tile):
-    __show_explanation = None
+    __show_explanation: Callable[[LogicalMessage, bool], None] = None
 
     @staticmethod
     def set_show_explanation_callback(show_explanation: Callable[[LogicalMessage, bool], None]):
@@ -23,7 +24,7 @@ class WalkTriggerTile(Tile):
         if WalkTriggerTile.__show_explanation:
             WalkTriggerTile.__show_explanation(msg, overwrite)
         else:
-            Logger.instance().error("WalkTriggerTile's show_explanation is None!")
+            Logger.instance().error("WalkTriggerTile's show_explanation is None!", from_pycui=False)
 
     def __init__(self, code: TileCode):
         super().__init__(code)
@@ -108,29 +109,49 @@ class Trigger(WalkTriggerTile):
 
 
 class Teleport(WalkTriggerTile):
-    def __init__(self, callback: Callable[[str, Coordinate], None], target_map: str, room: Coordinate):
+    @staticmethod
+    def Img() -> str:
+        return "t"
+
+    def __init__(self, load_map: Callable[[str, Optional[Coordinate]], None], target_map: str,
+                 room: Optional[Coordinate]):
         super().__init__(TileCode.Teleport)
-        self.__callback = callback
+        self.__load_map = load_map
         self.__target_map = target_map
         self.__room = room
 
     def _on_walk(self, direction: Direction, controllable: Controllable) -> bool:
-        self.__callback(self.__target_map, self.__room)
+        def callback(confirm: bool = True):
+            if confirm:
+                self.__load_map(self.__target_map, self.__room)
+        if self.__target_map == MapConfig.back_map_string():
+            CommonQuestions.GoingBack.ask(callback)
+        else:
+            CommonQuestions.UseTeleporter.ask(callback)
         return True
 
     def get_img(self):
-        return "t"
+        return Teleport.Img()
 
     def _copy(self) -> "Tile":
-        return Teleport(self.__callback, self.__target_map, self.__room)
+        return Teleport(self.__load_map, self.__target_map, self.__room)
+
+
+class Tunnel(Teleport):
+    """
+    Like Teleport but locally. So no map is loaded, just the position of the player changes
+    """
+    def __init__(self, load_room: Callable[[str, Optional[Coordinate]], None], target_room: str,
+                 pos: Coordinate):
+        super().__init__(load_room, target_room, pos)
 
 
 class Message(WalkTriggerTile):
     __msg_counter = 0
-    __show = None
+    __show: Callable[[LogicalMessage, Callable[[], None]], None] = None
 
     @staticmethod
-    def set_show_callback(show: Callable[[LogicalMessage], None]):
+    def set_show_callback(show: Callable[[LogicalMessage, Callable[[], None]], None]):
         Message.__show = show
 
     @staticmethod
@@ -157,10 +178,10 @@ class Message(WalkTriggerTile):
         self.__times -= 1
         if self.__times >= 0:
             if Message.__show:
-                Message.__show(self.__message)
+                Message.__show(self.__message, self._explicit_trigger)
             else:
-                Logger.instance().error("Message's show is None!")
-            return True
+                Logger.instance().error("Message's show is None!", from_pycui=False)
+            return False
         return False
 
     def _copy(self) -> "Tile":
@@ -198,6 +219,36 @@ class Riddler(WalkTriggerTile):
         return Riddler(self.__open_riddle, self.__riddle)
 
 
+class Challenger(WalkTriggerTile):
+    def __init__(self, open_challenge_callback: Callable[[Controllable, Challenge], None], challenge: Challenge):
+        super().__init__(TileCode.Challenger)
+        self.__open_challenge = open_challenge_callback
+        self.__challenge = challenge
+        self.__is_active = True
+
+    @property
+    def _is_active(self) -> bool:
+        if self.__is_active:
+            if not self.__challenge.is_active:
+                self._explicit_trigger()
+                self.__is_active = False
+        return self.__is_active
+
+    def _on_walk(self, direction: Direction, controllable: Controllable) -> bool:
+        if self._is_active:
+            self.__open_challenge(controllable, self.__challenge)
+        return False
+
+    def _copy(self) -> "WalkTriggerTile":
+        return Challenger(self.__open_challenge, self.__challenge)
+
+    def get_img(self):
+        if self._is_active:
+            return "!"
+        else:
+            return self._invisible
+
+
 class ShopKeeper(WalkTriggerTile):
     def __init__(self, visit_shop_callback, inventory: "List[ShopItem]"):
         super().__init__(TileCode.ShopKeeper)
@@ -216,10 +267,14 @@ class ShopKeeper(WalkTriggerTile):
 
 
 class Collectible(WalkTriggerTile):
-    __pickup_message = None
+    __pickup_message: Callable[["Collectible"], None] = None
 
     @staticmethod
-    def set_pickup_message_callback(pickup_message: Callable[[str, str], None]):
+    def set_pickup_message_callback(pickup_message_callback: Callable[[str, str], None]):
+        def pickup_message(collectible: LogicalCollectible):
+            name = collectible.name()
+            desc = collectible.description()
+            pickup_message_callback("Collectible", f"You picked up: {ColorConfig.highlight_object(name)}\n{desc}")
         Collectible.__pickup_message = pickup_message
 
     def __init__(self, collectible: LogicalCollectible):
@@ -240,11 +295,9 @@ class Collectible(WalkTriggerTile):
         if self.__active:
             if not self.has_explanation:
                 if Collectible.__pickup_message:
-                    name = self.__collectible.name()
-                    desc = self.__collectible.description()
-                    Collectible.__pickup_message(self.__collectible.name(), f"You picked up: {name}\n{desc}")
+                    Collectible.__pickup_message(self.__collectible)
                 else:
-                    Logger.instance().error("Collectible's pickup message callback is None!")
+                    Logger.instance().error("Collectible's pickup message callback is None!", from_pycui=False)
             controllable.give_collectible(self.__collectible)
             self.__active = False
             return True

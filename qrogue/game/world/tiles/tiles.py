@@ -5,6 +5,7 @@ from typing import Callable
 
 from qrogue.game.logic.actors import Controllable
 from qrogue.game.world.navigation import Direction
+from qrogue.util import CheatConfig
 
 
 class TileCode(Enum):
@@ -33,6 +34,7 @@ class TileCode(Enum):
     Riddler = 51
     ShopKeeper = 52
     Energy = 53
+    Challenger = 54
 
     SpaceshipBlock = 70
     SpaceshipWalk = 71
@@ -159,7 +161,7 @@ class Obstacle(Tile):
         return "o"
 
     def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
-        return False
+        return False or CheatConfig.ignore_obstacles()
 
     def copy(self) -> "Tile":
         return Obstacle()

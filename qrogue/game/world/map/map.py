@@ -1,8 +1,9 @@
 import enum
 from abc import ABC, abstractmethod
-from typing import List, Callable
+from typing import List, Callable, Optional, Tuple
 
 import qrogue.game.world.tiles as tiles
+from qrogue.game.logic import Message
 from qrogue.game.logic.actors import Controllable, Robot
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.util import Logger, MapConfig
@@ -14,6 +15,18 @@ class MapType(enum.Enum):
     World = 0
     Level = 1
     Expedition = 2
+
+
+class MapMetaData:
+    def __init__(self, name: Optional[str], description: Optional[Message], has_teleporter: bool,
+                 show_description: Callable[[], None]):
+        self.name = name
+        self.description = description
+        self.has_teleporter = has_teleporter
+        self.__show_description = show_description
+
+    def show_description(self):
+        self.__show_description()
 
 
 class Map(ABC):
@@ -31,10 +44,10 @@ class Map(ABC):
         y = pos_of_room.y * (Area.UNIT_HEIGHT + 1) + pos_in_room.y
         return Coordinate(x, y)
 
-    def __init__(self, name: str, internal_name: str, seed: int, rooms: List[List[Room]], controllable: Controllable,
-                 spawn_room: Coordinate, check_achievement: Callable[[str], bool],
+    def __init__(self, meta_data: MapMetaData, internal_name: str, seed: int, rooms: List[List[Room]],
+                 controllable: Controllable, spawn_room: Coordinate, check_achievement: Callable[[str], bool],
                  trigger_event: Callable[[str], None]):
-        self.__name = name
+        self.__meta_data = meta_data
         self.__internal_name = internal_name
         self.__seed = seed
         self.__rooms = rooms
@@ -52,7 +65,8 @@ class Map(ABC):
         if isinstance(self.__cur_area, SpawnRoom):
             self.__cur_area.set_is_done_callback(self.__is_done)
         elif not isinstance(self.__cur_area, MetaRoom) and self.__cur_area.type is not AreaType.SpawnRoom:
-            Logger.instance().error(f"{name} starts in area that is not a SpawnRoom! cur_area = {self.__cur_area}")
+            Logger.instance().error(f"{meta_data.name} starts in area that is not a SpawnRoom! cur_area = "
+                                    f"{self.__cur_area}", from_pycui=False)
 
     @property
     def name(self) -> str:
@@ -61,7 +75,9 @@ class Map(ABC):
         Can be the same as its internal name.
         :return: name of the Map that is shown in-game
         """
-        return self.__name
+        if self.__meta_data.name is None:   # show the internal name if no display name was specified
+            return self.__internal_name
+        return self.__meta_data.name
 
     @property
     def internal_name(self) -> str:
@@ -103,9 +119,12 @@ class Map(ABC):
     def get_type(self) -> MapType:
         pass
 
-    def __get_area(self, x: int, y: int) -> (Area, tiles.Tile):
+    def start(self):
+        self.__meta_data.show_description()
+
+    def __get_area(self, x: int, y: int) -> Tuple[Optional[Area], tiles.Tile]:
         """
-        Calculates and returns the Room and in-room Coordinates of the given Map position.
+        Calculates and returns the Room and in-room Coordinates of the given Map position (globally, not room position!).
         :param x: x position on the Map
         :param y: y position on the Map
         :return: Room or Hallway and their Tile at the given position
@@ -119,7 +138,8 @@ class Map(ABC):
         if x_mod == Area.UNIT_WIDTH:
             if y_mod == Area.UNIT_HEIGHT:
                 # there are a few points on the map that are surrounded by Hallways and don't belong to any Room
-                Logger.instance().error(f"Error! You should not be able to move outside of Hallways: {x}|{y}")
+                Logger.instance().error(f"Error! You should not be able to move outside of Hallways: {x}|{y}",
+                                        from_pycui=False)
                 return None, tiles.Invalid()
             x -= 1
             x_mod -= 1
@@ -133,7 +153,7 @@ class Map(ABC):
         room_y = int(y / height)
         room = self.__rooms[room_y][room_x]
         if room is None:
-            Logger.instance().error(f"Error! Invalid position: {x}|{y}")
+            Logger.instance().error(f"Error! Invalid position: {x}|{y}", from_pycui=False)
             return None, tiles.Invalid()
 
         if in_hallway:
@@ -147,7 +167,7 @@ class Map(ABC):
         else:
             return room, room.at(x_mod, y_mod)
 
-    def __room_at(self, x: int, y: int) -> Room:
+    def __room_at(self, x: int, y: int) -> Optional[Room]:
         """
         Returns the Room at the given position or None if either x or y are out of bounds.
         :param x: x-Coordinate of the room we want to get
@@ -156,6 +176,7 @@ class Map(ABC):
         """
         if 0 <= x < self.width and 0 <= y < self.height:
             return self.__rooms[y][x]
+        return None
 
     def move(self, direction: Direction) -> bool:
         """
@@ -163,9 +184,8 @@ class Map(ABC):
         :param direction: in which direction the robot should move
         :return: True if the robot was able to move, False otherwise
         """
-        robot = self.__controllable_tile.controllable
-        if isinstance(robot, Robot):
-            robot.on_move()
+        if self.controllable_tile.controllable.game_over_check():
+            return False
 
         new_pos = self.__controllable_pos + direction
         if new_pos.y < 0 or self.full_height <= new_pos.y or \
@@ -173,7 +193,11 @@ class Map(ABC):
             return False
 
         area, tile = self.__get_area(new_pos.x, new_pos.y)
-        if tile.is_walkable(direction, self.__controllable_tile.controllable):
+        if tile.is_walkable(direction, self.controllable_tile.controllable):
+            robot = self.controllable_tile.controllable
+            if isinstance(robot, Robot):
+                robot.on_move()
+
             if area != self.__cur_area:
                 self.__cur_area.leave(direction)
                 self.__cur_area = area
@@ -186,6 +210,23 @@ class Map(ABC):
             return True
         else:
             return False
+
+    def tunnel(self, pos_of_room: Coordinate, pos_in_room: Optional[Coordinate]) -> bool:
+        if pos_in_room is None:
+            _x, _y = MapConfig.room_mid()
+            pos_in_room = Coordinate(_x, _y)
+
+        room = self.__room_at(pos_of_room.x, pos_of_room.y)
+        if room is None:
+            return False
+
+        target_pos = Map.__calculate_pos(pos_of_room, pos_in_room)
+        direction = Direction.from_coordinates(self.__controllable_pos, target_pos)
+        destination_tile = room.at(pos_in_room.x, pos_in_room.y, force=True)
+        if destination_tile.is_walkable(direction, self.controllable_tile.controllable):
+            self.__controllable_pos = target_pos
+            return True
+        return False
 
     def __is_done(self) -> bool:
         return self.__check_achievement(MapConfig.done_event_id())

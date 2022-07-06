@@ -1,0 +1,272 @@
+Qrogue<
+Name = "Lesson 7: Intrisically Interconnected"
+Description = Speaker "0" "In this lesson we will talk about a quantum concept //05Einstein// described as //05'spooky action at a distance'//. If you're not familiar with this quote: no reason to actually be afraid! It's only mind-blowing."
+NO_TELEPORTER
+
+// Introduced Concepts:
+// entangled Puzzles, entangled Doors, entangled Qubits
+
+[Robot]
+2 qubits [ *xgate, *cxgate, *hgate ]
+circuit_space = 3
+maxenergy = 100
+
+[Layout]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+| __ .. __ .. zc 23 zb 22 za .. __ .. __ |
+| ..    ..    34    ==    31    ..    .. |
+| __ .. ee == dd .. cc .. bb 16 aa == SR |
+| ..    ..    33    ==    32    ..    .. |
+| __ .. __ .. xc 24 xb 22 xa .. __ .. __ |
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[Custom Rooms]
+
+SR (Spawn):
+#############
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# m _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+#############
+m 1 *recap1
+
+aa (Wild):
+#############
+# c o 0 m _ #
+# m o 0 o _ #
+# _ o _ o m #
+# _ o m o 1 #
+# 0 0 0 o 9 #
+#############
+m 1 *recap3
+m 1 *recap5
+m 1 *recap2
+m 1 *recap4
+c energy 10 trigger *doorEvent
+0 *introXCXH
+
+bb (Wild):
+#############
+# 8 8 7 o o #
+# 9 9 7 6 o #
+# 9 9 _ m _ #
+# 9 9 7 6 o #
+# 8 8 7 o o #
+#############
+m 1 *multiDigits
+
+
+cc (Wild):
+#############
+# o _ _ _ o #
+# _ o c o _ #
+# _ c 0 c _ #
+# _ o c o _ #
+# o _ _ _ o #
+#############
+0 *entangledNeg tutorial *inverseEntanglement trigger *sawEntanglement
+c energy 25
+
+dd (Wild):
+#############
+# o o 3 2 2  #
+# o 4 3 1 1 #
+# _ m _ 1 1 #
+# o 4 3 1 1 #
+# o o 3 2 2 #
+#############
+m 1 *einstein
+1 *reachable energy 50
+2 *reachable energy 50
+3 *reachable energy 50
+4 *reachable energy 50
+
+ee (Wild):
+#############
+# _ _ o _ _ #
+# _ o _ o _ #
+# o _ m _ _ #
+# _ o _ o _ #
+# _ _ o _ _ #
+#############
+m *doneMsg trigger *done
+
+
+xa (Wild):
+#############
+# 1 1 m 9 9 #
+# 1 1 _ 9 9 #
+# _ _ _ _ _ #
+# 2 2 _ 8 8 #
+# 2 2 _ 8 8 #
+#############
+m 1 *tutEntangledTiles
+
+xb (Wild):
+#############
+# o o c _ 0 #
+# o o o o _ #
+# _ o o o m #
+# _ o o o _ #
+# _ _ _ _ _ #
+#############
+m *entangledDoorX1 trigger *enteredXB
+0 *entangledPos tutorial *entHint
+c energy 20
+
+xc (Wild):
+#############
+# 1 1 _ _ 7 #
+# 1 _ _ 0 _ #
+# _ _ m _ _ #
+# _ 0 _ _ _ #
+# 7 _ _ _ 1 #
+#############
+m 1 *lockedForever
+1 *indeterministic
+7 *indeterministic
+
+za (Wild):
+#############
+# 1 1 _ 9 9 #
+# 1 1 _ 9 9 #
+# _ _ _ _ _ #
+# 2 2 _ 8 8 #
+# 2 2 m 8 8 #
+#############
+m 1 *tutEntangledTiles
+
+zb (Wild):
+#############
+# _ _ _ _ _ #
+# _ o o o _ #
+# _ o o o m #
+# o o o o _ #
+# o o c _ 0 #
+#############
+m *entangledDoorZ1 trigger *enteredZB
+0 *entangledPos tutorial *entHint
+c energy 20
+
+zc (Wild):
+#############
+# 7 _ _ _ 1 #
+# _ 0 _ _ _ #
+# _ _ m _ _ #
+# 1 _ _ 0 _ #
+# 1 1 _ _ 7 #
+#############
+m 1 *lockedForever
+1 *indeterministic
+7 *indeterministic
+
+
+[Hallways]
+11 (locked; ; )
+16 (event *doorEvent; ; )
+22 (closed; ; entangled [22])
+23 (event *enteredXB; ; entangled [24])
+24 (event *enteredZB; ; entangled [23])
+31 (closed; one way North permanent; )
+32 (closed; one way South permanent; )
+33 (closed; ; entangled [34])
+34 (closed; ; entangled [33])
+
+[StateVector Pools]
+custom
+
+*base00 [ [1, 0, 0, 0] ]	// reachable with only CX Gate
+*base01 [ [0, 1, 0, 0] ]
+*base10 [ [0, 0, 1, 0] ]
+*base11 [ [0, 0, 0, 1] ]
+
+*reach1X [ *base01, *base10 ]
+*reach2X [ *reach1X, [0, 0, 0, 1] ]
+
+*superPos0 [ [0.707, 0.707, 0, 0] ]
+*superPos1 [ [0.707, 0, 0.707, 0] ]
+*superPos [ *superPos0, *superPos1 ]
+
+*H0X1 [ [0, 0, 0.707, 0.707] ]
+*H1X0 [ [0, 0.707, 0, 0.707] ]
+*H0X0 [ *superPos0 ]
+*H1X1 [ *superPos1 ]
+*X0H0 [ [ 0.707, -0.707, 0, 0 ] ]
+*X1H1 [ [ 0.707, 0, -0.707, 0] ]
+*HX [ *X0H0, *H0X0, *H0X1, *H1X0, *H1X1, *X1H1 ]
+
+*basicHXCX [ *reach2X, *HX ]
+
+*entangledPos [ [0.707, 0, 0, 0.707] ]
+*entangledNeg [ [0, 0.707, 0.707, 0] ]
+*entangleds [ *entangledPos, *entangledNeg ]
+
+*introXCXH ordered [ *base01, *superPos0, *base11, *H0X1, *X0H0 ]
+
+*indeterministic [ *HX, *entangleds ]
+
+*reachable [ *reach2X, *HX, *entangleds ]
+
+default *basicHXCX
+
+[Reward Pools]
+custom 
+*energySmall [energy 10]
+*energyBig [energy 20]
+
+default *energySmall
+
+
+[Messages]
+// highlight text by encapsulating it in "//02abcd//" where "abcd" is the text to highlight and "02" one of the available styles: 01 is for tiles, 02 is for game objects, 03 for actions, 04 for keys on the keyboard and 05 for other words
+// speaker: 0 = Examiner, 1 = Scientist, 2 = System, 3 = Player
+
+*recap1 Speaker "0" "Let's start with a short recap." 
+"1) Always consider your //02Current Energy Level//." 
+"- //03Moving// the //02Qubot// costs energy"
+"- //03Editing// the //02Curcuit// costs energy"
+"- You can //05get back// energy as a //02Reward// or by //03picking// up //02Collectibles//"
+
+*recap2 Speaker "0" "2) Moving onto a //02Digit// //05collapses// it. 10 * digit-value herby describes the //05percentage// of it collapsing to 0 and hence //05not// presenting a //02Puzzle// to you." 
+"These //02Puzzles// are solved by //03placing// //02Gates// in a //05certain order//, on a //05certain position// (//02Qubit// and //02Slot//)."
+
+*recap3 Speaker "0" "3) There are a lot of different //02Gates//. You already know:"
+"- //02X Gate//: Acts similar to a //05Not Gate// by //05swapping// the //050// and //051// values."
+"- //02CX Gate//: Acts like some sort of //05If Gate// by only applying its //05X// (gate) part if its //05controlled// part is //051//."
+"- //02H Gate//: Acts no longer classical. It brings a //02Qubit// in //02Superposition//, hence introducing //05indeterministic// behaviour."
+
+*recap4 Speaker "0" "4) By increasing the number of //02Qubits//, //02Circuit Slots// and //02Quantum Gates// we can create more and more exciting //02Puzzles//."
+
+*recap5 Speaker "0" "5) Different //02Doors// open in different ways:"
+"- //02Open Doors// are already open"
+"- //02Closed Doors// will open by simply moving through them"
+"- //02Locked Doors// require a //02Key// to open"
+"- //02One-way Doors// can only be opened from one direction. They're either temporary or permanent and may additionally be locked."
+"- //02Event Doors// are invisible and only open after something triggered it. They can also be one-way."
+
+*multiDigits Speaker "0" "Back to new stuff:" "Did you ever question why all digits greater //010// never occurred //05more than once// per room?"
+
+*tutEntangledTiles Speaker "0" "//05Same// digits are //05entangled//. This means that they //05share// their //02State//. E.g. if one //017// collapses all other //017//s in this room //05collapse too//. And they also collapse to the //05same value// (0 or 1). Still, the //02Puzzle// they present to you are //05not the same//, so don't confuse this."
+"Technically this is also true for //010//s but you just didn't realize it yet because they //05always// collapse to //051// either way."
+
+*einstein Speaker "0" "Einstein called this phenomenon 'spooky action at a distance' because for him it didn't make sense. He always said that nothing is faster than light. Yet entanglement seems to be instant, hence faster than light. "
+
+*inverseEntanglement Speaker "0" "There is also a second kind of //02Entanglement// - let's call it //05inverse// //02Entanglement//. Try to reproduce it." "Hint: You'll need all of your //02Gates//." 
+
+*entangledDoorZ1 Speaker "0" "Alright, now try to reproduce //02Entanglement// in your //02Circuit//." when *enteredXB then *entangledDoorZ2
+*entangledDoorZ2 Speaker "0" "But not only digits can be entangled. There is another type of //02Door// we previously kept a secret: //02Entangled Doors//. But there is one major difference to the entangled digits. //02Entangled Doors// are //05inversily// entangled. Meaning if one //05collapses to 0// the other will //05collapse to 1//. When you //03walk// through one //02Entangled Door// it will //05collapse to 0//. Therefore, you can walk through it while the other //02Entangled Door// will be closed forever." when *enteredZB then *entangledDoorGeneral
+
+*entangledDoorX1 Speaker "0" "Alright, now try to reproduce //02Entanglement// in your //02Circuit//." when *enteredZB then *entangledDoorX2
+*entangledDoorX2 Speaker "0" "But not only digits can be entangled. There is another type of //02Door// we previously kept a secret: //02Entangled Doors//. But there is one major difference to the entangled digits. //02Entangled Doors// are //05inversily// entangled. Meaning if one //05collapses to 0// the other will //05collapse to 1//. When you //03walk// through one //02Entangled Door// it will //05collapse to 0//. Therefore, you can walk through it while the other //02Entangled Door// will be closed forever." when *enteredXB then *entangledDoorGeneral
+
+*entangledDoorGeneral Speaker "0" "//02Entangled Doors// are //05inversily// entangled. Meaning if one //05collapses to 0// the other will //05collapse to 1//. When you //03walk// through one //02Entangled Door// it will //05collapse to 0//. Therefore, you can walk through it while the other //02Entangled Door// will be closed forever."
+
+*entHint Speaker "0" "Hint: You need to place //05two// of your //02Gates//."
+
+*lockedForever Speaker "0" "The two rooms in the right as well as the two rooms in the left corner were only accessible through //02Entangled Doors//. So, depending on the path you chose you are not able to find out what the other two rooms contained. Only if you would be able to retry this lesson you could experience what another path has to offer." "This is the reason why real //02Quantum Algorithms// are usually not executed once but rather a lot of times. We cannot know exactly which paths the //02Qubits// take so we simply try to give the correct one the highest probability."
+
+*doneMsg Speaker "0" "You finally made it! Congratulations on successfully completing the //05'Mission Quniverse' Trainings Program//. Now you should be ready for the //05Exam//."
+
+>Qrogue

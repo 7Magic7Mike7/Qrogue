@@ -1,4 +1,4 @@
-import py_cui
+from py_cui.renderer import Renderer
 
 from qrogue.game.world.tiles import Tile
 from qrogue.util import ColorConfig, Logger
@@ -111,7 +111,7 @@ class FragmentStorage:
         return iter(self.__fragments)
 
 
-class MultiColorRenderer(py_cui.renderer.Renderer):
+class MultiColorRenderer(Renderer):
     def __init__(self, root, stdscr, logger):
         super().__init__(root, stdscr, logger)
 

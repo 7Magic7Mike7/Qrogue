@@ -4,7 +4,7 @@ Qrogue<
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 | __ .. __ .. ee .. __ .. __ .. __ .. __ |
 | ..    ..    ==    ..    ..    ..    .. |
-| SR == wa == wb .. __ .. __ .. __ .. __ |
+| wa == SR == wb .. __ .. __ .. __ .. __ |
 | ..    ..    ==    ..    ..    ..    .. |
 | __ .. wd == wc .. __ .. __ .. __ .. __ |
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -14,9 +14,9 @@ SR (World 0; North):
 description "Spawn"
 teleport *back
 
-wa (World 1; North):
-description "Enter World 1"
-teleport *w1
+wa (World 0; North):
+description "Mission Quniverse Training Program"
+teleport *w0
 
 wb (World 2; East):
 description "Enter World 2"

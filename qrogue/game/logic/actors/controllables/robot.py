@@ -3,44 +3,56 @@ Author: Artner Michael
 13.06.2021
 """
 from abc import ABC
-from typing import Tuple, List, Callable
+from typing import Tuple, List, Callable, Optional
 
-from qiskit import QuantumCircuit, transpile
+from qiskit import QuantumCircuit, transpile, Aer, execute
 from qiskit.providers.aer import StatevectorSimulator
 
-from qrogue.game.logic.actors import StateVector
+from qrogue.game.logic.actors import StateVector, CircuitMatrix
 from qrogue.game.logic.actors.controllables import Controllable
+from qrogue.game.logic.actors.controllables.qubit import QubitSet, DummyQubitSet
 from qrogue.game.logic.collectibles import Coin, Collectible, Consumable, Instruction, Key, MultiCollectible, \
     Qubit, Energy
-from qrogue.util import CheatConfig, Config, Logger, InstructionConfig, GameplayConfig
-
-from .qubit import QubitSet, DummyQubitSet
+from qrogue.util import CheatConfig, Config, Logger, GameplayConfig, QuantumSimulationConfig
 
 
 # from jkq import ddsim
 
 
 class _Attributes:
-    __DAMAGE_TO_ENERGY = 10
+    __DEFAULT_SPACE = 3
+    __MIN_INIT_ENERGY = 1  # during initialization neither max_energy nor cur_energy must be below this value
+    __DEFAULT_MAX_ENERGY = 100
 
     """
     Is used as storage for a bunch of attributes of the robot
     """
 
-    def __init__(self, qubits: QubitSet = DummyQubitSet(), space: int = 3):
+    def __init__(self, qubits: QubitSet = DummyQubitSet(), space: int = __DEFAULT_SPACE,
+                 max_energy: int = __DEFAULT_MAX_ENERGY, start_energy: int = None):
         """
 
         :param qubits: the set of qubits the robot is currently using
         :param space: how many instructions the robot can put on their circuit
+        :param max_energy: how much energy the robot can store at most
+        :param start_energy: with how much energy the robot starts. If it is bigger than max_energy, max_energy will be
+                             used instead of the specified number
         """
-        self.__space = space
-        self.__qubits = qubits
-        self.__cur_energy = 1000
-        self.__max_energy = 1000
+        if space is None:
+            space = _Attributes.__DEFAULT_SPACE
+        if max_energy is None:
+            max_energy = _Attributes.__DEFAULT_MAX_ENERGY
+        if start_energy is None:
+            start_energy = max_energy
 
-    @property
-    def is_alive(self) -> bool:
-        return self.__cur_energy > 0
+        assert space > 0
+        assert max_energy > _Attributes.__MIN_INIT_ENERGY
+        assert start_energy > _Attributes.__MIN_INIT_ENERGY
+
+        self.__qubits = qubits
+        self.__space = space
+        self.__max_energy = max_energy
+        self.__cur_energy = min(start_energy, max_energy)
 
     @property
     def num_of_qubits(self) -> int:
@@ -73,15 +85,12 @@ class _Attributes:
             self.__cur_energy = self.__max_energy
         return amount
 
-    def decrease_energy(self, amount: int) -> Tuple[int, bool]:
+    def decrease_energy(self, amount: int) -> int:
         self.__cur_energy -= amount
         if self.__cur_energy < 0:
             amount += self.__cur_energy     # e.g. if we got 6 damage and cur_energy is now -2, we actually got 4 damage
-            self.__cur_energy = 0
-        return amount, not self.is_alive
-
-    def damage(self, amount: int) -> Tuple[int, bool]:
-        return self.decrease_energy(amount * _Attributes.__DAMAGE_TO_ENERGY)
+            self.__cur_energy = -1
+        return amount
 
 
 class Backpack:
@@ -97,9 +106,12 @@ class Backpack:
         :param capacity: how many Instructions can be stored in this Backpack
         :param content: initially stored Instructions
         """
+        if capacity is None:
+            capacity = Backpack.__CAPACITY
+
         self.__capacity = capacity
         if content:
-            #self.__capacity = max(len(content), capacity)
+            # self.__capacity = max(len(content), capacity)
             self.__storage = content
         else:
             self.__capacity = capacity
@@ -202,7 +214,7 @@ class Backpack:
                 return True
         if Config.debugging():
             Logger.instance().error("Reached a line in Backpack.remove() that I think should not be reachable "
-                                    "(although it has no game-consequences if I'm wrong.")
+                                    "(although it has no game-consequences if I'm wrong.", from_pycui=False)
         try:
             self.__storage.remove(instruction)
             return True
@@ -233,7 +245,7 @@ class Backpack:
         data = []
         for gate in self.__storage:
             data.append(gate.copy())
-        return data #[gate.copy() for gate in self.__storage]
+        return data  # [gate.copy() for gate in self.__storage]
 
 
 class BackpackIterator:
@@ -262,11 +274,11 @@ class Robot(Controllable, ABC):
             Logger.instance().throw(ValueError(f"Function only works for counts with 1 shot but counts was: {counts}"))
         bits = arr[0]
         bits = bits[1:len(bits) - 1]
-        list = []
+        list_ = []
         for b in bits:
-            list.append(int(b))
-        list.reverse()  # so that list[i] corresponds to the measured value of qi
-        return list
+            list_.append(int(b))
+        list_.reverse()  # so that list_[i] corresponds to the measured value of qi
+        return list_
 
     def __init__(self, name: str, attributes: _Attributes, backpack: Backpack, game_over_callback: Callable[[], None]):
         super().__init__(name)
@@ -274,20 +286,21 @@ class Robot(Controllable, ABC):
         self.__backpack = backpack
         self.__game_over = game_over_callback
         # initialize qubit stuff (rows)
-        self.__simulator = StatevectorSimulator()#ddsim.JKQProvider().get_backend('statevector_simulator')
-        self.__stv = None
-        self.__qubit_indices = []
+        self.__simulator = StatevectorSimulator()  # ddsim.JKQProvider().get_backend('statevector_simulator')
+        self.__backend = Aer.get_backend('unitary_simulator')
+        self.__stv: Optional[StateVector] = None
+        self.__circuit_matrix: Optional[CircuitMatrix] = None
+        self.__qubit_indices: List[int] = []
         for i in range(0, attributes.num_of_qubits):
             self.__qubit_indices.append(i)
 
         # initialize gate stuff (columns)
-        self.__instruction_count = 0
+        self.__instruction_count: int = 0   # how many instructions are currently placed on the circuit
 
         # apply gates/instructions, create the circuit
         self.__circuit = None
-        self.__instructions = [None] * attributes.circuit_space
-        self.__apply_instructions()
-        self.update_statevector()  # to initialize the statevector
+        self.__instructions: List[Optional[Instruction]] = [None] * attributes.circuit_space
+        self.update_statevector(use_energy=False)  # to initialize the statevector
 
     @property
     def backpack(self) -> Backpack:
@@ -296,6 +309,10 @@ class Robot(Controllable, ABC):
     @property
     def state_vector(self) -> StateVector:
         return self.__stv
+
+    @property
+    def circuit_matrix(self) -> CircuitMatrix:
+        return self.__circuit_matrix
 
     @property
     def cur_energy(self) -> int:
@@ -321,13 +338,18 @@ class Robot(Controllable, ABC):
     def is_space_left(self) -> bool:
         return self.__instruction_count < self.circuit_space
 
+    def game_over_check(self) -> bool:
+        if self.__attributes.cur_energy <= 0:
+            self.__game_over()
+            return True
+        return False
+
     def __apply_instructions(self):
         circuit = QuantumCircuit(self.__attributes.num_of_qubits, self.__attributes.num_of_qubits)
         for inst in self.__instructions:
             if inst:
                 inst.append_to(circuit)
         self.__circuit = circuit
-        return True
 
     def key_count(self) -> int:     # cannot be a property since it is an abstractmethod in Controllable
         return self.backpack.key_count
@@ -335,21 +357,36 @@ class Robot(Controllable, ABC):
     def use_key(self) -> bool:
         return self.backpack.use_key()
 
-    def update_statevector(self):
+    def update_statevector(self, use_energy: bool = True):
         """
         Compiles and simulates the current circuit and saves and returns the resulting StateVector
         :return: an updated StateVector corresponding to the current circuit
         """
+        if self.game_over_check():
+            return
+
+        self.__apply_instructions()
         compiled_circuit = transpile(self.__circuit, self.__simulator)
         job = self.__simulator.run(compiled_circuit, shots=1)
         result = job.result()
-        self.__stv = StateVector(result.get_statevector(self.__circuit))
+        self.__stv = StateVector(result.get_statevector(self.__circuit), num_of_used_gates=self.__instruction_count)
+
+        job = execute(self.__circuit, self.__backend)
+        result = job.result()
+        self.__circuit_matrix = CircuitMatrix(result.get_unitary(self.__circuit,
+                                                                 decimals=QuantumSimulationConfig.DECIMALS).data)
+        if use_energy:
+            self.decrease_energy(amount=1)
 
     def __remove_instruction(self, instruction: Instruction, skip_qargs: bool = False):
         if instruction and instruction.is_used():
             self.__instructions[instruction.position] = None
             self.__instruction_count -= 1
             instruction.reset(skip_qargs=skip_qargs)
+
+    def remove_instruction(self, instruction: Instruction):
+        if instruction in self.__instructions:
+            self.__remove_instruction(instruction)
 
     def __place_instruction(self, instruction: Instruction, position: int):
         if instruction.position == position:
@@ -388,7 +425,7 @@ class Robot(Controllable, ABC):
                 return True
         return False
 
-    def get_instruction(self, instruction_index: int) -> Instruction:
+    def get_instruction(self, instruction_index: int) -> Optional[Instruction]:
         if 0 <= instruction_index < self.backpack.used_capacity:
             return self.backpack.get(instruction_index)
         return None
@@ -409,15 +446,14 @@ class Robot(Controllable, ABC):
                 self.__place_instruction(instruction, position)
             else:
                 return False
-        return self.__apply_instructions()
+        return True
 
     def reset_circuit(self):
         temp = self.__instructions.copy()
         for instruction in temp:
             self.__remove_instruction(instruction)
         self.__instruction_count = 0
-        self.__apply_instructions()
-        self.update_statevector()
+        self.update_statevector(use_energy=False)
 
     def get_available_instructions(self) -> [Instruction]:
         """
@@ -443,64 +479,39 @@ class Robot(Controllable, ABC):
             for c in collectible.iterator():
                 self.give_collectible(c)
         else:
-            Logger.instance().error(f"Received uncovered collectible: {collectible}")
+            Logger.instance().error(f"Received uncovered collectible: {collectible}", from_pycui=False)
 
     def on_move(self):
-        _, died = self.__attributes.decrease_energy(amount=1)
-        return died
+        self.__attributes.decrease_energy(amount=1)
 
-    def damage(self, amount: int = 1) -> Tuple[int, bool]:
-        return self.__attributes.damage(amount)
+    def decrease_energy(self, amount: int = 1) -> Tuple[int, bool]:
+        assert amount > 0   # todo maybe == 0 is also okay?
 
-    def regenerate(self, amount: int = 1) -> int:
+        if self.game_over_check():
+            return amount, True
+        return self.__attributes.decrease_energy(amount), False
+
+    def increase_energy(self, amount: int = 1) -> int:
         """
 
         :param amount: how much energy to regenerate
         :return: how much was actually regenerated (e.g. cannot exceed max health)
         """
+        assert amount > 0   # todo maybe == 0 is also okay?
         return self.__attributes.refill_energy(amount)
 
-    def get_circuit_print(self) -> str:
-        entry = "-" * (3 + InstructionConfig.MAX_ABBREVIATION_LEN + 3)
-        rows = [[entry] * self.circuit_space for _ in range(self.num_of_qubits)]
-
-        for i, inst in enumerate(self.__instructions):
-            if inst:
-                for q in inst.qargs_iter():
-                    inst_str = inst.abbreviation(q)
-                    diff_len = InstructionConfig.MAX_ABBREVIATION_LEN - len(inst_str)
-                    inst_str = f"--{{{inst_str}}}--"
-                    if diff_len > 0:
-                        half_diff = int(diff_len / 2)
-                        inst_str = inst_str.ljust(len(inst_str) + half_diff, "-")
-                        if diff_len % 2 == 0:
-                            inst_str = inst_str.rjust(len(inst_str) + half_diff, "-")
-                        else:
-                            inst_str = inst_str.rjust(len(inst_str) + half_diff + 1, "-")
-                    rows[q][i] = inst_str
-
-        circ_str = ""
-        # place qubits from top to bottom, high to low index
-        for q in range(len(rows) - 1, -1, -1):
-            circ_str += f"| q{q} >---"
-            row = rows[q]
-            for i in range(len(row)):
-                circ_str += row[i]
-                if i < len(row) - 1:
-                    circ_str += "+"
-            circ_str += "< out |\n"
-        return circ_str
+    def gate_at(self, index: int) -> Optional[Instruction]:
+        if 0 <= index < self.circuit_space:
+            return self.__instructions[index]
 
 
 class TestBot(Robot):
-    def __init__(self, game_over_callback: Callable[[], None], num_of_qubits: int = 2, gates: List[Instruction] = None):
-        attributes = _Attributes(DummyQubitSet(num_of_qubits))
-        backpack = Backpack(5, gates)
-
+    def __init__(self, game_over_callback: Callable[[], None], num_of_qubits: int = 2, gates: List[Instruction] = None,
+                 circuit_space: int = None, backpack_space: int = None, max_energy: int = None,
+                 start_energy: int = None):
+        attributes = _Attributes(DummyQubitSet(num_of_qubits), circuit_space, max_energy, start_energy)
+        backpack = Backpack(backpack_space, gates)
         super(TestBot, self).__init__("Testbot", attributes, backpack, game_over_callback)
-    
-    def give_collectible(self, collectible: Collectible):
-        super(TestBot, self).give_collectible(collectible)
 
     def get_img(self):
         return "T"
@@ -516,15 +527,15 @@ class LukeBot(Robot):
 
         # randomness is not allowed during Robot creation because it messes up the seed
         # add random gates and a HealthPotion
-        #rm = RandomManager.create_new()
-        #if rm.get(msg="LukeBot.init()") < 0.5:
-        #    num_of_gates = 3
-        #else:
-        #    num_of_gates = 4
-        #gate_factory = GateFactory.default()
-        #for gate in gate_factory.produce_multiple(rm, num_of_gates):
-        #    backpack.add(gate)
-        #backpack.place_in_pouch(HealthPotion(3))
+        # rm = RandomManager.create_new()
+        # if rm.get(msg="LukeBot.init()") < 0.5:
+        #     num_of_gates = 3
+        # else:
+        #     num_of_gates = 4
+        # gate_factory = GateFactory.default()
+        # for gate in gate_factory.produce_multiple(rm, num_of_gates):
+        #     backpack.add(gate)
+        # backpack.place_in_pouch(HealthPotion(3))
         super().__init__("Luke", attributes, backpack, game_over_callback)
 
     def get_img(self):

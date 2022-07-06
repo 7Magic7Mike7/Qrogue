@@ -1,4 +1,4 @@
-# Generated from D:/Documents/pycharm_workspace/Qrogue/qrogue/dungeon_editor\QrogueWorld.g4 by ANTLR 4.9.2
+# Generated from D:/Documents/pycharm_workspace/Qrogue/qrogue/game/world/dungeon_generator\QrogueWorld.g4 by ANTLR 4.10.1
 from antlr4 import *
 
 # This class defines a complete listener for a parse tree produced by QrogueWorldParser.
@@ -10,6 +10,42 @@ class QrogueWorldListener(ParseTreeListener):
 
     # Exit a parse tree produced by QrogueWorldParser#start.
     def exitStart(self, ctx):
+        pass
+
+
+    # Enter a parse tree produced by QrogueWorldParser#room_content.
+    def enterRoom_content(self, ctx):
+        pass
+
+    # Exit a parse tree produced by QrogueWorldParser#room_content.
+    def exitRoom_content(self, ctx):
+        pass
+
+
+    # Enter a parse tree produced by QrogueWorldParser#r_type.
+    def enterR_type(self, ctx):
+        pass
+
+    # Exit a parse tree produced by QrogueWorldParser#r_type.
+    def exitR_type(self, ctx):
+        pass
+
+
+    # Enter a parse tree produced by QrogueWorldParser#integer.
+    def enterInteger(self, ctx):
+        pass
+
+    # Exit a parse tree produced by QrogueWorldParser#integer.
+    def exitInteger(self, ctx):
+        pass
+
+
+    # Enter a parse tree produced by QrogueWorldParser#complex_number.
+    def enterComplex_number(self, ctx):
+        pass
+
+    # Exit a parse tree produced by QrogueWorldParser#complex_number.
+    def exitComplex_number(self, ctx):
         pass
 
 
@@ -76,15 +112,6 @@ class QrogueWorldListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by QrogueWorldParser#r_type.
-    def enterR_type(self, ctx):
-        pass
-
-    # Exit a parse tree produced by QrogueWorldParser#r_type.
-    def exitR_type(self, ctx):
-        pass
-
-
     # Enter a parse tree produced by QrogueWorldParser#hallways.
     def enterHallways(self, ctx):
         pass
@@ -109,6 +136,33 @@ class QrogueWorldListener(ParseTreeListener):
 
     # Exit a parse tree produced by QrogueWorldParser#h_attributes.
     def exitH_attributes(self, ctx):
+        pass
+
+
+    # Enter a parse tree produced by QrogueWorldParser#messages.
+    def enterMessages(self, ctx):
+        pass
+
+    # Exit a parse tree produced by QrogueWorldParser#messages.
+    def exitMessages(self, ctx):
+        pass
+
+
+    # Enter a parse tree produced by QrogueWorldParser#message.
+    def enterMessage(self, ctx):
+        pass
+
+    # Exit a parse tree produced by QrogueWorldParser#message.
+    def exitMessage(self, ctx):
+        pass
+
+
+    # Enter a parse tree produced by QrogueWorldParser#message_body.
+    def enterMessage_body(self, ctx):
+        pass
+
+    # Exit a parse tree produced by QrogueWorldParser#message_body.
+    def exitMessage_body(self, ctx):
         pass
 
 

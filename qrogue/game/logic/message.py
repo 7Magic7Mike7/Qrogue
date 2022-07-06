@@ -1,7 +1,5 @@
 from typing import Optional, Callable, Tuple
 
-from qrogue.util import Config
-
 
 class Message:
     __err_count = 0
@@ -10,10 +8,6 @@ class Message:
     def error(text: str) -> "Message":
         Message.__err_count += 1
         return Message(f"Error_{Message.__err_count}", "Error", text, None, None)
-
-    @staticmethod
-    def create_simple(m_id: str, text: str) -> "Message":
-        return Message(m_id, Config.scientist_name(), text, None, None)
 
     @staticmethod
     def create_with_title(m_id: str, title: str, text: str) -> "Message":
@@ -48,7 +42,7 @@ class Message:
         return self.__m_id
 
     @property
-    def alt_message_ref(self) -> str:
+    def alt_message_ref(self) -> Optional[str]:
         if self.__alt_ref:
             return self.__alt_ref
         else:
@@ -69,7 +63,7 @@ class Message:
         return False
 
     def get(self, check_achievement: Callable[[str], bool]) -> Tuple[str, str]:
-        if check_achievement(self.__event):
+        if self.__event is not None and check_achievement(self.__event):
             if self.__alt_message:
                 return self.__alt_message.get(check_achievement)
         else:

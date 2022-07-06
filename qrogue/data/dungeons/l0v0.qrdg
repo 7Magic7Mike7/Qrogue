@@ -1,0 +1,116 @@
+Qrogue<
+// DONE
+Name = "Lesson 0: Zeros and Ones"
+Description = Speaker "0" "Welcome to the //05'Mission Quniverse' Trainings Program//!"
+"We will teach you how to //03control// the newest //02Quantum Circuit Robots// - or //02Qubots// for short - and how to //03utilize// their //05Quantum Computing// capabilities. At the end of the program an //05Examination Challenge// will await you and the //05Winner// will receive a formidable //05Prize//. So give it your all!" ""
+"But first things first:" "//03Move// the //02Qubot// with //04WASD// or //04Arrow Keys//. You can //03close// this message with //04Enter// or //04Space//. //03Reopen// it with //04H// if you get stuck."
+NO_TELEPORTER
+
+// Introduced Concepts:
+// Moving, Keys, Locked Doors, Puzzles
+
+[Robot]
+1 qubits [ *xgate ] 
+circuit_space = 1
+maxenergy = 100000 // it should not be possible to run out of energy in this level
+
+[Layout]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+| __ .. __ .. __ .. __ .. __ .. __ .. __ |
+| ..    ..    ..    ..    ..    ..    .. |
+| __ .. SR == zz == aa 11 bb 11 cc .. __ |
+| ..    ..    ..    ..    ..    ..    .. |
+| __ .. __ .. __ .. __ .. __ .. __ .. __ |
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[Custom Rooms]
+
+SR (Spawn):
+#############
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ m #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+#############
+m 1 *movingDone
+
+zz (Wild):
+#############
+# _ _ _ o _ #
+# _ o _ _ _ #
+# _ o _ o _ #
+# _ o _ _ _ #
+# _ _ _ o _ #
+#############
+
+aa (Wild):
+#############
+# o _ _ _ _ #
+# _ _ o o _ #
+# m o _ _ _ #
+# o o o o _ #
+# c _ _ _ _ #
+#############
+m *lockedDoor
+c *key
+
+bb (Wild):
+#############
+# o m _ _ o #
+# o 0 o m _ #
+# _ o o o _ #
+# _ m o m _ #
+# o _ _ _ o #
+#############
+0 *base1 tutorial *helptextFight trigger *solvedPuzzle 
+m 1 *puzzle4
+m *puzzle3
+m *puzzle1
+m *puzzle2
+
+cc (Wild):
+#############
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ m _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+#############
+m *doneMsg trigger *done
+
+
+
+[Hallways]
+11 (locked; ; ) trigger *sawLockedDoor
+
+[StateVector Pools]
+custom
+*base1 [ [0, 1] ]
+
+default *base1
+
+[Reward Pools]
+custom
+*key [key 1]
+
+default *key
+
+[Messages]
+// highlight text by encapsulating it in "//02abcd//" where "abcd" is the text to highlight and "02" one of the available styles: 01 is for tiles, 02 is for game objects, 03 for actions, 04 for keys on the keyboard and 05 for other words
+// speaker: 0 = Examiner, 1 = Scientist, 2 = System, 3 = Player
+
+*movingDone Speaker "0" "Next: //03Move// through the //02Door//."
+
+*lockedDoor Speaker "0" "A small hint:" "Some //02Doors// don't open by simply //03moving// onto them. Just //03try// it and you will see!"
+
+*puzzle1 Speaker "0" "The red //010// is a //02Quantum Puzzle//. It will challenge you to reach a certain //02Quantum State//." when *solvedPuzzle then *wrongDirection
+*puzzle2 Speaker "0" "For this you can //03add//, //03move// or //03remove// //02Quantum Gates//. Right now, you only have //05one// //02X Gate// and one slot for placing a gate." when *solvedPuzzle then *wrongDirection
+*puzzle3 Speaker "0" "No worries. At the beginning we will stay in the //05Classical World// of 0s and 1s. Here an //02X Gate// acts like a //05Not Gate//." when *solvedPuzzle then *puzzleDone
+*puzzle4 Speaker "0" "Now //03step// onto the //010// and try your best."
+*puzzleDone Speaker "0" "Now you have a //02Key// to //03open// the next //02Door//."
+*wrongDirection Speaker "0" "You're moving in the //05wrong direction//."
+
+*doneMsg "Alright, you successfully //03finished// the //05first// lesson. Now onwards to the //05second// one."
+
+>Qrogue

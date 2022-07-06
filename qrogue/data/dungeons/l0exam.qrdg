@@ -1,0 +1,213 @@
+Qrogue<
+Name = "Exam for participating in Mission Quniverse"
+Description = Speaker "0" "The //05Mission Quniverse Exam// is about to start. Your hidden score will determine whether we consider you as student during the revolutionary Mission Quniverse. So try your best." "Good luck."
+NO_TELEPORTER
+
+// Introduced Concepts:
+
+[Robot]
+2 qubits [ *xgate ]
+circuit_space = 3
+maxenergy = 100
+
+[Layout]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+| __ .. nn 33 oo 34 pp == pp 11 qq 44 fi |
+| ..    33    ==    ..    ..    ..    .. |
+| __ .. ea 12 SR == aa 21 bb .. __ .. __ |
+| ..    13    12    22    ==    ..    .. |
+| __ .. ee 13 eb 23 dd == cc .. __ .. __ |
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[Custom Rooms]
+
+aa (Wild):
+#############
+# 0 6 _ 2 0 #
+# 6 o _ o 2 #
+# _ o 0 o _ #
+# 1 o o o 5 #
+# 0 1 _ 5 0 #
+#############
+0 *reachHX
+0 *reachHX
+0 *entangleds key 1
+0 *reachHX
+0 *reachHX
+
+bb (Wild):
+#############
+# 1 _ 7 _ 1 #
+# _ 5 _ 5 _ #
+# 7 _ 1 _ 7 #
+# _ 5 _ 5 _ #
+# 1 _ 7 _ 1 #
+#############
+
+cc (Wild):
+#############
+# _ 2 _ 2 _ #
+# 2 _ 4 _ 2 #
+# _ 4 _ 4 _ #
+# 2 _ 4 _ 2 #
+# _ 2 _ 2 _ #
+#############
+
+dd (Wild):
+#############
+# _ 3 3 3 _ #
+# 2 _ 0 _ 7 #
+# 2 0 0 0 7 #
+# 2 _ 0 _ 7 #
+# _ 4 4 4 _ #
+#############
+
+ea (Wild):
+#############
+# _ _ _ _ _ #
+# _ o o o o #
+# _ o c c c #
+# _ o c c c #
+# 0 o c c c #
+#############
+c energy 20
+0 *HH key 1 trigger *secondEntanglement
+
+eb (Wild):
+#############
+# o o _ 6 9 #
+# 0 0 _ o o #
+# c 0 _ o c #
+# 0 0 _ o o #
+# o o _ 7 8 #
+#############
+c energy 20
+c gate *cx
+
+ee (Wild):
+#############
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# o o r _ _ #
+# o o o _ _ #
+# o o o _ _ #
+#############
+r 4 *entangledPos gate *h trigger *miniBossDone
+
+nn (Wild):
+#############
+# 0 7 8 9 _ #
+# 7 o o o _ #
+# 8 o _ o _ #
+# 9 o o o o #
+# _ _ _ o _ #
+#############
+
+oo (Wild):
+#############
+# o o c o o #
+# _ o _ o _ #
+# _ _ r _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+#############
+c gate *h
+r 2 *base10 energy10
+
+pp (Wild):
+#############
+# 0 0 4 0 0 #
+# _ o c o _ #
+# _ o o o _ #
+# _ o 3 o _ #
+# 9 9 3 9 9 #
+#############
+
+qq (Wild):
+#############
+# o o o o o #
+# _ o _ o _ #
+# _ _ ! _ _ #
+# _ o _ o _ #
+# o o o o o #
+#############
+! 3 [1, 0, 0, 0] energy 2 trigger *bossDone
+
+fi (Wild):
+#############
+# _ o _ o _ #
+# o _ o _ o #
+# _ _ m o _ #
+# o _ o _ o #
+# _ o _ o _ #
+#############
+m *doneMsg trigger *done
+
+
+[Hallways]
+11 (locked; ; )
+12 (locked; ; entangled [12])
+13 (closed; ; entangled [13])
+21 (closed; one way East permanent; )
+22 (closed; one way North permanent; )
+23 (closed; one way West; )
+33 (event *miniBossDone; ; )
+34 (event *secondEntanglement; ; )
+44 (event *bossDone; ; )
+
+[StateVector Pools]
+custom
+
+*base00 [ [1, 0, 0, 0] ]	// reachable with only CX Gate
+*base01 [ [0, 1, 0, 0] ]
+*base10 [ [0, 0, 1, 0] ]
+*base11 [ [0, 0, 0, 1] ]
+
+*reach1X [ *base01, *base10 ]
+*reach2X [ *reach1X, [0, 0, 0, 1] ]
+
+*superPos0 [ [0.707, 0.707, 0, 0] ]
+*superPos1 [ [0.707, 0, 0.707, 0] ]
+*superPos [ *superPos0, *superPos1 ]
+
+*H0X1 [ [0, 0, 0.707, 0.707] ]
+*H1X0 [ [0, 0.707, 0, 0.707] ]
+*H0X0 [ *superPos0 ]
+*H1X1 [ *superPos1 ]
+*X0H0 [ [0.707, -0.707, 0, 0] ]
+*X1H1 [ [0.707, 0, -0.707, 0] ]
+*HX [ *X0H0, *H0X0, *H0X1, *H1X0, *H1X1, *X1H1 ]
+
+*HH [ [0.5, 0.5, 0.5, 0.5] ]
+
+*reachHX [ *reach1X, *HX ]
+*basicHXCX [ *reach2X, *HX ]
+
+*entangledPos [ [0.707, 0, 0, 0.707] ]
+*entangledNeg [ [0, 0.707, 0.707, 0] ]
+*entangleds [ *entangledPos, *entangledNeg ]
+
+*introXCXH ordered [ *base01, *superPos0, *base11, *H0X1, *X0H0 ]
+
+*indeterministic [ *HX, *entangleds ]
+
+*reachable [ *reach2X, *HX, *entangleds ]
+
+default *reachHX
+
+[Reward Pools]
+custom 
+*energySmall [energy 10]
+*energyBig [energy 20]
+
+default *energySmall
+
+
+[Messages]
+// highlight text by encapsulating it in "//02abcd//" where "abcd" is the text to highlight and "02" one of the available styles: 01 is for tiles, 02 is for game objects, 03 for actions, 04 for keys on the keyboard and 05 for other words
+// speaker: 0 = Examiner, 1 = Scientist, 2 = System, 3 = Player
+
+*doneMsg Speaker "0" "Congratulations, you successfully finished the //05Exam//." "" 
+"That's currently it for Qrogue!" "Thanks for playing. There are //05more updates to come//, so keep an eye out! Also feel free to //05share your feedback//. We'd be happy to know what you think of Qrogue!"
+
+>Qrogue

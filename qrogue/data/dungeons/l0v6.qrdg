@@ -1,0 +1,202 @@
+Qrogue<
+Name = "Lesson 6: Position? Super!"
+Description = Speaker "0" "Now we will slowly start to dive into the //05strange world// of //02Quantum Computing//. Do you remember the word //02Superposition// from //05lesson 3//?"
+NO_TELEPORTER
+
+// Introduced Concepts:
+// H Gate
+
+[Robot]
+2 qubits [ *xgate, *cxgate ]
+circuit_space = 2
+maxenergy = 100
+
+[Layout]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+| __ .. __ .. __ .. __ .. dd .. __ .. __ |
+| ..    ..    ..    ..    ==    ..    .. |
+| __ .. bb == aa == SR 11 cc 22 ff .. __ |
+| ..    ..    ..    ..    11    ..    .. |
+| __ .. __ .. __ .. __ .. ee .. __ .. __ |
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[Custom Rooms]
+
+SR (Spawn):
+#############
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+#############
+
+aa (Wild):
+#############
+# 0 m 0 o c #
+# m o m o _ #
+# 0 o c o _ #
+# _ o _ o 0 #
+# c o 0 0 0 #
+#############
+m 1 *tutHadamard2
+m 1 *tutHadamard3
+m 1 *tutHadamard1
+c energy 10
+c gate *hgate
+c energy 10
+0 *superPos1 tutorial *superPosHint
+0 *superPos0 tutorial *superPosHint
+0 *superPos
+0 *reach2X
+
+bb (Wild):
+#############
+# _ 1 _ _ o #
+# 0 o 0 o 8 #
+# c o 0 _ 5 #
+# 0 o 0 o 9 #
+# _ 2 _ _ o #
+#############
+0 *superPos0 *bbPool
+0 *bbStvs
+0 *bbStvs
+0 *superPos1 *bbPool
+0 *bbStvs
+1 *bbStvs
+2 *bbStvs
+5 *bbStvs
+8 *bbStvs
+9 *bbStvs
+
+
+cc (Wild):
+#############
+# _ o c 1 _ #
+# 8 o o o _ #
+# m 0 0 _ _ #
+# 7 o _ o o #
+# c o 5 4 9 #
+#############
+m 1 *combineHX
+c energy 10
+0 *H0X1
+0 *H1X0
+1 *superPos
+4 *reach2X
+5 *reach2X
+7 *H0X1
+8 *H1X0
+9 *superPos
+
+dd (Wild):
+#############
+# 1 _ 0 _ 2 #
+# _ _ _ _ _ #
+# ! _ 0 _ ! #
+# _ _ _ _ _ #
+# _ _ m _ _ #
+#############
+m 1 *tutChallenges
+! 2 *H0X0 *ddPool tutorial *tutHnXn
+! 2 *H1X1 *ddPool tutorial *tutHnXn
+0 *H1X0 *ddPool
+0 *H0X1 *ddPool
+1 *superPos
+2 *superPos
+
+ee (Wild):
+#############
+# o 7 _ 8 o #
+# 3 _ _ _ 5 #
+# 4 _ 0 _ 6 #
+# o o 0 o o #
+# o c 0 0 o #
+#############
+c energy 10
+0 *H0X0 tutorial *tutHXAgain
+0 *X0H0 tutorial *tutMinus
+0 *H1X1 tutorial *tutHXAgain
+0 *X1H1 trigger *sawHXCombis
+3 *eeStvs
+4 *eeStvs
+5 *eeStvs
+6 *eeStvs
+7 *eeStvs
+8 *eeStvs
+
+ff (Wild):
+#############
+# _ _ _ o _ #
+# o _ _ _ _ #
+# _ _ m _ _ #
+# o _ _ _ _ #
+# _ _ _ o _ #
+#############
+m *doneMsg trigger *done
+
+
+[Hallways]
+11 (locked; ; )
+22 (event *sawHXCombis; ; )
+
+[StateVector Pools]
+custom
+
+*base01 [ [0, 1, 0, 0] ]
+*base10 [ [0, 0, 1, 0] ]
+*base11 [ [0, 0, 0, 1] ]
+
+*reach1X [ *base01, *base10 ]
+*reach2X [ *reach1X, [0, 0, 0, 1] ]
+
+*superPos0 [ [0.707, 0.707, 0, 0] ]
+*superPos1 [ [0.707, 0, 0.707, 0] ]
+*superPos [ *superPos0, *superPos1 ]
+
+*H0X1 [ [0, 0, 0.707, 0.707] ]
+*H1X0 [ [0, 0.707, 0, 0.707] ]
+*H0X0 [ *superPos0 ]
+*H1X1 [ *superPos1 ]
+*X0H0 [ [ 0.707, -0.707, 0, 0 ] ]
+*X1H1 [ [ 0.707, 0, -0.707, 0] ]
+*HX [ *X0H0, *H0X0, *H0X1, *H1X0, *H1X1, *X1H1 ]
+
+*bbStvs [ *reach2X, *superPos ]
+*eeStvs [ *reach2X, *superPos, *H0X1, *H1X0 ]
+
+default *reach2X
+
+[Reward Pools]
+custom 
+*energySmall [energy 10]
+*energyBig [energy 20]
+
+*bbPool ordered [energy 5, key 1]
+*ddPool ordered [energy 10, energy 10, energy 5, key 1]
+
+default *energySmall
+
+
+[Messages]
+// highlight text by encapsulating it in "//02abcd//" where "abcd" is the text to highlight and "02" one of the available styles: 01 is for tiles, 02 is for game objects, 03 for actions, 04 for keys on the keyboard and 05 for other words
+// speaker: 0 = Examiner, 1 = Scientist, 2 = System, 3 = Player
+
+*tutHadamard1 Speaker "0" "Now we're talking! With the help of a //02Hadamard Gate// (//02H Gate// for short) you are finally able to leave the realm of //050s// and //051s//. "
+*tutHadamard2 Speaker "0" "If applied on a //02Qubit// the //02H Gate// will bring it in a state //05in the middle of 0 and 1//." 
+"No, not //050.5//. It is a bit more //05complex//. "
+*tutHadamard3 Speaker "0" "But indeed the state of a //02Qubit// at the output of an //02H Gate// corresponds to a //0550%// chance of it //05collapsing to 0// and a //0550%// chance of it //05collapsing to 1//. You do //05remember// the things you learned in //05lesson 3//, right?"
+
+*superPosHint Speaker "0" "Hint: You only need to place your new //02Hadamard Gate// here."
+
+*combineHX Speaker "0" "Next let's try to use both //02X Gate// and //02H Gate//."
+
+*tutHnXn Speaker "0" "You already know this //02Target State//. You can reach it with a single //02H Gate//. But let's try to also use an //02X Gate//."
+*tutHXAgain Speaker "0" "Again, try to also place your //02X Gate//."
+*tutMinus Speaker "0" "Look, the //02Target State// contains a //05negative number//. What a refreshing change!"
+
+*tutChallenges Speaker "0" "The //01!// is a new kind of //02Puzzle//: a //02Challenge//." "It is basically just like a normal //02Puzzle// but with additional constraints like a minimum number of //02Gates// you //05have to use// or a maximum number you are allowed to use."
+
+*doneMsg Speaker "0" "You've now seen the //02H Gate// alone and in combination with an //02X Gate//." "What do you think will happen if you combine it with an //02CX Gate//?" "Find out in the next lesson!"
+
+>Qrogue

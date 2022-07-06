@@ -1,16 +1,14 @@
 
 import random
 import sys
-from typing import Tuple, List
-
-import py_cui.errors
+from typing import Tuple, List, Optional
 
 from qrogue.game.logic.actors import Player
 from qrogue.game.world.dungeon_generator import QrogueLevelGenerator, QrogueWorldGenerator
 from qrogue.game.world.map import CallbackPack
 from qrogue.game.world.navigation import Coordinate
 from qrogue.management import SaveData, QrogueCUI
-from qrogue.util import Config, Logger, RandomManager, PathConfig, GameplayConfig, CheatConfig, Controls
+from qrogue.util import PyCuiConfig, Config, Logger, RandomManager, PathConfig, GameplayConfig
 from qrogue.util.key_logger import OverWorldKeyLogger
 
 
@@ -42,16 +40,19 @@ def __init_singletons(seed: int):
     def open_riddle(robot, riddle):
         pass
 
+    def open_challenge(robot, challenge):
+        pass
+
     def visit_shop(robot, shop_item_list):
         pass
 
     def game_over():
         pass
 
-    CallbackPack(start_level, start_fight, start_boss_fight, open_riddle, visit_shop, game_over)
+    CallbackPack(start_level, start_fight, start_boss_fight, open_riddle, open_challenge, visit_shop, game_over)
 
 
-def __parse_argument(argument: List[str], has_value: bool = False) -> Tuple[bool, str]:
+def __parse_argument(argument: List[str], has_value: bool = False) -> Tuple[bool, Optional[str]]:
     for arg in argument:
         if arg in sys.argv:
             if has_value:
@@ -66,14 +67,16 @@ def __parse_argument(argument: List[str], has_value: bool = False) -> Tuple[bool
 def start_qrogue() -> None:
     __CONSOLE_ARGUMENT = ["--from-console", "-fc"]
     __DEBUG_ARGUMENT = ["--debug", "-d"]
+    __TEST_LEVEL_ARGUMENT = ["--test-level", "-tl"]
     __GAME_DATA_PATH_ARGUMENT = ["--game-data", "-gd"]  # path argument
     __USER_DATA_PATH_ARGUMENT = ["--user-data", "-ud"]  # path argument
-    #__CONTROLS_ARGUMENT = ["--controls", "-c"]          # int argument
+    # __CONTROLS_ARGUMENT = ["--controls", "-c"]          # int argument
     __SIMULATION_FILE_ARGUMENT = ["--simulation-path", "-sp"]   # path argument
-    __VALIDATE_MAP_ARGUMENT = ["--validate-map", "-vm"] # path argument
+    __VALIDATE_MAP_ARGUMENT = ["--validate-map", "-vm"]     # path argument
 
     from_console, _ = __parse_argument(__CONSOLE_ARGUMENT)
     debugging, _ = __parse_argument(__DEBUG_ARGUMENT)
+    test_level, _ = __parse_argument(__TEST_LEVEL_ARGUMENT)
     _, data_folder = __parse_argument(__GAME_DATA_PATH_ARGUMENT, has_value=True)
     _, user_data_folder = __parse_argument(__USER_DATA_PATH_ARGUMENT, has_value=True)
     _, simulation_path = __parse_argument(__SIMULATION_FILE_ARGUMENT, has_value=True)
@@ -85,7 +88,7 @@ def start_qrogue() -> None:
         if simulation_path:
             simulate_game(simulation_path, from_console, debugging, data_folder, user_data_folder)
         else:
-            start_game(from_console, debugging, data_folder, user_data_folder)
+            start_game(from_console, debugging, test_level, data_folder, user_data_folder)
 
 
 def setup_game(game_data_path: str = "", user_data_path: str = "") -> None:
@@ -104,21 +107,21 @@ def setup_game(game_data_path: str = "", user_data_path: str = "") -> None:
     PathConfig.write(path, data, in_user_path=False, may_exist=True, append=False)
 
 
-def start_game(from_console: bool = False, debugging: bool = False, data_folder: str = None,
-               user_data_folder: str = None):
+def start_game(from_console: bool = False, debugging: bool = False, test_level: bool = False,
+               data_folder: str = None, user_data_folder: str = None):
     if PathConfig.load_paths(data_folder, user_data_folder):
         return_code = Config.load()  # NEEDS TO BE THE FIRST THING WE DO!
     else:
         return_code = 1
     if return_code == 0:
         if debugging:
-            Config.activate_debugging()
+            Config.activate_debugging(test_level)
 
         seed = random.randint(0, Config.MAX_SEED)
         print(f"[Qrogue] Starting game with seed = {seed}")
         try:
             QrogueCUI(seed).start()
-        except py_cui.errors.PyCUIOutOfBoundsError:
+        except PyCuiConfig.OutOfBoundsError:
             #print("[Qrogue] ERROR!")
             #print("Your terminal window is too small. "
             #      "Please make it bigger (i.e. maximize it) or reduce the font size.")
@@ -126,11 +129,12 @@ def start_game(from_console: bool = False, debugging: bool = False, data_folder:
             exit(1)
 
         # flush after the player stopped playing
-        if GameplayConfig.auto_save() and not CheatConfig.did_cheat():
-            if SaveData.instance().save():
+        if GameplayConfig.auto_save():
+            success, message = SaveData.instance().save()
+            if success:
                 print("[Qrogue] Successfully saved the game!")
             else:
-                Logger.instance().error("Failed to save the game.", show=False)
+                Logger.instance().error(f"Failed to save the game: {message.text}", show=False, from_pycui=False)
         Logger.instance().flush()
         OverWorldKeyLogger.instance().flush_if_useful()
         print("[Qrogue] Successfully flushed all logs and shut down the game without any problems. See you next time!")
@@ -161,7 +165,7 @@ def simulate_game(simulation_path: str, from_console: bool = False, debugging: b
         print(f"[Qrogue] Simulating the game recorded at \"{simulation_path}\"")
         try:
             QrogueCUI.start_simulation(simulation_path)
-        except py_cui.errors.PyCUIOutOfBoundsError:
+        except PyCuiConfig.OutOfBoundsError:
             # print("[Qrogue] ERROR!")
             # print("Your terminal window is too small. "
             #      "Please make it bigger (i.e. maximize it) or reduce the font size.")
@@ -169,11 +173,12 @@ def simulate_game(simulation_path: str, from_console: bool = False, debugging: b
             exit(1)
 
         # flush after the player stopped playing
-        if GameplayConfig.auto_save() and not CheatConfig.did_cheat():
-            if SaveData.instance().save():
+        if GameplayConfig.auto_save():
+            success, message = SaveData.instance().save()
+            if success:
                 print("[Qrogue] Successfully saved the game!")
             else:
-                Logger.instance().error("Failed to save the game.", show=False)
+                Logger.instance().error(f"Failed to save the game: {message.text}", show=False, from_pycui=False)
         Logger.instance().flush()
         OverWorldKeyLogger.instance().flush_if_useful()
         print("[Qrogue] Successfully flushed all logs and shut down the game without any problems. See you next time!")
@@ -181,8 +186,8 @@ def simulate_game(simulation_path: str, from_console: bool = False, debugging: b
         print(f"[Qrogue] Error #{return_code}:")
         if return_code == 1:
             print("qrogue.config is invalid. Please check if the second line describes a valid path (the path "
-                  "to your save files). Using special characters in the path could also cause this error so if the path is "
-                  "valid please consider using another one without special characters.")
+                  "to your save files). Using special characters in the path could also cause this error so if the "
+                  "path is valid please consider using another one without special characters.")
 
     if not from_console:
         print()
@@ -210,11 +215,14 @@ def validate_map(path: str, is_level: bool = True, in_base_path: bool = True) ->
     def load_map(map_name: str, spawn_pos: Coordinate):
         pass
 
+    def show_message(title: str, text: str):
+        pass
+
     if is_level:
-        generator = QrogueLevelGenerator(seed, check_achievement, trigger_event, load_map)
+        generator = QrogueLevelGenerator(seed, check_achievement, trigger_event, load_map, show_message)
     else:
         player = Player()
-        generator = QrogueWorldGenerator(seed, player, check_achievement, trigger_event, load_map)
+        generator = QrogueWorldGenerator(seed, player, check_achievement, trigger_event, load_map, show_message)
 
     try:
         error_occurred = False

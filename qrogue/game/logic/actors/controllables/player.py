@@ -4,11 +4,13 @@ from qrogue.game.logic.collectibles import Collectible, Key
 from qrogue.util import Config
 
 
-
 class Player(Controllable):
     def __init__(self):
         super().__init__(Config.player_name())
         self.__key_count = 0
+
+    def game_over_check(self) -> bool:
+        return False
 
     def get_img(self):
         return "M"

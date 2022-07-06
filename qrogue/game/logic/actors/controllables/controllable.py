@@ -31,6 +31,10 @@ class Controllable(ABC):
         return self.__name
 
     @abstractmethod
+    def game_over_check(self) -> bool:
+        pass
+
+    @abstractmethod
     def key_count(self) -> int:
         pass
 

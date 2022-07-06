@@ -3,30 +3,31 @@ from typing import Callable
 
 from qrogue.util import Config, ColorConfig as CC, Logger
 
+
 class _CallbackHandler:
-    __show = None
-    __ask = None
+    __show: Callable[[str, str], None] = None
+    __ask: Callable[[str, str, Callable[[bool], None]], None] = None
 
     @staticmethod
     def show(title: str, text: str):
         if _CallbackHandler.__show:
             _CallbackHandler.__show(title, text)
         else:
-            Logger.instance().error("CommonMessages' show is None!")
+            Logger.instance().error("CommonMessages' show is None!", from_pycui=False)
 
     @staticmethod
     def set_show_callback(show: Callable[[str, str], None]):
         _CallbackHandler.__show = show
 
     @staticmethod
-    def ask(text: str, callback: Callable[[bool], None]):
+    def ask(title: str, text: str, callback: Callable[[bool], None]):
         if _CallbackHandler.__ask:
-            _CallbackHandler.__ask(text, callback)
+            _CallbackHandler.__ask(title, text, callback)
         else:
-            Logger.instance().error("CommonMessages' ask is None!")
+            Logger.instance().error("CommonMessages' ask is None!", from_pycui=False)
 
     @staticmethod
-    def set_ask_callback(ask: Callable[[str, Callable[[bool], None]], None]):
+    def set_ask_callback(ask: Callable[[str, str, Callable[[bool], None]], None]):
         _CallbackHandler.__ask = ask
 
 
@@ -34,7 +35,7 @@ def set_show_callback(show: Callable[[str, str], None]):
     _CallbackHandler.set_show_callback(show)
 
 
-def set_ask_callback(ask: Callable[[str, Callable[[bool], None]], None]):
+def set_ask_callback(ask: Callable[[str, str, Callable[[bool], None]], None]):
     _CallbackHandler.set_ask_callback(ask)
 
 
@@ -73,35 +74,63 @@ def _no_space() -> str:
     return f"Your {circ} has {space} left. Remove a {gate} to place another one."
 
 
+def _no_gate_placed() -> str:
+    no = CC.highlight_word("no")
+    gate = CC.highlight_object("Gate")
+    circuit = CC.highlight_object("Circuit")
+    return f"Currently there is {no} {gate} in your {circuit} that you could remove!"
+
+
+def _not_enough_energy_to_flee() -> str:
+    denied = CC.highlight_word("Denied")
+    not_possible = CC.highlight_word("not possible")
+    robots = CC.highlight_object("Robot's")
+    energy = CC.highlight_object("Energy")
+    return f"{denied}. Fleeing {not_possible} because it would cost all of the {robots} remaining {energy}."
+
+
 class CommonPopups(Enum):
     SavingFailed = ("Error!", "Failed to save the game. Please make sure the folder for save data still exists and try "
                               "again.")
     SavingSuccessful = ("Saved", "You successfully saved the game!")
     NoSavingWithCheats = ("Cheating", "You used a cheat and therefore are not allowed to save the game!")
-    LockedDoor = ("Door is locked!", _locked_door())
-    EventDoor = (Config.scientist_name(), "Hmm, I think we should complete the current task first.")
-    WrongDirectionDoor = (Config.scientist_name(), "We sadly cannot access the door from this direction.")
-    EntangledDoor = ("Door is entangled!", _entangled_door())
+    OptionsSaved = ("Saved", "You successfully saved your changes to the options!")
+    OptionsNotSaved = ("Error!", "Could not save your changes...")
+    LockedDoor = (Config.system_name(), _locked_door())
+    EventDoor = (Config.system_name(), "Access denied. Permission requirements not yet fulfilled.")
+    WrongDirectionDoor = (Config.system_name(), "Access denied. Door cannot be accessed from this side.")
+    EntangledDoor = (Config.system_name(), _entangled_door())
     TutorialBlocked = ("Halt!", _tutorial_blocked())
-    NotEnoughMoney = ("$$$", _not_enough_money())
-    NoCircuitSpace = ("Nope", _no_space())
+    NotEnoughMoney = (Config.system_name(), _not_enough_money())
+    NoCircuitSpace = (Config.system_name(), _no_space())
+    NoGatePlaced = (Config.system_name(), _no_gate_placed())
+    NotEnoughEnergyToFlee = (Config.system_name(), _not_enough_energy_to_flee())
 
     def __init__(self, title: str, text: str):
         self.__title = title
         self.__text = text
+
+    @property
+    def title(self) -> str:
+        return self.__title
+
+    @property
+    def text(self) -> str:
+        return self.__text
 
     def show(self):
         _CallbackHandler.show(self.__title, self.__text)
 
 
 class CommonQuestions(Enum):
-    __ask = None
+    GoingBack = (Config.scientist_name(), "We are not done yet. \nDo you really want to go back to the spaceship?")
+    ProceedToNextMap = (Config.scientist_name(), "Looks like we cleared this map. Shall we proceed directly to the " 
+                                                 "next one?")
+    UseTeleporter = (Config.system_name(), "Do you want to use this Teleporter?")
 
-    GoingBack = "We are not done yet. \nDo you really want to go back to the spaceship?"
-    ProceedToNextMap = "Looks like we cleared this map. Shall we proceed directly to the next one?"
-
-    def __init__(self, text: str):
+    def __init__(self, title: str, text: str):
+        self.__title = title
         self.__text = text
 
     def ask(self, callback: Callable[[bool], None]):
-        _CallbackHandler.ask(self.__text, callback)
+        _CallbackHandler.ask(self.__title, self.__text, callback)

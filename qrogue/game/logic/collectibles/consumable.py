@@ -46,7 +46,7 @@ class EnergyRefill(Consumable):
         self.__robot = None
 
     def on_consumption(self, robot: "Robot") -> bool:
-        self.__amount_refilled = robot.regenerate(self.__amount)
+        self.__amount_refilled = robot.increase_energy(self.__amount)
         self.__robot = robot
         return True
 

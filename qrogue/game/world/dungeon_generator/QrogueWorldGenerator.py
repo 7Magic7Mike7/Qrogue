@@ -1,34 +1,39 @@
-from typing import List, Tuple, Callable
+from typing import List, Tuple, Callable, Optional
 
 from antlr4 import InputStream, CommonTokenStream
 from antlr4.tree.Tree import TerminalNodeImpl
 
-from qrogue.game.world.dungeon_generator import parser_util
 from qrogue.game.logic import Message
 from qrogue.game.logic.actors import Player
+from qrogue.game.world.dungeon_generator import parser_util
 from qrogue.game.world.map import Room, MetaRoom, SpawnRoom, WorldMap
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.game.world.tiles import Door, DoorOneWayState, DoorOpenState
-from qrogue.util import MapConfig, PathConfig, Logger
+from qrogue.util import MapConfig, PathConfig, Logger, Config
 
-from .world_parser.QrogueWorldLexer import QrogueWorldLexer
-from .world_parser.QrogueWorldParser import QrogueWorldParser
-from .world_parser.QrogueWorldVisitor import QrogueWorldVisitor
+from qrogue.game.world.dungeon_generator.world_parser.QrogueWorldLexer import QrogueWorldLexer
+from qrogue.game.world.dungeon_generator.world_parser.QrogueWorldParser import QrogueWorldParser
+from qrogue.game.world.dungeon_generator.world_parser.QrogueWorldVisitor import QrogueWorldVisitor
+from qrogue.game.world.map.rooms import Placeholder
 
 
 class QrogueWorldGenerator(QrogueWorldVisitor):
+    CONNECTING_ROOM_ID = "_"
+
     @staticmethod
     def is_spawn_room(room_id: str) -> bool:
         return room_id.lower() == 'sr'
 
     def __init__(self, seed: int, player: Player, check_achievement_callback: Callable[[str], bool],
                  trigger_achievement_callback: Callable[[str], None],
-                 load_map_callback: Callable[[str, Coordinate], None]):
+                 load_map_callback: Callable[[str, Optional[Coordinate]], None],
+                 show_message_callback: Callable[[str, str], None]):
         self.__seed = seed
         self.__player = player
         self.__check_achievement = check_achievement_callback
         self.__trigger_achievement = trigger_achievement_callback
         self.__load_map = load_map_callback
+        self.__show_message = show_message_callback
 
         self.__hallways_by_id = {}
         self.__created_hallways = {}
@@ -48,7 +53,7 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
             else:
                 self.__hallways[room2] = {room1: door}
 
-    def generate(self, file_name: str, in_dungeon_folder: bool = True) -> Tuple[WorldMap, bool]:
+    def generate(self, file_name: str, in_dungeon_folder: bool = True) -> Tuple[Optional[WorldMap], bool]:
         map_data = PathConfig.read_world(file_name, in_dungeon_folder)
 
         input_stream = InputStream(map_data)
@@ -62,7 +67,7 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
             if name is None:
                 name = file_name
         except SyntaxError as se:
-            Logger.instance().error(str(se))
+            Logger.instance().error(str(se), from_pycui=False)
             return None, False
 
         # add empty rooms if rows don't have the same width
@@ -75,7 +80,7 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
                 row += [None] * (max_len - len(row))
 
         world = WorldMap(name, file_name, self.__seed, room_matrix, self.__player, self.__spawn_pos,
-                         self.__check_achievement, self.__trigger_achievement)
+                         self.__check_achievement, self.__trigger_achievement, self.__show_message)
         return world, True
 
     def __load_next(self):
@@ -83,7 +88,7 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
 
     ##### loading #####
 
-    def __load_hallway(self, reference: str) -> Door:
+    def __load_hallway(self, reference: str) -> Optional[Door]:
         if reference in self.__hallways_by_id:
             return self.__hallways_by_id[reference]
         elif reference == parser_util.EMPTY_HALLWAY_CODE:
@@ -95,7 +100,7 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
 
     def __load_room(self, reference: str, x: int, y: int) -> Room:
         if reference in self.__rooms:
-            if str.lower(reference) == 'sr':
+            if reference.lower() == 'sr':
                 if self.__spawn_pos:
                     parser_util.warning("A second SpawnRoom was defined! Ignoring the first one "
                                         "and using this one as SpawnRoom.")
@@ -103,6 +108,9 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
             room = self.__rooms[reference]
             hw_dic = parser_util.get_hallways(self.__created_hallways, self.__hallways, Coordinate(x, y))
             return room.copy(hw_dic)
+        elif reference.startswith(QrogueWorldGenerator.CONNECTING_ROOM_ID):
+            hw_dic = parser_util.get_hallways(self.__created_hallways, self.__hallways, Coordinate(x, y))
+            return Placeholder.empty_room(hw_dic)
         else:
             parser_util.warning(f"room_id \"{reference}\" not specified and imports not supported for worlds! "
                                 "Placing an empty room instead.")
@@ -117,8 +125,8 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
         if ctx.OPEN_LITERAL():
             open_state = DoorOpenState.Open
         elif ctx.EVENT_LITERAL():
-            if ctx.REFERENCE():
-                event_id = parser_util.normalize_reference(ctx.REFERENCE().getText())
+            if ctx.REFERENCE(0):
+                event_id = parser_util.normalize_reference(ctx.REFERENCE(0).getText())
 
                 def door_check():
                     return self.__check_achievement(event_id)
@@ -144,13 +152,19 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
 
     ##### Room area #####
 
-    def visitR_type(self, ctx: QrogueWorldParser.R_typeContext) -> str:
+    def visitR_type(self, ctx: QrogueWorldParser.R_typeContext) -> Tuple[str, int, Direction]:
+        num = 0
+        for digit in ctx.DIGIT():
+            num *= 10
+            d = int(digit.getText())
+            num += d
+        direction = parser_util.direction_from_string(ctx.DIRECTION().getText())
         if ctx.WORLD_LITERAL():
-            return "W"
+            return "W", num, direction
         elif ctx.LEVEL_LITERAL():
-            return "L"
+            return "L", num, direction
         else:
-            raise ValueError(f"Invalid r_type: {ctx.getText()}")
+            raise ValueError("Invalid r_type: " + ctx.getText())
 
     def visitR_visibility(self, ctx: QrogueWorldParser.R_visibilityContext) -> Tuple[bool, bool]:
         visible = False
@@ -164,24 +178,23 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
     def visitR_attributes(self, ctx: QrogueWorldParser.R_attributesContext) \
             -> Tuple[Tuple[bool, bool], bool, int, Direction]:
         visibility = self.visit(ctx.r_visibility())
-        rtype = self.visit(ctx.r_type())
-        num = 0
-        for digit in ctx.DIGIT():
-            num *= 10
-            d = int(digit.getText())
-            num += d
-        direction = parser_util.direction_from_string(ctx.DIRECTION().getText())
+        rtype, num, direction = self.visit(ctx.r_type())
         return visibility, rtype, num, direction
 
-    def visitRoom(self, ctx: QrogueWorldParser.RoomContext) -> Tuple[str, MetaRoom]:
-        room_id = ctx.ROOM_ID().getText()
-        msg = ctx.TEXT().getText()[1:-1]  # strip encapsulating \"
+    def visitRoom_content(self, ctx: QrogueWorldParser.Room_contentContext) -> Tuple[str, str]:
+        _, msg = parser_util.parse_message_body(ctx.message_body())
         level_to_load = parser_util.normalize_reference(ctx.REFERENCE().getText())
+        return msg, level_to_load
+
+    def visitRoom(self, ctx: QrogueWorldParser.RoomContext) -> Tuple[str, Room]:
+        room_id = ctx.ROOM_ID().getText()
+        msg, level_to_load = self.visit(ctx.room_content())
         visibility, m_type, num, orientation = self.visit(ctx.r_attributes())
 
-        alt_message = Message.create_with_title(f"load{room_id}Done", f"{level_to_load} - done", msg)
+        alt_message = Message.create_with_title("load" + room_id + "Done", Config.system_name(), "[DONE]\n" + msg)
         # the (internal) level name is also the name of the event that describes whether the level was completed or not
-        message = Message.create_with_alternative(f"load{room_id}", level_to_load, msg, level_to_load, alt_message)
+        message = Message.create_with_alternative("load" + room_id, Config.system_name(), msg, level_to_load,
+                                                  alt_message)
         # hallways will be added later
         if self.is_spawn_room(room_id):
             room = MetaRoom(self.__load_map, orientation, message, level_to_load, m_type, num, is_spawn=True)
@@ -207,16 +220,16 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
             self.__visitL_hallway_row(hw_row, y)
 
         room_matrix = []
-        for y in range(MapConfig.max_height()):
+        for y in range(MapConfig.map_height()):
             row_ctx = ctx.l_room_row(y)
             if row_ctx:
                 room_matrix.append(self.__visitL_room_row(row_ctx, y))
             else:
                 break
-        if ctx.l_room_row(MapConfig.max_height()):
+        if ctx.l_room_row(MapConfig.map_height()):
             parser_util.warning(
-                f"Too much room rows specified. Only maps of size ({MapConfig.max_width()}, "
-                f"{MapConfig.max_height()}) supported. Ignoring over-specified rows.")
+                f"Too much room rows specified. Only maps of size ({MapConfig.map_width()}, "
+                f"{MapConfig.map_height()}) supported. Ignoring over-specified rows.")
 
         return room_matrix
 
@@ -225,8 +238,8 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
         for child in ctx_children:
             if parser_util.check_for_overspecified_columns(x, child.symbol.type, QrogueWorldParser.VERTICAL_SEPARATOR):
                 parser_util.warning(
-                    f"Too much room columns specified. Only maps of size ({MapConfig.max_width()}, "
-                    f"{MapConfig.max_height()}) supported. Ignoring over-specified columns.")
+                    f"Too much room columns specified. Only maps of size ({MapConfig.map_width()}, "
+                    f"{MapConfig.map_height()}) supported. Ignoring over-specified columns.")
                 break
             if child.symbol.type == QrogueWorldParser.HALLWAY_ID:
                 hw_id = child.symbol.text
@@ -246,8 +259,8 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
         x = 0
         for child in ctx.children:
             if parser_util.check_for_overspecified_columns(x, child.symbol.type, QrogueWorldParser.VERTICAL_SEPARATOR):
-                parser_util.warning(f"Too much room columns specified. Only maps of size ({MapConfig.max_width()}, "
-                                    f"{MapConfig.max_height()}) supported. Ignoring over-specified columns.")
+                parser_util.warning(f"Too much room columns specified. Only maps of size ({MapConfig.map_width()}, "
+                                    f"{MapConfig.map_height()}) supported. Ignoring over-specified columns.")
                 break
 
             if child.symbol.type == QrogueWorldParser.ROOM_ID:
@@ -262,7 +275,7 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
     ##### Start area #####
 
     def visitStart(self, ctx: QrogueWorldParser.StartContext) -> Tuple[str, List[List[Room]]]:
-        if ctx.NAME():
+        if ctx.TEXT():
             name = ctx.TEXT().getText()[1:-1]
         else:
             name = None

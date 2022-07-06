@@ -8,6 +8,8 @@ from .enemy import Enemy
 
 
 class Boss(Enemy, ABC):
+    __BOSS_ID = 0
+
     """
     A special Enemy with specified target and reward.
     """
@@ -18,7 +20,7 @@ class Boss(Enemy, ABC):
         :param target:
         :param reward:
         """
-        super().__init__(target, reward, flee_chance=0.3)
+        super().__init__(Boss.__BOSS_ID, target, reward)
         self.__is_defeated = False
 
     @property
