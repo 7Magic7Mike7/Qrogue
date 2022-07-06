@@ -193,9 +193,9 @@ class QrogueCUI(PyCUI):
             return True
 
         if gameplay:
-            pause = GameplayConfig.get_option_value_converted(Options.gameplay_key_pause, convert=float)
+            pause = GameplayConfig.get_option_value(Options.gameplay_key_pause, convert=True)
         else:
-            pause = GameplayConfig.get_option_value_converted(Options.simulation_key_pause, convert=float)
+            pause = GameplayConfig.get_option_value(Options.simulation_key_pause, convert=True)
         now_time = time.time()
         if now_time - self.__last_input >= pause:
             self.__last_input = now_time
