@@ -46,7 +46,7 @@ setup(
 	keywords=['Quantum Computing', 'Gamification', 'Video Game', 'PyCUI'],
 	install_requires=[
 		'py-cui==0.1.4',
-		'numpy==1.20.1',
+		'numpy==1.22.0',
 		'qiskit==0.34.2',
 		'antlr4-python3-runtime==4.10',
 	],
