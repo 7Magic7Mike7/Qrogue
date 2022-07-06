@@ -562,8 +562,7 @@ class OutputStateVectorWidget(StateVectorWidget):
         self._stv_str_rep = self._headline
         for i in range(output_stv.size):
             correct_amplitude = abs(diff_stv.at(i)) <= QuantumSimulationConfig.TOLERANCE
-            self._stv_str_rep += StateVector.wrap_in_qubit_conf(output_stv, i, coloring=True,
-                                                                correct_amplitude=correct_amplitude)
+            self._stv_str_rep += output_stv.wrap_in_qubit_conf(i, coloring=True, correct_amplitude=correct_amplitude)
             self._stv_str_rep += "\n"
 
 
@@ -574,7 +573,7 @@ class TargetStateVectorWidget(StateVectorWidget):
     def set_data(self, state_vector: StateVector) -> None:
         self._stv_str_rep = self._headline
         for i in range(state_vector.size):
-            self._stv_str_rep += StateVector.wrap_in_qubit_conf(state_vector, i, show_percentage=True)
+            self._stv_str_rep += state_vector.wrap_in_qubit_conf(i, show_percentage=True)
             self._stv_str_rep += "\n"
 
 

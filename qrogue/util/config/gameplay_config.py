@@ -238,6 +238,9 @@ class Options(Enum):
     simulation_key_pause = ("Simulation Key Pause", _get_float_callback(0.05, 1.0, 19), 19, 3,
                             "How long to wait before we process the next input during simulation.")
 
+    show_ket_notation = ("Show Ket-Notation", _get_boolean_callback(), 2, 1,
+                         "Whether to display ket-notation for state vectors and circuit matrix or not.")
+
     def __init__(self, name: str, get_value: Tuple[Callable[[int], str], Callable[[str], Any]], num_of_values: int,
                  default_index: int, description: str):
         self.__name = name
@@ -280,6 +283,8 @@ class GameplayConfig:
 
         Options.gameplay_key_pause: Options.gameplay_key_pause.default_index,
         Options.simulation_key_pause: Options.simulation_key_pause.default_index,
+
+        Options.show_ket_notation: Options.show_ket_notation.default_index,
     }
 
     @staticmethod
