@@ -12,7 +12,8 @@ class WorldMap(Map):
                  trigger_achievement_callback: Callable[[str], None],
                  show_message_callback: Callable[[str, str], None]):
         def show_description():
-            show_message_callback(name, "TODO?")
+            pass
+            # show_message_callback(name, "TODO?")
         meta_data = MapMetaData(name, None, False, show_description)
         super().__init__(meta_data, file_name, seed, rooms, player, spawn_room, check_achievement_callback,
                          trigger_achievement_callback)
