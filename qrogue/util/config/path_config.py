@@ -132,7 +132,8 @@ class PathConfig:
             PathConfig.set_base_path(data_path)
             PathConfig.set_user_data_path(user_data_path)
             return os.path.exists(PathConfig.__Base_Path) and os.path.exists(PathConfig.__User_Data_Path)
-        except:
+        except Exception as error:
+            print(error)
             return False
 
     @staticmethod
