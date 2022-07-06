@@ -1,7 +1,7 @@
 
 import random
 import sys
-from typing import Tuple, List
+from typing import Tuple, List, Optional
 
 from qrogue.game.logic.actors import Player
 from qrogue.game.world.dungeon_generator import QrogueLevelGenerator, QrogueWorldGenerator
@@ -52,7 +52,7 @@ def __init_singletons(seed: int):
     CallbackPack(start_level, start_fight, start_boss_fight, open_riddle, open_challenge, visit_shop, game_over)
 
 
-def __parse_argument(argument: List[str], has_value: bool = False) -> Tuple[bool, str]:
+def __parse_argument(argument: List[str], has_value: bool = False) -> Tuple[bool, Optional[str]]:
     for arg in argument:
         if arg in sys.argv:
             if has_value:
