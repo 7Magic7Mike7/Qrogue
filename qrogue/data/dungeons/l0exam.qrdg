@@ -4,11 +4,10 @@ Description = Speaker "0" "The //05Mission Quniverse Exam// is about to start. Y
 NO_TELEPORTER
 
 // Introduced Concepts:
-// fleeing from puzzles
 
 [Robot]
 2 qubits [ *xgate ]
-circuit_space = 2
+circuit_space = 3
 maxenergy = 100
 
 [Layout]
@@ -93,7 +92,7 @@ ee (Wild):
 # o o o _ _ #
 # o o o _ _ #
 #############
-r 3 *entangledPos gate *h trigger *miniBossDone
+r 4 *entangledPos gate *h trigger *miniBossDone
 
 nn (Wild):
 #############
