@@ -264,7 +264,7 @@ class Options(Enum):
 
     @property
     def description(self) -> str:
-        return self.__name
+        return self.__description
 
     def get_value(self, cur_index: int) -> str:
         return self.__get_value(cur_index)
