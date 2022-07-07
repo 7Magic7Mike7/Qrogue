@@ -97,6 +97,14 @@ version will likely work but are not recommended.
 - Debug Keys (not for use in normal play through!)
   - Print screen: CTRL+P
   - Force re-render: CTRL+R 
+  
+## Feedback ##
+We'd be very happy if you share any feedback with us, regardless whether you liked the game or not.
+Just send it via Email to michael.artner@jku.at with the subject "Qrogue Feedback". 
+It would also be nice if you could add your user-data folder ("qrogue/QrogueData", for normal installations it can be found in your virtual environment's packages) with the log files. Thanks!
+
+If you find a typo: In the title of the popup window you should find something like "{@abc}" where abc is the message id. 
+Please do tell us the message id so we have an easier time fixing it. Thanks!
 
 ## Outlook ##
 
