@@ -185,8 +185,10 @@ class MenuWidgetSet(MyWidgetSet):
             choices.append("START YOUR JOURNEY\n")
             callbacks.append(self.__start_playing)
 
-        choices += ["OPTIONS\n", "EXIT\n"]  # for more space between the rows we add "\n"
-        callbacks += [self.__options, self.__stop]
+        # choices.append("OPTIONS\n")  # for more space between the rows we add "\n"
+        # callbacks.append(self.__options)
+        choices.append("EXIT\n")
+        callbacks.append(self.__stop)
         self.__selection.set_data(data=(choices, callbacks))
 
     def new_seed(self) -> None:
