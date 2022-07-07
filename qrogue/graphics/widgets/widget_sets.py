@@ -319,7 +319,7 @@ class PauseMenuWidgetSet(MyWidgetSet):
         texts = []
         for op_tup in options:
             option, _ = op_tup
-            texts.append(f"{option.name}: {GameplayConfig.get_option_value(option)}")
+            texts.append(f"{option.name}: {GameplayConfig.get_option_value(option, convert=False)}")
 
         def callback(index: int) -> bool:
             if 0 <= index < len(options):

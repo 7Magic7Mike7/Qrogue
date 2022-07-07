@@ -305,7 +305,7 @@ class GameplayConfig:
         return [(option, next_) for option in GameplayConfig.__OPTIONS]
 
     @staticmethod
-    def get_option_value(option: Options, convert: bool = False) -> Any:
+    def get_option_value(option: Options, convert: bool = True) -> Any:
         cur_index = GameplayConfig.__OPTIONS[option]
         if convert:
             return option.convert(cur_index)
