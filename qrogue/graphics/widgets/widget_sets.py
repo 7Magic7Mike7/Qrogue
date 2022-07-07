@@ -251,8 +251,7 @@ class PauseMenuWidgetSet(MyWidgetSet):
 
         self.__hud = MyWidgetSet.create_hud_row(self)
 
-        choices = self.add_block_label('Choices', UIConfig.HUD_HEIGHT, 0,
-                                       row_span=UIConfig.NON_HUD_HEIGHT,
+        choices = self.add_block_label('Choices', UIConfig.HUD_HEIGHT, 0, row_span=UIConfig.NON_HUD_HEIGHT,
                                        column_span=UIConfig.PAUSE_CHOICES_WIDTH, center=True)
         self.__choices = SelectionWidget(choices, controls, stay_selected=True)
         self.__choices.set_data(data=(
@@ -264,6 +263,11 @@ class PauseMenuWidgetSet(MyWidgetSet):
                                        row_span=UIConfig.WINDOW_HEIGHT-UIConfig.HUD_HEIGHT,
                                        column_span=UIConfig.WINDOW_WIDTH-UIConfig.PAUSE_CHOICES_WIDTH, center=True)
         self.__details = SelectionWidget(details, controls, is_second=True)
+
+        description = self.add_block_label('Description', UIConfig.WINDOW_HEIGHT-UIConfig.PAUSE_DESCRIPTION_HEIGHT,
+                                           UIConfig.PAUSE_CHOICES_WIDTH, row_span=UIConfig.PAUSE_DESCRIPTION_HEIGHT,
+                                           column_span=UIConfig.WINDOW_WIDTH-UIConfig.PAUSE_CHOICES_WIDTH, center=True)
+        self.__description = SimpleWidget(description)
 
         # add action key commands
         def use_choices():
@@ -318,8 +322,8 @@ class PauseMenuWidgetSet(MyWidgetSet):
         options = GameplayConfig.get_options()
         texts = []
         for op_tup in options:
-            option, _ = op_tup
-            texts.append(f"{option.name}: {GameplayConfig.get_option_value(option, convert=False)}")
+            op, _ = op_tup
+            texts.append(f"{op.name}: {GameplayConfig.get_option_value(op, convert=False)}")
 
         def callback(index: int) -> bool:
             if 0 <= index < len(options):
@@ -327,6 +331,8 @@ class PauseMenuWidgetSet(MyWidgetSet):
                 new_title = f"{option.name}: {next_(option)}"
                 self.__details.update_text(new_title, index)
                 self.__details.render()
+                self.__description.set_data(option.description)
+                self.__description.render()
                 return False  # don't change widget focus
 
             if index == len(options):
@@ -370,6 +376,7 @@ class PauseMenuWidgetSet(MyWidgetSet):
             self.__hud,
             self.__choices,
             self.__details,
+            self.__description,
         ]
 
     def get_main_widget(self) -> WidgetWrapper:
@@ -383,6 +390,7 @@ class PauseMenuWidgetSet(MyWidgetSet):
     def reset(self) -> None:
         self.__choices.render_reset()
         self.__details.render_reset()
+        self.__description.render_reset()
 
 
 class WorkbenchWidgetSet(MyWidgetSet):
