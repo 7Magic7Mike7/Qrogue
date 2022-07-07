@@ -15,7 +15,7 @@ from qrogue.graphics.popups import Popup
 from qrogue.graphics.rendering import ColorRules
 from qrogue.graphics.widget_base import WidgetWrapper
 from qrogue.util import CommonPopups, Config, Controls, GameplayConfig, HelpText, HelpTextType, Logger, PathConfig, \
-    RandomManager, AchievementManager, Keys, UIConfig, HudConfig, ColorConfig
+    RandomManager, AchievementManager, Keys, UIConfig, HudConfig, ColorConfig, Options
 from qrogue.util.achievements import Ach, Unlocks
 
 from qrogue.graphics.widgets import Renderable, Widget, MyBaseWidget
@@ -833,7 +833,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                     self.render()
                     return True
                 else:
-                    if self._robot.is_space_left:
+                    if self._robot.is_space_left or GameplayConfig.get_option_value(Options.allow_implicit_removal):
                         self.__circuit.start_gate_placement(cur_instruction)
                         self.render()
                         return True

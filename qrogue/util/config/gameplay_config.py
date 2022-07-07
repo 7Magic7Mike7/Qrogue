@@ -240,6 +240,9 @@ class Options(Enum):
 
     show_ket_notation = ("Show Ket-Notation", _get_boolean_callback(), 2, 1,
                          "Whether to display ket-notation for state vectors and circuit matrix or not.")
+    allow_implicit_removal = ("Allow implicit Removal", _get_boolean_callback(), 2, 0,
+                              "Allows you to place a gate on an occupied spot, removing the occupying gate in the "
+                              "process.")
 
     def __init__(self, name: str, get_value: Tuple[Callable[[int], str], Callable[[str], Any]], num_of_values: int,
                  default_index: int, description: str):
@@ -285,6 +288,7 @@ class GameplayConfig:
         Options.simulation_key_pause: Options.simulation_key_pause.default_index,
 
         Options.show_ket_notation: Options.show_ket_notation.default_index,
+        Options.allow_implicit_removal: Options.allow_implicit_removal.default_index,
     }
 
     @staticmethod
