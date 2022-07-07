@@ -228,8 +228,6 @@ class Options(Enum):
     auto_reset_circuit = ("Auto Reset Circuit", _get_boolean_callback(), 2, 1,
                           "Automatically reset your Circuit to a clean state at the beginning of a Puzzle, Riddle, "
                           "etc.")
-    auto_swap_gates = ("Auto Swap Gates", _get_boolean_callback(), 2, 1,
-                       "Automatically swaps position of two gates if you try to move one to an occupied slot.")
     log_keys = ("Log Keys", _get_boolean_callback(), 2, 1,
                 "Stores all keys you pressed in a .qrkl-file so one can replay them (e.g. for analysing a bug)")
 
@@ -281,7 +279,6 @@ class GameplayConfig:
     __OPTIONS: Dict[Options, int] = {
         Options.auto_save: Options.auto_save.default_index,
         Options.auto_reset_circuit: Options.auto_reset_circuit.default_index,
-        Options.auto_swap_gates: Options.auto_swap_gates.default_index,
         Options.log_keys: Options.log_keys.default_index,
 
         Options.gameplay_key_pause: Options.gameplay_key_pause.default_index,
@@ -356,10 +353,6 @@ class GameplayConfig:
     @staticmethod
     def log_keys() -> bool:
         return GameplayConfig.get_option_value(Options.log_keys, convert=True)
-
-    @staticmethod
-    def auto_swap_gates() -> bool:
-        return GameplayConfig.get_option_value(Options.auto_swap_gates, convert=True)
 
 
 class PuzzleConfig:

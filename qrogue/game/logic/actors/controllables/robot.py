@@ -408,14 +408,8 @@ class Robot(Controllable, ABC):
         if instruction.is_used() and instruction.position != position:
             if 0 <= position < self.__attributes.circuit_space:
                 if self.__instructions[position]:
-                    prev_pos = instruction.position
                     self.__remove_instruction(instruction, skip_qargs=True)
-                    if GameplayConfig.auto_swap_gates():
-                        instruction2 = self.__instructions[position]
-                        self.__remove_instruction(instruction2, skip_qargs=True)
-                        self.__place_instruction(instruction2, prev_pos)
-                    else:
-                        self.__remove_instruction(self.__instructions[position])
+                    self.__remove_instruction(self.__instructions[position])
                 else:
                     self.__remove_instruction(instruction, skip_qargs=True)
                 self.__place_instruction(instruction, position)
