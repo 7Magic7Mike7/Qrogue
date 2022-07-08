@@ -8,7 +8,7 @@ from qiskit.providers.aer import StatevectorSimulator
 from qrogue.game.logic.collectibles import Instruction
 from qrogue.util import Logger, QuantumSimulationConfig, GameplayConfig, Options
 from qrogue.util.config import ColorCode, ColorConfig
-from qrogue.util.util_functions import is_power_of_2, center_string, to_binary_string
+from qrogue.util.util_functions import is_power_of_2, center_string, to_binary_string, align_string
 
 
 def _generate_ket(qubit: int, num_of_qubits: int) -> str:
@@ -25,7 +25,11 @@ def _wrap_in_ket_notation(number: complex, qubit: int, num_of_qubits: int,
         else:
             value = ColorConfig.colorize(ColorCode.WRONG_AMPLITUDE, value)
     if show_percentage:
-        value += f"  ({StateVector.complex_to_amplitude_percentage_string(number)})"
+        # line_width is space + 1 because of the additional "%"
+        space = QuantumSimulationConfig.MAX_PERCENTAGE_SPACE
+        percentage = align_string(StateVector.complex_to_amplitude_percentage_string(number, space), space + 1,
+                                  left=False)
+        value += f"  ({percentage})"
 
     if GameplayConfig.get_option_value(Options.show_ket_notation, convert=True):
         return f"{_generate_ket(qubit, num_of_qubits)}  {value}"
@@ -61,11 +65,14 @@ class StateVector:
         return text
 
     @staticmethod
-    def complex_to_amplitude_percentage_string(val: complex) -> str:
+    def complex_to_amplitude_percentage_string(val: complex,
+                                               space: int = QuantumSimulationConfig.MAX_PERCENTAGE_SPACE) -> str:
         amp = np.round(abs(val**2), QuantumSimulationConfig.DECIMALS)
         text = str(amp * 100)
         if text[-2:] == ".0":
-            text = text[:-2]    # remove the redundant ".0"
+            text = text[:-2]        # remove the redundant ".0"
+        if len(text) > space:
+            text = text[:space]     # clamp to specified space
         return text + "%"
 
     @staticmethod
@@ -208,19 +215,24 @@ class CircuitMatrix:
         return int(np.log2(self.size))
 
     def to_string(self, space_per_value: int = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER) -> str:
+        spacing = " "
         if GameplayConfig.get_option_value(Options.show_ket_notation, convert=True):
-            text = " " * (1 + self.num_of_qubits + 1)   # we need to pad the rows' |qubits> prefix
+            padding = len(_generate_ket(0, self.num_of_qubits)) + len(spacing)  # also add the space after the ket
+            text = " " * padding   # we need to pad the rows' |qubits> prefix
             for i in range(self.size):
+                # space_per_value + 1 due to the trailing space
                 text += center_string(_generate_ket(i, self.num_of_qubits), space_per_value)
+                text += spacing
             text += "\n"
         else:
             text = "\n"
         for i, row in enumerate(self.__matrix):
             if GameplayConfig.get_option_value(Options.show_ket_notation, convert=True):
-                text += _generate_ket(i, self.num_of_qubits) + " "
+                text += _generate_ket(i, self.num_of_qubits)
+                text += spacing
             for val in row:
                 text += center_string(StateVector.complex_to_string(val), space_per_value)
-                text += " "
+                text += spacing
             text += "\n"
         return text
 

@@ -599,7 +599,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         posx = 0
         row_span = UIConfig.stv_height(2)   # doesn't matter since we reposition the dependent widgets anyway
         matrix_width = UIConfig.WINDOW_WIDTH - (UIConfig.INPUT_STV_WIDTH + UIConfig.OUTPUT_STV_WIDTH +
-                                                UIConfig.TARGET_STV_WIDTH + 1 * 3)  # width of the three signs
+                                                UIConfig.TARGET_STV_WIDTH + 1 * 3)  # + width of the three signs
         circuit_height = UIConfig.NON_HUD_HEIGHT - row_span - UIConfig.DIALOG_HEIGHT
 
         self._hud = MyWidgetSet.create_hud_row(self)
@@ -736,7 +736,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
             # for smaller qubit numbers we shrink the matrix and place everything closer to the middle
             if num_of_qubits < 3:
-                shrinkage = 2   # magic number that turned out to give a good visual result
+                shrinkage = 1   # magic number that turned out to give a good visual result
                 # window width minus width of all StVs and signs, afterwards adapted by the small-qubit-shrinkage
                 matrix_width = UIConfig.WINDOW_WIDTH - (UIConfig.INPUT_STV_WIDTH + UIConfig.OUTPUT_STV_WIDTH +
                                                         UIConfig.TARGET_STV_WIDTH + 1 * 3) - 2 * shrinkage
@@ -755,14 +755,14 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                 posx += 1
                 self.__stv_target.widget.reposition(column=posx)
 
-                self.__circuit.widget.reposition(row=UIConfig.HUD_HEIGHT + row_span + shrinkage)
+                self.__circuit.widget.reposition(row=UIConfig.HUD_HEIGHT + row_span + 2 * shrinkage)
             elif num_of_qubits == 4:
 
                 self.__circuit.widget.reposition(row=UIConfig.HUD_HEIGHT + row_span)
                 self._choices.widget.reposition(row=UIConfig.WINDOW_HEIGHT - 1, row_span=1)
                 self._details.widget.reposition(row=UIConfig.WINDOW_HEIGHT - 1, row_span=1)
             else:
-                self.__circuit.widget.reposition(row=UIConfig.HUD_HEIGHT + row_span)
+                self.__circuit.widget.reposition(row=UIConfig.HUD_HEIGHT + row_span + 1)    # + 1 for visuals
 
     def get_main_widget(self) -> WidgetWrapper:
         return self._choices.widget
