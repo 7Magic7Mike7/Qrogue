@@ -338,7 +338,7 @@ class CircuitWidget(Widget):
             # if gate is None we search for a occupied position (gate_at(pos) is not None)
             # if gate is not None we search for a free position (gate_at(pos) is None)
             # hence this xor condition
-            return (self.gate is None) != (robot.gate_at(pos) is None)
+            return (self.gate is None) != (robot.gate_used_at(pos) is None)
 
         def place(self) -> bool:
             if self.gate is not None and self.gate.use_qubit(self.qubit):
@@ -422,11 +422,12 @@ class CircuitWidget(Widget):
         if self.__place_holder_data:
             if self.__place_holder_data.gate is None:
                 # remove the instruction
-                gate = self.__robot.gate_at(self.__place_holder_data.pos)
-                self.__robot.remove_instruction(gate)
-                self.__place_holder_data = None
-                self.render()
-                return True, None
+                gate = self.__robot.gate_used_at(self.__place_holder_data.pos)
+                if gate is not None:
+                    self.__robot.remove_instruction(gate)
+                    self.__place_holder_data = None
+                    self.render()
+                    return True, None
             else:
                 gate = self.__place_holder_data.gate
                 if self.__place_holder_data.place():
@@ -446,7 +447,7 @@ class CircuitWidget(Widget):
             entry = "-" * (3 + InstructionConfig.MAX_ABBREVIATION_LEN + 3)
             rows = [[entry] * self.__robot.circuit_space for _ in range(self.__robot.num_of_qubits)]
             for i in range(self.__robot.circuit_space):
-                inst = self.__robot.gate_at(i)
+                inst = self.__robot.gate_used_at(i)
                 if inst:
                     for q in inst.qargs_iter():
                         inst_str = center_string(inst.abbreviation(q), InstructionConfig.MAX_ABBREVIATION_LEN)
