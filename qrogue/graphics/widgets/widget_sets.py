@@ -811,7 +811,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
     def __choose_instruction(self, index: int) -> bool:
         if 0 <= index < self._robot.backpack.used_capacity:
-            cur_instruction = self._robot.get_instruction(index)
+            cur_instruction = self._robot.get_stored_instruction(index)
             if cur_instruction is not None:
                 if cur_instruction.is_used():
                     # move the instruction
@@ -885,11 +885,12 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
     def __choices_help(self) -> bool:
         def show_help_popup(index: int = 0) -> bool:
-            if 0 <= index < self._robot.backpack.used_capacity:
-                instruction = self._robot.backpack.get(index)
+            instruction = self._robot.backpack.get(index)
+            if instruction is None:
+                return True
+            else:
                 Popup.generic_info(instruction.name(), instruction.description())
                 return False
-            return True
         options = [instruction.name() for instruction in self._robot.backpack]
         self._details.set_data(data=(
             SelectionWidget.wrap_in_hotkey_str(options) + [MyWidgetSet.BACK_STRING],
@@ -1068,7 +1069,7 @@ class ShopWidgetSet(MyWidgetSet):
         return True
 
     def __buy_item(self) -> bool:
-        if self.__robot.backpack.use_coins(self.__cur_item.price):
+        if self.__robot.backpack.spend_coins(self.__cur_item.price):
             self.__robot.give_collectible(self.__cur_item.collectible)
             self.__hud.render()
             self.__items.remove(self.__cur_item)

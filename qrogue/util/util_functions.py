@@ -3,6 +3,11 @@ __DEFAULT_CHARACTER = " "
 
 
 def is_power_of_2(n: int):
+    """
+    Checks if a given number is a power of 2.
+    :param n: the number we want to check
+    :return: True if n is a power of 2, False otherwise
+    """
     if n == 0:
         return False
     return (n & (n - 1)) == 0
