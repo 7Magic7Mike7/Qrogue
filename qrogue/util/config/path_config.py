@@ -16,9 +16,9 @@ class FileTypes(enum.Enum):
 
 
 class PathConfig:
-    __DEFAULT_GAME_DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "data")
-    __DEFAULT_USER_DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "QrogueData")
     __DATA_FOLDER = "data"
+    __DEFAULT_GAME_DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "..", __DATA_FOLDER)
+    __DEFAULT_USER_DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "QrogueData")
     __LOG_FOLDER = "logs"
     __KEY_LOG_FOLDER = "keylogs"
     __SCREEN_PRINTS_FOLDER = "screenprints"
@@ -65,7 +65,7 @@ class PathConfig:
 
     @staticmethod
     def launch_config_path() -> str:
-        return os.path.join(os.path.dirname(__file__), "../..", PathConfig.__DATA_FOLDER, "qrogue_launch.config")
+        return os.path.join(PathConfig.__Base_Path, "qrogue_launch.config")
 
     @staticmethod
     def default_base_path() -> str:

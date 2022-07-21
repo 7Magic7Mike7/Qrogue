@@ -1,3 +1,4 @@
+import os.path
 from typing import Tuple, Optional
 
 from qrogue.game.logic.actors import Player, Robot
@@ -31,6 +32,8 @@ class SaveData:
             path = PathConfig.find_latest_save_file()
             content = ""
             try:
+                print(f"Latest save file: {os.path.normpath(path)}")
+                print(f"Caller path: {os.path.normpath(__file__)}")
                 content = PathConfig.read(path, in_user_path=True).splitlines()
             except FileNotFoundError:
                 Logger.instance().throw(NotImplementedError("This line should not be reachable! Please send us the log "
