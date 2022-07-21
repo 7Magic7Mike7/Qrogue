@@ -97,7 +97,8 @@ class PathConfig:
         if os.path.exists(base_path):
             PathConfig.__Base_Path = base_path
         else:
-            raise FileNotFoundError(f"Given base path is not valid: {base_path}")
+            raise FileNotFoundError(f"Given base path is not valid: {base_path} [normalized value = "
+                                    f"{os.path.normpath(base_path)}]")
 
     @staticmethod
     def set_user_data_path(user_data_path: str):
