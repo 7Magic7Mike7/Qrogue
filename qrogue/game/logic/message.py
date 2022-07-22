@@ -43,10 +43,7 @@ class Message:
 
     @property
     def alt_message_ref(self) -> Optional[str]:
-        if self.__alt_ref:
-            return self.__alt_ref
-        else:
-            return None
+        return self.__alt_ref
 
     def resolve_message_ref(self, message: "Message") -> bool:
         if self.alt_message_ref == message.__m_id:
@@ -62,8 +59,10 @@ class Message:
             return True
         return False
 
-    def get(self, check_achievement: Callable[[str], bool]) -> Tuple[str, str]:
+    def get(self, check_achievement: Callable[[str], bool]) -> Optional[Tuple[str, str]]:
         if self.__event is not None and check_achievement(self.__event):
+            if self.alt_message_ref == "none":
+                return None
             if self.__alt_message:
                 return self.__alt_message.get(check_achievement)
         else:

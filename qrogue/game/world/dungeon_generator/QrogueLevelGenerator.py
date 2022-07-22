@@ -130,8 +130,10 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
     def __show_description(self):
         if self.__meta_data.description:
-            title, text = self.__meta_data.description.get(self.__check_achievement)
-            self.__show_message(title, text)
+            ret = self.__meta_data.description.get(self.__check_achievement)
+            if ret:
+                title, text = ret
+                self.__show_message(title, text)
 
     def warning(self, text: str):
         parser_util.warning(text)
