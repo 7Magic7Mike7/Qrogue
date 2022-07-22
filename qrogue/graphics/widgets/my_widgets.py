@@ -10,7 +10,7 @@ from qrogue.game.logic.actors import Robot, CircuitMatrix
 from qrogue.game.logic.collectibles import Instruction
 from qrogue.game.world.map import Map
 from qrogue.game.world.navigation import Direction
-from qrogue.util import ColorConfig, Controls, Keys, Logger, Config, HudConfig
+from qrogue.util import ColorConfig, Controls, Keys, Logger, Config, HudConfig, GameplayConfig, Options
 from qrogue.util.config import QuantumSimulationConfig, InstructionConfig
 from qrogue.util.util_functions import center_string, align_string
 
@@ -335,12 +335,16 @@ class CircuitWidget(Widget):
             return self.gate is None or self.gate.can_use_qubit(qubit)
 
         def is_valid_pos(self, pos: int, robot: Robot) -> bool:
-            # if gate is None we search for a occupied position (gate_at(pos) is not None)
+            # if gate is None we search for an occupied position (gate_at(pos) is not None)
             # if gate is not None we search for a free position (gate_at(pos) is None)
             # hence this xor condition
             return (self.gate is None) != (robot.gate_at(pos) is None)
 
         def place(self) -> bool:
+            """
+
+            :return: True if more qubits need to be placed, False otherwise
+            """
             if self.gate is not None and self.gate.use_qubit(self.qubit):
                 if self.qubit > 0:
                     self.qubit -= 1
@@ -360,6 +364,41 @@ class CircuitWidget(Widget):
         widget.add_key_command(controls.get_keys(Keys.SelectionLeft), self.__move_left)
         #widget.add_key_command(controls.get_keys(Keys.Cancel), self.__abort_placement)
 
+    def __change_position(self, right: bool) -> bool:
+        def go_right(position: int) -> Optional[int]:
+            if position + 1 >= self.__robot.circuit_space:
+                return None
+            return position + 1
+
+        def go_left(position: int) -> Optional[int]:
+            if position - 1 < 0:
+                return None
+            return position - 1
+
+        if right:
+            pos = go_right(self.__place_holder_data.pos)
+        else:
+            pos = go_left(self.__place_holder_data.pos)
+        if pos is None:
+            return False
+
+        # only if we are currently removing a gate or if implicit removal is not allowed we have to check for for other
+        # gates
+        if self.__place_holder_data.gate is None or \
+                not GameplayConfig.get_option_value(Options.allow_implicit_removal, convert=True):
+            # go on until we find a valid position for the gate
+            while not self.__place_holder_data.is_valid_pos(pos, self.__robot):
+                if right:
+                    pos = go_right(pos)
+                else:
+                    pos = go_left(pos)
+                if pos is None:
+                    return False
+
+        self.__place_holder_data.pos = pos
+        self.render()
+        return True
+
     def __move_up(self):
         if self.__place_holder_data:
             qubit = self.__place_holder_data.qubit + 1
@@ -373,14 +412,7 @@ class CircuitWidget(Widget):
     def __move_right(self):
         if self.__place_holder_data:
             if self.__place_holder_data.can_change_position():
-                pos = self.__place_holder_data.pos + 1
-                # go right until we find a free space for the circuit
-                while pos < self.__robot.circuit_space:
-                    if self.__place_holder_data.is_valid_pos(pos, self.__robot):
-                        self.__place_holder_data.pos = pos
-                        self.render()
-                        return
-                    pos += 1
+                self.__change_position(True)
 
     def __move_down(self):
         if self.__place_holder_data:
@@ -395,14 +427,7 @@ class CircuitWidget(Widget):
     def __move_left(self):
         if self.__place_holder_data:
             if self.__place_holder_data.can_change_position():
-                pos = self.__place_holder_data.pos - 1
-                # go left until we find a free space for the circuit
-                while pos >= 0:
-                    if self.__place_holder_data.is_valid_pos(pos, self.__robot):
-                        self.__place_holder_data.pos = pos
-                        self.render()
-                        return
-                    pos -= 1
+                self.__change_position(False)
 
     def __abort_placement(self):
         if self.__place_holder_data:
@@ -413,12 +438,22 @@ class CircuitWidget(Widget):
     def start_gate_placement(self, gate: Optional[Instruction], pos: int = -1, qubit: int = 0):
         self.__place_holder_data = self.PlaceHolderData(gate, pos, qubit)
         if pos < 0 or self.__robot.circuit_space <= pos:
-            for i in range(self.__robot.circuit_space):
-                if self.__place_holder_data.is_valid_pos(i, self.__robot):
-                    self.__place_holder_data.pos = i
-                    break
+            # if we're currently not removing a gate and implicit removal is allowed we can definitely start at any
+            # position
+            if self.__place_holder_data.gate is not None and \
+                    GameplayConfig.get_option_value(Options.allow_implicit_removal, convert=True):
+                self.__place_holder_data.pos = 0
+            else:
+                for i in range(self.__robot.circuit_space):
+                    if self.__place_holder_data.is_valid_pos(i, self.__robot):
+                        self.__place_holder_data.pos = i
+                        break
 
     def place_gate(self) -> Tuple[bool, Optional[Instruction]]:
+        """
+
+        :return: True if gate is fully placed, False otherwise (e.g. more qubits need to be placed)
+        """
         if self.__place_holder_data:
             if self.__place_holder_data.gate is None:
                 # remove the instruction
@@ -428,11 +463,11 @@ class CircuitWidget(Widget):
                 self.render()
                 return True, None
             else:
-                gate = self.__place_holder_data.gate
                 if self.__place_holder_data.place():
                     self.render()
-                    return False, gate
+                    return False, self.__place_holder_data.gate
                 if self.__robot.use_instruction(self.__place_holder_data.gate, self.__place_holder_data.pos):
+                    gate = self.__place_holder_data.gate
                     self.__place_holder_data = None
                     return True, gate
                 Logger.instance().error("Place_Gate() did not work correctly", from_pycui=False)
@@ -562,8 +597,7 @@ class OutputStateVectorWidget(StateVectorWidget):
         self._stv_str_rep = self._headline
         for i in range(output_stv.size):
             correct_amplitude = abs(diff_stv.at(i)) <= QuantumSimulationConfig.TOLERANCE
-            self._stv_str_rep += StateVector.wrap_in_qubit_conf(output_stv, i, coloring=True,
-                                                                correct_amplitude=correct_amplitude)
+            self._stv_str_rep += output_stv.wrap_in_qubit_conf(i, coloring=True, correct_amplitude=correct_amplitude)
             self._stv_str_rep += "\n"
 
 
@@ -574,7 +608,7 @@ class TargetStateVectorWidget(StateVectorWidget):
     def set_data(self, state_vector: StateVector) -> None:
         self._stv_str_rep = self._headline
         for i in range(state_vector.size):
-            self._stv_str_rep += StateVector.wrap_in_qubit_conf(state_vector, i, show_percentage=True)
+            self._stv_str_rep += state_vector.wrap_in_qubit_conf(i, show_percentage=True)
             self._stv_str_rep += "\n"
 
 

@@ -6,7 +6,7 @@ from qrogue.util.config import CheatConfig, GameplayConfig, PathConfig
 
 class Config:   # todo make singleton and handle access to other configs?
     MAX_SEED = 1000000
-    __VERSION = "v0.4"
+    __VERSION = "v0.4.1.1"
     __GAME_CONFIG = "qrogue_game.config"
     __GAMEPLAY_HEAD = "[Gameplay]\n"
     __DEBUG = False

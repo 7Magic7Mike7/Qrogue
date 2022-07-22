@@ -13,7 +13,7 @@ from qrogue.game.logic.actors.controllables import Controllable
 from qrogue.game.logic.actors.controllables.qubit import QubitSet, DummyQubitSet
 from qrogue.game.logic.collectibles import Coin, Collectible, Consumable, Instruction, Key, MultiCollectible, \
     Qubit, Energy
-from qrogue.util import CheatConfig, Config, Logger, GameplayConfig, QuantumSimulationConfig
+from qrogue.util import CheatConfig, Config, Logger, GameplayConfig, QuantumSimulationConfig, Options
 
 
 # from jkq import ddsim
@@ -408,14 +408,8 @@ class Robot(Controllable, ABC):
         if instruction.is_used() and instruction.position != position:
             if 0 <= position < self.__attributes.circuit_space:
                 if self.__instructions[position]:
-                    prev_pos = instruction.position
                     self.__remove_instruction(instruction, skip_qargs=True)
-                    if GameplayConfig.auto_swap_gates():
-                        instruction2 = self.__instructions[position]
-                        self.__remove_instruction(instruction2, skip_qargs=True)
-                        self.__place_instruction(instruction2, prev_pos)
-                    else:
-                        self.__remove_instruction(self.__instructions[position])
+                    self.__remove_instruction(self.__instructions[position])
                 else:
                     self.__remove_instruction(instruction, skip_qargs=True)
                 self.__place_instruction(instruction, position)
@@ -442,7 +436,7 @@ class Robot(Controllable, ABC):
         if instruction.is_used():
             self.__move_instruction(instruction, position)
         else:
-            if self.is_space_left:
+            if self.is_space_left or GameplayConfig.get_option_value(Options.allow_implicit_removal):
                 self.__place_instruction(instruction, position)
             else:
                 return False

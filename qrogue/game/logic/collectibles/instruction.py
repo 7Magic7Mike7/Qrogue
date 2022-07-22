@@ -1,6 +1,6 @@
 
 from abc import ABC, abstractmethod
-from typing import Iterator
+from typing import Iterator, Optional
 
 import qiskit.circuit.library.standard_gates as gates
 from qiskit import QuantumCircuit
@@ -22,14 +22,14 @@ class Instruction(Collectible, ABC):
         self.__needed_qubits = needed_qubits
         self._qargs = []
         self._cargs = []
-        self.__position = -1
+        self.__position: Optional[int] = None
 
     @property
     def num_of_qubits(self) -> int:
         return self.__needed_qubits
 
     @property
-    def position(self) -> int:
+    def position(self) -> Optional[int]:
         return self.__position
 
     @property
@@ -54,9 +54,11 @@ class Instruction(Collectible, ABC):
         return len(self._qargs) < self.__needed_qubits
 
     def is_used(self) -> bool:
-        return self.__position >= 0
+        return self.__position is not None
 
     def use(self, position: int) -> bool:
+        assert position >= 0
+
         if len(self._qargs) == self.__needed_qubits:
             self.__position = position
             return True
@@ -66,7 +68,7 @@ class Instruction(Collectible, ABC):
         if not skip_qargs:
             self._qargs = []
         if not skip_position:
-            self.__position = -1
+            self.__position = None
 
     def append_to(self, circuit: QuantumCircuit):
         circuit.append(self.__instruction, self._qargs, self._cargs)

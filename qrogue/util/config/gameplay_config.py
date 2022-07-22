@@ -195,16 +195,22 @@ class CheatConfig:
         return ret
 
 
-def _get_boolean_callback() -> Callable[[int], str]:
+def _get_boolean_callback() -> Tuple[Callable[[int], str], Callable[[str], bool]]:
     def get(index: int) -> str:
         if index % 2 == 1:
             return "yes"
         else:
             return "no"
-    return get
+
+    def convert(value: str) -> bool:
+        if value.lower() == "yes":
+            return True
+        else:
+            return False
+    return get, convert
 
 
-def _get_float_callback(min_: float, max_: float, steps: int) -> Callable[[int], str]:
+def _get_float_callback(min_: float, max_: float, steps: int) -> Tuple[Callable[[int], str], Callable[[str], float]]:
     assert min_ < max_
     assert steps > 0
     range_ = max_ - min_
@@ -213,7 +219,7 @@ def _get_float_callback(min_: float, max_: float, steps: int) -> Callable[[int],
     def get(index: int) -> str:
         val = min_ + step_size * index
         return str(val)
-    return get
+    return get, float
 
 
 class Options(Enum):
@@ -222,8 +228,6 @@ class Options(Enum):
     auto_reset_circuit = ("Auto Reset Circuit", _get_boolean_callback(), 2, 1,
                           "Automatically reset your Circuit to a clean state at the beginning of a Puzzle, Riddle, "
                           "etc.")
-    auto_swap_gates = ("Auto Swap Gates", _get_boolean_callback(), 2, 1,
-                       "Automatically swaps position of two gates if you try to move one to an occupied slot.")
     log_keys = ("Log Keys", _get_boolean_callback(), 2, 1,
                 "Stores all keys you pressed in a .qrkl-file so one can replay them (e.g. for analysing a bug)")
 
@@ -232,10 +236,16 @@ class Options(Enum):
     simulation_key_pause = ("Simulation Key Pause", _get_float_callback(0.05, 1.0, 19), 19, 3,
                             "How long to wait before we process the next input during simulation.")
 
-    def __init__(self, name: str, get_value: Callable[[int], str], num_of_values: int, default_index: int,
-                 description: str):
+    show_ket_notation = ("Show Ket-Notation", _get_boolean_callback(), 2, 1,
+                         "Whether to display ket-notation for state vectors and circuit matrix or not.")
+    allow_implicit_removal = ("Allow implicit Removal", _get_boolean_callback(), 2, 0,
+                              "Allows you to place a gate on an occupied spot, removing the occupying gate in the "
+                              "process.")
+
+    def __init__(self, name: str, get_value: Tuple[Callable[[int], str], Callable[[str], Any]], num_of_values: int,
+                 default_index: int, description: str):
         self.__name = name
-        self.__get_value = get_value
+        self.__get_value, self.__convert_value = get_value
         self.__num_of_values = num_of_values
         self.__default_index = default_index
         self.__description = description
@@ -254,10 +264,14 @@ class Options(Enum):
 
     @property
     def description(self) -> str:
-        return self.__name
+        return self.__description
 
     def get_value(self, cur_index: int) -> str:
         return self.__get_value(cur_index)
+
+    def convert(self, cur_index: int) -> Any:
+        value = self.get_value(cur_index)
+        return self.__convert_value(value)
 
 
 class GameplayConfig:
@@ -265,11 +279,13 @@ class GameplayConfig:
     __OPTIONS: Dict[Options, int] = {
         Options.auto_save: Options.auto_save.default_index,
         Options.auto_reset_circuit: Options.auto_reset_circuit.default_index,
-        Options.auto_swap_gates: Options.auto_swap_gates.default_index,
         Options.log_keys: Options.log_keys.default_index,
 
         Options.gameplay_key_pause: Options.gameplay_key_pause.default_index,
         Options.simulation_key_pause: Options.simulation_key_pause.default_index,
+
+        Options.show_ket_notation: Options.show_ket_notation.default_index,
+        Options.allow_implicit_removal: Options.allow_implicit_removal.default_index,
     }
 
     @staticmethod
@@ -289,17 +305,12 @@ class GameplayConfig:
         return [(option, next_) for option in GameplayConfig.__OPTIONS]
 
     @staticmethod
-    def get_option_value(option: Options) -> str:
+    def get_option_value(option: Options, convert: bool = True) -> Any:
         cur_index = GameplayConfig.__OPTIONS[option]
-        return option.get_value(cur_index)
-
-    @staticmethod
-    def get_option_value_converted(option: Options, convert: Callable[[str], Any]) -> Any:
-        value = GameplayConfig.get_option_value(option)
-        try:
-            return convert(value)
-        except:
-            raise Exception(f"Failed to convert \"{value}\" with \"{convert}\"!")
+        if convert:
+            return option.convert(cur_index)
+        else:
+            return option.get_value(cur_index)
 
     @staticmethod
     def to_file_text() -> str:
@@ -333,19 +344,15 @@ class GameplayConfig:
 
     @staticmethod
     def auto_save() -> bool:
-        return GameplayConfig.get_option_value(Options.auto_save) == "yes"
+        return GameplayConfig.get_option_value(Options.auto_save, convert=True)
 
     @staticmethod
     def auto_reset_circuit() -> bool:
-        return GameplayConfig.get_option_value(Options.auto_reset_circuit) == "yes"
+        return GameplayConfig.get_option_value(Options.auto_reset_circuit, convert=True)
 
     @staticmethod
     def log_keys() -> bool:
-        return GameplayConfig.get_option_value(Options.log_keys) == "yes"
-
-    @staticmethod
-    def auto_swap_gates() -> bool:
-        return GameplayConfig.get_option_value(Options.auto_swap_gates) == "yes"
+        return GameplayConfig.get_option_value(Options.log_keys, convert=True)
 
 
 class PuzzleConfig:
@@ -364,8 +371,9 @@ class PuzzleConfig:
 
 class QuantumSimulationConfig:
     DECIMALS = 3
-    MAX_SPACE_PER_NUMBER = 1 + 1 + 1 + DECIMALS  # sign + "0" + "." + DECIMALS
     TOLERANCE = 0.1
+    MAX_SPACE_PER_NUMBER = 1 + 1 + 1 + DECIMALS  # sign + "0" + "." + DECIMALS
+    MAX_PERCENTAGE_SPACE = 3
 
 
 class ShopConfig:

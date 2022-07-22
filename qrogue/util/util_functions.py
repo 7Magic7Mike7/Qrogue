@@ -1,4 +1,7 @@
 
+__DEFAULT_CHARACTER = " "
+
+
 def is_power_of_2(n: int):
     if n == 0:
         return False
@@ -29,7 +32,7 @@ def to_binary_string(num: int, digits: int = -1, msb: bool = True) -> str:
         return str_rep
 
 
-def center_string(text: str, line_width: int, uneven_left: bool = True, character: str = " ") -> str:
+def center_string(text: str, line_width: int, uneven_left: bool = True, character: str = __DEFAULT_CHARACTER) -> str:
     """
     Prepends and appends the given character to the text in such a way that the text is centered as good as possible
     in a line with the given line width. If the number of characters to add is uneven (i.e. number of prepended and
@@ -53,7 +56,7 @@ def center_string(text: str, line_width: int, uneven_left: bool = True, characte
         return half1 * character + text + half2 * character
 
 
-def align_string(text: str, line_width: int, left: bool = True, character: str = " ") -> str:
+def align_string(text: str, line_width: int, left: bool = True, character: str = __DEFAULT_CHARACTER) -> str:
     if line_width <= len(text):
         return text
     diff = line_width - len(text)

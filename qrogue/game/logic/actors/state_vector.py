@@ -6,9 +6,35 @@ from qiskit import transpile, QuantumCircuit
 from qiskit.providers.aer import StatevectorSimulator
 
 from qrogue.game.logic.collectibles import Instruction
-from qrogue.util import Logger, QuantumSimulationConfig
+from qrogue.util import Logger, QuantumSimulationConfig, GameplayConfig, Options
 from qrogue.util.config import ColorCode, ColorConfig
-from qrogue.util.util_functions import is_power_of_2, center_string, to_binary_string
+from qrogue.util.util_functions import is_power_of_2, center_string, to_binary_string, align_string
+
+
+def _generate_ket(qubit: int, num_of_qubits: int) -> str:
+    return f"|{to_binary_string(qubit, num_of_qubits)}>"
+
+
+def _wrap_in_ket_notation(number: complex, qubit: int, num_of_qubits: int,
+                          space_per_value: int = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER, coloring: bool = False,
+                          correct_amplitude: bool = False, show_percentage: bool = False):
+    value = f"{center_string(StateVector.complex_to_string(number), space_per_value)}"
+    if coloring:
+        if correct_amplitude:
+            value = ColorConfig.colorize(ColorCode.CORRECT_AMPLITUDE, value)
+        else:
+            value = ColorConfig.colorize(ColorCode.WRONG_AMPLITUDE, value)
+    if show_percentage:
+        # line_width is space + 1 because of the additional "%"
+        space = QuantumSimulationConfig.MAX_PERCENTAGE_SPACE
+        percentage = align_string(StateVector.complex_to_amplitude_percentage_string(number, space), space + 1,
+                                  left=False)
+        value += f"  ({percentage})"
+
+    if GameplayConfig.get_option_value(Options.show_ket_notation, convert=True):
+        return f"{_generate_ket(qubit, num_of_qubits)}  {value}"
+    else:
+        return value
 
 
 class StateVector:
@@ -39,27 +65,15 @@ class StateVector:
         return text
 
     @staticmethod
-    def complex_to_amplitude_percentage_string(val: complex) -> str:
+    def complex_to_amplitude_percentage_string(val: complex,
+                                               space: int = QuantumSimulationConfig.MAX_PERCENTAGE_SPACE) -> str:
         amp = np.round(abs(val**2), QuantumSimulationConfig.DECIMALS)
         text = str(amp * 100)
         if text[-2:] == ".0":
-            text = text[:-2]    # remove the redundant ".0"
+            text = text[:-2]        # remove the redundant ".0"
+        if len(text) > space:
+            text = text[:space]     # clamp to specified space
         return text + "%"
-
-    @staticmethod
-    def wrap_in_qubit_conf(state_vector: "StateVector", index: int,
-                           space_per_value: int = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER, coloring: bool = False,
-                           correct_amplitude: bool = False, show_percentage: bool = False):
-        qubit_conf = f"|{to_binary_string(index, state_vector.num_of_qubits)}>"
-        value = f"{center_string(StateVector.complex_to_string(state_vector.at(index)), space_per_value)}"
-        if coloring:
-            if correct_amplitude:
-                value = ColorConfig.colorize(ColorCode.CORRECT_AMPLITUDE, value)
-            else:
-                value = ColorConfig.colorize(ColorCode.WRONG_AMPLITUDE, value)
-        if show_percentage:
-            value += f"  ({StateVector.complex_to_amplitude_percentage_string(state_vector.at(index))})"
-        return f"{qubit_conf}  {value}"
 
     @staticmethod
     def create_zero_state_vector(num_of_qubits: int) -> "StateVector":
@@ -146,10 +160,16 @@ class StateVector:
             raise ValueError("Cannot calculate the difference between StateVectors of different size! "
                              f"self = {self}, other = {other}")
 
+    def wrap_in_qubit_conf(self, index: int, space_per_value: int = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER,
+                           coloring: bool = False, correct_amplitude: bool = False, show_percentage: bool = False) \
+            -> str:
+        return _wrap_in_ket_notation(self.at(index), index, self.num_of_qubits, space_per_value, coloring,
+                                     correct_amplitude, show_percentage)
+
     def to_string(self, space_per_value: int = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER) -> str:
         text = ""
         for i in range(self.size):
-            text += StateVector.wrap_in_qubit_conf(self, i, space_per_value)
+            text += self.wrap_in_qubit_conf(i, space_per_value)
             text += "\n"
         return text
 
@@ -195,15 +215,24 @@ class CircuitMatrix:
         return int(np.log2(self.size))
 
     def to_string(self, space_per_value: int = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER) -> str:
-        text = " " * (1 + self.num_of_qubits + 1)   # we need to pad the rows' |qubits> prefix
-        for i in range(self.size):
-            text += center_string(f"|{to_binary_string(i, self.num_of_qubits)}>", space_per_value)
-        text += "\n"
+        spacing = " "
+        if GameplayConfig.get_option_value(Options.show_ket_notation, convert=True):
+            padding = len(_generate_ket(0, self.num_of_qubits)) + len(spacing)  # also add the space after the ket
+            text = " " * padding   # we need to pad the rows' |qubits> prefix
+            for i in range(self.size):
+                # space_per_value + 1 due to the trailing space
+                text += center_string(_generate_ket(i, self.num_of_qubits), space_per_value)
+                text += spacing
+            text += "\n"
+        else:
+            text = "\n"
         for i, row in enumerate(self.__matrix):
-            text += f"|{to_binary_string(i, self.num_of_qubits)}> "
+            if GameplayConfig.get_option_value(Options.show_ket_notation, convert=True):
+                text += _generate_ket(i, self.num_of_qubits)
+                text += spacing
             for val in row:
                 text += center_string(StateVector.complex_to_string(val), space_per_value)
-                text += " "
+                text += spacing
             text += "\n"
         return text
 
