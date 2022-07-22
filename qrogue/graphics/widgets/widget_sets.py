@@ -460,40 +460,64 @@ class WorkbenchWidgetSet(MyWidgetSet):
         return True
 
 
-class ExploreWidgetSet(MyWidgetSet):
+class MapWidgetSet(MyWidgetSet, ABC):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI):
         super().__init__(logger, root, render)
-        self.__hud = MyWidgetSet.create_hud_row(self)
 
         map_widget = self.add_block_label('MAP', UIConfig.HUD_HEIGHT, 0, row_span=UIConfig.NON_HUD_HEIGHT,
                                           column_span=UIConfig.WINDOW_WIDTH, center=True)
         self.__map_widget = MapWidget(map_widget)
-        ColorRules.apply_map_rules(self.__map_widget.widget)
+        ColorRules.apply_navigation_rules(self.__map_widget.widget)
 
         # init movement keys
-        def move_up() -> None:
-            if self.__map_widget.move(Direction.Up):
-                self.render()
+        def move(direction: Direction) -> Callable[[], None]:
+            def _move() -> None:
+                if GameplayConfig.get_option_value(Options.allow_multi_move, convert=True):
+                    while self.__move_counter > 1:
+                        if not self.__map_widget.move(direction):
+                            self.render()
+                            # reset because otherwise the next direction would use remaining counter value
+                            self.__move_counter = 0
+                            return  # abort if we cannot move in this direction
+                        self.__move_counter -= 1
+                if self.__map_widget.move(direction):
+                    self.render()
+            return _move
 
-        def move_right() -> None:
-            if self.__map_widget.move(Direction.Right):
-                self.render()
+        self.__map_widget.widget.add_key_command(controls.get_keys(Keys.MoveUp), move(Direction.Up))
+        self.__map_widget.widget.add_key_command(controls.get_keys(Keys.MoveRight), move(Direction.Right))
+        self.__map_widget.widget.add_key_command(controls.get_keys(Keys.MoveDown), move(Direction.Down))
+        self.__map_widget.widget.add_key_command(controls.get_keys(Keys.MoveLeft), move(Direction.Left))
 
-        def move_down() -> None:
-            if self.__map_widget.move(Direction.Down):
-                self.render()
+        self.__move_counter = 0
 
-        def move_left() -> None:
-            if self.__map_widget.move(Direction.Left):
-                self.render()
+        def setup_hotkey(number: int):
+            def set_move_counter():
+                self.__move_counter = number
 
-        self.__map_widget.widget.add_key_command(controls.get_keys(Keys.MoveUp), move_up)
-        self.__map_widget.widget.add_key_command(controls.get_keys(Keys.MoveRight), move_right)
-        self.__map_widget.widget.add_key_command(controls.get_keys(Keys.MoveDown), move_down)
-        self.__map_widget.widget.add_key_command(controls.get_keys(Keys.MoveLeft), move_left)
+            self.__map_widget.widget.add_key_command(controls.get_hotkey(number), set_move_counter)
+
+        [setup_hotkey(i) for i in range(10)]
+
+    @property
+    def _map_widget(self) -> MapWidget:
+        return self.__map_widget
 
     def get_main_widget(self) -> WidgetWrapper:
         return self.__map_widget.widget
+
+    def update_story_progress(self, progress: int):
+        super(MapWidgetSet, self).update_story_progress(progress)
+        self.__map_widget.try_to_start_map()
+
+    def reset(self) -> None:
+        self.__map_widget.render_reset()
+
+
+class ExploreWidgetSet(MapWidgetSet):
+    def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI):
+        super().__init__(controls, render, logger, root)
+        self.__hud = MyWidgetSet.create_hud_row(self)
 
     def set_data(self, map_: Map) -> None:
         controllable = map_.controllable_tile.controllable
@@ -501,18 +525,14 @@ class ExploreWidgetSet(MyWidgetSet):
             self.__hud.set_data((controllable, map_.name, "TEST"))
         else:
             self.__hud.reset_data()
-        self.__map_widget.set_data(map_)
+        self._map_widget.set_data(map_)
         # map_.start()  # we cannot start the map here because the widget_set has not been applied yet
 
     def get_widget_list(self) -> List[Widget]:
         return [
             self.__hud,
-            self.__map_widget
+            self._map_widget
         ]
-
-    def update_story_progress(self, progress: int):
-        super(ExploreWidgetSet, self).update_story_progress(progress)
-        self.__map_widget.try_to_start_map()
 
     def render(self) -> None:
         start = time.time()
@@ -521,58 +541,13 @@ class ExploreWidgetSet(MyWidgetSet):
         self.__hud.update_render_duration(duration)
         self.__hud.render()
 
-    def reset(self) -> None:
-        self.__map_widget.render_reset()
 
-
-class NavigationWidgetSet(MyWidgetSet):
-    def __init__(self, controls: Controls, logger, root: py_cui.PyCUI,
-                 base_render_callback: Callable[[List[Renderable]], None]):
-        super().__init__(logger, root, base_render_callback)
-
-        map_widget = self.add_block_label('MAP', UIConfig.HUD_HEIGHT, 0, row_span=UIConfig.NON_HUD_HEIGHT,
-                                          column_span=UIConfig.WINDOW_WIDTH, center=True)
-        self.__map_widget = MapWidget(map_widget)
-        ColorRules.apply_navigation_rules(self.__map_widget.widget)
-
-        # init movement keys
-        def move_up() -> None:
-            # MapManager.instance().move_on_cur_map(Direction.Up)
-            if self.__map_widget.move(Direction.Up):
-                self.render()
-
-        def move_right() -> None:
-            if self.__map_widget.move(Direction.Right):
-                self.render()
-
-        def move_down() -> None:
-            if self.__map_widget.move(Direction.Down):
-                self.render()
-
-        def move_left() -> None:
-            if self.__map_widget.move(Direction.Left):
-                self.render()
-
-        self.__map_widget.widget.add_key_command(controls.get_keys(Keys.MoveUp), move_up)
-        self.__map_widget.widget.add_key_command(controls.get_keys(Keys.MoveRight), move_right)
-        self.__map_widget.widget.add_key_command(controls.get_keys(Keys.MoveDown), move_down)
-        self.__map_widget.widget.add_key_command(controls.get_keys(Keys.MoveLeft), move_left)
-
-    def get_main_widget(self) -> WidgetWrapper:
-        return self.__map_widget.widget
-
+class NavigationWidgetSet(MapWidgetSet):
     def set_data(self, map_: Map) -> None:
-        self.__map_widget.set_data(map_)
+        self._map_widget.set_data(map_)
 
     def get_widget_list(self) -> List[Widget]:
-        return [self.__map_widget]
-
-    def update_story_progress(self, progress: int):
-        super(NavigationWidgetSet, self).update_story_progress(progress)
-        self.__map_widget.try_to_start_map()
-
-    def reset(self) -> None:
-        self.__map_widget.render_reset()
+        return [self._map_widget]
 
 
 class ReachTargetWidgetSet(MyWidgetSet, ABC):

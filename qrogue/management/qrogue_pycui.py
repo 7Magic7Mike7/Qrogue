@@ -97,7 +97,7 @@ class QrogueCUI(PyCUI):
         self.__workbench = WorkbenchWidgetSet(self.__controls, Logger.instance(), self,
                                               SaveData.instance().available_robots(), self.__render,
                                               self.__continue_spaceship)
-        self.__navigation = NavigationWidgetSet(self.__controls, Logger.instance(), self, self.__render)
+        self.__navigation = NavigationWidgetSet(self.__controls, self.__render, Logger.instance(), self)
 
         self.__explore = ExploreWidgetSet(self.__controls, self.__render, Logger.instance(), self)
         self.__fight = FightWidgetSet(self.__controls, self.__render, Logger.instance(), self, self.__continue_explore,

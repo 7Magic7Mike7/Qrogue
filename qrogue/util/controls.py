@@ -181,6 +181,12 @@ class Controls:
             return keys[index]
         return keys[0]
 
+    def get_hotkey(self, number: int) -> List[int]:
+        if number == 0:
+            number = 10     # 0 is after 9, so at the 10th position
+        base = Keys.HotKey1.num - 1
+        return self.__pycui_keys[base + number]
+
     def handle(self, key: Keys):
         key_pressed = self.get_key(key)
         self.__handle_key_presses(key_pressed)
