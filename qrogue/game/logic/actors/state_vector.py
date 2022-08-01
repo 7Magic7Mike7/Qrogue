@@ -1,4 +1,4 @@
-from collections import Iterator
+from collections.abc import Iterator
 from typing import List, Optional
 
 import numpy as np
