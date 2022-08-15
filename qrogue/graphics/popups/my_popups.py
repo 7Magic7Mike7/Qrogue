@@ -73,7 +73,8 @@ class Popup:
             ret = message.get(Popup.__check_achievement)    # resolve possible alternative messages
             if ret:
                 title, text = ret
-                title += f" {{@*{message.id}}}"        # todo remove for release version
+                if Config.debugging():
+                    title += f" {{@*{message.id}}}"
                 # the message is reopen-able because we explicitly defined it
                 Popup.message(title, text, reopen=True, on_close_callback=on_close_callback)
 
