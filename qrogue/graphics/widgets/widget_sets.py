@@ -522,7 +522,7 @@ class ExploreWidgetSet(MapWidgetSet):
     def set_data(self, map_: Map) -> None:
         controllable = map_.controllable_tile.controllable
         if isinstance(controllable, Robot):
-            self.__hud.set_data((controllable, map_.name, "TEST"))
+            self.__hud.set_data((controllable, map_.name, "TEST"))  # todo fix/remove
         else:
             self.__hud.reset_data()
         self._map_widget.set_data(map_)
@@ -1037,7 +1037,7 @@ class ShopWidgetSet(MyWidgetSet):
 
     def set_data(self, robot: Robot, items: List[ShopItem]) -> None:
         self.__robot = robot
-        self.__hud.set_data((robot, None))    # don't overwrite the current map name
+        self.__hud.set_data((robot, None, None))    # don't overwrite the current map name
         self.__update_inventory(items)
 
     def __update_inventory(self, items: List[ShopItem]):
@@ -1089,7 +1089,7 @@ class RiddleWidgetSet(ReachTargetWidgetSet):
 
     def set_data(self, robot: Robot, target: Riddle) -> None:
         super(RiddleWidgetSet, self).set_data(robot, target)
-        self._hud.set_data((robot, None, f"Remaining attempts: {self._target.attempts}"))
+        self._hud.set_data((robot, None, f"Remaining attempts: {target.attempts}"))
 
     def _on_commit_fail(self) -> bool:
         if self._target.attempts <= 0:

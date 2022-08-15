@@ -1,15 +1,15 @@
-from typing import Callable
+from typing import Callable, Optional, List
 
 from qrogue.game.logic import Message
 from qrogue.util import Config, PopupConfig
 
 
 class Popup:
-    __show_popup = None
-    __check_achievement = None
-    __popup_queue = []
-    __cur_popup = None
-    __last_popup = None
+    __show_popup: Optional[Callable[[str, str, int], None]] = None
+    __check_achievement: Optional[Callable[[str], bool]] = None
+    __popup_queue: List["Popup"] = []
+    __cur_popup: Optional["Popup"] = None
+    __last_popup: Optional["Popup"] = None
 
     @staticmethod
     def update_popup_functions(show_popup_callback: Callable[[str, str, int], None]) -> None:

@@ -117,9 +117,9 @@ class MapManager:
                                             from_pycui=False)
         return self.__world_memory[MapConfig.hub_world()]
 
-    def __load_map(self, map_name: str, room: Optional[Coordinate], map_seed: int = None):
+    def __load_map(self, map_name: str, room: Optional[Coordinate], map_seed: Optional[int] = None):
         if map_name == MapConfig.spaceship():
-            next_map = get_next(map_name)
+            next_map = get_next(MapConfig.spaceship())
             if next_map is None:
                 self.__load_map(MapConfig.hub_world(), room, map_seed)
             elif next_map == map_name:
@@ -187,7 +187,7 @@ class MapManager:
     def __load_next(self):
         next_map = get_next(self.__cur_map.internal_name)
         if next_map:
-            self.load_map(next_map, None)
+            self.__load_map(next_map, None, None)
         else:
             world = self.__get_world(self.__cur_map.internal_name)
             self.__show_world(world)
@@ -228,7 +228,7 @@ class MapManager:
                 self.__proceed()
         SaveData.instance().achievement_manager.trigger_event(event_id)
 
-    def load_map(self, map_name: str, spawn_room: Optional[Coordinate], map_seed: int = None):
+    def load_map(self, map_name: str, spawn_room: Optional[Coordinate], map_seed: Optional[int] = None):
         if map_name.lower() == MapConfig.next_map_string():
             self.__load_next()
         else:

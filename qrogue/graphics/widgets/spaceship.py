@@ -4,6 +4,7 @@ import py_cui
 
 from qrogue.game.world.map import SpaceshipMap
 from qrogue.game.world.navigation import Direction
+from qrogue.graphics import WidgetWrapper
 from qrogue.graphics.rendering import ColorRules
 from qrogue.util import Controls, Keys, UIConfig
 
@@ -54,12 +55,12 @@ class SpaceshipWidgetSet(MyWidgetSet):
         spaceship.add_key_command(controls.get_keys(Keys.MoveLeft), self.move_left)
         self.__spaceship = SpaceshipWidget(spaceship)
 
-    def get_widget_list(self) -> "list of Widgets":
+    def get_widget_list(self) -> List[Widget]:
         return [
             self.__spaceship,
         ]
 
-    def get_main_widget(self) -> MyBaseWidget:
+    def get_main_widget(self) -> WidgetWrapper:
         return self.__spaceship.widget
 
     def reset(self) -> None:
