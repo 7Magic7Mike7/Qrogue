@@ -23,6 +23,7 @@ class Popup:
     def on_close() -> bool:
         if Popup.__cur_popup:
             Popup.__cur_popup.on_close_callback()
+            Popup.__cur_popup.__on_close_callback = None    # clear callback to not execute it when reopening!
         if Popup.__cur_popup and Popup.__cur_popup.is_reopenable:
             Popup.__last_popup = Popup.__cur_popup
         Popup.__cur_popup = None

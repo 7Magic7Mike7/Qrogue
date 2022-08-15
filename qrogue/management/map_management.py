@@ -86,6 +86,9 @@ class MapManager:
     def in_level(self) -> bool:
         return self.__cur_map.get_type() is MapType.Level
 
+    def __show_spaceship(self):
+        self.__show_world(None)
+
     def get_restart_message(self) -> str:
         # todo maybe should be handled differently. I'm not satisfied by this approach but for now it works and is
         #  straight forward.
@@ -118,8 +121,12 @@ class MapManager:
         if map_name == MapConfig.spaceship():
             next_map = get_next(map_name)
             if next_map is None:
-                next_map = MapConfig.hub_world()
-            self.load_map(next_map, None)
+                self.__load_map(MapConfig.hub_world(), room, map_seed)
+            elif next_map == map_name:
+                # todo rethink? only possible if MAP_ORDER is misconfigured or all levels are cleared?
+                self.__show_spaceship()    # show spaceship to avoid infinite recursion
+            else:
+                self.__load_map(next_map, room, map_seed)
         elif map_name in self.__world_memory:
             self.__cur_map = self.__world_memory[map_name]
             self.__in_level = False
