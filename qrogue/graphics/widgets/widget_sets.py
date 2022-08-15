@@ -467,7 +467,6 @@ class MapWidgetSet(MyWidgetSet, ABC):
         map_widget = self.add_block_label('MAP', UIConfig.HUD_HEIGHT, 0, row_span=UIConfig.NON_HUD_HEIGHT,
                                           column_span=UIConfig.WINDOW_WIDTH, center=True)
         self.__map_widget = MapWidget(map_widget)
-        ColorRules.apply_navigation_rules(self.__map_widget.widget)
 
         # init movement keys
         def move(direction: Direction) -> Callable[[], None]:
@@ -518,6 +517,7 @@ class ExploreWidgetSet(MapWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI):
         super().__init__(controls, render, logger, root)
         self.__hud = MyWidgetSet.create_hud_row(self)
+        ColorRules.apply_map_rules(self._map_widget.widget)
 
     def set_data(self, map_: Map) -> None:
         controllable = map_.controllable_tile.controllable
@@ -543,6 +543,10 @@ class ExploreWidgetSet(MapWidgetSet):
 
 
 class NavigationWidgetSet(MapWidgetSet):
+    def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI):
+        super().__init__(controls, render, logger, root)
+        ColorRules.apply_navigation_rules(self._map_widget.widget)
+
     def set_data(self, map_: Map) -> None:
         self._map_widget.set_data(map_)
 
