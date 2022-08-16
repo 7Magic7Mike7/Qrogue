@@ -10,7 +10,8 @@ from qrogue.management.save_data import SaveData
 from qrogue.util.achievements import Ach, Unlocks
 
 __MAP_ORDER = {
-    MapConfig.spaceship(): MapConfig.intro_level(),
+    #MapConfig.spaceship(): MapConfig.intro_level(),
+    MapConfig.first_uncleared(): MapConfig.intro_level(),
     MapConfig.intro_level(): "l0v1",
     "l0v1": "l0v2",
     "l0v2": "l0v3",
@@ -27,7 +28,7 @@ __MAP_ORDER = {
 
 
 def get_next(cur_map: str) -> Optional[str]:
-    if cur_map == MapConfig.spaceship():    # next of spaceship is always the newest uncleared level
+    if cur_map == MapConfig.first_uncleared():
         next_map = __MAP_ORDER[cur_map]
         while SaveData.instance().achievement_manager.check_achievement(next_map):
             if next_map in __MAP_ORDER:
@@ -118,15 +119,14 @@ class MapManager:
         return self.__world_memory[MapConfig.hub_world()]
 
     def __load_map(self, map_name: str, room: Optional[Coordinate], map_seed: Optional[int] = None):
-        if map_name == MapConfig.spaceship():
+        if map_name == MapConfig.first_uncleared():
             next_map = get_next(MapConfig.spaceship())
             if next_map is None:
                 self.__load_map(MapConfig.hub_world(), room, map_seed)
-            elif next_map == map_name:
-                # todo rethink? only possible if MAP_ORDER is misconfigured or all levels are cleared?
-                self.__show_spaceship()    # show spaceship to avoid infinite recursion
             else:
                 self.__load_map(next_map, room, map_seed)
+        elif map_name == MapConfig.spaceship():
+            self.__show_spaceship()
         elif map_name in self.__world_memory:
             self.__cur_map = self.__world_memory[map_name]
             self.__in_level = False
@@ -238,7 +238,7 @@ class MapManager:
         if Config.test_level(ignore_debugging=False):
             self.__load_map(MapConfig.test_level(), None)
         else:
-            map_name = get_next(MapConfig.spaceship())
+            map_name = get_next(MapConfig.first_uncleared())
             self.__load_map(map_name, None)
 
     def reload(self):

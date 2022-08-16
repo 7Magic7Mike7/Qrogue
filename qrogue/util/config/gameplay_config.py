@@ -74,6 +74,10 @@ class MapConfig:
         return "l0v"
 
     @staticmethod
+    def first_uncleared() -> str:
+        return "firstUncleared"
+
+    @staticmethod
     def spaceship() -> str:
         return "spaceship"
 
