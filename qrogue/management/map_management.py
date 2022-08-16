@@ -20,7 +20,8 @@ __MAP_ORDER = {
     "l0v5": "l0v6",
     "l0v6": "l0v7",
     "l0v7": "w0",
-    "l0v8": MapConfig.spaceship(),
+    "l0training": "w0",
+    "l0exam": MapConfig.spaceship(),
     "w0": MapConfig.spaceship(),
 
     MapConfig.hub_world(): "l0v0",
