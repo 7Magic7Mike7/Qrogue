@@ -13,6 +13,15 @@ class QrogueWorldListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by QrogueWorldParser#meta.
+    def enterMeta(self, ctx):
+        pass
+
+    # Exit a parse tree produced by QrogueWorldParser#meta.
+    def exitMeta(self, ctx):
+        pass
+
+
     # Enter a parse tree produced by QrogueWorldParser#room_content.
     def enterRoom_content(self, ctx):
         pass

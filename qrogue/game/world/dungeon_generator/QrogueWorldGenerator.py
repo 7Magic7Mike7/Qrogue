@@ -6,7 +6,7 @@ from antlr4.tree.Tree import TerminalNodeImpl
 from qrogue.game.logic import Message
 from qrogue.game.logic.actors import Player
 from qrogue.game.world.dungeon_generator import parser_util
-from qrogue.game.world.map import Room, MetaRoom, SpawnRoom, WorldMap
+from qrogue.game.world.map import Room, MetaRoom, SpawnRoom, WorldMap, MapMetaData
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.game.world.tiles import Door, DoorOneWayState, DoorOpenState
 from qrogue.util import MapConfig, PathConfig, Logger, Config
@@ -40,7 +40,15 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
         self.__hallways = {}
 
         self.__rooms = {}
-        self.__spawn_pos = None
+        self.__spawn_pos: Optional[Coordinate] = None
+        self.__meta_data = MapMetaData(None, None, False, self.__show_description)
+
+    def __show_description(self):
+        if self.__meta_data.description:
+            ret = self.__meta_data.description.get(self.__check_achievement)
+            if ret:
+                title, text = ret
+                self.__show_message(title, text)
 
     def _add_hallway(self, room1: Coordinate, room2: Coordinate, door: Door):
         if door:  # for simplicity door could be null so we check it here
@@ -63,9 +71,7 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
         parser.addErrorListener(parser_util.MyErrorListener())
 
         try:
-            name, room_matrix = self.visit(parser.start())
-            if name is None:
-                name = file_name
+            meta_data, room_matrix = self.visit(parser.start())
         except SyntaxError as se:
             Logger.instance().error(str(se), from_pycui=False)
             return None, False
@@ -79,8 +85,8 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
             if len(row) < max_len:
                 row += [None] * (max_len - len(row))
 
-        world = WorldMap(name, file_name, self.__seed, room_matrix, self.__player, self.__spawn_pos,
-                         self.__check_achievement, self.__trigger_achievement, self.__show_message)
+        world = WorldMap(meta_data, file_name, self.__seed, room_matrix, self.__player, self.__spawn_pos,
+                         self.__check_achievement, self.__trigger_achievement)
         return world, True
 
     def __load_next(self):
@@ -272,13 +278,29 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
                 x += 1
         return row
 
+    ##### Meta area #####
+
+    def visitMeta(self, ctx: QrogueWorldParser.MetaContext) -> MapMetaData:
+        if ctx.TEXT():
+            name = parser_util.text_to_str(ctx)
+        else:
+            name = None
+        if ctx.message_body():
+            title, msg = parser_util.parse_message_body(ctx.message_body())
+            message = Message.create_with_title("_map_description", title, msg)
+
+            if ctx.MSG_EVENT():
+                ref = parser_util.normalize_reference(ctx.REFERENCE().getText())
+                if self.__check_achievement(ref):
+                    message = Message.create_with_exception("_map_description", title, msg, ref)
+        else:
+            message = None
+        return MapMetaData(name, message, False, self.__show_description)
+
     ##### Start area #####
 
     def visitStart(self, ctx: QrogueWorldParser.StartContext) -> Tuple[str, List[List[Room]]]:
-        if ctx.TEXT():
-            name = ctx.TEXT().getText()[1:-1]
-        else:
-            name = None
+        self.__meta_data = self.visit(ctx.meta())
 
         # prepare hallways first because they are standalone
         self.visit(ctx.hallways())
@@ -286,4 +308,4 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
         self.visit(ctx.rooms())
 
         # for the last step we retrieve the room matrix from layout
-        return name, self.visit(ctx.layout())
+        return self.__meta_data, self.visit(ctx.layout())

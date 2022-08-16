@@ -20,6 +20,10 @@ class Message:
         return message
 
     @staticmethod
+    def create_with_exception(m_id: str, title: str, text: str, event: str):
+        return Message(m_id, title, text, event, "none")
+
+    @staticmethod
     def create_from_message(message: "Message") -> "Message":
         msg = Message(message.__m_id, message.__title, message.__text, message.__event, message.__alt_ref)
         if message.__alt_message:
@@ -34,7 +38,7 @@ class Message:
         self.__event = event
         self.__alt_message = None
 
-        if self.alt_message_ref is self.id:
+        if self.__alt_ref is self.id:
             raise ValueError("Messages must not reference themselves as alternatives!")
 
     @property

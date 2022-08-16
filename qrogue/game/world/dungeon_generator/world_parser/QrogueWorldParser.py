@@ -1,86 +1,89 @@
 # Generated from D:/Documents/pycharm_workspace/Qrogue/qrogue/game/world/dungeon_generator\QrogueWorld.g4 by ANTLR 4.10.1
 # encoding: utf-8
 from __future__ import print_function
-
-import sys
-
 from antlr4 import *
-
+from io import StringIO
+import sys
 
 def serializedATN():
     return [
-        4,1,61,208,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,
+        4,1,63,222,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,
         6,2,7,7,7,2,8,7,8,2,9,7,9,2,10,7,10,2,11,7,11,2,12,7,12,2,13,7,13,
-        2,14,7,14,2,15,7,15,2,16,7,16,2,17,7,17,1,0,1,0,1,0,1,0,3,0,41,8,
-        0,1,0,1,0,1,0,1,0,1,0,1,1,1,1,1,1,1,1,1,1,1,2,1,2,1,2,3,2,56,8,2,
-        1,2,1,2,1,3,1,3,1,4,3,4,63,8,4,1,4,1,4,1,4,3,4,68,8,4,1,4,1,4,3,
-        4,72,8,4,3,4,74,8,4,1,5,1,5,5,5,78,8,5,10,5,12,5,81,9,5,1,5,1,5,
-        1,5,1,5,5,5,87,8,5,10,5,12,5,90,9,5,1,5,5,5,93,8,5,10,5,12,5,96,
-        9,5,1,6,1,6,1,6,1,6,5,6,102,8,6,10,6,12,6,105,9,6,1,6,1,6,1,7,1,
-        7,4,7,111,8,7,11,7,12,7,112,1,7,1,7,1,8,1,8,5,8,119,8,8,10,8,12,
-        8,122,9,8,1,9,1,9,1,9,1,9,1,9,1,10,1,10,1,10,1,10,1,10,1,11,3,11,
-        135,8,11,1,12,1,12,5,12,139,8,12,10,12,12,12,142,9,12,1,13,1,13,
-        1,13,1,14,1,14,1,14,1,14,1,14,1,14,3,14,153,8,14,1,14,1,14,1,14,
-        3,14,158,8,14,3,14,160,8,14,1,14,1,14,1,14,1,14,1,14,5,14,167,8,
-        14,10,14,12,14,170,9,14,1,14,3,14,173,8,14,1,14,1,14,1,14,3,14,178,
-        8,14,1,14,1,14,3,14,182,8,14,1,15,1,15,5,15,186,8,15,10,15,12,15,
-        189,9,15,1,16,1,16,1,16,1,16,1,16,1,16,3,16,197,8,16,1,17,1,17,3,
-        17,201,8,17,1,17,4,17,204,8,17,11,17,12,17,205,1,17,0,0,18,0,2,4,
-        6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,0,5,1,0,43,44,2,0,22,
-        23,32,32,2,0,21,21,31,31,2,0,20,20,32,32,1,0,41,42,216,0,36,1,0,
-        0,0,2,47,1,0,0,0,4,52,1,0,0,0,6,59,1,0,0,0,8,62,1,0,0,0,10,75,1,
-        0,0,0,12,97,1,0,0,0,14,108,1,0,0,0,16,116,1,0,0,0,18,123,1,0,0,0,
-        20,128,1,0,0,0,22,134,1,0,0,0,24,136,1,0,0,0,26,143,1,0,0,0,28,146,
-        1,0,0,0,30,183,1,0,0,0,32,190,1,0,0,0,34,200,1,0,0,0,36,40,5,14,
-        0,0,37,38,5,1,0,0,38,39,5,2,0,0,39,41,5,30,0,0,40,37,1,0,0,0,40,
-        41,1,0,0,0,41,42,1,0,0,0,42,43,3,10,5,0,43,44,3,16,8,0,44,45,3,24,
-        12,0,45,46,5,15,0,0,46,1,1,0,0,0,47,48,5,3,0,0,48,49,3,34,17,0,49,
-        50,5,4,0,0,50,51,5,33,0,0,51,3,1,0,0,0,52,53,7,0,0,0,53,55,5,22,
-        0,0,54,56,5,22,0,0,55,54,1,0,0,0,55,56,1,0,0,0,56,57,1,0,0,0,57,
-        58,5,11,0,0,58,5,1,0,0,0,59,60,7,1,0,0,60,7,1,0,0,0,61,63,5,26,0,
-        0,62,61,1,0,0,0,62,63,1,0,0,0,63,73,1,0,0,0,64,74,5,25,0,0,65,68,
-        3,6,3,0,66,68,5,24,0,0,67,65,1,0,0,0,67,66,1,0,0,0,68,71,1,0,0,0,
-        69,70,5,26,0,0,70,72,5,25,0,0,71,69,1,0,0,0,71,72,1,0,0,0,72,74,
-        1,0,0,0,73,64,1,0,0,0,73,67,1,0,0,0,74,9,1,0,0,0,75,79,5,38,0,0,
-        76,78,5,16,0,0,77,76,1,0,0,0,78,81,1,0,0,0,79,77,1,0,0,0,79,80,1,
-        0,0,0,80,82,1,0,0,0,81,79,1,0,0,0,82,88,3,12,6,0,83,84,3,14,7,0,
-        84,85,3,12,6,0,85,87,1,0,0,0,86,83,1,0,0,0,87,90,1,0,0,0,88,86,1,
-        0,0,0,88,89,1,0,0,0,89,94,1,0,0,0,90,88,1,0,0,0,91,93,5,16,0,0,92,
-        91,1,0,0,0,93,96,1,0,0,0,94,92,1,0,0,0,94,95,1,0,0,0,95,11,1,0,0,
-        0,96,94,1,0,0,0,97,98,5,17,0,0,98,103,7,2,0,0,99,100,7,3,0,0,100,
-        102,7,2,0,0,101,99,1,0,0,0,102,105,1,0,0,0,103,101,1,0,0,0,103,104,
-        1,0,0,0,104,106,1,0,0,0,105,103,1,0,0,0,106,107,5,17,0,0,107,13,
-        1,0,0,0,108,110,5,17,0,0,109,111,7,3,0,0,110,109,1,0,0,0,111,112,
-        1,0,0,0,112,110,1,0,0,0,112,113,1,0,0,0,113,114,1,0,0,0,114,115,
-        5,17,0,0,115,15,1,0,0,0,116,120,5,39,0,0,117,119,3,18,9,0,118,117,
-        1,0,0,0,119,122,1,0,0,0,120,118,1,0,0,0,120,121,1,0,0,0,121,17,1,
-        0,0,0,122,120,1,0,0,0,123,124,5,31,0,0,124,125,3,20,10,0,125,126,
-        5,5,0,0,126,127,3,2,1,0,127,19,1,0,0,0,128,129,5,6,0,0,129,130,3,
-        22,11,0,130,131,3,4,2,0,131,132,5,7,0,0,132,21,1,0,0,0,133,135,7,
-        4,0,0,134,133,1,0,0,0,134,135,1,0,0,0,135,23,1,0,0,0,136,140,5,40,
-        0,0,137,139,3,26,13,0,138,137,1,0,0,0,139,142,1,0,0,0,140,138,1,
-        0,0,0,140,141,1,0,0,0,141,25,1,0,0,0,142,140,1,0,0,0,143,144,5,32,
-        0,0,144,145,3,28,14,0,145,27,1,0,0,0,146,152,5,6,0,0,147,153,5,52,
-        0,0,148,153,5,53,0,0,149,153,5,54,0,0,150,151,5,55,0,0,151,153,5,
-        33,0,0,152,147,1,0,0,0,152,148,1,0,0,0,152,149,1,0,0,0,152,150,1,
-        0,0,0,153,159,1,0,0,0,154,155,5,8,0,0,155,157,5,11,0,0,156,158,5,
-        56,0,0,157,156,1,0,0,0,157,158,1,0,0,0,158,160,1,0,0,0,159,154,1,
-        0,0,0,159,160,1,0,0,0,160,172,1,0,0,0,161,162,5,57,0,0,162,163,5,
-        9,0,0,163,168,5,32,0,0,164,165,5,18,0,0,165,167,5,32,0,0,166,164,
-        1,0,0,0,167,170,1,0,0,0,168,166,1,0,0,0,168,169,1,0,0,0,169,171,
-        1,0,0,0,170,168,1,0,0,0,171,173,5,10,0,0,172,161,1,0,0,0,172,173,
-        1,0,0,0,173,174,1,0,0,0,174,177,5,7,0,0,175,176,5,12,0,0,176,178,
-        5,33,0,0,177,175,1,0,0,0,177,178,1,0,0,0,178,181,1,0,0,0,179,180,
-        5,13,0,0,180,182,5,33,0,0,181,179,1,0,0,0,181,182,1,0,0,0,182,29,
-        1,0,0,0,183,187,5,58,0,0,184,186,3,32,16,0,185,184,1,0,0,0,186,189,
-        1,0,0,0,187,185,1,0,0,0,187,188,1,0,0,0,188,31,1,0,0,0,189,187,1,
-        0,0,0,190,191,5,33,0,0,191,196,3,34,17,0,192,193,5,59,0,0,193,194,
-        5,33,0,0,194,195,5,60,0,0,195,197,5,33,0,0,196,192,1,0,0,0,196,197,
-        1,0,0,0,197,33,1,0,0,0,198,199,5,61,0,0,199,201,5,30,0,0,200,198,
-        1,0,0,0,200,201,1,0,0,0,201,203,1,0,0,0,202,204,5,30,0,0,203,202,
-        1,0,0,0,204,205,1,0,0,0,205,203,1,0,0,0,205,206,1,0,0,0,206,35,1,
-        0,0,0,25,40,55,62,67,71,73,79,88,94,103,112,120,134,140,152,157,
-        159,168,172,177,181,187,196,200,205
+        2,14,7,14,2,15,7,15,2,16,7,16,2,17,7,17,2,18,7,18,1,0,1,0,1,0,1,
+        0,1,0,1,0,1,0,1,1,1,1,1,1,3,1,49,8,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+        3,1,58,8,1,3,1,60,8,1,1,2,1,2,1,2,1,2,1,2,1,3,1,3,1,3,3,3,70,8,3,
+        1,3,1,3,1,4,1,4,1,5,3,5,77,8,5,1,5,1,5,1,5,3,5,82,8,5,1,5,1,5,3,
+        5,86,8,5,3,5,88,8,5,1,6,1,6,5,6,92,8,6,10,6,12,6,95,9,6,1,6,1,6,
+        1,6,1,6,5,6,101,8,6,10,6,12,6,104,9,6,1,6,5,6,107,8,6,10,6,12,6,
+        110,9,6,1,7,1,7,1,7,1,7,5,7,116,8,7,10,7,12,7,119,9,7,1,7,1,7,1,
+        8,1,8,4,8,125,8,8,11,8,12,8,126,1,8,1,8,1,9,1,9,5,9,133,8,9,10,9,
+        12,9,136,9,9,1,10,1,10,1,10,1,10,1,10,1,11,1,11,1,11,1,11,1,11,1,
+        12,3,12,149,8,12,1,13,1,13,5,13,153,8,13,10,13,12,13,156,9,13,1,
+        14,1,14,1,14,1,15,1,15,1,15,1,15,1,15,1,15,3,15,167,8,15,1,15,1,
+        15,1,15,3,15,172,8,15,3,15,174,8,15,1,15,1,15,1,15,1,15,1,15,5,15,
+        181,8,15,10,15,12,15,184,9,15,1,15,3,15,187,8,15,1,15,1,15,1,15,
+        3,15,192,8,15,1,15,1,15,3,15,196,8,15,1,16,1,16,5,16,200,8,16,10,
+        16,12,16,203,9,16,1,17,1,17,1,17,1,17,1,17,1,17,3,17,211,8,17,1,
+        18,1,18,3,18,215,8,18,1,18,4,18,218,8,18,11,18,12,18,219,1,18,0,
+        0,19,0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,0,5,1,0,
+        45,46,2,0,24,25,34,34,2,0,23,23,33,33,2,0,22,22,34,34,1,0,43,44,
+        231,0,38,1,0,0,0,2,48,1,0,0,0,4,61,1,0,0,0,6,66,1,0,0,0,8,73,1,0,
+        0,0,10,76,1,0,0,0,12,89,1,0,0,0,14,111,1,0,0,0,16,122,1,0,0,0,18,
+        130,1,0,0,0,20,137,1,0,0,0,22,142,1,0,0,0,24,148,1,0,0,0,26,150,
+        1,0,0,0,28,157,1,0,0,0,30,160,1,0,0,0,32,197,1,0,0,0,34,204,1,0,
+        0,0,36,214,1,0,0,0,38,39,5,16,0,0,39,40,3,2,1,0,40,41,3,12,6,0,41,
+        42,3,18,9,0,42,43,3,26,13,0,43,44,5,17,0,0,44,1,1,0,0,0,45,46,5,
+        1,0,0,46,47,5,2,0,0,47,49,5,32,0,0,48,45,1,0,0,0,48,49,1,0,0,0,49,
+        59,1,0,0,0,50,51,5,3,0,0,51,52,5,2,0,0,52,57,3,36,18,0,53,54,5,61,
+        0,0,54,55,5,35,0,0,55,56,5,62,0,0,56,58,5,4,0,0,57,53,1,0,0,0,57,
+        58,1,0,0,0,58,60,1,0,0,0,59,50,1,0,0,0,59,60,1,0,0,0,60,3,1,0,0,
+        0,61,62,5,5,0,0,62,63,3,36,18,0,63,64,5,6,0,0,64,65,5,35,0,0,65,
+        5,1,0,0,0,66,67,7,0,0,0,67,69,5,24,0,0,68,70,5,24,0,0,69,68,1,0,
+        0,0,69,70,1,0,0,0,70,71,1,0,0,0,71,72,5,13,0,0,72,7,1,0,0,0,73,74,
+        7,1,0,0,74,9,1,0,0,0,75,77,5,28,0,0,76,75,1,0,0,0,76,77,1,0,0,0,
+        77,87,1,0,0,0,78,88,5,27,0,0,79,82,3,8,4,0,80,82,5,26,0,0,81,79,
+        1,0,0,0,81,80,1,0,0,0,82,85,1,0,0,0,83,84,5,28,0,0,84,86,5,27,0,
+        0,85,83,1,0,0,0,85,86,1,0,0,0,86,88,1,0,0,0,87,78,1,0,0,0,87,81,
+        1,0,0,0,88,11,1,0,0,0,89,93,5,40,0,0,90,92,5,18,0,0,91,90,1,0,0,
+        0,92,95,1,0,0,0,93,91,1,0,0,0,93,94,1,0,0,0,94,96,1,0,0,0,95,93,
+        1,0,0,0,96,102,3,14,7,0,97,98,3,16,8,0,98,99,3,14,7,0,99,101,1,0,
+        0,0,100,97,1,0,0,0,101,104,1,0,0,0,102,100,1,0,0,0,102,103,1,0,0,
+        0,103,108,1,0,0,0,104,102,1,0,0,0,105,107,5,18,0,0,106,105,1,0,0,
+        0,107,110,1,0,0,0,108,106,1,0,0,0,108,109,1,0,0,0,109,13,1,0,0,0,
+        110,108,1,0,0,0,111,112,5,19,0,0,112,117,7,2,0,0,113,114,7,3,0,0,
+        114,116,7,2,0,0,115,113,1,0,0,0,116,119,1,0,0,0,117,115,1,0,0,0,
+        117,118,1,0,0,0,118,120,1,0,0,0,119,117,1,0,0,0,120,121,5,19,0,0,
+        121,15,1,0,0,0,122,124,5,19,0,0,123,125,7,3,0,0,124,123,1,0,0,0,
+        125,126,1,0,0,0,126,124,1,0,0,0,126,127,1,0,0,0,127,128,1,0,0,0,
+        128,129,5,19,0,0,129,17,1,0,0,0,130,134,5,41,0,0,131,133,3,20,10,
+        0,132,131,1,0,0,0,133,136,1,0,0,0,134,132,1,0,0,0,134,135,1,0,0,
+        0,135,19,1,0,0,0,136,134,1,0,0,0,137,138,5,33,0,0,138,139,3,22,11,
+        0,139,140,5,7,0,0,140,141,3,4,2,0,141,21,1,0,0,0,142,143,5,8,0,0,
+        143,144,3,24,12,0,144,145,3,6,3,0,145,146,5,9,0,0,146,23,1,0,0,0,
+        147,149,7,4,0,0,148,147,1,0,0,0,148,149,1,0,0,0,149,25,1,0,0,0,150,
+        154,5,42,0,0,151,153,3,28,14,0,152,151,1,0,0,0,153,156,1,0,0,0,154,
+        152,1,0,0,0,154,155,1,0,0,0,155,27,1,0,0,0,156,154,1,0,0,0,157,158,
+        5,34,0,0,158,159,3,30,15,0,159,29,1,0,0,0,160,166,5,8,0,0,161,167,
+        5,54,0,0,162,167,5,55,0,0,163,167,5,56,0,0,164,165,5,57,0,0,165,
+        167,5,35,0,0,166,161,1,0,0,0,166,162,1,0,0,0,166,163,1,0,0,0,166,
+        164,1,0,0,0,167,173,1,0,0,0,168,169,5,10,0,0,169,171,5,13,0,0,170,
+        172,5,58,0,0,171,170,1,0,0,0,171,172,1,0,0,0,172,174,1,0,0,0,173,
+        168,1,0,0,0,173,174,1,0,0,0,174,186,1,0,0,0,175,176,5,59,0,0,176,
+        177,5,11,0,0,177,182,5,34,0,0,178,179,5,20,0,0,179,181,5,34,0,0,
+        180,178,1,0,0,0,181,184,1,0,0,0,182,180,1,0,0,0,182,183,1,0,0,0,
+        183,185,1,0,0,0,184,182,1,0,0,0,185,187,5,12,0,0,186,175,1,0,0,0,
+        186,187,1,0,0,0,187,188,1,0,0,0,188,191,5,9,0,0,189,190,5,14,0,0,
+        190,192,5,35,0,0,191,189,1,0,0,0,191,192,1,0,0,0,192,195,1,0,0,0,
+        193,194,5,15,0,0,194,196,5,35,0,0,195,193,1,0,0,0,195,196,1,0,0,
+        0,196,31,1,0,0,0,197,201,5,60,0,0,198,200,3,34,17,0,199,198,1,0,
+        0,0,200,203,1,0,0,0,201,199,1,0,0,0,201,202,1,0,0,0,202,33,1,0,0,
+        0,203,201,1,0,0,0,204,205,5,35,0,0,205,210,3,36,18,0,206,207,5,61,
+        0,0,207,208,5,35,0,0,208,209,5,62,0,0,209,211,5,35,0,0,210,206,1,
+        0,0,0,210,211,1,0,0,0,211,35,1,0,0,0,212,213,5,63,0,0,213,215,5,
+        32,0,0,214,212,1,0,0,0,214,215,1,0,0,0,215,217,1,0,0,0,216,218,5,
+        32,0,0,217,216,1,0,0,0,218,219,1,0,0,0,219,217,1,0,0,0,219,220,1,
+        0,0,0,220,37,1,0,0,0,27,48,57,59,69,76,81,85,87,93,102,108,117,126,
+        134,148,154,166,171,173,182,186,191,195,201,210,214,219
     ]
 
 class QrogueWorldParser ( Parser ):
@@ -93,26 +96,26 @@ class QrogueWorldParser ( Parser ):
 
     sharedContextCache = PredictionContextCache()
 
-    literalNames = [ u"<INVALID>", u"'Name'", u"'='", u"'description'", 
-                     u"'teleport'", u"':'", u"'('", u"')'", u"'one way'", 
-                     u"'['", u"']'", u"<INVALID>", u"'tutorial'", u"'trigger'", 
-                     u"'Qrogue<'", u"'>Qrogue'", u"'~'", u"'|'", u"','", 
-                     u"'#'", u"'..'", u"'__'", u"<INVALID>", u"<INVALID>", 
+    literalNames = [ u"<INVALID>", u"'Name'", u"'='", u"'Description'", 
+                     u"'*none'", u"'description'", u"'teleport'", u"':'", 
+                     u"'('", u"')'", u"'one way'", u"'['", u"']'", u"<INVALID>", 
+                     u"'tutorial'", u"'trigger'", u"'Qrogue<'", u"'>Qrogue'", 
+                     u"'~'", u"'|'", u"','", u"'#'", u"'..'", u"'__'", u"<INVALID>", 
                      u"<INVALID>", u"<INVALID>", u"<INVALID>", u"<INVALID>", 
                      u"<INVALID>", u"<INVALID>", u"<INVALID>", u"<INVALID>", 
                      u"<INVALID>", u"<INVALID>", u"<INVALID>", u"<INVALID>", 
-                     u"<INVALID>", u"<INVALID>", u"'[Layout]'", u"<INVALID>", 
-                     u"'[Hallways]'", u"'visible'", u"'foggy'", u"'World'", 
-                     u"'Level'", u"'Spawn'", u"'Wild'", u"'Shop'", u"'Riddle'", 
-                     u"'Boss'", u"'Gate'", u"'Treasure'", u"'open'", u"'closed'", 
-                     u"'locked'", u"'event'", u"'permanent'", u"'entangled'", 
-                     u"'[Messages]'", u"'when'" ]
+                     u"<INVALID>", u"<INVALID>", u"<INVALID>", u"'[Layout]'", 
+                     u"<INVALID>", u"'[Hallways]'", u"'visible'", u"'foggy'", 
+                     u"'World'", u"'Level'", u"'Spawn'", u"'Wild'", u"'Shop'", 
+                     u"'Riddle'", u"'Boss'", u"'Gate'", u"'Treasure'", u"'open'", 
+                     u"'closed'", u"'locked'", u"'event'", u"'permanent'", 
+                     u"'entangled'", u"'[Messages]'", u"'when'" ]
 
     symbolicNames = [ u"<INVALID>", u"<INVALID>", u"<INVALID>", u"<INVALID>", 
                       u"<INVALID>", u"<INVALID>", u"<INVALID>", u"<INVALID>", 
-                      u"<INVALID>", u"<INVALID>", u"<INVALID>", u"DIRECTION", 
-                      u"TUTORIAL_LITERAL", u"TRIGGER_LITERAL", u"HEADER", 
-                      u"ENDER", u"HORIZONTAL_SEPARATOR", u"VERTICAL_SEPARATOR", 
+                      u"<INVALID>", u"<INVALID>", u"<INVALID>", u"<INVALID>", 
+                      u"<INVALID>", u"DIRECTION", u"TUTORIAL_LITERAL", u"TRIGGER_LITERAL", 
+                      u"HEADER", u"ENDER", u"HORIZONTAL_SEPARATOR", u"VERTICAL_SEPARATOR", 
                       u"LIST_SEPARATOR", u"WALL", u"EMPTY_HALLWAY", u"EMPTY_ROOM", 
                       u"DIGIT", u"INTEGER", u"FLOAT", u"IMAG_NUMBER", u"SIGN", 
                       u"CHARACTER_LOW", u"CHARACTER_UP", u"CHARACTER", u"TEXT", 
@@ -127,29 +130,30 @@ class QrogueWorldParser ( Parser ):
                       u"MESSAGES", u"MSG_EVENT", u"MSG_ALTERNATIVE", u"MSG_SPEAKER" ]
 
     RULE_start = 0
-    RULE_room_content = 1
-    RULE_r_type = 2
-    RULE_integer = 3
-    RULE_complex_number = 4
-    RULE_layout = 5
-    RULE_l_room_row = 6
-    RULE_l_hallway_row = 7
-    RULE_rooms = 8
-    RULE_room = 9
-    RULE_r_attributes = 10
-    RULE_r_visibility = 11
-    RULE_hallways = 12
-    RULE_hallway = 13
-    RULE_h_attributes = 14
-    RULE_messages = 15
-    RULE_message = 16
-    RULE_message_body = 17
+    RULE_meta = 1
+    RULE_room_content = 2
+    RULE_r_type = 3
+    RULE_integer = 4
+    RULE_complex_number = 5
+    RULE_layout = 6
+    RULE_l_room_row = 7
+    RULE_l_hallway_row = 8
+    RULE_rooms = 9
+    RULE_room = 10
+    RULE_r_attributes = 11
+    RULE_r_visibility = 12
+    RULE_hallways = 13
+    RULE_hallway = 14
+    RULE_h_attributes = 15
+    RULE_messages = 16
+    RULE_message = 17
+    RULE_message_body = 18
 
-    ruleNames =  [ u"start", u"room_content", u"r_type", u"integer", u"complex_number", 
-                   u"layout", u"l_room_row", u"l_hallway_row", u"rooms", 
-                   u"room", u"r_attributes", u"r_visibility", u"hallways", 
-                   u"hallway", u"h_attributes", u"messages", u"message", 
-                   u"message_body" ]
+    ruleNames =  [ u"start", u"meta", u"room_content", u"r_type", u"integer", 
+                   u"complex_number", u"layout", u"l_room_row", u"l_hallway_row", 
+                   u"rooms", u"room", u"r_attributes", u"r_visibility", 
+                   u"hallways", u"hallway", u"h_attributes", u"messages", 
+                   u"message", u"message_body" ]
 
     EOF = Token.EOF
     T__0=1
@@ -162,57 +166,59 @@ class QrogueWorldParser ( Parser ):
     T__7=8
     T__8=9
     T__9=10
-    DIRECTION=11
-    TUTORIAL_LITERAL=12
-    TRIGGER_LITERAL=13
-    HEADER=14
-    ENDER=15
-    HORIZONTAL_SEPARATOR=16
-    VERTICAL_SEPARATOR=17
-    LIST_SEPARATOR=18
-    WALL=19
-    EMPTY_HALLWAY=20
-    EMPTY_ROOM=21
-    DIGIT=22
-    INTEGER=23
-    FLOAT=24
-    IMAG_NUMBER=25
-    SIGN=26
-    CHARACTER_LOW=27
-    CHARACTER_UP=28
-    CHARACTER=29
-    TEXT=30
-    ROOM_ID=31
-    HALLWAY_ID=32
-    REFERENCE=33
-    WS=34
-    UNIVERSAL_SEPARATOR=35
-    COMMENT=36
-    LINE_COMMENT=37
-    LAYOUT=38
-    ROOMS=39
-    HALLWAYS=40
-    VISIBLE_LITERAL=41
-    FOGGY_LITERAL=42
-    WORLD_LITERAL=43
-    LEVEL_LITERAL=44
-    SPAWN_LITERAL=45
-    WILD_LITERAL=46
-    SHOP_LITERAL=47
-    RIDDLE_LITERAL=48
-    BOSS_LITERAL=49
-    GATE_ROOM_LITERAL=50
-    TREASURE_LITERAL=51
-    OPEN_LITERAL=52
-    CLOSED_LITERAL=53
-    LOCKED_LITERAL=54
-    EVENT_LITERAL=55
-    PERMANENT_LITERAL=56
-    ENTANGLED_LITERAL=57
-    MESSAGES=58
-    MSG_EVENT=59
-    MSG_ALTERNATIVE=60
-    MSG_SPEAKER=61
+    T__10=11
+    T__11=12
+    DIRECTION=13
+    TUTORIAL_LITERAL=14
+    TRIGGER_LITERAL=15
+    HEADER=16
+    ENDER=17
+    HORIZONTAL_SEPARATOR=18
+    VERTICAL_SEPARATOR=19
+    LIST_SEPARATOR=20
+    WALL=21
+    EMPTY_HALLWAY=22
+    EMPTY_ROOM=23
+    DIGIT=24
+    INTEGER=25
+    FLOAT=26
+    IMAG_NUMBER=27
+    SIGN=28
+    CHARACTER_LOW=29
+    CHARACTER_UP=30
+    CHARACTER=31
+    TEXT=32
+    ROOM_ID=33
+    HALLWAY_ID=34
+    REFERENCE=35
+    WS=36
+    UNIVERSAL_SEPARATOR=37
+    COMMENT=38
+    LINE_COMMENT=39
+    LAYOUT=40
+    ROOMS=41
+    HALLWAYS=42
+    VISIBLE_LITERAL=43
+    FOGGY_LITERAL=44
+    WORLD_LITERAL=45
+    LEVEL_LITERAL=46
+    SPAWN_LITERAL=47
+    WILD_LITERAL=48
+    SHOP_LITERAL=49
+    RIDDLE_LITERAL=50
+    BOSS_LITERAL=51
+    GATE_ROOM_LITERAL=52
+    TREASURE_LITERAL=53
+    OPEN_LITERAL=54
+    CLOSED_LITERAL=55
+    LOCKED_LITERAL=56
+    EVENT_LITERAL=57
+    PERMANENT_LITERAL=58
+    ENTANGLED_LITERAL=59
+    MESSAGES=60
+    MSG_EVENT=61
+    MSG_ALTERNATIVE=62
+    MSG_SPEAKER=63
 
     def __init__(self, input, output=sys.stdout):
         super(QrogueWorldParser, self).__init__(input, output=output)
@@ -232,6 +238,10 @@ class QrogueWorldParser ( Parser ):
         def HEADER(self):
             return self.getToken(QrogueWorldParser.HEADER, 0)
 
+        def meta(self):
+            return self.getTypedRuleContext(QrogueWorldParser.MetaContext,0)
+
+
         def layout(self):
             return self.getTypedRuleContext(QrogueWorldParser.LayoutContext,0)
 
@@ -246,9 +256,6 @@ class QrogueWorldParser ( Parser ):
 
         def ENDER(self):
             return self.getToken(QrogueWorldParser.ENDER, 0)
-
-        def TEXT(self):
-            return self.getToken(QrogueWorldParser.TEXT, 0)
 
         def getRuleIndex(self):
             return QrogueWorldParser.RULE_start
@@ -274,31 +281,116 @@ class QrogueWorldParser ( Parser ):
 
         localctx = QrogueWorldParser.StartContext(self, self._ctx, self.state)
         self.enterRule(localctx, 0, self.RULE_start)
+        try:
+            self.enterOuterAlt(localctx, 1)
+            self.state = 38
+            self.match(QrogueWorldParser.HEADER)
+            self.state = 39
+            self.meta()
+            self.state = 40
+            self.layout()
+            self.state = 41
+            self.rooms()
+            self.state = 42
+            self.hallways()
+            self.state = 43
+            self.match(QrogueWorldParser.ENDER)
+        except RecognitionException as re:
+            localctx.exception = re
+            self._errHandler.reportError(self, re)
+            self._errHandler.recover(self, re)
+        finally:
+            self.exitRule()
+        return localctx
+
+
+    class MetaContext(ParserRuleContext):
+
+        def __init__(self, parser, parent=None, invokingState=-1):
+            super(QrogueWorldParser.MetaContext, self).__init__(parent, invokingState)
+            self.parser = parser
+
+        def TEXT(self):
+            return self.getToken(QrogueWorldParser.TEXT, 0)
+
+        def message_body(self):
+            return self.getTypedRuleContext(QrogueWorldParser.Message_bodyContext,0)
+
+
+        def MSG_EVENT(self):
+            return self.getToken(QrogueWorldParser.MSG_EVENT, 0)
+
+        def REFERENCE(self):
+            return self.getToken(QrogueWorldParser.REFERENCE, 0)
+
+        def MSG_ALTERNATIVE(self):
+            return self.getToken(QrogueWorldParser.MSG_ALTERNATIVE, 0)
+
+        def getRuleIndex(self):
+            return QrogueWorldParser.RULE_meta
+
+        def enterRule(self, listener):
+            if hasattr(listener, "enterMeta"):
+                listener.enterMeta(self)
+
+        def exitRule(self, listener):
+            if hasattr(listener, "exitMeta"):
+                listener.exitMeta(self)
+
+        def accept(self, visitor):
+            if hasattr(visitor, "visitMeta"):
+                return visitor.visitMeta(self)
+            else:
+                return visitor.visitChildren(self)
+
+
+
+
+    def meta(self):
+
+        localctx = QrogueWorldParser.MetaContext(self, self._ctx, self.state)
+        self.enterRule(localctx, 2, self.RULE_meta)
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 36
-            self.match(QrogueWorldParser.HEADER)
-            self.state = 40
+            self.state = 48
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             if _la==QrogueWorldParser.T__0:
-                self.state = 37
+                self.state = 45
                 self.match(QrogueWorldParser.T__0)
-                self.state = 38
+                self.state = 46
                 self.match(QrogueWorldParser.T__1)
-                self.state = 39
+                self.state = 47
                 self.match(QrogueWorldParser.TEXT)
 
 
-            self.state = 42
-            self.layout()
-            self.state = 43
-            self.rooms()
-            self.state = 44
-            self.hallways()
-            self.state = 45
-            self.match(QrogueWorldParser.ENDER)
+            self.state = 59
+            self._errHandler.sync(self)
+            _la = self._input.LA(1)
+            if _la==QrogueWorldParser.T__2:
+                self.state = 50
+                self.match(QrogueWorldParser.T__2)
+                self.state = 51
+                self.match(QrogueWorldParser.T__1)
+                self.state = 52
+                self.message_body()
+                self.state = 57
+                self._errHandler.sync(self)
+                _la = self._input.LA(1)
+                if _la==QrogueWorldParser.MSG_EVENT:
+                    self.state = 53
+                    self.match(QrogueWorldParser.MSG_EVENT)
+                    self.state = 54
+                    self.match(QrogueWorldParser.REFERENCE)
+                    self.state = 55
+                    self.match(QrogueWorldParser.MSG_ALTERNATIVE)
+                    self.state = 56
+                    self.match(QrogueWorldParser.T__3)
+
+
+
+
         except RecognitionException as re:
             localctx.exception = re
             self._errHandler.reportError(self, re)
@@ -344,16 +436,16 @@ class QrogueWorldParser ( Parser ):
     def room_content(self):
 
         localctx = QrogueWorldParser.Room_contentContext(self, self._ctx, self.state)
-        self.enterRule(localctx, 2, self.RULE_room_content)
+        self.enterRule(localctx, 4, self.RULE_room_content)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 47
-            self.match(QrogueWorldParser.T__2)
-            self.state = 48
+            self.state = 61
+            self.match(QrogueWorldParser.T__4)
+            self.state = 62
             self.message_body()
-            self.state = 49
-            self.match(QrogueWorldParser.T__3)
-            self.state = 50
+            self.state = 63
+            self.match(QrogueWorldParser.T__5)
+            self.state = 64
             self.match(QrogueWorldParser.REFERENCE)
         except RecognitionException as re:
             localctx.exception = re
@@ -408,28 +500,28 @@ class QrogueWorldParser ( Parser ):
     def r_type(self):
 
         localctx = QrogueWorldParser.R_typeContext(self, self._ctx, self.state)
-        self.enterRule(localctx, 4, self.RULE_r_type)
+        self.enterRule(localctx, 6, self.RULE_r_type)
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 52
+            self.state = 66
             _la = self._input.LA(1)
             if not(_la==QrogueWorldParser.WORLD_LITERAL or _la==QrogueWorldParser.LEVEL_LITERAL):
                 self._errHandler.recoverInline(self)
             else:
                 self._errHandler.reportMatch(self)
                 self.consume()
-            self.state = 53
+            self.state = 67
             self.match(QrogueWorldParser.DIGIT)
-            self.state = 55
+            self.state = 69
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             if _la==QrogueWorldParser.DIGIT:
-                self.state = 54
+                self.state = 68
                 self.match(QrogueWorldParser.DIGIT)
 
 
-            self.state = 57
+            self.state = 71
             self.match(QrogueWorldParser.DIRECTION)
         except RecognitionException as re:
             localctx.exception = re
@@ -478,11 +570,11 @@ class QrogueWorldParser ( Parser ):
     def integer(self):
 
         localctx = QrogueWorldParser.IntegerContext(self, self._ctx, self.state)
-        self.enterRule(localctx, 6, self.RULE_integer)
+        self.enterRule(localctx, 8, self.RULE_integer)
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 59
+            self.state = 73
             _la = self._input.LA(1)
             if not((((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << QrogueWorldParser.DIGIT) | (1 << QrogueWorldParser.INTEGER) | (1 << QrogueWorldParser.HALLWAY_ID))) != 0)):
                 self._errHandler.recoverInline(self)
@@ -543,47 +635,47 @@ class QrogueWorldParser ( Parser ):
     def complex_number(self):
 
         localctx = QrogueWorldParser.Complex_numberContext(self, self._ctx, self.state)
-        self.enterRule(localctx, 8, self.RULE_complex_number)
+        self.enterRule(localctx, 10, self.RULE_complex_number)
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 62
+            self.state = 76
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             if _la==QrogueWorldParser.SIGN:
-                self.state = 61
+                self.state = 75
                 self.match(QrogueWorldParser.SIGN)
 
 
-            self.state = 73
+            self.state = 87
             self._errHandler.sync(self)
             token = self._input.LA(1)
             if token in [QrogueWorldParser.IMAG_NUMBER]:
-                self.state = 64
+                self.state = 78
                 self.match(QrogueWorldParser.IMAG_NUMBER)
                 pass
             elif token in [QrogueWorldParser.DIGIT, QrogueWorldParser.INTEGER, QrogueWorldParser.FLOAT, QrogueWorldParser.HALLWAY_ID]:
-                self.state = 67
+                self.state = 81
                 self._errHandler.sync(self)
                 token = self._input.LA(1)
                 if token in [QrogueWorldParser.DIGIT, QrogueWorldParser.INTEGER, QrogueWorldParser.HALLWAY_ID]:
-                    self.state = 65
+                    self.state = 79
                     self.integer()
                     pass
                 elif token in [QrogueWorldParser.FLOAT]:
-                    self.state = 66
+                    self.state = 80
                     self.match(QrogueWorldParser.FLOAT)
                     pass
                 else:
                     raise NoViableAltException(self)
 
-                self.state = 71
+                self.state = 85
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
                 if _la==QrogueWorldParser.SIGN:
-                    self.state = 69
+                    self.state = 83
                     self.match(QrogueWorldParser.SIGN)
-                    self.state = 70
+                    self.state = 84
                     self.match(QrogueWorldParser.IMAG_NUMBER)
 
 
@@ -652,43 +744,43 @@ class QrogueWorldParser ( Parser ):
     def layout(self):
 
         localctx = QrogueWorldParser.LayoutContext(self, self._ctx, self.state)
-        self.enterRule(localctx, 10, self.RULE_layout)
+        self.enterRule(localctx, 12, self.RULE_layout)
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 75
+            self.state = 89
             self.match(QrogueWorldParser.LAYOUT)
-            self.state = 79
+            self.state = 93
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             while _la==QrogueWorldParser.HORIZONTAL_SEPARATOR:
-                self.state = 76
+                self.state = 90
                 self.match(QrogueWorldParser.HORIZONTAL_SEPARATOR)
-                self.state = 81
+                self.state = 95
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
 
-            self.state = 82
+            self.state = 96
             self.l_room_row()
-            self.state = 88
+            self.state = 102
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             while _la==QrogueWorldParser.VERTICAL_SEPARATOR:
-                self.state = 83
+                self.state = 97
                 self.l_hallway_row()
-                self.state = 84
+                self.state = 98
                 self.l_room_row()
-                self.state = 90
+                self.state = 104
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
 
-            self.state = 94
+            self.state = 108
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             while _la==QrogueWorldParser.HORIZONTAL_SEPARATOR:
-                self.state = 91
+                self.state = 105
                 self.match(QrogueWorldParser.HORIZONTAL_SEPARATOR)
-                self.state = 96
+                self.state = 110
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
 
@@ -760,42 +852,42 @@ class QrogueWorldParser ( Parser ):
     def l_room_row(self):
 
         localctx = QrogueWorldParser.L_room_rowContext(self, self._ctx, self.state)
-        self.enterRule(localctx, 12, self.RULE_l_room_row)
+        self.enterRule(localctx, 14, self.RULE_l_room_row)
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 97
+            self.state = 111
             self.match(QrogueWorldParser.VERTICAL_SEPARATOR)
-            self.state = 98
+            self.state = 112
             _la = self._input.LA(1)
             if not(_la==QrogueWorldParser.EMPTY_ROOM or _la==QrogueWorldParser.ROOM_ID):
                 self._errHandler.recoverInline(self)
             else:
                 self._errHandler.reportMatch(self)
                 self.consume()
-            self.state = 103
+            self.state = 117
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             while _la==QrogueWorldParser.EMPTY_HALLWAY or _la==QrogueWorldParser.HALLWAY_ID:
-                self.state = 99
+                self.state = 113
                 _la = self._input.LA(1)
                 if not(_la==QrogueWorldParser.EMPTY_HALLWAY or _la==QrogueWorldParser.HALLWAY_ID):
                     self._errHandler.recoverInline(self)
                 else:
                     self._errHandler.reportMatch(self)
                     self.consume()
-                self.state = 100
+                self.state = 114
                 _la = self._input.LA(1)
                 if not(_la==QrogueWorldParser.EMPTY_ROOM or _la==QrogueWorldParser.ROOM_ID):
                     self._errHandler.recoverInline(self)
                 else:
                     self._errHandler.reportMatch(self)
                     self.consume()
-                self.state = 105
+                self.state = 119
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
 
-            self.state = 106
+            self.state = 120
             self.match(QrogueWorldParser.VERTICAL_SEPARATOR)
         except RecognitionException as re:
             localctx.exception = re
@@ -853,30 +945,30 @@ class QrogueWorldParser ( Parser ):
     def l_hallway_row(self):
 
         localctx = QrogueWorldParser.L_hallway_rowContext(self, self._ctx, self.state)
-        self.enterRule(localctx, 14, self.RULE_l_hallway_row)
+        self.enterRule(localctx, 16, self.RULE_l_hallway_row)
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 108
+            self.state = 122
             self.match(QrogueWorldParser.VERTICAL_SEPARATOR)
-            self.state = 110 
+            self.state = 124 
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             while True:
-                self.state = 109
+                self.state = 123
                 _la = self._input.LA(1)
                 if not(_la==QrogueWorldParser.EMPTY_HALLWAY or _la==QrogueWorldParser.HALLWAY_ID):
                     self._errHandler.recoverInline(self)
                 else:
                     self._errHandler.reportMatch(self)
                     self.consume()
-                self.state = 112 
+                self.state = 126 
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
                 if not (_la==QrogueWorldParser.EMPTY_HALLWAY or _la==QrogueWorldParser.HALLWAY_ID):
                     break
 
-            self.state = 114
+            self.state = 128
             self.match(QrogueWorldParser.VERTICAL_SEPARATOR)
         except RecognitionException as re:
             localctx.exception = re
@@ -926,19 +1018,19 @@ class QrogueWorldParser ( Parser ):
     def rooms(self):
 
         localctx = QrogueWorldParser.RoomsContext(self, self._ctx, self.state)
-        self.enterRule(localctx, 16, self.RULE_rooms)
+        self.enterRule(localctx, 18, self.RULE_rooms)
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 116
+            self.state = 130
             self.match(QrogueWorldParser.ROOMS)
-            self.state = 120
+            self.state = 134
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             while _la==QrogueWorldParser.ROOM_ID:
-                self.state = 117
+                self.state = 131
                 self.room()
-                self.state = 122
+                self.state = 136
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
 
@@ -991,16 +1083,16 @@ class QrogueWorldParser ( Parser ):
     def room(self):
 
         localctx = QrogueWorldParser.RoomContext(self, self._ctx, self.state)
-        self.enterRule(localctx, 18, self.RULE_room)
+        self.enterRule(localctx, 20, self.RULE_room)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 123
+            self.state = 137
             self.match(QrogueWorldParser.ROOM_ID)
-            self.state = 124
+            self.state = 138
             self.r_attributes()
-            self.state = 125
-            self.match(QrogueWorldParser.T__4)
-            self.state = 126
+            self.state = 139
+            self.match(QrogueWorldParser.T__6)
+            self.state = 140
             self.room_content()
         except RecognitionException as re:
             localctx.exception = re
@@ -1048,17 +1140,17 @@ class QrogueWorldParser ( Parser ):
     def r_attributes(self):
 
         localctx = QrogueWorldParser.R_attributesContext(self, self._ctx, self.state)
-        self.enterRule(localctx, 20, self.RULE_r_attributes)
+        self.enterRule(localctx, 22, self.RULE_r_attributes)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 128
-            self.match(QrogueWorldParser.T__5)
-            self.state = 129
+            self.state = 142
+            self.match(QrogueWorldParser.T__7)
+            self.state = 143
             self.r_visibility()
-            self.state = 130
+            self.state = 144
             self.r_type()
-            self.state = 131
-            self.match(QrogueWorldParser.T__6)
+            self.state = 145
+            self.match(QrogueWorldParser.T__8)
         except RecognitionException as re:
             localctx.exception = re
             self._errHandler.reportError(self, re)
@@ -1103,15 +1195,15 @@ class QrogueWorldParser ( Parser ):
     def r_visibility(self):
 
         localctx = QrogueWorldParser.R_visibilityContext(self, self._ctx, self.state)
-        self.enterRule(localctx, 22, self.RULE_r_visibility)
+        self.enterRule(localctx, 24, self.RULE_r_visibility)
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 134
+            self.state = 148
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             if _la==QrogueWorldParser.VISIBLE_LITERAL or _la==QrogueWorldParser.FOGGY_LITERAL:
-                self.state = 133
+                self.state = 147
                 _la = self._input.LA(1)
                 if not(_la==QrogueWorldParser.VISIBLE_LITERAL or _la==QrogueWorldParser.FOGGY_LITERAL):
                     self._errHandler.recoverInline(self)
@@ -1168,19 +1260,19 @@ class QrogueWorldParser ( Parser ):
     def hallways(self):
 
         localctx = QrogueWorldParser.HallwaysContext(self, self._ctx, self.state)
-        self.enterRule(localctx, 24, self.RULE_hallways)
+        self.enterRule(localctx, 26, self.RULE_hallways)
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 136
+            self.state = 150
             self.match(QrogueWorldParser.HALLWAYS)
-            self.state = 140
+            self.state = 154
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             while _la==QrogueWorldParser.HALLWAY_ID:
-                self.state = 137
+                self.state = 151
                 self.hallway()
-                self.state = 142
+                self.state = 156
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
 
@@ -1229,12 +1321,12 @@ class QrogueWorldParser ( Parser ):
     def hallway(self):
 
         localctx = QrogueWorldParser.HallwayContext(self, self._ctx, self.state)
-        self.enterRule(localctx, 26, self.RULE_hallway)
+        self.enterRule(localctx, 28, self.RULE_hallway)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 143
+            self.state = 157
             self.match(QrogueWorldParser.HALLWAY_ID)
-            self.state = 144
+            self.state = 158
             self.h_attributes()
         except RecognitionException as re:
             localctx.exception = re
@@ -1319,99 +1411,99 @@ class QrogueWorldParser ( Parser ):
     def h_attributes(self):
 
         localctx = QrogueWorldParser.H_attributesContext(self, self._ctx, self.state)
-        self.enterRule(localctx, 28, self.RULE_h_attributes)
+        self.enterRule(localctx, 30, self.RULE_h_attributes)
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 146
-            self.match(QrogueWorldParser.T__5)
-            self.state = 152
+            self.state = 160
+            self.match(QrogueWorldParser.T__7)
+            self.state = 166
             self._errHandler.sync(self)
             token = self._input.LA(1)
             if token in [QrogueWorldParser.OPEN_LITERAL]:
-                self.state = 147
+                self.state = 161
                 self.match(QrogueWorldParser.OPEN_LITERAL)
                 pass
             elif token in [QrogueWorldParser.CLOSED_LITERAL]:
-                self.state = 148
+                self.state = 162
                 self.match(QrogueWorldParser.CLOSED_LITERAL)
                 pass
             elif token in [QrogueWorldParser.LOCKED_LITERAL]:
-                self.state = 149
+                self.state = 163
                 self.match(QrogueWorldParser.LOCKED_LITERAL)
                 pass
             elif token in [QrogueWorldParser.EVENT_LITERAL]:
-                self.state = 150
+                self.state = 164
                 self.match(QrogueWorldParser.EVENT_LITERAL)
-                self.state = 151
+                self.state = 165
                 self.match(QrogueWorldParser.REFERENCE)
                 pass
             else:
                 raise NoViableAltException(self)
 
-            self.state = 159
+            self.state = 173
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            if _la==QrogueWorldParser.T__7:
-                self.state = 154
-                self.match(QrogueWorldParser.T__7)
-                self.state = 155
+            if _la==QrogueWorldParser.T__9:
+                self.state = 168
+                self.match(QrogueWorldParser.T__9)
+                self.state = 169
                 self.match(QrogueWorldParser.DIRECTION)
-                self.state = 157
+                self.state = 171
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
                 if _la==QrogueWorldParser.PERMANENT_LITERAL:
-                    self.state = 156
+                    self.state = 170
                     self.match(QrogueWorldParser.PERMANENT_LITERAL)
 
 
 
 
-            self.state = 172
+            self.state = 186
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             if _la==QrogueWorldParser.ENTANGLED_LITERAL:
-                self.state = 161
+                self.state = 175
                 self.match(QrogueWorldParser.ENTANGLED_LITERAL)
-                self.state = 162
-                self.match(QrogueWorldParser.T__8)
-                self.state = 163
+                self.state = 176
+                self.match(QrogueWorldParser.T__10)
+                self.state = 177
                 self.match(QrogueWorldParser.HALLWAY_ID)
-                self.state = 168
+                self.state = 182
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
                 while _la==QrogueWorldParser.LIST_SEPARATOR:
-                    self.state = 164
+                    self.state = 178
                     self.match(QrogueWorldParser.LIST_SEPARATOR)
-                    self.state = 165
+                    self.state = 179
                     self.match(QrogueWorldParser.HALLWAY_ID)
-                    self.state = 170
+                    self.state = 184
                     self._errHandler.sync(self)
                     _la = self._input.LA(1)
 
-                self.state = 171
-                self.match(QrogueWorldParser.T__9)
+                self.state = 185
+                self.match(QrogueWorldParser.T__11)
 
 
-            self.state = 174
-            self.match(QrogueWorldParser.T__6)
-            self.state = 177
+            self.state = 188
+            self.match(QrogueWorldParser.T__8)
+            self.state = 191
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             if _la==QrogueWorldParser.TUTORIAL_LITERAL:
-                self.state = 175
+                self.state = 189
                 self.match(QrogueWorldParser.TUTORIAL_LITERAL)
-                self.state = 176
+                self.state = 190
                 self.match(QrogueWorldParser.REFERENCE)
 
 
-            self.state = 181
+            self.state = 195
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             if _la==QrogueWorldParser.TRIGGER_LITERAL:
-                self.state = 179
+                self.state = 193
                 self.match(QrogueWorldParser.TRIGGER_LITERAL)
-                self.state = 180
+                self.state = 194
                 self.match(QrogueWorldParser.REFERENCE)
 
 
@@ -1463,19 +1555,19 @@ class QrogueWorldParser ( Parser ):
     def messages(self):
 
         localctx = QrogueWorldParser.MessagesContext(self, self._ctx, self.state)
-        self.enterRule(localctx, 30, self.RULE_messages)
+        self.enterRule(localctx, 32, self.RULE_messages)
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 183
+            self.state = 197
             self.match(QrogueWorldParser.MESSAGES)
-            self.state = 187
+            self.state = 201
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             while _la==QrogueWorldParser.REFERENCE:
-                self.state = 184
+                self.state = 198
                 self.message()
-                self.state = 189
+                self.state = 203
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
 
@@ -1533,25 +1625,25 @@ class QrogueWorldParser ( Parser ):
     def message(self):
 
         localctx = QrogueWorldParser.MessageContext(self, self._ctx, self.state)
-        self.enterRule(localctx, 32, self.RULE_message)
+        self.enterRule(localctx, 34, self.RULE_message)
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 190
+            self.state = 204
             self.match(QrogueWorldParser.REFERENCE)
-            self.state = 191
+            self.state = 205
             self.message_body()
-            self.state = 196
+            self.state = 210
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             if _la==QrogueWorldParser.MSG_EVENT:
-                self.state = 192
+                self.state = 206
                 self.match(QrogueWorldParser.MSG_EVENT)
-                self.state = 193
+                self.state = 207
                 self.match(QrogueWorldParser.REFERENCE)
-                self.state = 194
+                self.state = 208
                 self.match(QrogueWorldParser.MSG_ALTERNATIVE)
-                self.state = 195
+                self.state = 209
                 self.match(QrogueWorldParser.REFERENCE)
 
 
@@ -1602,27 +1694,27 @@ class QrogueWorldParser ( Parser ):
     def message_body(self):
 
         localctx = QrogueWorldParser.Message_bodyContext(self, self._ctx, self.state)
-        self.enterRule(localctx, 34, self.RULE_message_body)
+        self.enterRule(localctx, 36, self.RULE_message_body)
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 200
+            self.state = 214
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             if _la==QrogueWorldParser.MSG_SPEAKER:
-                self.state = 198
+                self.state = 212
                 self.match(QrogueWorldParser.MSG_SPEAKER)
-                self.state = 199
+                self.state = 213
                 self.match(QrogueWorldParser.TEXT)
 
 
-            self.state = 203 
+            self.state = 217 
             self._errHandler.sync(self)
             _la = self._input.LA(1)
             while True:
-                self.state = 202
+                self.state = 216
                 self.match(QrogueWorldParser.TEXT)
-                self.state = 205 
+                self.state = 219 
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
                 if not (_la==QrogueWorldParser.TEXT):

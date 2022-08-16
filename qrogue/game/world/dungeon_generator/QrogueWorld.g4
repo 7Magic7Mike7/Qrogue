@@ -4,9 +4,12 @@ import QrogueBasics, QrogueAreas, QrogueMessage;
 
 // RULES
 
-start  :    HEADER ('Name' '=' TEXT)?
+start  :    HEADER meta
             layout rooms hallways
-            ENDER;
+            ENDER ;
+
+meta :  ('Name' '=' TEXT)?
+        ('Description' '=' message_body (MSG_EVENT REFERENCE MSG_ALTERNATIVE '*none')?)? ;
 
 // building the non-template rooms used in the layout (note: template rooms are pre-defined rooms)
 room_content :      'description' message_body                // world/level description
