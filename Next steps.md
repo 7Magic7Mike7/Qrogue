@@ -55,3 +55,4 @@ https://medium.com/@joel.barmettler/how-to-upload-your-python-package-to-pypi-65
 - adapt "damaging" messages
 - show attempts for Riddle in HUD
 - Constraint based Puzzles (= "Challenges")
+- implement multi moves (e.g. 6+W = move up 6 times)
