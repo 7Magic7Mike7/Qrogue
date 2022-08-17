@@ -23,6 +23,7 @@ For upcoming v0.4
   - Confirmation popup with custom choices and arrow controls?
   - if alternative message is *None or *null etc. no message is shown if event is satisfied
 - Automated testing
+- Documentation
 
 # Tweaks #
 - key input pauses?
