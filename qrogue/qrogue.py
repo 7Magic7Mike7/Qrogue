@@ -126,7 +126,7 @@ def start_game(from_console: bool = False, debugging: bool = False, test_level: 
             #print("Your terminal window is too small. "
             #      "Please make it bigger (i.e. maximize it) or reduce the font size.")
             print("---------------------------------------------------------")
-            exit(1)
+            sys.exit(1)
 
         # flush after the player stopped playing
         if GameplayConfig.auto_save():
@@ -149,7 +149,7 @@ def start_game(from_console: bool = False, debugging: bool = False, test_level: 
         print()
         input("[Qrogue] Press ENTER to close the application")
 
-    exit(return_code)
+    sys.exit(return_code)
 
 
 def simulate_game(simulation_path: str, from_console: bool = False, debugging: bool = False, data_folder: str = None,
@@ -170,7 +170,7 @@ def simulate_game(simulation_path: str, from_console: bool = False, debugging: b
             # print("Your terminal window is too small. "
             #      "Please make it bigger (i.e. maximize it) or reduce the font size.")
             print("---------------------------------------------------------")
-            exit(1)
+            sys.exit(1)
 
         # flush after the player stopped playing
         if GameplayConfig.auto_save():
@@ -193,7 +193,7 @@ def simulate_game(simulation_path: str, from_console: bool = False, debugging: b
         print()
         input("[Qrogue] Press ENTER to close the application")
 
-    exit(return_code)
+    sys.exit(return_code)
 
 
 def validate_map(path: str, is_level: bool = True, in_base_path: bool = True) -> bool:
