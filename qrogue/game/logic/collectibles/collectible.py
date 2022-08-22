@@ -1,7 +1,7 @@
 import math
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Iterator
+from typing import Iterator, List
 
 
 class CollectibleType(Enum):
@@ -50,7 +50,7 @@ class Collectible(ABC):
 class MultiCollectible(Collectible):
     PRICE_MULT = 0.9
 
-    def __init__(self, content: [Collectible]):
+    def __init__(self, content: List[Collectible]):
         super(MultiCollectible, self).__init__(CollectibleType.Multi)
         self.__content = content
 

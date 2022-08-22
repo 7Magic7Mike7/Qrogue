@@ -13,11 +13,12 @@ def is_power_of_2(n: int):
     return (n & (n - 1)) == 0
 
 
-def to_binary_string(num: int, digits: int = -1, msb: bool = True) -> str:
+def to_binary_string(num: int, digits: Optional[int] = None, msb: bool = True) -> str:
     """
     Converts a given integer into its binary representation as string.
+
     :param num: the number we want to convert to a binary string
-    :param digits: number of digits the string should show (= length)
+    :param digits: number of digits the string should show (= length), if None it is calculated to fit num
     :param msb: whether to place the most or least significant bit(s) first
     :return:
     """
@@ -43,6 +44,7 @@ def center_string(text: str, line_width: int, uneven_left: bool = True, characte
     in a line with the given line width. If the number of characters to add is uneven (i.e. number of prepended and
     appended characters cannot be the same) the flag uneven_left decides whether to prepend (= left, default) or
     append (= right) should be bigger.
+
     :param text: the text to center in the line
     :param line_width: width of the line the text should be centered in
     :param uneven_left: whether to prepend or append one character more in case of imbalance, defaults to True
@@ -62,6 +64,16 @@ def center_string(text: str, line_width: int, uneven_left: bool = True, characte
 
 
 def align_string(text: str, line_width: int, left: bool = True, character: str = __DEFAULT_CHARACTER) -> str:
+    """
+    Tries to align text in a line by adding character to the left or right until text has the length of the given line
+    width. If text is not shorter than line width it is immediately returned without any changes.
+
+    :param text: the text to align
+    :param line_width: the length text should have in the end
+    :param left: whether the text should be left-aligned (True) or right-aligned (false)
+    :param character: the character to add as alignment, defaults to whitespace
+    :return: a left or right aligned version of text
+    """
     if line_width <= len(text):
         return text
     diff = line_width - len(text)

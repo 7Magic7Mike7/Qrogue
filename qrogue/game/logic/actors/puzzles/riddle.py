@@ -7,12 +7,20 @@ from .target import Target
 
 
 class Riddle(Target):
+    """
+    A Target with a restricted amount of attempts to reach its StateVector.
+    """
+
     def __init__(self, target: StateVector, reward: Collectible, attempts: int = 1):
         super().__init__(target, reward)
         self.__attempts = attempts
 
     @property
     def attempts(self) -> int:
+        """
+
+        :return: the number of attempts that are left for reaching this Target's StateVector
+        """
         return self.__attempts
 
     @property
@@ -21,7 +29,12 @@ class Riddle(Target):
 
     @property
     def flee_energy(self) -> int:
-        return 0    # fleeing/aborting/pausing riddles is for free
+        """
+        Fleeing (pausing) Riddles should always be possible, hence it costs 0 energy.
+
+        :return: 0
+        """
+        return 0
 
     def is_reached(self, state_vector: StateVector) -> Tuple[bool, Optional[Collectible]]:
         success, reward = super(Riddle, self).is_reached(state_vector)
@@ -32,4 +45,8 @@ class Riddle(Target):
         return success, reward
 
     def _on_reached(self):
+        """
+        Nothing additional to do for reached Riddles.
+        :return: None
+        """
         pass

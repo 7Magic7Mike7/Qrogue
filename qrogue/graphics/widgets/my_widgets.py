@@ -335,8 +335,8 @@ class CircuitWidget(Widget):
             return self.gate is None or self.gate.can_use_qubit(qubit)
 
         def is_valid_pos(self, pos: int, robot: Robot) -> bool:
-            # if gate is None we search for an occupied position (gate_at(pos) is not None)
-            # if gate is not None we search for a free position (gate_at(pos) is None)
+            # if gate is None we search for an occupied position (gate_used_at(pos) is not None)
+            # if gate is not None we search for a free position (gate_used_at(pos) is None)
             # hence this xor condition
             return (self.gate is None) != (robot.gate_used_at(pos) is None)
 

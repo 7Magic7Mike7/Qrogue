@@ -23,19 +23,16 @@ class _Attributes:
     """
     A class that handles some attributes of a Robot.
     """
-    __DEFAULT_SPACE = 3
-    __MIN_INIT_ENERGY = 1  # during initialization neither max_energy nor cur_energy must be below this value
-    __DEFAULT_MAX_ENERGY = 100
 
-    """
-    Is used as storage for a bunch of attributes of the robot
-    """
+    __DEFAULT_SPACE = 3
+    __DEFAULT_MAX_ENERGY = 100
+    __MIN_INIT_ENERGY = 1  # during initialization neither max_energy nor cur_energy must be below this value
 
     def __init__(self, qubits: QubitSet = DummyQubitSet(), space: int = __DEFAULT_SPACE,
                  max_energy: int = __DEFAULT_MAX_ENERGY, start_energy: int = None):
         """
 
-        :param qubits: the set of qubits the robot is currently using
+        :param qubits: the QubitSet the Robot is currently using
         :param space: how many instructions the robot can put on their circuit
         :param max_energy: how much energy the robot can store at most
         :param start_energy: with how much energy the robot starts. If it is bigger than max_energy, max_energy will be
@@ -59,27 +56,48 @@ class _Attributes:
 
     @property
     def num_of_qubits(self) -> int:
+        """
+
+        :return: number of qubits the Robot's QubitSet has
+        """
         return self.__qubits.size
 
     @property
     def circuit_space(self) -> int:
+        """
+
+        :return: maximum number of Instructions the Robot can use in its Circuit
+        """
         return self.__space
 
     @property
     def qubits(self) -> QubitSet:
+        """
+
+        :return: the QubitSet used by the Robot
+        """
         return self.__qubits
 
     @property
     def cur_energy(self) -> int:
+        """
+
+        :return: the amount of energy the Robot currently has
+        """
         return self.__cur_energy
 
     @property
     def max_energy(self) -> int:
+        """
+
+        :return: the maximum amount of energy the Robot can store
+        """
         return self.__max_energy
 
     def add_qubits(self, additional_qubits: int = 1):
         """
-        Adds the given number of additional qubits to the QubitSet
+        Adds the given number of additional qubits to the QubitSet.
+
         :param additional_qubits: how many qubits to add (defaults to 1)
         :return: None
         """
@@ -88,6 +106,7 @@ class _Attributes:
     def increase_energy(self, amount: int) -> int:
         """
         Increases current energy by the given amount up to maximum energy.
+
         :param amount: by how much we want to increase current energy
         :return: by how much current energy was actually increased
         """
@@ -101,25 +120,29 @@ class _Attributes:
     def decrease_energy(self, amount: int) -> int:
         """
         Decreases current energy by the given amount at most to 0.
+
         :param amount: by how much we want to decrease current energy
         :return: by how much current energy was actually decreased
         """
         self.__cur_energy -= amount
         if self.__cur_energy < 0:
-            amount += self.__cur_energy     # e.g. if we got 6 damage and cur_energy is now -2, we actually got 4 damage
+            # e.g. if we decrease by 6 then cur_energy is now -2, so actually we were only able to decrease it by 4
+            amount += self.__cur_energy
             self.__cur_energy = -1
         return amount
 
 
 class Backpack:
     """
-    Stores Instructions, Consumables and other Collectibles for Robot to use.
+    Stores Instructions, Consumables and other Collectibles for a Robot to use.
     """
+
     __CAPACITY: int = 5      # how many Instructions the Backpack can hold at once
     __POUCH_SIZE: int = 5    # how many Consumables the Backpack can hold at once
 
-    def __init__(self, capacity: int = __CAPACITY, content: List[Instruction] = None):
+    def __init__(self, capacity: int = __CAPACITY, content: Optional[List[Instruction]] = None):
         """
+        Backpack is a storage/management class for Collectibles.
 
         :param capacity: how many Instructions can be stored in this Backpack
         :param content: list of initially stored Instructions
@@ -140,10 +163,18 @@ class Backpack:
         self.__key_count: int = 0
 
     def __iter__(self) -> "BackpackIterator":
+        """
+
+        :return: an Iterator over the stored Instructions
+        """
         return BackpackIterator(self)
 
     @property
     def capacity(self) -> int:
+        """
+
+        :return: how many Collectibles can be stored in this Backpack
+        """
         return self.__capacity
 
     @property
@@ -164,33 +195,47 @@ class Backpack:
 
     @property
     def num_of_available_items(self) -> int:
+        """
+
+        :return: number of items that are currently available to use (e.g. Consumables)
+        """
         return self.consumables_in_pouch    # later we might add active item(s)?
 
     @property
     def coin_count(self) -> int:
+        """
+
+        :return: number of Coins we currently have
+        """
         if CheatConfig.got_inf_resources():
             return 999
         return self.__coin_count
 
     @property
     def key_count(self) -> int:
+        """
+
+        :return: number of Keys we currently have
+        """
         if CheatConfig.got_inf_resources():
             return 999
         return self.__key_count
 
     def can_afford(self, price: int) -> bool:
         """
-        Checks if we have enough resources to afford an item with the given price.
-        :param price: how many coins the item costs
-        :return: whether we could afford an item with this price or not
+        Checks if we have enough resources to afford a Collectible with the given price.
+
+        :param price: how many Coins the item costs
+        :return: whether we could afford a Collectible with this price or not
         """
         return self.coin_count >= price
 
     def give_coin(self, amount: int) -> bool:
         """
-        Adds the given amount of coins. Fails if amount is less or equal to 0.
-        :param amount: how many coins we want to add
-        :return: True if the given amount of coins where handed out successfully, False otherwise
+        Adds the given amount of Coins. Fails if amount is less or equal to 0.
+
+        :param amount: how many Coins we want to add
+        :return: True if the given amount of Coins were handed out successfully, False otherwise
         """
         if amount > 0:
             self.__coin_count += amount
@@ -199,9 +244,10 @@ class Backpack:
 
     def spend_coins(self, amount: int) -> bool:
         """
-        Spends the given amount of coins, i.e. decreases coin count by the given amount.
-        :param amount: how many coins we want to spend
-        :return: True if we could successfully spend the amount of coins, False if it failed (e.g. not enough coins)
+        Spends the given amount of Coins, i.e. decreases coin count by the given amount.
+
+        :param amount: how many Coins we want to spend
+        :return: True if we could successfully spend the amount of Coins, False if it failed (e.g. not enough Coins)
         """
         if CheatConfig.got_inf_resources():
             return True
@@ -213,9 +259,10 @@ class Backpack:
 
     def give_key(self, amount: int) -> bool:
         """
-        Adds the given amount of keys. Fails if amount is less or equal to 0.
-        :param amount: how many keys we want to add
-        :return: True if the given amount of keys where handed out successfully, False otherwise
+        Adds the given amount of Keys. Fails if amount is less or equal to 0.
+
+        :param amount: how many Keys we want to add
+        :return: True if the given amount of Keys where handed out successfully, False otherwise
         """
         if amount > 0:
             self.__key_count += amount
@@ -224,8 +271,9 @@ class Backpack:
 
     def use_key(self) -> bool:
         """
-        Uses one key, i.e. decreases key count by 1.
-        :return: True if we could successfully use a key, False if it failed (e.g. no key left)
+        Uses one Key, i.e. decreases key count by 1.
+
+        :return: True if we could successfully use a Key, False if it failed (e.g. no Key left)
         """
         if CheatConfig.got_inf_resources():
             return True
@@ -238,6 +286,7 @@ class Backpack:
     def get(self, index: int) -> Optional[Instruction]:
         """
         Returns the Instruction at the provided index in the storage if index is valid. Otherwise returns None.
+
         :param index: index of the Instruction we want to get
         :return: the Instruction at the given index or None
         """
@@ -247,7 +296,7 @@ class Backpack:
 
     def add(self, instruction: Instruction) -> bool:
         """
-        Adds an Instruction to the backpack if possible (i.e. there is still space left).
+        Adds an Instruction to the backpack if possible (i.e. if there is still space left).
 
         :param instruction: the Instruction to add
         :return: True if there is enough capacity left to store the Instruction, False otherwise
@@ -259,7 +308,7 @@ class Backpack:
 
     def remove(self, instruction: Instruction) -> bool:
         """
-        Removes an Instruction from the backpack if it's stored.
+        Removes a given Instruction from the backpack if it's actually stored in it.
 
         :param instruction: the Instruction we want to remove
         :return: True if the Instruction is in the backpack and we were able to remove it, False otherwise
@@ -278,11 +327,16 @@ class Backpack:
             return False
 
     def pouch_iterator(self) -> __iter__:
+        """
+
+        :return: an Iterator over the Consumables stored in this Backpack
+        """
         return iter(self.__pouch)
 
     def get_from_pouch(self, index: int) -> Optional[Consumable]:
         """
         Returns the Consumable at the provided index in the pouch if index is valid. Otherwise returns None.
+
         :param index: index of the Consumable we want to get
         :return: the Consumable at the given index or None
         """
@@ -293,6 +347,7 @@ class Backpack:
     def place_in_pouch(self, consumable: Consumable) -> bool:
         """
         Places a Consumable in the pouch if possible (i.e. there is still space left).
+
         :param consumable: the Consumable we want to store in the pouch
         :return: True if we could add the Consumable, False otherwise
         """
@@ -304,6 +359,7 @@ class Backpack:
     def remove_from_pouch(self, consumable: Consumable) -> bool:
         """
         Tries to remove a given Consumable from the pouch. Fails if it's not stored in the pouch.
+
         :param consumable: the Consumable we want to remove
         :return: True if consumable was removed successfully, False otherwise
         """
@@ -316,6 +372,7 @@ class Backpack:
     def copy_gates(self) -> List[Instruction]:
         """
         Creates a new List that contains copies of all the stored gates.
+
         :return: a deep copy of the stored gates
         """
         data = []
@@ -328,6 +385,7 @@ class BackpackIterator:
     """
     Allows us to easily iterate through all the Instructions in a backpack.
     """
+
     def __init__(self, backpack: Backpack):
         self.__index: int = 0
         self.__backpack: Backpack = backpack
@@ -427,6 +485,7 @@ class Robot(Controllable, ABC):
     def game_over_check(self) -> bool:
         """
         Checks if the Robot still has some energy and then calls game_over() if there is None left.
+
         :return: True if the Robot is game over, False otherwise
         """
         if self.__attributes.cur_energy <= 0:
@@ -444,6 +503,7 @@ class Robot(Controllable, ABC):
         """
         Compiles and simulates the current circuit and saves and returns the resulting StateVector. Can also lead to a
         game over.
+
         :param use_energy: whether the update should cost energy or not, defaults to True
         :return: None
         """
@@ -470,6 +530,7 @@ class Robot(Controllable, ABC):
     def __remove_instruction(self, instruction: Optional[Instruction], skip_qargs: bool = False) -> bool:
         """
         Tries to remove the given instruction from the circuit. Fails if the Instruction is not used in the circuit.
+
         :param instruction: the Instruction to remove
         :param skip_qargs: whether to skip resetting the qubits of the Instruction or not, defaults to False
         :return: True if we successfully removed the Instruction, False otherwise
@@ -484,6 +545,7 @@ class Robot(Controllable, ABC):
     def remove_instruction(self, instruction: Instruction) -> bool:
         """
         Tries to remove the given instruction from the circuit.
+
         :param instruction: the Instruction to remove
         :return: True if we successfully removed the Instruction, False otherwise
         """
@@ -494,6 +556,7 @@ class Robot(Controllable, ABC):
     def __place_instruction(self, instruction: Instruction, position: int) -> bool:
         """
         Tries to place the given instruction at the given position.
+
         :param instruction: the Instruction we want to place
         :param position: the position in the circuit where we want to place instruction at
         :return: True if instruction was successfully placed at position, False otherwise
@@ -519,6 +582,7 @@ class Robot(Controllable, ABC):
         """
         Tries to move instruction to position. Fails if instruction is not used or already at position. If an invalid
         position is given, instruction is removed instead.
+
         :param instruction: the Instruction we want to move
         :param position: the position to which we want to move instruction (invalid position => remove)
         :return: True if we successfully (re)moved instruction, False otherwise
@@ -539,6 +603,7 @@ class Robot(Controllable, ABC):
     def get_stored_instruction(self, index: int) -> Optional[Instruction]:
         """
         Returns the Instruction stored at the given index in the backpack or None for invalid indices.
+
         :param index: index of the Instruction in the backpack
         :return: the stored Instruction at the given index or None
         """
@@ -569,6 +634,7 @@ class Robot(Controllable, ABC):
     def reset_circuit(self):
         """
         Resets the circuit by removing all Instructions of it and updating the statevector.
+
         :return: None
         """
         temp = self.__instructions.copy()
@@ -584,9 +650,10 @@ class Robot(Controllable, ABC):
         """
         return self.backpack.copy_gates()
 
-    def give_collectible(self, collectible: Collectible):   # todo check if collectible can be None
+    def give_collectible(self, collectible: Collectible):
         """
         Gives collectible to this Robot.
+
         :param collectible: the Collectible we want to give this Robot
         :return: None
         """
@@ -611,6 +678,7 @@ class Robot(Controllable, ABC):
     def on_move(self):
         """
         Decreases energy every time this Robot moves.
+
         :return: None
         """
         self.__attributes.decrease_energy(amount=1)
@@ -618,6 +686,7 @@ class Robot(Controllable, ABC):
     def decrease_energy(self, amount: int = 1) -> Tuple[int, bool]:
         """
         Decreases this Robot's current energy by the given amount.
+
         :param amount: by how much we want to reduce this Robot's energy, defaults to 1
         :return: the actual amount by how much current energy was decreased, whether this Robot is game over or not
         """
@@ -630,6 +699,7 @@ class Robot(Controllable, ABC):
     def increase_energy(self, amount: int = 1) -> int:
         """
         Increases this Robot's current energy by the given amount at most to its max energy.
+
         :param amount: by how much current energy was increased
         :return: by how much current energy was actually increased.
         """
@@ -639,6 +709,7 @@ class Robot(Controllable, ABC):
     def gate_used_at(self, position: int) -> Optional[Instruction]:
         """
         Returns the Instruction at the given index or None for invalid indices.
+
         :param position: position of the Instruction in the circuit
         :return: the Instruction at the given position or None
         """

@@ -5,6 +5,10 @@ from typing import Tuple
 
 # interface for a set of qubits (e.g. Ion-traps, Super conducting, ...)
 class QubitSet(ABC):
+    """
+    QubitSet provides an interface for different kind of qubits  # todo continue after old code is removed
+    """
+
     def __init__(self, max_hp: int, size: int):
         self._max_hp = max_hp
         self._cur_hp = max_hp
@@ -26,7 +30,7 @@ class QubitSet(ABC):
         return self.hp > 0
 
     @abstractmethod
-    def damage(self, amount: int) -> Tuple[int, bool]:
+    def damage(self, amount: int) -> Tuple[int, bool]:  # todo remove
         """
 
         :param amount: the amount of damage that should be received
