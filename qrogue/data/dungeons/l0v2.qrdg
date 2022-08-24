@@ -130,11 +130,11 @@ default *energySmall
 // highlight text by encapsulating it in "//02abcd//" where "abcd" is the text to highlight and "02" one of the available styles: 01 is for tiles, 02 is for game objects, 03 for actions, 04 for keys on the keyboard and 05 for other words
 // speaker: 0 = Examiner, 1 = Scientist, 2 = System, 3 = Player
 
-*firstPuzzle Speaker "0" "As already mentionened, we extended the //02Circuit Space// of your //02Qubot// to //02two// //02Slots//. So you could place up to two //02Quantum Gates// now - well, if you would have more than a single //02X Gate// that is ;)"
+*firstPuzzle Speaker "0" prio "As already mentionened, we extended the //02Circuit Space// of your //02Qubot// to //02two// //02Slots//. So you could place up to two //02Quantum Gates// now - well, if you would have more than a single //02X Gate// that is ;)"
 "As you have only //05one// gate it //05doesn't matter// in which slot you //03position// it. Nonetheless, you can //03choose// with //04AD// or //04Left// and //04Right Arrow Keys//."
 "You should already be familiar with this //02Puzzle//. It's //05basically the same// as the previous ones but now with //05two// Qubits." when *solvedFirstPuzzle then *None
 
-*selectQubit Speaker "0" "Just like you can //03choose// the //02Slot// with left and right you can also //03select// the //02Qubit// you want to //03apply// the //02Gate// to with up and down - so, //04WS// or //04Up// and //04Down Arrow Keys//."
+*selectQubit Speaker "0" prio "Just like you can //03choose// the //02Slot// with left and right you can also //03select// the //02Qubit// you want to //03apply// the //02Gate// to with up and down - so, //04WS// or //04Up// and //04Down Arrow Keys//."
 "But whether you need to //03change// the //02Qubit// for this //02Puzzle// or not will remain a secret you have to uncover yourself. Good Luck." when *solvedSecondPuzzle then *None
 
 *doneMsg Speaker "0" "No words needed. Ready for the next lesson?"

@@ -166,15 +166,15 @@ default *energySmall
 *srMsg Speaker "0" "Technically this here is also a new kind of //02Door//. It's simply an //02Open Door//. Not really anything special about it. Just treat it like a //02Normal Door//."
 
 
-*temporaryOWDs Speaker "0" "The //02One-way Doors// you have seen now were all //05permanent//. You //03walked// through them but you //05couldn't go back//. But there are also //05temporary// ones. Once you //03walked// through them they are //05open forever//."
+*temporaryOWDs Speaker "0" prio "The //02One-way Doors// you have seen now were all //05permanent//. You //03walked// through them but you //05couldn't go back//. But there are also //05temporary// ones. Once you //03walked// through them they are //05open forever//."
 
-*permVsTemp Speaker "0" "Note that there is //05no visual difference// between //05permanent// and //05temporary// //02One-way Doors//. You only get to know one's type by walking through it." 
+*permVsTemp Speaker "0" prio "Note that there is //05no visual difference// between //05permanent// and //05temporary// //02One-way Doors//. You only get to know one's type by walking through it." 
 "During the lessons we //05won't trap you// but on real //05missions// you sometimes have to consider the //05risk//."
 
-*deadEnd Speaker "0" "Looks like a //05dead end//." "But is it reall one? Or is it just some new kind of //02Door// playing with you?" when *eventDoorIntro then *eventDoors
-*eventDoors Speaker "0" "Maybe you already guessed it, but this is indeed an //02Event Door//. It's usually //05invisible// but as soon as it is //05triggered// (e.g. by //03picking up// a //02Collectible// or //03solving// a //02Puzzle//) it will //05open//."
+*deadEnd Speaker "0" prio "Looks like a //05dead end//." "But is it reall one? Or is it just some new kind of //02Door// playing with you?" when *eventDoorIntro then *eventDoors
+*eventDoors Speaker "0" prio "Maybe you already guessed it, but this is indeed an //02Event Door//. It's usually //05invisible// but as soon as it is //05triggered// (e.g. by //03picking up// a //02Collectible// or //03solving// a //02Puzzle//) it will //05open//."
 
-*lockedOWD Speaker "0" "Did you see that? This //02One-way Door// was //05locked// in addition to its //05one-way// properties. That means you just used the one and only //02Key// you received..."
+*lockedOWD Speaker "0" prio "Did you see that? This //02One-way Door// was //05locked// in addition to its //05one-way// properties. That means you just used the one and only //02Key// you received..."
 
 *joking Speaker "0" "AHAHA, what a luck! There was actually another //02Key//. Now you can finally //03open// the //02Locked Door// in the starting room."
 
