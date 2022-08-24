@@ -79,8 +79,11 @@ class Popup:
                 title, text = ret
                 if Config.debugging():
                     title += f" {{@*{message.id}}}"
-                # the message is reopen-able because we explicitly defined it
-                Popup.message(title, text, reopen=True, on_close_callback=on_close_callback)
+                reopen = True
+                # the popup is not reopenable if it has lower priority than the last popup
+                if Popup.__last_popup is not None and Popup.__last_popup.is_reopenable and not message.priority:
+                    reopen = False
+                Popup.message(title, text, reopen, on_close_callback=on_close_callback)
 
     def __init__(self, title: str, text: str, color: int = PopupConfig.default_color(), show: bool = True,
                  overwrite: bool = False, reopen: bool = True, on_close_callback: Callable[[], None] = None):
