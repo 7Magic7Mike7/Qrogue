@@ -8,6 +8,8 @@ from qrogue.util import ColorConfig as CC, Keys, Logger, PopupConfig
 
 
 class MultilinePopup(PyCuiPopup, MenuImplementation):
+    __STATIC_PY_CUI_PADDING = 6     # based on PyCUI "padding" I think
+
     @staticmethod
     def __get_color_rules():
         regex = CC.REGEX_TEXT_HIGHLIGHT
@@ -80,8 +82,8 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
         self.__confirmation_callback = confirmation_callback
         self._top_view = 0
 
-        #self._pady = PopupConfig.PADDING_Y
-        self.__lines = MultilinePopup.__split_text(text, self._width - 6, PopupConfig.PADDING_X, logger)  # 6: based on PyCUI "padding" I think
+        self.__lines = MultilinePopup.__split_text(text, self._width - MultilinePopup.__STATIC_PY_CUI_PADDING,
+                                                   PopupConfig.PADDING_X, logger)
 
         if pos:
             if pos[0] is not None:
@@ -93,6 +95,8 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
             self.__lines.append("-" * self._width + "\n")
             self.__lines.append("Cancel" + " " * 10 + "Confirm")     # todo how to explain controls?
 
+        self._pageAlignment = " " * (self._width - MultilinePopup.__STATIC_PY_CUI_PADDING)
+
     @property
     def _is_question(self) -> bool:
         return self.__confirmation_callback is not None
@@ -103,7 +107,10 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
 
         :return: number of rows inside the popup
         """
-        return self._height - self._pady - 2    # subtract both title and end line
+        full_page_height = self._height - self._pady - 2    # subtract both title and end line
+        if len(self.__lines) > full_page_height:
+            return full_page_height - 1     # subtract the space we need for page indication
+        return full_page_height
 
     def up(self):
         if len(self.__lines) > self.textbox_height and self._top_view > 0:
@@ -158,5 +165,11 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
             self._renderer.draw_text(self, self.__lines[i], self._start_y + counter, selected=True)
             counter += 1
             i += 1
+
+        if len(self.__lines) > self.textbox_height:
+            rem_rows = str(len(self.__lines) - counter - self._top_view + 1)
+            rem_rows = self._pageAlignment[:-len(rem_rows)] + rem_rows
+            self._renderer.draw_text(self, rem_rows, self._start_y + counter, selected=False)
+
         self._renderer.unset_color_mode(self._color)
         self._renderer.reset_cursor(self)

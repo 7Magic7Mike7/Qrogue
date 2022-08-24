@@ -74,6 +74,10 @@ class MapConfig:
         return "l0v"
 
     @staticmethod
+    def first_uncleared() -> str:
+        return "firstUncleared"
+
+    @staticmethod
     def spaceship() -> str:
         return "spaceship"
 
@@ -241,6 +245,8 @@ class Options(Enum):
     allow_implicit_removal = ("Allow implicit Removal", _get_boolean_callback(), 2, 0,
                               "Allows you to place a gate on an occupied spot, removing the occupying gate in the "
                               "process.")
+    allow_multi_move = ("Allow multi move", _get_boolean_callback(), 2, 0,
+                        "Allows you to move multiple tiles at once by pressing a number followed by a direction.")
 
     def __init__(self, name: str, get_value: Tuple[Callable[[int], str], Callable[[str], Any]], num_of_values: int,
                  default_index: int, description: str):
@@ -286,6 +292,8 @@ class GameplayConfig:
 
         Options.show_ket_notation: Options.show_ket_notation.default_index,
         Options.allow_implicit_removal: Options.allow_implicit_removal.default_index,
+
+        Options.allow_multi_move: Options.allow_multi_move.default_index,
     }
 
     @staticmethod

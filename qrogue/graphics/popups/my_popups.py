@@ -1,15 +1,15 @@
-from typing import Callable
+from typing import Callable, Optional, List
 
 from qrogue.game.logic import Message
 from qrogue.util import Config, PopupConfig
 
 
 class Popup:
-    __show_popup = None
-    __check_achievement = None
-    __popup_queue = []
-    __cur_popup = None
-    __last_popup = None
+    __show_popup: Optional[Callable[[str, str, int], None]] = None
+    __check_achievement: Optional[Callable[[str], bool]] = None
+    __popup_queue: List["Popup"] = []
+    __cur_popup: Optional["Popup"] = None
+    __last_popup: Optional["Popup"] = None
 
     @staticmethod
     def update_popup_functions(show_popup_callback: Callable[[str, str, int], None]) -> None:
@@ -20,9 +20,14 @@ class Popup:
         Popup.__check_achievement = check_achievement_callback
 
     @staticmethod
+    def clear_last_popup() -> None:
+        Popup.__last_popup = None
+
+    @staticmethod
     def on_close() -> bool:
         if Popup.__cur_popup:
             Popup.__cur_popup.on_close_callback()
+            Popup.__cur_popup.__on_close_callback = None    # clear callback to not execute it when reopening!
         if Popup.__cur_popup and Popup.__cur_popup.is_reopenable:
             Popup.__last_popup = Popup.__cur_popup
         Popup.__cur_popup = None
@@ -43,20 +48,20 @@ class Popup:
         Popup(title, text, color, reopen=reopen, show=True, overwrite=overwrite, on_close_callback=on_close_callback)
 
     @staticmethod
-    def generic_info(title: str, text: str):
-        Popup.message(title, text, reopen=False)
+    def generic_info(title: str, text: str, reopen: bool = False):
+        Popup.message(title, text, reopen=reopen)
 
     @staticmethod
-    def examiner_says(text: str):
-        Popup.message(Config.examiner_name(), text, reopen=True)
+    def examiner_says(text: str, reopen: bool = True):
+        Popup.message(Config.examiner_name(), text, reopen=reopen)
 
     @staticmethod
-    def scientist_says(text: str):
-        Popup.message(Config.scientist_name(), text, reopen=True)
+    def scientist_says(text: str, reopen: bool = True):
+        Popup.message(Config.scientist_name(), text, reopen=reopen)
 
     @staticmethod
-    def npc_says(name: str, text: str):
-        Popup.message(name, text, reopen=True)
+    def npc_says(name: str, text: str, reopen: bool = True):
+        Popup.message(name, text, reopen=reopen)
 
     @staticmethod
     def from_message(message: Message, overwrite: bool = False):
@@ -64,8 +69,11 @@ class Popup:
             ret = message.get(Popup.__check_achievement)    # resolve possible alternative messages
             if ret:
                 title, text = ret
-                # the message is reopen-able because we explicitly defined it
-                Popup.message(title, text, reopen=True, overwrite=overwrite)
+                reopen = True
+                # the popup is not reopenable if it has lower priority than the last popup
+                if Popup.__last_popup is not None and Popup.__last_popup.is_reopenable and not message.priority:
+                    reopen = False
+                Popup.message(title, text, reopen=reopen, overwrite=overwrite)
 
     @staticmethod
     def from_message_trigger(message: Message, on_close_callback: Callable[[], None]):
@@ -73,9 +81,13 @@ class Popup:
             ret = message.get(Popup.__check_achievement)    # resolve possible alternative messages
             if ret:
                 title, text = ret
-                title += f" {{@*{message.id}}}"        # todo remove for release version
-                # the message is reopen-able because we explicitly defined it
-                Popup.message(title, text, reopen=True, on_close_callback=on_close_callback)
+                if Config.debugging():
+                    title += f" {{@*{message.id}}}"
+                reopen = True
+                # the popup is not reopenable if it has lower priority than the last popup
+                if Popup.__last_popup is not None and Popup.__last_popup.is_reopenable and not message.priority:
+                    reopen = False
+                Popup.message(title, text, reopen, on_close_callback=on_close_callback)
 
     def __init__(self, title: str, text: str, color: int = PopupConfig.default_color(), show: bool = True,
                  overwrite: bool = False, reopen: bool = True, on_close_callback: Callable[[], None] = None):

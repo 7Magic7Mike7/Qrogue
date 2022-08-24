@@ -10,7 +10,8 @@ from qrogue.management.save_data import SaveData
 from qrogue.util.achievements import Ach, Unlocks
 
 __MAP_ORDER = {
-    MapConfig.spaceship(): MapConfig.intro_level(),
+    #MapConfig.spaceship(): MapConfig.intro_level(),
+    MapConfig.first_uncleared(): MapConfig.intro_level(),
     MapConfig.intro_level(): "l0v1",
     "l0v1": "l0v2",
     "l0v2": "l0v3",
@@ -19,7 +20,8 @@ __MAP_ORDER = {
     "l0v5": "l0v6",
     "l0v6": "l0v7",
     "l0v7": "w0",
-    "l0v8": MapConfig.spaceship(),
+    "l0training": "w0",
+    "l0exam": MapConfig.spaceship(),
     "w0": MapConfig.spaceship(),
 
     MapConfig.hub_world(): "l0v0",
@@ -27,7 +29,7 @@ __MAP_ORDER = {
 
 
 def get_next(cur_map: str) -> Optional[str]:
-    if cur_map == MapConfig.spaceship():    # next of spaceship is always the newest uncleared level
+    if cur_map == MapConfig.first_uncleared():
         next_map = __MAP_ORDER[cur_map]
         while SaveData.instance().achievement_manager.check_achievement(next_map):
             if next_map in __MAP_ORDER:
@@ -86,10 +88,13 @@ class MapManager:
     def in_level(self) -> bool:
         return self.__cur_map.get_type() is MapType.Level
 
+    def __show_spaceship(self):
+        self.__show_world(None)
+
     def get_restart_message(self) -> str:
         # todo maybe should be handled differently. I'm not satisfied by this approach but for now it works and is
         #  straight forward.
-        if self.__get_world(self.__cur_map.internal_name) == MapConfig.tutorial_world():
+        if self.__get_world(self.__cur_map.internal_name).internal_name == MapConfig.tutorial_world():
             return "Do you want to restart the current lesson?"
         else:
             return "Connection lost..."
@@ -114,12 +119,15 @@ class MapManager:
                                             from_pycui=False)
         return self.__world_memory[MapConfig.hub_world()]
 
-    def __load_map(self, map_name: str, room: Optional[Coordinate], map_seed: int = None):
-        if map_name == MapConfig.spaceship():
-            next_map = get_next(map_name)
+    def __load_map(self, map_name: str, room: Optional[Coordinate], map_seed: Optional[int] = None):
+        if map_name == MapConfig.first_uncleared():
+            next_map = get_next(MapConfig.spaceship())
             if next_map is None:
-                next_map = MapConfig.hub_world()
-            self.load_map(next_map, None)
+                self.__load_map(MapConfig.hub_world(), room, map_seed)
+            else:
+                self.__load_map(next_map, room, map_seed)
+        elif map_name == MapConfig.spaceship():
+            self.__show_spaceship()
         elif map_name in self.__world_memory:
             self.__cur_map = self.__world_memory[map_name]
             self.__in_level = False
@@ -180,7 +188,7 @@ class MapManager:
     def __load_next(self):
         next_map = get_next(self.__cur_map.internal_name)
         if next_map:
-            self.load_map(next_map, None)
+            self.__load_map(next_map, None, None)
         else:
             world = self.__get_world(self.__cur_map.internal_name)
             self.__show_world(world)
@@ -221,7 +229,7 @@ class MapManager:
                 self.__proceed()
         SaveData.instance().achievement_manager.trigger_event(event_id)
 
-    def load_map(self, map_name: str, spawn_room: Optional[Coordinate], map_seed: int = None):
+    def load_map(self, map_name: str, spawn_room: Optional[Coordinate], map_seed: Optional[int] = None):
         if map_name.lower() == MapConfig.next_map_string():
             self.__load_next()
         else:
@@ -231,7 +239,7 @@ class MapManager:
         if Config.test_level(ignore_debugging=False):
             self.__load_map(MapConfig.test_level(), None)
         else:
-            map_name = get_next(MapConfig.spaceship())
+            map_name = get_next(MapConfig.first_uncleared())
             self.__load_map(map_name, None)
 
     def reload(self):

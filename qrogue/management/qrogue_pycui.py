@@ -97,7 +97,7 @@ class QrogueCUI(PyCUI):
         self.__workbench = WorkbenchWidgetSet(self.__controls, Logger.instance(), self,
                                               SaveData.instance().available_robots(), self.__render,
                                               self.__continue_spaceship)
-        self.__navigation = NavigationWidgetSet(self.__controls, Logger.instance(), self, self.__render)
+        self.__navigation = NavigationWidgetSet(self.__controls, self.__render, Logger.instance(), self)
 
         self.__explore = ExploreWidgetSet(self.__controls, self.__render, Logger.instance(), self)
         self.__fight = FightWidgetSet(self.__controls, self.__render, Logger.instance(), self, self.__continue_explore,
@@ -517,7 +517,10 @@ class QrogueCUI(PyCUI):
         self.apply_widget_set(self.__navigation)
 
     def __start_level(self, seed: int, level: Map) -> None:
+        # reset in-level stuff
         SaveData.instance().achievement_manager.reset_level_events()
+        Popup.clear_last_popup()
+
         robot = level.controllable_tile.controllable
         if isinstance(robot, Robot):
             self.__key_logger.reinit(level.seed, level.internal_name)  # the seed used to build the Map

@@ -1,4 +1,5 @@
 Qrogue<
+Description = "To the right you can keep training for the exam." when *l0exam then *none
 
 [Layout]
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

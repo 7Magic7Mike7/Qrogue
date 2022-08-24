@@ -152,17 +152,17 @@ def parse_complex(ctx) -> complex:
 def parse_message(ctx) -> Message:
     m_id = normalize_reference(ctx.REFERENCE(0).getText())
 
-    title, msg = parse_message_body(ctx.message_body())
+    title, priority, msg = parse_message_body(ctx.message_body())
 
     if ctx.MSG_EVENT():
         event = normalize_reference(ctx.REFERENCE(1).getText())
         msg_ref = normalize_reference(ctx.REFERENCE(2).getText())
-        return Message(m_id, title, msg, event, msg_ref)
+        return Message(m_id, title, msg, priority, event, msg_ref)
     else:
-        return Message.create_with_title(m_id, title, msg)
+        return Message.create_with_title(m_id, title, msg, priority)
 
 
-def parse_message_body(ctx) -> Tuple[str, str]:
+def parse_message_body(ctx) -> Tuple[str, bool, str]:
     if ctx.MSG_SPEAKER():
         title = text_to_str(ctx, 0)
         if title.isdigit():
@@ -171,11 +171,12 @@ def parse_message_body(ctx) -> Tuple[str, str]:
     else:
         title = Config.examiner_name()  # todo but later in the game it should default to scientist_name()
         start = 0
+    priority = ctx.MSG_PRIORITY()
     msg = ""
     for i in range(start, len(ctx.TEXT())):
         msg += text_to_str(ctx, i) + "\n"
 
-    return title, msg
+    return title, priority, msg
 
 
 class MyErrorListener(ErrorListener):
