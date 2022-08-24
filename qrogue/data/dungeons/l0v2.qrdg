@@ -129,7 +129,6 @@ default *energySmall
 [Messages]
 // highlight text by encapsulating it in "//02abcd//" where "abcd" is the text to highlight and "02" one of the available styles: 01 is for tiles, 02 is for game objects, 03 for actions, 04 for keys on the keyboard and 05 for other words
 // speaker: 0 = Examiner, 1 = Scientist, 2 = System, 3 = Player
-*None Speaker "TODO" "Implement the 'invisible' message."
 
 *firstPuzzle Speaker "0" "As already mentionened, we extended the //02Circuit Space// of your //02Qubot// to //02two// //02Slots//. So you could place up to two //02Quantum Gates// now - well, if you would have more than a single //02X Gate// that is ;)"
 "As you have only //05one// gate it //05doesn't matter// in which slot you //03position// it. Nonetheless, you can //03choose// with //04AD// or //04Left// and //04Right Arrow Keys//."
