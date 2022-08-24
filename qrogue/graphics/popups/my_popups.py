@@ -20,6 +20,10 @@ class Popup:
         Popup.__check_achievement = check_achievement_callback
 
     @staticmethod
+    def clear_last_popup() -> None:
+        Popup.__last_popup = None
+
+    @staticmethod
     def on_close() -> bool:
         if Popup.__cur_popup:
             Popup.__cur_popup.on_close_callback()
