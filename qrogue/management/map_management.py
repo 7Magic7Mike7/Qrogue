@@ -94,7 +94,7 @@ class MapManager:
     def get_restart_message(self) -> str:
         # todo maybe should be handled differently. I'm not satisfied by this approach but for now it works and is
         #  straight forward.
-        if self.__get_world(self.__cur_map.internal_name) == MapConfig.tutorial_world():
+        if self.__get_world(self.__cur_map.internal_name).internal_name == MapConfig.tutorial_world():
             return "Do you want to restart the current lesson?"
         else:
             return "Connection lost..."
