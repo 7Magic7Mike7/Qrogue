@@ -44,20 +44,20 @@ class Popup:
         Popup(title, text, color, reopen=reopen, show=True, overwrite=overwrite, on_close_callback=on_close_callback)
 
     @staticmethod
-    def generic_info(title: str, text: str):
-        Popup.message(title, text, reopen=False)
+    def generic_info(title: str, text: str, reopen: bool = False):
+        Popup.message(title, text, reopen=reopen)
 
     @staticmethod
-    def examiner_says(text: str):
-        Popup.message(Config.examiner_name(), text, reopen=True)
+    def examiner_says(text: str, reopen: bool = True):
+        Popup.message(Config.examiner_name(), text, reopen=reopen)
 
     @staticmethod
-    def scientist_says(text: str):
-        Popup.message(Config.scientist_name(), text, reopen=True)
+    def scientist_says(text: str, reopen: bool = True):
+        Popup.message(Config.scientist_name(), text, reopen=reopen)
 
     @staticmethod
-    def npc_says(name: str, text: str):
-        Popup.message(name, text, reopen=True)
+    def npc_says(name: str, text: str, reopen: bool = True):
+        Popup.message(name, text, reopen=reopen)
 
     @staticmethod
     def from_message(message: Message, overwrite: bool = False):
@@ -65,8 +65,11 @@ class Popup:
             ret = message.get(Popup.__check_achievement)    # resolve possible alternative messages
             if ret:
                 title, text = ret
-                # the message is reopen-able because we explicitly defined it
-                Popup.message(title, text, reopen=True, overwrite=overwrite)
+                reopen = True
+                # the popup is not reopenable if it has lower priority than the last popup
+                if Popup.__last_popup is not None and Popup.__last_popup.is_reopenable and not message.priority:
+                    reopen = False
+                Popup.message(title, text, reopen=reopen, overwrite=overwrite)
 
     @staticmethod
     def from_message_trigger(message: Message, on_close_callback: Callable[[], None]):
