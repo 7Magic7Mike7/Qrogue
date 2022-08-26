@@ -624,8 +624,6 @@ class Robot(Controllable, ABC):
             self.__move_instruction(instruction, position)
         else:
             if self.is_space_left or GameplayConfig.get_option_value(Options.allow_implicit_removal):
-                self.__place_instruction(instruction, position)
-            if self.is_space_left:
                 return self.__place_instruction(instruction, position)
             else:
                 return False

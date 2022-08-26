@@ -126,6 +126,7 @@ def start_game(from_console: bool = False, debugging: bool = False, test_level: 
             #print("Your terminal window is too small. "
             #      "Please make it bigger (i.e. maximize it) or reduce the font size.")
             print("---------------------------------------------------------")
+            input("[Qrogue] Press ENTER to close the application")
             sys.exit(1)
 
         # flush after the player stopped playing
