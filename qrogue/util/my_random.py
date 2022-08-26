@@ -1,19 +1,19 @@
-import random
-from typing import List
+from random import Random
+from typing import List, Any
 
 from qrogue.util.config import Config
 from qrogue.util.logger import Logger
 
 
 class MyRandom:
-    COUNTER = 0
-    _MAX_INT = 1000000000
-    __Next_Id = 0
+    COUNTER: int = 0
+    _MAX_INT: int = 1000000000
+    __Next_Id: int = 0
 
     def __init__(self, seed: int):
         seed = seed % Config.MAX_SEED
-        self.__random = random.Random(seed)
-        self.__id = MyRandom.__Next_Id
+        self.__random: Random = Random(seed)
+        self.__id: int = MyRandom.__Next_Id
         MyRandom.__Next_Id += 1
 
     def get(self, min_: float = 0.0, max_: float = 1.0, msg: str = ""):
@@ -36,7 +36,7 @@ class MyRandom:
     def get_seed(self, msg: str = str(COUNTER)) -> int:
         return self.get_int(min_=0, max_=Config.MAX_SEED, msg=msg)
 
-    def get_element(self, iterable, remove: bool = False, msg: str = str(COUNTER)):
+    def get_element(self, iterable, remove: bool = False, msg: str = str(COUNTER)) -> Any:
         if len(iterable) == 0:
             return None
         index = self.get_int(min_=0, max_=len(iterable), msg=msg)
@@ -49,7 +49,7 @@ class MyRandom:
                 Logger.instance().error(f"{iterable} doesn't contain {elem}", from_pycui=False)
         return elem
 
-    def get_element_prioritized(self, iterable, priorities: List[float], msg: str = str(COUNTER)):
+    def get_element_prioritized(self, iterable, priorities: List[float], msg: str = str(COUNTER)) -> Any:
         if len(iterable) == 0:
             return None
         if len(priorities) == 0:

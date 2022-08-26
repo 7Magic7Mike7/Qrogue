@@ -1,7 +1,7 @@
 
 from qrogue.game.logic.actors import StateVector
 from qrogue.game.logic.collectibles import Collectible
-from qrogue.util import RandomManager, PuzzleConfig
+from qrogue.util import RandomManager, PuzzleConfig, MyRandom
 
 from .target import Target
 
@@ -19,8 +19,8 @@ class Enemy(Target):
         :param reward: the Collectible to get as a reward
         """
         super().__init__(target, reward)
-        self.__id = eid
-        self.__rm = RandomManager.create_new()
+        self.__id: int = eid
+        self.__rm: MyRandom = RandomManager.create_new()    # todo shouldn't we provide a seed here???
 
     @property
     def flee_energy(self) -> int:
@@ -29,6 +29,7 @@ class Enemy(Target):
     def _on_reached(self):
         """
         Nothing to do here.
+
         :return: None
         """
         pass
@@ -36,8 +37,10 @@ class Enemy(Target):
     def flee_check(self) -> bool:
         """
         Check if we are allowed to flee or not.
+
         :return: True if fleeing was a success, False otherwise
         """
+        # todo potentially update docstring? because now we always return True
         return True     # self.__rm.get(msg="Enemy.flee_check()") < PuzzleConfig.calculate_flee_chance(self.__id)
 
     def __str__(self):

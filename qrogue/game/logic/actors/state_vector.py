@@ -12,12 +12,35 @@ from qrogue.util.util_functions import is_power_of_2, center_string, to_binary_s
 
 
 def _generate_ket(qubit: int, num_of_qubits: int) -> str:
+    """
+    Generates a str for the ket notation of the given qubit. num_of_qubits is also needed to determine the number of
+    leading 0s needed.
+    Examples:
+        - _generate_ket(1, 2) == "|01>"
+        - _generate_ket(0, 1) == "|0>"
+        - _generate_ket(3, 4) == "|0011>"
+
+    :param qubit: the id (in terms of MSB-LSB) of the given qubit
+    :param num_of_qubits: the number of qubits in the StateVector
+    :return: ket notation of the given qubit as str
+    """
     return f"|{to_binary_string(qubit, num_of_qubits)}>"
 
 
 def _wrap_in_ket_notation(number: complex, qubit: int, num_of_qubits: int,
                           space_per_value: int = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER, coloring: bool = False,
                           correct_amplitude: bool = False, show_percentage: bool = False):
+    """
+
+    :param number:
+    :param qubit:
+    :param num_of_qubits:
+    :param space_per_value:
+    :param coloring:
+    :param correct_amplitude:
+    :param show_percentage:
+    :return:
+    """
     value = f"{center_string(StateVector.complex_to_string(number), space_per_value)}"
     if coloring:
         if correct_amplitude:
@@ -119,12 +142,21 @@ class StateVector:
             return self.__amplitudes[index]
 
     def to_value(self) -> List[float]:
-        return [np.round(val.real ** 2 + val.imag ** 2, decimals=QuantumSimulationConfig.DECIMALS) for val in self.__amplitudes]
+        """
 
-    def is_equal_to(self, other, tolerance: float = QuantumSimulationConfig.TOLERANCE) -> bool:
-        if type(other) is not type(self):
-            return False
-        # other_value needs at least as many entries as self_value, more are allowed
+        :return:
+        """
+        return [np.round(val.real ** 2 + val.imag ** 2, decimals=QuantumSimulationConfig.DECIMALS)
+                for val in self.__amplitudes]
+
+    def is_equal_to(self, other: "StateVector", tolerance: float = QuantumSimulationConfig.TOLERANCE) -> bool:
+        """
+
+        :param other:
+        :param tolerance:
+        :return:
+        """
+        # other needs at least as many entries as self_value, more are allowed
         #  (so the robot can have more qubits than the enemy)
         if self.size > other.size:
             return False
@@ -145,9 +177,23 @@ class StateVector:
         return True
 
     def get_diff(self, other: "StateVector") -> "StateVector":
+        """
+        Calculates the difference of this and other, i.e. this - other, with basically normal vector subtraction rules.
+        To be more specific, the difference of every amplitude entry of this and other is calculated and then used to
+        create a new StateVector.
+        In the special case of this being smaller in size than other, this is first extended with 0s before the
+        difference is calculated the usual way.
+
+        :param other: the StateVector we want to know the difference of
+        :return: a new StateVector corresponding to this - other
+        """
+        assert self.size <= other.size, "Cannot calculate the difference between StateVectors of different size! " \
+                                        f"self = {self}, other = {other}"
+
         if self.size == other.size:
             diff = [self.__amplitudes[i] - other.__amplitudes[i] for i in range(self.size)]
             return StateVector(diff)
+
         elif self.size < other.size:
             Logger.instance().info("Requested difference between StateVectors of different sizes! "
                                    f"self = {self}, other = {other}; padding self with the needed number of 0s",
@@ -156,9 +202,6 @@ class StateVector:
             for i in range(self.size):
                 diff[i] = self.__amplitudes[i] - other.__amplitudes[i]
             return StateVector(diff)
-        else:
-            raise ValueError("Cannot calculate the difference between StateVectors of different size! "
-                             f"self = {self}, other = {other}")
 
     def wrap_in_qubit_conf(self, index: int, space_per_value: int = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER,
                            coloring: bool = False, correct_amplitude: bool = False, show_percentage: bool = False) \

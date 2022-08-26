@@ -57,6 +57,12 @@ class Instruction(Collectible, ABC):
         return self.__position is not None
 
     def use(self, position: int) -> bool:
+        """
+        Checks if this Instruction has all its needed information (e.g. qubit arguments) specified and then saves the
+        given position.
+        :param position: position where we want to use this Instruction at
+        :return: True if this Instruction was successfully used/positioned, False otherwise
+        """
         assert position >= 0
 
         if len(self._qargs) == self.__needed_qubits:

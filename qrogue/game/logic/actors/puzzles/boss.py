@@ -8,15 +8,16 @@ from .enemy import Enemy
 
 
 class Boss(Enemy, ABC):
-    __BOSS_ID = 0
-
     """
     A special Enemy with specified target and reward.
     """
 
+    __BOSS_ID: int = 0
+
     def __init__(self, target: StateVector, reward: Collectible):
         """
         Creates a boss enemy with a specified target StateVector and a specified reward.
+
         :param target:
         :param reward:
         """
@@ -29,7 +30,7 @@ class Boss(Enemy, ABC):
 
         :return: whether the boss has been defeated yet or not
         """
-        return self.__is_defeated   # todo why would is_active not be sufficient?
+        return self.__is_defeated   # todo why would "is_active" not be sufficient?
 
     def _on_reached(self):
         self.__is_defeated = True   # todo is this really needed? can't we simply override is_reached()?
