@@ -7,33 +7,37 @@ class Message:
     @staticmethod
     def error(text: str) -> "Message":
         Message.__err_count += 1
-        return Message(f"Error_{Message.__err_count}", "Error", text, None, None)
+        return Message(f"Error_{Message.__err_count}", "Error", text, False, None, None)
 
     @staticmethod
-    def create_with_title(m_id: str, title: str, text: str) -> "Message":
-        return Message(m_id, title, text, None, None)
+    def create_with_title(m_id: str, title: str, text: str, priority: bool) -> "Message":
+        return Message(m_id, title, text, priority, None, None)
 
     @staticmethod
-    def create_with_alternative(m_id: str, title: str, text: str, event: str, alternative: "Message") -> "Message":
-        message = Message(m_id, title, text, event, alternative.id)
+    def create_with_alternative(m_id: str, title: str, text: str, priority: bool, event: str, alternative: "Message") \
+            -> "Message":
+        message = Message(m_id, title, text, priority, event, alternative.id)
         message.resolve_message_ref(alternative)
         return message
 
     @staticmethod
-    def create_with_exception(m_id: str, title: str, text: str, event: str):
-        return Message(m_id, title, text, event, "none")
+    def create_with_exception(m_id: str, title: str, text: str, priority: bool, event: str):
+        return Message(m_id, title, text, priority, event, "none")
 
     @staticmethod
     def create_from_message(message: "Message") -> "Message":
-        msg = Message(message.__m_id, message.__title, message.__text, message.__event, message.__alt_ref)
+        msg = Message(message.__m_id, message.__title, message.__text, message.__priority, message.__event,
+                      message.__alt_ref)
         if message.__alt_message:
             msg.resolve_message_ref(message.__alt_message)
         return msg
 
-    def __init__(self, m_id: str, title: str, text: str, event: Optional[str], alternative: Optional[str]):
+    def __init__(self, m_id: str, title: str, text: str, priority: bool, event: Optional[str],
+                 alternative: Optional[str]):
         self.__m_id = m_id
         self.__title = title
         self.__text = text
+        self.__priority = priority
         self.__alt_ref = alternative
         self.__event = event
         self.__alt_message = None
@@ -44,6 +48,10 @@ class Message:
     @property
     def id(self) -> str:
         return self.__m_id
+
+    @property
+    def priority(self) -> bool:
+        return self.__priority
 
     @property
     def alt_message_ref(self) -> Optional[str]:

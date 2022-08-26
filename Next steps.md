@@ -17,11 +17,11 @@ For upcoming v0.4
   - provide different positions like Top, Left, Right, Bot, Center, ...
   - tweak padding
   - add default Speaker to grammar
-  - add page indication
+  - +add page indication
   - define in grammar whether the Popup is important enough to be reopened
   - define intro message on level start? might make event stuff a lot easier
   - Confirmation popup with custom choices and arrow controls?
-  - if alternative message is *None or *null etc. no message is shown if event is satisfied
+  - +if alternative message is *None or *null etc. no message is shown if event is satisfied
 - Automated testing
 - Documentation
 

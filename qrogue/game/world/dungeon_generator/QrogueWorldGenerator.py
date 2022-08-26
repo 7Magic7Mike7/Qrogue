@@ -188,7 +188,7 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
         return visibility, rtype, num, direction
 
     def visitRoom_content(self, ctx: QrogueWorldParser.Room_contentContext) -> Tuple[str, str]:
-        _, msg = parser_util.parse_message_body(ctx.message_body())
+        _, _, msg = parser_util.parse_message_body(ctx.message_body())
         level_to_load = parser_util.normalize_reference(ctx.REFERENCE().getText())
         return msg, level_to_load
 
@@ -197,9 +197,10 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
         msg, level_to_load = self.visit(ctx.room_content())
         visibility, m_type, num, orientation = self.visit(ctx.r_attributes())
 
-        alt_message = Message.create_with_title("load" + room_id + "Done", Config.system_name(), "[DONE]\n" + msg)
+        alt_message = Message.create_with_title("load" + room_id + "Done", Config.system_name(), "[DONE]\n" + msg,
+                                                False)
         # the (internal) level name is also the name of the event that describes whether the level was completed or not
-        message = Message.create_with_alternative("load" + room_id, Config.system_name(), msg, level_to_load,
+        message = Message.create_with_alternative("load" + room_id, Config.system_name(), msg, False, level_to_load,
                                                   alt_message)
         # hallways will be added later
         if self.is_spawn_room(room_id):
@@ -286,13 +287,13 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
         else:
             name = None
         if ctx.message_body():
-            title, msg = parser_util.parse_message_body(ctx.message_body())
-            message = Message.create_with_title("_map_description", title, msg)
+            title, priority, msg = parser_util.parse_message_body(ctx.message_body())
+            message = Message.create_with_title("_map_description", title, msg, priority)
 
             if ctx.MSG_EVENT():
                 ref = parser_util.normalize_reference(ctx.REFERENCE().getText())
                 if self.__check_achievement(ref):
-                    message = Message.create_with_exception("_map_description", title, msg, ref)
+                    message = Message.create_with_exception("_map_description", title, msg, priority, ref)
         else:
             message = None
         return MapMetaData(name, message, False, self.__show_description)

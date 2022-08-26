@@ -1,7 +1,7 @@
 Qrogue<
 // DONE
 Name = "Lesson 1: Energy Savings"
-Description = Speaker "0" "In this lesson you will learn how to //03stir// a //02Qubot// //05efficiently// because every action it takes //05costs// //02Energy//."
+Description = Speaker "0" prio "In this lesson you will learn how to //03stir// a //02Qubot// //05efficiently// because every action it takes //05costs// //02Energy//."
 "In the //05top left// of the screen you can see its //02Current Energy Level// and its //02Maximum Energy Capacity//. If the Qubot is out of energy it will //05shut down// and we lose the connection to it." 
 "In this controlled training environment this is not a problem but for the exam and real missions this is crucial."
 NO_TELEPORTER

@@ -1,6 +1,6 @@
 Qrogue<
 Name = "Lesson 7: Intrisically Interconnected"
-Description = Speaker "0" "In this lesson we will talk about a quantum concept //05Einstein// described as //05'spooky action at a distance'//. If you're not familiar with this quote: no reason to actually be afraid! It's only mind-blowing."
+Description = Speaker "0" prio "In this lesson we will talk about a quantum concept //05Einstein// described as //05'spooky action at a distance'//. If you're not familiar with this quote: no reason to actually be afraid! It's only mind-blowing."
 NO_TELEPORTER
 
 // Introduced Concepts:
@@ -223,7 +223,7 @@ default *energySmall
 // highlight text by encapsulating it in "//02abcd//" where "abcd" is the text to highlight and "02" one of the available styles: 01 is for tiles, 02 is for game objects, 03 for actions, 04 for keys on the keyboard and 05 for other words
 // speaker: 0 = Examiner, 1 = Scientist, 2 = System, 3 = Player
 
-*recap1 Speaker "0" "Let's start with a short recap." 
+*recap1 Speaker "0" "Let's start with a short recap."
 "1) Always consider your //02Current Energy Level//." 
 "- //03Moving// the //02Qubot// costs energy"
 "- //03Editing// the //02Curcuit// costs energy"
@@ -246,26 +246,26 @@ default *energySmall
 "- //02One-way Doors// can only be opened from one direction. They're either temporary or permanent and may additionally be locked."
 "- //02Event Doors// are invisible and only open after something triggered it. They can also be one-way."
 
-*multiDigits Speaker "0" "Back to new stuff:" "Did you ever question why all digits greater //010// never occurred //05more than once// per room?"
+*multiDigits Speaker "0" prio "Back to new stuff:" "Did you ever question why all digits greater //010// never occurred //05more than once// per room?"
 
-*tutEntangledTiles Speaker "0" "//05Same// digits are //05entangled//. This means that they //05share// their //02State//. E.g. if one //017// collapses all other //017//s in this room //05collapse too//. And they also collapse to the //05same value// (0 or 1). Still, the //02Puzzle// they present to you are //05not the same//, so don't confuse this."
+*tutEntangledTiles Speaker "0" prio "//05Same// digits are //05entangled//. This means that they //05share// their //02State//. E.g. if one //017// collapses all other //017//s in this room //05collapse too//. And they also collapse to the //05same value// (0 or 1). Still, the //02Puzzle// they present to you are //05not the same//, so don't confuse this."
 "Technically this is also true for //010//s but you just didn't realize it yet because they //05always// collapse to //051// either way."
 
 *einstein Speaker "0" "Einstein called this phenomenon 'spooky action at a distance' because for him it didn't make sense. He always said that nothing is faster than light. Yet entanglement seems to be instant, hence faster than light. "
 
-*inverseEntanglement Speaker "0" "There is also a second kind of //02Entanglement// - let's call it //05inverse// //02Entanglement//. Try to reproduce it." "Hint: You'll need all of your //02Gates//." 
+*inverseEntanglement Speaker "0" prio "There is also a second kind of //02Entanglement// - let's call it //05inverse// //02Entanglement//. Try to reproduce it." "Hint: You'll need all of your //02Gates//." 
 
 *entangledDoorZ1 Speaker "0" "Alright, now try to reproduce //02Entanglement// in your //02Circuit//." when *enteredXB then *entangledDoorZ2
-*entangledDoorZ2 Speaker "0" "But not only digits can be entangled. There is another type of //02Door// we previously kept a secret: //02Entangled Doors//. But there is one major difference to the entangled digits. //02Entangled Doors// are //05inversily// entangled. Meaning if one //05collapses to 0// the other will //05collapse to 1//. When you //03walk// through one //02Entangled Door// it will //05collapse to 0//. Therefore, you can walk through it while the other //02Entangled Door// will be closed forever." when *enteredZB then *entangledDoorGeneral
+*entangledDoorZ2 Speaker "0" prio "But not only digits can be entangled. There is another type of //02Door// we previously kept a secret: //02Entangled Doors//. But there is one major difference to the entangled digits. //02Entangled Doors// are //05inversily// entangled. Meaning if one //05collapses to 0// the other will //05collapse to 1//. When you //03walk// through one //02Entangled Door// it will //05collapse to 0//. Therefore, you can walk through it while the other //02Entangled Door// will be closed forever." when *enteredZB then *entangledDoorGeneral
 
 *entangledDoorX1 Speaker "0" "Alright, now try to reproduce //02Entanglement// in your //02Circuit//." when *enteredZB then *entangledDoorX2
-*entangledDoorX2 Speaker "0" "But not only digits can be entangled. There is another type of //02Door// we previously kept a secret: //02Entangled Doors//. But there is one major difference to the entangled digits. //02Entangled Doors// are //05inversily// entangled. Meaning if one //05collapses to 0// the other will //05collapse to 1//. When you //03walk// through one //02Entangled Door// it will //05collapse to 0//. Therefore, you can walk through it while the other //02Entangled Door// will be closed forever." when *enteredXB then *entangledDoorGeneral
+*entangledDoorX2 Speaker "0" prio "But not only digits can be entangled. There is another type of //02Door// we previously kept a secret: //02Entangled Doors//. But there is one major difference to the entangled digits. //02Entangled Doors// are //05inversily// entangled. Meaning if one //05collapses to 0// the other will //05collapse to 1//. When you //03walk// through one //02Entangled Door// it will //05collapse to 0//. Therefore, you can walk through it while the other //02Entangled Door// will be closed forever." when *enteredXB then *entangledDoorGeneral
 
-*entangledDoorGeneral Speaker "0" "//02Entangled Doors// are //05inversily// entangled. Meaning if one //05collapses to 0// the other will //05collapse to 1//. When you //03walk// through one //02Entangled Door// it will //05collapse to 0//. Therefore, you can walk through it while the other //02Entangled Door// will be closed forever."
+*entangledDoorGeneral Speaker "0" prio "//02Entangled Doors// are //05inversily// entangled. Meaning if one //05collapses to 0// the other will //05collapse to 1//. When you //03walk// through one //02Entangled Door// it will //05collapse to 0//. Therefore, you can walk through it while the other //02Entangled Door// will be closed forever."
 
-*entHint Speaker "0" "Hint: You need to place //05two// of your //02Gates//."
+*entHint Speaker "0" prio "Hint: You need to place //05two// of your //02Gates//."
 
-*lockedForever Speaker "0" "The two rooms in the right as well as the two rooms in the left corner were only accessible through //02Entangled Doors//. So, depending on the path you chose you are not able to find out what the other two rooms contained. Only if you would be able to retry this lesson you could experience what another path has to offer." "This is the reason why real //02Quantum Algorithms// are usually not executed once but rather a lot of times. We cannot know exactly which paths the //02Qubits// take so we simply try to give the correct one the highest probability."
+*lockedForever Speaker "0" prio "The two rooms in the right as well as the two rooms in the left corner were only accessible through //02Entangled Doors//. So, depending on the path you chose you are not able to find out what the other two rooms contained. Only if you would be able to retry this lesson you could experience what another path has to offer." "This is the reason why real //02Quantum Algorithms// are usually not executed once but rather a lot of times. We cannot know exactly which paths the //02Qubits// take so we simply try to give the correct one the highest probability."
 
 *doneMsg Speaker "0" "You finally made it! Congratulations on successfully completing the //05'Mission Quniverse' Trainings Program//. Now you should be ready for the //05Exam//."
 

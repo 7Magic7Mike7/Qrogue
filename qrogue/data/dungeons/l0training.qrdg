@@ -1,9 +1,9 @@
 Qrogue<
 Name = "Trainings environment"
-Description = Speaker "0" "In this trainings environment you will start with 2 //02Qubits//, 5 //02Slots// for you //02Circuit// and one //02CX Gate//."
+Description = Speaker "0" prio "In this trainings environment you will start with 2 //02Qubits//, 5 //02Slots// for you //02Circuit// and one //02CX Gate//."
 "In the northern rooms you can pick up additional //02Gates//. Other rooms mostly contain random //02Puzzles// and //02Energy//. "
 "One more thing: We enhanced your //02Qubot// with two new features."
-"1) You can now remove all //02Gates// from your //02Curcuit// by //05resetting// it instead of removing everyone individually."
+"1) You can now remove all //02Gates// from your //02Curcuit// by //05resetting// it instead of removing every gate individually."
 "2) You can now //03flee// from //02Puzzles//. This costs //02Energy// (the bigger the digit the higher the costs) but might still be worth it if you just can't find the solution or haven't found the //02Gates// needed to solve it yet. You can always try again later and still get a reward."
 "With that said you now know everything you need. Check out the trainings environment as you like and then you can go back to do the exam."
 

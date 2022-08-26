@@ -76,11 +76,12 @@ console.
 
 - newer Python versions
 
-Usually also Python 3.9 and onward should perfectly work for 
+Usually also Python 3.9 should perfectly work for 
 playing Qrogue but testing is currently done for Python 3.8 so 
 there is no official support yet for other versions. The same 
 is true if you decide to manually install the dependencies; newer 
 version will likely work but are not recommended.
+Python 3.10 is not yet supported due to changes in import locations.
 
 ## How to play - Controls ##
 - Navigate in menus: Arrow Keys, wasd
