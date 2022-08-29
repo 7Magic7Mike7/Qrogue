@@ -1,5 +1,5 @@
 Qrogue<
-Description = "To the right you can keep training for the exam." when *l0exam then *none
+Description = "For one last time, go to the trainings room on the right side." when *l0exam then *none
 
 [Layout]
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

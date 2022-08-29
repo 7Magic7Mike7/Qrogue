@@ -131,7 +131,7 @@ m *doneMsg trigger *done
 [Hallways]
 01 (open; ; )
 12 (closed; one way South permanent; )
-13 (closed; one way West; )
+13 (closed; one way West; ) trigger *sawTempOneWay
 14 (closed; one way West permanent; )
 15 (event *eventDoorIntro; one way North permanent; )
 16 (locked; one way North permanent; )
@@ -166,7 +166,8 @@ default *energySmall
 *srMsg Speaker "0" "Technically this here is also a new kind of //02Door//. It's simply an //02Open Door//. Not really anything special about it. Just treat it like a //02Normal Door//."
 
 
-*temporaryOWDs Speaker "0" prio "The //02One-way Doors// you have seen now were all //05permanent//. You //03walked// through them but you //05couldn't go back//. But there are also //05temporary// ones. Once you //03walked// through them they are //05open forever//."
+*temporaryOWDs Speaker "0" prio "The //02One-way Doors// you have seen now were all //05permanent//. You //03walked// through them but you //05couldn't go back//. But there are also //05temporary// ones. Once you //03walked// through them they are //05open forever//." when *sawTempOneWay then *tempOWDSeen
+*tempOWDSeen Speaker "0" "See, the //02One-way Door// is gone and you were able to go back. Now continue to go clockwise!"
 
 *permVsTemp Speaker "0" prio "Note that there is //05no visual difference// between //05permanent// and //05temporary// //02One-way Doors//. You only get to know one's type by walking through it." 
 "During the lessons we //05won't trap you// but on real //05missions// you sometimes have to consider the //05risk//."

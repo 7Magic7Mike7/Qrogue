@@ -1,6 +1,6 @@
 Qrogue<
 Name = "Lesson 6: Position? Super!"
-Description = Speaker "0" "Now we will slowly start to dive into the //05strange world// of //02Quantum Computing//. Do you remember the word //02Superposition// from //05lesson 3//?"
+Description = Speaker "0" "Now we will start to really dive into the //05strange world// of //02Quantum Computing//. Do you remember the word //02Superposition// from //05lesson 3//?"
 NO_TELEPORTER
 
 // Introduced Concepts:
@@ -187,16 +187,16 @@ default *energySmall
 "No, not //050.5//. It is a bit more //05complex//. "
 *tutHadamard3 Speaker "0" prio "But indeed the state of a //02Qubit// at the output of an //02H Gate// corresponds to a //0550%// chance of it //05collapsing to 0// and a //0550%// chance of it //05collapsing to 1//. You do //05remember// the things you learned in //05lesson 3//, right?"
 
-*superPosHint Speaker "0" prio "Hint: You only need to place your new //02Hadamard Gate// here."
+*superPosHint Speaker "0" "Hint: You only need to place your new //02Hadamard Gate// here."
 
-*combineHX Speaker "0" prio "Next let's try to use both //02X Gate// and //02H Gate//."
+*combineHX Speaker "0" "Next let's try to use both //02X Gate// and //02H Gate//."
 
-*tutHnXn Speaker "0" prio "You already know this //02Target State//. You can reach it with a single //02H Gate//. But let's try to also use an //02X Gate//."
-*tutHXAgain Speaker "0" prio "Again, try to also place your //02X Gate//."
-*tutMinus Speaker "0" prio "Look, the //02Target State// contains a //05negative number//. What a refreshing change!"
+*tutHnXn Speaker "0" "You already know this //02Target State//. You can reach it with a single //02H Gate//. But let's try to also use an //02X Gate//."
+*tutHXAgain Speaker "0" "Again, try to also place your //02X Gate//."
+*tutMinus Speaker "0" "Look, the //02Target State// contains a //05negative number//. What a refreshing change!"
 
 *tutChallenges Speaker "0" prio "The //01!// is a new kind of //02Puzzle//: a //02Challenge//." "It is basically just like a normal //02Puzzle// but with additional constraints like a minimum number of //02Gates// you //05have to use// or a maximum number you are allowed to use."
 
-*doneMsg Speaker "0" prio "You've now seen the //02H Gate// alone and in combination with an //02X Gate//." "What do you think will happen if you combine it with an //02CX Gate//?" "Find out in the next lesson!"
+*doneMsg Speaker "0" prio "You've now seen the //02H Gate// alone and in combination with an //02X Gate//." "What do you think will happen if you combine it with a //02CX Gate//?" "Find out in the next lesson!"
 
 >Qrogue

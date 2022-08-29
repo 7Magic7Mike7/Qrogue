@@ -251,7 +251,7 @@ default *energySmall
 *tutEntangledTiles Speaker "0" prio "//05Same// digits are //05entangled//. This means that they //05share// their //02State//. E.g. if one //017// collapses all other //017//s in this room //05collapse too//. And they also collapse to the //05same value// (0 or 1). Still, the //02Puzzle// they present to you are //05not the same//, so don't confuse this."
 "Technically this is also true for //010//s but you just didn't realize it yet because they //05always// collapse to //051// either way."
 
-*einstein Speaker "0" "Einstein called this phenomenon 'spooky action at a distance' because for him it didn't make sense. He always said that nothing is faster than light. Yet entanglement seems to be instant, hence faster than light. "
+*einstein Speaker "0" "Einstein called this phenomenon //05'spooky action at a distance'// because for him it didn't make sense. He always said that nothing is faster than light. Yet //02Entanglement// seems to be instant, hence faster than light. "
 
 *inverseEntanglement Speaker "0" prio "There is also a second kind of //02Entanglement// - let's call it //05inverse// //02Entanglement//. Try to reproduce it." "Hint: You'll need all of your //02Gates//." 
 
