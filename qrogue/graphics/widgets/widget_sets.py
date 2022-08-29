@@ -1104,6 +1104,7 @@ class RiddleWidgetSet(ReachTargetWidgetSet):
                 [self._empty_callback]
             ))
         self._hud.update_situational(f"Remaining attempts: {self._target.attempts}")
+        self._details_content = ReachTargetWidgetSet._DETAILS_INFO_THEN_EDIT
         return True
 
     def _choices_flee(self) -> bool:
@@ -1112,6 +1113,7 @@ class RiddleWidgetSet(ReachTargetWidgetSet):
                 [f"Abort - you can still try again later", "Continue"],
                 [self._continue_exploration_callback, self._empty_callback]
             ))
+            self._details_content = ReachTargetWidgetSet._DETAILS_INFO_THEN_EDIT
         else:
             self._details.set_data(data=(
                 ["Abort - but you don't have any attempts left to try again later!", "Continue"],
