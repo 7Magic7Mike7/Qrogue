@@ -176,7 +176,7 @@ def parse_message_body(ctx, default_speaker: str) -> Tuple[str, bool, int, str]:
     else:
         title = default_speaker
         start = 0
-    priority = ctx.MSG_PRIORITY()
+    priority = ctx.MSG_PRIORITY() is not None
     if ctx.DIGIT():
         position = int(ctx.DIGIT().getText())
     else:
