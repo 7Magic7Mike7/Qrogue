@@ -432,9 +432,10 @@ class QrogueCUI(PyCUI):
         self.__focused_widget = self.get_selected_widget()
         super(QrogueCUI, self).show_error_popup(title, text)
 
-    def __show_message_popup(self, title: str, text: str, color: int) -> None:
+    def __show_message_popup(self, title: str, text: str, position: int, color: int) -> None:
         self.__focused_widget = self.get_selected_widget()
-        self._popup = MultilinePopup(self, title, text, color, self._renderer, self._logger, self.__controls)
+        self._popup = MultilinePopup(self, title, text, color, self._renderer, self._logger, self.__controls,
+                                     pos=PopupConfig.resolve_position(position))
 
     def __show_confirmation_popup(self, title: str, text: str, color: int, callback: Callable[[bool], None]):
         self.__focused_widget = self.get_selected_widget()

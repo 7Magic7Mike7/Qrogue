@@ -299,7 +299,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             help_text = HelpText.load(help_text_type)
             if help_text:
                 # todo check if we really want to prioritize help texts
-                return Message.create_with_title(norm_ref, Config.system_name(), help_text, True)
+                return Message.create_with_title(norm_ref, Config.system_name(), help_text, True, None)
         self.warning(f"Unknown text reference: {ref}. Returning \"Message not found!\"")
         return Message.error("Message not found!")
 
@@ -1004,8 +1004,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         else:
             name = None
         if ctx.message_body():
-            title, priority, msg = parser_util.parse_message_body(ctx.message_body(), self.__default_speaker)
-            message = Message.create_with_title("_map_description", title, msg, priority)
+            title, priority, position, msg = parser_util.parse_message_body(ctx.message_body(), self.__default_speaker)
+            message = Message.create_with_title("_map_description", title, msg, priority, position)
         elif ctx.REFERENCE():
             message = self.__load_message(ctx.REFERENCE())
         else:

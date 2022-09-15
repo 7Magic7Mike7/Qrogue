@@ -1,4 +1,4 @@
-from typing import Callable, Tuple, List
+from typing import Callable, Tuple, List, Optional
 
 from py_cui import ColorRule
 from py_cui.popups import Popup as PyCuiPopup
@@ -76,7 +76,7 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
         return [" " * padding + line + " " * padding for line in split_text]
 
     def __init__(self, root, title, text, color, renderer, logger, controls,
-                 confirmation_callback: Callable[[bool], None] = None, pos: Tuple[int, int] = None):
+                 confirmation_callback: Callable[[bool], None] = None, pos: Optional[Tuple[int, int]] = None):
         super().__init__(root, title, text, color, renderer, logger)
         self.__controls = controls
         self.__confirmation_callback = confirmation_callback

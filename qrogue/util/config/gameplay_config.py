@@ -128,7 +128,7 @@ class CheatConfig:
     __input_popup = None
 
     @staticmethod
-    def init(popup_callback: Callable[[str, str, int], None],
+    def init(popup_callback: Callable[[str, str, int, int], None],
              input_popup_callback: Callable[[str, int, Callable[[str], None]], None], deactivate_cheats: bool = True,
              allow_cheats: bool = False):
         CheatConfig.__allow_cheats = allow_cheats
@@ -178,7 +178,7 @@ class CheatConfig:
                 text += "Active\n"
             else:
                 text += "Inactive\n"
-        CheatConfig.__popup("List of Cheats", text, PopupConfig.default_color())
+        CheatConfig.__popup("List of Cheats", text, PopupConfig.default_pos(), PopupConfig.default_color())
 
     @staticmethod
     def __use_cheat(code: str) -> bool:
@@ -192,10 +192,12 @@ class CheatConfig:
             ret = True
 
         if ret:
-            CheatConfig.__popup("Cheats", f"Successfully used the Cheat \"{code}\"", PopupConfig.default_color())
+            CheatConfig.__popup("Cheats", f"Successfully used the Cheat \"{code}\"", PopupConfig.default_pos(),
+                                PopupConfig.default_color())
             CheatConfig.__cheated = True
         else:
-            CheatConfig.__popup("Cheats", "This is not a valid Cheat!", PopupConfig.default_color())
+            CheatConfig.__popup("Cheats", "This is not a valid Cheat!", PopupConfig.default_pos(),
+                                PopupConfig.default_color())
         return ret
 
 

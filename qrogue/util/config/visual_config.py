@@ -180,9 +180,15 @@ class ColorConfig:
 
 
 class PopupConfig:
+    __DEFAULT_POS = 0
     __TOP_POS = 3
-    __LEFT_POS = 3
+    __RIGHT_POS = 111
     __BOT_POS = 22
+    __LEFT_POS = 3
+    __POSITIONS = [
+        None, (None, __TOP_POS), (__RIGHT_POS, __TOP_POS), (__RIGHT_POS, None), (__RIGHT_POS, __BOT_POS),
+        (None, __BOT_POS), (__LEFT_POS, __BOT_POS), (__LEFT_POS, None), (__LEFT_POS, __TOP_POS)
+    ]
 
     PADDING_X = 2
     PADDING_Y = 2
@@ -192,20 +198,16 @@ class PopupConfig:
         return PyCuiColors.BLACK_ON_WHITE
 
     @staticmethod
-    def position_top_left() -> Optional[Tuple[Optional[int], Optional[int]]]:
-        return PopupConfig.__LEFT_POS, PopupConfig.__TOP_POS
+    def default_pos() -> int:
+        assert 0 <= PopupConfig.__DEFAULT_POS < len(PopupConfig.__POSITIONS)
+        return PopupConfig.__DEFAULT_POS
 
     @staticmethod
-    def position_top() -> Optional[Tuple[Optional[int], Optional[int]]]:
-        return None, PopupConfig.__TOP_POS
-
-    @staticmethod
-    def position_mid() -> Optional[Tuple[Optional[int], Optional[int]]]:
-        return None
-
-    @staticmethod
-    def position_bottom() -> Optional[Tuple[Optional[int], Optional[int]]]:
-        return None, PopupConfig.__BOT_POS
+    def resolve_position(position: int) -> Optional[Tuple[Optional[int], Optional[int]]]:
+        if 0 <= position < len(PopupConfig.__POSITIONS):
+            return PopupConfig.__POSITIONS[position]
+        else:
+            return PopupConfig.resolve_position(PopupConfig.default_pos())
 
     # sizes don't work as easy as positions somehow
 
