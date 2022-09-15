@@ -35,6 +35,8 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
         self.__load_map = load_map_callback
         self.__show_message = show_message_callback
 
+        self.__default_speaker = Config.system_name()
+
         self.__hallways_by_id = {}
         self.__created_hallways = {}
         self.__hallways = {}
@@ -188,7 +190,7 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
         return visibility, rtype, num, direction
 
     def visitRoom_content(self, ctx: QrogueWorldParser.Room_contentContext) -> Tuple[str, str]:
-        _, _, msg = parser_util.parse_message_body(ctx.message_body())
+        _, _, msg = parser_util.parse_message_body(ctx.message_body(), self.__default_speaker)
         level_to_load = parser_util.normalize_reference(ctx.REFERENCE().getText())
         return msg, level_to_load
 
@@ -287,7 +289,7 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
         else:
             name = None
         if ctx.message_body():
-            title, priority, msg = parser_util.parse_message_body(ctx.message_body())
+            title, priority, msg = parser_util.parse_message_body(ctx.message_body(), self.__default_speaker)
             message = Message.create_with_title("_map_description", title, msg, priority)
 
             if ctx.MSG_EVENT():

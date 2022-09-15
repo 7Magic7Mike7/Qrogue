@@ -2,7 +2,7 @@ grammar QrogueMessage;
 
 import QrogueBasics;
 
-messages : MESSAGES message* ;
+messages : MESSAGES ('default' MSG_SPEAKER TEXT)? message* ;
 message : REFERENCE message_body (MSG_EVENT REFERENCE MSG_ALTERNATIVE REFERENCE)? ;
 message_body : (MSG_SPEAKER TEXT)? MSG_PRIORITY? TEXT+ ;    // alternative message if a certain event already happened
 

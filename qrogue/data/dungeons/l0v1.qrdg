@@ -128,10 +128,11 @@ custom
 default *key
 
 [Messages]
+default Speaker "0"
 // highlight text by encapsulating it in "//02abcd//" where "abcd" is the text to highlight and "02" one of the available styles: 01 is for tiles, 02 is for game objects, 03 for actions, 04 for keys on the keyboard and 05 for other words
 // speaker: 0 = Examiner, 1 = Scientist, 2 = System, 3 = Player
 
-*energyReward Speaker "0" "You can also get //02Energy// as a //02Reward// from //03solving// a //02Quantum Puzzle//."
+*energyReward "You can also get //02Energy// as a //02Reward// from //03solving// a //02Quantum Puzzle//."
 
 *levelDone "//05Great//!" "This lesson was specifically designed to bring the //02Qubot// to its energy limits. Usually it won't be that harsh and a misstep doesn't mean the end of a mission. Nonetheless the remaining energy is something you should always keep in mind."
 

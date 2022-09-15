@@ -27,6 +27,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
     __DEFAULT_NUM_OF_RIDDLE_ATTEMPTS = 7
     __ROBOT_NO_GATES = "none"
     __SPAWN_ROOM_ID = "SR"
+    __DEFAULT_SPEAKER = Config.examiner_name()  # todo but later in the game it should default to scientist_name()
 
     @staticmethod
     def __normalize_reference(reference: str) -> str:
@@ -99,6 +100,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         self.__robot: Optional[TestBot] = None
         self.__rm = RandomManager.create_new(seed)
 
+        self.__default_speaker = QrogueLevelGenerator.__DEFAULT_SPEAKER
         self.__messages: Dict[str, Message] = {}
 
         # "collectible factory" refers to "reward pool" in grammar due to the original purpose, simplicity & readability
@@ -363,10 +365,14 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
     ##### Message area ######
 
     def visitMessage(self, ctx: QrogueDungeonParser.MessageContext) -> Message:
-        return parser_util.parse_message(ctx)
+        return parser_util.parse_message(ctx, self.__default_speaker)
 
     def visitMessages(self, ctx: QrogueDungeonParser.MessagesContext):
         self.__messages.clear()
+        if ctx.MSG_SPEAKER():
+            self.__default_speaker = parser_util.parse_speaker(ctx, text_index=None)
+        else:
+            self.__default_speaker = QrogueLevelGenerator.__DEFAULT_SPEAKER
         for msg in ctx.message():
             message = self.visit(msg)
             self.__messages[message.id] = message
@@ -586,7 +592,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         items = shop_factory.produce_multiple(self.__rm, num_of_items)
         return tiles.ShopKeeper(self.__cbp.visit_shop, [ShopItem(item) for item in items])
 
-    def visitPuzzle_parameter(self, ctx: QrogueDungeonParser.Puzzle_parameterContext) -> Tuple[StateVector, Collectible]:
+    def visitPuzzle_parameter(self, ctx: QrogueDungeonParser.Puzzle_parameterContext) \
+            -> Tuple[StateVector, Collectible]:
         ref_index = 0
         if ctx.stv():
             stv = self.visit(ctx.stv())
@@ -997,7 +1004,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         else:
             name = None
         if ctx.message_body():
-            title, priority, msg = parser_util.parse_message_body(ctx.message_body())
+            title, priority, msg = parser_util.parse_message_body(ctx.message_body(), self.__default_speaker)
             message = Message.create_with_title("_map_description", title, msg, priority)
         elif ctx.REFERENCE():
             message = self.__load_message(ctx.REFERENCE())
