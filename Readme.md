@@ -89,8 +89,9 @@ Python 3.10 is not yet supported due to changes in import locations.
 - Scroll in popup: Arrow Keys, wasd
 - Close popup: Space, Enter
 - Reopen last popup: H
+- Select answer in question popup: horizontal Arrow Keys, ad
 - Confirm selection (also in question popup): Space, Enter
-- Cancel/back (also in question popup): Shift+A, Shift+Left, Backspace
+- Cancel/back: Shift+A, Shift+Left, Backspace
 - Pause: P, Tab
 - Situational 
   - shortcut keys: 0-9
