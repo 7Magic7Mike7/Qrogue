@@ -95,7 +95,7 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
             if pos[1] is not None:
                 self._start_y = pos[1]
 
-        self.__question_state = False
+        self.__question_state = True
         self._pageAlignment = " " * (self._width - MultilinePopup.__STATIC_PY_CUI_PADDING)
 
     @property
