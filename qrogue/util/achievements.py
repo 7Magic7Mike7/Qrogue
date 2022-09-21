@@ -92,6 +92,14 @@ class Ach:
 
         raise NotImplementedError(f"Unlock \"{unlock}\" not implemented yet!")
 
+    @staticmethod
+    def is_most_recent_unlock(unlock: Unlocks, progress: int) -> bool:
+        if unlock is Unlocks.Spaceship:
+            # we can now use the spaceship
+            return progress == Ach.__EXAM_DONE_PROGRESS + 1
+
+        raise NotImplementedError(f"Unlock \"{unlock}\" not yet implemented for recency check!")
+
 
 class AchievementType(enum.Enum):
     World = 0
