@@ -1,4 +1,4 @@
-from typing import List, Tuple, Callable, Optional
+from typing import List, Tuple, Callable, Optional, Dict, Set
 
 from antlr4 import InputStream, CommonTokenStream
 from antlr4.tree.Tree import TerminalNodeImpl
@@ -15,6 +15,11 @@ from qrogue.game.world.dungeon_generator.world_parser.QrogueWorldLexer import Qr
 from qrogue.game.world.dungeon_generator.world_parser.QrogueWorldParser import QrogueWorldParser
 from qrogue.game.world.dungeon_generator.world_parser.QrogueWorldVisitor import QrogueWorldVisitor
 from qrogue.game.world.map.rooms import Placeholder
+
+
+class _MapType:
+    WORLD = "W"
+    LEVEL = "L"
 
 
 class QrogueWorldGenerator(QrogueWorldVisitor):
@@ -41,7 +46,8 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
         self.__created_hallways = {}
         self.__hallways = {}
 
-        self.__rooms = {}
+        self.__rooms: Dict[str, MetaRoom] = {}
+        self.__mandatory_levels: Set[str] = set()
         self.__spawn_pos: Optional[Coordinate] = None
         self.__meta_data = MapMetaData(None, None, False, self.__show_description)
 
@@ -88,7 +94,7 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
                 row += [None] * (max_len - len(row))
 
         world = WorldMap(meta_data, file_name, self.__seed, room_matrix, self.__player, self.__spawn_pos,
-                         self.__check_achievement, self.__trigger_achievement)
+                         self.__check_achievement, self.__trigger_achievement, self.__mandatory_levels)
         return world, True
 
     def __load_next(self):
@@ -168,9 +174,9 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
             num += d
         direction = parser_util.direction_from_string(ctx.DIRECTION().getText())
         if ctx.WORLD_LITERAL():
-            return "W", num, direction
+            return _MapType.WORLD, num, direction
         elif ctx.LEVEL_LITERAL():
-            return "L", num, direction
+            return _MapType.LEVEL, num, direction
         else:
             raise ValueError("Invalid r_type: " + ctx.getText())
 
@@ -189,16 +195,20 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
         rtype, num, direction = self.visit(ctx.r_type())
         return visibility, rtype, num, direction
 
-    def visitRoom_content(self, ctx: QrogueWorldParser.Room_contentContext) -> Tuple[str, str]:
+    def visitRoom_content(self, ctx: QrogueWorldParser.Room_contentContext) -> Tuple[bool, str, str]:
+        is_mandatory = ctx.OPTIONAL_LEVEL() is None
         # basically retrieves the description of the room - no explicit title, priority or position needed
         _, _, _, msg = parser_util.parse_message_body(ctx.message_body(), self.__default_speaker)
         level_to_load = parser_util.normalize_reference(ctx.REFERENCE().getText())
-        return msg, level_to_load
+        return is_mandatory, msg, level_to_load
 
     def visitRoom(self, ctx: QrogueWorldParser.RoomContext) -> Tuple[str, Room]:
         room_id = ctx.ROOM_ID().getText()
-        msg, level_to_load = self.visit(ctx.room_content())
+        is_mandatory, msg, level_to_load = self.visit(ctx.room_content())
         visibility, m_type, num, orientation = self.visit(ctx.r_attributes())
+
+        if is_mandatory and m_type == _MapType.LEVEL:
+            self.__mandatory_levels.add(level_to_load)
 
         alt_message = Message.create_with_title("load" + room_id + "Done", Config.system_name(), "[DONE]\n" + msg,
                                                 False, None)
