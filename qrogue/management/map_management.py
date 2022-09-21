@@ -218,8 +218,13 @@ class MapManager:
             if self.__cur_map.get_type() is MapType.World:
                 SaveData.instance().achievement_manager.finished_world(self.__cur_map.internal_name)
             elif self.__cur_map.get_type() is MapType.Level:
-                SaveData.instance().achievement_manager.finished_level(self.__cur_map.internal_name,
-                                                                       self.__cur_map.name)
+                if SaveData.instance().achievement_manager.finished_level(self.__cur_map.internal_name,
+                                                                          self.__cur_map.name):
+                    # if the level was not finished before, we may increase the score of the world's achievement
+                    world = self.__get_world(self.__cur_map.internal_name)
+                    if world.is_mandatory_level(self.__cur_map.internal_name):
+                        SaveData.instance().achievement_manager.add_to_achievement(world.internal_name, 1.0)
+
             elif self.__cur_map.get_type() is MapType.Expedition:
                 SaveData.instance().achievement_manager.add_to_achievement(achievements.CompletedExpedition, 1)
 
