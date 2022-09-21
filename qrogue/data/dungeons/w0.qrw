@@ -52,7 +52,7 @@ description "Lesson 7: Interacting with //02Entanglement// via //02Digits//, new
 teleport *l0v7
 
 tt (visible Level 8; East):
-description "A simple trainings environment to practive everything you learned."
+description "A simple trainings environment to practice everything you learned."
 teleport *l0training
 
 [Hallways]
