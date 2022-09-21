@@ -39,7 +39,7 @@ class Unlocks(enum.Enum):
 
 
 class Ach:
-    __EXAM_DONE_PROGRESS = 10   # todo check
+    __EXAM_DONE_PROGRESS = 8
 
     @staticmethod
     def story() -> str:
