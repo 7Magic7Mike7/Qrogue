@@ -241,12 +241,10 @@ class AchievementManager:
         if achievement.add_score(achievement.done_score):
             self.__on_achievement_completion(achievement)
 
-    def finished_level(self, level: str, display_name: str = None):
-        already_finished = False
-        if level in self.__storage:
-            already_finished = self.__storage[level].is_done()
-
-        if not already_finished:
+    def finished_level(self, level: str, display_name: str = None) -> bool:
+        if level in self.__storage and self.__storage[level].is_done():
+            return False
+        else:
             self.__storage[level] = Achievement(level, AchievementType.Level, 1, 1)
             if Ach.is_story_mission(level):
                 if display_name is None:
@@ -255,6 +253,7 @@ class AchievementManager:
                     self.progressed_in_story(display_name)
             else:
                 self.__on_achievement_completion(self.__storage[level])
+            return True
 
     def finished_world(self, world: str):
         if world not in self.__storage:
