@@ -9,9 +9,9 @@ from qrogue.game.world.map import Map, MapType, Room, MapMetaData
 class WorldMap(Map):
     def __init__(self, meta_data: MapMetaData, file_name: str, seed: int, rooms: List[List[Room]], player: Player,
                  spawn_room: Coordinate, check_achievement_callback: Callable[[str], bool],
-                 trigger_achievement_callback: Callable[[str], None], mandatory_levels: Set[str]):
+                 trigger_event_callback: Callable[[str], None], mandatory_levels: Set[str]):
         super().__init__(meta_data, file_name, seed, rooms, player, spawn_room, check_achievement_callback,
-                         trigger_achievement_callback)
+                         trigger_event_callback)
         self.__mandatory_levels: Set[str] = mandatory_levels
 
     @property
