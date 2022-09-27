@@ -29,6 +29,7 @@ class PathConfig:
     __TEMPLATE_STV_POOLS = "stv_pools"
     __TEMPLATE_REWARD_POOLS = "reward_pools"
     __TEMPLATE_FILE = f"templates{FileTypes.Templates.value}"
+    __SAVE_FILE_PREFIX = "qrogue-save"
     __FRESH_SAVE_FILE = "fresh"
     __SAVE_FILE_NUMERATION_SEPARATOR = "_"
     __NUMBER_OF_SAVE_FILES = 7    # how many save files can be present before we delete the oldest one
@@ -43,7 +44,8 @@ class PathConfig:
     @staticmethod
     def __save_file_str(num: int) -> str:
         return os.path.join(PathConfig.__SAVE_DATA_FOLDER,
-                            f"qrogue-save{PathConfig.__SAVE_FILE_NUMERATION_SEPARATOR}{num}{FileTypes.Save.value}")
+                            f"{PathConfig.__SAVE_FILE_PREFIX}{PathConfig.__SAVE_FILE_NUMERATION_SEPARATOR}{num}"
+                            f"{FileTypes.Save.value}")
 
     @staticmethod
     def __get_save_files_stats() -> Tuple[int, int]:
@@ -55,7 +57,7 @@ class PathConfig:
         num = -1
         num_of_files = 0
         for file in files:
-            if file.endswith(FileTypes.Save.value):
+            if file.startswith(PathConfig.__SAVE_FILE_PREFIX) and file.endswith(FileTypes.Save.value):
                 file_ending_index = len(file) - len(FileTypes.Save.value)
                 num_of_files += 1
                 cur_num = int(file[file.rindex(PathConfig.__SAVE_FILE_NUMERATION_SEPARATOR) + 1:file_ending_index])
