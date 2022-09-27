@@ -51,7 +51,8 @@ class QrogueCUI(PyCUI):
         OverWorldKeyLogger().reinit(seed, "meta")
 
         def move_focus(widget: WidgetWrapper, widget_set):
-            # this check is necessary for manual widget-set switches due to the call-order (the callback happens before this move_focus here)
+            # this check is necessary for manual widget-set switches due to the call-order (the callback happens before
+            # this move_focus here)
             if widget_set is self.__cur_widget_set:
                 self.move_focus(widget, auto_press_buttons=False)
         self._auto_focus_buttons = False
@@ -105,7 +106,8 @@ class QrogueCUI(PyCUI):
                                       self.__game_over)
         self.__boss_fight = BossFightWidgetSet(self.__controls, self.__render, Logger.instance(), self,
                                                self.__continue_explore, self.__game_over)
-        self.__riddle = RiddleWidgetSet(self.__controls, self.__render, Logger.instance(), self, self.__continue_explore)
+        self.__riddle = RiddleWidgetSet(self.__controls, self.__render, Logger.instance(), self,
+                                        self.__continue_explore)
         self.__challenge = ChallengeWidgetSet(self.__controls, self.__render, Logger.instance(), self,
                                               self.__continue_explore)
         self.__shop = ShopWidgetSet(self.__controls, self.__render, Logger.instance(), self, self.__continue_explore)
@@ -230,7 +232,7 @@ class QrogueCUI(PyCUI):
                     Popup.generic_info("Simulator", "finished")
                     self.__simulator = None
 
-    def _cycle_widgets(self, reverse: bool=False) -> None:
+    def _cycle_widgets(self, reverse: bool = False) -> None:
         pass    # this is neither needed nor allowed in Qrogue
 
     def _draw(self, stdscr) -> None:    # overridden because we want to ignore mouse events
@@ -248,9 +250,9 @@ class QrogueCUI(PyCUI):
         # Clear and refresh the screen for a blank canvas
         stdscr.clear()
         stdscr.refresh()
-        #curses.mousemask(curses.ALL_MOUSE_EVENTS)   # ignore mouse events for our CUI
+        # curses.mousemask(curses.ALL_MOUSE_EVENTS)   # ignore mouse events for our CUI
         # stdscr.nodelay(False)
-        #stdscr.keypad(True)
+        # stdscr.keypad(True)
 
         # Initialization functions. Generates colors and renderer
         self._initialize_colors()
@@ -366,7 +368,6 @@ class QrogueCUI(PyCUI):
             except KeyboardInterrupt:
                 self._logger.info('Detect Keyboard Interrupt, Exiting...')
                 self._stopped = True
-
 
         stdscr.erase()
         stdscr.refresh()

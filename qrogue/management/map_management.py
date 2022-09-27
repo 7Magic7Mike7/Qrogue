@@ -68,7 +68,7 @@ class MapManager:
                                              self.load_map, Popup.npc_says)
             hub_world, success = generator.generate(MapConfig.hub_world())
             if not success:
-                Logger.instance().throw(RuntimeError("Unable to build world map! Please download again and make sure "
+                Logger.instance().throw(RuntimeError("Unable to build hub world! Please download again and make sure "
                                                      "to not edit game data."))
             self.__world_memory[MapConfig.hub_world()] = hub_world
             self.__cur_map = hub_world
@@ -145,12 +145,15 @@ class MapManager:
                 self.__load_map(MapConfig.hub_world(), room, map_seed)
             else:
                 self.__load_map(next_map, room, map_seed)
+
         elif map_name == MapConfig.spaceship():
             self.__show_spaceship()
+
         elif map_name in self.__world_memory:
             self.__cur_map = self.__world_memory[map_name]
             self.__in_level = False
             self.__show_world(self.__cur_map)
+
         elif map_name[0].lower().startswith(MapConfig.world_map_prefix()):
             try:
                 world = self.__load_world(map_name)
@@ -162,11 +165,12 @@ class MapManager:
                     Logger.instance().error(f"Could not load world \"{map_name}\"!", from_pycui=False)
             except FileNotFoundError:
                 Logger.instance().error(f"Failed to open the specified world-file: {map_name}", from_pycui=False)
+
         elif map_name.lower().startswith(MapConfig.level_map_prefix()):
             if map_seed is None:
                 map_seed = self.__rm.get_seed(msg="MapMngr_seedForLevel")
 
-            # todo maybe levels should be able to have arbitrary names aside from "w..." or "back"?
+            # todo maybe levels should be able to have arbitrary names except "w..." or "e..." or "back" or "next"?
             check_achievement = SaveData.instance().achievement_manager.check_achievement
             generator = QrogueLevelGenerator(map_seed, check_achievement, self.__trigger_event, self.load_map,
                                              Popup.npc_says)
@@ -181,6 +185,7 @@ class MapManager:
                     Logger.instance().error(f"Could not load level \"{map_name}\"!", from_pycui=False)
             except FileNotFoundError:
                 Logger.instance().error(f"Failed to open the specified level-file: {map_name}", from_pycui=False)
+
         elif map_name.lower().startswith(MapConfig.expedition_map_prefix()):
             if map_seed is None:
                 map_seed = self.__rm.get_seed(msg="MapMngr_seedForExpedition")
@@ -196,6 +201,7 @@ class MapManager:
                 self.__start_level(map_seed, self.__cur_map)
             else:
                 Logger.instance().error(f"Could not create expedition with seed = {map_seed}", from_pycui=False)
+
         elif map_name == MapConfig.back_map_string():
             self.__load_back()
         else:
