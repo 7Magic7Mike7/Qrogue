@@ -99,24 +99,43 @@ class MapManager:
         else:
             return "Connection lost..."
 
+    def __load_world(self, world_name: str) -> Optional[WorldMap]:
+        """
+        Loads the world either from memory or generates it from its file. In case of generation the world's achievement
+        score will also be corrected.
+
+        :param world_name: internal name of the world to load
+        :return: a WorldMap corresponding to the provided name or None if it could not be generated
+        """
+        if world_name in self.__world_memory:
+            return self.__world_memory[world_name]
+
+        generator = QrogueWorldGenerator(self.__base_seed, SaveData.instance().player,
+                                         SaveData.instance().achievement_manager.check_achievement,
+                                         self.__custom_trigger_event,
+                                         self.load_map, Popup.npc_says)
+        world, success = generator.generate(world_name)
+        if success:
+            level_counter = 0
+            for level in world.mandatory_level_iterator():
+                if SaveData.instance().achievement_manager.check_achievement(level):
+                    level_counter += 1
+            SaveData.instance().achievement_manager.correct_world_progress(world.internal_name, level_counter,
+                                                                           world.num_of_mandatory_levels)
+            self.__world_memory[world_name] = world
+            return world
+        else:
+            return None
+
     def __get_world(self, level_name: str) -> WorldMap:
         if level_name[0] == "l" and level_name[1].isdigit():
             world_name = "w" + level_name[1]
-            if world_name in self.__world_memory:
-                return self.__world_memory[world_name]
+            world = self.__load_world(world_name)
+            if world is None:
+                Logger.instance().error(f"Error! Unable to build map \"{world_name}\". Returning to HubWorld",
+                                        from_pycui=False)
             else:
-                def trigger_achievement(name: str):
-                    SaveData.instance().achievement_manager.add_to_achievement(name, 1)
-                check_achievement = SaveData.instance().achievement_manager.check_achievement
-                generator = QrogueWorldGenerator(self.__base_seed, SaveData.instance().player, check_achievement,
-                                                 trigger_achievement, self.load_map, Popup.npc_says)
-                world, success = generator.generate(world_name)
-                if success:
-                    self.__world_memory[world_name] = world
-                    return world
-                else:
-                    Logger.instance().error(f"Error! Unable to build map \"{world_name}\". Returning to HubWorld",
-                                            from_pycui=False)
+                return world
         return self.__world_memory[MapConfig.hub_world()]
 
     def __load_map(self, map_name: str, room: Optional[Coordinate], map_seed: Optional[int] = None):
@@ -133,13 +152,9 @@ class MapManager:
             self.__in_level = False
             self.__show_world(self.__cur_map)
         elif map_name[0].lower().startswith(MapConfig.world_map_prefix()):
-            player = SaveData.instance().player
-            check_achievement = SaveData.instance().achievement_manager.check_achievement
-            generator = QrogueWorldGenerator(self.__base_seed, player, check_achievement, self.__trigger_event,
-                                             self.load_map, Popup.npc_says)
             try:
-                world, success = generator.generate(map_name)
-                if success:
+                world = self.__load_world(map_name)
+                if world is not None:
                     self.__cur_map = world
                     self.__in_level = False
                     self.__show_world(self.__cur_map)
@@ -158,6 +173,7 @@ class MapManager:
             try:
                 level, success = generator.generate(map_name)
                 if success:
+                    self.__get_world(level.internal_name)
                     self.__cur_map = level
                     self.__in_level = True
                     self.__start_level(map_seed, self.__cur_map)

@@ -40,6 +40,7 @@ class Unlocks(enum.Enum):
 
 class Ach:
     __EXAM_DONE_PROGRESS = 8
+    STORY_DONE_PROGRESS = 100
 
     @staticmethod
     def story() -> str:
@@ -109,13 +110,14 @@ class AchievementType(enum.Enum):
     Story = 4
     Event = 5    # in-level event
     Expedition = 6
+    Implicit = 7    # e.g. overall story score is an implicit achievement, hence it's not explicitly saved
 
     @staticmethod
     def get_display_order() -> "List[AchievementType]":
         return [
             AchievementType.Secret, AchievementType.Misc,
             AchievementType.Expedition, AchievementType.World, AchievementType.Level,
-            AchievementType.Story,
+            AchievementType.Story, AchievementType.Implicit,
         ]
 
 
@@ -187,6 +189,9 @@ class Achievement:
             text += f" {self.name} ({self.score} / {self.done_score})"
         return text
 
+    def __str__(self) -> str:
+        return self.to_string()
+
 
 class AchievementManager:
     __DISPLAY_STRING_INDENT = "  "
@@ -195,8 +200,14 @@ class AchievementManager:
         self.__storage = {}
         self.__temp_level_storage = {}
 
+        story_counter = 0
         for achievement in achievements:
-            self.__storage[achievement.name] = achievement
+            if achievement.type is not AchievementType.Implicit:
+                if achievement.type is AchievementType.Story and achievement.is_done():
+                    story_counter += 1
+                self.__storage[achievement.name] = achievement
+        self.__storage[Ach.story()] = Achievement(Ach.story(), AchievementType.Implicit, story_counter,
+                                                  Ach.STORY_DONE_PROGRESS)
 
     @property
     def story_progress(self) -> int:
@@ -227,7 +238,12 @@ class AchievementManager:
     def reset_level_events(self):
         self.__temp_level_storage.clear()
 
-    def add_to_achievement(self, name: str, score: float):  # todo maybe default score to 1?
+    def correct_world_progress(self, world: str, score: int, max_score: int):
+        assert world in self.__storage, f"World \"{world}\" is not stored and therefore cannot be corrected!"
+
+        self.__storage[world] = Achievement(world, AchievementType.World, score, max_score)
+
+    def add_to_achievement(self, name: str, score: float = 1):
         if name in self.__storage:
             self.__storage[name].add_score(score)
 
@@ -276,6 +292,8 @@ class AchievementManager:
     def to_string(self) -> str:
         text = ""
         for value in self.__storage.values():
+            if value.type is AchievementType.Implicit:
+                continue
             text += f"{value.to_string()}\n"
         return text
 

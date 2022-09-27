@@ -1,4 +1,4 @@
-from typing import List, Callable, Set
+from typing import List, Callable, Set, Iterator
 
 from qrogue.game.logic.actors import Player
 from qrogue.game.world.navigation import Coordinate
@@ -14,8 +14,15 @@ class WorldMap(Map):
                          trigger_achievement_callback)
         self.__mandatory_levels: Set[str] = mandatory_levels
 
+    @property
+    def num_of_mandatory_levels(self) -> int:
+        return len(self.__mandatory_levels)
+
     def get_type(self) -> MapType:
         return MapType.World
 
     def is_mandatory_level(self, internal_level_name: str) -> bool:
         return internal_level_name in self.__mandatory_levels
+
+    def mandatory_level_iterator(self) -> Iterator[str]:
+        return iter(self.__mandatory_levels)
