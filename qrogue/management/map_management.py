@@ -1,4 +1,4 @@
-from typing import Callable, Optional
+from typing import Callable, Optional, Dict
 
 from qrogue.game.world.dungeon_generator import ExpeditionGenerator, QrogueLevelGenerator, QrogueWorldGenerator
 from qrogue.game.world.map import Map, WorldMap, MapType
@@ -60,7 +60,7 @@ class MapManager:
             self.__rm = RandomManager.create_new(seed)
             self.__show_world = show_world
             self.__start_level = start_level
-            self.__world_memory = {}    # str -> WorldMap
+            self.__world_memory: Dict[str, WorldMap] = {}    # str -> WorldMap
 
             generator = QrogueWorldGenerator(seed, SaveData.instance().player,
                                              SaveData.instance().achievement_manager.check_achievement,
