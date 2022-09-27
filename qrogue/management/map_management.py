@@ -237,6 +237,8 @@ class MapManager:
     def __trigger_event(self, event_id: str):
         if event_id.lower() == MapConfig.done_event_id():
             event_id = MapConfig.specific_done_event_id(self.__cur_map.internal_name)
+            SaveData.instance().achievement_manager.trigger_event(event_id)
+
             if self.__cur_map.get_type() is MapType.World:
                 SaveData.instance().achievement_manager.finished_world(self.__cur_map.internal_name)
             elif self.__cur_map.get_type() is MapType.Level:
@@ -254,7 +256,8 @@ class MapManager:
                 CommonQuestions.ProceedToNextMap.ask(self.__proceed)
             else:
                 self.__proceed()
-        SaveData.instance().achievement_manager.trigger_event(event_id)
+        else:
+            SaveData.instance().achievement_manager.trigger_event(event_id)
 
     def load_map(self, map_name: str, spawn_room: Optional[Coordinate], map_seed: Optional[int] = None):
         if map_name.lower() == MapConfig.next_map_string():
