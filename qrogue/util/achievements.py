@@ -78,7 +78,7 @@ class Ach:
 
         elif unlock is Unlocks.ProceedChoice:
             # instead of automatically proceeding to the next level we now have a choice
-            return progress > Ach.__EXAM_DONE_PROGRESS
+            return progress > Ach.__EXAM_DONE_PROGRESS + 1
 
         elif unlock is Unlocks.Spaceship:
             # we can now use the spaceship
