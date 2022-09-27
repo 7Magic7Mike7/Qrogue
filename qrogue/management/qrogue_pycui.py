@@ -20,7 +20,7 @@ from qrogue.graphics.popups import Popup, MultilinePopup, ConfirmationPopup
 from qrogue.graphics.rendering import MultiColorRenderer
 from qrogue.graphics.widgets import Renderable, SpaceshipWidgetSet, BossFightWidgetSet, ExploreWidgetSet, \
     FightWidgetSet, MenuWidgetSet, MyWidgetSet, NavigationWidgetSet, PauseMenuWidgetSet, RiddleWidgetSet, \
-    ChallengeWidgetSet, ShopWidgetSet, WorkbenchWidgetSet, TrainingsWidgetSet, Widget
+    ChallengeWidgetSet, ShopWidgetSet, WorkbenchWidgetSet, TrainingsWidgetSet, Widget, TransitionWidgetSet
 from qrogue.util import achievements, common_messages, CheatConfig, Config, GameplayConfig, UIConfig, HelpText, \
     HelpTextType, Logger, PathConfig, MapConfig, Controls, Keys, RandomManager, PyCuiConfig, PyCuiColors, Options
 from qrogue.util.achievements import Ach, Unlocks
@@ -28,7 +28,7 @@ from qrogue.util.config import FileTypes, PopupConfig
 from qrogue.util.game_simulator import GameSimulator
 from qrogue.util.key_logger import KeyLogger, OverWorldKeyLogger
 
-from qrogue.management import MapManager, Pausing, SaveData, StoryNarration
+from qrogue.management import MapManager, Pausing, SaveData, StoryNarration, TransitionText
 
 
 class QrogueCUI(PyCUI):
@@ -87,6 +87,7 @@ class QrogueCUI(PyCUI):
         self.__menu = MenuWidgetSet(self.__controls, self.__render, Logger.instance(), self,
                                     MapManager.instance().load_first_uncleared_map,
                                     self.__start_playing, self.stop, self.__choose_simulation)
+        self.__transition = TransitionWidgetSet(self.__controls, Logger.instance(), self, self.__render)
         self.__pause = PauseMenuWidgetSet(self.__controls, self.__render, Logger.instance(), self,
                                           self.__general_continue, SaveData.instance().save, self.switch_to_menu)
         self.__pause.set_data(None, "Qrogue", SaveData.instance().achievement_manager)
@@ -502,8 +503,20 @@ class QrogueCUI(PyCUI):
     def __show_world(self, world: WorldMap = None) -> None:
         if world is None:
             if Ach.check_unlocks(Unlocks.Spaceship, SaveData.instance().story_progress):
-                self.__state_machine.change_state(State.Spaceship, None)
-                self.__pause.set_data(None, "Spaceship", SaveData.instance().achievement_manager)
+                if Ach.is_most_recent_unlock(Unlocks.Spaceship, SaveData.instance().story_progress):
+
+                    def callback_():
+                        self.__state_machine.change_state(State.Spaceship, None)
+                        self.__pause.set_data(None, "Spaceship", SaveData.instance().achievement_manager)
+                        if not SaveData.instance().achievement_manager.check_achievement(achievements.EnteredPauseMenu):
+                            Popup.generic_info("Pause", HelpText.get(HelpTextType.Pause))
+                            SaveData.instance().achievement_manager.add_to_achievement(achievements.EnteredPauseMenu, 1)
+
+                    texts = TransitionText.exam_spaceship()
+                    self.__state_machine.change_state(State.Transition, (texts, callback_))
+                else:
+                    self.__state_machine.change_state(State.Spaceship, None)
+                    self.__pause.set_data(None, "Spaceship", SaveData.instance().achievement_manager)
             else:
                 # return to the main screen if the Spaceship is not yet unlocked
                 self.__state_machine.change_state(State.Menu, None)
@@ -611,6 +624,11 @@ class QrogueCUI(PyCUI):
             self.__shop.set_data(player, items)
         self.apply_widget_set(self.__shop)
 
+    def switch_to_blank_screen(self, data) -> None:
+        texts, continue_ = data
+        self.__transition.set_data(texts, continue_)
+        self.apply_widget_set(self.__transition)
+
     def __render(self, renderables: List[Renderable]):
         for r in renderables:
             r.render()
@@ -632,6 +650,8 @@ class State(Enum):
 
     Challenge = 11
 
+    Transition = 12    # for atmospheric transitions and elements
+
 
 class StateMachine:
     def __init__(self, renderer: QrogueCUI):
@@ -648,7 +668,9 @@ class StateMachine:
         return self.__prev_state
 
     def change_state(self, state: State, data) -> None:
-        self.__prev_state = self.__cur_state
+        if self.__cur_state is not State.Transition:
+            # don't overwrite previous prev_state if the new one would be BlankScreen
+            self.__prev_state = self.__cur_state
         self.__cur_state = state
 
         if self.__cur_state == State.Menu:
@@ -676,3 +698,6 @@ class StateMachine:
             self.__renderer.switch_to_workbench(data)
         elif self.__cur_state == State.Navigation:
             self.__renderer.switch_to_navigation(data)
+
+        elif self.__cur_state == State.Transition:
+            self.__renderer.switch_to_blank_screen(data)

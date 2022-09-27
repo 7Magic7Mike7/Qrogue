@@ -1,4 +1,5 @@
 import enum
+from typing import List
 
 from qrogue.graphics.popups import Popup
 from qrogue.management import SaveData
@@ -57,3 +58,12 @@ class StoryNarration:
             return f"The {navigation_panel} {n_tile} is on the left end of the Spaceship."
 
         return "NO MORE TEXT"
+
+
+class TransitionText:
+    @staticmethod
+    def exam_spaceship() -> List[str]:
+        return [
+            "A couple of days later...",
+            "Mike received a letter stating he was chosen to join Mission Quniverse!",
+        ]

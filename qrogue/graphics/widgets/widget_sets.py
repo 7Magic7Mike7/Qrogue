@@ -224,6 +224,58 @@ class MenuWidgetSet(MyWidgetSet):
         Popup.generic_info("Gameplay Config", GameplayConfig.to_file_text())
 
 
+class TransitionWidgetSet(MyWidgetSet):
+    def __init__(self, controls: Controls, logger, root: py_cui.PyCUI,
+                 base_render_callback: Callable[[List[Renderable]], None]):
+        super().__init__(logger, root, base_render_callback)
+        self.__continue: Optional[Callable[[], None]] = None
+        self.__texts: List[str] = []
+        self.__index = 0
+
+        widget = self.add_block_label("Text", UIConfig.TRANSITION_SCREEN_ROW, UIConfig.TRANSITION_SCREEN_COL,
+                                      row_span=UIConfig.TRANSITION_SCREEN_HEIGHT,
+                                      column_span=UIConfig.TRANSITION_SCREEN_WIDTH, center=True)
+        widget.add_key_command(controls.action, self.__next_text)
+        self.__text = SimpleWidget(widget)
+
+        widget = self.add_block_label("Confirm", UIConfig.TRANSITION_SCREEN_ROW + UIConfig.TRANSITION_SCREEN_HEIGHT,
+                                      UIConfig.TRANSITION_SCREEN_COL, row_span=1,
+                                      column_span=UIConfig.TRANSITION_SCREEN_WIDTH, center=True)
+        self.__confirm = SimpleWidget(widget)
+
+    def __next_text(self):
+        if self.__index < len(self.__texts):
+            text = self.__texts[self.__index]
+            self.__index += 1
+            if self.__index >= len(self.__texts):
+                self.__confirm.set_data("Press [Confirm] to continue.")
+            self.__text.set_data(text)
+            self.render()
+        elif self.__continue is not None:
+            self.__continue()
+
+    def set_data(self, texts: List[str], continue_callback: Callable[[], None]):
+        assert len(texts) > 0, "Empty list of texts provided!"
+
+        self.__texts = texts
+        self.__index = 0
+        self.__continue = continue_callback
+        self.__confirm.set_data("Press [Confirm] for next text.")
+        self.__next_text()
+
+    def get_widget_list(self) -> List[Widget]:
+        return [
+            self.__text,
+            self.__confirm,
+        ]
+
+    def get_main_widget(self) -> WidgetWrapper:
+        return self.__text.widget
+
+    def reset(self) -> None:
+        self.__confirm.set_data("Press [Confirm] for next text.")
+
+
 class PauseMenuWidgetSet(MyWidgetSet):
     __HELP_TEXTS = (
         [
