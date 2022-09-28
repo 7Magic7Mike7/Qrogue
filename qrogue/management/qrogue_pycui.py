@@ -226,11 +226,11 @@ class QrogueCUI(PyCUI):
         else:
             if self._ready_for_input(key_pressed, gameplay=False):
                 key = self.__simulator.next()
-                if key:
-                    super(QrogueCUI, self)._handle_key_presses(key)
-                else:
-                    Popup.generic_info("Simulator", "finished")
+                if key is None:
+                    Popup.message("Simulator", "finished", reopen=False, overwrite=True)
                     self.__simulator = None
+                else:
+                    super(QrogueCUI, self)._handle_key_presses(key)
 
     def _cycle_widgets(self, reverse: bool = False) -> None:
         pass    # this is neither needed nor allowed in Qrogue
