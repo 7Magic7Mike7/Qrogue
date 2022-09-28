@@ -27,7 +27,7 @@ class Logger(PyCUILogger):
     def __init__(self, seed: int):
         super().__init__("Qrogue-Logger")
         if Logger.__instance is not None:
-            self.throw(Exception("This class is a singleton!"))
+            Logger.__instance.throw(Exception("This class is a singleton!"))
         else:
             self.__text = ""
             self.__message_popup: Optional[Callable[[str, str, int], None]] = None
