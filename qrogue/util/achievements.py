@@ -309,7 +309,7 @@ class AchievementManager:
         # first add the temporary level events
         if len(self.__temp_level_storage) > 0:
             text += f"{AchievementType.Event.name}\n"
-            for event in self.__temp_level_storage:
+            for event in self.__temp_level_storage.values():
                 text += f"{AchievementManager.__DISPLAY_STRING_INDENT}{event.to_display_string()}\n"
         # now add permanent the achievements
         for a_type in AchievementType.get_display_order():
