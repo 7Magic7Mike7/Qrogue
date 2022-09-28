@@ -97,6 +97,7 @@ def start_qrogue() -> int:
 def setup_game(game_data_path: str = "", user_data_path: str = "") -> None:
     """
     Creates the needed folder structure and game config file qrogue_game.config if not already existent.
+
     :param game_data_path: the path where we want to setup the game data
     :param user_data_path: the path where we want to load and store the user data (e.g. logs, save data)
     :return: None
