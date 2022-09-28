@@ -2,7 +2,7 @@ import enum
 import os
 import pathlib
 from datetime import datetime
-from typing import Tuple
+from typing import Tuple, Optional
 
 
 class FileTypes(enum.Enum):
@@ -112,7 +112,7 @@ class PathConfig:
         PathConfig.__User_Data_Path = user_data_path
 
     @staticmethod
-    def load_paths(custom_data_path: str, custom_user_data_path: str) -> bool:
+    def load_paths(custom_data_path: Optional[str], custom_user_data_path: Optional[str]) -> bool:
         try:
             if custom_data_path is None or custom_user_data_path is None:
                 with open(PathConfig.launch_config_path()) as f:
