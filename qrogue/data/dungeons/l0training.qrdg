@@ -291,7 +291,7 @@ default *energyFull
 // highlight text by encapsulating it in "//02abcd//" where "abcd" is the text to highlight and "02" one of the available styles: 01 is for tiles, 02 is for game objects, 03 for actions, 04 for keys on the keyboard and 05 for other words
 // speaker: 0 = Examiner, 1 = Scientist, 2 = System, 3 = Player
 
-*tutTeleporter Speaker "0" "//03Stepping// back onto the //01t// in the middle of the room will give you the //05possibility to leave// the trainings environment again. Unlike in the lessons, there is //05no final room// you need to go to and you //05cannot complete// this 'level'."
+*tutTeleporter Speaker "0" pos 5 "//03Stepping// back onto the //01t// in the middle of the room will give you the //05possibility to leave// the trainings environment again. Unlike in the lessons, there is //05no final room// you need to go to and you //05cannot complete// this 'level'."
 
 *pickupXCX Speaker "2" "To the //05left// you can pickup an //02X Gate//." "To the //05right// you can pickup an //02CX Gate//."
 *pickupCXH Speaker "2" "To the //05left// you can pickup an //02CX Gate//." "To the //05right// you can pickup an //02H Gate//."
