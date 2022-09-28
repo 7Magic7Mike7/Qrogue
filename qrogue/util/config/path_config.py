@@ -78,6 +78,10 @@ class PathConfig:
         return PathConfig.__DEFAULT_USER_DATA_PATH
 
     @staticmethod
+    def keylog_folder() -> str:
+        return PathConfig.__KEY_LOG_FOLDER
+
+    @staticmethod
     def create_folder_structure(user_data_path: str) -> None:
         pathlib.Path(user_data_path).mkdir(parents=True, exist_ok=True)
         log_path = os.path.join(user_data_path, PathConfig.__LOG_FOLDER)
