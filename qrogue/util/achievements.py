@@ -12,7 +12,6 @@ UnlockedWorkbench = "UnlockedWorkbench"
 
 class Unlocks(enum.Enum):
     # global unlocks
-    Saving = 0
 
     # menu unlocks
     MainMenuContinue = 10
@@ -39,7 +38,7 @@ class Unlocks(enum.Enum):
 
 
 class Ach:
-    __EXAM_DONE_PROGRESS = 8
+    __EXAM_DONE_PROGRESS = 9
     STORY_DONE_PROGRESS = 100
 
     @staticmethod
@@ -58,16 +57,12 @@ class Ach:
 
     @staticmethod
     def check_unlocks(unlock: Unlocks, progress: int) -> bool:
-        if unlock is Unlocks.Saving:
-            # there is something we can save
-            return progress > 0
-
-        elif unlock is Unlocks.MainMenuContinue:
+        if unlock is Unlocks.MainMenuContinue:
             # something was already completed so continue is no longer the same than a fresh start
             return progress > 0
         elif unlock is Unlocks.MainMenuPlay:
             # from now on we can choose with which level we want to to continue
-            return progress > Ach.__EXAM_DONE_PROGRESS
+            return progress > Ach.__EXAM_DONE_PROGRESS + 1
 
         elif unlock is Unlocks.ShowEnergy:
             return progress > 0     # Lesson 0 completed
@@ -83,10 +78,10 @@ class Ach:
 
         elif unlock is Unlocks.Spaceship:
             # we can now use the spaceship
-            return progress > Ach.__EXAM_DONE_PROGRESS
+            return progress >= Ach.__EXAM_DONE_PROGRESS
         elif unlock is Unlocks.Navigation:
             # we can now freely choose between levels in the current world
-            return progress > Ach.__EXAM_DONE_PROGRESS
+            return progress > Ach.__EXAM_DONE_PROGRESS + 1
         elif unlock is Unlocks.FreeNavigation:
             # we can now choose between worlds and not only levels in a given world
             return False    # todo implement
@@ -97,7 +92,7 @@ class Ach:
     def is_most_recent_unlock(unlock: Unlocks, progress: int) -> bool:
         if unlock is Unlocks.Spaceship:
             # we can now use the spaceship
-            return progress == Ach.__EXAM_DONE_PROGRESS + 1
+            return progress == Ach.__EXAM_DONE_PROGRESS
 
         raise NotImplementedError(f"Unlock \"{unlock}\" not yet implemented for recency check!")
 
