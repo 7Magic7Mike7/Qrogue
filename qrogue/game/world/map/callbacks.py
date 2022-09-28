@@ -3,7 +3,7 @@ from typing import Callable, List
 from qrogue.game.logic.actors import Boss, Enemy, Robot
 from qrogue.game.world.map import LevelMap
 from qrogue.game.world.navigation import Direction
-from qrogue.util import Logger
+from qrogue.util import Logger, TestConfig
 
 
 class CallbackPack:
@@ -14,6 +14,13 @@ class CallbackPack:
         if CallbackPack.__instance is None:
             Logger.instance().throw(Exception("This singleton has not been initialized yet!"))
         return CallbackPack.__instance
+
+    @staticmethod
+    def reset():
+        if TestConfig.is_active():
+            CallbackPack.__instance = None
+        else:
+            raise TestConfig.StateException("Can only reset the singleton \"CallbackPack\" during testing!")
 
     def __init__(self, start_level: "Callable[[int, LevelMap], None]",
                  start_fight: "Callable[[Robot, Enemy, Direction], None]",

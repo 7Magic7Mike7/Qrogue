@@ -42,6 +42,25 @@ class QrogueCUI(PyCUI):
         except FileNotFoundError:
             Logger.instance().show_error(f"File \"{simulation_path}\" could not be found!")
 
+    @staticmethod
+    def start_simulation_test(simulation_path: str) -> bool:
+        # first we have to reset all singletons
+        Logger.reset()
+        RandomManager.reset()
+        OverWorldKeyLogger.reset()
+        CallbackPack.reset()
+        SaveData.reset()
+        MapManager.reset()
+
+        try:
+            simulator = GameSimulator(simulation_path, in_keylog_folder=True)
+            qrogue_cui = QrogueCUI(simulator.seed)
+            qrogue_cui._set_simulator(simulator, stop_when_finished=True)
+            qrogue_cui.start()
+            return True
+        except FileNotFoundError:
+            return False
+
     def __init__(self, seed: int, width: int = UIConfig.WINDOW_WIDTH, height: int = UIConfig.WINDOW_HEIGHT):
         super().__init__(width, height)
         self.set_title(f"Qrogue {Config.version()}")
@@ -79,6 +98,7 @@ class QrogueCUI(PyCUI):
 
         self.__key_logger = KeyLogger()
         self.__simulator = None
+        self.__stop_with_simulation_end = False
         self.__state_machine = StateMachine(self)
         self.__last_input = time.time()
         self.__last_key = None
@@ -175,8 +195,9 @@ class QrogueCUI(PyCUI):
         except FileNotFoundError:
             Logger.instance().show_error(f"File \"{path}\" could not be found!")
 
-    def _set_simulator(self, simulator: GameSimulator):
+    def _set_simulator(self, simulator: GameSimulator, stop_when_finished: bool = False):
         self.__simulator = simulator
+        self.__stop_with_simulation_end = stop_when_finished
         simulator.set_controls(self.controls)
 
         if simulator.simulates_over_world:
@@ -229,6 +250,8 @@ class QrogueCUI(PyCUI):
                 if key is None:
                     Popup.message("Simulator", "finished", reopen=False, overwrite=True)
                     self.__simulator = None
+                    if self.__stop_with_simulation_end:
+                        self.stop()
                 else:
                     super(QrogueCUI, self)._handle_key_presses(key)
 

@@ -4,7 +4,7 @@ from typing import Tuple, Optional
 from qrogue.game.logic.actors import Player, Robot
 from qrogue.game.logic.actors.controllables import TestBot, LukeBot
 from qrogue.game.world.map import CallbackPack
-from qrogue.util import Logger, PathConfig, AchievementManager, RandomManager, CommonPopups, Config
+from qrogue.util import Logger, PathConfig, AchievementManager, RandomManager, CommonPopups, Config, TestConfig
 from qrogue.util.achievements import Achievement
 
 
@@ -19,6 +19,13 @@ class SaveData:
         if SaveData.__instance is None:
             Logger.instance().throw(Exception("This singleton has not been initialized yet!"))
         return SaveData.__instance
+
+    @staticmethod
+    def reset():
+        if TestConfig.is_active():
+            SaveData.__instance = None
+        else:
+            raise TestConfig.StateException("Can only reset the singleton \"SaveData\" during testing!")
 
     @staticmethod
     def __empty_save_file() -> str:

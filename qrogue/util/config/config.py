@@ -1,7 +1,7 @@
 import os
 from datetime import datetime
 
-from qrogue.util.config import CheatConfig, GameplayConfig, PathConfig
+from qrogue.util.config import CheatConfig, GameplayConfig, PathConfig, TestConfig
 
 
 class Config:   # todo make singleton and handle access to other configs?
@@ -152,3 +152,7 @@ class Config:   # todo make singleton and handle access to other configs?
         text = f"{Config.__GAMEPLAY_HEAD}\n{GameplayConfig.to_file_text()}\n"
         PathConfig.write(Config.game_config_file(), text, in_user_path=True, may_exist=True, append=False)
         return True
+
+    @staticmethod
+    def skip_persisting() -> bool:
+        return TestConfig.is_active()

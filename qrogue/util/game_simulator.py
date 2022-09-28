@@ -1,5 +1,6 @@
 from typing import Tuple, Optional
 
+from qrogue.util import Logger
 from qrogue.util.config import PathConfig, GameplayConfig, Config, ColorConfig, FileTypes
 from qrogue.util.controls import Controls, Keys
 
@@ -19,6 +20,7 @@ class GameSimulator:
 
         self.__notification_popup = True
         self.__marker_counter = 0
+        self.__finished = False
 
         # retrieve the name of the map that was played
         second_line = self.__cur_chunk.index((bytes("\n", GameSimulator.__ENCODING)))
@@ -114,6 +116,7 @@ class GameSimulator:
             key = self.__next_key()
             if key > -1:
                 return key
+        self.__finished = True
         return None
 
     def print(self):
@@ -149,3 +152,11 @@ class GameSimulator:
                f"Version you try to simulate: {self.version}\n" \
                "This is not supported and can cause problems. Only continue if you know what you do! Else close this " \
                "popup and press ESC to abort the simulation."
+
+    def stop_message(self) -> str:
+        if self.__finished:
+            text = "finished Simulation"
+        else:
+            text = "stopped Simulator"
+        text += f"\n{Logger.instance().error_count} errors occurred while simulating"
+        return text
