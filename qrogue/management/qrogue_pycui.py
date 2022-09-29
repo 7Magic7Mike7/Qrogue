@@ -113,7 +113,8 @@ class QrogueCUI(PyCUI):
         self.__menu = MenuWidgetSet(self.__controls, self.__render, Logger.instance(), self,
                                     MapManager.instance().load_first_uncleared_map,
                                     self.__start_playing, self.stop, self.__choose_simulation)
-        self.__transition = TransitionWidgetSet(self.__controls, Logger.instance(), self, self.__render)
+        self.__transition = TransitionWidgetSet(self.__controls, Logger.instance(), self, self.__render,
+                                                self.set_refresh_timeout)
         self.__pause = PauseMenuWidgetSet(self.__controls, self.__render, Logger.instance(), self,
                                           self.__general_continue, SaveData.instance().save, self.switch_to_menu)
         self.__pause.set_data(None, "Qrogue", SaveData.instance().achievement_manager)
@@ -190,8 +191,10 @@ class QrogueCUI(PyCUI):
         :param timeout: timeout in ms
         :return: None
         """
-        # does the same as the super-method except skipping the conversion to seconds to have more fine-grained control
         self._refresh_timeout = timeout
+        if self._stdscr is not None:
+            # since _draw is only called once, we have to set the timeout manually for the screen
+            self._stdscr.timeout(self._refresh_timeout)
 
     def start(self):
         self.__render([self.__cur_widget_set])
