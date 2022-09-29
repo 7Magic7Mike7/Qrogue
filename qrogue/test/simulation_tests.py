@@ -58,6 +58,8 @@ def test_run() -> List[int]:
     ]
     error_counts = []
     for p in paths:
+        if not p.endswith(FileTypes.KeyLog.value):
+            p += FileTypes.KeyLog.value
         sim_path = os.path.join(user_data_path, PathConfig.keylog_folder(), p)
         return_code = start_simulation(sim_path)
         if return_code == 0:
