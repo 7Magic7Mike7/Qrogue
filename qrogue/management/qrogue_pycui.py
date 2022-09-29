@@ -22,7 +22,8 @@ from qrogue.graphics.widgets import Renderable, SpaceshipWidgetSet, BossFightWid
     FightWidgetSet, MenuWidgetSet, MyWidgetSet, NavigationWidgetSet, PauseMenuWidgetSet, RiddleWidgetSet, \
     ChallengeWidgetSet, ShopWidgetSet, WorkbenchWidgetSet, TrainingsWidgetSet, Widget, TransitionWidgetSet
 from qrogue.util import achievements, common_messages, CheatConfig, Config, GameplayConfig, UIConfig, HelpText, \
-    HelpTextType, Logger, PathConfig, MapConfig, Controls, Keys, RandomManager, PyCuiConfig, PyCuiColors, Options
+    HelpTextType, Logger, PathConfig, MapConfig, Controls, Keys, RandomManager, PyCuiConfig, PyCuiColors, Options, \
+    TestConfig
 from qrogue.util.achievements import Ach, Unlocks
 from qrogue.util.config import FileTypes, PopupConfig
 from qrogue.util.game_simulator import GameSimulator
@@ -56,6 +57,10 @@ class QrogueCUI(PyCUI):
             simulator = GameSimulator(simulation_path, in_keylog_folder=True)
             qrogue_cui = QrogueCUI(simulator.seed)
             qrogue_cui._set_simulator(simulator, stop_when_finished=True)
+
+            if TestConfig.is_automatic():
+                qrogue_cui.set_refresh_timeout(TestConfig.automation_step_time())
+
             qrogue_cui.start()
             return True
         except FileNotFoundError:
@@ -178,6 +183,15 @@ class QrogueCUI(PyCUI):
     @property
     def controls(self) -> Controls:
         return self.__controls
+
+    def set_refresh_timeout(self, timeout: int):
+        """
+
+        :param timeout: timeout in ms
+        :return: None
+        """
+        # does the same as the super-method except skipping the conversion to seconds to have more fine-grained control
+        self._refresh_timeout = timeout
 
     def start(self):
         self.__render([self.__cur_widget_set])

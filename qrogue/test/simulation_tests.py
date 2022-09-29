@@ -21,6 +21,7 @@ def cleanup() -> bool:
 def setup() -> bool:
     # activate testing
     TestConfig.activate()
+    TestConfig.set_automation()
 
     # create the needed folder structure
     try:
