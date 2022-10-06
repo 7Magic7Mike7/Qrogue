@@ -1,7 +1,7 @@
 import curses
 import time
 from enum import Enum
-from typing import List, Callable
+from typing import List, Callable, Optional
 
 from py_cui import PyCUI
 from py_cui import popups
@@ -54,8 +54,8 @@ class QrogueCUI(PyCUI):
     class _StateMachine:
         def __init__(self, renderer: "QrogueCUI"):
             self.__renderer = renderer
-            self.__cur_state = None
-            self.__prev_state = None
+            self.__cur_state: Optional["QrogueCUI._State"] = None
+            self.__prev_state: Optional["QrogueCUI._State"] = None
 
         @property
         def cur_state(self) -> "QrogueCUI._State":
@@ -169,12 +169,12 @@ class QrogueCUI(PyCUI):
         Collectible.set_pickup_message_callback(Popup.generic_info)
 
         self.__key_logger = KeyLogger()
-        self.__simulator = None
+        self.__simulator: Optional[GameSimulator] = None
         self.__stop_with_simulation_end = False
         self.__state_machine = QrogueCUI._StateMachine(self)
         self.__last_input = time.time()
-        self.__last_key = None
-        self.__focused_widget = None
+        self.__last_key: Optional[int] = None
+        self.__focused_widget: Optional[Widget] = None
 
         # init widget sets
         self.__menu = MenuWidgetSet(self.__controls, self.__render, Logger.instance(), self,
