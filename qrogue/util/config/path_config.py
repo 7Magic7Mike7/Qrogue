@@ -115,22 +115,33 @@ class PathConfig:
     def load_paths(custom_data_path: Optional[str], custom_user_data_path: Optional[str]) -> bool:
         try:
             if custom_data_path is None or custom_user_data_path is None:
-                with open(PathConfig.launch_config_path()) as f:
-                    content = f.readlines()
+                if os.path.exists(PathConfig.launch_config_path()):
+                    with open(PathConfig.launch_config_path()) as f:
+                        content = f.readlines()
+                else:
+                    content = None
 
             if custom_data_path:
                 data_path = custom_data_path
-            else:
+            elif content:
                 data_path = content[1]
+            else:
+                # use the default if nothing is provided
+                data_path = PathConfig.default_base_path()
+
             if custom_user_data_path:
                 user_data_path = custom_user_data_path
-            else:
+            elif content:
                 user_data_path = content[2]
+            else:
+                # use the default if nothing is provided
+                user_data_path = PathConfig.default_user_data_path()
 
             if data_path == "\n":
                 data_path = PathConfig.default_base_path()
             elif data_path.endswith("\n"):
                 data_path = data_path[:-1]
+
             if user_data_path == "\n":
                 user_data_path = PathConfig.default_user_data_path()
             elif user_data_path.endswith("\n"):
@@ -139,6 +150,7 @@ class PathConfig:
             PathConfig.set_base_path(data_path)
             PathConfig.set_user_data_path(user_data_path)
             return os.path.exists(PathConfig.__Base_Path) and os.path.exists(PathConfig.__User_Data_Path)
+
         except Exception as error:
             print(error)
             return False
