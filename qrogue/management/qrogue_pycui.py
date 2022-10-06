@@ -33,6 +33,73 @@ from qrogue.management import MapManager, Pausing, SaveData, StoryNarration, Tra
 
 
 class QrogueCUI(PyCUI):
+    class _State(Enum):
+        Menu = 0
+        Pause = 1
+        Explore = 2
+        Fight = 3
+        Shop = 4
+        Riddle = 5
+        BossFight = 6
+
+        Spaceship = 7
+        Workbench = 8
+        Navigation = 9
+        Training = 10
+
+        Challenge = 11
+
+        Transition = 12  # for atmospheric transitions and elements
+
+    class _StateMachine:
+        def __init__(self, renderer: "QrogueCUI"):
+            self.__renderer = renderer
+            self.__cur_state = None
+            self.__prev_state = None
+
+        @property
+        def cur_state(self) -> "QrogueCUI._State":
+            return self.__cur_state
+
+        @property
+        def prev_state(self) -> "QrogueCUI._State":
+            return self.__prev_state
+
+        def change_state(self, state: "QrogueCUI._State", data) -> None:
+            if self.__cur_state is not QrogueCUI._State.Transition:
+                # don't overwrite previous prev_state if the new one would be Transition
+                self.__prev_state = self.__cur_state
+            self.__cur_state = state
+
+            if self.__cur_state == QrogueCUI._State.Menu:
+                self.__renderer._switch_to_menu(data)
+            elif self.__cur_state == QrogueCUI._State.Explore:
+                self.__renderer._switch_to_explore(data)
+            elif self.__cur_state == QrogueCUI._State.Fight:
+                self.__renderer._switch_to_fight(data)
+            elif self.__cur_state == QrogueCUI._State.Riddle:
+                self.__renderer._switch_to_riddle(data)
+            elif self.__cur_state == QrogueCUI._State.Challenge:
+                self.__renderer._switch_to_challenge(data)
+            elif self.__cur_state == QrogueCUI._State.Shop:
+                self.__renderer._switch_to_shop(data)
+            elif self.__cur_state == QrogueCUI._State.BossFight:
+                self.__renderer._switch_to_boss_fight(data)
+            elif self.__cur_state == QrogueCUI._State.Pause:
+                self.__renderer._switch_to_pause()
+
+            elif self.__cur_state == QrogueCUI._State.Spaceship:
+                self.__renderer._switch_to_spaceship(data)
+            elif self.__cur_state == QrogueCUI._State.Training:
+                self.__renderer._switch_to_training(data)
+            elif self.__cur_state == QrogueCUI._State.Workbench:
+                self.__renderer._switch_to_workbench(data)
+            elif self.__cur_state == QrogueCUI._State.Navigation:
+                self.__renderer._switch_to_navigation(data)
+
+            elif self.__cur_state == QrogueCUI._State.Transition:
+                self.__renderer._switch_to_transition(data)
+
     @staticmethod
     def start_simulation(simulation_path: str):
         try:
@@ -104,7 +171,7 @@ class QrogueCUI(PyCUI):
         self.__key_logger = KeyLogger()
         self.__simulator = None
         self.__stop_with_simulation_end = False
-        self.__state_machine = StateMachine(self)
+        self.__state_machine = QrogueCUI._StateMachine(self)
         self.__last_input = time.time()
         self.__last_key = None
         self.__focused_widget = None
@@ -116,7 +183,7 @@ class QrogueCUI(PyCUI):
         self.__transition = TransitionWidgetSet(self.__controls, Logger.instance(), self, self.__render,
                                                 self.set_refresh_timeout)
         self.__pause = PauseMenuWidgetSet(self.__controls, self.__render, Logger.instance(), self,
-                                          self.__general_continue, SaveData.instance().save, self.switch_to_menu)
+                                          self.__general_continue, SaveData.instance().save, self._switch_to_menu)
         self.__pause.set_data(None, "Qrogue", SaveData.instance().achievement_manager)
 
         self.__spaceship = SpaceshipWidgetSet(self.__controls, Logger.instance(), self, self.__render)
@@ -141,12 +208,12 @@ class QrogueCUI(PyCUI):
         self.__cur_widget_set = None
         self.__init_keys()
 
-        self.__state_machine.change_state(State.Menu, seed)
+        self.__state_machine.change_state(QrogueCUI._State.Menu, seed)
 
         # init spaceship
         def stop_playing(direction: Direction, controllable: Controllable):
             if SaveData.instance().achievement_manager.progressed_in_story(achievements.FinishedTutorial):
-                self.switch_to_menu(None)
+                self._switch_to_menu(None)
 
         def open_world_view(direction: Direction, controllable: Controllable):
             if Ach.check_unlocks(Unlocks.Navigation, SaveData.instance().story_progress):
@@ -432,12 +499,12 @@ class QrogueCUI(PyCUI):
 
     def __init_keys(self) -> None:
         # debugging stuff
-        self.add_key_command(self.__controls.get_key(Keys.PrintScreen), self.print_screen)
-        self.__menu.get_main_widget().add_key_command(self.__controls.get_keys(Keys.PrintScreen), self.print_screen)
-        self.__explore.get_main_widget().add_key_command(self.__controls.get_keys(Keys.PrintScreen), self.print_screen)
-        self.__fight.get_main_widget().add_key_command(self.__controls.get_keys(Keys.PrintScreen), self.print_screen)
+        self.add_key_command(self.__controls.get_key(Keys.PrintScreen), self._print_screen)
+        self.__menu.get_main_widget().add_key_command(self.__controls.get_keys(Keys.PrintScreen), self._print_screen)
+        self.__explore.get_main_widget().add_key_command(self.__controls.get_keys(Keys.PrintScreen), self._print_screen)
+        self.__fight.get_main_widget().add_key_command(self.__controls.get_keys(Keys.PrintScreen), self._print_screen)
         self.__boss_fight.get_main_widget().add_key_command(self.__controls.get_keys(Keys.PrintScreen),
-                                                            self.print_screen)
+                                                            self._print_screen)
 
         self.__pause.get_main_widget().add_key_command(self.__controls.get_keys(Keys.CheatInput),
                                                        CheatConfig.cheat_input)
@@ -450,7 +517,7 @@ class QrogueCUI(PyCUI):
                 widget.widget.add_key_command(self.__controls.get_keys(Keys.Pause), Pausing.pause)
                 widget.widget.add_key_command(self.__controls.get_keys(Keys.PopupReopen), Popup.reopen)
 
-    def print_screen(self) -> None:
+    def _print_screen(self) -> None:
         text = ""
         for my_widget in self.__cur_widget_set.get_widget_list():
             text += str(my_widget) + "\n"
@@ -498,7 +565,7 @@ class QrogueCUI(PyCUI):
     def __general_continue(self):
         self.__state_machine.change_state(self.__state_machine.prev_state, None)
 
-    def switch_to_menu(self, data=None) -> None:
+    def _switch_to_menu(self, data=None) -> None:
         if self.__key_logger and self.__key_logger.is_initialized:
             self.__key_logger.flush_if_useful()
         if data:
@@ -510,35 +577,35 @@ class QrogueCUI(PyCUI):
 
     def __start_playing(self):
         if Ach.check_unlocks(Unlocks.Spaceship, SaveData.instance().story_progress):
-            self.__state_machine.change_state(State.Spaceship, SaveData.instance())
+            self.__state_machine.change_state(QrogueCUI._State.Spaceship, SaveData.instance())
         else:
             # load the newest level (exam phase) by
             MapManager.instance().load_first_uncleared_map()
 
-    def switch_to_spaceship(self, data=None):
+    def _switch_to_spaceship(self, data=None):
         StoryNarration.returned_to_spaceship()
         self.apply_widget_set(self.__spaceship)
 
     def __continue_spaceship(self) -> None:
-        self.__state_machine.change_state(State.Spaceship, None)
+        self.__state_machine.change_state(QrogueCUI._State.Spaceship, None)
 
     def __start_training(self, direction: Direction):
         robot = LukeBot(self.__game_over, size=2)
         for collectible in [collectibles.XGate(), collectibles.XGate(), collectibles.HGate(), collectibles.CXGate()]:
             robot.give_collectible(collectible)
         enemy = Enemy(eid=0, target=StateVector([0] * (2**robot.num_of_qubits)), reward=Energy())
-        self.__state_machine.change_state(State.Training, (robot, enemy))
+        self.__state_machine.change_state(QrogueCUI._State.Training, (robot, enemy))
 
-    def switch_to_training(self, data=None):
+    def _switch_to_training(self, data=None):
         if data:
             robot, enemy = data
             self.__training.set_data(robot, enemy)
         self.apply_widget_set(self.__training)
 
     def __use_workbench(self, direction: Direction, controllable: Controllable):
-        self.__state_machine.change_state(State.Workbench, SaveData.instance())
+        self.__state_machine.change_state(QrogueCUI._State.Workbench, SaveData.instance())
 
-    def switch_to_workbench(self, data=None):
+    def _switch_to_workbench(self, data=None):
         self.apply_widget_set(self.__workbench)
 
     def __show_world(self, world: WorldMap = None) -> None:
@@ -547,25 +614,26 @@ class QrogueCUI(PyCUI):
                 if Ach.is_most_recent_unlock(Unlocks.Spaceship, SaveData.instance().story_progress):
 
                     def callback_():
-                        self.__state_machine.change_state(State.Spaceship, None)
+                        self.__state_machine.change_state(QrogueCUI._State.Spaceship, None)
                         self.__pause.set_data(None, "Spaceship", SaveData.instance().achievement_manager)
                         if not SaveData.instance().achievement_manager.check_achievement(achievements.EnteredPauseMenu):
                             Popup.generic_info("Pause", HelpText.get(HelpTextType.Pause))
                             SaveData.instance().achievement_manager.add_to_achievement(achievements.EnteredPauseMenu, 1)
 
                     texts = TransitionText.exam_spaceship()
-                    self.__state_machine.change_state(State.Transition, (texts, callback_))
+                    self.__state_machine.change_state(QrogueCUI._State.Transition, (texts, callback_))
+                    # self._execute_transition(texts, QrogueCUI._State.Spaceship, None)
                 else:
-                    self.__state_machine.change_state(State.Spaceship, None)
+                    self.__state_machine.change_state(QrogueCUI._State.Spaceship, None)
                     self.__pause.set_data(None, "Spaceship", SaveData.instance().achievement_manager)
             else:
                 # return to the main screen if the Spaceship is not yet unlocked
-                self.__state_machine.change_state(State.Menu, None)
+                self.__state_machine.change_state(QrogueCUI._State.Menu, None)
         else:
-            self.__state_machine.change_state(State.Navigation, world)
+            self.__state_machine.change_state(QrogueCUI._State.Navigation, world)
             self.__pause.set_data(None, world.name, SaveData.instance().achievement_manager)
 
-    def switch_to_navigation(self, data) -> None:
+    def _switch_to_navigation(self, data) -> None:
         if data is not None:
             self.__navigation.set_data(data)
         StoryNarration.entered_navigation()
@@ -582,7 +650,7 @@ class QrogueCUI(PyCUI):
             OverWorldKeyLogger.instance().level_start(level.internal_name)
 
             self.__pause.set_data(robot, level.name, SaveData.instance().achievement_manager)
-            self.__state_machine.change_state(State.Explore, level)
+            self.__state_machine.change_state(QrogueCUI._State.Explore, level)
         else:
             Logger.instance().throw(ValueError(f"Tried to start a level with a non-Robot: {robot}"))
 
@@ -591,44 +659,44 @@ class QrogueCUI(PyCUI):
             if confirmed:
                 MapManager.instance().reload()
             elif Ach.check_unlocks(Unlocks.Spaceship, SaveData.instance().story_progress):
-                self.__state_machine.change_state(State.Spaceship, None)
+                self.__state_machine.change_state(QrogueCUI._State.Spaceship, None)
             else:
-                self.__state_machine.change_state(State.Menu, None)
+                self.__state_machine.change_state(QrogueCUI._State.Menu, None)
         ConfirmationPopup.ask(Config.system_name(), f"Your Robot is out of energy. "
                                                     f"{MapManager.instance().get_restart_message()}", callback)
 
     def __start_fight(self, robot: Robot, enemy: Enemy, direction: Direction) -> None:
-        self.__state_machine.change_state(State.Fight, (robot, enemy))
+        self.__state_machine.change_state(QrogueCUI._State.Fight, (robot, enemy))
 
     def __start_boss_fight(self, robot: Robot, boss: Boss, direction: Direction):
-        self.__state_machine.change_state(State.BossFight, (robot, boss))
+        self.__state_machine.change_state(QrogueCUI._State.BossFight, (robot, boss))
 
-    def switch_to_pause(self, data=None) -> None:
+    def _switch_to_pause(self, data=None) -> None:
         self.apply_widget_set(self.__pause)
 
     def __pause_game(self) -> None:
-        self.__state_machine.change_state(State.Pause, None)
+        self.__state_machine.change_state(QrogueCUI._State.Pause, None)
         if not SaveData.instance().achievement_manager.check_achievement(achievements.EnteredPauseMenu):
             Popup.generic_info("Pause", HelpText.get(HelpTextType.Pause))
             SaveData.instance().achievement_manager.add_to_achievement(achievements.EnteredPauseMenu, 1)
 
-    def switch_to_explore(self, data) -> None:
+    def _switch_to_explore(self, data) -> None:
         if data is not None:
             map = data
             self.__explore.set_data(map)
         self.apply_widget_set(self.__explore)
 
     def __continue_explore(self) -> None:
-        self.__state_machine.change_state(State.Explore, None)
+        self.__state_machine.change_state(QrogueCUI._State.Explore, None)
 
-    def switch_to_fight(self, data) -> None:
+    def _switch_to_fight(self, data) -> None:
         if data is not None:
             robot = data[0]
             enemy = data[1]
             self.__fight.set_data(robot, enemy)
         self.apply_widget_set(self.__fight)
 
-    def switch_to_boss_fight(self, data) -> None:
+    def _switch_to_boss_fight(self, data) -> None:
         if data is not None:
             player = data[0]
             boss = data[1]
@@ -636,9 +704,9 @@ class QrogueCUI(PyCUI):
         self.apply_widget_set(self.__boss_fight)
 
     def __open_riddle(self, robot: Robot, riddle: Riddle):
-        self.__state_machine.change_state(State.Riddle, (robot, riddle))
+        self.__state_machine.change_state(QrogueCUI._State.Riddle, (robot, riddle))
 
-    def switch_to_riddle(self, data) -> None:
+    def _switch_to_riddle(self, data) -> None:
         if data is not None:
             player = data[0]
             riddle = data[1]
@@ -646,9 +714,9 @@ class QrogueCUI(PyCUI):
         self.apply_widget_set(self.__riddle)
 
     def __open_challenge(self, robot: Robot, challenge: Challenge):
-        self.__state_machine.change_state(State.Challenge, (robot, challenge))
+        self.__state_machine.change_state(QrogueCUI._State.Challenge, (robot, challenge))
 
-    def switch_to_challenge(self, data) -> None:
+    def _switch_to_challenge(self, data) -> None:
         if data is not None:
             robot = data[0]
             challenge = data[1]
@@ -656,16 +724,22 @@ class QrogueCUI(PyCUI):
         self.apply_widget_set(self.__challenge)
 
     def __visit_shop(self, robot: Robot, items: "list of ShopItems"):
-        self.__state_machine.change_state(State.Shop, (robot, items))
+        self.__state_machine.change_state(QrogueCUI._State.Shop, (robot, items))
 
-    def switch_to_shop(self, data) -> None:
+    def _switch_to_shop(self, data) -> None:
         if data is not None:
             player = data[0]
             items = data[1]
             self.__shop.set_data(player, items)
         self.apply_widget_set(self.__shop)
 
-    def switch_to_blank_screen(self, data) -> None:
+    def _execute_transition(self, text_scrolls: List[TransitionWidgetSet.TextScroll], next_state: "QrogueCUI._State",
+                            next_data):
+        def callback():
+            self.__state_machine.change_state(next_state, next_data)
+        self.__state_machine.change_state(QrogueCUI._State.Transition, (text_scrolls, callback))
+
+    def _switch_to_transition(self, data) -> None:
         texts, continue_ = data
         self.__transition.set_data(texts, continue_)
         self.apply_widget_set(self.__transition)
@@ -673,72 +747,3 @@ class QrogueCUI(PyCUI):
     def __render(self, renderables: List[Renderable]):
         for r in renderables:
             r.render()
-
-
-class State(Enum):
-    Menu = 0
-    Pause = 1
-    Explore = 2
-    Fight = 3
-    Shop = 4
-    Riddle = 5
-    BossFight = 6
-
-    Spaceship = 7
-    Workbench = 8
-    Navigation = 9
-    Training = 10
-
-    Challenge = 11
-
-    Transition = 12    # for atmospheric transitions and elements
-
-
-class StateMachine:
-    def __init__(self, renderer: QrogueCUI):
-        self.__renderer = renderer
-        self.__cur_state = None
-        self.__prev_state = None
-
-    @property
-    def cur_state(self) -> State:
-        return self.__cur_state
-
-    @property
-    def prev_state(self) -> State:
-        return self.__prev_state
-
-    def change_state(self, state: State, data) -> None:
-        if self.__cur_state is not State.Transition:
-            # don't overwrite previous prev_state if the new one would be BlankScreen
-            self.__prev_state = self.__cur_state
-        self.__cur_state = state
-
-        if self.__cur_state == State.Menu:
-            self.__renderer.switch_to_menu(data)
-        elif self.__cur_state == State.Explore:
-            self.__renderer.switch_to_explore(data)
-        elif self.__cur_state == State.Fight:
-            self.__renderer.switch_to_fight(data)
-        elif self.__cur_state == State.Riddle:
-            self.__renderer.switch_to_riddle(data)
-        elif self.__cur_state == State.Challenge:
-            self.__renderer.switch_to_challenge(data)
-        elif self.__cur_state == State.Shop:
-            self.__renderer.switch_to_shop(data)
-        elif self.__cur_state == State.BossFight:
-            self.__renderer.switch_to_boss_fight(data)
-        elif self.__cur_state == State.Pause:
-            self.__renderer.switch_to_pause()
-
-        elif self.__cur_state == State.Spaceship:
-            self.__renderer.switch_to_spaceship(data)
-        elif self.__cur_state == State.Training:
-            self.__renderer.switch_to_training(data)
-        elif self.__cur_state == State.Workbench:
-            self.__renderer.switch_to_workbench(data)
-        elif self.__cur_state == State.Navigation:
-            self.__renderer.switch_to_navigation(data)
-
-        elif self.__cur_state == State.Transition:
-            self.__renderer.switch_to_blank_screen(data)
