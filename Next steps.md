@@ -1,7 +1,7 @@
 For upcoming v0.4
 
 # Must haves #
-- template email, gather contacts, website text
+- +template email, gather contacts, website text
 
 # Should haves #
 - implement remaining changes proposed via Feedback
@@ -14,13 +14,13 @@ For upcoming v0.4
 
 # For v0.5 #
 - Popup overhaul
-  - provide different positions like Top, Left, Right, Bot, Center, ...
+  - +provide different positions like Top, Left, Right, Bot, Center, ...
   - tweak padding
-  - add default Speaker to grammar
+  - +add default Speaker to grammar
   - +add page indication
-  - define in grammar whether the Popup is important enough to be reopened
-  - define intro message on level start? might make event stuff a lot easier
-  - Confirmation popup with custom choices and arrow controls?
+  - +define in grammar whether the Popup is important enough to be reopened
+  - +define intro message on level start? might make event stuff a lot easier
+  - +Confirmation popup with custom choices and arrow controls?
   - +if alternative message is *None or *null etc. no message is shown if event is satisfied
 - Automated testing
 - Documentation
