@@ -263,6 +263,10 @@ class TransitionWidgetSet(MyWidgetSet):
             return TransitionWidgetSet.TextScroll(text, 0, text_delay, clear_previous)
 
         def __init__(self, text: str, char_pause: float, text_delay: float = 0, clear_previous: bool = False):
+            assert len(text) > 0, "Avoid empty texts by defining a text_delay instead!"
+            assert char_pause >= 0, "Negative char_pauses are not allowed!"
+            assert text_delay >= 0, "Negative text_delays are not allowed!"
+
             self.__text = text
             self.__char_pause = char_pause
             self.__text_delay = text_delay
