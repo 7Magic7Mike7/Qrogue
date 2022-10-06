@@ -2,6 +2,7 @@ import enum
 from typing import List
 
 from qrogue.graphics.popups import Popup
+from qrogue.graphics.widgets import TransitionWidgetSet as TWS
 from qrogue.management import SaveData
 from qrogue.util import ColorConfig
 from qrogue.util.help_texts import StoryText, StoryTextType, TutorialText, TutorialTextType
@@ -62,8 +63,9 @@ class StoryNarration:
 
 class TransitionText:
     @staticmethod
-    def exam_spaceship() -> List[str]:
+    def exam_spaceship() -> List[TWS.TextScroll]:
         return [
-            "A couple of days later...",
-            "Mike received a letter stating he was chosen to join Mission Quniverse!",
+            TWS.TextScroll.fast("A couple of days later..."),
+            TWS.TextScroll.medium("Mike received a letter stating he was chosen to join Mission Quniverse!",
+                                  clear_previous=True),
         ]

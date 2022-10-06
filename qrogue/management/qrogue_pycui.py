@@ -617,17 +617,7 @@ class QrogueCUI(PyCUI):
         if world is None:
             if Ach.check_unlocks(Unlocks.Spaceship, SaveData.instance().story_progress):
                 if Ach.is_most_recent_unlock(Unlocks.Spaceship, SaveData.instance().story_progress):
-
-                    def callback_():
-                        self.__state_machine.change_state(QrogueCUI._State.Spaceship, None)
-                        self.__pause.set_data(None, "Spaceship", SaveData.instance().achievement_manager)
-                        if not SaveData.instance().achievement_manager.check_achievement(achievements.EnteredPauseMenu):
-                            Popup.generic_info("Pause", HelpText.get(HelpTextType.Pause))
-                            SaveData.instance().achievement_manager.add_to_achievement(achievements.EnteredPauseMenu, 1)
-
-                    texts = TransitionText.exam_spaceship()
-                    self.__state_machine.change_state(QrogueCUI._State.Transition, (texts, callback_))
-                    # self._execute_transition(texts, QrogueCUI._State.Spaceship, None)
+                    self._execute_transition(TransitionText.exam_spaceship(), QrogueCUI._State.Spaceship, None)
                 else:
                     self.__state_machine.change_state(QrogueCUI._State.Spaceship, None)
                     self.__pause.set_data(None, "Spaceship", SaveData.instance().achievement_manager)
