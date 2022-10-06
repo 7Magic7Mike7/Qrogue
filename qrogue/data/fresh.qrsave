@@ -2,9 +2,7 @@
 [Robots]
 [Collectibles]
 [Achievements]
-Story>q<4>q<0>q<10>q<
-CompletedTutorial>q<4>q<0>q<1>q<
-EnteredPauseMenu>q<4>q<0.0>q<1.0>q<
+EnteredPauseMenu>q<5>q<0.0>q<1.0>q<
 CompletedExpedition>q<6>q<0.0>q<1000.0>q<
-w0>q<0>q<0>q<8>q<
+w0>q<0>q<0>q<1>q<
 
