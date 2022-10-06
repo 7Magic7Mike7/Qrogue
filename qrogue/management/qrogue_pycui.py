@@ -137,6 +137,7 @@ class QrogueCUI(PyCUI):
         super().__init__(width, height)
         self.set_title(f"Qrogue {Config.version()}")
         self.__controls = Controls(self._handle_key_presses)
+        self.__seed = seed
         Logger(seed)
         RandomManager(seed)
         OverWorldKeyLogger().reinit(seed, "meta")
@@ -251,6 +252,10 @@ class QrogueCUI(PyCUI):
     @property
     def controls(self) -> Controls:
         return self.__controls
+
+    @property
+    def seed(self) -> int:
+        return self.__seed
 
     def set_refresh_timeout(self, timeout: int):
         """
