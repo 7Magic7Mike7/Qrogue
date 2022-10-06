@@ -1,7 +1,7 @@
 import curses
 import time
 from enum import Enum
-from typing import List, Callable, Optional
+from typing import List, Callable, Optional, Any
 
 from py_cui import PyCUI
 from py_cui import popups
@@ -729,9 +729,11 @@ class QrogueCUI(PyCUI):
         self.apply_widget_set(self.__shop)
 
     def _execute_transition(self, text_scrolls: List[TransitionWidgetSet.TextScroll], next_state: "QrogueCUI._State",
-                            next_data):
+                            next_data: Any, additional_callback: Optional[Callable] = None):
         def callback():
             self.__state_machine.change_state(next_state, next_data)
+            if additional_callback is not None:
+                additional_callback()
         self.__state_machine.change_state(QrogueCUI._State.Transition, (text_scrolls, callback))
 
     def _switch_to_transition(self, data) -> None:
