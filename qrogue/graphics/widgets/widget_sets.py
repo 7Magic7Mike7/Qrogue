@@ -351,8 +351,12 @@ class TransitionWidgetSet(MyWidgetSet):
         # todo autoscroll?
 
     @property
+    def at_transition_end(self) -> bool:
+        return self.__index >= len(self.__text_scrolls)
+
+    @property
     def _cur_text_scroll(self) -> TextScroll:
-        assert self.__index < len(self.__text_scrolls)
+        assert not self.at_transition_end
         return self.__text_scrolls[self.__index]
 
     def _stop_timer(self):
@@ -378,7 +382,7 @@ class TransitionWidgetSet(MyWidgetSet):
 
     def __next_section(self):
         if self.__wait_for_confirmation:
-            if self.__index < len(self.__text_scrolls):
+            if not self.at_transition_end:
                 if self._cur_text_scroll.clear_previous:
                     self.__display_text = ""
                 self.__update_confirm_text(confirm=False)
@@ -395,12 +399,12 @@ class TransitionWidgetSet(MyWidgetSet):
         self._stop_timer()
         # at this point there is only one active thread (the other one was stopped if it existed)
 
-        if self.__index < len(self.__text_scrolls):
+        if not self.at_transition_end:
             # immediately show the whole content of the current text scroll in case the user manually proceeded
             self.__display_text += self._cur_text_scroll.skip_to_end()
 
             self.__index += 1
-            if self.__index < len(self.__text_scrolls):
+            if not self.at_transition_end:
                 if self._cur_text_scroll.clear_previous:
                     self.__update_confirm_text(confirm=True, transition_end=False)
                 else:
@@ -419,7 +423,7 @@ class TransitionWidgetSet(MyWidgetSet):
 
     def __render_text_scroll(self):
         # check is necessary due to multiple threads working with __index
-        if self.__index >= len(self.__text_scrolls):
+        if self.at_transition_end:
             return
 
         if GameplayConfig.get_option_value(Options.auto_skip_text_animation):
@@ -429,7 +433,7 @@ class TransitionWidgetSet(MyWidgetSet):
         next_char = self._cur_text_scroll.next()
         if next_char is None:
             self.__index += 1
-            if self.__index < len(self.__text_scrolls):
+            if not self.at_transition_end:
                 # continue with the next text scroll
                 self.__set_refresh_timeout()    # update timeout
 
