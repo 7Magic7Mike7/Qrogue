@@ -32,7 +32,7 @@ SR (Spawn):
 # _ _ t _ _ #
 # _ _ _ _ _ #
 #############
-m 1 *tutTeleporter trigger *learnedAboutFleeing
+m 1 *tutTeleporter trigger *global_event_learnedAboutFleeing
 t GlobalAchievement *learnedAboutFleeing
 t teleport *back
 t GlobalAchievement *learnedAboutFleeing
