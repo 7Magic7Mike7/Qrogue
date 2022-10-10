@@ -777,7 +777,10 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
                 tile.set_explanation(msg)
                 ref_index += 1
             if ctx.TRIGGER_LITERAL():
-                event_id = parser_util.normalize_reference(ctx.REFERENCE(ref_index).getText())
+                if ctx.GLOBAL_EVENT_REFERENCE():
+                    event_id = parser_util.normalize_reference(ctx.GLOBAL_EVENT_REFERENCE().getText())
+                else:
+                    event_id = parser_util.normalize_reference(ctx.REFERENCE(ref_index).getText())
                 tile.set_event(event_id)
         return tile
 

@@ -47,7 +47,7 @@ class MapConfig:
 
     @staticmethod
     def global_event_prefix() -> str:
-        return "globalEvent_"
+        return "global_event_"
 
     @staticmethod
     def next_map_string() -> str:
