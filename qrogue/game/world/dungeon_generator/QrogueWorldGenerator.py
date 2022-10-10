@@ -41,6 +41,7 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
         self.__show_message = show_message_callback
 
         self.__default_speaker = Config.system_name()
+        self.__messages: Dict[str, Message] = {}
 
         self.__hallways_by_id = {}
         self.__created_hallways = {}
@@ -130,6 +131,36 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
                                 "Placing an empty room instead.")
             # row.append(rooms.Placeholder.empty_room())
         return SpawnRoom(self.__load_map)
+
+    def __load_message(self, reference: QrogueWorldParser.REFERENCE) -> Message:
+        ref = reference.getText()
+        if ref in self.__messages:
+            return self.__messages[ref]
+        norm_ref = parser_util.normalize_reference(ref)
+        if norm_ref in self.__messages:
+            return self.__messages[norm_ref]
+        parser_util.warning(f"Unknown text reference: {ref}. Returning \"Message not found!\"")
+        return Message.error("Message not found!")
+
+    ##### Message area ######
+
+    def visitMessage(self, ctx: QrogueWorldParser.MessageContext) -> Message:
+        return parser_util.parse_message(ctx, self.__default_speaker)
+
+    def visitMessages(self, ctx: QrogueWorldParser.MessagesContext):
+        self.__messages.clear()
+        if ctx.MSG_SPEAKER():
+            self.__default_speaker = parser_util.parse_speaker(ctx, text_index=None)
+        for msg in ctx.message():
+            message = self.visit(msg)
+            self.__messages[message.id] = message
+        for message in self.__messages.values():
+            if message.alt_message_ref and message.alt_message_ref in self.__messages:
+                alt_message = self.__messages[message.alt_message_ref]
+                try:
+                    message.resolve_message_ref(alt_message)
+                except ValueError as ve:
+                    parser_util.warning("Message-cycle found: " + str(ve))
 
     ##### Hallway area #####
 
@@ -302,11 +333,8 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
         if ctx.message_body():
             title, priority, position, msg = parser_util.parse_message_body(ctx.message_body(), self.__default_speaker)
             message = Message.create_with_title("_map_description", title, msg, priority, position)
-
-            if ctx.MSG_EVENT():
-                ref = parser_util.normalize_reference(ctx.REFERENCE().getText())
-                if self.__check_achievement(ref):
-                    message = Message.create_with_exception("_map_description", title, msg, priority, ref)
+        elif ctx.REFERENCE():
+            message = self.__load_message(ctx.REFERENCE())
         else:
             message = None
         return MapMetaData(name, message, False, self.__show_description)
@@ -314,6 +342,10 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
     ##### Start area #####
 
     def visitStart(self, ctx: QrogueWorldParser.StartContext) -> Tuple[str, List[List[Room]]]:
+        # prepare messages (needs to be done first since meta data might reference it
+        if ctx.messages():
+            self.visit(ctx.messages())
+
         self.__meta_data = self.visit(ctx.meta())
 
         # prepare hallways first because they are standalone
