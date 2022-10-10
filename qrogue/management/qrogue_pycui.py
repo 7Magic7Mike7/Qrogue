@@ -206,9 +206,8 @@ class QrogueCUI(PyCUI):
                                               self.__continue_explore)
         self.__shop = ShopWidgetSet(self.__controls, self.__render, Logger.instance(), self, self.__continue_explore)
 
-        self.__cur_widget_set = None
-        self.__init_keys()
-
+        self._init_keys()
+        self.__cur_widget_set: MyWidgetSet = self.__transition      # avoid None value
         self.__state_machine.change_state(QrogueCUI._State.Menu, seed)
 
         # init spaceship
