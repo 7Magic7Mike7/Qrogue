@@ -253,7 +253,7 @@ default *energySmall
 
 *einstein Speaker "0" "Einstein called this phenomenon //05'spooky action at a distance'// because for him it didn't make sense. He always said that nothing is faster than light. Yet //02Entanglement// seems to be instant, hence faster than light. "
 
-*inverseEntanglement Speaker "0" prio "There is also a second kind of //02Entanglement// - let's call it //05inverse// //02Entanglement//. Try to reproduce it." "Hint: You'll need all of your //02Gates//." 
+*inverseEntanglement Speaker "0" prio "There is also a second kind of //02Entanglement// - let's call it //05inverse// //02Entanglement//. Try to reproduce it." "Hint: You'll need //05all// of your //02Gates//." 
 
 *entangledDoorZ1 Speaker "0" "Alright, now try to reproduce //02Entanglement// in your //02Circuit//." when *enteredXB then *entangledDoorZ2
 *entangledDoorZ2 Speaker "0" prio "But not only digits can be entangled. There is another type of //02Door// we previously kept a secret: //02Entangled Doors//. But there is one major difference to the entangled digits. //02Entangled Doors// are //05inversily// entangled. Meaning if one //05collapses to 0// the other will //05collapse to 1//. When you //03walk// through one //02Entangled Door// it will //05collapse to 0//. Therefore, you can walk through it while the other //02Entangled Door// will be closed forever." when *enteredZB then *entangledDoorGeneral
