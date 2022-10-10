@@ -119,7 +119,7 @@ default *energySmall
 
 *tutSingleX Speaker "0" "One more thing:" "We took one of your //02X Gates//. You will later see why."
 
-*riddleNote Speaker "0" prio "The //01?// you see on the left is a //02Riddle//. It's very similar to a //02Puzzle//, yet a bit different. It also shows you a //02Target State// you need to //03reach// to solve it but you //05cannot// //03try// it arbitrary //05often//. Instead, it has a predefined //05number of times// you can //03edit// your //02Circuit// before it vanishes together with its //02Reward// - which is often //05better// than for //02Puzzles//."
+*riddleNote Speaker "0" prio pos 5 "The //01?// you see on the left is a //02Riddle//. It's very similar to a //02Puzzle//, yet a bit different. It also shows you a //02Target State// you need to //03reach// to solve it but you //05cannot// //03try// it arbitrary //05often//. Instead, it has a predefined //05number of times// you can //03edit// your //02Circuit// before it vanishes together with its //02Reward// - which is often //05better// than for //02Puzzles//."
 
 *tutCXGate Speaker "0" prio "You picked up: //02CX Gate//" "//02CX Gate// is short for //02Controlled X Gate//. In contrast to the normal //02X Gate// which is placed on //05one qubit// - hence, a //02Single Qubit Gate// - this one is a //02Multi Qubit Gate//. To be precice: it needs to be placed on //05two qubits//. First you have to //03place// the //05C// part. It controls whether the //05X// part is active or not. So if the //02Qubit// of //05C// is //051// the //02Qubit// of //05X// will be //05adapted// accordingly. Else it won't do anything."
 
