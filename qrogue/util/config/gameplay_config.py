@@ -249,6 +249,10 @@ class Options(Enum):
                               "process.")
     allow_multi_move = ("Allow multi move", _get_boolean_callback(), 2, 0,
                         "Allows you to move multiple tiles at once by pressing a number followed by a direction.")
+    auto_skip_text_animation = ("Auto skip text animation", _get_boolean_callback(), 2, 0,
+                                "During some special scene transitions there will be some animated text describing "
+                                "what happened in-between story sections. Skipping this means that the whole text "
+                                "will be shown at once.")
 
     def __init__(self, name: str, get_value: Tuple[Callable[[int], str], Callable[[str], Any]], num_of_values: int,
                  default_index: int, description: str):
@@ -296,6 +300,7 @@ class GameplayConfig:
         Options.allow_implicit_removal: Options.allow_implicit_removal.default_index,
 
         Options.allow_multi_move: Options.allow_multi_move.default_index,
+        Options.auto_skip_text_animation: Options.auto_skip_text_animation.default_index
     }
 
     @staticmethod

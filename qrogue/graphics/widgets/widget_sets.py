@@ -422,6 +422,10 @@ class TransitionWidgetSet(MyWidgetSet):
         if self.__index >= len(self.__text_scrolls):
             return
 
+        if GameplayConfig.get_option_value(Options.auto_skip_text_animation):
+            self.__display_text += self._cur_text_scroll.skip_to_end()
+            self.__update_screen()
+
         next_char = self._cur_text_scroll.next()
         if next_char is None:
             self.__index += 1
