@@ -318,7 +318,8 @@ class TransitionWidgetSet(MyWidgetSet):
                  base_render_callback: Callable[[List[Renderable]], None],
                  set_refresh_timeout_callback: Callable[[int], None]):
         super().__init__(logger, root, base_render_callback)
-        self.__set_refresh_timeout = lambda : set_refresh_timeout_callback(int(self._cur_text_scroll.char_pause * 1000))
+        self.__set_refresh_timeout = lambda: set_refresh_timeout_callback(int(self._cur_text_scroll.char_pause * 1000))
+        self.__reset_refresh_timeout = lambda: set_refresh_timeout_callback(-1)
 
         self.__continue: Optional[Callable[[], None]] = None
         self.__text_scrolls: List[TransitionWidgetSet.TextScroll] = []
@@ -380,6 +381,11 @@ class TransitionWidgetSet(MyWidgetSet):
         self.__wait_for_confirmation = confirm
         self.__confirm.render()
 
+        if confirm:
+            self.__reset_refresh_timeout()
+        else:
+            self.__set_refresh_timeout()
+
     def __next_section(self):
         if self.__wait_for_confirmation:
             if not self.at_transition_end:
@@ -409,7 +415,6 @@ class TransitionWidgetSet(MyWidgetSet):
                     self.__update_confirm_text(confirm=True, transition_end=False)
                 else:
                     # start rendering the new one
-                    self.__set_refresh_timeout()
                     # don't wait for text delay since the player also didn't want to wait for the characters
                     self.__render_text_scroll()
                     self.__update_confirm_text(confirm=False)
@@ -435,12 +440,11 @@ class TransitionWidgetSet(MyWidgetSet):
             self.__index += 1
             if not self.at_transition_end:
                 # continue with the next text scroll
-                self.__set_refresh_timeout()    # update timeout
-
                 if self._cur_text_scroll.clear_previous:
                     self._stop_timer()
                     self.__update_confirm_text(confirm=True, transition_end=False)
                 else:
+                    self.__set_refresh_timeout()    # update timeout
                     self.__timer = Timer(self._cur_text_scroll.text_delay, self.__render_text_scroll)
                     self.__timer.start()
             else:
@@ -462,7 +466,6 @@ class TransitionWidgetSet(MyWidgetSet):
         self.__index = 0
 
         self.__update_confirm_text(confirm=False)
-        self.__set_refresh_timeout()
         self.__timer = Timer(self._cur_text_scroll.text_delay, self.__render_text_scroll)
         self.__timer.start()
 

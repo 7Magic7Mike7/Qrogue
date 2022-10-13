@@ -259,11 +259,24 @@ class QrogueCUI(PyCUI):
     def set_refresh_timeout(self, timeout: int):
         """
 
-        :param timeout: timeout in ms
+        :param timeout: timeout in ms or -1 for no timeout
         :return: None
         """
         self._refresh_timeout = timeout
         if self._stdscr is not None:
+            # handle the special case of stopping the draw-thread
+            if self._refresh_timeout < 0:
+                # we have to redraw manually since most likely the last update wasn't recognized by the draw-thread yet
+                # calls are taken directly from super._draw() while ignoring input handling and logging
+                self._stdscr.erase()
+                # Draw status/title bar, and all widgets. Selected widget will be bolded.
+                self._draw_status_bars(self._stdscr, self._height, self._width)
+                self._draw_widgets()
+                # draw the popup if required (although we most likely won't use popups during automated actions)
+                if self._popup is not None:
+                    self._popup._draw()
+                self._stdscr.refresh()
+
             # since _draw is only called once, we have to set the timeout manually for the screen
             self._stdscr.timeout(self._refresh_timeout)
 
