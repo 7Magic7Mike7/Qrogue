@@ -312,7 +312,12 @@ class HudWidget(Widget):
                 text += f"{self.__robot.backpack.coin_count}$  \t"
         if HudConfig.ShowFPS and self.__render_duration:
             text += f"\t\t{self.__render_duration:.2f} ms"
-        self.widget.set_title(f"{text}{MyMultiWidget.get_title_separator()}{self.__details}")
+
+        if Config.debugging():
+            self.widget.set_title(f"{text}{MyMultiWidget.get_title_separator()}{self.__details}"
+                                  f"{MyMultiWidget.get_title_separator()}{Config.frame_count()}")
+        else:
+            self.widget.set_title(f"{text}{MyMultiWidget.get_title_separator()}{self.__details}")
 
     def render_reset(self) -> None:
         self.widget.set_title("")

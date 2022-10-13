@@ -5,6 +5,7 @@ from qrogue.util.config import CheatConfig, GameplayConfig, PathConfig, TestConf
 
 
 class Config:   # todo make singleton and handle access to other configs?
+    __frame_count = 0
     MAX_SEED = 1000000
     __VERSION = "v0.4.2"
     __GAME_CONFIG = "qrogue_game.config"
@@ -156,3 +157,11 @@ class Config:   # todo make singleton and handle access to other configs?
     @staticmethod
     def skip_persisting() -> bool:
         return TestConfig.is_active()
+
+    @staticmethod
+    def inc_frame_count():
+        Config.__frame_count += 1
+
+    @staticmethod
+    def frame_count() -> int:
+        return Config.__frame_count

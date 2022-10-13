@@ -1,5 +1,6 @@
 from qrogue.graphics.widgets import TransitionWidgetSet
 from qrogue.management import QrogueCUI, TransitionText
+from qrogue.util import Config
 
 
 class TestQrogueCUI(QrogueCUI):
@@ -17,4 +18,10 @@ class TestQrogueCUI(QrogueCUI):
         super(TestQrogueCUI, self).start()
 
 
-TestQrogueCUI(7).start()
+def transition_test():
+    TestQrogueCUI(7).start()
+
+
+if __name__ == "__main__":
+    Config.activate_debugging()
+    transition_test()

@@ -229,6 +229,9 @@ class QrogueCUI(PyCUI):
                                             MapManager.instance().load_first_uncleared_map, self.__start_training)
         self.__spaceship.set_data(self.__spaceship_map)
 
+        if Config.debugging():
+            self.set_on_draw_update_func(Config.inc_frame_count)
+
     def _refresh_height_width(self) -> None:
         try:
             super(QrogueCUI, self)._refresh_height_width()

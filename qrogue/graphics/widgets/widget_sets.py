@@ -34,11 +34,21 @@ class MyWidgetSet(WidgetSet, Renderable, ABC):
         hud = widget_set.add_block_label('HUD', 0, 0, row_span=UIConfig.HUD_HEIGHT, column_span=UIConfig.HUD_WIDTH,
                                          center=False)
         hud.toggle_border()
+        widgets = [hud]
+        width = UIConfig.WINDOW_WIDTH-UIConfig.HUD_WIDTH
+
+        if Config.debugging():
+            width -= 1  # we need space for frame count
+            frame_count = widget_set.add_block_label('Frame count', 0, UIConfig.WINDOW_WIDTH - 1,
+                                                     row_span=UIConfig.HUD_HEIGHT, column_span=1, center=False)
+            widgets.append(frame_count)
 
         situational_hud = widget_set.add_block_label('Situational', 0, UIConfig.HUD_WIDTH, row_span=UIConfig.HUD_HEIGHT,
-                                                     column_span=UIConfig.WINDOW_WIDTH-UIConfig.HUD_WIDTH, center=False)
+                                                     column_span=width, center=False)
         situational_hud.toggle_border()
-        return HudWidget(MyMultiWidget([hud, situational_hud]))
+        widgets.append(situational_hud)
+
+        return HudWidget(MyMultiWidget(widgets))
 
     BACK_STRING = "-Back-"
 
@@ -341,6 +351,10 @@ class TransitionWidgetSet(MyWidgetSet):
                                       column_span=UIConfig.TRANSITION_SCREEN_WIDTH, center=True)
         self.__confirm = SimpleWidget(widget)
 
+        if Config.debugging():
+            widget = self.add_block_label("Frame count", 0, UIConfig.WINDOW_WIDTH-1)
+            self.__frame_count = SimpleWidget(widget)
+
         #raise Exception(
         """
         Continue: 
@@ -368,6 +382,10 @@ class TransitionWidgetSet(MyWidgetSet):
     def __update_screen(self):
         self.__text.set_data(self.__display_text)
         self.__text.render()
+
+        if Config.debugging():
+            self.__frame_count.set_data(Config.frame_count())
+            self.__frame_count.render()
 
     def __update_confirm_text(self, confirm: bool, transition_end: bool = False):
         if confirm:
