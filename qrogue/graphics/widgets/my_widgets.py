@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from typing import List, Any, Callable, Tuple, Optional
 
 from py_cui import ColorRule
+from py_cui.widget_set import WidgetSet
 from py_cui.widgets import BlockLabel
 
 from qrogue.game.logic import StateVector
@@ -49,8 +50,10 @@ class MyBaseWidget(BlockLabel, WidgetWrapper):
         return super(MyBaseWidget, self).get_title()
 
     def add_text_color_rule(self, regex: str, color: int, rule_type: str, match_type: str = 'line',
-                            region: List[int] = [0, 1], include_whitespace: bool = False, selected_color = None)\
+                            region: List[int] = None, include_whitespace: bool = False, selected_color=None)\
             -> None:
+        if region is None:
+            region = [0, 1]
         super(MyBaseWidget, self).add_text_color_rule(regex, color, rule_type, match_type, region, include_whitespace,
                                                       selected_color)
 
@@ -194,9 +197,10 @@ class MyMultiWidget(WidgetWrapper):
         return titles
 
     def add_text_color_rule(self, regex: str, color: int, rule_type: str, match_type: str = 'line',
-                            region: List[int] = [0, 1], include_whitespace: bool = False, selected_color=None) -> None:
+                            region: List[int] = None, include_whitespace: bool = False, selected_color=None) -> None:
         """
         Applies the color rule to all of its widgets
+
         :param regex:
         :param color:
         :param rule_type:
@@ -206,6 +210,9 @@ class MyMultiWidget(WidgetWrapper):
         :param selected_color:
         :return:
         """
+        if region is None:
+            region = [0, 1]
+
         for w in self.__widgets:
             w.add_text_color_rule(regex, color, rule_type, match_type, region, include_whitespace, selected_color)
 
@@ -223,14 +230,14 @@ class MyMultiWidget(WidgetWrapper):
 
 
 class Widget(Renderable, ABC):
-    __MOVE_FOCUS = None
+    __MOVE_FOCUS: Optional[Callable[[WidgetWrapper, WidgetSet], None]] = None
 
     @staticmethod
-    def set_move_focus_callback(move_focus: Callable[[WidgetWrapper, Any], None]):
+    def set_move_focus_callback(move_focus: Callable[[WidgetWrapper, WidgetSet], None]):
         Widget.__MOVE_FOCUS = move_focus
 
     @staticmethod
-    def move_focus(widget: "Widget", widget_set: Any):
+    def move_focus(widget: "Widget", widget_set: WidgetSet):
         if Widget.__MOVE_FOCUS:
             Widget.__MOVE_FOCUS(widget.widget, widget_set)
 
@@ -367,7 +374,7 @@ class CircuitWidget(Widget):
         widget.add_key_command(controls.get_keys(Keys.SelectionRight), self.__move_right)
         widget.add_key_command(controls.get_keys(Keys.SelectionDown), self.__move_down)
         widget.add_key_command(controls.get_keys(Keys.SelectionLeft), self.__move_left)
-        #widget.add_key_command(controls.get_keys(Keys.Cancel), self.__abort_placement)
+        # widget.add_key_command(controls.get_keys(Keys.Cancel), self.__abort_placement)     # todo
 
     def __change_position(self, right: bool) -> bool:
         def go_right(position: int) -> Optional[int]:
@@ -437,7 +444,7 @@ class CircuitWidget(Widget):
     def __abort_placement(self):
         if self.__place_holder_data:
             pass
-            #gate, pos, qubit = self.__place_holder_data
+            # gate, pos, qubit = self.__place_holder_data
             # todo
 
     def start_gate_placement(self, gate: Optional[Instruction], pos: int = -1, qubit: int = 0):
@@ -667,8 +674,8 @@ class QubitInfoWidget(Widget):
 
         for i in range(2 ** num_of_qubits):
             bin_num = bin(i)[2:]    # get rid of the '0b' at the beginning of the binary representation
-            bin_num = bin_num.rjust(num_of_qubits, '0')     # add 0s to the beginning (left) by justifying the text to
-                                                            # the right
+            # add 0s to the beginning (left) by justifying the text to the right
+            bin_num = bin_num.rjust(num_of_qubits, '0')
             row = "   ".join(bin_num)  # separate the digits in the string with spaces
             if not self.__left_aligned:
                 row = row[::-1]     # [::-1] reverses the list so q0 is on the left

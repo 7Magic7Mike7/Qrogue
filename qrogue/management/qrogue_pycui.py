@@ -1,10 +1,10 @@
-import curses
 import time
 from enum import Enum
 from typing import List, Callable, Optional, Any
 
 from py_cui import PyCUI
 from py_cui import popups
+from py_cui.widget_set import WidgetSet
 
 from qrogue.game.logic import StateVector, collectibles
 from qrogue.game.logic.actors import Boss, Controllable, Enemy, Riddle, Robot
@@ -142,11 +142,11 @@ class QrogueCUI(PyCUI):
         RandomManager(seed)
         OverWorldKeyLogger().reinit(seed, "meta")
 
-        def move_focus(widget: WidgetWrapper, widget_set):
+        def move_focus(_widget: WidgetWrapper, _widget_set: WidgetSet):
             # this check is necessary for manual widget-set switches due to the call-order (the callback happens before
             # this move_focus here)
-            if widget_set is self.__cur_widget_set:
-                self.move_focus(widget, auto_press_buttons=False)
+            if _widget_set is self.__cur_widget_set:
+                self.move_focus(_widget, auto_press_buttons=False)
         self._auto_focus_buttons = False
         Widget.set_move_focus_callback(move_focus)
 
@@ -174,7 +174,7 @@ class QrogueCUI(PyCUI):
         self.__stop_with_simulation_end = False
         self.__last_input = time.time()
         self.__last_key: Optional[int] = None
-        self.__focused_widget: Optional[Widget] = None
+        self.__focused_widget: Optional[Widget] = self.get_selected_widget()
 
         # INIT WIDGET SETS
         self.__menu = MenuWidgetSet(self.__controls, self.__render, Logger.instance(), self,
@@ -485,7 +485,8 @@ class QrogueCUI(PyCUI):
     def __use_workbench(self, direction: Direction, controllable: Controllable):
         self.__state_machine.change_state(QrogueCUI._State.Workbench, SaveData.instance())
 
-    def _switch_to_workbench(self, data=None):
+    def _switch_to_workbench(self, _=None):
+        # no data parameter needed
         self.apply_widget_set(self.__workbench)
 
     def __show_world(self, world: WorldMap = None) -> None:
@@ -552,8 +553,8 @@ class QrogueCUI(PyCUI):
 
     def _switch_to_explore(self, data) -> None:
         if data is not None:
-            map = data
-            self.__explore.set_data(map)
+            map_ = data
+            self.__explore.set_data(map_)
         self.apply_widget_set(self.__explore)
 
     def __continue_explore(self) -> None:

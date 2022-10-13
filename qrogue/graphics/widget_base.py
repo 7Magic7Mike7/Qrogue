@@ -37,7 +37,7 @@ class WidgetWrapper(ABC):
 
     @abstractmethod
     def add_text_color_rule(self, regex: str, color: int, rule_type: str, match_type: str = 'line',
-                            region: List[int] = [0, 1], include_whitespace: bool = False, selected_color = None)\
+                            region: List[int] = None, include_whitespace: bool = False, selected_color=None)\
             -> None:
         pass
 

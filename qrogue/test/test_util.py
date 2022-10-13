@@ -110,7 +110,7 @@ class DummyWidget(WidgetWrapper):
         pass
 
     def add_text_color_rule(self, regex: str, color: int, rule_type: str, match_type: str = 'line',
-                            region: List[int] = [0, 1], include_whitespace: bool = False, selected_color=None) -> None:
+                            region: List[int] = None, include_whitespace: bool = False, selected_color=None) -> None:
         pass
 
     def activate_individual_coloring(self):
@@ -132,8 +132,8 @@ class DummyWidget(WidgetWrapper):
 class DummySelectionWidget(SelectionWidget):
     def __init__(self, columns: int, is_second: bool = False, stay_selected: bool = False, print_keys: bool = False):
         self.__dummy_widget = DummyWidget()
-        super(DummySelectionWidget, self).__init__(self.__dummy_widget, get_dummy_controls(print_keys), columns, is_second,
-                                                   stay_selected)
+        super(DummySelectionWidget, self).__init__(self.__dummy_widget, get_dummy_controls(print_keys), columns,
+                                                   is_second, stay_selected)
 
     def get_dummy_widget(self) -> DummyWidget:
         return self.__dummy_widget
