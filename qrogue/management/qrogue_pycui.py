@@ -150,7 +150,7 @@ class QrogueCUI(PyCUI):
         self._auto_focus_buttons = False
         Widget.set_move_focus_callback(move_focus)
 
-        # init management
+        # INIT MANAGEMENT
         Logger.instance().set_popup(self.show_message_popup, self.show_error_popup)
         CheatConfig.init(self.__show_message_popup, self.__show_input_popup, deactivate_cheats=not Config.debugging(),
                          allow_cheats=Config.debugging())
@@ -172,12 +172,11 @@ class QrogueCUI(PyCUI):
         self.__key_logger = KeyLogger()
         self.__simulator: Optional[GameSimulator] = None
         self.__stop_with_simulation_end = False
-        self.__state_machine = QrogueCUI._StateMachine(self)
         self.__last_input = time.time()
         self.__last_key: Optional[int] = None
         self.__focused_widget: Optional[Widget] = None
 
-        # init widget sets
+        # INIT WIDGET SETS
         self.__menu = MenuWidgetSet(self.__controls, self.__render, Logger.instance(), self,
                                     MapManager.instance().load_first_uncleared_map,
                                     self.__start_playing, self.stop, self.__choose_simulation)
@@ -206,11 +205,32 @@ class QrogueCUI(PyCUI):
                                               self.__continue_explore)
         self.__shop = ShopWidgetSet(self.__controls, self.__render, Logger.instance(), self, self.__continue_explore)
 
-        self._init_keys()
+        widget_sets: List[MyWidgetSet] = [self.__spaceship, self.__training, self.__navigation, self.__explore,
+                                          self.__fight, self.__boss_fight, self.__shop, self.__riddle, self.__workbench]
+        # INIT KEYS
+        # add the general keys to everything except Transition, Menu and Pause
+        for widget_set in widget_sets:
+            for widget in widget_set.get_widget_list():
+                widget.widget.add_key_command(self.__controls.get_keys(Keys.Pause), Pausing.pause)
+                widget.widget.add_key_command(self.__controls.get_keys(Keys.PopupReopen), Popup.reopen)
+
+        # debugging keys
+        for widget_set in (widget_sets + [self.__transition, self.__menu, self.__pause]):
+            for widget in widget_set.get_widget_list():
+                widget.widget.add_key_command(self.__controls.get_keys(Keys.PrintScreen), self._print_screen)
+                widget.widget.add_key_command(self.__controls.get_keys(Keys.Render), lambda: self.__render(None))
+
+        # special cheat keys
+        self.__pause.get_main_widget().add_key_command(self.__controls.get_keys(Keys.CheatInput),
+                                                       CheatConfig.cheat_input)
+        self.__pause.get_main_widget().add_key_command(self.__controls.get_keys(Keys.CheatList), CheatConfig.cheat_list)
+
+        # INIT STATE MACHINE
         self.__cur_widget_set: MyWidgetSet = self.__transition      # avoid None value
+        self.__state_machine = QrogueCUI._StateMachine(self)
         self.__state_machine.change_state(QrogueCUI._State.Menu, seed)
 
-        # init spaceship
+        # INIT SPACESHIP
         def stop_playing(direction: Direction, controllable: Controllable):
             if SaveData.instance().achievement_manager.progressed_in_story(achievements.FinishedTutorial):
                 self._switch_to_menu(None)
@@ -229,6 +249,7 @@ class QrogueCUI(PyCUI):
                                             MapManager.instance().load_first_uncleared_map, self.__start_training)
         self.__spaceship.set_data(self.__spaceship_map)
 
+        # MISC
         if Config.debugging():
             self.set_on_draw_update_func(Config.inc_frame_count)
 
@@ -375,26 +396,6 @@ class QrogueCUI(PyCUI):
         else:
             Logger.instance().throw(Exception(
                 f"Non-PyCUI widget used in renderer! CurWidgetSet = {self.__cur_widget_set}"))
-
-    def __init_keys(self) -> None:
-        # debugging stuff
-        self.add_key_command(self.__controls.get_key(Keys.PrintScreen), self._print_screen)
-        self.__menu.get_main_widget().add_key_command(self.__controls.get_keys(Keys.PrintScreen), self._print_screen)
-        self.__explore.get_main_widget().add_key_command(self.__controls.get_keys(Keys.PrintScreen), self._print_screen)
-        self.__fight.get_main_widget().add_key_command(self.__controls.get_keys(Keys.PrintScreen), self._print_screen)
-        self.__boss_fight.get_main_widget().add_key_command(self.__controls.get_keys(Keys.PrintScreen),
-                                                            self._print_screen)
-
-        self.__pause.get_main_widget().add_key_command(self.__controls.get_keys(Keys.CheatInput),
-                                                       CheatConfig.cheat_input)
-        self.__pause.get_main_widget().add_key_command(self.__controls.get_keys(Keys.CheatList), CheatConfig.cheat_list)
-
-        # don't add the general keys to Menu and Pause
-        for widget_set in [self.__spaceship, self.__training, self.__navigation, self.__explore, self.__fight,
-                           self.__boss_fight, self.__shop, self.__riddle]:
-            for widget in widget_set.get_widget_list():
-                widget.widget.add_key_command(self.__controls.get_keys(Keys.Pause), Pausing.pause)
-                widget.widget.add_key_command(self.__controls.get_keys(Keys.PopupReopen), Popup.reopen)
 
     def _print_screen(self) -> None:
         text = ""
@@ -615,6 +616,8 @@ class QrogueCUI(PyCUI):
         self.__transition.set_data(texts, continue_)
         self.apply_widget_set(self.__transition)
 
-    def __render(self, renderables: List[Renderable]):
+    def __render(self, renderables: Optional[List[Renderable]]):
+        if renderables is None:
+            renderables = self.__cur_widget_set.get_widget_list()
         for r in renderables:
             r.render()
