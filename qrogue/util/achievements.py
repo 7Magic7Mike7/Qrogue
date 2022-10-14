@@ -8,6 +8,7 @@ EnteredPauseMenu = "EnteredPauseMenu"
 FirstDoorUnlocked = "UnlockedDoor"
 CompletedExpedition = "CompletedExpedition"
 UnlockedWorkbench = "UnlockedWorkbench"
+UnlockedQuickStart = "UnlockedQuickStart"
 
 
 class Unlocks(enum.Enum):

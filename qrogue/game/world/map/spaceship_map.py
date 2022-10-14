@@ -173,7 +173,8 @@ class SpaceshipMap:
                     # we want to start on top of the bed
                     SpaceshipMap.SPAWN_POS = Coordinate(len(row), len(self.__tiles))
                 tile = self.__ascii_to_tile(character)
-                row.append(tile)
+                if tile is not None:
+                    row.append(tile)
 
         self.__player_pos = SpaceshipMap.SPAWN_POS
 
@@ -183,7 +184,7 @@ class SpaceshipMap:
     def player_pos(self) -> Coordinate:
         return self.__player_pos
 
-    def __ascii_to_tile(self, character: str) -> Tile:
+    def __ascii_to_tile(self, character: str) -> Optional[Tile]:
         if character == SCIENTIST_TILE_REPRESENTATION:
             tile = self.__scientist
         elif character == SpaceshipFreeWalkTile.MAP_REPRESENTATION:
@@ -201,7 +202,10 @@ class SpaceshipMap:
         # elif character == SpaceshipTriggerTile.MAP_GATE_LIBRARY_REPRESENTATION:
         #    tile = SpaceshipTriggerTile(character, self.open_gate_library)
         elif character == SpaceshipTriggerTile.QUICKSTART_LEVEL:
-            tile = SpaceshipTriggerTile(character, self.__load_newest_map)
+            if self.__check_achievement(achievements.UnlockedQuickStart):
+                tile = SpaceshipTriggerTile(character, self.__load_newest_map)
+            else:
+                tile = None
         elif character == SpaceshipTriggerTile.TRAININGS_ROOM:
             def start_training(direction: Direction, controllable: Controllable):
                 self.__start_training(direction)
