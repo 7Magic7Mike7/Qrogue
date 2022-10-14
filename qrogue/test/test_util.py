@@ -100,7 +100,13 @@ class DummyWidget(WidgetWrapper):
     def get_pos(self) -> Tuple[int, int]:
         return 0, 0
 
+    def get_abs_pos(self) -> Tuple[int, int]:
+        return 0, 0
+
     def get_size(self) -> Tuple[int, int]:
+        return 1, 1
+
+    def get_abs_size(self) -> Tuple[int, int]:
         return 1, 1
 
     def is_selected(self):

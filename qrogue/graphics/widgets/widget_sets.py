@@ -341,10 +341,11 @@ class TransitionWidgetSet(MyWidgetSet):
 
         widget = self.add_block_label("Text", UIConfig.TRANSITION_SCREEN_ROW, UIConfig.TRANSITION_SCREEN_COL,
                                       row_span=UIConfig.TRANSITION_SCREEN_HEIGHT,
-                                      column_span=UIConfig.TRANSITION_SCREEN_WIDTH, center=True)
+                                      column_span=UIConfig.TRANSITION_SCREEN_WIDTH, center=False)
         widget.add_key_command(controls.get_keys(Keys.Cancel), self.__next_text)
         widget.add_key_command(controls.action, self.__next_section)
         self.__text = SimpleWidget(widget)
+        self.__line_width = self.__text.widget.get_abs_size()[0] - 6  # -6 comes from some PyCUI internal border padding
 
         widget = self.add_block_label("Confirm", UIConfig.TRANSITION_SCREEN_ROW + UIConfig.TRANSITION_SCREEN_HEIGHT,
                                       UIConfig.TRANSITION_SCREEN_COL, row_span=1,
@@ -379,7 +380,15 @@ class TransitionWidgetSet(MyWidgetSet):
             self.__timer.cancel()       # todo what if we cancel the thread before it started?
             self.__timer = None         # todo is it actually good to set it to None?
 
-    def __update_screen(self):
+    def __update_screen(self, new_text: str):
+        remaining_chars = self.__line_width - len(self.__display_text)
+        while len(new_text) >= remaining_chars:
+            self.__display_text += new_text[:remaining_chars]
+            self.__display_text += "\n"     # todo use locks because otherwise this loop is accessed by multiple threads
+            new_text = new_text[remaining_chars:]
+            remaining_chars = self.__line_width
+        self.__display_text += new_text     # append the remaining text
+
         self.__text.set_data(self.__display_text)
         self.__text.render()
 
@@ -425,7 +434,7 @@ class TransitionWidgetSet(MyWidgetSet):
 
         if not self.at_transition_end:
             # immediately show the whole content of the current text scroll in case the user manually proceeded
-            self.__display_text += self._cur_text_scroll.skip_to_end()
+            self.__update_screen(self._cur_text_scroll.skip_to_end())
 
             self.__index += 1
             if not self.at_transition_end:
@@ -438,8 +447,6 @@ class TransitionWidgetSet(MyWidgetSet):
                     self.__update_confirm_text(confirm=False)
             else:
                 self.__update_confirm_text(confirm=True, transition_end=True)
-            # finally show the changes to the player
-            self.__update_screen()
 
         elif self.__continue is not None:
             self.__continue()
@@ -450,8 +457,7 @@ class TransitionWidgetSet(MyWidgetSet):
             return
 
         if GameplayConfig.get_option_value(Options.auto_skip_text_animation):
-            self.__display_text += self._cur_text_scroll.skip_to_end()
-            self.__update_screen()
+            self.__update_screen(self._cur_text_scroll.skip_to_end())
 
         next_char = self._cur_text_scroll.next()
         if next_char is None:
@@ -471,9 +477,7 @@ class TransitionWidgetSet(MyWidgetSet):
         else:
             self.__timer = Timer(self._cur_text_scroll.char_pause, self.__render_text_scroll)
             self.__timer.start()
-
-            self.__display_text += next_char
-            self.__update_screen()
+            self.__update_screen(next_char)
 
     def set_data(self, text_scrolls: List[TextScroll], continue_callback: Callable[[], None]):
         assert len(text_scrolls) > 0, "Empty list of texts provided!"

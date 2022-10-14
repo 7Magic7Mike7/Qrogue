@@ -1,6 +1,6 @@
 import math
 from abc import ABC, abstractmethod
-from typing import List, Any, Callable, Tuple, Optional
+from typing import List, Any, Callable, Tuple, Optional, Dict
 
 from py_cui import ColorRule
 from py_cui.widget_set import WidgetSet
@@ -27,8 +27,14 @@ class MyBaseWidget(BlockLabel, WidgetWrapper):
     def get_pos(self) -> Tuple[int, int]:
         return self._column, self._row
 
+    def get_abs_pos(self) -> Tuple[int, int]:
+        return self._start_x, self._start_y
+
     def get_size(self) -> Tuple[int, int]:
         return self._column_span, self._row_span
+
+    def get_abs_size(self) -> Tuple[int, int]:
+        return self._stop_x - self._start_x, self._stop_y - self._start_y
 
     def is_selected(self) -> bool:
         return super(MyBaseWidget, self).is_selected()
@@ -74,22 +80,41 @@ class MyMultiWidget(WidgetWrapper):
         return ">$%<"
 
     def __init__(self, widgets: List[WidgetWrapper]):
-        self.__widgets = widgets
-        x = min([w.get_pos()[0] for w in self.__widgets])
-        y = min([w.get_pos()[1] for w in self.__widgets])
-        # the minimal (left-top most) position is where this widget starts (like casting a rectangle around all widgets)
-        self.__pos = x, y
+        assert len(widgets) > 0, "Emtpy MultiWidget created!"
 
-        widths = {}     # find out width of the longest row
-        heights = {}    # and height of biggest column
+        self.__widgets = widgets
+
+        # the minimal (left-top most) position is where this widget starts (like casting a rectangle around all widgets)
+        x, y = self.__widgets[0].get_pos()
+        ax, ay = self.__widgets[0].get_abs_pos()
+        for i in range(1, len(self.__widgets)):
+            w = self.__widgets[i]
+            # if logical position is smaller, than also absolute is
+            wx, wy = w.get_pos()
+            if wx < x:
+                ax = w.get_abs_pos()[0]
+                x = wx
+            if wy < y:
+                ay = w.get_abs_pos()[1]
+                y = wy
+        self.__pos = x, y
+        self.__abs_pos = ax, ay
+
+        widths: Dict[int, int] = {}     # find out width of the longest row
+        heights: Dict[int, int] = {}    # and height of biggest column
+        abs_widths: Dict[int, int] = {}
+        abs_heights: Dict[int, int] = {}
         for w in self.__widgets:
             col, row = w.get_pos()
             width, height = w.get_size()
             if row not in widths or col + width > widths[row]:
                 widths[row] = col + width
+                abs_widths[row] = w.get_abs_pos()[0] + w.get_abs_size()[0]
             if col not in heights or row + height > heights[col]:
                 heights[col] = row + height
-        self.__size = max(widths), max(heights)
+                abs_heights[col] = w.get_abs_pos()[1] + w.get_abs_size()[1]
+        self.__size = max(widths) - x, max(heights) - y
+        self.__abs_size = max(abs_widths) - ax, max(abs_heights) - ay
 
     def get_pos(self) -> Tuple[int, int]:
         """
@@ -99,6 +124,9 @@ class MyMultiWidget(WidgetWrapper):
         """
         return self.__pos
 
+    def get_abs_pos(self) -> Tuple[int, int]:
+        return self.__abs_pos
+
     def get_size(self) -> Tuple[int, int]:
         """
         Width of the widest row and height of the highest column. You can imagine it like fitting the smallest possible
@@ -106,6 +134,9 @@ class MyMultiWidget(WidgetWrapper):
         :return: width, height
         """
         return self.__size
+
+    def get_abs_size(self) -> Tuple[int, int]:
+        return self.__abs_size
 
     def is_selected(self) -> bool:
         """
