@@ -65,7 +65,7 @@ class TransitionText:
     @staticmethod
     def exam_spaceship() -> List[TWS.TextScroll]:
         return [
-            TWS.TextScroll.fast("A couple of days later..."),
-            TWS.TextScroll.medium("Mike received a letter stating he was chosen to join Mission Quniverse!",
-                                  clear_previous=True),
+            TWS.TextScroll.hasty("A couple of days later...", text_delay=0.5),
+            TWS.TextScroll.fast("Mike received a letter stating he was chosen to join Mission Quniverse!",
+                                clear_previous=True),
         ]
