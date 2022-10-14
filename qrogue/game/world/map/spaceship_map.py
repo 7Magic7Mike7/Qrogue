@@ -160,7 +160,7 @@ class SpaceshipMap:
         self.__open_world_view = open_world_view
         self.__use_workbench_callback = use_workbench
         self.__load_map = load_map
-        self.__load_newest_map = load_newest_map
+        self.__load_newest_map = lambda robot, direction: load_newest_map()
         self.__start_training = start_training
         self.__tiles = []
         row = []
