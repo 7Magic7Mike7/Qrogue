@@ -1,3 +1,4 @@
+import threading
 from threading import Timer
 import time
 from abc import abstractmethod, ABC
@@ -331,6 +332,10 @@ class TransitionWidgetSet(MyWidgetSet):
         self.__set_refresh_timeout = lambda: set_refresh_timeout_callback(int(self._cur_text_scroll.char_pause * 1000))
         self.__reset_refresh_timeout = lambda: set_refresh_timeout_callback(-1)
 
+        self.__display_lock = threading.Lock()
+        self.__index_lock = threading.Lock()
+        self.__timer_lock = threading.Lock()
+
         self.__continue: Optional[Callable[[], None]] = None
         self.__text_scrolls: List[TransitionWidgetSet.TextScroll] = []
         self.__index = 0
@@ -344,10 +349,11 @@ class TransitionWidgetSet(MyWidgetSet):
                                       column_span=UIConfig.TRANSITION_SCREEN_WIDTH, center=False)
         widget.add_key_command(controls.get_keys(Keys.Cancel), self.__next_text)
         widget.add_key_command(controls.action, self.__next_section)
+        widget.toggle_border()
         self.__text = SimpleWidget(widget)
         self.__line_width = self.__text.widget.get_abs_size()[0] - 6  # -6 comes from some PyCUI internal border padding
 
-        widget = self.add_block_label("Confirm", UIConfig.TRANSITION_SCREEN_ROW + UIConfig.TRANSITION_SCREEN_HEIGHT,
+        widget = self.add_block_label("Confirm", UIConfig.TRANSITION_SCREEN_ROW + UIConfig.TRANSITION_SCREEN_HEIGHT + 1,
                                       UIConfig.TRANSITION_SCREEN_COL, row_span=1,
                                       column_span=UIConfig.TRANSITION_SCREEN_WIDTH, center=True)
         self.__confirm = SimpleWidget(widget)
@@ -356,41 +362,55 @@ class TransitionWidgetSet(MyWidgetSet):
             widget = self.add_block_label("Frame count", 0, UIConfig.WINDOW_WIDTH-1)
             self.__frame_count = SimpleWidget(widget)
 
-        #raise Exception(
-        """
-        Continue: 
-            - use locks?
-            - set __next_text() as command for Cancel and Confirm does nothing until the text is finished
-                - how to handle clearing text? swap from Cancel to Confirm in that case?
-        """
-        #)
         # todo autoscroll?
 
     @property
     def at_transition_end(self) -> bool:
-        return self.__index >= len(self.__text_scrolls)
+        self._lock(self.__index_lock)
+        value = self.__index >= len(self.__text_scrolls)
+        self._unlock(self.__index_lock)
+        return value
 
     @property
     def _cur_text_scroll(self) -> TextScroll:
         assert not self.at_transition_end
-        return self.__text_scrolls[self.__index]
+        self._lock(self.__index_lock)
+        value = self.__text_scrolls[self.__index]
+        self._unlock(self.__index_lock)
+        return value
+
+    def _lock(self, lock: threading.Lock, blocking: bool = True, timeout: Optional[float] = None):
+        if timeout is None:
+            timeout = 1000  # todo use twice refresh timeout instead?
+        lock.acquire(blocking=blocking, timeout=timeout)
+
+    def _unlock(self, lock: threading.Lock):
+        lock.release()
 
     def _stop_timer(self):
+        self._lock(self.__timer_lock)
         if self.__timer is not None:
-            self.__timer.cancel()       # todo what if we cancel the thread before it started?
-            self.__timer = None         # todo is it actually good to set it to None?
+            self.__timer.cancel()  # todo what if we cancel the thread before it started?
+            self.__timer = None  # todo is it actually good to set it to None?
+        self._unlock(self.__timer_lock)
 
     def __update_screen(self, new_text: str):
-        remaining_chars = self.__line_width - len(self.__display_text)
+        self._lock(self.__display_lock)
+        if len(self.__display_text) == 0:
+            remaining_chars = self.__line_width
+        else:
+            # compute difference between len(text) and the next bigger multiple of line_width
+            remaining_chars = -len(self.__display_text) % self.__line_width
         while len(new_text) >= remaining_chars:
             self.__display_text += new_text[:remaining_chars]
-            self.__display_text += "\n"     # todo use locks because otherwise this loop is accessed by multiple threads
+            self.__display_text += "\n"
             new_text = new_text[remaining_chars:]
             remaining_chars = self.__line_width
         self.__display_text += new_text     # append the remaining text
 
         self.__text.set_data(self.__display_text)
         self.__text.render()
+        self._unlock(self.__display_lock)
 
         if Config.debugging():
             self.__frame_count.set_data(Config.frame_count())
@@ -417,7 +437,9 @@ class TransitionWidgetSet(MyWidgetSet):
         if self.__wait_for_confirmation:
             if not self.at_transition_end:
                 if self._cur_text_scroll.clear_previous:
+                    self._lock(self.__display_lock)
                     self.__display_text = ""
+                    self._unlock(self.__display_lock)
                 self.__update_confirm_text(confirm=False)
                 self.__render_text_scroll()
 
@@ -436,7 +458,9 @@ class TransitionWidgetSet(MyWidgetSet):
             # immediately show the whole content of the current text scroll in case the user manually proceeded
             self.__update_screen(self._cur_text_scroll.skip_to_end())
 
+            self._lock(self.__index_lock)
             self.__index += 1
+            self._unlock(self.__index_lock)
             if not self.at_transition_end:
                 if self._cur_text_scroll.clear_previous:
                     self.__update_confirm_text(confirm=True, transition_end=False)
@@ -461,22 +485,29 @@ class TransitionWidgetSet(MyWidgetSet):
 
         next_char = self._cur_text_scroll.next()
         if next_char is None:
+            self._lock(self.__index_lock)
             self.__index += 1
+            self._unlock(self.__index_lock)
+
             if not self.at_transition_end:
                 # continue with the next text scroll
                 if self._cur_text_scroll.clear_previous:
                     self._stop_timer()
                     self.__update_confirm_text(confirm=True, transition_end=False)
                 else:
-                    self.__set_refresh_timeout()    # update timeout
+                    self.__set_refresh_timeout()  # update timeout
+                    self._lock(self.__timer_lock)
                     self.__timer = Timer(self._cur_text_scroll.text_delay, self.__render_text_scroll)
                     self.__timer.start()
+                    self._unlock(self.__timer_lock)
             else:
                 # inform the player that we finished
                 self.__update_confirm_text(confirm=True, transition_end=True)
         else:
+            self._lock(self.__timer_lock)
             self.__timer = Timer(self._cur_text_scroll.char_pause, self.__render_text_scroll)
             self.__timer.start()
+            self._unlock(self.__timer_lock)
             self.__update_screen(next_char)
 
     def set_data(self, text_scrolls: List[TextScroll], continue_callback: Callable[[], None]):
@@ -484,6 +515,8 @@ class TransitionWidgetSet(MyWidgetSet):
 
         self.__text_scrolls = text_scrolls
         self.__continue = continue_callback
+
+        # no locks required since there are no additional threads at this point
         self.__display_text = ""
         self.__index = 0
 
