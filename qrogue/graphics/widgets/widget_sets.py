@@ -239,10 +239,10 @@ class MenuWidgetSet(MyWidgetSet):
 class TransitionWidgetSet(MyWidgetSet):
     class TextScroll:
         _SLOW = 1.0
-        _RELAXED = 0.75
-        _MEDIUM = 0.25
-        _FAST = 0.1
-        _HASTY = 0.02
+        _RELAXED = 0.65
+        _MEDIUM = 0.15
+        _FAST = 0.05
+        _HASTY = 0.01
 
         @staticmethod
         def slow(text: str, text_delay: float = 0, clear_previous: bool = False) -> "TransitionWidgetSet.TextScroll":
