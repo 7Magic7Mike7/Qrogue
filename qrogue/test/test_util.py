@@ -1,4 +1,4 @@
-from typing import List, Callable, Any, Tuple
+from typing import List, Callable, Any, Tuple, Optional
 
 from qrogue.game.logic.actors import Robot, Enemy, Boss, Riddle
 from qrogue.game.logic.actors.puzzles import Challenge
@@ -50,7 +50,7 @@ def game_over():
     print("game over")
 
 
-def message_popup(title: str, text: str):
+def message_popup(title: str, text: str, reopen: Optional[bool] = None, position: Optional[int] = None):
     print("----------------------------------------")
     print(f"[{title}]")
     print(text)

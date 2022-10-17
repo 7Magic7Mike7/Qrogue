@@ -86,7 +86,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
     def __init__(self, seed: int, check_achievement: Callable[[str], bool], trigger_event: Callable[[str], None],
                  load_map_callback: Callable[[str, Coordinate], None],
-                 show_message_callback: Callable[[str, str], None]):
+                 show_message_callback: Callable[[str, str, Optional[bool], Optional[int]], None]):
         super(QrogueLevelGenerator, self).__init__(seed, 0, 0)
         self.__seed = seed
         self.__check_achievement = check_achievement
@@ -135,7 +135,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             ret = self.__meta_data.description.get(self.__check_achievement)
             if ret:
                 title, text = ret
-                self.__show_message(title, text)
+                self.__show_message(title, text, None, self.__meta_data.description.position)
 
     def warning(self, text: str):
         parser_util.warning(text)

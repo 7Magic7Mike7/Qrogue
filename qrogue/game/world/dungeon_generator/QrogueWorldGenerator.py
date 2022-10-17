@@ -32,7 +32,7 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
     def __init__(self, seed: int, player: Player, check_achievement_callback: Callable[[str], bool],
                  trigger_event_callback: Callable[[str], None],
                  load_map_callback: Callable[[str, Optional[Coordinate]], None],
-                 show_message_callback: Callable[[str, str], None]):
+                 show_message_callback: Callable[[str, str, Optional[bool], Optional[int]], None]):
         self.__seed = seed
         self.__player = player
         self.__check_achievement = check_achievement_callback
@@ -57,7 +57,7 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
             ret = self.__meta_data.description.get(self.__check_achievement)
             if ret:
                 title, text = ret
-                self.__show_message(title, text)
+                self.__show_message(title, text, None, self.__meta_data.description.position)
 
     def _add_hallway(self, room1: Coordinate, room2: Coordinate, door: Door):
         if door:  # for simplicity door could be null so we check it here

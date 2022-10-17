@@ -220,7 +220,7 @@ def validate_map(path: str, is_level: bool = True, in_base_path: bool = True) ->
     def load_map(map_name: str, spawn_pos: Coordinate):
         pass
 
-    def show_message(title: str, text: str):
+    def show_message(title: str, text: str, reopen: Optional[bool], position: Optional[int]):
         pass
 
     if is_level:
