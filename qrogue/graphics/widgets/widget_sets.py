@@ -238,6 +238,7 @@ class MenuWidgetSet(MyWidgetSet):
 
 class TransitionWidgetSet(MyWidgetSet):
     class TextScroll:
+        __DEFAULT_TEXT_DELAY = 0.01     # 0 can lead to messed up render order so we just use a very small number
         _SLOW = 1.0
         _RELAXED = 0.65
         _MEDIUM = 0.15
@@ -273,7 +274,8 @@ class TransitionWidgetSet(MyWidgetSet):
         def instant(text: str, text_delay: float = 0, clear_previous: bool = False) -> "TransitionWidgetSet.TextScroll":
             return TransitionWidgetSet.TextScroll(text, 0, text_delay, clear_previous)
 
-        def __init__(self, text: str, char_pause: float, text_delay: float = 0, clear_previous: bool = False):
+        def __init__(self, text: str, char_pause: float, text_delay: float = __DEFAULT_TEXT_DELAY,
+                     clear_previous: bool = False):
             """
 
             :param text:
@@ -293,6 +295,8 @@ class TransitionWidgetSet(MyWidgetSet):
 
         @property
         def text_delay(self) -> float:
+            if GameplayConfig.get_option_value(Options.auto_skip_text_animation):
+                return self.__DEFAULT_TEXT_DELAY
             return self.__text_delay
 
         @property
