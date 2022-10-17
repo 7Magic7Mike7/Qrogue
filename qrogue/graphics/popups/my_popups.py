@@ -44,7 +44,7 @@ class Popup:
             Popup.__last_popup.show()
 
     @staticmethod
-    def message(title: str, text: str, reopen: bool, pos: Optional[int] = __DEFAULT_POS,
+    def message(title: str, text: str, reopen: bool, pos: Optional[int] = None,
                 color: int = PopupConfig.default_color(), overwrite: bool = False,
                 on_close_callback: Callable[[], None] = None):
         if pos is None:
@@ -53,19 +53,35 @@ class Popup:
               on_close_callback=on_close_callback)
 
     @staticmethod
-    def generic_info(title: str, text: str, reopen: bool = False, pos: int = __DEFAULT_POS):
+    def generic_info(title: str, text: str, reopen: Optional[bool] = None, pos: Optional[int] = None):
+        if reopen is None:
+            reopen = False
+        if pos is None:
+            pos = Popup.__DEFAULT_POS
         Popup.message(title, text, reopen=reopen, pos=pos)
 
     @staticmethod
-    def examiner_says(text: str, reopen: bool = True, pos: int = __DEFAULT_POS):
+    def examiner_says(text: str, reopen: Optional[bool] = None, pos: Optional[int] = None):
+        if reopen is None:
+            reopen = True
+        if pos is None:
+            pos = Popup.__DEFAULT_POS
         Popup.message(Config.examiner_name(), text, reopen=reopen, pos=pos)
 
     @staticmethod
-    def scientist_says(text: str, reopen: bool = True, pos: int = __DEFAULT_POS):
+    def scientist_says(text: str, reopen: Optional[bool] = None, pos: Optional[int] = None):
+        if reopen is None:
+            reopen = True
+        if pos is None:
+            pos = Popup.__DEFAULT_POS
         Popup.message(Config.scientist_name(), text, reopen=reopen, pos=pos)
 
     @staticmethod
-    def npc_says(name: str, text: str, reopen: bool = True, pos: int = __DEFAULT_POS):
+    def npc_says(name: str, text: str, reopen: Optional[bool] = None, pos: Optional[int] = None):
+        if reopen is None:
+            reopen = True
+        if pos is None:
+            pos = Popup.__DEFAULT_POS
         Popup.message(name, text, reopen=reopen, pos=pos)
 
     @staticmethod
