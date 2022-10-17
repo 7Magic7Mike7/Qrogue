@@ -426,9 +426,11 @@ class QrogueCUI(PyCUI):
         self._popup = MultilinePopup(self, title, text, color, self._renderer, self._logger, self.__controls,
                                      pos=PopupConfig.resolve_position(position))
 
-    def __show_confirmation_popup(self, title: str, text: str, color: int, callback: Callable[[bool], None]):
+    def __show_confirmation_popup(self, title: str, text: str, color: int, callback: Callable[[int], None],
+                                  answers: Optional[List[str]]):
         self.__focused_widget = self.get_selected_widget()
-        self._popup = MultilinePopup(self, title, text, color, self._renderer, self._logger, self.__controls, callback)
+        self._popup = MultilinePopup(self, title, text, color, self._renderer, self._logger, self.__controls, callback,
+                                     answers)
 
     def __show_input_popup(self, title: str, color: int, callback: Callable[[str], None]) -> None:
         self.__focused_widget = self.get_selected_widget()
@@ -526,8 +528,8 @@ class QrogueCUI(PyCUI):
             Logger.instance().throw(ValueError(f"Tried to start a level with a non-Robot: {robot}"))
 
     def __game_over(self) -> None:
-        def callback(confirmed: bool):
-            if confirmed:
+        def callback(confirmed: int):
+            if confirmed == 0:
                 MapManager.instance().reload()
             elif Ach.check_unlocks(Unlocks.Spaceship, SaveData.instance().story_progress):
                 self.__state_machine.change_state(QrogueCUI._State.Spaceship, None)

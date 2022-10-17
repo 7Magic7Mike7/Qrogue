@@ -228,8 +228,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         return False    # default value is "random"
 
     def __teleport_callback(self, map_name: str, spawn_pos: Coordinate):
-        def cb(confirm: bool):
-            if confirm:
+        def cb(confirm: int):
+            if confirm == 0:
                 self.__load_map(map_name, spawn_pos)
         CommonQuestions.GoingBack.ask(cb)
 

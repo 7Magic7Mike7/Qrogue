@@ -237,9 +237,13 @@ class MapManager:
             self.__in_level = False
             self.__show_world(self.__cur_map)
 
-    def __proceed(self, confirmed: bool = True):
-        if confirmed:
+    def __proceed(self, confirmed: int = 0):
+        if confirmed == 0:
             self.__load_next()
+        elif confirmed == 1:
+            pass    # stay
+        elif confirmed == 2:
+            self.__load_back()
 
     def __trigger_event(self, event_id: str):
         if event_id.lower() == MapConfig.done_event_id():

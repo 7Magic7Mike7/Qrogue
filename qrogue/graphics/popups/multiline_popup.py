@@ -9,8 +9,8 @@ from qrogue.util import ColorConfig as CC, Keys, Logger, PopupConfig, ColorConfi
 
 class MultilinePopup(PyCuiPopup, MenuImplementation):
     __STATIC_PY_CUI_PADDING = 6     # based on PyCUI "padding" I think
-    __QUESTION_ARROW = "--> "
     __QUESTION_SPACING = " " * 7
+    __QUESTION_ARROW = " " * (len(__QUESTION_SPACING) - 4) + "--> "  # -4 due to the length of the arrow
 
     @staticmethod
     def __get_color_rules():
@@ -80,12 +80,17 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
         return [" " * padding + line + " " * padding for line in split_text]
 
     def __init__(self, root, title, text, color, renderer, logger, controls,
-                 confirmation_callback: Callable[[bool], None] = None, pos: Optional[Tuple[int, int]] = None):
+                 confirmation_callback: Callable[[int], None] = None, answers: Optional[List] = None,
+                 pos: Optional[Tuple[int, int]] = None):
         super().__init__(root, title, text, color, renderer, logger)
         self.__controls = controls
         self.__confirmation_callback = confirmation_callback
-        self._top_view = 0
+        if answers is None and self._is_question:
+            self.__answers = ["Confirm", "Cancel"]
+        else:
+            self.__answers = answers
 
+        self._top_view = 0
         self.__lines = MultilinePopup.__split_text(text, self._width - MultilinePopup.__STATIC_PY_CUI_PADDING,
                                                    PopupConfig.PADDING_X, logger)
 
@@ -95,7 +100,7 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
             if pos[1] is not None:
                 self._start_y = pos[1]
 
-        self.__question_state = True
+        self.__question_state = 0
         self._pageAlignment = " " * (self._width - MultilinePopup.__STATIC_PY_CUI_PADDING)
 
     @property
@@ -140,9 +145,9 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
                 self.__confirmation_callback(self.__question_state)
                 self._root.close_popup()
             elif key_pressed in self.__controls.get_keys(Keys.SelectionRight):
-                self.__question_state = True
+                self.__question_state = min(self.__question_state + 1, len(self.__answers) - 1)
             elif key_pressed in self.__controls.get_keys(Keys.SelectionLeft):
-                self.__question_state = False
+                self.__question_state = max(self.__question_state - 1, 0)
             elif key_pressed in self.__controls.get_keys(Keys.PopupScrollUp):
                 self.__up()
             elif key_pressed in self.__controls.get_keys(Keys.PopupScrollDown):
@@ -184,14 +189,15 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
         if self._is_question:
             # the question answers should always be positioned at the very bottom of the popup
             self._renderer.draw_text(self, "-" * self._width, info_line_y, selected=True)
-            if self.__question_state:
-                self._renderer.draw_text(self, len(MultilinePopup.__QUESTION_ARROW) * " " + "Cancel" +
-                                         MultilinePopup.__QUESTION_SPACING + MultilinePopup.__QUESTION_ARROW +
-                                         "Confirm", info_line_y + 1, selected=False)
-            else:
-                self._renderer.draw_text(self, MultilinePopup.__QUESTION_ARROW + "Cancel" +
-                                         len(MultilinePopup.__QUESTION_ARROW) * " " + MultilinePopup.__QUESTION_SPACING
-                                         + "Confirm", info_line_y + 1, selected=False)
+
+            text = ""
+            for i in range(len(self.__answers)):
+                if i == self.__question_state:
+                    text += MultilinePopup.__QUESTION_ARROW
+                else:
+                    text += MultilinePopup.__QUESTION_SPACING
+                text += self.__answers[i]
+            self._renderer.draw_text(self, text, info_line_y + 1, selected=False)
 
         self._renderer.unset_color_mode(self._color)
         self._renderer.reset_cursor(self)

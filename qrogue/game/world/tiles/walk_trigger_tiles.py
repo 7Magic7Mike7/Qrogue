@@ -121,8 +121,8 @@ class Teleport(WalkTriggerTile):
         self.__room = room
 
     def _on_walk(self, direction: Direction, controllable: Controllable) -> bool:
-        def callback(confirm: bool = True):
-            if confirm:
+        def callback(confirm: int = 0):
+            if confirm == 0:
                 self.__load_map(self.__target_map, self.__room)
         if self.__target_map == MapConfig.back_map_string():
             CommonQuestions.GoingBack.ask(callback)

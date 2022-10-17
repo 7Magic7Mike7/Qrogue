@@ -631,14 +631,14 @@ class SpawnRoom(CopyAbleRoom):
     def __teleport_callback(self, level_to_load: str, room: Optional[Coordinate]):
         if self.__is_done:
             if self.__is_done():
-                self.__conditional_going_back(True)
+                self.__conditional_going_back(0)
             else:
                 CommonQuestions.GoingBack.ask(self.__conditional_going_back)
         else:
             Logger.instance().error("is_done_callback not set yet!", from_pycui=False)
 
-    def __conditional_going_back(self, confirmed: bool):
-        if confirmed:
+    def __conditional_going_back(self, confirmed: int):
+        if confirmed == 0:
             self.__load_map(MapConfig.back_map_string(), None)
 
     def copy(self, hw_dic: Dict[Direction, Hallway]) -> "CopyAbleRoom":
