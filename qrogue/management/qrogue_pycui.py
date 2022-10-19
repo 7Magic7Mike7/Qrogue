@@ -465,8 +465,8 @@ class QrogueCUI(PyCUI):
             MapManager.instance().load_first_uncleared_map()
 
     def _switch_to_spaceship(self, data=None):
-        StoryNarration.returned_to_spaceship()
         self.apply_widget_set(self.__spaceship)
+        StoryNarration.returned_to_spaceship()
 
     def __continue_spaceship(self) -> None:
         self.__state_machine.change_state(QrogueCUI._State.Spaceship, None)
