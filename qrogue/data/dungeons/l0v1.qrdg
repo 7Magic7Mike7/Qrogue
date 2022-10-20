@@ -32,7 +32,7 @@ aa (Wild):
 # _ o _ o o #
 # _ _ _ _ _ #
 #############
-c *energyTiny
+c *energySmall
 
 bb (Wild):
 #############
@@ -52,29 +52,32 @@ cc (Wild):
 # o _ _ _ o #
 # _ o _ _ _ #
 # _ _ _ o _ #
-# _ o _ _ _ #
+# 0 o _ _ _ #
 #############
 0 *simplePool *energyTiny
+0 *simplePool *energySmall
 c *energyHuge
 
 dd (Wild):
 #############
 # _ _ _ _ _ #
 # _ o o o _ #
-# _ o _ _ _ #
+# _ o 0 _ _ #
 # _ o _ o o #
 # _ _ _ _ _ #
 #############
+0 *simplePool *energySmall
 
 ea (Wild):
 #############
 # o _ _ _ _ #
 # _ _ o o _ #
 # _ o _ _ _ #
-# _ o o o c #
-# _ _ _ o o #
+# _ o o o 0 #
+# c _ _ o o #
 #############
-c *energyBig
+0 *simplePool *energyMedium
+c *energyMedium
 
 eb (Wild):
 #############
