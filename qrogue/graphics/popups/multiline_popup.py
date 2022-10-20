@@ -81,7 +81,9 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
 
     def __init__(self, root, title, text, color, renderer, logger, controls,
                  confirmation_callback: Callable[[int], None] = None, answers: Optional[List] = None,
-                 pos: Optional[Tuple[int, int]] = None):
+                 pos: Optional[Tuple[int, int]] = None, dimensions: Optional[Tuple[int, int]] = None):
+        self.__custom_size = None
+
         super().__init__(root, title, text, color, renderer, logger)
         self.__controls = controls
         self.__confirmation_callback = confirmation_callback
@@ -90,15 +92,20 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
         else:
             self.__answers = answers
 
-        self._top_view = 0
-        self.__lines = MultilinePopup.__split_text(text, self._width - MultilinePopup.__STATIC_PY_CUI_PADDING,
-                                                   PopupConfig.PADDING_X, logger)
-
         if pos:
             if pos[0] is not None:
                 self._start_x = pos[0]
             if pos[1] is not None:
                 self._start_y = pos[1]
+
+        if dimensions is not None:
+            self.__custom_size = True
+            self._height, self._width = dimensions
+            self._stop_x, self._stop_y = self._start_x + self._width, self._start_y + self._height
+
+        self._top_view = 0
+        self.__lines = MultilinePopup.__split_text(text, self._width - MultilinePopup.__STATIC_PY_CUI_PADDING,
+                                                   PopupConfig.PADDING_X, logger)
 
         self.__question_state = 0
         self._pageAlignment = " " * (self._width - MultilinePopup.__STATIC_PY_CUI_PADDING)
@@ -201,3 +208,13 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
 
         self._renderer.unset_color_mode(self._color)
         self._renderer.reset_cursor(self)
+
+    def get_absolute_stop_pos(self) -> Tuple[int, int]:
+        # override for custom sizes so we can calculate the stop position based on our custom width and height instead
+        # of calculating width and height based on start and stop
+        if self.__custom_size is None:
+            return super(MultilinePopup, self).get_absolute_stop_pos()
+        else:
+            start_x, start_y = self.get_absolute_start_pos()
+            self._stop_x, self._stop_y = start_x + self._width, start_y + self._height
+            return self._stop_x, self._stop_y

@@ -6,14 +6,15 @@ from qrogue.util import Config, PopupConfig
 
 class Popup:
     __DEFAULT_POS = PopupConfig.default_pos()
-    __show_popup: Optional[Callable[[str, str, int, int], None]] = None
+    __show_popup: Optional[Callable[[str, str, int, int, Optional[Tuple[int, int]]], None]] = None
     __check_achievement: Optional[Callable[[str], bool]] = None
     __popup_queue: List["Popup"] = []
     __cur_popup: Optional["Popup"] = None
     __last_popup: Optional["Popup"] = None
 
     @staticmethod
-    def update_popup_functions(show_popup_callback: Callable[[str, str, int, int], None]) -> None:
+    def update_popup_functions(show_popup_callback: Callable[[str, str, int, int, Optional[Tuple[int, int]]], None]) \
+            -> None:
         Popup.__show_popup = show_popup_callback
 
     @staticmethod
@@ -46,11 +47,12 @@ class Popup:
     @staticmethod
     def message(title: str, text: str, reopen: bool, pos: Optional[int] = None,
                 color: int = PopupConfig.default_color(), overwrite: bool = False,
-                on_close_callback: Callable[[], None] = None):
+                on_close_callback: Callable[[], None] = None,
+                dimensions: Optional[Tuple[int, int]] = None):
         if pos is None:
             pos = Popup.__DEFAULT_POS
         Popup(title, text, pos, color, reopen=reopen, show=True, overwrite=overwrite,
-              on_close_callback=on_close_callback)
+              on_close_callback=on_close_callback, dimensions=dimensions)
 
     @staticmethod
     def generic_info(title: str, text: str, reopen: Optional[bool] = None, pos: Optional[int] = None):
@@ -69,12 +71,13 @@ class Popup:
         Popup.message(Config.examiner_name(), text, reopen=reopen, pos=pos)
 
     @staticmethod
-    def scientist_says(text: str, reopen: Optional[bool] = None, pos: Optional[int] = None):
+    def scientist_says(text: str, reopen: Optional[bool] = None, pos: Optional[int] = None,
+                       dimensions: Optional[Tuple[int, int]] = None):
         if reopen is None:
             reopen = True
         if pos is None:
             pos = Popup.__DEFAULT_POS
-        Popup.message(Config.scientist_name(), text, reopen=reopen, pos=pos)
+        Popup.message(Config.scientist_name(), text, reopen=reopen, pos=pos, dimensions=dimensions)
 
     @staticmethod
     def npc_says(name: str, text: str, reopen: Optional[bool] = None, pos: Optional[int] = None):
@@ -112,10 +115,11 @@ class Popup:
 
     def __init__(self, title: str, text: str, position: int, color: int = PopupConfig.default_color(),
                  show: bool = True, overwrite: bool = False, reopen: bool = True,
-                 on_close_callback: Callable[[], None] = None):
+                 on_close_callback: Callable[[], None] = None, dimensions: Optional[Tuple[int, int]] = None):
         self.__title = title
         self.__text = text
         self.__position = position
+        self.__dimensions = dimensions
         self.__color = color
         self.__reopen = reopen    # whether this popup should be reopen-able or not
         self.__on_close_callback = on_close_callback
@@ -143,7 +147,7 @@ class Popup:
             self.__on_close_callback()
 
     def _base_show(self):
-        Popup.__show_popup(self.__title, self.__text, self.__position, self.__color)
+        Popup.__show_popup(self.__title, self.__text, self.__position, self.__color, self.__dimensions)
 
     def _enqueue(self):
         Popup.__popup_queue.append(self)

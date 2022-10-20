@@ -1,6 +1,6 @@
 import time
 from enum import Enum
-from typing import List, Callable, Optional, Any
+from typing import List, Callable, Optional, Any, Tuple
 
 from py_cui import PyCUI
 from py_cui import popups
@@ -421,10 +421,11 @@ class QrogueCUI(PyCUI):
         self.__focused_widget = self.get_selected_widget()
         super(QrogueCUI, self).show_error_popup(title, text)
 
-    def __show_message_popup(self, title: str, text: str, position: int, color: int) -> None:
+    def __show_message_popup(self, title: str, text: str, position: int, color: int,
+                             dimensions: Optional[Tuple[int, int]]) -> None:
         self.__focused_widget = self.get_selected_widget()
         self._popup = MultilinePopup(self, title, text, color, self._renderer, self._logger, self.__controls,
-                                     pos=PopupConfig.resolve_position(position))
+                                     pos=PopupConfig.resolve_position(position), dimensions=dimensions)
 
     def __show_confirmation_popup(self, title: str, text: str, color: int, callback: Callable[[int], None],
                                   answers: Optional[List[str]]):
