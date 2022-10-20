@@ -140,7 +140,7 @@ class Popup:
     def from_message_trigger(message: Message, on_close_callback: Callable[[], None]):
         if Popup.__check_achievement:
             ret = message.get(Popup.__check_achievement)    # resolve possible alternative messages
-            if ret:
+            if ret is not None:
                 title, text = ret
                 if Config.debugging():
                     title += f" {{@*{message.id}}}"
@@ -212,10 +212,6 @@ class ConfirmationPopup(Popup):
     @staticmethod
     def ask(title: str, text: str, callback: Callable[[int], None], answers: Optional[List[str]] = None):
         ConfirmationPopup(title, text, callback, answers)
-
-    @staticmethod
-    def scientist_asks(text: str, callback: Callable[[bool], None]):
-        ConfirmationPopup(Config.scientist_name(), text, callback)
 
     def __init__(self, title: str, text: str, callback: Callable[[int], None], answers: Optional[List[str]] = None,
                  position: int = __DEFAULT_POS, color: int = PopupConfig.default_color(), show: bool = True,
