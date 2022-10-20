@@ -26,7 +26,8 @@ class StoryNarration:
     def returned_to_spaceship():
         progress = SaveData.instance().story_progress
         if Ach.is_most_recent_unlock(Unlocks.Spaceship, progress):
-            Popup.scientist_says(StoryText.get(StoryTextType.Intro), pos=5)
+            Popup.scientist_says(StoryText.get(StoryTextType.Intro), pos=Popup.Pos.TopLeft,
+                                 dimensions=(Popup.DimY.small, Popup.DimX.small))
 
         # if progress is _StoryProgress.RobotShowcase:
         #    pass
