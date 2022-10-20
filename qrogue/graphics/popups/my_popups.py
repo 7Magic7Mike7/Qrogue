@@ -1,10 +1,47 @@
-from typing import Callable, Optional, List
+from typing import Callable, Optional, List, Tuple
 
 from qrogue.game.logic import Message
 from qrogue.util import Config, PopupConfig
 
 
 class Popup:
+    class Pos:
+        Center = 0
+        Top = 1
+        TopRight = 2
+        Right = 3
+        BottomRight = 4
+        Bottom = 5
+        BottomLeft = 6
+        Left = 7
+        TopLeft = 8
+
+    class Dimension:
+        def __init__(self, tiny: int, small: int, medium: int, large: int):
+            self.__tiny = tiny
+            self.__small = small
+            self.__medium = medium
+            self.__large = large
+
+        @property
+        def tiny(self) -> int:
+            return self.__tiny
+
+        @property
+        def small(self) -> int:
+            return self.__small
+
+        @property
+        def medium(self) -> int:
+            return self.__medium
+
+        @property
+        def large(self) -> int:
+            return self.__large
+
+    DimX = Dimension(50, 80, 114, 150)
+    DimY = Dimension(5, 7, 10, 15)
+
     __DEFAULT_POS = PopupConfig.default_pos()
     __show_popup: Optional[Callable[[str, str, int, int, Optional[Tuple[int, int]]], None]] = None
     __check_achievement: Optional[Callable[[str], bool]] = None
