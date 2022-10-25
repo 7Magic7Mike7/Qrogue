@@ -198,7 +198,10 @@ class SpaceshipMap:
         elif character == SpaceshipTriggerTile.MAP_START_REPRESENTATION:
             tile = SpaceshipTriggerTile(character, self.__open_world_view)
         elif character == SpaceshipTriggerTile.MAP_WORKBENCH_REPRESENTATION:
-            tile = SpaceshipTriggerTile(character, self.__use_workbench)
+            if self.__achievement_manager.check_achievement(achievements.UnlockedWorkbench):
+                tile = SpaceshipTriggerTile(character, self.__use_workbench)
+            else:
+                tile = None
         # elif character == SpaceshipTriggerTile.MAP_GATE_LIBRARY_REPRESENTATION:
         #    tile = SpaceshipTriggerTile(character, self.open_gate_library)
         elif character == SpaceshipTriggerTile.QUICKSTART_LEVEL:
