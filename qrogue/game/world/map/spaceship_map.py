@@ -5,7 +5,7 @@ from qrogue.game.logic.actors import Robot, Controllable, Player
 from qrogue.game.world.navigation import Direction, Coordinate
 from qrogue.game.world.tiles import Tile, TileCode, WalkTriggerTile
 from qrogue.game.world.tiles.tiles import NpcTile
-from qrogue.util import Config, achievements
+from qrogue.util import Config, achievements, AchievementManager
 
 SCIENTIST_TILE_REPRESENTATION = Config.scientist_name()[0]
 ascii_spaceship = \
@@ -147,7 +147,7 @@ class SpaceshipMap:
     HEIGHT = ascii_spaceship.count("\n")
     SPAWN_POS = Coordinate(x=25, y=16)
 
-    def __init__(self, player: Player, scientist: NpcTile, check_achievement: Callable[[str], bool],
+    def __init__(self, player: Player, scientist: NpcTile, achievement_manager: AchievementManager,
                  stop_playing: Callable[[Direction, Controllable], None],
                  open_world_view: Callable[[Direction, Controllable], None],
                  use_workbench: Callable[[Direction, Controllable], None],
@@ -155,7 +155,7 @@ class SpaceshipMap:
                  start_training: Callable[[Direction], None]):
         self.__player = player
         self.__scientist = scientist
-        self.__check_achievement = check_achievement
+        self.__achievement_manager = achievement_manager
         self.__stop_playing_callback = stop_playing
         self.__open_world_view = open_world_view
         self.__use_workbench_callback = use_workbench
@@ -202,7 +202,7 @@ class SpaceshipMap:
         # elif character == SpaceshipTriggerTile.MAP_GATE_LIBRARY_REPRESENTATION:
         #    tile = SpaceshipTriggerTile(character, self.open_gate_library)
         elif character == SpaceshipTriggerTile.QUICKSTART_LEVEL:
-            if self.__check_achievement(achievements.UnlockedQuickStart):
+            if self.__achievement_manager.check_achievement(achievements.UnlockedQuickStart):
                 tile = SpaceshipTriggerTile(character, self.__load_newest_map)
             else:
                 tile = None
@@ -243,11 +243,11 @@ class SpaceshipMap:
             return False
 
     def __stop_playing(self, direction: Direction, controllable: Controllable):
-        if self.__check_achievement(achievements.FinishedTutorial):
+        if self.__achievement_manager.check_achievement(achievements.FinishedTutorial):
             self.__stop_playing_callback(direction, controllable)
 
     def __use_workbench(self, direction: Direction, controllable: Controllable):
-        if self.__check_achievement(achievements.UnlockedWorkbench):
+        if self.__achievement_manager.check_achievement(achievements.UnlockedWorkbench):
             self.__use_workbench_callback(direction, controllable)
 
     def __trigger_event(self, event_id: str):
