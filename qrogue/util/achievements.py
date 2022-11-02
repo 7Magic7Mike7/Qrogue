@@ -83,7 +83,7 @@ class Ach:
             return progress >= Ach.__EXAM_DONE_PROGRESS
         elif unlock is Unlocks.Navigation:
             # we can now freely choose between levels in the current world
-            return progress > Ach.__EXAM_DONE_PROGRESS + 1
+            return progress >= Ach.__EXAM_DONE_PROGRESS
         elif unlock is Unlocks.FreeNavigation:
             # we can now choose between worlds and not only levels in a given world
             return False    # todo implement
