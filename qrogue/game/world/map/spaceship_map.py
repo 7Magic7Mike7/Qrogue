@@ -5,7 +5,7 @@ from qrogue.game.logic.actors import Robot, Controllable, Player
 from qrogue.game.world.navigation import Direction, Coordinate
 from qrogue.game.world.tiles import Tile, TileCode, WalkTriggerTile
 from qrogue.game.world.tiles.tiles import NpcTile
-from qrogue.util import Config, achievements, AchievementManager
+from qrogue.util import Config, achievements, AchievementManager, MapConfig
 
 SCIENTIST_TILE_REPRESENTATION = Config.scientist_name()[0]
 ascii_spaceship = \
@@ -199,7 +199,8 @@ class SpaceshipMap:
             def callback_(direction: Direction, robot: Robot):
                 # todo check if using secrets like this is what I want
                 self.__achievement_manager.uncovered_secret(achievements.EnteredNavigationPanel)
-                self.__open_world_view(direction, robot)
+                #self.__open_world_view(direction, robot)
+                self.__load_map(MapConfig.expedition_map_prefix(), None)    # for now we immediately start an expedition
             tile = SpaceshipTriggerTile(character, callback_)
         elif character == SpaceshipTriggerTile.MAP_WORKBENCH_REPRESENTATION:
             if self.__achievement_manager.check_achievement(achievements.UnlockedWorkbench):

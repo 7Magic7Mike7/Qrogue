@@ -8,6 +8,7 @@ from qrogue.util import CommonQuestions, Logger, MapConfig, achievements, Random
 
 from qrogue.management.save_data import SaveData
 from qrogue.util.achievements import Ach, Unlocks
+from qrogue.util.config.gameplay_config import ExpeditionConfig
 
 __MAP_ORDER = {
     #MapConfig.spaceship(): MapConfig.intro_level(),
@@ -197,7 +198,10 @@ class MapManager:
             if map_seed is None:
                 map_seed = self.__rm.get_seed(msg="MapMngr_seedForExpedition")
 
-            difficulty = int(map_name[len(MapConfig.expedition_map_prefix()):])
+            if len(map_name) > len(MapConfig.expedition_map_prefix()):
+                difficulty = int(map_name[len(MapConfig.expedition_map_prefix()):])
+            else:
+                difficulty = ExpeditionConfig.DEFAULT_DIFFICULTY
             robot = SaveData.instance().get_robot(0)
             check_achievement = SaveData.instance().achievement_manager.check_achievement
             generator = ExpeditionGenerator(map_seed, check_achievement, self.__trigger_event, self.load_map)

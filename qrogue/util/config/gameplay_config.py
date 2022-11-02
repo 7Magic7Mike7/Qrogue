@@ -401,3 +401,7 @@ class ShopConfig:
 
 class InstructionConfig:
     MAX_ABBREVIATION_LEN = 3
+
+
+class ExpeditionConfig:
+    DEFAULT_DIFFICULTY = 2
