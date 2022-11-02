@@ -9,6 +9,7 @@ FirstDoorUnlocked = "UnlockedDoor"
 CompletedExpedition = "CompletedExpedition"
 UnlockedWorkbench = "UnlockedWorkbench"
 UnlockedQuickStart = "UnlockedQuickStart"
+EnteredNavigationPanel = "EnteredNavigationPanel"
 
 
 class Unlocks(enum.Enum):

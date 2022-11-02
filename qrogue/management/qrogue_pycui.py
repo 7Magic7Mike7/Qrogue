@@ -495,7 +495,8 @@ class QrogueCUI(PyCUI):
     def __show_world(self, world: WorldMap = None) -> None:
         if world is None:
             if Ach.check_unlocks(Unlocks.Spaceship, SaveData.instance().story_progress):
-                if Ach.is_most_recent_unlock(Unlocks.Spaceship, SaveData.instance().story_progress):
+                if Ach.is_most_recent_unlock(Unlocks.Spaceship, SaveData.instance().story_progress) and \
+                    not SaveData.instance().achievement_manager.check_achievement(achievements.EnteredNavigationPanel):
                     self._execute_transition(TransitionText.exam_spaceship(), QrogueCUI._State.Spaceship, None)
                 else:
                     self.__state_machine.change_state(QrogueCUI._State.Spaceship, None)

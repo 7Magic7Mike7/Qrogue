@@ -196,7 +196,11 @@ class SpaceshipMap:
         elif character == SpaceshipTriggerTile.BED_SPAWN_REPRESENTATION:
             tile = SpaceshipTriggerTile(character, self.__stop_playing)
         elif character == SpaceshipTriggerTile.MAP_START_REPRESENTATION:
-            tile = SpaceshipTriggerTile(character, self.__open_world_view)
+            def callback_(direction: Direction, robot: Robot):
+                # todo check if using secrets like this is what I want
+                self.__achievement_manager.uncovered_secret(achievements.EnteredNavigationPanel)
+                self.__open_world_view(direction, robot)
+            tile = SpaceshipTriggerTile(character, callback_)
         elif character == SpaceshipTriggerTile.MAP_WORKBENCH_REPRESENTATION:
             if self.__achievement_manager.check_achievement(achievements.UnlockedWorkbench):
                 tile = SpaceshipTriggerTile(character, self.__use_workbench)
