@@ -1,14 +1,14 @@
 from enum import IntEnum
-from typing import Callable, Dict
+from typing import Callable, Dict, Optional
 
 from qrogue.game.logic.actors import Robot
-from qrogue.game.logic.collectibles import GateFactory, ShopFactory, EnergyRefill, Coin, Key, instruction
+from qrogue.game.logic.collectibles import GateFactory, ShopFactory, Key, instruction, Energy
 from qrogue.game.target_factory import TargetDifficulty, BossFactory, EnemyFactory, RiddleFactory
 from qrogue.game.world.map import CallbackPack, LevelMap, Hallway, WildRoom, SpawnRoom, ShopRoom, RiddleRoom, BossRoom, \
     TreasureRoom, ExpeditionMap
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.game.world.tiles import Boss, Collectible, Door, DoorOpenState
-from qrogue.util import Logger, RandomManager
+from qrogue.util import Logger, RandomManager, MapConfig
 
 from qrogue.game.world.dungeon_generator.generator import DungeonGenerator
 
@@ -635,8 +635,10 @@ class ExpeditionGenerator(DungeonGenerator):
                             elif code == _Code.Gate:
                                 room = TreasureRoom(Collectible(gate), hw, direction)
                             elif code == _Code.Boss:
-                                room = BossRoom(hw, direction, Boss(dungeon_boss,
-                                                                          CallbackPack.instance().start_boss_fight))
+                                def end_level():
+                                    self.__load_map(MapConfig.back_map_string(), None)
+                                boss = Boss(dungeon_boss, CallbackPack.instance().start_boss_fight, end_level)
+                                room = BossRoom(hw, direction, boss)
                         if room:
                             rooms[y][x] = room
             if spawn_room:

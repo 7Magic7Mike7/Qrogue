@@ -227,7 +227,9 @@ class MapManager:
             self.__show_world(world)
 
     def __load_back(self):
-        if self.__in_level:
+        if self.__cur_map.get_type() == MapType.Expedition:
+            self.__show_spaceship()     # todo for now every expedition returns to the spaceship
+        elif self.__in_level:
             # if we are currently in a level we return to the current world
             self.__in_level = False
             self.__show_world(self.__get_world(self.__cur_map.internal_name))

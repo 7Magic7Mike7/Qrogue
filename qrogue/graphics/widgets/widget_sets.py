@@ -1302,12 +1302,6 @@ class BossFightWidgetSet(FightWidgetSet):
     def set_data(self, robot: Robot, target: Boss):
         super(BossFightWidgetSet, self).set_data(robot, target)
 
-    def __continue_exploration(self):
-        if self._target.is_defeated:
-            Logger.instance().info("Defeated boss.", from_pycui=False)    # todo
-        else:
-            self.__continue_exploration_callback()
-
 
 class ShopWidgetSet(MyWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
