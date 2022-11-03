@@ -422,7 +422,7 @@ class QrogueCUI(PyCUI):
         super(QrogueCUI, self).show_error_popup(title, text)
 
     def __show_message_popup(self, title: str, text: str, position: int, color: int,
-                             dimensions: Optional[Tuple[int, int]]) -> None:
+                             dimensions: Optional[Tuple[int, int]] = None) -> None:
         self.__focused_widget = self.get_selected_widget()
         self._popup = MultilinePopup(self, title, text, color, self._renderer, self._logger, self.__controls,
                                      pos=PopupConfig.resolve_position(position), dimensions=dimensions)
