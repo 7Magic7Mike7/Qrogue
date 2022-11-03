@@ -56,6 +56,15 @@ to install Qrogue in your current Python environment.
 
 Afterwards you can launch the game simply by executing `qrogue` in the Python environment you installed Qrogue in.
 
+#### Alternative: pipenv ####
+
+If you want to keep your system environment clean, you may use `pipenv`:
+
+```bash
+pipenv install -e .
+pipenv run ./play_qrogue.sh
+```
+
 ### Windows ###
 
 #### Prerequisites ####
