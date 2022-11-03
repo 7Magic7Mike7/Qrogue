@@ -17,7 +17,7 @@ from qrogue.graphics.popups import Popup
 from qrogue.graphics.rendering import ColorRules
 from qrogue.graphics.widget_base import WidgetWrapper
 from qrogue.util import CommonPopups, Config, Controls, GameplayConfig, HelpText, HelpTextType, Logger, PathConfig, \
-    RandomManager, AchievementManager, Keys, UIConfig, HudConfig, ColorConfig, Options
+    RandomManager, AchievementManager, Keys, UIConfig, HudConfig, ColorConfig, Options, PuzzleConfig
 from qrogue.util.achievements import Ach, Unlocks
 
 from qrogue.graphics.widgets import Renderable, Widget, MyBaseWidget
@@ -1301,6 +1301,10 @@ class BossFightWidgetSet(FightWidgetSet):
 
     def set_data(self, robot: Robot, target: Boss):
         super(BossFightWidgetSet, self).set_data(robot, target)
+
+    def _on_commit_fail(self) -> bool:
+        self._robot.decrease_energy(PuzzleConfig.BOSS_FAIL_DAMAGE)
+        return super(BossFightWidgetSet, self)._on_commit_fail()
 
 
 class ShopWidgetSet(MyWidgetSet):

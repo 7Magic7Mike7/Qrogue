@@ -373,6 +373,9 @@ class GameplayConfig:
 
 
 class PuzzleConfig:
+    BOSS_FLEE_ENERGY = 10
+    BOSS_FAIL_DAMAGE = 5
+
     @staticmethod
     def calculate_appearance_chance(eid: int) -> float:
         return 0.1 * (10 - eid)   # the lower the id the higher the chance of a puzzle to appear
