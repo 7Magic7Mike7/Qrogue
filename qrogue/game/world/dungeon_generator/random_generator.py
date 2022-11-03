@@ -518,7 +518,7 @@ class ExpeditionGenerator(DungeonGenerator):
     __MAX_ENEMY_FACTORY_CHANCE = 0.8
 
     def __init__(self, seed: int, check_achievement: Callable[[str], bool], trigger_event: Callable[[str], None],
-                 load_map_callback: Callable[[str], None], width: int = DungeonGenerator.WIDTH,
+                 load_map_callback: Callable[[str, Optional[Coordinate]], None], width: int = DungeonGenerator.WIDTH,
                  height: int = DungeonGenerator.HEIGHT):
         super(ExpeditionGenerator, self).__init__(seed, width, height)
         self.__check_achievement = check_achievement
@@ -607,11 +607,11 @@ class ExpeditionGenerator(DungeonGenerator):
                         if code == _Code.Spawn:
                             spawn_room = pos
                             room = SpawnRoom(self.__load_map,
-                                north_hallway=room_hallways[Direction.North],
-                                east_hallway=room_hallways[Direction.East],
-                                south_hallway=room_hallways[Direction.South],
-                                west_hallway=room_hallways[Direction.West],
-                                )
+                                             north_hallway=room_hallways[Direction.North],
+                                             east_hallway=room_hallways[Direction.East],
+                                             south_hallway=room_hallways[Direction.South],
+                                             west_hallway=room_hallways[Direction.West],
+                                             )
                         elif code == _Code.Wild:
                             enemy_factory = rm.get_element_prioritized(enemy_factories, enemy_factory_priorities,
                                                                        msg="RandomDG_elemPrioritized")
@@ -626,7 +626,7 @@ class ExpeditionGenerator(DungeonGenerator):
                                 west_hallway=room_hallways[Direction.West],
                             )
                         else:
-                            # special rooms have exactly 1 neighbor which is already stroed in direction
+                            # special rooms have exactly 1 neighbor which is already stored in direction
                             hw = room_hallways[direction]
                             if code == _Code.Shop:
                                 # since there was no shop introduction yet, we have to skip creating one.

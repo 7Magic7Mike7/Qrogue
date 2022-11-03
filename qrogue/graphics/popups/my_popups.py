@@ -223,7 +223,7 @@ class ConfirmationPopup(Popup):
                          on_close_callback=on_close_callback)
         self.__confirmed: Optional[int] = None
 
-    def __set_confirmation(self, confirmed: bool):
+    def __set_confirmation(self, confirmed: int):
         # by setting confirmed here we determine the parameter of the callback called after closing
         self.__confirmed = confirmed
 

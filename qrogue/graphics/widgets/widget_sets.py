@@ -1297,7 +1297,7 @@ class BossFightWidgetSet(FightWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  continue_exploration_callback: Callable[[], None], game_over_callback: Callable[[], None]):
         self.__continue_exploration_callback = continue_exploration_callback
-        super().__init__(controls, render, logger, root, self.__continue_exploration, game_over_callback)
+        super().__init__(controls, render, logger, root, self.__continue_exploration_callback, game_over_callback)
 
     def set_data(self, robot: Robot, target: Boss):
         super(BossFightWidgetSet, self).set_data(robot, target)

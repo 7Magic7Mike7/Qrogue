@@ -120,7 +120,7 @@ class MapManager:
 
         generator = QrogueWorldGenerator(self.__base_seed, SaveData.instance().player,
                                          SaveData.instance().achievement_manager.check_achievement,
-                                         self.__custom_trigger_event,
+                                         SaveData.instance().achievement_manager.add_to_achievement,
                                          self.load_map, Popup.npc_says)
         world, success = generator.generate(world_name)
         if success:
