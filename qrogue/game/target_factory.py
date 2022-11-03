@@ -4,7 +4,7 @@ from qrogue.game.logic.actors import StateVector
 from qrogue.game.logic.actors.controllables import Robot
 from qrogue.game.logic.actors.puzzles import Enemy, Target, Riddle, Boss
 from qrogue.game.logic.collectibles import Collectible, CollectibleFactory, Instruction, CXGate, SwapGate, HGate, \
-    XGate, Coin, Key
+    XGate, Coin, Key, Energy
 from qrogue.game.world.navigation import Direction
 from qrogue.util import Logger, MyRandom, RandomManager
 
@@ -168,7 +168,7 @@ class ExplicitEnemyFactory(EnemyFactory):
 class RiddleFactory:
     @staticmethod
     def default(robot: Robot) -> "RiddleFactory":
-        reward_pool = [CXGate(), HGate, XGate, SwapGate, Coin(11), Key(5)]
+        reward_pool = [CXGate(), HGate, XGate, SwapGate, Energy(40), Key(5)]
         difficulty = RiddleDifficulty(num_of_instructions=4, reward_pool=reward_pool, min_attempts=4, max_attempts=9)
         return RiddleFactory(robot, difficulty)
 
@@ -186,7 +186,7 @@ class RiddleFactory:
 class BossFactory:
     @staticmethod
     def default(robot: Robot) -> "BossFactory":
-        pool = [CXGate(), SwapGate(), Coin(30)]
+        pool = [CXGate(), SwapGate(), Energy(100)]
         return BossFactory(robot, pool)
 
     def __init__(self, robot: Robot, reward_pool: List[Collectible]):

@@ -89,7 +89,7 @@ class GateFactory:
     @staticmethod
     def default():
         return CollectibleFactory(pool=[
-            gates.HGate(), gates.XGate(), gates.YGate(), gates.ZGate(),
+            gates.HGate(), gates.XGate(), #gates.YGate(), gates.ZGate(),
             gates.CXGate(), gates.SwapGate(),
         ])
 

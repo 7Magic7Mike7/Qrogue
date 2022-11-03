@@ -548,16 +548,16 @@ class ExpeditionGenerator(DungeonGenerator):
 
         enemy_factories = [
             EnemyFactory(CallbackPack.instance().start_fight, TargetDifficulty(
-                2, [Coin(2), EnergyRefill()]
+                2, [Energy(5), Energy(10)]
             )),
             EnemyFactory(CallbackPack.instance().start_fight, TargetDifficulty(
-                2, [Coin(1), Coin(2), Coin(2), Coin(3), Key(), EnergyRefill(15)]
+                2, [Energy(5), Key(), Energy(5)]
             )),
             EnemyFactory(CallbackPack.instance().start_fight, TargetDifficulty(
-                3, [Coin(1), Coin(5), Key(), EnergyRefill(20)]
+                3, [Energy(5), Key(), Energy(20)]
             )),
             EnemyFactory(CallbackPack.instance().start_fight, TargetDifficulty(
-                3, [Coin(1), Coin(1), EnergyRefill(3)]
+                3, [Energy(10), Energy(15), Energy(20)]
             )),
         ]
         enemy_factory_priorities = [0.25, 0.35, 0.3, 0.1]
@@ -629,7 +629,8 @@ class ExpeditionGenerator(DungeonGenerator):
                             # special rooms have exactly 1 neighbor which is already stroed in direction
                             hw = room_hallways[direction]
                             if code == _Code.Shop:
-                                room = ShopRoom(hw, direction, shop_items, CallbackPack.instance().visit_shop)
+                                # since there was no shop introduction yet, we have to skip creating one.
+                                room = None  #ShopRoom(hw, direction, shop_items, CallbackPack.instance().visit_shop)
                             elif code == _Code.Riddle:
                                 room = RiddleRoom(hw, direction, riddle, CallbackPack.instance().open_riddle)
                             elif code == _Code.Gate:
