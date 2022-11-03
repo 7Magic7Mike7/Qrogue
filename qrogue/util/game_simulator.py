@@ -1,5 +1,6 @@
-from typing import Tuple
+from typing import Tuple, Optional
 
+from qrogue.util import Logger
 from qrogue.util.config import PathConfig, GameplayConfig, Config, ColorConfig, FileTypes
 from qrogue.util.controls import Controls, Keys
 
@@ -12,13 +13,14 @@ class GameSimulator:
         if not path.endswith(FileTypes.KeyLog.value):
             path += FileTypes.KeyLog.value
 
-        self.__controls = None
+        self.__controls: Optional[Controls] = None
         self.__reader = PathConfig.read_keylog_buffered(path, in_keylog_folder, buffer_size=GameSimulator.__BUFFER_SIZE)
-        self.__cur_chunk = None
+        self.__cur_chunk: Optional[bytes] = None
         self._next_chunk()  # initializes __cur_chunk
 
         self.__notification_popup = True
         self.__marker_counter = 0
+        self.__finished = False
 
         # retrieve the name of the map that was played
         second_line = self.__cur_chunk.index((bytes("\n", GameSimulator.__ENCODING)))
@@ -26,21 +28,21 @@ class GameSimulator:
         self.__cur_index = second_line
 
         # change the config so we can reproduce the run (e.g. different auto reset would destroy the simulation)
-        if self.__cur_chunk[second_line+1:].startswith(bytes(Config.HEADER(), GameSimulator.__ENCODING)):
+        if self.__cur_chunk[second_line + 1:].startswith(bytes(Config.HEADER(), GameSimulator.__ENCODING)):
             version_start = second_line + len(Config.HEADER())
             version_end = self.__cur_chunk.index(bytes("\n", GameSimulator.__ENCODING), version_start)
             self.__version = str(self.__cur_chunk[version_start:version_end], GameSimulator.__ENCODING)
             seed_start = self.__cur_chunk.index(bytes(Config.SEED_HEAD(), GameSimulator.__ENCODING), version_end) \
-                         + len(Config.SEED_HEAD())
+                + len(Config.SEED_HEAD())
             seed_end = self.__cur_chunk.index(bytes("\n", GameSimulator.__ENCODING), seed_start)
             self.__seed = int(self.__cur_chunk[seed_start:seed_end])
             time_start = self.__cur_chunk.index(bytes(Config.TIME_HEAD(), GameSimulator.__ENCODING), seed_end) \
-                         + len(Config.TIME_HEAD())
+                + len(Config.TIME_HEAD())
             time_end = self.__cur_chunk.index(bytes("\n", GameSimulator.__ENCODING), time_start)
             self.__time = str(self.__cur_chunk[time_start:time_end], GameSimulator.__ENCODING)
 
             start = self.__cur_chunk.index(bytes(Config.CONFIG_HEAD(), GameSimulator.__ENCODING), seed_end) \
-                    + len(Config.CONFIG_HEAD()) + 1  # start at the first line after CONFIG_HEAD
+                + len(Config.CONFIG_HEAD()) + 1  # start at the first line after CONFIG_HEAD
             end = self.__cur_chunk.index(bytes("\n\n", GameSimulator.__ENCODING), start)
             config = str(self.__cur_chunk[start:end], GameSimulator.__ENCODING)
             GameplayConfig.from_log_text(config)
@@ -88,7 +90,7 @@ class GameSimulator:
             if key is Keys.ErrorMarker:
                 self.__marker_counter += 1
                 if self.__marker_counter >= 3:  # todo fix magic number
-                    pass    # todo parse error
+                    pass  # todo parse error
                 return -1
             else:
                 self.__marker_counter = 0
@@ -101,7 +103,7 @@ class GameSimulator:
                 self.__cur_chunk = None
         return -1
 
-    def next(self) -> int:
+    def next(self) -> Optional[int]:
         """
 
         :return: the key to press or None if the simulation finished
@@ -114,6 +116,7 @@ class GameSimulator:
             key = self.__next_key()
             if key > -1:
                 return key
+        self.__finished = True
         return None
 
     def print(self):
@@ -149,3 +152,11 @@ class GameSimulator:
                f"Version you try to simulate: {self.version}\n" \
                "This is not supported and can cause problems. Only continue if you know what you do! Else close this " \
                "popup and press ESC to abort the simulation."
+
+    def stop_message(self) -> str:
+        if self.__finished:
+            text = "finished Simulation"
+        else:
+            text = "stopped Simulator"
+        text += f"\n{Logger.instance().error_count} errors occurred while simulating"
+        return text

@@ -1,12 +1,12 @@
 from enum import Enum
-from typing import Callable
+from typing import Callable, Optional, List
 
 from qrogue.util import Config, ColorConfig as CC, Logger
 
 
 class _CallbackHandler:
     __show: Callable[[str, str], None] = None
-    __ask: Callable[[str, str, Callable[[bool], None]], None] = None
+    __ask: Callable[[str, str, Callable[[int], None], Optional[List[str]]], None] = None
 
     @staticmethod
     def show(title: str, text: str):
@@ -20,14 +20,14 @@ class _CallbackHandler:
         _CallbackHandler.__show = show
 
     @staticmethod
-    def ask(title: str, text: str, callback: Callable[[bool], None]):
+    def ask(title: str, text: str, callback: Callable[[int], None], answers: Optional[List[str]]):
         if _CallbackHandler.__ask:
-            _CallbackHandler.__ask(title, text, callback)
+            _CallbackHandler.__ask(title, text, callback, answers)
         else:
             Logger.instance().error("CommonMessages' ask is None!", from_pycui=False)
 
     @staticmethod
-    def set_ask_callback(ask: Callable[[str, str, Callable[[bool], None]], None]):
+    def set_ask_callback(ask: Callable[[str, str, Callable[[int], None]], None]):
         _CallbackHandler.__ask = ask
 
 
@@ -35,7 +35,7 @@ def set_show_callback(show: Callable[[str, str], None]):
     _CallbackHandler.set_show_callback(show)
 
 
-def set_ask_callback(ask: Callable[[str, str, Callable[[bool], None]], None]):
+def set_ask_callback(ask: Callable[[str, str, Callable[[int], None], Optional[List[str]]], None]):
     _CallbackHandler.set_ask_callback(ask)
 
 
@@ -123,14 +123,15 @@ class CommonPopups(Enum):
 
 
 class CommonQuestions(Enum):
-    GoingBack = (Config.scientist_name(), "We are not done yet. \nDo you really want to go back to the spaceship?")
+    GoingBack = (Config.scientist_name(), "We are not done yet. \nDo you really want to go back?")
     ProceedToNextMap = (Config.scientist_name(), "Looks like we cleared this map. Shall we proceed directly to the " 
-                                                 "next one?")
+                                                 "next one?", ["Proceed", "Stay", "Back to world"])
     UseTeleporter = (Config.system_name(), "Do you want to use this Teleporter?")
 
-    def __init__(self, title: str, text: str):
+    def __init__(self, title: str, text: str, answers: Optional[List[str]] = None):
         self.__title = title
         self.__text = text
+        self.__answers = answers
 
-    def ask(self, callback: Callable[[bool], None]):
-        _CallbackHandler.ask(self.__title, self.__text, callback)
+    def ask(self, callback: Callable[[int], None]):
+        _CallbackHandler.ask(self.__title, self.__text, callback, self.__answers)

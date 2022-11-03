@@ -5,7 +5,7 @@ from qrogue.game.logic.actors import Robot, Controllable, Player
 from qrogue.game.world.navigation import Direction, Coordinate
 from qrogue.game.world.tiles import Tile, TileCode, WalkTriggerTile
 from qrogue.game.world.tiles.tiles import NpcTile
-from qrogue.util import Config, achievements
+from qrogue.util import Config, achievements, AchievementManager, MapConfig
 
 SCIENTIST_TILE_REPRESENTATION = Config.scientist_name()[0]
 ascii_spaceship = \
@@ -147,7 +147,7 @@ class SpaceshipMap:
     HEIGHT = ascii_spaceship.count("\n")
     SPAWN_POS = Coordinate(x=25, y=16)
 
-    def __init__(self, player: Player, scientist: NpcTile, check_achievement: Callable[[str], bool],
+    def __init__(self, player: Player, scientist: NpcTile, achievement_manager: AchievementManager,
                  stop_playing: Callable[[Direction, Controllable], None],
                  open_world_view: Callable[[Direction, Controllable], None],
                  use_workbench: Callable[[Direction, Controllable], None],
@@ -155,12 +155,12 @@ class SpaceshipMap:
                  start_training: Callable[[Direction], None]):
         self.__player = player
         self.__scientist = scientist
-        self.__check_achievement = check_achievement
+        self.__achievement_manager = achievement_manager
         self.__stop_playing_callback = stop_playing
         self.__open_world_view = open_world_view
         self.__use_workbench_callback = use_workbench
         self.__load_map = load_map
-        self.__load_newest_map = load_newest_map
+        self.__load_newest_map = lambda robot, direction: load_newest_map()
         self.__start_training = start_training
         self.__tiles = []
         row = []
@@ -173,7 +173,8 @@ class SpaceshipMap:
                     # we want to start on top of the bed
                     SpaceshipMap.SPAWN_POS = Coordinate(len(row), len(self.__tiles))
                 tile = self.__ascii_to_tile(character)
-                row.append(tile)
+                if tile is not None:
+                    row.append(tile)
 
         self.__player_pos = SpaceshipMap.SPAWN_POS
 
@@ -183,7 +184,7 @@ class SpaceshipMap:
     def player_pos(self) -> Coordinate:
         return self.__player_pos
 
-    def __ascii_to_tile(self, character: str) -> Tile:
+    def __ascii_to_tile(self, character: str) -> Optional[Tile]:
         if character == SCIENTIST_TILE_REPRESENTATION:
             tile = self.__scientist
         elif character == SpaceshipFreeWalkTile.MAP_REPRESENTATION:
@@ -195,13 +196,24 @@ class SpaceshipMap:
         elif character == SpaceshipTriggerTile.BED_SPAWN_REPRESENTATION:
             tile = SpaceshipTriggerTile(character, self.__stop_playing)
         elif character == SpaceshipTriggerTile.MAP_START_REPRESENTATION:
-            tile = SpaceshipTriggerTile(character, self.__open_world_view)
+            def callback_(direction: Direction, robot: Robot):
+                # todo check if using secrets like this is what I want
+                self.__achievement_manager.uncovered_secret(achievements.EnteredNavigationPanel)
+                #self.__open_world_view(direction, robot)
+                self.__load_map(MapConfig.expedition_map_prefix(), None)    # for now we immediately start an expedition
+            tile = SpaceshipTriggerTile(character, callback_)
         elif character == SpaceshipTriggerTile.MAP_WORKBENCH_REPRESENTATION:
-            tile = SpaceshipTriggerTile(character, self.__use_workbench)
+            if self.__achievement_manager.check_achievement(achievements.UnlockedWorkbench):
+                tile = SpaceshipTriggerTile(character, self.__use_workbench)
+            else:
+                tile = None
         # elif character == SpaceshipTriggerTile.MAP_GATE_LIBRARY_REPRESENTATION:
         #    tile = SpaceshipTriggerTile(character, self.open_gate_library)
         elif character == SpaceshipTriggerTile.QUICKSTART_LEVEL:
-            tile = SpaceshipTriggerTile(character, self.__load_newest_map)
+            if self.__achievement_manager.check_achievement(achievements.UnlockedQuickStart):
+                tile = SpaceshipTriggerTile(character, self.__load_newest_map)
+            else:
+                tile = None
         elif character == SpaceshipTriggerTile.TRAININGS_ROOM:
             def start_training(direction: Direction, controllable: Controllable):
                 self.__start_training(direction)
@@ -239,11 +251,11 @@ class SpaceshipMap:
             return False
 
     def __stop_playing(self, direction: Direction, controllable: Controllable):
-        if self.__check_achievement(achievements.FinishedTutorial):
+        if self.__achievement_manager.check_achievement(achievements.FinishedTutorial):
             self.__stop_playing_callback(direction, controllable)
 
     def __use_workbench(self, direction: Direction, controllable: Controllable):
-        if self.__check_achievement(achievements.UnlockedWorkbench):
+        if self.__achievement_manager.check_achievement(achievements.UnlockedWorkbench):
             self.__use_workbench_callback(direction, controllable)
 
     def __trigger_event(self, event_id: str):

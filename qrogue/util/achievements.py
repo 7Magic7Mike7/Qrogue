@@ -8,11 +8,12 @@ EnteredPauseMenu = "EnteredPauseMenu"
 FirstDoorUnlocked = "UnlockedDoor"
 CompletedExpedition = "CompletedExpedition"
 UnlockedWorkbench = "UnlockedWorkbench"
+UnlockedQuickStart = "UnlockedQuickStart"
+EnteredNavigationPanel = "EnteredNavigationPanel"
 
 
 class Unlocks(enum.Enum):
     # global unlocks
-    Saving = 0
 
     # menu unlocks
     MainMenuContinue = 10
@@ -39,7 +40,8 @@ class Unlocks(enum.Enum):
 
 
 class Ach:
-    __EXAM_DONE_PROGRESS = 10   # todo check
+    __EXAM_DONE_PROGRESS = 9
+    STORY_DONE_PROGRESS = 100
 
     @staticmethod
     def story() -> str:
@@ -57,16 +59,12 @@ class Ach:
 
     @staticmethod
     def check_unlocks(unlock: Unlocks, progress: int) -> bool:
-        if unlock is Unlocks.Saving:
-            # there is something we can save
-            return progress > 0
-
-        elif unlock is Unlocks.MainMenuContinue:
+        if unlock is Unlocks.MainMenuContinue:
             # something was already completed so continue is no longer the same than a fresh start
             return progress > 0
         elif unlock is Unlocks.MainMenuPlay:
             # from now on we can choose with which level we want to to continue
-            return progress > Ach.__EXAM_DONE_PROGRESS
+            return progress > Ach.__EXAM_DONE_PROGRESS + 1
 
         elif unlock is Unlocks.ShowEnergy:
             return progress > 0     # Lesson 0 completed
@@ -78,19 +76,27 @@ class Ach:
 
         elif unlock is Unlocks.ProceedChoice:
             # instead of automatically proceeding to the next level we now have a choice
-            return progress > Ach.__EXAM_DONE_PROGRESS
+            return progress >= Ach.__EXAM_DONE_PROGRESS - 1    # when we unlocked the world view (right before the exam)
 
         elif unlock is Unlocks.Spaceship:
             # we can now use the spaceship
-            return progress > Ach.__EXAM_DONE_PROGRESS
+            return progress >= Ach.__EXAM_DONE_PROGRESS
         elif unlock is Unlocks.Navigation:
             # we can now freely choose between levels in the current world
-            return progress > Ach.__EXAM_DONE_PROGRESS
+            return progress >= Ach.__EXAM_DONE_PROGRESS
         elif unlock is Unlocks.FreeNavigation:
             # we can now choose between worlds and not only levels in a given world
             return False    # todo implement
 
         raise NotImplementedError(f"Unlock \"{unlock}\" not implemented yet!")
+
+    @staticmethod
+    def is_most_recent_unlock(unlock: Unlocks, progress: int) -> bool:
+        if unlock is Unlocks.Spaceship:
+            # we can now use the spaceship
+            return progress == Ach.__EXAM_DONE_PROGRESS
+
+        raise NotImplementedError(f"Unlock \"{unlock}\" not yet implemented for recency check!")
 
 
 class AchievementType(enum.Enum):
@@ -101,13 +107,14 @@ class AchievementType(enum.Enum):
     Story = 4
     Event = 5    # in-level event
     Expedition = 6
+    Implicit = 7    # e.g. overall story score is an implicit achievement, hence it's not explicitly saved
 
     @staticmethod
     def get_display_order() -> "List[AchievementType]":
         return [
             AchievementType.Secret, AchievementType.Misc,
             AchievementType.Expedition, AchievementType.World, AchievementType.Level,
-            AchievementType.Story,
+            AchievementType.Story, AchievementType.Implicit,
         ]
 
 
@@ -179,6 +186,9 @@ class Achievement:
             text += f" {self.name} ({self.score} / {self.done_score})"
         return text
 
+    def __str__(self) -> str:
+        return self.to_string()
+
 
 class AchievementManager:
     __DISPLAY_STRING_INDENT = "  "
@@ -187,8 +197,14 @@ class AchievementManager:
         self.__storage = {}
         self.__temp_level_storage = {}
 
+        story_counter = 0
         for achievement in achievements:
-            self.__storage[achievement.name] = achievement
+            if achievement.type is not AchievementType.Implicit:
+                if achievement.type is AchievementType.Story and achievement.is_done():
+                    story_counter += 1
+                self.__storage[achievement.name] = achievement
+        self.__storage[Ach.story()] = Achievement(Ach.story(), AchievementType.Implicit, story_counter,
+                                                  Ach.STORY_DONE_PROGRESS)
 
     @property
     def story_progress(self) -> int:
@@ -219,7 +235,12 @@ class AchievementManager:
     def reset_level_events(self):
         self.__temp_level_storage.clear()
 
-    def add_to_achievement(self, name: str, score: float):  # todo maybe default score to 1?
+    def correct_world_progress(self, world: str, score: int, max_score: int):
+        assert world in self.__storage, f"World \"{world}\" is not stored and therefore cannot be corrected!"
+
+        self.__storage[world] = Achievement(world, AchievementType.World, score, max_score)
+
+    def add_to_achievement(self, name: str, score: float = 1):
         if name in self.__storage:
             self.__storage[name].add_score(score)
 
@@ -241,12 +262,10 @@ class AchievementManager:
         if achievement.add_score(achievement.done_score):
             self.__on_achievement_completion(achievement)
 
-    def finished_level(self, level: str, display_name: str = None):
-        already_finished = False
-        if level in self.__storage:
-            already_finished = self.__storage[level].is_done()
-
-        if not already_finished:
+    def finished_level(self, level: str, display_name: str = None) -> bool:
+        if level in self.__storage and self.__storage[level].is_done():
+            return False
+        else:
             self.__storage[level] = Achievement(level, AchievementType.Level, 1, 1)
             if Ach.is_story_mission(level):
                 if display_name is None:
@@ -255,6 +274,7 @@ class AchievementManager:
                     self.progressed_in_story(display_name)
             else:
                 self.__on_achievement_completion(self.__storage[level])
+            return True
 
     def finished_world(self, world: str):
         if world not in self.__storage:
@@ -269,6 +289,8 @@ class AchievementManager:
     def to_string(self) -> str:
         text = ""
         for value in self.__storage.values():
+            if value.type is AchievementType.Implicit:
+                continue
             text += f"{value.to_string()}\n"
         return text
 
@@ -284,7 +306,7 @@ class AchievementManager:
         # first add the temporary level events
         if len(self.__temp_level_storage) > 0:
             text += f"{AchievementType.Event.name}\n"
-            for event in self.__temp_level_storage:
+            for event in self.__temp_level_storage.values():
                 text += f"{AchievementManager.__DISPLAY_STRING_INDENT}{event.to_display_string()}\n"
         # now add permanent the achievements
         for a_type in AchievementType.get_display_order():

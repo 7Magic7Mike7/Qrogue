@@ -1,4 +1,4 @@
-from typing import List, Callable, Any, Tuple
+from typing import List, Callable, Any, Tuple, Optional
 
 from qrogue.game.logic.actors import Robot, Enemy, Boss, Riddle
 from qrogue.game.logic.actors.puzzles import Challenge
@@ -50,7 +50,7 @@ def game_over():
     print("game over")
 
 
-def message_popup(title: str, text: str):
+def message_popup(title: str, text: str, reopen: Optional[bool] = None, position: Optional[int] = None):
     print("----------------------------------------")
     print(f"[{title}]")
     print(text)
@@ -100,7 +100,13 @@ class DummyWidget(WidgetWrapper):
     def get_pos(self) -> Tuple[int, int]:
         return 0, 0
 
+    def get_abs_pos(self) -> Tuple[int, int]:
+        return 0, 0
+
     def get_size(self) -> Tuple[int, int]:
+        return 1, 1
+
+    def get_abs_size(self) -> Tuple[int, int]:
         return 1, 1
 
     def is_selected(self):
@@ -110,7 +116,7 @@ class DummyWidget(WidgetWrapper):
         pass
 
     def add_text_color_rule(self, regex: str, color: int, rule_type: str, match_type: str = 'line',
-                            region: List[int] = [0, 1], include_whitespace: bool = False, selected_color=None) -> None:
+                            region: List[int] = None, include_whitespace: bool = False, selected_color=None) -> None:
         pass
 
     def activate_individual_coloring(self):
@@ -132,8 +138,8 @@ class DummyWidget(WidgetWrapper):
 class DummySelectionWidget(SelectionWidget):
     def __init__(self, columns: int, is_second: bool = False, stay_selected: bool = False, print_keys: bool = False):
         self.__dummy_widget = DummyWidget()
-        super(DummySelectionWidget, self).__init__(self.__dummy_widget, get_dummy_controls(print_keys), columns, is_second,
-                                                   stay_selected)
+        super(DummySelectionWidget, self).__init__(self.__dummy_widget, get_dummy_controls(print_keys), columns,
+                                                   is_second, stay_selected)
 
     def get_dummy_widget(self) -> DummyWidget:
         return self.__dummy_widget

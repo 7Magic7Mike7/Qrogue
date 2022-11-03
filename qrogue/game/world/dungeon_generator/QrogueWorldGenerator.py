@@ -1,4 +1,4 @@
-from typing import List, Tuple, Callable, Optional
+from typing import List, Tuple, Callable, Optional, Dict, Set
 
 from antlr4 import InputStream, CommonTokenStream
 from antlr4.tree.Tree import TerminalNodeImpl
@@ -17,6 +17,11 @@ from qrogue.game.world.dungeon_generator.world_parser.QrogueWorldVisitor import 
 from qrogue.game.world.map.rooms import Placeholder
 
 
+class _MapType:
+    WORLD = "W"
+    LEVEL = "L"
+
+
 class QrogueWorldGenerator(QrogueWorldVisitor):
     CONNECTING_ROOM_ID = "_"
 
@@ -25,21 +30,25 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
         return room_id.lower() == 'sr'
 
     def __init__(self, seed: int, player: Player, check_achievement_callback: Callable[[str], bool],
-                 trigger_achievement_callback: Callable[[str], None],
+                 trigger_event_callback: Callable[[str], None],
                  load_map_callback: Callable[[str, Optional[Coordinate]], None],
-                 show_message_callback: Callable[[str, str], None]):
+                 show_message_callback: Callable[[str, str, Optional[bool], Optional[int]], None]):
         self.__seed = seed
         self.__player = player
         self.__check_achievement = check_achievement_callback
-        self.__trigger_achievement = trigger_achievement_callback
+        self.__trigger_event = trigger_event_callback
         self.__load_map = load_map_callback
         self.__show_message = show_message_callback
+
+        self.__default_speaker = Config.system_name()
+        self.__messages: Dict[str, Message] = {}
 
         self.__hallways_by_id = {}
         self.__created_hallways = {}
         self.__hallways = {}
 
-        self.__rooms = {}
+        self.__rooms: Dict[str, MetaRoom] = {}
+        self.__mandatory_levels: Set[str] = set()
         self.__spawn_pos: Optional[Coordinate] = None
         self.__meta_data = MapMetaData(None, None, False, self.__show_description)
 
@@ -48,7 +57,7 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
             ret = self.__meta_data.description.get(self.__check_achievement)
             if ret:
                 title, text = ret
-                self.__show_message(title, text)
+                self.__show_message(title, text, None, self.__meta_data.description.position)
 
     def _add_hallway(self, room1: Coordinate, room2: Coordinate, door: Door):
         if door:  # for simplicity door could be null so we check it here
@@ -86,7 +95,7 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
                 row += [None] * (max_len - len(row))
 
         world = WorldMap(meta_data, file_name, self.__seed, room_matrix, self.__player, self.__spawn_pos,
-                         self.__check_achievement, self.__trigger_achievement)
+                         self.__check_achievement, self.__trigger_event, self.__mandatory_levels)
         return world, True
 
     def __load_next(self):
@@ -122,6 +131,36 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
                                 "Placing an empty room instead.")
             # row.append(rooms.Placeholder.empty_room())
         return SpawnRoom(self.__load_map)
+
+    def __load_message(self, reference: QrogueWorldParser.REFERENCE) -> Message:
+        ref = reference.getText()
+        if ref in self.__messages:
+            return self.__messages[ref]
+        norm_ref = parser_util.normalize_reference(ref)
+        if norm_ref in self.__messages:
+            return self.__messages[norm_ref]
+        parser_util.warning(f"Unknown text reference: {ref}. Returning \"Message not found!\"")
+        return Message.error("Message not found!")
+
+    ##### Message area ######
+
+    def visitMessage(self, ctx: QrogueWorldParser.MessageContext) -> Message:
+        return parser_util.parse_message(ctx, self.__default_speaker)
+
+    def visitMessages(self, ctx: QrogueWorldParser.MessagesContext):
+        self.__messages.clear()
+        if ctx.MSG_SPEAKER():
+            self.__default_speaker = parser_util.parse_speaker(ctx, text_index=None)
+        for msg in ctx.message():
+            message = self.visit(msg)
+            self.__messages[message.id] = message
+        for message in self.__messages.values():
+            if message.alt_message_ref and message.alt_message_ref in self.__messages:
+                alt_message = self.__messages[message.alt_message_ref]
+                try:
+                    message.resolve_message_ref(alt_message)
+                except ValueError as ve:
+                    parser_util.warning("Message-cycle found: " + str(ve))
 
     ##### Hallway area #####
 
@@ -166,9 +205,9 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
             num += d
         direction = parser_util.direction_from_string(ctx.DIRECTION().getText())
         if ctx.WORLD_LITERAL():
-            return "W", num, direction
+            return _MapType.WORLD, num, direction
         elif ctx.LEVEL_LITERAL():
-            return "L", num, direction
+            return _MapType.LEVEL, num, direction
         else:
             raise ValueError("Invalid r_type: " + ctx.getText())
 
@@ -187,21 +226,26 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
         rtype, num, direction = self.visit(ctx.r_type())
         return visibility, rtype, num, direction
 
-    def visitRoom_content(self, ctx: QrogueWorldParser.Room_contentContext) -> Tuple[str, str]:
-        _, _, msg = parser_util.parse_message_body(ctx.message_body())
+    def visitRoom_content(self, ctx: QrogueWorldParser.Room_contentContext) -> Tuple[bool, str, str]:
+        is_mandatory = ctx.OPTIONAL_LEVEL() is None
+        # basically retrieves the description of the room - no explicit title, priority or position needed
+        _, _, _, msg = parser_util.parse_message_body(ctx.message_body(), self.__default_speaker)
         level_to_load = parser_util.normalize_reference(ctx.REFERENCE().getText())
-        return msg, level_to_load
+        return is_mandatory, msg, level_to_load
 
     def visitRoom(self, ctx: QrogueWorldParser.RoomContext) -> Tuple[str, Room]:
         room_id = ctx.ROOM_ID().getText()
-        msg, level_to_load = self.visit(ctx.room_content())
+        is_mandatory, msg, level_to_load = self.visit(ctx.room_content())
         visibility, m_type, num, orientation = self.visit(ctx.r_attributes())
 
+        if is_mandatory and m_type == _MapType.LEVEL:
+            self.__mandatory_levels.add(level_to_load)
+
         alt_message = Message.create_with_title("load" + room_id + "Done", Config.system_name(), "[DONE]\n" + msg,
-                                                False)
+                                                False, None)
         # the (internal) level name is also the name of the event that describes whether the level was completed or not
-        message = Message.create_with_alternative("load" + room_id, Config.system_name(), msg, False, level_to_load,
-                                                  alt_message)
+        message = Message.create_with_alternative("load" + room_id, Config.system_name(), msg, False,
+                                                  alt_message.position, level_to_load, alt_message)
         # hallways will be added later
         if self.is_spawn_room(room_id):
             room = MetaRoom(self.__load_map, orientation, message, level_to_load, m_type, num, is_spawn=True)
@@ -287,13 +331,10 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
         else:
             name = None
         if ctx.message_body():
-            title, priority, msg = parser_util.parse_message_body(ctx.message_body())
-            message = Message.create_with_title("_map_description", title, msg, priority)
-
-            if ctx.MSG_EVENT():
-                ref = parser_util.normalize_reference(ctx.REFERENCE().getText())
-                if self.__check_achievement(ref):
-                    message = Message.create_with_exception("_map_description", title, msg, priority, ref)
+            title, priority, position, msg = parser_util.parse_message_body(ctx.message_body(), self.__default_speaker)
+            message = Message.create_with_title("_map_description", title, msg, priority, position)
+        elif ctx.REFERENCE():
+            message = self.__load_message(ctx.REFERENCE())
         else:
             message = None
         return MapMetaData(name, message, False, self.__show_description)
@@ -301,6 +342,10 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
     ##### Start area #####
 
     def visitStart(self, ctx: QrogueWorldParser.StartContext) -> Tuple[str, List[List[Room]]]:
+        # prepare messages (needs to be done first since meta data might reference it
+        if ctx.messages():
+            self.visit(ctx.messages())
+
         self.__meta_data = self.visit(ctx.meta())
 
         # prepare hallways first because they are standalone

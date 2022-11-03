@@ -4,6 +4,7 @@ from qrogue.game.logic.actors import StateVector
 from qrogue.game.logic.collectibles import Collectible, Instruction
 
 from qrogue.game.logic.actors.puzzles import Target
+from qrogue.util import CheatConfig
 
 
 class Challenge(Target):
@@ -28,7 +29,7 @@ class Challenge(Target):
 
     def is_reached(self, state_vector: StateVector) -> Tuple[bool, Optional[Collectible]]:
         # first check if the additional constraints are met
-        if self.__min_gates <= state_vector.num_of_used_gates <= self.__max_gates:
+        if self.__min_gates <= state_vector.num_of_used_gates <= self.__max_gates or CheatConfig.in_god_mode():
             return super(Challenge, self).is_reached(state_vector)
         return False, None
 

@@ -1,21 +1,25 @@
-from typing import Callable, Tuple, List
+from typing import Callable, Tuple, List, Optional
 
 from py_cui import ColorRule
 from py_cui.popups import Popup as PyCuiPopup
 from py_cui.ui import MenuImplementation
 
-from qrogue.util import ColorConfig as CC, Keys, Logger, PopupConfig
+from qrogue.util import ColorConfig as CC, Keys, Logger, PopupConfig, ColorConfig
 
 
 class MultilinePopup(PyCuiPopup, MenuImplementation):
     __STATIC_PY_CUI_PADDING = 6     # based on PyCUI "padding" I think
+    __QUESTION_SPACING = " " * 7
+    __QUESTION_ARROW = " " * (len(__QUESTION_SPACING) - 4) + "--> "  # -4 due to the length of the arrow
 
     @staticmethod
     def __get_color_rules():
         regex = CC.REGEX_TEXT_HIGHLIGHT
         return [
             ColorRule(f"{regex}.*?{regex}", 0, 0, "contains", "regex", [0, 1],
-                      False, Logger.instance())
+                      False, Logger.instance()),
+            ColorRule(MultilinePopup.__QUESTION_ARROW, ColorConfig.QUESTION_SELECTION_COLOR, 0, "contains", "regex",
+                      [0, 1], False, Logger.instance()),
         ]
 
     @staticmethod
@@ -76,14 +80,17 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
         return [" " * padding + line + " " * padding for line in split_text]
 
     def __init__(self, root, title, text, color, renderer, logger, controls,
-                 confirmation_callback: Callable[[bool], None] = None, pos: Tuple[int, int] = None):
+                 confirmation_callback: Callable[[int], None] = None, answers: Optional[List] = None,
+                 pos: Optional[Tuple[int, int]] = None, dimensions: Optional[Tuple[int, int]] = None):
+        self.__custom_size = None
+
         super().__init__(root, title, text, color, renderer, logger)
         self.__controls = controls
         self.__confirmation_callback = confirmation_callback
-        self._top_view = 0
-
-        self.__lines = MultilinePopup.__split_text(text, self._width - MultilinePopup.__STATIC_PY_CUI_PADDING,
-                                                   PopupConfig.PADDING_X, logger)
+        if answers is None and self._is_question:
+            self.__answers = ["Confirm", "Cancel"]
+        else:
+            self.__answers = answers
 
         if pos:
             if pos[0] is not None:
@@ -91,10 +98,16 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
             if pos[1] is not None:
                 self._start_y = pos[1]
 
-        if self._is_question:
-            self.__lines.append("-" * self._width + "\n")
-            self.__lines.append("Cancel" + " " * 10 + "Confirm")     # todo how to explain controls?
+        if dimensions is not None:
+            self.__custom_size = True
+            self._height, self._width = dimensions
+            self._stop_x, self._stop_y = self._start_x + self._width, self._start_y + self._height
 
+        self._top_view = 0
+        self.__lines = MultilinePopup.__split_text(text, self._width - MultilinePopup.__STATIC_PY_CUI_PADDING,
+                                                   PopupConfig.PADDING_X, logger)
+
+        self.__question_state = 0
         self._pageAlignment = " " * (self._width - MultilinePopup.__STATIC_PY_CUI_PADDING)
 
     @property
@@ -108,24 +121,26 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
         :return: number of rows inside the popup
         """
         full_page_height = self._height - self._pady - 2    # subtract both title and end line
+        if self._is_question:
+            full_page_height -= 2   # subtract the two lines needed for answer selection
         if len(self.__lines) > full_page_height:
             return full_page_height - 1     # subtract the space we need for page indication
         return full_page_height
 
-    def up(self):
+    def __up(self):
         if len(self.__lines) > self.textbox_height and self._top_view > 0:
             self._top_view -= 1
 
-    def down_fast(self):
+    def __down_fast(self):
         if len(self.__lines) > self.textbox_height and self._top_view > 0:
             self._top_view = max(self._top_view - self.textbox_height, 0)
 
-    def down(self):
+    def __down(self):
         # since _top_view can never be negative we don't need to check if we have lines that don't fit on the popup
         if self._top_view < len(self.__lines) - self.textbox_height:
             self._top_view += 1
 
-    def up_fast(self):
+    def __up_fast(self):
         if self._top_view < len(self.__lines) - self.textbox_height:
             self._top_view = min(self._top_view + self.textbox_height, len(self.__lines) - self.textbox_height)
 
@@ -134,22 +149,27 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
         """
         if self._is_question:
             if key_pressed in self.__controls.get_keys(Keys.Action):
-                self.__confirmation_callback(True)
+                self.__confirmation_callback(self.__question_state)
                 self._root.close_popup()
-            elif key_pressed in self.__controls.get_keys(Keys.Cancel):
-                self.__confirmation_callback(False)
-                self._root.close_popup()
+            elif key_pressed in self.__controls.get_keys(Keys.SelectionRight):
+                self.__question_state = min(self.__question_state + 1, len(self.__answers) - 1)
+            elif key_pressed in self.__controls.get_keys(Keys.SelectionLeft):
+                self.__question_state = max(self.__question_state - 1, 0)
+            elif key_pressed in self.__controls.get_keys(Keys.PopupScrollUp):
+                self.__up()
+            elif key_pressed in self.__controls.get_keys(Keys.PopupScrollDown):
+                self.__down()
         else:
             if key_pressed in self.__controls.get_keys(Keys.PopupClose):
                 self._root.close_popup()
             elif key_pressed in self.__controls.get_keys(Keys.PopupScrollUp):
-                self.up()
+                self.__up()
             elif key_pressed in self.__controls.get_keys(Keys.PopupScrollUpFast):
-                self.up_fast()
+                self.__up_fast()
             elif key_pressed in self.__controls.get_keys(Keys.PopupScrollDown):
-                self.down()
+                self.__down()
             elif key_pressed in self.__controls.get_keys(Keys.PopupScrollDownFast):
-                self.down_fast()
+                self.__down_fast()
 
     def _draw(self):
         """Overrides base class draw function
@@ -166,10 +186,35 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
             counter += 1
             i += 1
 
+        info_line_y = self._start_y + self.textbox_height + 1
         if len(self.__lines) > self.textbox_height:
             rem_rows = str(len(self.__lines) - counter - self._top_view + 1)
             rem_rows = self._pageAlignment[:-len(rem_rows)] + rem_rows
-            self._renderer.draw_text(self, rem_rows, self._start_y + counter, selected=False)
+            self._renderer.draw_text(self, rem_rows, info_line_y, selected=False)
+            info_line_y += 1
+
+        if self._is_question:
+            # the question answers should always be positioned at the very bottom of the popup
+            self._renderer.draw_text(self, "-" * self._width, info_line_y, selected=True)
+
+            text = ""
+            for i in range(len(self.__answers)):
+                if i == self.__question_state:
+                    text += MultilinePopup.__QUESTION_ARROW
+                else:
+                    text += MultilinePopup.__QUESTION_SPACING
+                text += self.__answers[i]
+            self._renderer.draw_text(self, text, info_line_y + 1, selected=False)
 
         self._renderer.unset_color_mode(self._color)
         self._renderer.reset_cursor(self)
+
+    def get_absolute_stop_pos(self) -> Tuple[int, int]:
+        # override for custom sizes so we can calculate the stop position based on our custom width and height instead
+        # of calculating width and height based on start and stop
+        if self.__custom_size is None:
+            return super(MultilinePopup, self).get_absolute_stop_pos()
+        else:
+            start_x, start_y = self.get_absolute_start_pos()
+            self._stop_x, self._stop_y = start_x + self._width, start_y + self._height
+            return self._stop_x, self._stop_y

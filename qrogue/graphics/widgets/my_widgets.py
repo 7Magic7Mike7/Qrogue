@@ -1,8 +1,9 @@
 import math
 from abc import ABC, abstractmethod
-from typing import List, Any, Callable, Tuple, Optional
+from typing import List, Any, Callable, Tuple, Optional, Dict
 
 from py_cui import ColorRule
+from py_cui.widget_set import WidgetSet
 from py_cui.widgets import BlockLabel
 
 from qrogue.game.logic import StateVector
@@ -26,8 +27,14 @@ class MyBaseWidget(BlockLabel, WidgetWrapper):
     def get_pos(self) -> Tuple[int, int]:
         return self._column, self._row
 
+    def get_abs_pos(self) -> Tuple[int, int]:
+        return self._start_x, self._start_y
+
     def get_size(self) -> Tuple[int, int]:
         return self._column_span, self._row_span
+
+    def get_abs_size(self) -> Tuple[int, int]:
+        return self._stop_x - self._start_x, self._stop_y - self._start_y
 
     def is_selected(self) -> bool:
         return super(MyBaseWidget, self).is_selected()
@@ -49,8 +56,10 @@ class MyBaseWidget(BlockLabel, WidgetWrapper):
         return super(MyBaseWidget, self).get_title()
 
     def add_text_color_rule(self, regex: str, color: int, rule_type: str, match_type: str = 'line',
-                            region: List[int] = [0, 1], include_whitespace: bool = False, selected_color = None)\
+                            region: List[int] = None, include_whitespace: bool = False, selected_color=None)\
             -> None:
+        if region is None:
+            region = [0, 1]
         super(MyBaseWidget, self).add_text_color_rule(regex, color, rule_type, match_type, region, include_whitespace,
                                                       selected_color)
 
@@ -71,22 +80,41 @@ class MyMultiWidget(WidgetWrapper):
         return ">$%<"
 
     def __init__(self, widgets: List[WidgetWrapper]):
-        self.__widgets = widgets
-        x = min([w.get_pos()[0] for w in self.__widgets])
-        y = min([w.get_pos()[1] for w in self.__widgets])
-        # the minimal (left-top most) position is where this widget starts (like casting a rectangle around all widgets)
-        self.__pos = x, y
+        assert len(widgets) > 0, "Emtpy MultiWidget created!"
 
-        widths = {}     # find out width of the longest row
-        heights = {}    # and height of biggest column
+        self.__widgets = widgets
+
+        # the minimal (left-top most) position is where this widget starts (like casting a rectangle around all widgets)
+        x, y = self.__widgets[0].get_pos()
+        ax, ay = self.__widgets[0].get_abs_pos()
+        for i in range(1, len(self.__widgets)):
+            w = self.__widgets[i]
+            # if logical position is smaller, than also absolute is
+            wx, wy = w.get_pos()
+            if wx < x:
+                ax = w.get_abs_pos()[0]
+                x = wx
+            if wy < y:
+                ay = w.get_abs_pos()[1]
+                y = wy
+        self.__pos = x, y
+        self.__abs_pos = ax, ay
+
+        widths: Dict[int, int] = {}     # find out width of the longest row
+        heights: Dict[int, int] = {}    # and height of biggest column
+        abs_widths: Dict[int, int] = {}
+        abs_heights: Dict[int, int] = {}
         for w in self.__widgets:
             col, row = w.get_pos()
             width, height = w.get_size()
             if row not in widths or col + width > widths[row]:
                 widths[row] = col + width
+                abs_widths[row] = w.get_abs_pos()[0] + w.get_abs_size()[0]
             if col not in heights or row + height > heights[col]:
                 heights[col] = row + height
-        self.__size = max(widths), max(heights)
+                abs_heights[col] = w.get_abs_pos()[1] + w.get_abs_size()[1]
+        self.__size = max(widths) - x, max(heights) - y
+        self.__abs_size = max(abs_widths) - ax, max(abs_heights) - ay
 
     def get_pos(self) -> Tuple[int, int]:
         """
@@ -96,6 +124,9 @@ class MyMultiWidget(WidgetWrapper):
         """
         return self.__pos
 
+    def get_abs_pos(self) -> Tuple[int, int]:
+        return self.__abs_pos
+
     def get_size(self) -> Tuple[int, int]:
         """
         Width of the widest row and height of the highest column. You can imagine it like fitting the smallest possible
@@ -103,6 +134,9 @@ class MyMultiWidget(WidgetWrapper):
         :return: width, height
         """
         return self.__size
+
+    def get_abs_size(self) -> Tuple[int, int]:
+        return self.__abs_size
 
     def is_selected(self) -> bool:
         """
@@ -194,9 +228,10 @@ class MyMultiWidget(WidgetWrapper):
         return titles
 
     def add_text_color_rule(self, regex: str, color: int, rule_type: str, match_type: str = 'line',
-                            region: List[int] = [0, 1], include_whitespace: bool = False, selected_color=None) -> None:
+                            region: List[int] = None, include_whitespace: bool = False, selected_color=None) -> None:
         """
         Applies the color rule to all of its widgets
+
         :param regex:
         :param color:
         :param rule_type:
@@ -206,6 +241,9 @@ class MyMultiWidget(WidgetWrapper):
         :param selected_color:
         :return:
         """
+        if region is None:
+            region = [0, 1]
+
         for w in self.__widgets:
             w.add_text_color_rule(regex, color, rule_type, match_type, region, include_whitespace, selected_color)
 
@@ -223,14 +261,14 @@ class MyMultiWidget(WidgetWrapper):
 
 
 class Widget(Renderable, ABC):
-    __MOVE_FOCUS = None
+    __MOVE_FOCUS: Optional[Callable[[WidgetWrapper, WidgetSet], None]] = None
 
     @staticmethod
-    def set_move_focus_callback(move_focus: Callable[[WidgetWrapper, Any], None]):
+    def set_move_focus_callback(move_focus: Callable[[WidgetWrapper, WidgetSet], None]):
         Widget.__MOVE_FOCUS = move_focus
 
     @staticmethod
-    def move_focus(widget: "Widget", widget_set: Any):
+    def move_focus(widget: "Widget", widget_set: WidgetSet):
         if Widget.__MOVE_FOCUS:
             Widget.__MOVE_FOCUS(widget.widget, widget_set)
 
@@ -312,7 +350,12 @@ class HudWidget(Widget):
                 text += f"{self.__robot.backpack.coin_count}$  \t"
         if HudConfig.ShowFPS and self.__render_duration:
             text += f"\t\t{self.__render_duration:.2f} ms"
-        self.widget.set_title(f"{text}{MyMultiWidget.get_title_separator()}{self.__details}")
+
+        if Config.debugging():
+            self.widget.set_title(f"{text}{MyMultiWidget.get_title_separator()}{self.__details}"
+                                  f"{MyMultiWidget.get_title_separator()}{Config.frame_count()}")
+        else:
+            self.widget.set_title(f"{text}{MyMultiWidget.get_title_separator()}{self.__details}")
 
     def render_reset(self) -> None:
         self.widget.set_title("")
@@ -355,14 +398,13 @@ class CircuitWidget(Widget):
 
     def __init__(self, widget: WidgetWrapper, controls: Controls):
         super().__init__(widget)
-        self.__robot = None
-        self.__place_holder_data = None
+        self.__robot: Optional[Robot] = None
+        self.__place_holder_data: Optional[CircuitWidget.PlaceHolderData] = None
 
         widget.add_key_command(controls.get_keys(Keys.SelectionUp), self.__move_up)
         widget.add_key_command(controls.get_keys(Keys.SelectionRight), self.__move_right)
         widget.add_key_command(controls.get_keys(Keys.SelectionDown), self.__move_down)
         widget.add_key_command(controls.get_keys(Keys.SelectionLeft), self.__move_left)
-        #widget.add_key_command(controls.get_keys(Keys.Cancel), self.__abort_placement)
 
     def __change_position(self, right: bool) -> bool:
         def go_right(position: int) -> Optional[int]:
@@ -429,10 +471,12 @@ class CircuitWidget(Widget):
             if self.__place_holder_data.can_change_position():
                 self.__change_position(False)
 
-    def __abort_placement(self):
-        if self.__place_holder_data:
-            pass
-            #gate, pos, qubit = self.__place_holder_data
+    def abort_placement(self):
+        if self.__place_holder_data is not None:
+            if self.__place_holder_data.gate is not None:
+                self.__place_holder_data.gate.reset()
+            self.__place_holder_data = None
+            self.render()
             # todo
 
     def start_gate_placement(self, gate: Optional[Instruction], pos: int = -1, qubit: int = 0):
@@ -662,8 +706,8 @@ class QubitInfoWidget(Widget):
 
         for i in range(2 ** num_of_qubits):
             bin_num = bin(i)[2:]    # get rid of the '0b' at the beginning of the binary representation
-            bin_num = bin_num.rjust(num_of_qubits, '0')     # add 0s to the beginning (left) by justifying the text to
-                                                            # the right
+            # add 0s to the beginning (left) by justifying the text to the right
+            bin_num = bin_num.rjust(num_of_qubits, '0')
             row = "   ".join(bin_num)  # separate the digits in the string with spaces
             if not self.__left_aligned:
                 row = row[::-1]     # [::-1] reverses the list so q0 is on the left

@@ -1,6 +1,7 @@
 from random import Random
 from typing import List, Any
 
+from qrogue.util import TestConfig
 from qrogue.util.config import Config
 from qrogue.util.logger import Logger
 
@@ -101,6 +102,13 @@ class RandomManager(MyRandom):
         else:
             RandomManager.__instance = RandomManager.create_new(new_seed)
             # PathConfig.write("random_debug.txt", f"RandomManager.init({new_seed})\n", append=True)
+
+    @staticmethod
+    def reset():
+        if TestConfig.is_active():
+            RandomManager.__instance = None
+        else:
+            raise TestConfig.StateException("Can only reset the singleton \"Logger\" during testing!")
 
     def __init__(self, seed: int):
         if RandomManager.__instance is not None:

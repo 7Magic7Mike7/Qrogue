@@ -64,7 +64,7 @@ def __parse_argument(argument: List[str], has_value: bool = False) -> Tuple[bool
     return False, None
 
 
-def start_qrogue() -> None:
+def start_qrogue() -> int:
     __CONSOLE_ARGUMENT = ["--from-console", "-fc"]
     __DEBUG_ARGUMENT = ["--debug", "-d"]
     __TEST_LEVEL_ARGUMENT = ["--test-level", "-tl"]
@@ -83,17 +83,21 @@ def start_qrogue() -> None:
     _, map_path = __parse_argument(__VALIDATE_MAP_ARGUMENT, has_value=True)
 
     if map_path:
-        validate_map(map_path)
+        if validate_map(map_path):
+            return 0
+        else:
+            return 1
     else:
         if simulation_path:
-            simulate_game(simulation_path, from_console, debugging, data_folder, user_data_folder)
+            return simulate_game(simulation_path, from_console, debugging, data_folder, user_data_folder)
         else:
-            start_game(from_console, debugging, test_level, data_folder, user_data_folder)
+            return start_game(from_console, debugging, test_level, data_folder, user_data_folder)
 
 
 def setup_game(game_data_path: str = "", user_data_path: str = "") -> None:
     """
     Creates the needed folder structure and game config file qrogue_game.config if not already existent.
+
     :param game_data_path: the path where we want to setup the game data
     :param user_data_path: the path where we want to load and store the user data (e.g. logs, save data)
     :return: None
@@ -108,7 +112,7 @@ def setup_game(game_data_path: str = "", user_data_path: str = "") -> None:
 
 
 def start_game(from_console: bool = False, debugging: bool = False, test_level: bool = False,
-               data_folder: str = None, user_data_folder: str = None):
+               data_folder: str = None, user_data_folder: str = None) -> int:
     if PathConfig.load_paths(data_folder, user_data_folder):
         return_code = Config.load()  # NEEDS TO BE THE FIRST THING WE DO!
     else:
@@ -150,11 +154,11 @@ def start_game(from_console: bool = False, debugging: bool = False, test_level: 
         print()
         input("[Qrogue] Press ENTER to close the application")
 
-    sys.exit(return_code)
+    return return_code
 
 
 def simulate_game(simulation_path: str, from_console: bool = False, debugging: bool = False, data_folder: str = None,
-                  user_data_folder: str = None):
+                  user_data_folder: str = None) -> int:
     if PathConfig.load_paths(data_folder, user_data_folder):
         return_code = Config.load()  # NEEDS TO BE THE FIRST THING WE DO!
     else:
@@ -194,7 +198,7 @@ def simulate_game(simulation_path: str, from_console: bool = False, debugging: b
         print()
         input("[Qrogue] Press ENTER to close the application")
 
-    sys.exit(return_code)
+    return return_code
 
 
 def validate_map(path: str, is_level: bool = True, in_base_path: bool = True) -> bool:
@@ -216,7 +220,7 @@ def validate_map(path: str, is_level: bool = True, in_base_path: bool = True) ->
     def load_map(map_name: str, spawn_pos: Coordinate):
         pass
 
-    def show_message(title: str, text: str):
+    def show_message(title: str, text: str, reopen: Optional[bool], position: Optional[int]):
         pass
 
     if is_level:

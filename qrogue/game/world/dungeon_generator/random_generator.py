@@ -1,14 +1,14 @@
 from enum import IntEnum
-from typing import Callable, Dict
+from typing import Callable, Dict, Optional
 
 from qrogue.game.logic.actors import Robot
-from qrogue.game.logic.collectibles import GateFactory, ShopFactory, EnergyRefill, Coin, Key, instruction
+from qrogue.game.logic.collectibles import GateFactory, ShopFactory, Key, instruction, Energy
 from qrogue.game.target_factory import TargetDifficulty, BossFactory, EnemyFactory, RiddleFactory
 from qrogue.game.world.map import CallbackPack, LevelMap, Hallway, WildRoom, SpawnRoom, ShopRoom, RiddleRoom, BossRoom, \
     TreasureRoom, ExpeditionMap
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.game.world.tiles import Boss, Collectible, Door, DoorOpenState
-from qrogue.util import Logger, RandomManager
+from qrogue.util import Logger, RandomManager, MapConfig
 
 from qrogue.game.world.dungeon_generator.generator import DungeonGenerator
 
@@ -518,7 +518,7 @@ class ExpeditionGenerator(DungeonGenerator):
     __MAX_ENEMY_FACTORY_CHANCE = 0.8
 
     def __init__(self, seed: int, check_achievement: Callable[[str], bool], trigger_event: Callable[[str], None],
-                 load_map_callback: Callable[[str], None], width: int = DungeonGenerator.WIDTH,
+                 load_map_callback: Callable[[str, Optional[Coordinate]], None], width: int = DungeonGenerator.WIDTH,
                  height: int = DungeonGenerator.HEIGHT):
         super(ExpeditionGenerator, self).__init__(seed, width, height)
         self.__check_achievement = check_achievement
@@ -548,16 +548,16 @@ class ExpeditionGenerator(DungeonGenerator):
 
         enemy_factories = [
             EnemyFactory(CallbackPack.instance().start_fight, TargetDifficulty(
-                2, [Coin(2), EnergyRefill()]
+                2, [Energy(5), Energy(10)]
             )),
             EnemyFactory(CallbackPack.instance().start_fight, TargetDifficulty(
-                2, [Coin(1), Coin(2), Coin(2), Coin(3), Key(), EnergyRefill(15)]
+                2, [Energy(5), Key(), Energy(5)]
             )),
             EnemyFactory(CallbackPack.instance().start_fight, TargetDifficulty(
-                3, [Coin(1), Coin(5), Key(), EnergyRefill(20)]
+                3, [Energy(5), Key(), Energy(20)]
             )),
             EnemyFactory(CallbackPack.instance().start_fight, TargetDifficulty(
-                3, [Coin(1), Coin(1), EnergyRefill(3)]
+                3, [Energy(10), Energy(15), Energy(20)]
             )),
         ]
         enemy_factory_priorities = [0.25, 0.35, 0.3, 0.1]
@@ -607,11 +607,11 @@ class ExpeditionGenerator(DungeonGenerator):
                         if code == _Code.Spawn:
                             spawn_room = pos
                             room = SpawnRoom(self.__load_map,
-                                north_hallway=room_hallways[Direction.North],
-                                east_hallway=room_hallways[Direction.East],
-                                south_hallway=room_hallways[Direction.South],
-                                west_hallway=room_hallways[Direction.West],
-                                )
+                                             north_hallway=room_hallways[Direction.North],
+                                             east_hallway=room_hallways[Direction.East],
+                                             south_hallway=room_hallways[Direction.South],
+                                             west_hallway=room_hallways[Direction.West],
+                                             )
                         elif code == _Code.Wild:
                             enemy_factory = rm.get_element_prioritized(enemy_factories, enemy_factory_priorities,
                                                                        msg="RandomDG_elemPrioritized")
@@ -626,17 +626,20 @@ class ExpeditionGenerator(DungeonGenerator):
                                 west_hallway=room_hallways[Direction.West],
                             )
                         else:
-                            # special rooms have exactly 1 neighbor which is already stroed in direction
+                            # special rooms have exactly 1 neighbor which is already stored in direction
                             hw = room_hallways[direction]
                             if code == _Code.Shop:
-                                room = ShopRoom(hw, direction, shop_items, CallbackPack.instance().visit_shop)
+                                # since there was no shop introduction yet, we have to skip creating one.
+                                room = None  #ShopRoom(hw, direction, shop_items, CallbackPack.instance().visit_shop)
                             elif code == _Code.Riddle:
                                 room = RiddleRoom(hw, direction, riddle, CallbackPack.instance().open_riddle)
                             elif code == _Code.Gate:
                                 room = TreasureRoom(Collectible(gate), hw, direction)
                             elif code == _Code.Boss:
-                                room = BossRoom(hw, direction, Boss(dungeon_boss,
-                                                                          CallbackPack.instance().start_boss_fight))
+                                def end_level():
+                                    self.__load_map(MapConfig.back_map_string(), None)
+                                boss = Boss(dungeon_boss, CallbackPack.instance().start_boss_fight, end_level)
+                                room = BossRoom(hw, direction, boss)
                         if room:
                             rooms[y][x] = room
             if spawn_room:

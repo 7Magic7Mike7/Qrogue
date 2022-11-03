@@ -124,6 +124,9 @@ class _Attributes:
         :param amount: by how much we want to decrease current energy
         :return: by how much current energy was actually decreased
         """
+        if CheatConfig.got_inf_resources():
+            return 0    # no decrease in this case
+
         self.__cur_energy -= amount
         if self.__cur_energy < 0:
             # e.g. if we decrease by 6 then cur_energy is now -2, so actually we were only able to decrease it by 4

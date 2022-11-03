@@ -149,34 +149,43 @@ def parse_complex(ctx) -> complex:
     return complex(complex_number)
 
 
-def parse_message(ctx) -> Message:
+def parse_message(ctx, default_speaker: str = Config.system_name()) -> Message:
     m_id = normalize_reference(ctx.REFERENCE(0).getText())
 
-    title, priority, msg = parse_message_body(ctx.message_body())
+    title, priority, position, msg = parse_message_body(ctx.message_body(), default_speaker)
 
     if ctx.MSG_EVENT():
         event = normalize_reference(ctx.REFERENCE(1).getText())
         msg_ref = normalize_reference(ctx.REFERENCE(2).getText())
-        return Message(m_id, title, msg, priority, event, msg_ref)
+        return Message(m_id, title, msg, priority, position, event, msg_ref)
     else:
-        return Message.create_with_title(m_id, title, msg, priority)
+        return Message.create_with_title(m_id, title, msg, priority, position)
 
 
-def parse_message_body(ctx) -> Tuple[str, bool, str]:
+def parse_speaker(ctx, text_index: Optional[int] = 0) -> str:
+    title = text_to_str(ctx, text_index)
+    if title.isdigit():
+        title = Config.get_name(int(title[0]))
+    return title
+
+
+def parse_message_body(ctx, default_speaker: str) -> Tuple[str, bool, int, str]:
     if ctx.MSG_SPEAKER():
-        title = text_to_str(ctx, 0)
-        if title.isdigit():
-            title = Config.get_name(int(title[0]))
+        title = parse_speaker(ctx, 0)
         start = 1
     else:
-        title = Config.examiner_name()  # todo but later in the game it should default to scientist_name()
+        title = default_speaker
         start = 0
-    priority = ctx.MSG_PRIORITY()
+    priority = ctx.MSG_PRIORITY() is not None
+    if ctx.DIGIT():
+        position = int(ctx.DIGIT().getText())
+    else:
+        position = None
     msg = ""
     for i in range(start, len(ctx.TEXT())):
         msg += text_to_str(ctx, i) + "\n"
 
-    return title, priority, msg
+    return title, priority, position, msg
 
 
 class MyErrorListener(ErrorListener):

@@ -121,8 +121,8 @@ class Teleport(WalkTriggerTile):
         self.__room = room
 
     def _on_walk(self, direction: Direction, controllable: Controllable) -> bool:
-        def callback(confirm: bool = True):
-            if confirm:
+        def callback(confirm: int = 0):
+            if confirm == 0:
                 self.__load_map(self.__target_map, self.__room)
         if self.__target_map == MapConfig.back_map_string():
             CommonQuestions.GoingBack.ask(callback)
@@ -156,7 +156,8 @@ class Message(WalkTriggerTile):
 
     @staticmethod
     def create(text: str, title: str = "Message", popup_times: int = 1) -> "Message":   # todo remove? seems to no longer be in use
-        return Message(LogicalMessage.create_with_title(f"Msg_{Message.__msg_counter}", title, text, False), popup_times)
+        return Message(LogicalMessage.create_with_title(f"Msg_{Message.__msg_counter}", title, text, False, None),
+                       popup_times)
 
     def __init__(self, message: LogicalMessage, popup_times: int = 1):
         super().__init__(TileCode.Message)

@@ -32,7 +32,7 @@ aa (Wild):
 # _ o _ o o #
 # _ _ _ _ _ #
 #############
-c *energyTiny
+c *energySmall
 
 bb (Wild):
 #############
@@ -52,29 +52,32 @@ cc (Wild):
 # o _ _ _ o #
 # _ o _ _ _ #
 # _ _ _ o _ #
-# _ o _ _ _ #
+# 0 o _ _ _ #
 #############
 0 *simplePool *energyTiny
+0 *simplePool *energySmall
 c *energyHuge
 
 dd (Wild):
 #############
 # _ _ _ _ _ #
 # _ o o o _ #
-# _ o _ _ _ #
+# _ o 0 _ _ #
 # _ o _ o o #
 # _ _ _ _ _ #
 #############
+0 *simplePool *energySmall
 
 ea (Wild):
 #############
 # o _ _ _ _ #
 # _ _ o o _ #
 # _ o _ _ _ #
-# _ o o o c #
-# _ _ _ o o #
+# _ o o o 0 #
+# c _ _ o o #
 #############
-c *energyBig
+0 *simplePool *energyMedium
+c *energyMedium
 
 eb (Wild):
 #############
@@ -128,10 +131,11 @@ custom
 default *key
 
 [Messages]
+default Speaker "0"
 // highlight text by encapsulating it in "//02abcd//" where "abcd" is the text to highlight and "02" one of the available styles: 01 is for tiles, 02 is for game objects, 03 for actions, 04 for keys on the keyboard and 05 for other words
 // speaker: 0 = Examiner, 1 = Scientist, 2 = System, 3 = Player
 
-*energyReward Speaker "0" "You can also get //02Energy// as a //02Reward// from //03solving// a //02Quantum Puzzle//."
+*energyReward "You can also get //02Energy// as a //02Reward// from //03solving// a //02Quantum Puzzle//."
 
 *levelDone "//05Great//!" "This lesson was specifically designed to bring the //02Qubot// to its energy limits. Usually it won't be that harsh and a misstep doesn't mean the end of a mission. Nonetheless the remaining energy is something you should always keep in mind."
 

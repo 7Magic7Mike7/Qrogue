@@ -1,13 +1,14 @@
-from typing import Callable, Optional
+from typing import Callable, Optional, Dict
 
 from qrogue.game.world.dungeon_generator import ExpeditionGenerator, QrogueLevelGenerator, QrogueWorldGenerator
 from qrogue.game.world.map import Map, WorldMap, MapType
 from qrogue.game.world.navigation import Coordinate
 from qrogue.graphics.popups import Popup
-from qrogue.util import CommonQuestions, Logger, MapConfig, achievements, RandomManager, Config
+from qrogue.util import CommonQuestions, Logger, MapConfig, achievements, RandomManager, Config, TestConfig
 
 from qrogue.management.save_data import SaveData
 from qrogue.util.achievements import Ach, Unlocks
+from qrogue.util.config.gameplay_config import ExpeditionConfig
 
 __MAP_ORDER = {
     #MapConfig.spaceship(): MapConfig.intro_level(),
@@ -51,6 +52,13 @@ class MapManager:
             raise Exception("This singleton has not been initialized yet!")
         return MapManager.__instance
 
+    @staticmethod
+    def reset():
+        if TestConfig.is_active():
+            MapManager.__instance = None
+        else:
+            raise TestConfig.StateException("Can only reset the singleton \"MapManager\" during testing!")
+
     def __init__(self, seed: int, show_world: Callable[[Optional[WorldMap]], None],
                  start_level: Callable[[int, Map], None]):
         if MapManager.__instance is not None:
@@ -60,7 +68,7 @@ class MapManager:
             self.__rm = RandomManager.create_new(seed)
             self.__show_world = show_world
             self.__start_level = start_level
-            self.__world_memory = {}    # str -> WorldMap
+            self.__world_memory: Dict[str, WorldMap] = {}    # str -> WorldMap
 
             generator = QrogueWorldGenerator(seed, SaveData.instance().player,
                                              SaveData.instance().achievement_manager.check_achievement,
@@ -68,7 +76,7 @@ class MapManager:
                                              self.load_map, Popup.npc_says)
             hub_world, success = generator.generate(MapConfig.hub_world())
             if not success:
-                Logger.instance().throw(RuntimeError("Unable to build world map! Please download again and make sure "
+                Logger.instance().throw(RuntimeError("Unable to build hub world! Please download again and make sure "
                                                      "to not edit game data."))
             self.__world_memory[MapConfig.hub_world()] = hub_world
             self.__cur_map = hub_world
@@ -99,24 +107,43 @@ class MapManager:
         else:
             return "Connection lost..."
 
+    def __load_world(self, world_name: str) -> Optional[WorldMap]:
+        """
+        Loads the world either from memory or generates it from its file. In case of generation the world's achievement
+        score will also be corrected.
+
+        :param world_name: internal name of the world to load
+        :return: a WorldMap corresponding to the provided name or None if it could not be generated
+        """
+        if world_name in self.__world_memory:
+            return self.__world_memory[world_name]
+
+        generator = QrogueWorldGenerator(self.__base_seed, SaveData.instance().player,
+                                         SaveData.instance().achievement_manager.check_achievement,
+                                         SaveData.instance().achievement_manager.add_to_achievement,
+                                         self.load_map, Popup.npc_says)
+        world, success = generator.generate(world_name)
+        if success:
+            level_counter = 0
+            for level in world.mandatory_level_iterator():
+                if SaveData.instance().achievement_manager.check_achievement(level):
+                    level_counter += 1
+            SaveData.instance().achievement_manager.correct_world_progress(world.internal_name, level_counter,
+                                                                           world.num_of_mandatory_levels)
+            self.__world_memory[world_name] = world
+            return world
+        else:
+            return None
+
     def __get_world(self, level_name: str) -> WorldMap:
         if level_name[0] == "l" and level_name[1].isdigit():
             world_name = "w" + level_name[1]
-            if world_name in self.__world_memory:
-                return self.__world_memory[world_name]
+            world = self.__load_world(world_name)
+            if world is None:
+                Logger.instance().error(f"Error! Unable to build map \"{world_name}\". Returning to HubWorld",
+                                        from_pycui=False)
             else:
-                def trigger_achievement(name: str):
-                    SaveData.instance().achievement_manager.add_to_achievement(name, 1)
-                check_achievement = SaveData.instance().achievement_manager.check_achievement
-                generator = QrogueWorldGenerator(self.__base_seed, SaveData.instance().player, check_achievement,
-                                                 trigger_achievement, self.load_map, Popup.npc_says)
-                world, success = generator.generate(world_name)
-                if success:
-                    self.__world_memory[world_name] = world
-                    return world
-                else:
-                    Logger.instance().error(f"Error! Unable to build map \"{world_name}\". Returning to HubWorld",
-                                            from_pycui=False)
+                return world
         return self.__world_memory[MapConfig.hub_world()]
 
     def __load_map(self, map_name: str, room: Optional[Coordinate], map_seed: Optional[int] = None):
@@ -126,20 +153,19 @@ class MapManager:
                 self.__load_map(MapConfig.hub_world(), room, map_seed)
             else:
                 self.__load_map(next_map, room, map_seed)
+
         elif map_name == MapConfig.spaceship():
             self.__show_spaceship()
+
         elif map_name in self.__world_memory:
             self.__cur_map = self.__world_memory[map_name]
             self.__in_level = False
             self.__show_world(self.__cur_map)
+
         elif map_name[0].lower().startswith(MapConfig.world_map_prefix()):
-            player = SaveData.instance().player
-            check_achievement = SaveData.instance().achievement_manager.check_achievement
-            generator = QrogueWorldGenerator(self.__base_seed, player, check_achievement, self.__trigger_event,
-                                             self.load_map, Popup.npc_says)
             try:
-                world, success = generator.generate(map_name)
-                if success:
+                world = self.__load_world(map_name)
+                if world is not None:
                     self.__cur_map = world
                     self.__in_level = False
                     self.__show_world(self.__cur_map)
@@ -147,17 +173,19 @@ class MapManager:
                     Logger.instance().error(f"Could not load world \"{map_name}\"!", from_pycui=False)
             except FileNotFoundError:
                 Logger.instance().error(f"Failed to open the specified world-file: {map_name}", from_pycui=False)
+
         elif map_name.lower().startswith(MapConfig.level_map_prefix()):
             if map_seed is None:
                 map_seed = self.__rm.get_seed(msg="MapMngr_seedForLevel")
 
-            # todo maybe levels should be able to have arbitrary names aside from "w..." or "back"?
+            # todo maybe levels should be able to have arbitrary names except "w..." or "e..." or "back" or "next"?
             check_achievement = SaveData.instance().achievement_manager.check_achievement
             generator = QrogueLevelGenerator(map_seed, check_achievement, self.__trigger_event, self.load_map,
                                              Popup.npc_says)
             try:
                 level, success = generator.generate(map_name)
                 if success:
+                    self.__get_world(level.internal_name)
                     self.__cur_map = level
                     self.__in_level = True
                     self.__start_level(map_seed, self.__cur_map)
@@ -165,11 +193,15 @@ class MapManager:
                     Logger.instance().error(f"Could not load level \"{map_name}\"!", from_pycui=False)
             except FileNotFoundError:
                 Logger.instance().error(f"Failed to open the specified level-file: {map_name}", from_pycui=False)
+
         elif map_name.lower().startswith(MapConfig.expedition_map_prefix()):
             if map_seed is None:
                 map_seed = self.__rm.get_seed(msg="MapMngr_seedForExpedition")
 
-            difficulty = int(map_name[len(MapConfig.expedition_map_prefix()):])
+            if len(map_name) > len(MapConfig.expedition_map_prefix()):
+                difficulty = int(map_name[len(MapConfig.expedition_map_prefix()):])
+            else:
+                difficulty = ExpeditionConfig.DEFAULT_DIFFICULTY
             robot = SaveData.instance().get_robot(0)
             check_achievement = SaveData.instance().achievement_manager.check_achievement
             generator = ExpeditionGenerator(map_seed, check_achievement, self.__trigger_event, self.load_map)
@@ -180,6 +212,7 @@ class MapManager:
                 self.__start_level(map_seed, self.__cur_map)
             else:
                 Logger.instance().error(f"Could not create expedition with seed = {map_seed}", from_pycui=False)
+
         elif map_name == MapConfig.back_map_string():
             self.__load_back()
         else:
@@ -194,7 +227,9 @@ class MapManager:
             self.__show_world(world)
 
     def __load_back(self):
-        if self.__in_level:
+        if self.__cur_map.get_type() == MapType.Expedition:
+            self.__show_spaceship()     # todo for now every expedition returns to the spaceship
+        elif self.__in_level:
             # if we are currently in a level we return to the current world
             self.__in_level = False
             self.__show_world(self.__get_world(self.__cur_map.internal_name))
@@ -208,18 +243,29 @@ class MapManager:
             self.__in_level = False
             self.__show_world(self.__cur_map)
 
-    def __proceed(self, confirmed: bool = True):
-        if confirmed:
+    def __proceed(self, confirmed: int = 0):
+        if confirmed == 0:
             self.__load_next()
+        elif confirmed == 1:
+            pass    # stay
+        elif confirmed == 2:
+            self.__load_back()
 
     def __trigger_event(self, event_id: str):
         if event_id.lower() == MapConfig.done_event_id():
             event_id = MapConfig.specific_done_event_id(self.__cur_map.internal_name)
+            SaveData.instance().achievement_manager.trigger_event(event_id)
+
             if self.__cur_map.get_type() is MapType.World:
                 SaveData.instance().achievement_manager.finished_world(self.__cur_map.internal_name)
             elif self.__cur_map.get_type() is MapType.Level:
-                SaveData.instance().achievement_manager.finished_level(self.__cur_map.internal_name,
-                                                                       self.__cur_map.name)
+                if SaveData.instance().achievement_manager.finished_level(self.__cur_map.internal_name,
+                                                                          self.__cur_map.name):
+                    # if the level was not finished before, we may increase the score of the world's achievement
+                    world = self.__get_world(self.__cur_map.internal_name)
+                    if world.is_mandatory_level(self.__cur_map.internal_name):
+                        SaveData.instance().achievement_manager.add_to_achievement(world.internal_name, 1.0)
+
             elif self.__cur_map.get_type() is MapType.Expedition:
                 SaveData.instance().achievement_manager.add_to_achievement(achievements.CompletedExpedition, 1)
 
@@ -227,11 +273,14 @@ class MapManager:
                 CommonQuestions.ProceedToNextMap.ask(self.__proceed)
             else:
                 self.__proceed()
-        SaveData.instance().achievement_manager.trigger_event(event_id)
+        else:
+            SaveData.instance().achievement_manager.trigger_event(event_id)
 
     def load_map(self, map_name: str, spawn_room: Optional[Coordinate], map_seed: Optional[int] = None):
         if map_name.lower() == MapConfig.next_map_string():
             self.__load_next()
+        elif map_name.lower() == MapConfig.back_map_string():
+            self.__load_back()
         else:
             self.__load_map(map_name, spawn_room, map_seed)
 

@@ -3,6 +3,7 @@ from abc import ABC
 
 from qrogue.game.logic.actors import StateVector
 from qrogue.game.logic.collectibles import Collectible, Coin
+from qrogue.util import PuzzleConfig
 
 from .enemy import Enemy
 
@@ -23,6 +24,10 @@ class Boss(Enemy, ABC):
         """
         super().__init__(Boss.__BOSS_ID, target, reward)
         self.__is_defeated = False
+
+    @property
+    def flee_energy(self) -> int:
+        return PuzzleConfig.BOSS_FLEE_ENERGY
 
     @property
     def is_defeated(self) -> bool:

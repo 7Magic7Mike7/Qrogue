@@ -2,7 +2,7 @@ import enum
 import os
 import pathlib
 from datetime import datetime
-from typing import Tuple
+from typing import Tuple, Optional
 
 
 class FileTypes(enum.Enum):
@@ -29,6 +29,7 @@ class PathConfig:
     __TEMPLATE_STV_POOLS = "stv_pools"
     __TEMPLATE_REWARD_POOLS = "reward_pools"
     __TEMPLATE_FILE = f"templates{FileTypes.Templates.value}"
+    __SAVE_FILE_PREFIX = "qrogue-save"
     __FRESH_SAVE_FILE = "fresh"
     __SAVE_FILE_NUMERATION_SEPARATOR = "_"
     __NUMBER_OF_SAVE_FILES = 7    # how many save files can be present before we delete the oldest one
@@ -43,7 +44,8 @@ class PathConfig:
     @staticmethod
     def __save_file_str(num: int) -> str:
         return os.path.join(PathConfig.__SAVE_DATA_FOLDER,
-                            f"qrogue-save{PathConfig.__SAVE_FILE_NUMERATION_SEPARATOR}{num}{FileTypes.Save.value}")
+                            f"{PathConfig.__SAVE_FILE_PREFIX}{PathConfig.__SAVE_FILE_NUMERATION_SEPARATOR}{num}"
+                            f"{FileTypes.Save.value}")
 
     @staticmethod
     def __get_save_files_stats() -> Tuple[int, int]:
@@ -55,7 +57,7 @@ class PathConfig:
         num = -1
         num_of_files = 0
         for file in files:
-            if file.endswith(FileTypes.Save.value):
+            if file.startswith(PathConfig.__SAVE_FILE_PREFIX) and file.endswith(FileTypes.Save.value):
                 file_ending_index = len(file) - len(FileTypes.Save.value)
                 num_of_files += 1
                 cur_num = int(file[file.rindex(PathConfig.__SAVE_FILE_NUMERATION_SEPARATOR) + 1:file_ending_index])
@@ -74,6 +76,10 @@ class PathConfig:
     @staticmethod
     def default_user_data_path() -> str:
         return PathConfig.__DEFAULT_USER_DATA_PATH
+
+    @staticmethod
+    def keylog_folder() -> str:
+        return PathConfig.__KEY_LOG_FOLDER
 
     @staticmethod
     def create_folder_structure(user_data_path: str) -> None:
@@ -106,25 +112,36 @@ class PathConfig:
         PathConfig.__User_Data_Path = user_data_path
 
     @staticmethod
-    def load_paths(custom_data_path: str, custom_user_data_path: str) -> bool:
+    def load_paths(custom_data_path: Optional[str], custom_user_data_path: Optional[str]) -> bool:
         try:
             if custom_data_path is None or custom_user_data_path is None:
-                with open(PathConfig.launch_config_path()) as f:
-                    content = f.readlines()
+                if os.path.exists(PathConfig.launch_config_path()):
+                    with open(PathConfig.launch_config_path()) as f:
+                        content = f.readlines()
+                else:
+                    content = None
 
             if custom_data_path:
                 data_path = custom_data_path
-            else:
+            elif content:
                 data_path = content[1]
+            else:
+                # use the default if nothing is provided
+                data_path = PathConfig.default_base_path()
+
             if custom_user_data_path:
                 user_data_path = custom_user_data_path
-            else:
+            elif content:
                 user_data_path = content[2]
+            else:
+                # use the default if nothing is provided
+                user_data_path = PathConfig.default_user_data_path()
 
             if data_path == "\n":
                 data_path = PathConfig.default_base_path()
             elif data_path.endswith("\n"):
                 data_path = data_path[:-1]
+
             if user_data_path == "\n":
                 user_data_path = PathConfig.default_user_data_path()
             elif user_data_path.endswith("\n"):
@@ -133,6 +150,7 @@ class PathConfig:
             PathConfig.set_base_path(data_path)
             PathConfig.set_user_data_path(user_data_path)
             return os.path.exists(PathConfig.__Base_Path) and os.path.exists(PathConfig.__User_Data_Path)
+
         except Exception as error:
             print(error)
             return False

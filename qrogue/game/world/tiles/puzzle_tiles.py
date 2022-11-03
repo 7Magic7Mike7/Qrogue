@@ -113,10 +113,12 @@ class Enemy(WalkTriggerTile):
 
 
 class Boss(WalkTriggerTile):
-    def __init__(self, boss: BossActor, on_walk_callback: Callable[[Robot, BossActor, Direction], None]):
+    def __init__(self, boss: BossActor, on_walk_callback: Callable[[Robot, BossActor, Direction], None],
+                 end_level_callback: Callable[[], None]):
         super().__init__(TileCode.Boss)
         self.__boss = boss
         self.__on_walk_callback = on_walk_callback
+        self.__end_level_callback = end_level_callback
         self.__is_active = True
 
     @property
@@ -131,16 +133,19 @@ class Boss(WalkTriggerTile):
         if isinstance(controllable, Robot):
             if self._is_active:
                 self.__on_walk_callback(controllable, self.__boss, direction)
+            else:
+                self.__end_level_callback()
+            return True
         else:
             Logger.instance().error(f"Non-Robot walked on Boss! controllable = {controllable}", from_pycui=False)
-        return False
+            return False
 
     def get_img(self):
         if self._is_active:
             return "B"
         else:
-            return self._invisible
+            return "t"  # teleport for ending the level
 
     def _copy(self) -> "Tile":
         # Bosses should not be duplicated in a level anyways, so it doesn't matter if we reference the same BossActor
-        return Boss(self.__boss, self.__on_walk_callback)
+        return Boss(self.__boss, self.__on_walk_callback, self.__end_level_callback)

@@ -1,5 +1,5 @@
 Qrogue<
-Description = "For one last time, go to the trainings room on the right side." when *l0exam then *none
+Description = *description0
 
 [Layout]
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -52,10 +52,15 @@ description "Lesson 7: Interacting with //02Entanglement// via //02Digits//, new
 teleport *l0v7
 
 tt (visible Level 8; East):
-description "A simple trainings environment to practive everything you learned."
+optional
+description "A simple trainings environment to practice everything you learned."
 teleport *l0training
 
 [Hallways]
 22 (event *learnedAboutFleeing; ; )
+
+[Messages]
+*description0 "For one last time, go to the trainings room on the right side." when *learnedaboutfleeing then *description1
+*description1 "Now you are ready for the exam to the left." when *l0exam then *none
 
 >Qrogue

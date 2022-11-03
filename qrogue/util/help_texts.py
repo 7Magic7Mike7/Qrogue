@@ -45,6 +45,7 @@ class _HL:
     editing = CC.highlight_action("editing")
     edits = CC.highlight_action("edits")
     position = CC.highlight_action("position")
+    talk = CC.highlight_action("talk")
 
     # words
     attempt = CC.highlight_word("Attempt")
@@ -251,8 +252,7 @@ class StoryText:
     __DIC = {
         StoryTextType.Intro:
             f"Hey Mike, the time has {_HL.finally_} come! Quick, join me over here!\n\n"
-            f"[Move to the blue {_HL.robb_tile} with {_HL.navigation_keys} and close this dialog with "
-            f"{_HL.action_keys}]",
+            f"[Move to the blue {_HL.robb_tile} to {_HL.talk} with Robb]",
         StoryTextType.Exam:
             f"Alright, this will be the official and final {_HL.exam} before you can join the {_HL.moon_mission}. I "
             "hope you're ready for it!\n"
@@ -264,9 +264,13 @@ class StoryText:
             f"Currently we are still orbiting earth, so please go over to the {_HL.navigation_panel} "
             f"{_HL.navigation_tile} and set our new destination.",
         StoryTextType.FirstExpedition:
-            f"Nice, I think you sort of understand {_HL.entanglement} and {_HL.superposition} now.\n"
-            "Currently there is no new mission I could assign you to. But if you want you can go on an "
-            f"{_HL.expedition}. Just head back to the {_HL.navigation_panel} and go down."
+            f"Are you ready for your first adventure? Simply go to the {_HL.navigation_panel} {_HL.navigation_tile}. "
+            f"There you will be able to choose a destination for our {_HL.expedition}!\n\n"
+            f"[Currently there are no more story levels implemented yet. However, you can still play randomly "
+            f"generated expeditions to test your Quantum Computing skills!]",
+            #f"Nice, I think you sort of understand {_HL.entanglement} and {_HL.superposition} now.\n"
+            #"Currently there is no new mission I could assign you to. But if you want you can go on an "
+            #f"{_HL.expedition}. Just head back to the {_HL.navigation_panel} and go down.",
     }
 
     @staticmethod

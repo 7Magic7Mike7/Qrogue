@@ -25,7 +25,7 @@ tile :  'o' | 't' | 'm' | DIGIT | 'c' | 'e' | 'r' | '!' | '$' | '_' ;    // obst
 tile_descriptor : (t_descriptor | message_descriptor |
                   enemy_descriptor | collectible_descriptor | energy_descriptor | riddle_descriptor |
                   challenge_descriptor | shop_descriptor)
-                  (TUTORIAL_LITERAL REFERENCE)? (TRIGGER_LITERAL REFERENCE)? ;  // winning a fight or picking up a collectible can also trigger an event
+                  (TUTORIAL_LITERAL REFERENCE)? (TRIGGER_LITERAL (REFERENCE | GLOBAL_EVENT_REFERENCE))? ;  // winning a fight or picking up a collectible can also trigger an event
 t_descriptor : 't' (trigger_descriptor | teleport_descriptor) ;
 trigger_descriptor : (LEVEL_EVENT | GLOBAL_ACHIEVEMENT)? REFERENCE ;
 teleport_descriptor : (LOCAL_TUNNEL ROOM_ID integer?) |     // no integer given equals middle of room
@@ -85,6 +85,7 @@ QUBIT_LITERAL : 'qubit' ;
 // trigger tiles
 LEVEL_EVENT : 'LevelEvent' ;
 GLOBAL_ACHIEVEMENT : 'GlobalAchievement' ;
+GLOBAL_EVENT_REFERENCE : '*' 'global_event_' (CHARACTER | DIGIT)+ ;  // same as reference but with 'globalEvent_' prefix
 
 // teleport tiles
 LOCAL_TUNNEL : 'tunnel' ;

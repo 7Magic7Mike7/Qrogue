@@ -3,7 +3,7 @@ from typing import Callable, Optional, List
 
 from py_cui.debug import PyCUILogger
 
-from qrogue.util import PyCuiColors
+from qrogue.util import PyCuiColors, TestConfig
 from qrogue.util.config import PathConfig, Config
 
 
@@ -17,21 +17,33 @@ class Logger(PyCUILogger):
             raise Exception("This singleton has not been initialized yet!")
         return Logger.__instance
 
+    @staticmethod
+    def reset():
+        if TestConfig.is_active():
+            Logger.__instance = None
+        else:
+            raise TestConfig.StateException("Can only reset the singleton \"Logger\" during testing!")
+
     def __init__(self, seed: int):
         super().__init__("Qrogue-Logger")
         if Logger.__instance is not None:
-            self.throw(Exception("This class is a singleton!"))
+            Logger.__instance.throw(Exception("This class is a singleton!"))
         else:
             self.__text = ""
             self.__message_popup: Optional[Callable[[str, str, int], None]] = None
             self.__error_popup: Optional[Callable[[str, str], None]] = None
             self.__save_file = PathConfig.new_log_file(seed)
             self.__buffer: List[str] = [Config.get_log_head(seed)]
+            self.__error_counter = 0
             Logger.__instance = self
 
     @property
     def __buffer_size(self) -> int:
         return len(self.__buffer)
+
+    @property
+    def error_count(self) -> int:
+        return self.__error_counter
 
     def set_popup(self, message_popup_function: Callable[[str, str, int], None],
                   error_popup_function: Callable[[str, str], None]) -> None:
@@ -55,15 +67,18 @@ class Logger(PyCUILogger):
             self.info(f"{{DEBUG}} |{msg}", from_pycui=from_pycui)
 
     def show_error(self, message) -> None:
+        self.__error_counter += 1
         self.__error_popup("ERROR", str(message))
 
     def error(self, message, show: bool = True, from_pycui: bool = True, **kwargs) -> None:
+        self.__error_counter += 1
         if show:
             self.__error_popup("ERROR", str(message))
         highlighting = "\n----------------------------------\n"
         self.info(f"{highlighting}ERROR |{message}{highlighting}", from_pycui=from_pycui)
 
     def throw(self, error: BaseException) -> None:
+        self.__error_counter += 1
         print(error)
         self.__write(f"[ERROR] {error}")
         self.flush()

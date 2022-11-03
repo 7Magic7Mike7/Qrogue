@@ -1,3 +1,5 @@
+import threading
+from threading import Timer
 import time
 from abc import abstractmethod, ABC
 from typing import List, Callable, Optional, Tuple
@@ -15,7 +17,7 @@ from qrogue.graphics.popups import Popup
 from qrogue.graphics.rendering import ColorRules
 from qrogue.graphics.widget_base import WidgetWrapper
 from qrogue.util import CommonPopups, Config, Controls, GameplayConfig, HelpText, HelpTextType, Logger, PathConfig, \
-    RandomManager, AchievementManager, Keys, UIConfig, HudConfig, ColorConfig, Options
+    RandomManager, AchievementManager, Keys, UIConfig, HudConfig, ColorConfig, Options, PuzzleConfig
 from qrogue.util.achievements import Ach, Unlocks
 
 from qrogue.graphics.widgets import Renderable, Widget, MyBaseWidget
@@ -33,11 +35,21 @@ class MyWidgetSet(WidgetSet, Renderable, ABC):
         hud = widget_set.add_block_label('HUD', 0, 0, row_span=UIConfig.HUD_HEIGHT, column_span=UIConfig.HUD_WIDTH,
                                          center=False)
         hud.toggle_border()
+        widgets = [hud]
+        width = UIConfig.WINDOW_WIDTH-UIConfig.HUD_WIDTH
+
+        if Config.debugging():
+            width -= 1  # we need space for frame count
+            frame_count = widget_set.add_block_label('Frame count', 0, UIConfig.WINDOW_WIDTH - 1,
+                                                     row_span=UIConfig.HUD_HEIGHT, column_span=1, center=False)
+            widgets.append(frame_count)
 
         situational_hud = widget_set.add_block_label('Situational', 0, UIConfig.HUD_WIDTH, row_span=UIConfig.HUD_HEIGHT,
-                                                     column_span=UIConfig.WINDOW_WIDTH-UIConfig.HUD_WIDTH, center=False)
+                                                     column_span=width, center=False)
         situational_hud.toggle_border()
-        return HudWidget(MyMultiWidget([hud, situational_hud]))
+        widgets.append(situational_hud)
+
+        return HudWidget(MyMultiWidget(widgets))
 
     BACK_STRING = "-Back-"
 
@@ -222,6 +234,319 @@ class MenuWidgetSet(MyWidgetSet):
 
     def __options(self) -> None:
         Popup.generic_info("Gameplay Config", GameplayConfig.to_file_text())
+
+
+class TransitionWidgetSet(MyWidgetSet):
+    class TextScroll:
+        __DEFAULT_TEXT_DELAY = 0.01     # 0 can lead to messed up render order so we just use a very small number
+        _SLOW = 1.0
+        _RELAXED = 0.65
+        _MEDIUM = 0.15
+        _FAST = 0.05
+        _HASTY = 0.01
+
+        @staticmethod
+        def slow(text: str, text_delay: float = 0, clear_previous: bool = False) -> "TransitionWidgetSet.TextScroll":
+            char_pause = TransitionWidgetSet.TextScroll._SLOW
+            return TransitionWidgetSet.TextScroll(text, char_pause, text_delay, clear_previous)
+
+        @staticmethod
+        def relaxed(text: str, text_delay: float = 0, clear_previous: bool = False) -> "TransitionWidgetSet.TextScroll":
+            char_pause = TransitionWidgetSet.TextScroll._RELAXED
+            return TransitionWidgetSet.TextScroll(text, char_pause, text_delay, clear_previous)
+
+        @staticmethod
+        def medium(text: str, text_delay: float = 0, clear_previous: bool = False) -> "TransitionWidgetSet.TextScroll":
+            char_pause = TransitionWidgetSet.TextScroll._MEDIUM
+            return TransitionWidgetSet.TextScroll(text, char_pause, text_delay, clear_previous)
+
+        @staticmethod
+        def fast(text: str, text_delay: float = 0, clear_previous: bool = False) -> "TransitionWidgetSet.TextScroll":
+            char_pause = TransitionWidgetSet.TextScroll._FAST
+            return TransitionWidgetSet.TextScroll(text, char_pause, text_delay, clear_previous)
+
+        @staticmethod
+        def hasty(text: str, text_delay: float = 0, clear_previous: bool = False) -> "TransitionWidgetSet.TextScroll":
+            char_pause = TransitionWidgetSet.TextScroll._HASTY
+            return TransitionWidgetSet.TextScroll(text, char_pause, text_delay, clear_previous)
+
+        @staticmethod
+        def instant(text: str, text_delay: float = 0, clear_previous: bool = False) -> "TransitionWidgetSet.TextScroll":
+            return TransitionWidgetSet.TextScroll(text, 0, text_delay, clear_previous)
+
+        def __init__(self, text: str, char_pause: float, text_delay: float = __DEFAULT_TEXT_DELAY,
+                     clear_previous: bool = False):
+            """
+
+            :param text:
+            :param char_pause: pause between rendering each character in seconds
+            :param text_delay: delay for rendering different TextScrolls in seconds
+            :param clear_previous:
+            """
+            assert len(text) > 0, "Avoid empty texts by defining a text_delay instead!"
+            assert char_pause >= 0, "Negative char_pauses are not allowed!"
+            assert text_delay >= 0, "Negative text_delays are not allowed!"
+
+            self.__text = text
+            self.__char_pause = char_pause
+            self.__text_delay = text_delay
+            self.__clear_prev = clear_previous
+            self.__pos = 0
+
+        @property
+        def text_delay(self) -> float:
+            if GameplayConfig.get_option_value(Options.auto_skip_text_animation):
+                return self.__DEFAULT_TEXT_DELAY
+            return self.__text_delay
+
+        @property
+        def char_pause(self) -> float:
+            return self.__char_pause
+
+        @property
+        def clear_previous(self) -> bool:
+            return self.__clear_prev
+
+        @property
+        def is_done(self) -> bool:
+            return self.__pos >= len(self.__text)
+
+        def next(self) -> Optional[str]:
+            if self.is_done:
+                return None
+            elif self.__char_pause == 0:
+                self.__pos = len(self.__text)
+                return self.__text
+            else:
+                char = self.__text[self.__pos]
+                self.__pos += 1
+                return char
+
+        def skip_to_end(self) -> str:
+            if self.is_done:
+                return ""
+            else:
+                text = self.__text[self.__pos:]
+                self.__pos = len(self.__text)
+                return text
+
+        def __len__(self) -> int:
+            return len(self.__text)
+
+        def __str__(self) -> str:
+            return self.__text
+
+    def __init__(self, controls: Controls, logger, root: py_cui.PyCUI,
+                 base_render_callback: Callable[[List[Renderable]], None],
+                 set_refresh_timeout_callback: Callable[[int], None]):
+        super().__init__(logger, root, base_render_callback)
+        self.__set_refresh_timeout = lambda: set_refresh_timeout_callback(int(self._cur_text_scroll.char_pause * 1000))
+        self.__reset_refresh_timeout = lambda: set_refresh_timeout_callback(-1)
+
+        self.__display_lock = threading.Lock()
+        self.__index_lock = threading.Lock()
+        self.__timer_lock = threading.Lock()
+
+        self.__continue: Optional[Callable[[], None]] = None
+        self.__text_scrolls: List[TransitionWidgetSet.TextScroll] = []
+        self.__index = 0
+
+        self.__display_text = ""
+        self.__timer: Optional[Timer] = None
+        self.__wait_for_confirmation = False
+
+        widget = self.add_block_label("Text", UIConfig.TRANSITION_SCREEN_ROW, UIConfig.TRANSITION_SCREEN_COL,
+                                      row_span=UIConfig.TRANSITION_SCREEN_HEIGHT,
+                                      column_span=UIConfig.TRANSITION_SCREEN_WIDTH, center=False)
+        widget.add_key_command(controls.get_keys(Keys.Cancel), self.__next_text)
+        widget.add_key_command(controls.action, self.__next_section)
+        widget.toggle_border()
+        self.__text = SimpleWidget(widget)
+        self.__line_width = self.__text.widget.get_abs_size()[0] - 6  # -6 comes from some PyCUI internal border padding
+
+        widget = self.add_block_label("Confirm", UIConfig.TRANSITION_SCREEN_ROW + UIConfig.TRANSITION_SCREEN_HEIGHT + 1,
+                                      UIConfig.TRANSITION_SCREEN_COL, row_span=1,
+                                      column_span=UIConfig.TRANSITION_SCREEN_WIDTH, center=True)
+        self.__confirm = SimpleWidget(widget)
+
+        if Config.debugging():
+            widget = self.add_block_label("Frame count", 0, UIConfig.WINDOW_WIDTH-1)
+            self.__frame_count = SimpleWidget(widget)
+
+        # todo autoscroll?
+
+    @property
+    def at_transition_end(self) -> bool:
+        self._lock(self.__index_lock)
+        value = self.__index >= len(self.__text_scrolls)
+        self._unlock(self.__index_lock)
+        return value
+
+    @property
+    def _cur_text_scroll(self) -> TextScroll:
+        assert not self.at_transition_end
+        self._lock(self.__index_lock)
+        value = self.__text_scrolls[self.__index]
+        self._unlock(self.__index_lock)
+        return value
+
+    def _lock(self, lock: threading.Lock, blocking: bool = True, timeout: Optional[float] = None):
+        if timeout is None:
+            timeout = 1000  # todo use twice refresh timeout instead?
+        lock.acquire(blocking=blocking, timeout=timeout)
+
+    def _unlock(self, lock: threading.Lock):
+        lock.release()
+
+    def _stop_timer(self):
+        self._lock(self.__timer_lock)
+        if self.__timer is not None:
+            self.__timer.cancel()  # todo what if we cancel the thread before it started?
+            self.__timer = None  # todo is it actually good to set it to None?
+        self._unlock(self.__timer_lock)
+
+    def __update_screen(self, new_text: str):
+        self._lock(self.__display_lock)
+        if len(self.__display_text) == 0:
+            remaining_chars = self.__line_width
+        else:
+            # compute difference between len(text) and the next bigger multiple of line_width
+            remaining_chars = -len(self.__display_text) % self.__line_width
+        while len(new_text) >= remaining_chars:
+            self.__display_text += new_text[:remaining_chars]
+            self.__display_text += "\n"
+            new_text = new_text[remaining_chars:]
+            remaining_chars = self.__line_width
+        self.__display_text += new_text     # append the remaining text
+
+        self.__text.set_data(self.__display_text)
+        self.__text.render()
+        self._unlock(self.__display_lock)
+
+        if Config.debugging():
+            self.__frame_count.set_data(Config.frame_count())
+            self.__frame_count.render()
+
+    def __update_confirm_text(self, confirm: bool, transition_end: bool = False):
+        if confirm:
+            self._stop_timer()
+            if transition_end:
+                self.__confirm.set_data("Press [Confirm] to continue playing.")
+            else:
+                self.__confirm.set_data("Press [Confirm] to start next text section.")
+        else:
+            self.__confirm.set_data("Press [Cancel] to skip to next text.")
+        self.__wait_for_confirmation = confirm
+        self.__confirm.render()
+
+        if confirm:
+            self.__reset_refresh_timeout()
+        else:
+            self.__set_refresh_timeout()
+
+    def __next_section(self):
+        if self.__wait_for_confirmation:
+            if not self.at_transition_end:
+                if self._cur_text_scroll.clear_previous:
+                    self._lock(self.__display_lock)
+                    self.__display_text = ""
+                    self._unlock(self.__display_lock)
+                self.__update_confirm_text(confirm=False)
+                self.__render_text_scroll()
+
+            elif self.__continue is not None:
+                self.__continue()
+
+    def __next_text(self):
+        if self.__wait_for_confirmation:
+            # do nothing until confirmation
+            return
+
+        self._stop_timer()
+        # at this point there is only one active thread (the other one was stopped if it existed)
+
+        if not self.at_transition_end:
+            # immediately show the whole content of the current text scroll in case the user manually proceeded
+            self.__update_screen(self._cur_text_scroll.skip_to_end())
+
+            self._lock(self.__index_lock)
+            self.__index += 1
+            self._unlock(self.__index_lock)
+            if not self.at_transition_end:
+                if self._cur_text_scroll.clear_previous:
+                    self.__update_confirm_text(confirm=True, transition_end=False)
+                else:
+                    # start rendering the new one
+                    # don't wait for text delay since the player also didn't want to wait for the characters
+                    self.__render_text_scroll()
+                    self.__update_confirm_text(confirm=False)
+            else:
+                self.__update_confirm_text(confirm=True, transition_end=True)
+
+        elif self.__continue is not None:
+            self.__continue()
+
+    def __render_text_scroll(self):
+        # check is necessary due to multiple threads working with __index
+        if self.at_transition_end:
+            return
+
+        if GameplayConfig.get_option_value(Options.auto_skip_text_animation):
+            self.__update_screen(self._cur_text_scroll.skip_to_end())
+
+        next_char = self._cur_text_scroll.next()
+        if next_char is None:
+            self._lock(self.__index_lock)
+            self.__index += 1
+            self._unlock(self.__index_lock)
+
+            if not self.at_transition_end:
+                # continue with the next text scroll
+                if self._cur_text_scroll.clear_previous:
+                    self._stop_timer()
+                    self.__update_confirm_text(confirm=True, transition_end=False)
+                else:
+                    self.__set_refresh_timeout()  # update timeout
+                    self._lock(self.__timer_lock)
+                    self.__timer = Timer(self._cur_text_scroll.text_delay, self.__render_text_scroll)
+                    self.__timer.start()
+                    self._unlock(self.__timer_lock)
+            else:
+                # inform the player that we finished
+                self.__update_confirm_text(confirm=True, transition_end=True)
+        else:
+            self._lock(self.__timer_lock)
+            self.__timer = Timer(self._cur_text_scroll.char_pause, self.__render_text_scroll)
+            self.__timer.start()
+            self._unlock(self.__timer_lock)
+            self.__update_screen(next_char)
+
+    def set_data(self, text_scrolls: List[TextScroll], continue_callback: Callable[[], None]):
+        assert len(text_scrolls) > 0, "Empty list of texts provided!"
+
+        self.__text_scrolls = text_scrolls
+        self.__continue = continue_callback
+
+        # no locks required since there are no additional threads at this point
+        self.__display_text = ""
+        self.__index = 0
+
+        self.__update_confirm_text(confirm=False)
+        self.__timer = Timer(self._cur_text_scroll.text_delay, self.__render_text_scroll)
+        self.__timer.start()
+
+    def get_widget_list(self) -> List[Widget]:
+        return [
+            self.__text,
+            self.__confirm,
+        ]
+
+    def get_main_widget(self) -> WidgetWrapper:
+        return self.__text.widget
+
+    def reset(self) -> None:
+        pass
+        #self.__confirm.set_data("Press [Confirm] for next text.")  # todo how to handle thread states?
 
 
 class PauseMenuWidgetSet(MyWidgetSet):
@@ -675,6 +1000,12 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                 self.render()
         self.__circuit.widget.add_key_command(controls.action, use_circuit)
 
+        def cancel_circuit():
+            self.__circuit.abort_placement()
+            Widget.move_focus(self._details, self)
+            self.render()
+        self.__circuit.widget.add_key_command(controls.get_keys(Keys.Cancel), cancel_circuit)
+
     def __init_choices(self):
         texts = ["Edit", "Gate Guide"]
         callbacks = [self.__choices_adapt, self.__choices_help]
@@ -972,16 +1303,14 @@ class BossFightWidgetSet(FightWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  continue_exploration_callback: Callable[[], None], game_over_callback: Callable[[], None]):
         self.__continue_exploration_callback = continue_exploration_callback
-        super().__init__(controls, render, logger, root, self.__continue_exploration, game_over_callback)
+        super().__init__(controls, render, logger, root, self.__continue_exploration_callback, game_over_callback)
 
     def set_data(self, robot: Robot, target: Boss):
         super(BossFightWidgetSet, self).set_data(robot, target)
 
-    def __continue_exploration(self):
-        if self._target.is_defeated:
-            Logger.instance().info("Defeated boss.", from_pycui=False)    # todo
-        else:
-            self.__continue_exploration_callback()
+    def _on_commit_fail(self) -> bool:
+        self._robot.decrease_energy(PuzzleConfig.BOSS_FAIL_DAMAGE)
+        return super(BossFightWidgetSet, self)._on_commit_fail()
 
 
 class ShopWidgetSet(MyWidgetSet):
@@ -1104,6 +1433,7 @@ class RiddleWidgetSet(ReachTargetWidgetSet):
                 [self._empty_callback]
             ))
         self._hud.update_situational(f"Remaining attempts: {self._target.attempts}")
+        self._details_content = ReachTargetWidgetSet._DETAILS_INFO_THEN_EDIT
         return True
 
     def _choices_flee(self) -> bool:
@@ -1112,6 +1442,7 @@ class RiddleWidgetSet(ReachTargetWidgetSet):
                 [f"Abort - you can still try again later", "Continue"],
                 [self._continue_exploration_callback, self._empty_callback]
             ))
+            self._details_content = ReachTargetWidgetSet._DETAILS_INFO_THEN_EDIT
         else:
             self._details.set_data(data=(
                 ["Abort - but you don't have any attempts left to try again later!", "Continue"],

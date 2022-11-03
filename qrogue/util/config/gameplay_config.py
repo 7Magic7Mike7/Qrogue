@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Callable, Tuple, List, Dict, Any
 
-from qrogue.util.config import PopupConfig, PyCuiColors
+from qrogue.util.config import TestConfig, PopupConfig, PyCuiColors
 
 
 class MapConfig:
@@ -47,7 +47,7 @@ class MapConfig:
 
     @staticmethod
     def global_event_prefix() -> str:
-        return "globalEvent_"
+        return "global_event_"
 
     @staticmethod
     def next_map_string() -> str:
@@ -128,7 +128,7 @@ class CheatConfig:
     __input_popup = None
 
     @staticmethod
-    def init(popup_callback: Callable[[str, str, int], None],
+    def init(popup_callback: Callable[[str, str, int, int], None],
              input_popup_callback: Callable[[str, int, Callable[[str], None]], None], deactivate_cheats: bool = True,
              allow_cheats: bool = False):
         CheatConfig.__allow_cheats = allow_cheats
@@ -178,7 +178,7 @@ class CheatConfig:
                 text += "Active\n"
             else:
                 text += "Inactive\n"
-        CheatConfig.__popup("List of Cheats", text, PopupConfig.default_color())
+        CheatConfig.__popup("List of Cheats", text, PopupConfig.default_pos(), PopupConfig.default_color())
 
     @staticmethod
     def __use_cheat(code: str) -> bool:
@@ -192,10 +192,12 @@ class CheatConfig:
             ret = True
 
         if ret:
-            CheatConfig.__popup("Cheats", f"Successfully used the Cheat \"{code}\"", PopupConfig.default_color())
+            CheatConfig.__popup("Cheats", f"Successfully used the Cheat \"{code}\"", PopupConfig.default_pos(),
+                                PopupConfig.default_color())
             CheatConfig.__cheated = True
         else:
-            CheatConfig.__popup("Cheats", "This is not a valid Cheat!", PopupConfig.default_color())
+            CheatConfig.__popup("Cheats", "This is not a valid Cheat!", PopupConfig.default_pos(),
+                                PopupConfig.default_color())
         return ret
 
 
@@ -247,6 +249,10 @@ class Options(Enum):
                               "process.")
     allow_multi_move = ("Allow multi move", _get_boolean_callback(), 2, 0,
                         "Allows you to move multiple tiles at once by pressing a number followed by a direction.")
+    auto_skip_text_animation = ("Auto skip text animation", _get_boolean_callback(), 2, 0,
+                                "During some special scene transitions there will be some animated text describing "
+                                "what happened in-between story sections. Skipping this means that the whole text "
+                                "will be shown at once.")
 
     def __init__(self, name: str, get_value: Tuple[Callable[[int], str], Callable[[str], Any]], num_of_values: int,
                  default_index: int, description: str):
@@ -294,6 +300,7 @@ class GameplayConfig:
         Options.allow_implicit_removal: Options.allow_implicit_removal.default_index,
 
         Options.allow_multi_move: Options.allow_multi_move.default_index,
+        Options.auto_skip_text_animation: Options.auto_skip_text_animation.default_index
     }
 
     @staticmethod
@@ -316,6 +323,8 @@ class GameplayConfig:
     def get_option_value(option: Options, convert: bool = True) -> Any:
         cur_index = GameplayConfig.__OPTIONS[option]
         if convert:
+            if Options.simulation_key_pause and TestConfig.is_active():
+                return TestConfig.key_pause()
             return option.convert(cur_index)
         else:
             return option.get_value(cur_index)
@@ -364,6 +373,9 @@ class GameplayConfig:
 
 
 class PuzzleConfig:
+    BOSS_FLEE_ENERGY = 10
+    BOSS_FAIL_DAMAGE = 5
+
     @staticmethod
     def calculate_appearance_chance(eid: int) -> float:
         return 0.1 * (10 - eid)   # the lower the id the higher the chance of a puzzle to appear
@@ -392,3 +404,7 @@ class ShopConfig:
 
 class InstructionConfig:
     MAX_ABBREVIATION_LEN = 3
+
+
+class ExpeditionConfig:
+    DEFAULT_DIFFICULTY = 2

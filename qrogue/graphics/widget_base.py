@@ -6,6 +6,16 @@ class WidgetWrapper(ABC):
     @abstractmethod
     def get_pos(self) -> Tuple[int, int]:
         """
+        Get logical position (e.g. grid cell).
+
+        :return: x, y / column, row
+        """
+        pass
+
+    @abstractmethod
+    def get_abs_pos(self) -> Tuple[int, int]:
+        """
+        Get absolute position (e.g. absolute screen position of top left character).
 
         :return: x, y / column, row
         """
@@ -14,6 +24,16 @@ class WidgetWrapper(ABC):
     @abstractmethod
     def get_size(self) -> Tuple[int, int]:
         """
+        Get logical size (e.g. span of grid cells).
+
+        :return: width, height
+        """
+        pass
+
+    @abstractmethod
+    def get_abs_size(self) -> Tuple[int, int]:
+        """
+        Get absolute size (e.g. number of characters per row, number of renderable rows).
 
         :return: width, height
         """
@@ -37,7 +57,7 @@ class WidgetWrapper(ABC):
 
     @abstractmethod
     def add_text_color_rule(self, regex: str, color: int, rule_type: str, match_type: str = 'line',
-                            region: List[int] = [0, 1], include_whitespace: bool = False, selected_color = None)\
+                            region: List[int] = None, include_whitespace: bool = False, selected_color=None)\
             -> None:
         pass
 
