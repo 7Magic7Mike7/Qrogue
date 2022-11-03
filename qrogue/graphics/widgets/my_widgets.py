@@ -405,7 +405,6 @@ class CircuitWidget(Widget):
         widget.add_key_command(controls.get_keys(Keys.SelectionRight), self.__move_right)
         widget.add_key_command(controls.get_keys(Keys.SelectionDown), self.__move_down)
         widget.add_key_command(controls.get_keys(Keys.SelectionLeft), self.__move_left)
-        # widget.add_key_command(controls.get_keys(Keys.Cancel), self.__abort_placement)     # todo
 
     def __change_position(self, right: bool) -> bool:
         def go_right(position: int) -> Optional[int]:
@@ -472,10 +471,12 @@ class CircuitWidget(Widget):
             if self.__place_holder_data.can_change_position():
                 self.__change_position(False)
 
-    def __abort_placement(self):
-        if self.__place_holder_data:
-            pass
-            # gate, pos, qubit = self.__place_holder_data
+    def abort_placement(self):
+        if self.__place_holder_data is not None:
+            if self.__place_holder_data.gate is not None:
+                self.__place_holder_data.gate.reset()
+            self.__place_holder_data = None
+            self.render()
             # todo
 
     def start_gate_placement(self, gate: Optional[Instruction], pos: int = -1, qubit: int = 0):

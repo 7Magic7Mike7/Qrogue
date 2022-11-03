@@ -1000,6 +1000,12 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                 self.render()
         self.__circuit.widget.add_key_command(controls.action, use_circuit)
 
+        def cancel_circuit():
+            self.__circuit.abort_placement()
+            Widget.move_focus(self._details, self)
+            self.render()
+        self.__circuit.widget.add_key_command(controls.get_keys(Keys.Cancel), cancel_circuit)
+
     def __init_choices(self):
         texts = ["Edit", "Gate Guide"]
         callbacks = [self.__choices_adapt, self.__choices_help]
