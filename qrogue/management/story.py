@@ -4,7 +4,7 @@ from qrogue.graphics.popups import Popup
 from qrogue.graphics.widgets import TransitionWidgetSet as TWS
 from qrogue.management import SaveData
 from qrogue.util import ColorConfig
-from qrogue.util.achievements import Ach, Unlocks
+from qrogue.util.achievements import Ach, EnteredNavigationPanel, Unlocks
 from qrogue.util.help_texts import StoryText, StoryTextType, TutorialText, TutorialTextType
 
 
@@ -25,7 +25,8 @@ class StoryNarration:
     @staticmethod
     def returned_to_spaceship():
         progress = SaveData.instance().story_progress
-        if Ach.is_most_recent_unlock(Unlocks.Spaceship, progress):
+        if Ach.is_most_recent_unlock(Unlocks.Spaceship, progress) and not \
+                SaveData.instance().achievement_manager.check_achievement(EnteredNavigationPanel):
             Popup.scientist_says(StoryText.get(StoryTextType.Intro), pos=Popup.Pos.TopLeft,
                                  dimensions=(Popup.DimY.small, Popup.DimX.small))
 
