@@ -50,6 +50,11 @@ class StoryNarration:
         #    navigation_panel = ColorConfig.highlight_word("Navigation Panel")
         #    n_tile = ColorConfig.highlight_tile("N")
         #    return f"The {navigation_panel} {n_tile} is on the left end of the Spaceship."
+        progress = SaveData.instance().story_progress
+        if Ach.is_most_recent_unlock(Unlocks.Spaceship, progress):
+            #Popup.scientist_says(StoryText.get(StoryTextType.FirstExpedition), pos=Popup.Pos.TopLeft,
+            #                     dimensions=(Popup.DimY.small, Popup.DimX.small))
+            return StoryText.get(StoryTextType.FirstExpedition)
 
         return "NO MORE TEXT"
 
