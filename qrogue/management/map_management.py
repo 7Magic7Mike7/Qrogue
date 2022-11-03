@@ -277,6 +277,8 @@ class MapManager:
     def load_map(self, map_name: str, spawn_room: Optional[Coordinate], map_seed: Optional[int] = None):
         if map_name.lower() == MapConfig.next_map_string():
             self.__load_next()
+        elif map_name.lower() == MapConfig.back_map_string():
+            self.__load_back()
         else:
             self.__load_map(map_name, spawn_room, map_seed)
 
