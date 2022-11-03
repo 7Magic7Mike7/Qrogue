@@ -131,7 +131,7 @@ qq (Wild):
 # _ o _ o _ #
 # o o o o o #
 #############
-! 3 [1, 0, 0, 0] energy 2 trigger *bossDone
+! 3 [1, 0, 0, 0] energy 100 trigger *bossDone
 
 fi (Wild):
 #############
