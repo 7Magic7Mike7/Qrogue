@@ -398,8 +398,8 @@ class CircuitWidget(Widget):
 
     def __init__(self, widget: WidgetWrapper, controls: Controls):
         super().__init__(widget)
-        self.__robot = None
-        self.__place_holder_data = None
+        self.__robot: Optional[Robot] = None
+        self.__place_holder_data: Optional[CircuitWidget.PlaceHolderData] = None
 
         widget.add_key_command(controls.get_keys(Keys.SelectionUp), self.__move_up)
         widget.add_key_command(controls.get_keys(Keys.SelectionRight), self.__move_right)
