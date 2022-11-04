@@ -34,10 +34,10 @@ powered universe exploration mission.
 
 
 ### Dependencies ###
-- py_cui v0.1.4
-- qiskit v0.34.2
-- numpy v1.20.1
-- antlr4-python3-runtime v4.10
+- py_cui 0.1.4
+- qiskit 0.34.2
+- numpy 1.20.3
+- antlr4-python3-runtime 4.10
 
 However, these dependencies are installed automatically if you install Qrogue via pip.
 
