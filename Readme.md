@@ -110,8 +110,5 @@ Please do tell us the message id so we have an easier time fixing it. Thanks!
 
 ## Outlook ##
 
-What you can expect from Qrogue v0.5:
-- better Popups
-- automated testing
-- Documentation
+
 
