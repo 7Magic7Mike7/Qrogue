@@ -1,5 +1,5 @@
 from enum import IntEnum
-from typing import Callable, Dict, Optional
+from typing import Callable, Dict, Optional, Tuple
 
 from qrogue.game.logic.actors import Robot
 from qrogue.game.logic.collectibles import GateFactory, ShopFactory, Key, instruction, Energy
@@ -11,6 +11,7 @@ from qrogue.game.world.tiles import Boss, Collectible, Door, DoorOpenState
 from qrogue.util import Logger, RandomManager, MapConfig
 
 from qrogue.game.world.dungeon_generator.generator import DungeonGenerator
+from qrogue.game.world.dungeon_generator.wfc_generator import WFCLayoutGenerator
 
 
 class _Code(IntEnum):
@@ -526,7 +527,16 @@ class ExpeditionGenerator(DungeonGenerator):
         self.__load_map = load_map_callback
         self.__layout = RandomLayoutGenerator(seed, width, height)
 
-    def generate(self, data: Robot) -> (LevelMap, bool):
+    def generate(self, data: Robot) -> Tuple[LevelMap, bool]:
+        return self.__wfc_generate(data)
+
+    def __wfc_generate(self, data: Robot) -> Tuple[LevelMap, bool]:
+        generator = WFCLayoutGenerator(7, [("l0exam.qrdg", True)])
+        generator.generate()
+
+        return self.__old_generate(data)
+
+    def __old_generate(self, data: Robot) -> (LevelMap, bool):
         # Testing: seeds from 0 to 500_000 were successful
         robot = data
         if len(robot.get_available_instructions()) <= 0:

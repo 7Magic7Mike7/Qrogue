@@ -28,6 +28,21 @@ class AreaType(Enum):
     BossRoom = 15
     TreasureRoom = 16
 
+    @staticmethod
+    def values(include_pseudo_areas: Optional[bool] = None, only_rooms: Optional[bool] = None) -> List["AreaType"]:
+        if include_pseudo_areas is None:
+            include_pseudo_areas = False
+        if only_rooms is None:
+            only_rooms = True
+
+        areas = [AreaType.SpawnRoom, AreaType.WildRoom, AreaType.ShopRoom, AreaType.RiddleRoom, AreaType.GateRoom,
+                 AreaType.BossRoom, AreaType.TreasureRoom]
+        if not only_rooms:
+            areas += [AreaType.Hallway]
+        if include_pseudo_areas:
+            areas += [AreaType.Invalid, AreaType.Placeholder, AreaType.EmptyRoom, AreaType.MetaRoom]
+        return areas
+
 
 class Area(ABC):
     __ID = 1

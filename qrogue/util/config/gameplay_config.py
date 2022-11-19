@@ -105,6 +105,14 @@ class MapConfig:
     def test_level() -> str:
         return "l0training"
 
+    @staticmethod
+    def level_list() -> List[str]:
+        levels = []
+        for i in range(MapConfig.num_of_lessons()):
+            levels.append(f"l0v{i}")
+        levels += ["l0training", "l0exam"]
+        return levels
+
 
 class CheatConfig:
     __ALL = "aLL"
