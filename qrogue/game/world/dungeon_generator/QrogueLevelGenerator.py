@@ -915,7 +915,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         for y, hw_row in enumerate(ctx.l_hallway_row()):
             self.__visitL_hallway_row(hw_row, y)
 
-        room_matrix = []
+        room_matrix: List[List[rooms.Room]] = []
         for y in range(MapConfig.map_height()):
             row_ctx = ctx.l_room_row(y)
             if row_ctx:
@@ -951,7 +951,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
     def __visitL_room_row(self, ctx: QrogueDungeonParser.L_room_rowContext, y: int) -> List[rooms.Room]:
         self.__hallway_handling(ctx.children, y, Direction.East)     # connect to the right to the next room
 
-        row = []
+        row: List[Optional[rooms.Room]] = []
         x = 0
         for child in ctx.children:
             if parser_util.check_for_overspecified_columns(x, child.symbol.type,
