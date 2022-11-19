@@ -1,8 +1,9 @@
 # exporting
 from .generator import DungeonGenerator
+from .QrogueLevelGenerator import QrogueLevelGenerator
+from .QrogueWorldGenerator import QrogueWorldGenerator
+from .wfc_generator import WFCLayoutGenerator, WFCLayoutLearner
 from .random_generator import ExpeditionGenerator
-from qrogue.game.world.dungeon_generator.QrogueLevelGenerator import QrogueLevelGenerator
-from qrogue.game.world.dungeon_generator.QrogueWorldGenerator import QrogueWorldGenerator
 
 # importing
 # +util
