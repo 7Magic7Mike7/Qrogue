@@ -718,6 +718,10 @@ class Robot(Controllable, ABC):
             return self.__instructions[position]
         return None
 
+    def reset(self):
+        self.reset_circuit()
+        self.__attributes.increase_energy(self.__attributes.max_energy)
+
 
 class TestBot(Robot):
     def __init__(self, game_over_callback: Callable[[], None], num_of_qubits: int = 2, gates: List[Instruction] = None,

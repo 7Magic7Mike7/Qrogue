@@ -207,6 +207,7 @@ class MapManager:
             generator = ExpeditionGenerator(map_seed, check_achievement, self.__trigger_event, self.load_map)
             expedition, success = generator.generate(robot)
             if success:
+                robot.reset()
                 self.__cur_map = expedition
                 self.__in_level = True
                 self.__start_level(map_seed, self.__cur_map)
