@@ -223,13 +223,13 @@ class WFCLayoutGenerator:
             entropies[pos] = self.__get_entropy(pos)
 
         # randomly place the SpawnRoom
-        sr_pos = Coordinate(self.__rand.get_int(0, width), self.__rand.get_int(0, height))
+        sr_pos = Coordinate(rand.get_int(0, width), rand.get_int(0, height))
         wave_functions[sr_pos].force_spawn_room()
         entropies.pop(sr_pos)
 
         while len(entropies) > 0:
             pos = self.min_entropy(entropies)
-            rtype = wave_functions[pos].collapse(self.__rand)
+            rtype = wave_functions[pos].collapse(rand)
 
             # propagate collapse to all neighbors
             for direction in Direction.values():
