@@ -11,7 +11,6 @@ from qrogue.game.world.tiles import Boss, Collectible, Door, DoorOpenState
 from qrogue.util import Logger, RandomManager, MapConfig
 
 from qrogue.game.world.dungeon_generator.generator import DungeonGenerator
-from qrogue.game.world.dungeon_generator.wfc_generator import WFCLayoutGenerator
 
 
 class _Code(IntEnum):
@@ -531,8 +530,8 @@ class ExpeditionGenerator(DungeonGenerator):
         return self.__wfc_generate(data)
 
     def __wfc_generate(self, data: Robot) -> Tuple[LevelMap, bool]:
-        generator = WFCLayoutGenerator(7, [("l0exam.qrdg", True)])
-        generator.generate()
+        #generator = WFCLayoutGenerator(7, [("l0exam.qrdg", True)])
+        #generator.generate()
 
         return self.__old_generate(data)
 
