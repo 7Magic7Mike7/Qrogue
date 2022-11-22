@@ -34,7 +34,7 @@ class WaveFunction:
                 # e.g. increase weight by 20% = multiply by 1.2
                 self.__weights[key] = int(self.__weights[key] * (1 + norm_weight))
             else:
-                self.__weights.pop(key)     # non-existing key is like a 0 weight, meaning we can simply remove it
+                self.__weights[key] = 0     # non-existing key is like a 0 weight
 
     def collapse(self, rand: MyRandom) -> Any:
         if len(self.__weights) == 0:
