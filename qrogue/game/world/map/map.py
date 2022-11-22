@@ -151,7 +151,7 @@ class BaseMap(ABC):
         else:
             return room, room.at(x_mod, y_mod)
 
-    def _room_at(self, x: int, y: int) -> Optional[Room]:
+    def room_at(self, x: int, y: int) -> Optional[Room]:
         """
         Returns the Room at the given position or None if either x or y are out of bounds.
         :param x: x-Coordinate of the room we want to get
@@ -173,7 +173,7 @@ class BaseMap(ABC):
 
             for x in range(self.width):
                 last_col = x == self.width - 1  # there are no more Hallways after the last Room in a row
-                room = self._room_at(x, y)
+                room = self.room_at(x, y)
                 if room is None:
                     areas.append(Placeholder.pseudo_room())
                     if not last_col:
@@ -219,7 +219,7 @@ class Map(BaseMap, ABC):
         self.__controllable_tile = tiles.ControllableTile(controllable)
         self.__controllable_pos = BaseMap._calculate_pos(spawn_room, Coordinate(Area.MID_X, Area.MID_Y))
 
-        self.__cur_area = self._room_at(spawn_room.x, spawn_room.y)
+        self.__cur_area = self.room_at(spawn_room.x, spawn_room.y)
         if self.__cur_area is None:
             Logger.instance().error(f"Illegal spawn room @{spawn_room} for map {meta_data.name}")
         else:
@@ -284,7 +284,7 @@ class Map(BaseMap, ABC):
             _x, _y = MapConfig.room_mid()
             pos_in_room = Coordinate(_x, _y)
 
-        room = self._room_at(pos_of_room.x, pos_of_room.y)
+        room = self.room_at(pos_of_room.x, pos_of_room.y)
         if room is None:
             return False
 
