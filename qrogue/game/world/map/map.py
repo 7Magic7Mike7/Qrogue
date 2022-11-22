@@ -163,13 +163,13 @@ class BaseMap(ABC):
         return None
 
     def row_strings(self) -> List[str]:
-        rows = []
+        rows: List[str] = []
         offset = 0
         # iterate through every row of Rooms
         for y in range(self.height):
             last_row = y == self.height - 1  # there are no more Hallways after the last row of Rooms
-            areas = []
-            south_hallways = []
+            areas: List[Area] = []
+            south_hallways: List[str] = []
 
             for x in range(self.width):
                 last_col = x == self.width - 1  # there are no more Hallways after the last Room in a row

@@ -1,5 +1,6 @@
 
 from enum import Enum
+from typing import List
 
 from qrogue.util import Logger
 
@@ -34,7 +35,7 @@ class Direction(Enum):
         return direction(c_from, c_to)
 
     @staticmethod
-    def values() -> "[Direction]":
+    def values() -> List["Direction"]:
         return [Direction.North, Direction.East, Direction.South, Direction.West]
 
     @property

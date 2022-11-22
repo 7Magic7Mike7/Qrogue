@@ -1,11 +1,12 @@
 from enum import IntEnum
-from typing import Callable, Dict, Optional, Tuple
+from typing import Callable, Dict, Optional, Tuple, List
 
 from qrogue.game.logic.actors import Robot
 from qrogue.game.logic.collectibles import GateFactory, ShopFactory, Key, instruction, Energy
 from qrogue.game.target_factory import TargetDifficulty, BossFactory, EnemyFactory, RiddleFactory
-from qrogue.game.world.map import CallbackPack, LevelMap, Hallway, WildRoom, SpawnRoom, ShopRoom, RiddleRoom, BossRoom, \
-    TreasureRoom, ExpeditionMap
+from qrogue.game.world.map import CallbackPack, Hallway, WildRoom, SpawnRoom, ShopRoom, RiddleRoom, BossRoom, \
+    TreasureRoom, ExpeditionMap, Room
+from qrogue.game.world.map.rooms import EmptyRoom
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.game.world.tiles import Boss, Collectible, Door, DoorOpenState
 from qrogue.util import Logger, RandomManager, MapConfig
@@ -170,7 +171,7 @@ class RandomLayoutGenerator:
                     neighbors.append((direction, code, new_pos))
         return neighbors
 
-    def __random_border(self) -> Coordinate:
+    def __random_border(self) -> Optional[Coordinate]:
         directions = Direction.values()
         while len(directions) > 0:
             direction = self.__rm.get_element(directions, remove=True, msg="RandomGen_borderDirection")
@@ -372,12 +373,12 @@ class RandomLayoutGenerator:
                     return True
         return False
 
-    def get_hallway(self, pos: Coordinate) -> Dict[Coordinate, Door]:
+    def get_hallway(self, pos: Coordinate) -> Optional[Dict[Coordinate, Door]]:
         if pos in self.__hallways:
             return self.__hallways[pos]
         return None
 
-    def get_room(self, pos: Coordinate) -> _Code:
+    def get_room(self, pos: Coordinate) -> Optional[_Code]:
         if self.__is_valid_pos(pos):
             return self.__get(pos)
         return None
@@ -526,16 +527,16 @@ class ExpeditionGenerator(DungeonGenerator):
         self.__load_map = load_map_callback
         self.__layout = RandomLayoutGenerator(seed, width, height)
 
-    def generate(self, data: Robot) -> Tuple[LevelMap, bool]:
+    def generate(self, data: Robot) -> Tuple[Optional[ExpeditionMap], bool]:
         return self.__wfc_generate(data)
 
-    def __wfc_generate(self, data: Robot) -> Tuple[LevelMap, bool]:
+    def __wfc_generate(self, data: Robot) -> Tuple[ExpeditionMap, bool]:
         #generator = WFCLayoutGenerator(7, [("l0exam.qrdg", True)])
         #generator.generate()
 
         return self.__old_generate(data)
 
-    def __old_generate(self, data: Robot) -> (LevelMap, bool):
+    def __old_generate(self, data: Robot) -> Tuple[Optional[ExpeditionMap], bool]:
         # Testing: seeds from 0 to 500_000 were successful
         robot = data
         if len(robot.get_available_instructions()) <= 0:
@@ -571,7 +572,7 @@ class ExpeditionGenerator(DungeonGenerator):
         ]
         enemy_factory_priorities = [0.25, 0.35, 0.3, 0.1]
 
-        rooms = [[None for _ in range(self.width)] for _ in range(self.height)]
+        rooms: List[List[Room]] = [[EmptyRoom() for _ in range(self.width)] for _ in range(self.height)]
         spawn_room = None
         created_hallways = {}
         if self.__layout.generate():

@@ -220,15 +220,15 @@ class Hallway(Area):
     def __init__(self, door: Door):
         self.__door = door
         self.__hide = door.is_event_locked
-        self.__room1 = None
-        self.__room2 = None
+        self.__room1: Optional[Room] = None
+        self.__room2: Optional[Room] = None
         if self.is_horizontal():
             missing_half = int((Area.UNIT_WIDTH - 3) / 2)
-            row = [Void()] * missing_half + [Wall(), door, Wall()] + [Void()] * missing_half
+            row: List[Tile] = [Void()] * missing_half + [Wall(), door, Wall()] + [Void()] * missing_half
             super(Hallway, self).__init__(AreaType.Hallway, [row])
         else:
             missing_half = int((Area.UNIT_HEIGHT - 3) / 2)
-            tiles = [[Void()]] * missing_half + [[Wall()], [door], [Wall()]] + [[Void()]] * missing_half
+            tiles: List[List[Tile]] = [[Void()]] * missing_half + [[Wall()], [door], [Wall()]] + [[Void()]] * missing_half
             super(Hallway, self).__init__(AreaType.Hallway, tiles)
 
     @property
@@ -341,7 +341,7 @@ class Room(Area):
 
     def __init__(self, type_: AreaType, tile_list: List[Tile], north_hallway: Hallway = None,
                  east_hallway: Hallway = None, south_hallway: Hallway = None, west_hallway: Hallway = None):
-        tiles = []
+        tiles: List[List[Tile]] = []
         room_top = [Wall()] * Area.UNIT_WIDTH
         tiles.append(room_top)
 
@@ -361,7 +361,7 @@ class Room(Area):
         room_bottom = [Wall()] * Area.UNIT_WIDTH
         tiles.append(room_bottom)
 
-        self.__hallways = {}
+        self.__hallways: Dict[Direction, Hallway] = {}
         if north_hallway is not None and not north_hallway.connects_horizontally():
             tiles[0][Area.MID_X] = HallwayEntrance(north_hallway.door)
             self.__hallways[Direction.North] = north_hallway
