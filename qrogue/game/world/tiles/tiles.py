@@ -9,37 +9,52 @@ from qrogue.util import CheatConfig
 
 
 class TileCode(Enum):
-    Invalid = -1    # when an error occurs, e.g. a tile at a non-existing position should be retrieved
-    Debug = -2      # displays a digit for debugging
-    Void = 7        # tile outside of the playable area
-    Floor = 0       # simple floor tile without special meaning
-    HallwayEntrance = 5     # depending on the hallway it refers to is either a Floor or Wall
-    FogOfWar = 3    # tile of a place we cannot see yet
+    Invalid = (-1, "§")    # when an error occurs, e.g. a tile at a non-existing position should be retrieved
+    Debug = (-2, "€")      # displays a digit for debugging
+    Void = (7, "_")        # tile outside of the playable area
+    Floor = (0, " ")       # simple floor tile without special meaning
+    HallwayEntrance = (5, " ")     # depending on the hallway it refers to is either a Floor or Wall
+    FogOfWar = (3, "~")    # tile of a place we cannot see yet
 
-    Message = 6         # tile for displaying a popup message
-    Trigger = 9         # tile that calls a function on walk, i.e. event tile
-    Teleport = 91       # special trigger for teleporting between maps
-    Decoration = 11     # simply displays a specified character
+    Message = (6, ".")         # tile for displaying a popup message
+    Trigger = (9, "T")         # tile that calls a function on walk, i.e. event tile
+    Teleport = (91, "t")       # special trigger for teleporting between maps
+    Decoration = (11, "d")     # simply displays a specified character
 
-    Wall = 1
-    Obstacle = 2
-    Door = 4
+    Wall = (1, "#")
+    Obstacle = (2, "o")
+    Door = (4, "|")
 
-    Controllable = 20
-    Npc = 25
-    Enemy = 30
-    Boss = 40
+    Controllable = (20, "C")
+    Npc = (25, "N")
+    Enemy = (30, "E")
+    Boss = (40, "B")
 
-    Collectible = 50
-    Riddler = 51
-    ShopKeeper = 52
-    Energy = 53
-    Challenger = 54
+    Collectible = (50, "c")
+    Riddler = (51, "?")
+    ShopKeeper = (52, "$")
+    Energy = (53, "e")
+    Challenger = (54, "!")
 
-    SpaceshipBlock = 70
-    SpaceshipWalk = 71
-    SpaceshipTrigger = 72
-    OuterSpace = 73
+    SpaceshipBlock = (70, "/")
+    SpaceshipWalk = (71, ".")
+    SpaceshipTrigger = (72, "T")
+    OuterSpace = (73, "*")
+
+    def __init__(self, id: int, representation: str):
+        self.__id = id
+        self.__representation = representation
+
+    @property
+    def id(self) -> int:
+        return self.__id
+
+    @property
+    def representation(self) -> str:
+        return self.__representation
+
+    def __str__(self):
+        return self.representation
 
 
 class Tile(ABC):
