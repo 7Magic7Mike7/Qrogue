@@ -212,7 +212,7 @@ class Riddler(WalkTriggerTile):
 
     def get_img(self):
         if self._is_active:
-            return "?"
+            return TileCode.Riddler.representation
         else:
             return self._invisible
 
@@ -245,7 +245,7 @@ class Challenger(WalkTriggerTile):
 
     def get_img(self):
         if self._is_active:
-            return "!"
+            return TileCode.Challenger.representation
         else:
             return self._invisible
 
@@ -261,7 +261,7 @@ class ShopKeeper(WalkTriggerTile):
         return True
 
     def get_img(self):
-        return "$"
+        return TileCode.ShopKeeper.representation
 
     def _copy(self) -> "Tile":
         return ShopKeeper(self.__visit_shop, self.__inventory.copy())
@@ -285,7 +285,7 @@ class Collectible(WalkTriggerTile):
 
     def get_img(self):
         if self.__active:
-            return "c"
+            return TileCode.Collectible.representation
         else:
             return self._invisible
 
@@ -316,7 +316,7 @@ class Energy(WalkTriggerTile):
 
     def get_img(self):
         if self.__active:
-            return "e"
+            return TileCode.Energy.representation
         else:
             return self._invisible
 

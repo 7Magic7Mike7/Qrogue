@@ -94,7 +94,7 @@ class Invalid(Tile):
         super().__init__(TileCode.Invalid)
 
     def get_img(self):
-        return "§"
+        return TileCode.Invalid.representation
 
     def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
         return False
@@ -153,7 +153,7 @@ class Floor(Tile):
 class Wall(Tile):
     @staticmethod
     def img():
-        return "#"
+        return TileCode.Wall.representation
 
     def __init__(self):
         super().__init__(TileCode.Wall)
@@ -173,7 +173,7 @@ class Obstacle(Tile):
         super().__init__(TileCode.Obstacle)
 
     def get_img(self):
-        return "o"
+        return TileCode.Obstacle.representation
 
     def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
         return False or CheatConfig.ignore_obstacles()
@@ -187,7 +187,7 @@ class FogOfWar(Tile):
         super().__init__(TileCode.Obstacle)
 
     def get_img(self):
-        return "~"
+        return TileCode.FogOfWar.representation
 
     def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
         return True
