@@ -154,58 +154,6 @@ class Area(ABC):
         return "?"
 
 
-class AreaPlaceholder(Area):
-    def __init__(self, code: int):
-        if code == 0:
-            # horizontal Hallway
-            self.__has_full_row = True
-        elif code == 1:
-            # vertical Hallway
-            self.__has_full_row = False
-        else:
-            # room
-            self.__has_full_row = True
-        super(AreaPlaceholder, self).__init__(AreaType.Placeholder, [[Area.void()]])
-
-    def at(self, x: int, y: int, force: bool = False) -> Tile:
-        return Area.void()
-
-    def get_row_str(self, row: int) -> str:
-        void_str = Area.void().get_img()
-        if self.__has_full_row:
-            return void_str * Area.UNIT_WIDTH
-        else:
-            return void_str
-
-    def in_sight(self):
-        pass
-
-    def enter(self, direction: Direction):
-        pass
-
-
-class Placeholder:
-    __HORIZONTAL = AreaPlaceholder(0)
-    __VERTICAL = AreaPlaceholder(1)
-    __ROOM = AreaPlaceholder(2)
-
-    @staticmethod
-    def horizontal() -> AreaPlaceholder:
-        return Placeholder.__HORIZONTAL
-
-    @staticmethod
-    def vertical() -> AreaPlaceholder:
-        return Placeholder.__VERTICAL
-
-    @staticmethod
-    def pseudo_room() -> AreaPlaceholder:
-        return Placeholder.__ROOM
-
-    @staticmethod
-    def empty_room(hw_dic: Dict[Direction, "Hallway"]) -> "CopyAbleRoom":
-        return EmptyRoom(hw_dic)
-
-
 class Hallway(Area):
     @staticmethod
     def is_first(direction: Direction):
@@ -766,3 +714,68 @@ class BossRoom(SpecialRoom):
 
     def abbreviation(self) -> str:
         return "BR"
+
+
+class Placeholder:
+    class _AreaPlaceholder(Area):
+        def __init__(self, code: int):
+            if code == 0:
+                # horizontal Hallway
+                self.__has_full_row = True
+            elif code == 1:
+                # vertical Hallway
+                self.__has_full_row = False
+            else:
+                # room
+                self.__has_full_row = True
+            super().__init__(AreaType.Placeholder, [[Area.void()]])
+
+        def at(self, x: int, y: int, force: bool = False) -> Tile:
+            return Area.void()
+
+        def get_row_str(self, row: int) -> str:
+            void_str = Area.void().get_img()
+            if self.__has_full_row:
+                return void_str * Area.UNIT_WIDTH
+            else:
+                return void_str
+
+        def in_sight(self):
+            pass
+
+        def enter(self, direction: Direction):
+            pass
+
+    class _RoomPlaceHolder(Room):
+        def __init__(self):
+            super().__init__(AreaType.Invalid, [])
+
+        def abbreviation(self) -> str:
+            return "PH"
+
+        def at(self, x: int, y: int, force: bool = False, inside_only: bool = False) -> Tile:
+            return Invalid()
+
+    __HORIZONTAL = _AreaPlaceholder(0)
+    __VERTICAL = _AreaPlaceholder(1)
+    __ROOM = _AreaPlaceholder(2)
+
+    @staticmethod
+    def horizontal() -> _AreaPlaceholder:
+        return Placeholder.__HORIZONTAL
+
+    @staticmethod
+    def vertical() -> _AreaPlaceholder:
+        return Placeholder.__VERTICAL
+
+    @staticmethod
+    def pseudo_room() -> _AreaPlaceholder:
+        return Placeholder.__ROOM
+
+    @staticmethod
+    def empty_room(hw_dic: Dict[Direction, "Hallway"]) -> "CopyAbleRoom":
+        return EmptyRoom(hw_dic)
+
+    @staticmethod
+    def room() -> _RoomPlaceHolder:
+        return Placeholder._RoomPlaceHolder()
