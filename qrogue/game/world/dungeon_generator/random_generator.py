@@ -6,7 +6,7 @@ from qrogue.game.logic.collectibles import GateFactory, ShopFactory, Key, instru
 from qrogue.game.target_factory import TargetDifficulty, BossFactory, EnemyFactory, RiddleFactory
 from qrogue.game.world.map import CallbackPack, Hallway, WildRoom, SpawnRoom, ShopRoom, RiddleRoom, BossRoom, \
     TreasureRoom, ExpeditionMap, Room
-from qrogue.game.world.map.rooms import EmptyRoom
+from qrogue.game.world.map.rooms import Placeholder
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.game.world.tiles import Boss, Collectible, Door, DoorOpenState
 from qrogue.util import Logger, RandomManager, MapConfig
@@ -572,7 +572,7 @@ class ExpeditionGenerator(DungeonGenerator):
         ]
         enemy_factory_priorities = [0.25, 0.35, 0.3, 0.1]
 
-        rooms: List[List[Room]] = [[EmptyRoom() for _ in range(self.width)] for _ in range(self.height)]
+        rooms: List[List[Room]] = [[Placeholder.room() for _ in range(self.width)] for _ in range(self.height)]
         spawn_room = None
         created_hallways = {}
         if self.__layout.generate():
