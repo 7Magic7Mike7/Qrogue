@@ -206,14 +206,14 @@ class SpaceshipMap:
             if self.__achievement_manager.check_achievement(achievements.UnlockedWorkbench):
                 tile = SpaceshipTriggerTile(character, self.__use_workbench)
             else:
-                tile = None
+                tile = SpaceshipFreeWalkTile()
         # elif character == SpaceshipTriggerTile.MAP_GATE_LIBRARY_REPRESENTATION:
         #    tile = SpaceshipTriggerTile(character, self.open_gate_library)
         elif character == SpaceshipTriggerTile.QUICKSTART_LEVEL:
             if self.__achievement_manager.check_achievement(achievements.UnlockedQuickStart):
                 tile = SpaceshipTriggerTile(character, self.__load_newest_map)
             else:
-                tile = None
+                tile = SpaceshipFreeWalkTile()
         elif character == SpaceshipTriggerTile.TRAININGS_ROOM:
             def start_training(direction: Direction, controllable: Controllable):
                 self.__start_training(direction)
