@@ -368,6 +368,24 @@ class Room(Area):
             hallway = self.__hallways[key]
             hallway.in_sight()
 
+    def at(self, x: int, y: int, force: bool = False, inside_only: bool = False) -> Tile:
+        """
+
+        :param x: horizontal position of the Tile we want to know
+        :param y: vertical position of the Tile we want to know
+        :param force: whether we return the real Tile or not (e.g. invisible Rooms usually return Fog)
+        :param inside_only: whether we consider the whole room or only its content inside the static walls; interprets
+                            x and y accordingly
+        :return: the Tile at the requested position
+        """
+        if inside_only:
+            if 0 <= x < Room.INNER_WIDTH and 0 <= y < Room.INNER_HEIGHT:
+                # offset position by 1
+                return super(Room, self).at(x + 1, y + 1, force)
+            return Invalid()
+        else:
+            return super(Room, self).at(x, y, force)
+
     @abstractmethod
     def abbreviation(self) -> str:
         pass
