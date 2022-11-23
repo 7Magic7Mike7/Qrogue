@@ -594,6 +594,8 @@ class ExpeditionGenerator(DungeonGenerator):
                                     f"Found a SpecialRoom ({code}) without connecting Hallways for seed = "
                                     f"{self.seed}. Please do report this error as this should not be "
                                     "possible to occur! :("))
+
+                        direction: Optional[Direction] = None
                         for neighbor in hallways:
                             direction = Direction.from_coordinates(pos, neighbor)
                             opposite = direction.opposite()
@@ -635,7 +637,7 @@ class ExpeditionGenerator(DungeonGenerator):
                                 south_hallway=room_hallways[Direction.South],
                                 west_hallway=room_hallways[Direction.West],
                             )
-                        else:
+                        elif direction is not None:
                             # special rooms have exactly 1 neighbor which is already stored in direction
                             hw = room_hallways[direction]
                             if code == _Code.Shop:
