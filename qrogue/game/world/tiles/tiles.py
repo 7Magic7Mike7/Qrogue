@@ -66,6 +66,16 @@ class Tile(ABC):
         self.__code = code
 
     @property
+    def data(self) -> None:
+        """
+        E.g. amount for Energy, logical Collectible for Collectibles, eid for Enemies or None for tiles without any
+        dynamic values (Walls, Floor, ...)
+
+        :return: a representation of the specific tile's data
+        """
+        return None
+
+    @property
     def code(self) -> TileCode:
         return self.__code
 
@@ -93,6 +103,10 @@ class Invalid(Tile):
     def __init__(self):
         super().__init__(TileCode.Invalid)
 
+    @property
+    def data(self) -> None:
+        return None
+
     def get_img(self):
         return TileCode.Invalid.representation
 
@@ -108,6 +122,10 @@ class Debug(Tile):
         super(Debug, self).__init__(TileCode.Debug)
         self.__num = str(num)[0]
 
+    @property
+    def data(self) -> int:
+        return self.__num
+
     def get_img(self) -> str:
         return self.__num
 
@@ -121,6 +139,10 @@ class Debug(Tile):
 class Void(Tile):
     def __init__(self):
         super().__init__(TileCode.Floor)
+
+    @property
+    def data(self) -> None:
+        return None
 
     def get_img(self):
         return self._invisible
@@ -140,6 +162,10 @@ class Floor(Tile):
     def __init__(self):
         super().__init__(TileCode.Floor)
 
+    @property
+    def data(self) -> None:
+        return None
+
     def get_img(self):
         return Floor.img()
 
@@ -158,6 +184,10 @@ class Wall(Tile):
     def __init__(self):
         super().__init__(TileCode.Wall)
 
+    @property
+    def data(self) -> None:
+        return None
+
     def get_img(self):
         return Wall.img()
 
@@ -172,6 +202,10 @@ class Obstacle(Tile):
     def __init__(self):
         super().__init__(TileCode.Obstacle)
 
+    @property
+    def data(self) -> None:
+        return None
+
     def get_img(self):
         return TileCode.Obstacle.representation
 
@@ -185,6 +219,10 @@ class Obstacle(Tile):
 class FogOfWar(Tile):
     def __init__(self):
         super().__init__(TileCode.Obstacle)
+
+    @property
+    def data(self) -> None:
+        return None
 
     def get_img(self):
         return TileCode.FogOfWar.representation
@@ -202,6 +240,10 @@ class Decoration(Tile):
         self.__decoration = decoration
         self.__blocking = blocking
 
+    @property
+    def data(self) -> bool:
+        return self.__blocking
+
     def get_img(self):
         return self.__decoration
 
@@ -216,6 +258,10 @@ class ControllableTile(Tile):
     def __init__(self, controllable: Controllable):
         super().__init__(TileCode.Controllable)
         self.__controllable = controllable
+
+    @property
+    def data(self) -> str:
+        return self.__controllable.name
 
     def get_img(self):
         return self.__controllable.get_img()
@@ -238,6 +284,10 @@ class NpcTile(Tile):
         self.__name = name
         self.__show_message = show_message_callback
         self.__get_text = get_text_callback
+
+    @property
+    def data(self) -> str:
+        return self.__name
 
     def get_img(self):
         return self.__name[0]

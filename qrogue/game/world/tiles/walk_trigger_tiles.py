@@ -5,7 +5,7 @@ from typing import List, Callable, Any, Optional
 from qrogue.game.logic import Message as LogicalMessage
 from qrogue.game.logic.actors import Controllable, Riddle
 from qrogue.game.logic.actors.puzzles import Challenge
-from qrogue.game.logic.collectibles import Collectible as LogicalCollectible, Energy as LogicalEnergy
+from qrogue.game.logic.collectibles import Collectible as LogicalCollectible, Energy as LogicalEnergy, CollectibleType
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.util import Logger, ColorConfig, CommonQuestions, MapConfig
 
@@ -198,6 +198,13 @@ class Riddler(WalkTriggerTile):
         self.__is_active = True
 
     @property
+    def data(self) -> Optional[int]:
+        if self.__is_active:
+            return self.__riddle.attempts
+        else:
+            return None
+
+    @property
     def _is_active(self) -> bool:
         if self.__is_active:
             if not self.__riddle.is_active:
@@ -283,6 +290,13 @@ class Collectible(WalkTriggerTile):
         self.__collectible = collectible
         self.__active = True
 
+    @property
+    def data(self) -> Optional[CollectibleType]:
+        if self.__active:
+            return self.__collectible.type
+        else:
+            return None
+
     def get_img(self):
         if self.__active:
             return TileCode.Collectible.representation
@@ -313,6 +327,10 @@ class Energy(WalkTriggerTile):
         super().__init__(TileCode.Energy)
         self.__amount = amount
         self.__active = True
+
+    @property
+    def data(self) -> int:
+        return self.__amount
 
     def get_img(self):
         if self.__active:

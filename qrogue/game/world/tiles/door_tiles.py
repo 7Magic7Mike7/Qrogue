@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Callable
+from typing import Callable, Tuple, Optional
 
 from qrogue.game.logic.actors import Controllable, Robot
 from qrogue.game.world.navigation import Direction
@@ -42,6 +42,13 @@ class Door(WalkTriggerTile):
         self.__entanglement_state = entanglement_state
         self.__event_check = event_check
         self.__check_entanglement_lock_callback = None
+
+    @property
+    def data(self) -> Tuple[Optional[DoorOpenState], Optional[DoorOneWayState], Optional[DoorEntanglementState]]:
+        if self.__open_state == DoorOpenState.Open:
+            # if the door is already opened we ignore the original values
+            return DoorOpenState.Open, DoorOneWayState.NoOneWay, DoorEntanglementState.NotEntangled
+        return self.__open_state, self.__one_way_state, self.__entanglement_state
 
     def set_entanglement(self, check_entanglement_lock: Callable[[], None]):
         self.__check_entanglement_lock_callback = check_entanglement_lock

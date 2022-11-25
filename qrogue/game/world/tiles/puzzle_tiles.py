@@ -30,6 +30,10 @@ class Enemy(WalkTriggerTile):
         self.__enemy = None
 
     @property
+    def data(self) -> int:
+        return self.eid
+
+    @property
     def eid(self) -> int:
         return self.__id
 
