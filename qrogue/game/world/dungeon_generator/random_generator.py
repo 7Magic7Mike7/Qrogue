@@ -4,11 +4,11 @@ from typing import Callable, Dict, Optional, Tuple, List
 from qrogue.game.logic.actors import Robot
 from qrogue.game.logic.collectibles import GateFactory, ShopFactory, Key, instruction, Energy
 from qrogue.game.target_factory import TargetDifficulty, BossFactory, EnemyFactory, RiddleFactory
+from qrogue.game.world import tiles
 from qrogue.game.world.map import CallbackPack, Hallway, WildRoom, SpawnRoom, ShopRoom, RiddleRoom, BossRoom, \
     TreasureRoom, ExpeditionMap, Room
 from qrogue.game.world.map.rooms import Placeholder
 from qrogue.game.world.navigation import Coordinate, Direction
-from qrogue.game.world.tiles import Boss, Collectible, Door, DoorOpenState
 from qrogue.util import Logger, RandomManager, MapConfig
 
 from qrogue.game.world.dungeon_generator.generator import DungeonGenerator
@@ -254,7 +254,7 @@ class RandomLayoutGenerator:
                     break
         return picked_rooms
 
-    def __add_hallway(self, room1: Coordinate, room2: Coordinate, door: Door):
+    def __add_hallway(self, room1: Coordinate, room2: Coordinate, door: tiles.Door):
         if room1 in self.__hallways:
             self.__hallways[room1][room2] = door
         else:
@@ -264,7 +264,7 @@ class RandomLayoutGenerator:
         else:
             self.__hallways[room2] = {room1: door}
 
-    def __place_wild(self, room: Coordinate, door: Door):
+    def __place_wild(self, room: Coordinate, door: tiles.Door):
         pos = room + door.direction
         self.__set(pos, _Code.Wild)
         self.__add_hallway(room, pos, door)
@@ -282,10 +282,10 @@ class RandomLayoutGenerator:
                     if self.__is_corner(wild_room):
                         # if the connected WildRoom is in the corner, we swap position between it and the SpecialRoom
                         self.__set(wild_room, code)
-                        self.__place_wild(wild_room, Door(direction.opposite(), DoorOpenState.KeyLocked))
+                        self.__place_wild(wild_room, tiles.Door(direction.opposite(), tiles.DoorOpenState.KeyLocked))
                         return wild_room
                     else:
-                        self.__place_wild(pos, Door(direction, DoorOpenState.KeyLocked))
+                        self.__place_wild(pos, tiles.Door(direction, tiles.DoorOpenState.KeyLocked))
                         return pos
             except NotImplementedError:
                 Logger.instance().error("Unimplemented case happened!", from_pycui=False)
@@ -307,7 +307,7 @@ class RandomLayoutGenerator:
         if len(relevant_neighbors) > 0:
             # there are neighbors we can connect to
             room = self.__rm.get_element(relevant_neighbors, msg="RandomGen_astarNeighbor")
-            door = Door(room[0])
+            door = tiles.Door(room[0])
             self.__add_hallway(pos, room[2], door)
             return room[2], False
         else:
@@ -367,13 +367,13 @@ class RandomLayoutGenerator:
             # and try to place a new room to connect the dead end to the rest
             while relevant_pos:
                 direction, _, new_pos = self.__rm.get_element(relevant_pos, remove=True, msg="RandomGen_astarRelevantPos")
-                self.__place_wild(dead_end, Door(direction))
+                self.__place_wild(dead_end, tiles.Door(direction))
                 visited.add(new_pos)
                 if self.__call_astar(visited, start_pos=new_pos, spawn_pos=spawn_pos):
                     return True
         return False
 
-    def get_hallway(self, pos: Coordinate) -> Optional[Dict[Coordinate, Door]]:
+    def get_hallway(self, pos: Coordinate) -> Optional[Dict[Coordinate, tiles.Door]]:
         if pos in self.__hallways:
             return self.__hallways[pos]
         return None
@@ -403,9 +403,9 @@ class RandomLayoutGenerator:
         corner = self.__is_corner(spawn_pos)
         if corner:
             if self.__get(spawn_pos + corner[0]) < _Code.Blocked:
-                self.__place_wild(spawn_pos, Door(corner[0]))
+                self.__place_wild(spawn_pos, tiles.Door(corner[0]))
             if self.__get(spawn_pos + corner[1]) < _Code.Blocked:
-                self.__place_wild(spawn_pos, Door(corner[1]))
+                self.__place_wild(spawn_pos, tiles.Door(corner[1]))
 
         # place the special rooms
         special_rooms = [
@@ -440,14 +440,14 @@ class RandomLayoutGenerator:
                 direction, code, new_pos = room[0]
                 pos = room[1]
                 self.__set(new_pos, _Code.Wild)
-                self.__add_hallway(pos, new_pos, Door(direction))
+                self.__add_hallway(pos, new_pos, tiles.Door(direction))
 
         # add a connection if the SpawnRoom is not connected to a WildRoom
         if spawn_pos not in self.__hallways:
             neighbors = self.__get_neighbors(spawn_pos)
             if len(neighbors) > 0:
                 direction, _, new_pos = self.__rm.get_element(neighbors, msg="RandomGen_neighbor")
-                self.__add_hallway(spawn_pos, new_pos, Door(direction))
+                self.__add_hallway(spawn_pos, new_pos, tiles.Door(direction))
 
         success = True
         # as last step, add missing Hallways and WildRooms to connect every SpecialRoom with the SpawnRoom
@@ -646,11 +646,11 @@ class ExpeditionGenerator(DungeonGenerator):
                             elif code == _Code.Riddle:
                                 room = RiddleRoom(hw, direction, riddle, CallbackPack.instance().open_riddle)
                             elif code == _Code.Gate:
-                                room = TreasureRoom(Collectible(gate), hw, direction)
+                                room = TreasureRoom(tiles.Collectible(gate), hw, direction)
                             elif code == _Code.Boss:
                                 def end_level():
                                     self.__load_map(MapConfig.back_map_string(), None)
-                                boss = Boss(dungeon_boss, CallbackPack.instance().start_boss_fight, end_level)
+                                boss = tiles.Boss(dungeon_boss, CallbackPack.instance().start_boss_fight, end_level)
                                 room = BossRoom(hw, direction, boss)
                         if room:
                             rooms[y][x] = room
