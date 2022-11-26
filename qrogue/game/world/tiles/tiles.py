@@ -1,7 +1,7 @@
 
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Callable
+from typing import Callable, List
 
 from qrogue.game.logic.actors import Controllable
 from qrogue.game.world.navigation import Direction
@@ -55,6 +55,13 @@ class TileCode(Enum):
 
     def __str__(self):
         return self.representation
+
+    @staticmethod
+    def special_values() -> List["TileCode"]:
+        return [
+            TileCode.Invalid, TileCode.Debug, TileCode.Void, TileCode.FogOfWar,
+            TileCode.Message, TileCode.Trigger, TileCode.Teleport, TileCode.Decoration,
+        ]
 
 
 class Tile(ABC):

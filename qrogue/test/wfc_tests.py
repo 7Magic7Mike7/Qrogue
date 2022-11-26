@@ -1,8 +1,11 @@
 import unittest
 
-from qrogue.game.world.map.rooms import AreaType
+from qrogue.game.world.dungeon_generator.wave_function_collapse.wfc_generator import WFCRoomGenerator, \
+    WFCLayoutGenerator
+from qrogue.game.world.map.rooms import AreaType, DefinedWildRoom, Area
 from qrogue.test import test_util
 from qrogue.util import TestConfig, MapConfig
+from qrogue.util.util_functions import enum_str
 
 
 class MyTestCase(unittest.TestCase):
@@ -15,23 +18,35 @@ class MyTestCase(unittest.TestCase):
     def test_layout_generator(self):
         test_util.init_singletons(include_config=True)
 
-        #generator = WFCLayoutGenerator(7, [(level, True) for level in MapConfig.level_list()])
-        #generator.generate()
-        #print(generator)
+        generator = WFCLayoutGenerator(7, [(level, True) for level in MapConfig.level_list()])
+        for i in range(7):
+            generator.start()
+            level = generator.generate()
+            text = ""
+            for row in level:
+                for val in row:
+                    text += f"{enum_str(val)}  "
+                text += "\n"
+            print(text)
+            print()
 
-    def test_room_learner(self):
+    def test_room_generator(self):
         test_util.init_singletons(include_config=True)
 
-        pos_weights = {}
-        type_weights = {}
-        #learner = WFCRoomLearner(AreaType.WildRoom, pos_weights, type_weights)
-        #generator = QrogueLevelGenerator(7, lambda s: True, lambda: None, lambda s, c: None, lambda s0, s1: None)
+        generator = WFCRoomGenerator(7, [(level, True) for level in MapConfig.level_list()], room_type=AreaType.WildRoom)
+        for i in range(7):
+            generator.start()
+            room = generator.generate()
 
-        for data in [(level, True) for level in MapConfig.level_list()]:
-            level_name, in_dungeon_folder = data
-            #level_map, success = generator.generate(level_name, in_dungeon_folder)
-            #if success:
-            #    learner.learn(LearnableLevelMap(level_map))
+            text = "#" * Area.UNIT_WIDTH + "\n"
+            for row in room:
+                text += "#"
+                for val in row:
+                    text += val.code.representation
+                text += "#\n"
+            text += "#" * Area.UNIT_WIDTH + "\n"
+            print(text)
+            print()
 
         #learner.remove_special_tiles()
         #print(learner)

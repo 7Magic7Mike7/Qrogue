@@ -1,13 +1,15 @@
 from enum import IntEnum
-from typing import Callable, Dict, Optional, Tuple, List
+from typing import Callable, Dict, Optional, Tuple, List, Any
 
 from qrogue.game.logic.actors import Robot
-from qrogue.game.logic.collectibles import GateFactory, ShopFactory, Key, instruction, Energy
+from qrogue.game.logic.collectibles import GateFactory, ShopFactory, Key, instruction, Energy, CollectibleType, \
+    CollectibleFactory
 from qrogue.game.target_factory import TargetDifficulty, BossFactory, EnemyFactory, RiddleFactory
 from qrogue.game.world import tiles
+from qrogue.game.world.dungeon_generator.wave_function_collapse.wfc_generator import WFCRoomGenerator
 from qrogue.game.world.map import CallbackPack, Hallway, WildRoom, SpawnRoom, ShopRoom, RiddleRoom, BossRoom, \
     TreasureRoom, ExpeditionMap, Room
-from qrogue.game.world.map.rooms import Placeholder
+from qrogue.game.world.map.rooms import Placeholder, AreaType, DefinedWildRoom
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.util import Logger, RandomManager, MapConfig
 
@@ -527,14 +529,183 @@ class ExpeditionGenerator(DungeonGenerator):
         self.__load_map = load_map_callback
         self.__layout = RandomLayoutGenerator(seed, width, height)
 
+        self.__wild_room_generator = WFCRoomGenerator(seed, WFCRoomGenerator.get_level_list(), AreaType.WildRoom)
+        self.__wild_room_generator.start()
+
     def generate(self, data: Robot) -> Tuple[Optional[ExpeditionMap], bool]:
         return self.__wfc_generate(data)
 
     def __wfc_generate(self, data: Robot) -> Tuple[ExpeditionMap, bool]:
-        #generator = WFCLayoutGenerator(7, [("l0exam.qrdg", True)])
-        #generator.generate()
+        robot = data
+        if len(robot.get_available_instructions()) <= 0:
+            gates = [instruction.HGate(), instruction.XGate(), instruction.CXGate()]
+            for gate in gates:
+                robot.give_collectible(gate)
 
-        return self.__old_generate(data)
+        rm = RandomManager.create_new()  # needed for WildRooms
+        gate_factory = GateFactory.default()
+        riddle_factory = RiddleFactory.default(robot)
+        boss_factory = BossFactory.default(robot)
+        typed_collectible_factory: Dict[CollectibleType, CollectibleFactory] = {
+            CollectibleType.Gate: gate_factory,
+            CollectibleType.Pickup: CollectibleFactory([Key(1), Energy(5), Energy(10), Energy(10), Energy(15),
+                                                        Energy(20)])
+        }
+
+        gate = gate_factory.produce(rm)
+        riddle = riddle_factory.produce(rm)
+        dungeon_boss = boss_factory.produce([gate])  # todo based on chance also add gates from riddle or shop_items?
+
+        enemy_factories = [
+            EnemyFactory(CallbackPack.instance().start_fight, TargetDifficulty(
+                2, [Energy(5), Energy(10)]
+            )),
+            EnemyFactory(CallbackPack.instance().start_fight, TargetDifficulty(
+                2, [Energy(5), Key(), Energy(5)]
+            )),
+            EnemyFactory(CallbackPack.instance().start_fight, TargetDifficulty(
+                3, [Energy(5), Key(), Energy(20)]
+            )),
+            EnemyFactory(CallbackPack.instance().start_fight, TargetDifficulty(
+                3, [Energy(10), Energy(15), Energy(20)]
+            )),
+        ]
+        enemy_factory_priorities = [0.25, 0.35, 0.3, 0.1]
+
+        rooms: List[List[Room]] = [[Placeholder.room() for _ in range(self.width)] for _ in range(self.height)]
+        spawn_room = None
+        created_hallways = {}
+        if self.__layout.generate():
+            for y in range(self.height):
+                for x in range(self.width):
+                    pos = Coordinate(x, y)
+                    code = self.__layout.get_room(pos)
+                    if code is not None and code > _Code.Blocked:
+                        room_hallways = {
+                            Direction.North: None, Direction.East: None, Direction.South: None, Direction.West: None,
+                        }
+                        hallways = self.__layout.get_hallway(pos)
+                        if hallways is None:
+                            if code == _Code.Wild:
+                                # it is completely fine if it happens that an isolated WildRoom was generated
+                                continue
+                            else:
+                                Logger.instance().throw(NotImplementedError(
+                                    f"Found a SpecialRoom ({code}) without connecting Hallways for seed = "
+                                    f"{self.seed}. Please do report this error as this should not be "
+                                    "possible to occur! :("))
+
+                        direction: Optional[Direction] = None
+                        for neighbor in hallways:
+                            direction = Direction.from_coordinates(pos, neighbor)
+                            opposite = direction.opposite()
+                            # get hallway from neighbor if it exists, otherwise create it
+                            if neighbor in created_hallways and opposite in created_hallways[neighbor]:
+                                hallway = created_hallways[neighbor][opposite]
+                            else:
+                                hallway = Hallway(hallways[
+                                                      neighbor])  # todo create door here and only check if it should be locked or not?
+                                if neighbor in created_hallways:
+                                    created_hallways[neighbor][opposite] = hallway
+                                else:
+                                    created_hallways[neighbor] = {opposite: hallway}
+
+                            # store the hallway so the neighbors can find it if necessary
+                            if pos not in created_hallways:
+                                created_hallways[pos] = {}
+                            created_hallways[pos][direction] = hallway
+                            room_hallways[direction] = hallway
+
+                        room = None
+                        if code == _Code.Spawn:
+                            spawn_room = pos
+                            room = SpawnRoom(self.__load_map,
+                                             north_hallway=room_hallways[Direction.North],
+                                             east_hallway=room_hallways[Direction.East],
+                                             south_hallway=room_hallways[Direction.South],
+                                             west_hallway=room_hallways[Direction.West],
+                                             )
+                        elif code == _Code.Wild:
+                            enemies_by_id: Dict[int, List[tiles.Enemy]] = {}
+
+                            def get_entangled_tiles(eid: int) -> List[tiles.Enemy]:
+                                if eid in enemies_by_id:
+                                    return enemies_by_id[eid]
+                                return []
+
+                            def update_entangled_groups(enemy: tiles.Enemy):
+                                if enemy.eid in enemies_by_id:
+                                    enemies_by_id[enemy.eid].append(enemy)
+                                else:
+                                    enemies_by_id[enemy.eid] = [enemy]
+
+                            enemy_factory = rm.get_element_prioritized(enemy_factories, enemy_factory_priorities,
+                                                                       msg="RandomDG_elemPrioritized")
+
+                            def tile_from_tile_data(tile_code: tiles.TileCode, tile_data: Any) -> tiles.Tile:
+                                if tile_code == tiles.TileCode.Enemy:
+                                    return tiles.Enemy(enemy_factory, get_entangled_tiles, update_entangled_groups,
+                                                       e_id=tile_data)
+                                elif tile_code == tiles.TileCode.Energy:
+                                    return tiles.Energy(tile_data)
+                                elif tile_code == tiles.TileCode.Collectible:
+                                    return tiles.Collectible(typed_collectible_factory[tile_data].produce(rm))
+                                elif tile_code == tiles.TileCode.Wall:
+                                    return tiles.Wall()
+                                elif tile_code == tiles.TileCode.Obstacle:
+                                    return tiles.Obstacle()
+                                else:
+                                    return tiles.Floor()
+
+                            tile_matrix: List[List["TileData"]] = self.__wild_room_generator.generate()
+                            tile_list = []
+                            for row in tile_matrix:
+                                for entry in row:
+                                    tile_list.append(tile_from_tile_data(entry.code, entry.data))
+
+                            room = DefinedWildRoom(
+                                tile_list,
+                                north_hallway=room_hallways[Direction.North],
+                                east_hallway=room_hallways[Direction.East],
+                                south_hallway=room_hallways[Direction.South],
+                                west_hallway=room_hallways[Direction.West]
+                            )
+                            """
+                            room = WildRoom(
+                                enemy_factory,
+                                chance=rm.get(ExpeditionGenerator.__MIN_ENEMY_FACTORY_CHANCE,
+                                              ExpeditionGenerator.__MAX_ENEMY_FACTORY_CHANCE,
+                                              msg="RandomDG_WRPuzzleDistribution"),
+                                north_hallway=room_hallways[Direction.North],
+                                east_hallway=room_hallways[Direction.East],
+                                south_hallway=room_hallways[Direction.South],
+                                west_hallway=room_hallways[Direction.West],
+                            )"""
+                        elif direction is not None:
+                            # special rooms have exactly 1 neighbor which is already stored in direction
+                            hw = room_hallways[direction]
+                            if code == _Code.Shop:
+                                # since there was no shop introduction yet, we have to skip creating one.
+                                room = None  # ShopRoom(hw, direction, shop_items, CallbackPack.instance().visit_shop)
+                            elif code == _Code.Riddle:
+                                room = RiddleRoom(hw, direction, riddle, CallbackPack.instance().open_riddle)
+                            elif code == _Code.Gate:
+                                room = TreasureRoom(tiles.Collectible(gate), hw, direction)
+                            elif code == _Code.Boss:
+                                def end_level():
+                                    self.__load_map(MapConfig.back_map_string(), None)
+                                boss = tiles.Boss(dungeon_boss, CallbackPack.instance().start_boss_fight, end_level)
+                                room = BossRoom(hw, direction, boss)
+                        if room:
+                            rooms[y][x] = room
+            if spawn_room:
+                my_map = ExpeditionMap(self.seed, rooms, robot, spawn_room, self.__check_achievement,
+                                       self.__trigger_event)
+                return my_map, True
+            else:
+                return None, False
+        else:
+            return None, False
 
     def __old_generate(self, data: Robot) -> Tuple[Optional[ExpeditionMap], bool]:
         # Testing: seeds from 0 to 500_000 were successful
