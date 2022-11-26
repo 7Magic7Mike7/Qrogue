@@ -680,7 +680,8 @@ class DefinedWildRoom(BaseWildRoom):
                  south_hallway: Hallway = None, west_hallway: Hallway = None):
         self.__dictionary = {1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [], 9: []}
         for tile in tile_list:
-            if isinstance(tile, EnemyTile):
+            # 0s always collapse to "fight" so they don't need to be in the dictionary for entanglement
+            if isinstance(tile, EnemyTile) and tile.eid > 0:
                 self.__dictionary[tile.eid].append(tile)
         super().__init__(tile_list, self.__get_tiles_by_id, north_hallway=north_hallway, east_hallway=east_hallway,
                          south_hallway=south_hallway, west_hallway=west_hallway)
