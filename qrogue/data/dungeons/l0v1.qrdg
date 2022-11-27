@@ -24,7 +24,7 @@ maxenergy = 30; startenergy = 27
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 [Custom Rooms]
-aa (Wild):
+aa (Pause):
 #############
 # _ _ _ _ _ #
 # _ o o o _ #
@@ -34,7 +34,7 @@ aa (Wild):
 #############
 c *energySmall
 
-bb (Wild):
+bb (Story):
 #############
 # c _ _ _ _ #
 # o o _ o _ #
@@ -46,7 +46,7 @@ m *energyReward
 0 *simplePool *energyBig 
 c *key
 
-cc (Wild):
+cc (Story):
 #############
 # c _ o 0 _ #
 # o _ _ _ o #
@@ -79,7 +79,7 @@ ea (Wild):
 0 *simplePool *energyMedium
 c *energyMedium
 
-eb (Wild):
+eb (Pause):
 #############
 # _ o _ _ _ #
 # _ o o _ _ #
@@ -99,7 +99,7 @@ ee (Wild):
 #############
 0 [0, 1] key 1
 
-ff (Wild):
+ff (Story):
 #############
 # o o o _ _ #
 # o o _ _ _ #

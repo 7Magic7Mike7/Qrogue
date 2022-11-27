@@ -32,7 +32,7 @@ SR (Spawn):
 #############
 m 1 *recap1
 
-aa (Wild):
+aa (Story):
 #############
 # c o 0 m _ #
 # m o 0 o _ #
@@ -58,7 +58,7 @@ bb (Wild):
 m 1 *multiDigits
 
 
-cc (Wild):
+cc (Pause):
 #############
 # o _ _ _ o #
 # _ o c o _ #
@@ -71,7 +71,7 @@ c energy 25
 
 dd (Wild):
 #############
-# o o 3 2 2  #
+# o o 3 2 2 #
 # o 4 3 1 1 #
 # _ m _ 1 1 #
 # o 4 3 1 1 #
@@ -83,7 +83,7 @@ m 1 *einstein
 3 *reachable energy 50
 4 *reachable energy 50
 
-ee (Wild):
+ee (Story):
 #############
 # _ _ o _ _ #
 # _ o _ o _ #
@@ -104,7 +104,7 @@ xa (Wild):
 #############
 m 1 *tutEntangledTiles
 
-xb (Wild):
+xb (Story):
 #############
 # o o c _ 0 #
 # o o o o _ #
@@ -138,7 +138,7 @@ za (Wild):
 #############
 m 1 *tutEntangledTiles
 
-zb (Wild):
+zb (Story):
 #############
 # _ _ _ _ _ #
 # _ o o o _ #

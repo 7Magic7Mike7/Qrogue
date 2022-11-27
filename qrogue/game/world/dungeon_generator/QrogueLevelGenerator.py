@@ -808,6 +808,12 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             return rooms.AreaType.GateRoom
         elif ctx.TREASURE_LITERAL():
             return rooms.AreaType.TreasureRoom
+        elif ctx.CHALLENGE_LITERAL():
+            return rooms.AreaType.ChallengeRoom
+        elif ctx.PAUSE_LITERAL():
+            return rooms.AreaType.PauseRoom
+        elif ctx.STORY_LITERAL():
+            return rooms.AreaType.StoryRoom
         else:
             self.warning(f"Invalid r_type: {ctx.getText()}")
             return rooms.AreaType.Invalid

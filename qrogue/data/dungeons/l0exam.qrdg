@@ -62,7 +62,7 @@ dd (Wild):
 # _ 4 4 4 _ #
 #############
 
-ea (Wild):
+ea (Treasure):
 #############
 # _ _ _ _ _ #
 # _ o o o o #
@@ -84,7 +84,7 @@ eb (Wild):
 c energy 20
 c gate *cx
 
-ee (Wild):
+ee (Riddle):
 #############
 # _ _ _ _ _ #
 # _ _ _ _ _ #
@@ -103,7 +103,7 @@ nn (Wild):
 # _ _ _ o _ #
 #############
 
-oo (Wild):
+oo (Riddle):
 #############
 # o o c o o #
 # _ o _ o _ #
@@ -123,7 +123,7 @@ pp (Wild):
 # 9 9 3 9 9 #
 #############
 
-qq (Wild):
+qq (Challenge):
 #############
 # o o o o o #
 # _ o _ o _ #
@@ -133,7 +133,7 @@ qq (Wild):
 #############
 ! 3 [1, 0, 0, 0] energy 100 trigger *bossDone
 
-fi (Wild):
+fi (Story):
 #############
 # _ o _ o _ #
 # o _ o _ o #

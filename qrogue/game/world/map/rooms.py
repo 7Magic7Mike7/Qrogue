@@ -21,12 +21,15 @@ class AreaType(Enum):
     MetaRoom = 3
 
     SpawnRoom = 10
-    WildRoom = 11
+    WildRoom = 11       # contains mostly normal Enemies/Puzzles
     ShopRoom = 12
-    RiddleRoom = 13
-    GateRoom = 14
-    BossRoom = 15
-    TreasureRoom = 16
+    RiddleRoom = 13     # room is built around its Riddle(s)
+    GateRoom = 14       # room contains mainly a Gate and other Tiles to support it
+    BossRoom = 15       # room contains a Boss-Puzzle and other supporting Tiles
+    TreasureRoom = 16   # room contains mainly some sort of Treasure/special Pickup and supporting Tiles
+    ChallengeRoom = 17  # room is built around its Challenge(s)
+    PauseRoom = 18      # room doesn't contain much interactive Tiles, mainly some Energy pickups
+    StoryRoom = 19      # room is mainly there for story purposes, e.g. containing Messages
 
     @staticmethod
     def values(include_pseudo_areas: Optional[bool] = None, only_rooms: Optional[bool] = None) -> List["AreaType"]:

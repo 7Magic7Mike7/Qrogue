@@ -34,7 +34,7 @@ aa (Wild):
 0 [0, 0, 1, 0] energy 5 tutorial *tutSingleX trigger *didPuzzle
 0 *reach1X
 
-bb (Wild):
+bb (Riddle):
 #############
 # _ _ _ 0 _ #
 # _ _ _ _ _ #
@@ -58,7 +58,7 @@ c gate *cx tutorial *tutCXGate
 0 *reach1X
 0 *base11
 
-dd (Wild):
+dd (Riddle):
 #############
 # _ _ _ _ _ #
 # _ _ _ _ _ #
@@ -69,7 +69,7 @@ dd (Wild):
 r 5 *base11 key 1 tutorial *riddle2
 
 
-ee (Wild):
+ee (Riddle):
 #############
 # _ _ _ _ _ #
 # _ _ m _ _ #
