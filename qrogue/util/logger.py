@@ -70,6 +70,13 @@ class Logger(PyCUILogger):
         self.__error_counter += 1
         self.__error_popup("ERROR", str(message))
 
+    def assertion(self, statement: bool, message, show_popup: bool = False):
+        if Config.debugging():
+            assert statement, str(message)
+        else:
+            if not statement:
+                self.error(message, show_popup, False)
+
     def error(self, message, show: bool = True, from_pycui: bool = True, **kwargs) -> None:
         self.__error_counter += 1
         if show:

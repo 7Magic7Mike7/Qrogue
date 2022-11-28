@@ -1201,6 +1201,9 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                     [self._continue_exploration_callback]
                 ))
             else:
+                Logger.instance().assertion(isinstance(reward, Collectible),
+                                            f"Error! Reward is not a Collectible: {reward}")
+
                 def give_reward_and_continue():
                     self._robot.give_collectible(reward)
                     self._continue_exploration_callback()
