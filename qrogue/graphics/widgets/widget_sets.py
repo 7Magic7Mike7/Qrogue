@@ -146,10 +146,12 @@ _ascii_art = """
 class MenuWidgetSet(MyWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  quick_start_callback: Callable[[], None], start_playing_callback: Callable[[], None],
-                 stop_callback: Callable[[], None], choose_simulation_callback: Callable[[], None]):
+                 start_expedition_callback: Callable[[], None], stop_callback: Callable[[], None],
+                 choose_simulation_callback: Callable[[], None]):
         self.__seed = 0
         self.__quick_start = quick_start_callback
         self.__start_playing = start_playing_callback
+        self.__start_expedition = start_expedition_callback
         self.__stop = stop_callback
         self.__choose_simulation = choose_simulation_callback
         super().__init__(logger, root, render)
@@ -190,12 +192,15 @@ class MenuWidgetSet(MyWidgetSet):
                 callbacks.append(self.__choose_simulation)
 
         elif Ach.check_unlocks(Unlocks.MainMenuContinue, self._progress):
-            choices.append("CONTINUE\n")
+            choices.append("CONTINUE JOURNEY\n")
             callbacks.append(self.__quick_start)
 
         else:
             choices.append("START YOUR JOURNEY\n")
             callbacks.append(self.__start_playing)
+
+        choices.append("START AN EXPEDITION\n")
+        callbacks.append(self.__start_expedition)
 
         # choices.append("OPTIONS\n")  # for more space between the rows we add "\n"
         # callbacks.append(self.__options)

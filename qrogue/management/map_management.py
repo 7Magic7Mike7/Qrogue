@@ -292,5 +292,8 @@ class MapManager:
             map_name = get_next(MapConfig.first_uncleared())
             self.__load_map(map_name, None)
 
+    def load_expedition(self, seed: Optional[int] = None) -> None:
+        self.__load_map(MapConfig.expedition_map_prefix(), None, seed)
+
     def reload(self):
         self.__load_map(self.__cur_map.internal_name, None, self.__cur_map.seed)

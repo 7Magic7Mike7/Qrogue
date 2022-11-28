@@ -23,7 +23,7 @@ from qrogue.graphics.widgets import Renderable, SpaceshipWidgetSet, BossFightWid
     ChallengeWidgetSet, ShopWidgetSet, WorkbenchWidgetSet, TrainingsWidgetSet, Widget, TransitionWidgetSet
 from qrogue.util import achievements, common_messages, CheatConfig, Config, GameplayConfig, UIConfig, HelpText, \
     HelpTextType, Logger, PathConfig, MapConfig, Controls, Keys, RandomManager, PyCuiConfig, PyCuiColors, Options, \
-    TestConfig
+    TestConfig, CommonQuestions
 from qrogue.util.achievements import Ach, Unlocks
 from qrogue.util.config import FileTypes, PopupConfig
 from qrogue.util.game_simulator import GameSimulator
@@ -179,7 +179,7 @@ class QrogueCUI(PyCUI):
         # INIT WIDGET SETS
         self.__menu = MenuWidgetSet(self.__controls, self.__render, Logger.instance(), self,
                                     MapManager.instance().load_first_uncleared_map,
-                                    self.__start_playing, self.stop, self.__choose_simulation)
+                                    self.__start_playing, self.__start_expedition, self.stop, self.__choose_simulation)
         self.__transition = TransitionWidgetSet(self.__controls, Logger.instance(), self, self.__render,
                                                 self.set_refresh_timeout)
         self.__pause = PauseMenuWidgetSet(self.__controls, self.__render, Logger.instance(), self,
@@ -464,6 +464,15 @@ class QrogueCUI(PyCUI):
         else:
             # load the newest level (exam phase) by
             MapManager.instance().load_first_uncleared_map()
+
+    def __start_expedition(self):
+        if Ach.check_unlocks(Unlocks.Spaceship, SaveData.instance().story_progress):
+            MapManager.instance().load_expedition()
+        else:
+            def _callback(selection: int):
+                if selection == 0:
+                    MapManager.instance().load_expedition()
+            CommonQuestions.SkipStoryTutorial.ask(_callback)
 
     def _switch_to_spaceship(self, data=None):
         self.apply_widget_set(self.__spaceship)
