@@ -10,7 +10,7 @@ from py_cui.widget_set import WidgetSet
 from qrogue.game.logic import StateVector
 from qrogue.game.logic.actors import Boss, Enemy, Riddle, Robot
 from qrogue.game.logic.actors.puzzles import Target, Challenge
-from qrogue.game.logic.collectibles import ShopItem
+from qrogue.game.logic.collectibles import ShopItem, Collectible
 from qrogue.game.world.map import Map
 from qrogue.game.world.navigation import Direction
 from qrogue.graphics.popups import Popup
@@ -903,6 +903,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self.__num_of_qubits = -1   # needs to be an illegal value because we definitely want to reposition all
         # dependent widgets for the first usage of this WidgetSet
         self._details_content = None
+        self.__in_expedition = False
 
         posy = 0
         posx = 0
@@ -1015,11 +1016,11 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         texts = ["Edit", "Gate Guide"]
         callbacks = [self.__choices_adapt, self.__choices_help]
 
-        if Ach.check_unlocks(Unlocks.CircuitReset, self._progress):
+        if self.__in_expedition or Ach.check_unlocks(Unlocks.CircuitReset, self._progress):
             texts.append("Reset")
             callbacks.append(self.__choices_reset)
 
-        if Ach.check_unlocks(Unlocks.PuzzleFlee, self._progress):
+        if self.__in_expedition or Ach.check_unlocks(Unlocks.PuzzleFlee, self._progress):
             texts.append(self.__flee_choice)
             callbacks.append(self._choices_flee)
 
@@ -1034,6 +1035,10 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
     @property
     def _sign_offset(self) -> str:
         return "\n" * (1 + 2 ** (self._robot.num_of_qubits - 1))  # 1 (headline) + middle of actual Stv
+
+    @property
+    def _is_expedition(self) -> bool:
+        return self.__in_expedition
 
     def _reposition_widgets(self, num_of_qubits: int):
         if num_of_qubits != self.__num_of_qubits:
@@ -1086,9 +1091,10 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         super(ReachTargetWidgetSet, self).update_story_progress(progress)
         self.__init_choices()
 
-    def set_data(self, robot: Robot, target: Target) -> None:
+    def set_data(self, robot: Robot, target: Target, in_expedition: bool) -> None:
         self._robot = robot
         self._target = target
+        self.__in_expedition = in_expedition
 
         self._reposition_widgets(robot.num_of_qubits)
 
@@ -1105,6 +1111,8 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self.__result_widget.set_data(self._sign_offset + "=")
         self.__update_calculation(False)
         self.__stv_target.set_data(target.state_vector)
+
+        self.__init_choices()
 
     def get_widget_list(self) -> List[Widget]:
         return [
@@ -1271,8 +1279,8 @@ class FightWidgetSet(ReachTargetWidgetSet):
         self.__game_over_callback = game_over_callback
         self.__flee_check = None
 
-    def set_data(self, robot: Robot, target: Enemy):
-        super(FightWidgetSet, self).set_data(robot, target)
+    def set_data(self, robot: Robot, target: Enemy, in_expedition: bool):
+        super(FightWidgetSet, self).set_data(robot, target, in_expedition)
         self.__flee_check = target.flee_check
 
     def _on_commit_fail(self) -> bool:
@@ -1310,8 +1318,8 @@ class BossFightWidgetSet(FightWidgetSet):
         self.__continue_exploration_callback = continue_exploration_callback
         super().__init__(controls, render, logger, root, self.__continue_exploration_callback, game_over_callback)
 
-    def set_data(self, robot: Robot, target: Boss):
-        super(BossFightWidgetSet, self).set_data(robot, target)
+    def set_data(self, robot: Robot, target: Boss, in_expedition: bool):
+        super(BossFightWidgetSet, self).set_data(robot, target, in_expedition)
 
     def _on_commit_fail(self) -> bool:
         self._robot.decrease_energy(PuzzleConfig.BOSS_FAIL_DAMAGE)
@@ -1422,8 +1430,8 @@ class RiddleWidgetSet(ReachTargetWidgetSet):
                  continue_exploration_callback: Callable[[None], None]):
         super().__init__(controls, render, logger, root, continue_exploration_callback, "Give Up")
 
-    def set_data(self, robot: Robot, target: Riddle) -> None:
-        super(RiddleWidgetSet, self).set_data(robot, target)
+    def set_data(self, robot: Robot, target: Riddle, in_expedition: bool) -> None:
+        super(RiddleWidgetSet, self).set_data(robot, target, in_expedition)
         self._hud.set_data((robot, None, f"Remaining attempts: {target.attempts}"))
 
     def _on_commit_fail(self) -> bool:
@@ -1461,8 +1469,8 @@ class ChallengeWidgetSet(ReachTargetWidgetSet):
                  continue_exploration_callback: Callable[[], None]):
         super().__init__(controls, render, logger, root, continue_exploration_callback)
 
-    def set_data(self, robot: Robot, target: Challenge) -> None:
-        super(ChallengeWidgetSet, self).set_data(robot, target)
+    def set_data(self, robot: Robot, target: Challenge, in_expedition: bool) -> None:
+        super(ChallengeWidgetSet, self).set_data(robot, target, in_expedition)
         if target.min_gates == target.max_gates:
             constraints = f"Constraints: Use exactly {target.min_gates} gates."
         else:

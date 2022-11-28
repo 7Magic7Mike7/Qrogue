@@ -96,6 +96,10 @@ class MapManager:
     def in_level(self) -> bool:
         return self.__cur_map.get_type() is MapType.Level
 
+    @property
+    def in_expedition(self) -> bool:
+        return self.__cur_map.get_type() is MapType.Expedition
+
     def __show_spaceship(self):
         self.__show_world(None)
 
