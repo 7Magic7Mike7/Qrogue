@@ -5,4 +5,5 @@ from .py_cui_config import PyCuiConfig, PyCuiColors
 from .visual_config import ColorCode, ColorConfig, PopupConfig, UIConfig, HudConfig
 from .gameplay_config import GameplayConfig, CheatConfig, MapConfig, PuzzleConfig, QuantumSimulationConfig, ShopConfig, \
     InstructionConfig, Options
+from .error_config import ErrorConfig
 from .config import Config
