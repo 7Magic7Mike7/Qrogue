@@ -100,6 +100,12 @@ def init_singletons(seed: int = 7, include_config: bool = False, custom_data_pat
     return True
 
 
+def reset_singletons():
+    RandomManager.reset()
+    CallbackPack.reset()
+    Logger.reset()
+
+
 class DummyWidget(WidgetWrapper):
     def __init__(self):
         self.title = ""
