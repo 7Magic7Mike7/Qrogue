@@ -3,7 +3,7 @@ from typing import Callable, Optional, List
 
 from py_cui.debug import PyCUILogger
 
-from qrogue.util import PyCuiColors, TestConfig
+from qrogue.util import PyCuiColors, TestConfig, ErrorConfig
 from qrogue.util.config import PathConfig, Config
 
 
@@ -14,7 +14,7 @@ class Logger(PyCUILogger):
     @staticmethod
     def instance() -> "Logger":
         if Logger.__instance is None:
-            raise Exception("This singleton has not been initialized yet!")
+            raise Exception(ErrorConfig.singleton_no_init("Logger"))
         return Logger.__instance
 
     @staticmethod
@@ -22,12 +22,12 @@ class Logger(PyCUILogger):
         if TestConfig.is_active():
             Logger.__instance = None
         else:
-            raise TestConfig.StateException("Can only reset the singleton \"Logger\" during testing!")
+            raise TestConfig.StateException(ErrorConfig.singleton_reset("Logger"))
 
     def __init__(self, seed: int):
         super().__init__("Qrogue-Logger")
         if Logger.__instance is not None:
-            Logger.__instance.throw(Exception("This class is a singleton!"))
+            Logger.__instance.throw(Exception(ErrorConfig.singleton("Logger")))
         else:
             self.__text = ""
             self.__message_popup: Optional[Callable[[str, str, int], None]] = None

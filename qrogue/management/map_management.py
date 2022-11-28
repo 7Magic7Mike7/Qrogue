@@ -4,7 +4,7 @@ from qrogue.game.world.dungeon_generator import ExpeditionGenerator, QrogueLevel
 from qrogue.game.world.map import Map, WorldMap, MapType
 from qrogue.game.world.navigation import Coordinate
 from qrogue.graphics.popups import Popup
-from qrogue.util import CommonQuestions, Logger, MapConfig, achievements, RandomManager, Config, TestConfig
+from qrogue.util import CommonQuestions, Logger, MapConfig, achievements, RandomManager, Config, TestConfig, ErrorConfig
 
 from qrogue.management.save_data import SaveData
 from qrogue.util.achievements import Ach, Unlocks
@@ -49,7 +49,7 @@ class MapManager:
     @staticmethod
     def instance() -> "MapManager":
         if MapManager.__instance is None:
-            raise Exception("This singleton has not been initialized yet!")
+            Logger.instance().throw(Exception(ErrorConfig.singleton_no_init("MapManager")))
         return MapManager.__instance
 
     @staticmethod
@@ -57,12 +57,12 @@ class MapManager:
         if TestConfig.is_active():
             MapManager.__instance = None
         else:
-            raise TestConfig.StateException("Can only reset the singleton \"MapManager\" during testing!")
+            raise TestConfig.StateException(ErrorConfig.singleton_reset("MapManager"))
 
     def __init__(self, seed: int, show_world: Callable[[Optional[WorldMap]], None],
                  start_level: Callable[[int, Map], None]):
         if MapManager.__instance is not None:
-            Logger.instance().throw(Exception("This class is a singleton!"))
+            Logger.instance().throw(Exception(ErrorConfig.singleton("MapManager")))
         else:
             self.__base_seed = seed
             self.__rm = RandomManager.create_new(seed)

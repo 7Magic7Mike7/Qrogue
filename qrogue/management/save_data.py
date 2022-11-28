@@ -4,7 +4,8 @@ from typing import Tuple, Optional
 from qrogue.game.logic.actors import Player, Robot
 from qrogue.game.logic.actors.controllables import TestBot, LukeBot
 from qrogue.game.world.map import CallbackPack
-from qrogue.util import Logger, PathConfig, AchievementManager, RandomManager, CommonPopups, Config, TestConfig
+from qrogue.util import Logger, PathConfig, AchievementManager, RandomManager, CommonPopups, Config, TestConfig, \
+    ErrorConfig
 from qrogue.util.achievements import Achievement
 
 
@@ -17,7 +18,7 @@ class SaveData:
     @staticmethod
     def instance() -> "SaveData":
         if SaveData.__instance is None:
-            Logger.instance().throw(Exception("This singleton has not been initialized yet!"))
+            Logger.instance().throw(Exception(ErrorConfig.singleton_no_init("SaveData")))
         return SaveData.__instance
 
     @staticmethod
@@ -25,7 +26,7 @@ class SaveData:
         if TestConfig.is_active():
             SaveData.__instance = None
         else:
-            raise TestConfig.StateException("Can only reset the singleton \"SaveData\" during testing!")
+            raise TestConfig.StateException(ErrorConfig.singleton_reset("SaveData"))
 
     @staticmethod
     def __empty_save_file() -> str:
@@ -33,7 +34,7 @@ class SaveData:
 
     def __init__(self):
         if SaveData.__instance is not None:
-            Logger.instance().throw(Exception("This class is a singleton!"))
+            Logger.instance().throw(Exception(ErrorConfig.singleton("SaveData")))
         else:
             self.__player = Player()
             path = PathConfig.find_latest_save_file()
