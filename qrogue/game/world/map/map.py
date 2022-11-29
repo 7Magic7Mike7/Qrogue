@@ -154,6 +154,7 @@ class BaseMap(ABC):
     def room_at(self, x: int, y: int) -> Optional[Room]:
         """
         Returns the Room at the given position or None if either x or y are out of bounds.
+
         :param x: x-Coordinate of the room we want to get
         :param y: y-Coordinate of the room we want to get
         :return: the Room at the given position or None if the position is invalid
