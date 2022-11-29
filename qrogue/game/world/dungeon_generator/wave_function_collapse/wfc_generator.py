@@ -30,7 +30,6 @@ class WFCGenerator:
         Learns the wave function from the given templates and builds a level layout based on that.
 
         :param seed:
-        :param templates: list of tuples that define a filename and whether it can be found in the dungeon folder or not
         """
         self.__rand = RandomManager.create_new(seed)
         self.__pos_weights: Dict[Coordinate, Dict[Any, int]] = {}
