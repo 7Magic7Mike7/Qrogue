@@ -710,7 +710,7 @@ class ExpeditionGenerator(DungeonGenerator):
                             hw = room_hallways[direction]
                             if code == _Code.Shop:
                                 # since there was no shop introduction yet, we have to skip creating one.
-                                room = None  # ShopRoom(hw, direction, shop_items, CallbackPack.instance().visit_shop)
+                                room = EmptyRoom(room_hallways)  # ShopRoom(hw, direction, shop_items, CallbackPack.instance().visit_shop)
                             elif code == _Code.Riddle:
                                 room = RiddleRoom(hw, direction, riddle, CallbackPack.instance().open_riddle)
                             elif code == _Code.Gate:
