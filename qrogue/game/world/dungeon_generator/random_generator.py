@@ -319,12 +319,13 @@ class RandomLayoutGenerator:
                 Logger.instance().debug(f"SpecialRoom marked as dead end for seed = {self.seed}", from_pycui=False)
             return pos, True  # we found a dead end
 
-    def __astar(self, visited: set, pos: Coordinate, target: Coordinate) -> Tuple[Optional[Set[Coordinate]], bool]:
+    def __astar(self, visited: set, pos: Coordinate, target: Coordinate, connect: bool = True) -> Tuple[Optional[Set[Coordinate]], bool]:
         """
 
         :param visited: Coordinates of all cells we already visited
         :param pos: position/Coordinate of the cell we currently check
         :param target: the cell we try to find
+        :param connect: whether we try to create new connection(s) in case we cannot find target
         :return: list of dead ends on the path and False if the target cannot be reached, otherwise True
         """
         dead_ends: Set[Coordinate] = set()
@@ -338,43 +339,48 @@ class RandomLayoutGenerator:
             if room in visited:
                 continue
             visited.add(room)
-            ret, success = self.__astar(visited, pos=room, target=target)
+            ret, success = self.__astar(visited, pos=room, target=target, connect=connect)
             if ret:
                 dead_ends.update(ret)
             if success:
                 return dead_ends, True
 
-        cur_pos = pos
-        while True:
-            # we come back from a dead end, so we check if we can connect the current cell with a non-visited neighbor
-            coordinate, dead_end = self.__astar_connect_neighbors(visited, cur_pos)
-            if dead_end:
-                if len(self.__get_neighbors(coordinate, free_spots=True)) > 0:
-                    dead_ends.add(coordinate)
-                return dead_ends, False
-            else:
-                visited.add(coordinate)
-                ret, success = self.__astar(visited, pos=coordinate, target=target)
-                if ret:
-                    dead_ends.update(ret)
-                if success:
-                    return dead_ends, True
+        if connect:
+            cur_pos = pos
+            while True:
+                # we come back from a dead end, so we check if we can connect the current cell with a non-visited neighbor
+                coordinate, dead_end = self.__astar_connect_neighbors(visited, cur_pos)
+                if dead_end:
+                    if len(self.__get_neighbors(coordinate, free_spots=True)) > 0:
+                        dead_ends.add(coordinate)
+                    return dead_ends, False
+                else:
+                    visited.add(coordinate)
+                    ret, success = self.__astar(visited, pos=coordinate, target=target)
+                    if ret is not None:
+                        dead_ends.update(ret)
+                    if success:
+                        return dead_ends, True
+        else:
+            return dead_ends, False
 
-    def __call_astar(self, visited: set, start_pos: Coordinate, spawn_pos: Coordinate) -> bool:
-        dead_ends, success = self.__astar(visited, start_pos, target=spawn_pos)
+    def __call_astar(self, visited: Set[Coordinate], start_pos: Coordinate, target_pos: Coordinate,
+                     connect: bool = True) -> bool:
+        dead_ends, success = self.__astar(visited, start_pos, target=target_pos, connect=connect)
         if success:
             return True
-        dead_ends = list(dead_ends)
-        while dead_ends:
-            dead_end = self.__rm.get_element(dead_ends, remove=True, msg="RandomGen_astarDeadEnd")
-            relevant_pos = self.__get_neighbors(dead_end, free_spots=True)
-            # and try to place a new room to connect the dead end to the rest
-            while relevant_pos:
-                direction, _, new_pos = self.__rm.get_element(relevant_pos, remove=True, msg="RandomGen_astarRelevantPos")
-                self.__place_wild(dead_end, tiles.Door(direction))
-                visited.add(new_pos)
-                if self.__call_astar(visited, start_pos=new_pos, spawn_pos=spawn_pos):
-                    return True
+        if connect:
+            dead_ends = list(dead_ends)
+            while dead_ends:
+                dead_end = self.__rm.get_element(dead_ends, remove=True, msg="RandomGen_astarDeadEnd")
+                relevant_pos = self.__get_neighbors(dead_end, free_spots=True)
+                # and try to place a new room to connect the dead end to the rest
+                while relevant_pos:
+                    direction, _, new_pos = self.__rm.get_element(relevant_pos, remove=True, msg="RandomGen_astarRelevantPos")
+                    self.__place_wild(dead_end, tiles.Door(direction))
+                    visited.add(new_pos)
+                    if self.__call_astar(visited, start_pos=new_pos, target_pos=target_pos):
+                        return True
         return False
 
     def get_hallway(self, pos: Coordinate) -> Optional[Dict[Coordinate, tiles.Door]]:
@@ -474,6 +480,22 @@ class RandomLayoutGenerator:
                 if not success:
                     return False
             return True
+
+    def validate(self) -> bool:
+        # first check if hallways are symmetric and contain the same doors
+        for pos in self.__hallways:
+            for neigh in self.__hallways[pos]:
+                if pos not in self.__hallways[neigh] or self.__hallways[pos][neigh] != self.__hallways[neigh][pos]:
+                    print(self)
+                    return False
+
+        # second check if we can reach the spawn room from every room with a hallway
+        for pos in self.__hallways:
+            visited = set()
+            if not self.__call_astar(visited, start_pos=pos, target_pos=self.__spawn_pos, connect=False):
+                print(self)
+                return False
+        return True
 
     def __str__(self):
         cell_width = 5
@@ -577,7 +599,7 @@ class ExpeditionGenerator(DungeonGenerator):
         rooms: List[List[Room]] = [[Placeholder.room() for _ in range(self.width)] for _ in range(self.height)]
         spawn_room = None
         created_hallways = {}
-        if self.__layout.generate():
+        if self.__layout.generate() and self.__layout.validate():
             for y in range(self.height):
                 for x in range(self.width):
                     pos = Coordinate(x, y)
@@ -748,7 +770,7 @@ class ExpeditionGenerator(DungeonGenerator):
         rooms: List[List[Room]] = [[Placeholder.room() for _ in range(self.width)] for _ in range(self.height)]
         spawn_room = None
         created_hallways = {}
-        if self.__layout.generate():
+        if self.__layout.generate() and self.__layout.validate():
             for y in range(self.height):
                 for x in range(self.width):
                     pos = Coordinate(x, y)
