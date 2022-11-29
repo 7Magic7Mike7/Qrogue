@@ -305,6 +305,8 @@ class Room(Area):
                     index = x + y * Room.INNER_WIDTH
                     if index < len(tile_list):
                         row.append(tile_list[index])
+                    else:
+                        row.append(Floor())
                 else:
                     row.append(Floor())
             row.append(Wall())
