@@ -593,12 +593,12 @@ class SpawnRoom(CopyAbleRoom):
                  tile_dic: Dict[Coordinate, Tile] = None, north_hallway: Hallway = None, east_hallway: Hallway = None,
                  south_hallway: Hallway = None, west_hallway: Hallway = None, place_teleporter: bool = True):
         room_mid = Coordinate(Room.INNER_MID_X, Room.INNER_MID_Y)
-        if tile_dic:
+        if tile_dic is None:
+            tile_dic = {}
+        else:
             if room_mid in tile_dic and place_teleporter:
                 Logger.instance().error("Specified tile_dic with non-empty room-center for SpawnRoom. Overriding it "
                                         "with Teleporter.", show=False, from_pycui=False)
-        else:
-            tile_dic = {}
         if place_teleporter:
             tile_dic[room_mid] = Teleport(self.__teleport_callback, MapConfig.back_map_string(), None)
         self.__tile_dic = tile_dic
