@@ -112,6 +112,7 @@ class RandomLayoutGenerator:
         self.__hallways: Dict[Coordinate, Dict[Coordinate, tiles.Door]] = {}
         self.__prio_sum = self.__width * self.__height
         self.__prio_mean = 1.0
+        self.__spawn_pos: Optional[Coordinate] = None
 
     @property
     def seed(self) -> int:
@@ -399,16 +400,16 @@ class RandomLayoutGenerator:
 
     def generate(self, debug: bool = False) -> bool:
         # place the spawn room
-        spawn_pos = self.__random_coordinate()
-        self.__set(spawn_pos, _Code.Spawn)
+        self.__spawn_pos = self.__random_coordinate()
+        self.__set(self.__spawn_pos, _Code.Spawn)
 
         # special case if SpawnRoom is in a corner
-        corner = self.__is_corner(spawn_pos)
+        corner = self.__is_corner(self.__spawn_pos)
         if corner:
-            if self.__get(spawn_pos + corner[0]) < _Code.Blocked:
-                self.__place_wild(spawn_pos, tiles.Door(corner[0]))
-            if self.__get(spawn_pos + corner[1]) < _Code.Blocked:
-                self.__place_wild(spawn_pos, tiles.Door(corner[1]))
+            if self.__get(self.__spawn_pos + corner[0]) < _Code.Blocked:
+                self.__place_wild(self.__spawn_pos, tiles.Door(corner[0]))
+            if self.__get(self.__spawn_pos + corner[1]) < _Code.Blocked:
+                self.__place_wild(self.__spawn_pos, tiles.Door(corner[1]))
 
         # place the special rooms
         special_rooms = [
@@ -419,13 +420,13 @@ class RandomLayoutGenerator:
         ]
 
         # create a locked hallway to spawn_pos-neighboring WildRooms if they lead to SpecialRooms
-        #directions = self.__available_directions(spawn_pos, allow_wildrooms=True)
+        #directions = self.__available_directions(self.__spawn_pos, allow_wildrooms=True)
         #for direction in directions:
-        #    new_pos = spawn_pos + direction
+        #    new_pos = self.__spawn_pos + direction
         #    if self.__get(new_pos) == _Code.Wild:
-        #        #wild_directions = self.__available_directions(spawn_pos, allow_wildrooms=True)
+        #        #wild_directions = self.__available_directions(self.__spawn_pos, allow_wildrooms=True)
         #        door = tiles.Door(direction, locked=True)
-        #        self.__add_hallway(spawn_pos, new_pos, door)
+        #        self.__add_hallway(self.__spawn_pos, new_pos, door)
 
         self.__new_prio()
         if len(self.__normal_rooms) < RandomLayoutGenerator.__MIN_NORMAL_ROOMS:
@@ -446,11 +447,11 @@ class RandomLayoutGenerator:
                 self.__add_hallway(pos, new_pos, tiles.Door(direction))
 
         # add a connection if the SpawnRoom is not connected to a WildRoom
-        if spawn_pos not in self.__hallways:
-            neighbors = self.__get_neighbors(spawn_pos)
+        if self.__spawn_pos not in self.__hallways:
+            neighbors = self.__get_neighbors(self.__spawn_pos)
             if len(neighbors) > 0:
                 direction, _, new_pos = self.__rm.get_element(neighbors, msg="RandomGen_neighbor")
-                self.__add_hallway(spawn_pos, new_pos, tiles.Door(direction))
+                self.__add_hallway(self.__spawn_pos, new_pos, tiles.Door(direction))
 
         success = True
         # as last step, add missing Hallways and WildRooms to connect every SpecialRoom with the SpawnRoom
@@ -460,7 +461,7 @@ class RandomLayoutGenerator:
             visited: Set[Coordinate] = set(special_rooms)
             start_pos = list(self.__hallways[room].keys())[0]
             visited.add(start_pos)
-            if not self.__call_astar(visited, start_pos, spawn_pos):
+            if not self.__call_astar(visited, start_pos, self.__spawn_pos):
                 success = False
                 break
         if success:
@@ -469,7 +470,7 @@ class RandomLayoutGenerator:
             for room in rooms:
                 start_pos = list(self.__hallways[room].keys())[0]
                 visited = set(special_rooms)
-                dead_ends, success = self.__astar(visited, start_pos, spawn_pos)
+                dead_ends, success = self.__astar(visited, start_pos, self.__spawn_pos)
                 if not success:
                     return False
             return True
