@@ -1,4 +1,4 @@
-from typing import List, Callable, Set, Iterator
+from typing import List, Callable, Set, Iterator, Optional
 
 from qrogue.game.logic.actors import Player
 from qrogue.game.world.navigation import Coordinate
@@ -7,8 +7,8 @@ from qrogue.game.world.map import Map, MapType, Room, MapMetaData
 
 
 class WorldMap(Map):
-    def __init__(self, meta_data: MapMetaData, file_name: str, seed: int, rooms: List[List[Room]], player: Player,
-                 spawn_room: Coordinate, check_achievement_callback: Callable[[str], bool],
+    def __init__(self, meta_data: MapMetaData, file_name: str, seed: int, rooms: List[List[Optional[Room]]],
+                 player: Player, spawn_room: Coordinate, check_achievement_callback: Callable[[str], bool],
                  trigger_event_callback: Callable[[str], None], mandatory_levels: Set[str]):
         super().__init__(meta_data, file_name, seed, rooms, player, spawn_room, check_achievement_callback,
                          trigger_event_callback)

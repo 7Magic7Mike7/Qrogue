@@ -916,12 +916,12 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
     ##### Layout area #####
 
-    def visitLayout(self, ctx: QrogueDungeonParser.LayoutContext) -> List[List[rooms.Room]]:
+    def visitLayout(self, ctx: QrogueDungeonParser.LayoutContext) -> List[List[Optional[rooms.Room]]]:
         # first setup all hallway connections
         for y, hw_row in enumerate(ctx.l_hallway_row()):
             self.__visitL_hallway_row(hw_row, y)
 
-        room_matrix: List[List[rooms.Room]] = []
+        room_matrix: List[List[Optional[rooms.Room]]] = []
         for y in range(MapConfig.map_height()):
             row_ctx = ctx.l_room_row(y)
             if row_ctx:
@@ -954,7 +954,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
     def __visitL_hallway_row(self, ctx: QrogueDungeonParser.L_hallway_rowContext, y: int) -> None:
         self.__hallway_handling(ctx.children, y, Direction.South)    # connect downwards to the next room row
 
-    def __visitL_room_row(self, ctx: QrogueDungeonParser.L_room_rowContext, y: int) -> List[rooms.Room]:
+    def __visitL_room_row(self, ctx: QrogueDungeonParser.L_room_rowContext, y: int) -> List[Optional[rooms.Room]]:
         self.__hallway_handling(ctx.children, y, Direction.East)     # connect to the right to the next room
 
         row: List[Optional[rooms.Room]] = []
@@ -1023,7 +1023,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
     ##### Start area #####
 
-    def visitStart(self, ctx: QrogueDungeonParser.StartContext) -> Tuple[MapMetaData, List[List[rooms.Room]]]:
+    def visitStart(self, ctx: QrogueDungeonParser.StartContext) -> Tuple[MapMetaData, List[List[Optional[rooms.Room]]]]:
         # prepare messages (needs to be done first since meta data might reference it
         self.visit(ctx.messages())
 

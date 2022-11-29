@@ -44,7 +44,7 @@ class BaseMap(ABC):
         y = pos_of_room.y * (Area.UNIT_HEIGHT + 1) + pos_in_room.y
         return Coordinate(x, y)
 
-    def __init__(self, meta_data: MapMetaData, internal_name: str, seed: int, rooms: List[List[Room]]):
+    def __init__(self, meta_data: MapMetaData, internal_name: str, seed: int, rooms: List[List[Optional[Room]]]):
         self.__meta_data = meta_data
         self.__internal_name = internal_name
         self.__seed = seed
@@ -56,7 +56,7 @@ class BaseMap(ABC):
         return self.__meta_data
 
     @property
-    def _rooms(self) -> List[List[Room]]:
+    def _rooms(self) -> List[List[Optional[Room]]]:
         return self.__rooms
 
     @property
@@ -209,7 +209,7 @@ class BaseMap(ABC):
 
 
 class Map(BaseMap, ABC):
-    def __init__(self, meta_data: MapMetaData, internal_name: str, seed: int, rooms: List[List[Room]],
+    def __init__(self, meta_data: MapMetaData, internal_name: str, seed: int, rooms: List[List[Optional[Room]]],
                  controllable: Controllable, spawn_room: Coordinate, check_achievement: Callable[[str], bool],
                  trigger_event: Callable[[str], None]):
         super().__init__(meta_data, internal_name, seed, rooms)
