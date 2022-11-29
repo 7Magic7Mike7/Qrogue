@@ -290,8 +290,9 @@ class Room(Area):
                                                        f"{len(tile_list)}!"))
         return tile_list
 
-    def __init__(self, type_: AreaType, tile_list: List[Tile], north_hallway: Hallway = None,
-                 east_hallway: Hallway = None, south_hallway: Hallway = None, west_hallway: Hallway = None):
+    def __init__(self, type_: AreaType, tile_list: List[Tile], north_hallway: Optional[Hallway] = None,
+                 east_hallway: Optional[Hallway] = None, south_hallway: Optional[Hallway] = None,
+                 west_hallway: Optional[Hallway] = None):
         tiles: List[List[Tile]] = []
         room_top = [Wall()] * Area.UNIT_WIDTH
         tiles.append(room_top)
@@ -507,13 +508,14 @@ class MetaRoom(CopyAbleRoom):
 
 
 class CustomRoom(CopyAbleRoom):
-    def __init__(self, type_: AreaType, tile_matrix: Optional[List[List[Tile]]], north_hallway: Hallway = None,
-                 east_hallway: Hallway = None, south_hallway: Hallway = None, west_hallway: Hallway = None):
+    def __init__(self, type_: AreaType, tile_matrix: Optional[List[List[Tile]]],
+                 north_hallway: Optional[Hallway] = None, east_hallway: Optional[Hallway] = None,
+                 south_hallway: Optional[Hallway] = None, west_hallway: Optional[Hallway] = None):
         self.__tile_matrix = tile_matrix
         tile_list = []
         for row in tile_matrix:
             tile_list += row
-        super().__init__(type_, tile_list, north_hallway, east_hallway, south_hallway, west_hallway)
+        super(CustomRoom, self).__init__(type_, tile_list, north_hallway, east_hallway, south_hallway, west_hallway)
 
     def abbreviation(self) -> str:
         return "CR"
@@ -555,9 +557,8 @@ class EmptyRoom(CopyAbleRoom):
         if Direction.West in hw_dic:
             west_hallway = hw_dic[Direction.West]
 
-        tile_list = Room.get_empty_room_tile_list()
-        super(EmptyRoom, self).__init__(AreaType.EmptyRoom, tile_list, north_hallway, east_hallway, south_hallway,
-                                        west_hallway)
+        super(EmptyRoom, self).__init__(AreaType.EmptyRoom, Room.get_empty_room_tile_list(), north_hallway,
+                                        east_hallway, south_hallway, west_hallway)
 
     def abbreviation(self) -> str:
         return "ER"
@@ -601,8 +602,8 @@ class SpawnRoom(CopyAbleRoom):
         if place_teleporter:
             tile_dic[room_mid] = Teleport(self.__teleport_callback, MapConfig.back_map_string(), None)
         self.__tile_dic = tile_dic
-        tile_list = Room.dic_to_tile_list(tile_dic)
-        super().__init__(AreaType.SpawnRoom, tile_list, north_hallway, east_hallway, south_hallway, west_hallway)
+        super(SpawnRoom, self).__init__(AreaType.SpawnRoom, Room.dic_to_tile_list(tile_dic), north_hallway,
+                                        east_hallway, south_hallway, west_hallway)
         self.__load_map = load_map_callback
         self.__is_done = None
 
@@ -632,10 +633,12 @@ class SpawnRoom(CopyAbleRoom):
 
 
 class BaseWildRoom(Room):
-    def __init__(self, tile_list: [Tile], get_tiles_by_id: Callable[[int], List[Tile]], north_hallway: Hallway = None,
-                 east_hallway: Hallway = None, south_hallway: Hallway = None, west_hallway: Hallway = None):
+    def __init__(self, tile_list: List[Tile], get_tiles_by_id: Callable[[int], List[Tile]],
+                 north_hallway: Optional[Hallway] = None, east_hallway: Optional[Hallway] = None,
+                 south_hallway: Optional[Hallway] = None, west_hallway: Optional[Hallway] = None):
         self.get_tiles_by_id = get_tiles_by_id
-        super().__init__(AreaType.WildRoom, tile_list, north_hallway, east_hallway, south_hallway, west_hallway)
+        super(BaseWildRoom, self).__init__(AreaType.WildRoom, tile_list, north_hallway, east_hallway, south_hallway,
+                                           west_hallway)
 
     def abbreviation(self):
         return "WR"
@@ -770,7 +773,7 @@ class Placeholder:
 
     class _RoomPlaceHolder(Room):
         def __init__(self):
-            super().__init__(AreaType.Invalid, [])
+            super(Placeholder._RoomPlaceHolder, self).__init__(AreaType.Invalid, [])
 
         def abbreviation(self) -> str:
             return "PH"

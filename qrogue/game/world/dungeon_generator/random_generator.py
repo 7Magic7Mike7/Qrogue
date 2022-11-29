@@ -1,5 +1,5 @@
 from enum import IntEnum
-from typing import Callable, Dict, Optional, Tuple, List, Any
+from typing import Callable, Dict, Optional, Tuple, List, Any, Set
 
 from qrogue.game.logic.actors import Robot
 from qrogue.game.logic.collectibles import GateFactory, ShopFactory, Key, instruction, Energy, CollectibleType, \
@@ -107,9 +107,9 @@ class RandomLayoutGenerator:
         self.__width = width
         self.__height = height
         # generate empty map
-        self.__map = [[_Code.Free] * self.__width for y in range(self.__height)]
-        self.__normal_rooms = set()
-        self.__hallways = {}
+        self.__map = [[_Code.Free] * self.__width for _ in range(self.__height)]
+        self.__normal_rooms: Set[Coordinate] = set()
+        self.__hallways: Dict[Coordinate, Dict[Coordinate, tiles.Door]] = {}
         self.__prio_sum = self.__width * self.__height
         self.__prio_mean = 1.0
 
@@ -160,7 +160,7 @@ class RandomLayoutGenerator:
                     directions.append(direction)
         return directions
 
-    def __get_neighbors(self, pos: Coordinate, free_spots: bool = False) -> [(Direction, _Code, Coordinate)]:
+    def __get_neighbors(self, pos: Coordinate, free_spots: bool = False) -> List[Tuple[Direction, _Code, Coordinate]]:
         neighbors = []
         for direction in Direction.values():
             new_pos = pos + direction
@@ -214,9 +214,9 @@ class RandomLayoutGenerator:
                                                     f"{self.seed}. Please do report this error as this should not be "
                                                     "possible to occur! :("))
 
-    def __random_free_wildroom_neighbors(self, num: int = 1) -> [Coordinate]:
-        rooms = self.__normal_rooms
-        room_prios = {}
+    def __random_free_wildroom_neighbors(self, num: int = 1) -> List[Tuple[Tuple[Direction, _Code, Coordinate], Coordinate]]:
+        rooms: Set[Coordinate] = self.__normal_rooms
+        room_prios: Dict[Tuple[Direction, _Code, Coordinate], Tuple[int, Coordinate]] = {}
         max_distance = self.__width + self.__height - 2
         prio_sum = 0
         # calculate the priorities of WR neighbors based on the "isolation" (distance to other WR or SR) of the WR and
@@ -228,10 +228,11 @@ class RandomLayoutGenerator:
                     min_distance = min(min_distance, Coordinate.distance(room, other))
             neighbors = self.__get_neighbors(room, free_spots=True)
             for neighbor in neighbors:
+                _, _, neighbor_pos = neighbor
                 neighbor_distance = max_distance
                 for other in rooms:
                     if room is not other:   # check distance to other WRs and SR (except the WR we know is a neighbor)
-                        neighbor_distance = min(neighbor_distance, Coordinate.distance(neighbor[2], other))
+                        neighbor_distance = min(neighbor_distance, Coordinate.distance(neighbor_pos, other))
                 # high isolation of room and low isolation of neighbor means high priority
                 prio = min_distance * (max_distance - neighbor_distance)
                 prio_sum += prio
@@ -243,7 +244,7 @@ class RandomLayoutGenerator:
                                     "doesn't break anything. Please consider reporting!", from_pycui=False)
             prio_sum = -1.0
 
-        picked_rooms = []
+        picked_rooms: List[Tuple[Tuple[Direction, _Code, Coordinate], Coordinate]] = []
         for i in range(num):
             val = self.__rm.get(msg="RandomDG_WRNeighbors")
             cur_val = 0.0
@@ -292,7 +293,7 @@ class RandomLayoutGenerator:
             except NotImplementedError:
                 Logger.instance().error("Unimplemented case happened!", from_pycui=False)
 
-    def __astar_connect_neighbors(self, visited: set, pos: Coordinate) -> (Coordinate, bool):
+    def __astar_connect_neighbors(self, visited: set, pos: Coordinate) -> Tuple[Coordinate, bool]:
         """
 
         :param visited:
@@ -317,7 +318,7 @@ class RandomLayoutGenerator:
                 Logger.instance().debug(f"SpecialRoom marked as dead end for seed = {self.seed}", from_pycui=False)
             return pos, True  # we found a dead end
 
-    def __astar(self, visited: set, pos: Coordinate, target: Coordinate) -> ([Coordinate], bool):
+    def __astar(self, visited: set, pos: Coordinate, target: Coordinate) -> Tuple[Optional[Set[Coordinate]], bool]:
         """
 
         :param visited: Coordinates of all cells we already visited
@@ -325,7 +326,7 @@ class RandomLayoutGenerator:
         :param target: the cell we try to find
         :return: list of dead ends on the path and False if the target cannot be reached, otherwise True
         """
-        dead_ends = set()
+        dead_ends: Set[Coordinate] = set()
         neighbors = list(self.__hallways[pos].keys())
 
         if target in neighbors:
@@ -456,7 +457,7 @@ class RandomLayoutGenerator:
         rooms = list(special_rooms)
         while rooms:
             room = rooms.pop(0)
-            visited = set(special_rooms)
+            visited: Set[Coordinate] = set(special_rooms)
             start_pos = list(self.__hallways[room].keys())[0]
             visited.add(start_pos)
             if not self.__call_astar(visited, start_pos, spawn_pos):
@@ -479,7 +480,7 @@ class RandomLayoutGenerator:
         __row_sep = "_" * (cell_width + 1) * self.__width
         str_rep = " " + __row_sep + "\n"
         for y in range(self.__height):
-            rows = ["|"] * 3
+            rows: List[str] = ["|"] * 3
             for x in range(self.__width):
                 pos = Coordinate(x, y)
                 if pos in self.__hallways:
@@ -535,7 +536,7 @@ class ExpeditionGenerator(DungeonGenerator):
     def generate(self, data: Robot) -> Tuple[Optional[ExpeditionMap], bool]:
         return self.__wfc_generate(data)
 
-    def __wfc_generate(self, data: Robot) -> Tuple[ExpeditionMap, bool]:
+    def __wfc_generate(self, data: Robot) -> Tuple[Optional[ExpeditionMap], bool]:
         robot = data
         if len(robot.get_available_instructions()) <= 0:
             gates = [instruction.HGate(), instruction.XGate(), instruction.CXGate()]
