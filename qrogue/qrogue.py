@@ -80,17 +80,17 @@ def start_qrogue() -> int:
     test_level, _ = __parse_argument(__TEST_LEVEL_ARGUMENT)
     _, data_folder = __parse_argument(__GAME_DATA_PATH_ARGUMENT, has_value=True)
     _, user_data_folder = __parse_argument(__USER_DATA_PATH_ARGUMENT, has_value=True)
-    _, simulation_path = __parse_argument(__SIMULATION_FILE_ARGUMENT, has_value=True)
-    _, map_path = __parse_argument(__VALIDATE_MAP_ARGUMENT, has_value=True)
+    has_simulation_path, simulation_path = __parse_argument(__SIMULATION_FILE_ARGUMENT, has_value=True)
+    has_map_path, map_path = __parse_argument(__VALIDATE_MAP_ARGUMENT, has_value=True)
     _, seed = __parse_argument(__SEED_ARGUMENT, has_value=True)
 
-    if map_path:
+    if has_map_path:
         if validate_map(map_path):
             return 0
         else:
             return 1
     else:
-        if simulation_path:
+        if has_simulation_path:
             return simulate_game(simulation_path, from_console, debugging, data_folder, user_data_folder)
         else:
             return start_game(from_console, debugging, test_level, data_folder, user_data_folder, seed)
