@@ -606,7 +606,7 @@ class ExpeditionGenerator(DungeonGenerator):
         ]
         enemy_factory_priorities = [0.25, 0.35, 0.3, 0.1]
 
-        rooms: List[List[Room]] = [[Placeholder.room() for _ in range(self.width)] for _ in range(self.height)]
+        rooms: List[List[Optional[Room]]] = [[None for _ in range(self.width)] for _ in range(self.height)]
         spawn_room = None
         created_hallways = {}
         layout = RandomLayoutGenerator(seed, self.width, self.height)
