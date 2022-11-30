@@ -465,6 +465,7 @@ class RandomLayoutGenerator:
         if success:
             return True
         else:
+            # try to create a connection to solve the issue
             for room in rooms:
                 start_pos = list(self.__hallways[room].keys())[0]
                 visited = set(special_rooms)
