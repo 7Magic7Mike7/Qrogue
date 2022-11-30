@@ -44,9 +44,6 @@ def test_layout():
             min_duration = (duration, seed)
         elif duration > max_duration[0]:
             max_duration = (duration, seed)
-
-        if not map_gen.check_special_rooms():
-            wrong_specials_seeds.append(seed)
         i += 1
 
     __print(f"Average time needed for generating a map: {duration_sum / (end_seed - start_seed)} seconds")

@@ -43,9 +43,7 @@ class LayoutGenTestCase(SingletonSetupTestCase):
             map_gen = RandomLayoutGenerator(seed, DungeonGenerator.WIDTH, DungeonGenerator.HEIGHT)
             if not map_gen.generate(debug=False):
                 failing_seeds.append(map_gen)
-
-            if not map_gen.check_special_rooms():
-                wrong_specials_seeds.append(seed)
+            self.assertTrue(map_gen.validate(), f"Invalid layout: {map_gen}")
             i += 1
 
         if len(failing_seeds) > 0:

@@ -396,17 +396,6 @@ class RandomLayoutGenerator:
             return self.__get(pos)
         return None
 
-    def check_special_rooms(self) -> bool:
-        for y in range(self.__height):
-            for x in range(self.__width):
-                pos = Coordinate(x, y)
-                code = self.__get(pos)
-                if code in [_Code.Boss, _Code.Shop, _Code.Riddle, _Code.Gate]:
-                    connections = self.__hallways[pos]
-                    if len(connections) != 1:
-                        return False
-        return True
-
     def generate(self, debug: bool = False) -> bool:
         # place the spawn room
         self.__spawn_pos = self.__random_coordinate()
@@ -485,14 +474,24 @@ class RandomLayoutGenerator:
             return True
 
     def validate(self) -> bool:
-        # first check if hallways are symmetric and contain the same doors
+        # first check if all SpecialRooms have exactly 1 connection
+        for y in range(self.__height):
+            for x in range(self.__width):
+                pos = Coordinate(x, y)
+                code = self.__get(pos)
+                if code in [_Code.Boss, _Code.Shop, _Code.Riddle, _Code.Gate]:
+                    connections = self.__hallways[pos]
+                    if len(connections) != 1:
+                        return False
+
+        # second check if hallways are symmetric and contain the same doors
         for pos in self.__hallways:
             for neigh in self.__hallways[pos]:
                 if pos not in self.__hallways[neigh] or self.__hallways[pos][neigh] != self.__hallways[neigh][pos]:
                     print(self)
                     return False
 
-        # second check if we can reach the spawn room from every room with a hallway
+        # third check if we can reach the spawn room from every room with a hallway
         for pos in self.__hallways:
             visited = set()
             if not self.__call_astar(visited, start_pos=pos, target_pos=self.__spawn_pos, connect=False):
