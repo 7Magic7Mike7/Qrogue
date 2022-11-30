@@ -25,7 +25,7 @@ class WFCGenerator:
                 min_val = val
         return min_pos
 
-    def __init__(self, seed: int, data: List[WFCLearnMatrix]):
+    def __init__(self, seed: int, data: Optional[List[WFCLearnMatrix]] = None):
         """
         Learns the wave function from the given templates and builds a level layout based on that.
 
@@ -34,20 +34,48 @@ class WFCGenerator:
         self.__rand = RandomManager.create_new(seed)
         self.__pos_weights: Dict[Coordinate, Dict[Any, int]] = {}
         self.__type_weights: Dict[Optional[Any], Dict[Optional[Any], int]] = {}
-        self.__data = data
+        self.__learner = WFCLearner(self.__pos_weights, self.__type_weights)
+
+        self.__entropies: Dict[Coordinate, float] = {}
+        self.__wave_functions: Dict[Coordinate, WaveFunction] = {}
+        self.__width: Optional[int] = None
+        self.__height: Optional[int] = None
+        self.__data = []
+
+        if data is not None:
+            self.add_knowledge(data)
 
     @property
     def _rand(self) -> MyRandom:
         return self.__rand
 
-    def start(self):
-        self.__pos_weights = {}
-        self.__type_weights = {}
-        # todo make a copy of the unused learner or something so we don't have to learn the probabilities all over again
-        learner = WFCLearner(self.__pos_weights, self.__type_weights)
-        for matrix in self.__data:
-            learner.learn(matrix)
-            learner.remove_unwanted_values()
+    def add_knowledge(self, data: List[WFCLearnMatrix]):
+        assert len(data) > 0, "Cannot learn from empty list!"
+
+        for matrix in data:
+            self.__learner.learn(matrix)
+        self.__learner.remove_unwanted_values()
+        self.__data += data
+
+        width = min([val.width for val in data])
+        if self.__width is None:
+            self.__width = width
+        else:
+            self.__width = min(self.__width, width)
+        height = min([val.height for val in data])
+        if self.__height is None:
+            self.__height = height
+        else:
+            self.__height = min(self.__height, height)
+
+        for x in range(self.__width):
+            for y in range(self.__height):
+                c = Coordinate(x, y)
+                self.__entropies[c] = self.__get_entropy(c)
+                if c in self.__pos_weights:
+                    self.__wave_functions[c] = WaveFunction(self.__pos_weights[c])
+                else:
+                    self.__wave_functions[c] = WaveFunction({})
 
     def __weight(self, main: Any, neighbor: Any) -> float:
         """
@@ -84,6 +112,8 @@ class WFCGenerator:
 
     def generate(self, seed: Optional[int] = None, width: Optional[int] = None, height: Optional[int] = None,
                  static_entries: Optional[Dict[Coordinate, Any]] = None) -> List[List[Any]]:
+        assert len(self.__data) > 0, "Cannot generate without learning from data before!"
+
         if seed is None:
             rand = self.__rand
         else:
@@ -95,17 +125,10 @@ class WFCGenerator:
         if height is None:
             height = min([val.height for val in self.__data])
 
-        # setup entropies and wave functions
-        entropies: Dict[Coordinate, float] = {}
+        # copy wave functions
         wave_functions: Dict[Coordinate, WaveFunction] = {}
-        for x in range(width):
-            for y in range(height):
-                c = Coordinate(x, y)
-                entropies[c] = self.__get_entropy(c)
-                if c in self.__pos_weights:
-                    wave_functions[c] = WaveFunction(self.__pos_weights[c])
-                else:
-                    wave_functions[c] = WaveFunction({})
+        for pos in self.__wave_functions:
+            wave_functions[pos] = self.__wave_functions[pos].copy()
 
         def propagate_collapse(position: Coordinate, collapsed_state: Any):
             # propagate collapse to all neighbors
@@ -120,6 +143,7 @@ class WFCGenerator:
                 wave_functions[pos].force_value(value)
                 propagate_collapse(pos, value)
 
+        entropies = self.__entropies.copy()
         while len(entropies) > 0:
             pos = WFCGenerator.min_entropy(entropies)
             value = wave_functions[pos].collapse(rand)

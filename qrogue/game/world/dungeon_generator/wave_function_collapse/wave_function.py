@@ -57,6 +57,12 @@ class WaveFunction:
         assert not self.is_collapsed, f"Forcing an already collapsed WaveFunction to {value}!"
         self.__state = value
 
+    def copy(self):
+        wf = WaveFunction(self.__weights.copy(), self.__default_value)
+        if self.is_collapsed:
+            wf.force_value(self.__state)
+        return wf
+
     def __str__(self):
         if self.is_collapsed:
             return f"WF ({self.__state})"

@@ -69,11 +69,11 @@ class LevelGenTestCase(SingletonSetupTestCase):
         failing_seeds = []
 
         i = 0
+        generator = ExpeditionGenerator(0, lambda s: True, lambda s: None, lambda s: None)
         for seed in range(start_seed, end_seed):
             if i % 1000 == 0:
                 self._print(f"Run {i + 1}): seed = {seed}")
-            generator = ExpeditionGenerator(seed, lambda s: True, lambda s: None, lambda s: None)
-            map_, success = generator.generate(SaveData.instance().get_robot(0))
+            map_, success = generator.generate((SaveData.instance().get_robot(0), seed))
             if not success:
                 failing_seeds.append((generator, seed))
                 self._print(f"Failed for seed = {seed}")
