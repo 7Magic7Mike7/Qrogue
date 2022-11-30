@@ -30,6 +30,7 @@ class AreaType(Enum):
     ChallengeRoom = 17  # room is built around its Challenge(s)
     PauseRoom = 18      # room doesn't contain much interactive Tiles, mainly some Energy pickups
     StoryRoom = 19      # room is mainly there for story purposes, e.g. containing Messages
+    PhantomRoom = 20    # a special hidden room that cannot be accessed via normal means (e.g. only via tunneling)
 
     @staticmethod
     def values(include_pseudo_areas: Optional[bool] = None, only_rooms: Optional[bool] = None) -> List["AreaType"]:

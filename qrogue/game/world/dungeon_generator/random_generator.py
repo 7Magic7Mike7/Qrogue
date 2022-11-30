@@ -27,6 +27,7 @@ class _Code(IntEnum):
     Riddle = 50
     Boss = 60
     Gate = 70
+    Phantom = 80
     Wild = 100
     # hallway codes
     North = 1
@@ -85,6 +86,8 @@ class _Code(IntEnum):
             return "G"
         if code == _Code.Wild:
             return "W"
+        if code == _Code.Phantom:
+            return "%"
         return "#"
 
     @staticmethod
@@ -493,8 +496,17 @@ class RandomLayoutGenerator:
         for pos in self.__hallways:
             visited = set()
             if not self.__call_astar(visited, start_pos=pos, target_pos=self.__spawn_pos, connect=False):
-                print(self)
-                return False
+                # now we either found a faulty connection or some "phantom rooms" which are only connected to themselves
+                self.__map[pos.y][pos.x] = _Code.Phantom
+                new_visited = set()
+                # we only have to check immediate neighbors since the neighbors are also checked in the outer loop,
+                # therefore, also their neighbors and ultimately any of these "phantom rooms" are checked
+                for neigh in self.__hallways[pos]:
+                    # see if a neighbor can reach spawn_pos (= neighbor is not a "phantom room" and hence the connection
+                    # is faulty)
+                    if self.__call_astar(new_visited, start_pos=neigh, target_pos=self.__spawn_pos, connect=False):
+                        print(self)
+                        return False
         return True
 
     def __str__(self):
@@ -706,6 +718,8 @@ class ExpeditionGenerator(DungeonGenerator):
                                 south_hallway=room_hallways[Direction.South],
                                 west_hallway=room_hallways[Direction.West],
                             )"""
+                        elif code == _Code.Phantom:
+                            room = EmptyRoom(room_hallways)
                         elif direction is not None:
                             # special rooms have exactly 1 neighbor which is already stored in direction
                             hw = room_hallways[direction]
