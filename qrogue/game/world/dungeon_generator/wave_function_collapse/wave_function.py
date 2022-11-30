@@ -51,11 +51,14 @@ class WaveFunction:
             if rand_val < val:
                 self.__state = key
                 return self.__state
-        return AreaType.Invalid     # this should not be possible to happen
+        return None     # this should not be possible to happen
 
-    def force_value(self, value: Any):
+    def force_value(self, value: Any) -> bool:
         assert not self.is_collapsed, f"Forcing an already collapsed WaveFunction to {value}!"
-        self.__state = value
+        if type(value) in [type(key) for key in self.__weights.keys()]:
+            self.__state = value
+            return True
+        return False
 
     def copy(self):
         wf = WaveFunction(self.__weights.copy(), self.__default_value)
