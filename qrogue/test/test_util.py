@@ -1,3 +1,4 @@
+import unittest
 from typing import List, Callable, Any, Tuple, Optional
 
 from qrogue.game.logic.actors import Robot, Enemy, Boss, Riddle
@@ -7,7 +8,8 @@ from qrogue.game.world.map import CallbackPack
 from qrogue.game.world.navigation import Direction
 from qrogue.graphics import WidgetWrapper
 from qrogue.graphics.widgets.my_widgets import SelectionWidget
-from qrogue.util import RandomManager, Config, PathConfig, Logger, Controls
+from qrogue.management import SaveData
+from qrogue.util import RandomManager, Config, PathConfig, Logger, Controls, TestConfig
 
 
 def true_callback() -> bool:
@@ -104,6 +106,40 @@ def reset_singletons():
     RandomManager.reset()
     CallbackPack.reset()
     Logger.reset()
+
+
+class SingletonSetupTestCase(unittest.TestCase):
+    __printing: bool = False
+
+    @staticmethod
+    def set_printing(active: bool):
+        SingletonSetupTestCase.__printing = active
+
+    @staticmethod
+    def _print(msg: Optional[Any] = None, force: bool = False):
+        if SingletonSetupTestCase.__printing or force:
+            print(msg)
+
+    def setUp(self) -> None:
+        TestConfig.activate()
+        # now create new singletons
+        if not init_singletons(include_config=True):
+            raise Exception("Could not initialize singletons")
+        SaveData()
+
+    def tearDown(self) -> None:
+        # first reset
+        SaveData.reset()
+        reset_singletons()
+
+    def test_singleton_setup(self):
+        self.assertRaises(Exception, self.setUp, None)  # setups without an intermediate tearDown() should fail
+        self.tearDown()     # tear down for next setup
+        self.setUp()        # setup again to see if setups for multiple tests after another are correctly reset
+        self.tearDown()     # tear down current setup
+        self.tearDown()     # no error should happen when tearing down without intermediate setUp()
+        self.setUp()        # setup for next tear down
+        self.tearDown()     # tear down again so the final post-test tearDown fails if this is an issue
 
 
 class DummyWidget(WidgetWrapper):

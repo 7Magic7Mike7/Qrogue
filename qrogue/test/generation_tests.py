@@ -1,35 +1,12 @@
 import unittest
-from typing import Optional, Any
 
 import test_util
 from qrogue.game.world.dungeon_generator import DungeonGenerator
 from qrogue.game.world.dungeon_generator.random_generator import RandomLayoutGenerator, ExpeditionGenerator
 from qrogue.management.save_data import SaveData
-from qrogue.util import TestConfig
-
-printing = False
 
 
-class SingletonSetupTestCase(unittest.TestCase):
-    @staticmethod
-    def _print(msg: Optional[Any] = None, force: bool = False):
-        if printing or force:
-            print(msg)
-
-    def setUp(self) -> None:
-        TestConfig.activate()
-        # now create new singletons
-        if not test_util.init_singletons(include_config=True):
-            raise Exception("Could not initialize singletons")
-        SaveData()
-
-    def tearDown(self) -> None:
-        # first reset
-        SaveData.reset()
-        test_util.reset_singletons()
-
-
-class LayoutGenTestCase(SingletonSetupTestCase):
+class LayoutGenTestCase(test_util.SingletonSetupTestCase):
     def test_single_seed(self):
         seed = 297
         map_gen = RandomLayoutGenerator(seed, DungeonGenerator.WIDTH, DungeonGenerator.HEIGHT)
@@ -69,7 +46,7 @@ class LayoutGenTestCase(SingletonSetupTestCase):
             self._print()
 
 
-class LevelGenTestCase(SingletonSetupTestCase):
+class LevelGenTestCase(test_util.SingletonSetupTestCase):
     def test_single_seed(self):
         generator = ExpeditionGenerator(0, lambda s: True, lambda s: None, lambda s: None)
         seed = 297
