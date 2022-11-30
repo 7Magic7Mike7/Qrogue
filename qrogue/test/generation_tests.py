@@ -30,7 +30,16 @@ class SingletonSetupTestCase(unittest.TestCase):
 
 
 class LayoutGenTestCase(SingletonSetupTestCase):
+    def test_single_seed(self):
+        seed = 297
+        map_gen = RandomLayoutGenerator(seed, DungeonGenerator.WIDTH, DungeonGenerator.HEIGHT)
+        self.assertTrue(map_gen.generate(debug=False), "Failed to generate!")
+        self.assertTrue(map_gen.validate(), f"Invalid layout: {map_gen}")
+        self._print(map_gen)
+
     def test_layout(self):
+        # took ~10 seconds for seeds 50_000 to 55_000, succeeded
+        # ~3:20 min for 0 to 100_000, succeeded
         start_seed = 50000
         end_seed = 50005
         failing_seeds = []
@@ -61,7 +70,16 @@ class LayoutGenTestCase(SingletonSetupTestCase):
 
 
 class LevelGenTestCase(SingletonSetupTestCase):
-    def test_dungeon(self):
+    def test_single_seed(self):
+        generator = ExpeditionGenerator(0, lambda s: True, lambda s: None, lambda s: None)
+        seed = 297
+        map_, success = generator.generate((SaveData.instance().get_robot(0), seed))
+        self.assertTrue(success, "Failed to generate.")
+        self._print(map_)
+
+    def test_expedition(self):
+        # ~1m per 900 seeds
+        # 1_000 seeds per ~1.25 minutes (1m15s)
         start_seed = 0
         end_seed = 5
         failing_seeds = []
@@ -78,7 +96,6 @@ class LevelGenTestCase(SingletonSetupTestCase):
             i += 1
 
         if len(failing_seeds) > 0:
-            self.assert_(False, "Some seeds failed!")
             self._print("Failing Seeds:", force=True)
             seeds = []
             for mg, seed in failing_seeds:
@@ -86,6 +103,7 @@ class LevelGenTestCase(SingletonSetupTestCase):
                 seeds.append(seed)
             self._print(seeds, force=True)
             self._print(force=True)
+            self.assertTrue(False, "Some seeds failed!")
 
 
 if __name__ == '__main__':
