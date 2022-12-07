@@ -1,6 +1,6 @@
 
 from enum import Enum
-from typing import List
+from typing import List, Optional
 
 from qrogue.util import Logger
 
@@ -102,6 +102,17 @@ class Coordinate:
         :return:
         """
         return self.x + self.y * row_width
+
+    def get_neighbors(self, min_: Optional["Coordinate"] = None, max_ = Optional["Coordinate"]) -> List["Coordinate"]:
+        neighbors = []
+        for d in Direction.values():
+            pos = self + d
+            if min_ is not None and (pos.x < min_.x or pos.y < min_.y):
+                continue
+            if max_ is not None and (pos.x > max_.x or pos.y > max_.y):
+                continue
+            neighbors.append(pos)
+        return neighbors
 
     def __add__(self, other) -> "Coordinate":
         if isinstance(other, Direction):
