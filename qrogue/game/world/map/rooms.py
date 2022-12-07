@@ -397,6 +397,15 @@ class Room(Area):
     def abbreviation(self) -> str:
         pass
 
+    def to_string(self) -> str:
+        text = str(self) + "\n"
+        for y in range(Area.UNIT_HEIGHT):
+            for x in range(Area.UNIT_WIDTH):
+                tile = self.at(x, y, force=True)
+                text += tile.get_img()
+            text += "\n"
+        return text
+
     def __str__(self) -> str:
         return self.abbreviation() + str(self._id)
 
