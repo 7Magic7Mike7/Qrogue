@@ -2,6 +2,7 @@ import unittest
 from typing import List, Callable, Any, Tuple, Optional
 
 from qrogue.game.logic.actors import Robot, Enemy, Boss, Riddle
+from qrogue.game.logic.actors.controllables import BaseBot
 from qrogue.game.logic.actors.puzzles import Challenge
 from qrogue.game.logic.collectibles import ShopItem
 from qrogue.game.world.map import CallbackPack
@@ -207,3 +208,14 @@ class DummySelectionWidget(SelectionWidget):
 
     def left(self):
         self._left()
+
+
+class DummyRobot(BaseBot):
+    def __init__(self):
+        super(DummyRobot, self).__init__(game_over)
+
+    def get_img(self):
+        return "D"
+
+    def description(self) -> str:
+        return "Minimal Robot for testing non-Robot dependent code (e.g. tiles)."

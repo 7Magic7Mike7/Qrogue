@@ -3,6 +3,10 @@ import unittest
 import test_util
 from qrogue.game.world.dungeon_generator import DungeonGenerator
 from qrogue.game.world.dungeon_generator.random_generator import RandomLayoutGenerator, ExpeditionGenerator
+from qrogue.game.world.map import Room
+from qrogue.game.world.map.rooms import Hallway
+from qrogue.game.world.navigation import Direction, Coordinate
+from qrogue.game.world import tiles
 from qrogue.management.save_data import SaveData
 
 
@@ -81,6 +85,65 @@ class LevelGenTestCase(test_util.SingletonSetupTestCase):
             self._print(seeds, force=True)
             self._print(force=True)
             self.assertTrue(False, "Some seeds failed!")
+
+    def test_room_correction(self):
+        tile_list = Room.dic_to_tile_list({
+            Coordinate(3, 0): tiles.Obstacle(),
+            Coordinate(4, 0): tiles.Obstacle(),
+
+            Coordinate(0, 1): tiles.Obstacle(),
+            Coordinate(1, 1): tiles.Obstacle(),
+            Coordinate(2, 1): tiles.Obstacle(),
+            Coordinate(3, 1): tiles.Obstacle(),
+            Coordinate(4, 1): tiles.Obstacle(),
+
+            Coordinate(0, 2): tiles.Obstacle(),
+            Coordinate(1, 2): tiles.Obstacle(),
+            Coordinate(2, 2): tiles.Obstacle(),
+
+            Coordinate(1, 3): tiles.Obstacle(),
+            Coordinate(2, 3): tiles.Obstacle(),
+            Coordinate(3, 3): tiles.Obstacle(),
+
+            Coordinate(2, 4): tiles.Obstacle(),
+            Coordinate(4, 4): tiles.Obstacle(),
+        })
+        hallways = {
+            Direction.North: Hallway(tiles.Door(Direction.North)),
+            Direction.South: Hallway(tiles.Door(Direction.South)),
+        }
+        """
+        print("Before correction:")
+        before_room = DefinedWildRoom(tile_list, north_hallway=hallways[Direction.North], south_hallway=hallways[Direction.South])
+        print(before_room.to_string())
+        """
+        num_of_changes = ExpeditionGenerator.correct_tile_list(test_util.DummyRobot(), tile_list, hallways)
+        self.assertGreater(num_of_changes, -1, "Could not correct the given tile_list!")
+        self.assertEqual(num_of_changes, 3, "Did not remove exactly 3 Obstacles!")
+        """
+        print("After correction:")
+        after_room = DefinedWildRoom(tile_list, north_hallway=hallways[Direction.North],
+                                     south_hallway=hallways[Direction.South])
+        print(after_room.to_string())
+        """
+
+
+    def test_astar(self):
+        tile_list = Room.dic_to_tile_list({
+            Coordinate(0, 2): tiles.Obstacle(),
+            Coordinate(1, 2): tiles.Obstacle(),
+            Coordinate(2, 2): tiles.Obstacle(),
+            Coordinate(3, 2): tiles.Obstacle(),
+            Coordinate(4, 2): tiles.Obstacle(),
+            Coordinate(4, 3): tiles.Obstacle(),
+        })
+        visited = set()
+
+        success, tiles_to_remove = ExpeditionGenerator.astar_obstacle_search(test_util.DummyRobot(), tile_list, visited,
+                                                                             target_pos=Coordinate(2, 4), cur_pos=Coordinate(2, 0))
+        self.assertTrue(success, "Didn't find a removable tile.")
+        self.assertTrue(len(tiles_to_remove) == 1, "Found more or less than 1 tile to remove!")
+        self.assertTrue(tiles_to_remove[0].x == 3 and tiles_to_remove[0].y == 2, "Didn't find expected tile.")
 
 
 if __name__ == '__main__':
