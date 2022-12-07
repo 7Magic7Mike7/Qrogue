@@ -9,7 +9,7 @@ from qrogue.game.world.navigation import Direction
 from qrogue.graphics import WidgetWrapper
 from qrogue.graphics.widgets.my_widgets import SelectionWidget
 from qrogue.management import SaveData
-from qrogue.util import RandomManager, Config, PathConfig, Logger, Controls, TestConfig
+from qrogue.util import RandomManager, Config, PathConfig, Logger, Controls, TestConfig, CheatConfig
 
 
 def true_callback() -> bool:
