@@ -8,6 +8,7 @@ from qrogue.game.world.map.rooms import Hallway
 from qrogue.game.world.navigation import Direction, Coordinate
 from qrogue.game.world import tiles
 from qrogue.management.save_data import SaveData
+from qrogue.util import CheatConfig
 
 
 class LayoutGenTestCase(test_util.SingletonSetupTestCase):
@@ -52,6 +53,7 @@ class LayoutGenTestCase(test_util.SingletonSetupTestCase):
 
 class LevelGenTestCase(test_util.SingletonSetupTestCase):
     def test_single_seed(self):
+        CheatConfig.use_cheat("Illuminati")
         generator = ExpeditionGenerator(0, lambda s: True, lambda s: None, lambda s: None)
         seed = 297
         map_, success = generator.generate((SaveData.instance().get_robot(0), seed))
