@@ -208,6 +208,11 @@ class CheatConfig:
                                 PopupConfig.default_color())
         return ret
 
+    @staticmethod
+    def use_cheat(code: str) -> bool:
+        assert TestConfig.is_active(), "You are not allowed to cheat outside of testing!"
+        return CheatConfig.__use_cheat(code)
+
 
 def _get_boolean_callback() -> Tuple[Callable[[int], str], Callable[[str], bool]]:
     def get(index: int) -> str:
