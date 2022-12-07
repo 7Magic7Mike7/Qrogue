@@ -553,6 +553,8 @@ class RandomLayoutGenerator:
 
 
 class ExpeditionGenerator(DungeonGenerator):
+    __MAX_ROOM_GEN_TRIES = 10
+
     def __init__(self, seed: int, check_achievement: Callable[[str], bool], trigger_event: Callable[[str], None],
                  load_map_callback: Callable[[str, Optional[Coordinate]], None], width: int = DungeonGenerator.WIDTH,
                  height: int = DungeonGenerator.HEIGHT):
@@ -692,13 +694,26 @@ class ExpeditionGenerator(DungeonGenerator):
                                 else:
                                     return tiles.Floor()
 
-                            tile_matrix: List[List["TileData"]] = self.__wild_room_generator.generate(
-                                seed=rm.get_seed("generating a room in ExpeditionGenerator")
-                            )
-                            tile_list = []
-                            for row in tile_matrix:
-                                for entry in row:
-                                    tile_list.append(tile_from_tile_data(entry.code, entry.data))
+                            # todo: should this be optional based on difficulty/progress (#tunneling)?
+                            # fourth check if we can reach every door from every door of this room (= doors are
+                            # reachable for player, implies that the previous layout reachability-check still holds)
+                            gen_tries = 0
+                            while gen_tries < ExpeditionGenerator.__MAX_ROOM_GEN_TRIES:
+                                tile_matrix: List[List["TileData"]] = self.__wild_room_generator.generate(
+                                    seed=rm.get_seed("generating a room in ExpeditionGenerator")
+                                )
+                                tile_list = [tile_from_tile_data(entry.code, entry.data)
+                                             for row in tile_matrix for entry in row]
+
+                                if self.correct_tile_list(robot, tile_list, room_hallways) >= 0:
+                                    break
+                                Logger.instance().warn(f"Failed to generate a room: try #{gen_tries}, seed={seed}")
+                                gen_tries += 1
+                            if gen_tries >= ExpeditionGenerator.__MAX_ROOM_GEN_TRIES:
+                                # todo don't care about potentially impossible Expedition?
+                                Logger.instance().error(
+                                    "Failed to validate generated room! Expedition might be "
+                                    "impossible to clear.", from_pycui=False)
 
                             room = DefinedWildRoom(
                                 tile_list,
@@ -746,3 +761,92 @@ class ExpeditionGenerator(DungeonGenerator):
         else:
             return None, False
 
+    @staticmethod
+    def correct_tile_list(robot: Robot, tile_list: List[tiles.Tile], hallways: Dict[Direction, Optional[Hallway]]) \
+            -> int:
+        """
+        Corrects a given list of tiles (interpreted as Room.INNER_WIDTH * Room.INNER_HEIGHT tile matrix) such that
+        robot is able to reach every Hallway from every other Hallway. This way it is guaranteed that a Room with the
+        given tile_list and hallways does not block off access to one of its neighboring Rooms.
+        Potentially modifies tile_list by removing Obstacles!
+
+        :param robot: the Robot that is moving
+        :param tile_list: a Room's tile matrix in list form (interpreted as concatenation of its rows)
+        :param hallways: a dictionary of Directions and the Hallways that connect to other Rooms in this Direction
+        :return: how many changes were made on tile_list, with -1 indicating that the tile_list cannot be corrected
+        """
+        if len(hallways) <= 0:
+            return 0
+
+        num_of_changes = 0
+        direction: Optional[Direction] = None
+        for other_dir in hallways.keys():
+            if direction is None:
+                direction = other_dir
+            elif other_dir is not None:
+                # we have to use adapted middles since there is no ring of walls yet
+                in_room_mid_x = Room.MID_X - 1
+                in_room_mid_y = Room.MID_Y - 1
+                # up and left destructively interfere with +1, resulting in 0
+                # while right and bottom constructively interfere with +1, resulting in 2
+                start_pos = Coordinate(in_room_mid_x * (1 + direction.x), in_room_mid_y * (1 + direction.y))
+                target_pos = Coordinate(in_room_mid_x * (1 + other_dir.x), in_room_mid_y * (1 + other_dir.y))
+
+                visited = set()
+                # which positions need to be cleared to reach exit from key
+                success, tiles_to_remove = ExpeditionGenerator.astar_obstacle_search(robot, tile_list, visited,
+                                                                                     target_pos, start_pos)
+                if success:
+                    for pos in tiles_to_remove:
+                        tile_list[pos.x + pos.y * Room.INNER_WIDTH] = tiles.Floor()
+                    num_of_changes += len(tiles_to_remove)
+                else:
+                    return -1
+        return num_of_changes
+
+    @staticmethod
+    def astar_obstacle_search(robot: Robot, tile_list: List[tiles.Tile], visited: Set[Coordinate],
+                              target_pos: Coordinate, cur_pos: Coordinate) -> Tuple[bool, List[Coordinate]]:
+        """
+        Searches for a path in tile_list (interpreted as Room.INNER_WIDTH * Room.INNER_HEIGHT tile matrix) from cur_pos
+        to target_pos with robot while moving over as few Obstacles as possible.
+
+        :param robot: the Robot that is moving
+        :param tile_list: a Room's tile matrix in list form (interpreted as concatenation of its rows)
+        :param visited: set of already visited positions so we don't double check
+        :param target_pos: end of the path we search
+        :param cur_pos: current position in the path we search
+        :return: True and a list of Coordinates of the Obstacles we have to remove to get a valid path, False and a
+                 meaningless list if no such path exists (e.g. target is blocked by walls)
+        """
+        if cur_pos == target_pos:
+            return True, []
+
+        min_changes: Optional[Tuple[List[Coordinate], Set[Coordinate]]] = None
+
+        # max_ is inclusive
+        neighbors = cur_pos.get_neighbors(Coordinate(0, 0), Coordinate(Room.INNER_WIDTH - 1, Room.INNER_HEIGHT - 1))
+        for pos in neighbors:
+            if pos in visited:
+                continue
+            visited.add(pos)
+
+            path_visited = visited.copy()
+            success, tiles_to_remove = ExpeditionGenerator.astar_obstacle_search(robot, tile_list, path_visited, target_pos, pos)
+
+            if success:
+                tile = tile_list[pos.x + pos.y * Room.INNER_WIDTH]
+                if not tile.is_walkable(Direction.from_coordinates(cur_pos, pos), robot):
+                    if tile.code == tiles.TileCode.Obstacle:    # only remove obstacles
+                        tiles_to_remove = [pos] + tiles_to_remove
+
+                if min_changes is None or len(tiles_to_remove) < len(min_changes[0]):
+                    min_changes = tiles_to_remove, path_visited
+
+        if min_changes is None:
+            return False, []
+
+        min_tiles_to_remove, min_visited = min_changes
+        for pos in min_visited:
+            visited.add(pos)
+        return True, min_tiles_to_remove
