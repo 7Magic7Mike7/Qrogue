@@ -2,7 +2,7 @@ import os.path
 from typing import Tuple, Optional
 
 from qrogue.game.logic.actors import Player, Robot
-from qrogue.game.logic.actors.controllables import TestBot, LukeBot
+from qrogue.game.logic.actors.controllables import BaseBot, LukeBot
 from qrogue.game.world.map import CallbackPack
 from qrogue.util import Logger, PathConfig, AchievementManager, RandomManager, CommonPopups, Config, TestConfig, \
     ErrorConfig
@@ -54,7 +54,7 @@ class SaveData:
             self.__achievements = AchievementManager(achievement_list)
 
             self.__available_robots = [
-                TestBot(CallbackPack.instance().game_over),
+                BaseBot(CallbackPack.instance().game_over),
                 LukeBot(CallbackPack.instance().game_over),
             ]
             SaveData.__instance = self

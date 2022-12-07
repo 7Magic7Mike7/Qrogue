@@ -4,8 +4,7 @@ from antlr4 import InputStream, CommonTokenStream
 from antlr4.tree.Tree import TerminalNodeImpl
 
 from qrogue.game.logic import Message, StateVector
-from qrogue.game.logic.actors import Controllable, Riddle
-from qrogue.game.logic.actors.controllables import TestBot
+from qrogue.game.logic.actors import Controllable, Riddle, Robot, robot
 from qrogue.game.logic.actors.puzzles import Challenge
 from qrogue.game.logic.collectibles import Collectible, pickup, instruction, MultiCollectible, Qubit, ShopItem, \
     CollectibleFactory, OrderedCollectibleFactory
@@ -97,7 +96,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
         self.__warnings = 0
         self.__level: Optional[LevelMap] = None
-        self.__robot: Optional[TestBot] = None
+        self.__robot: Optional[Robot] = None
         self.__rm = RandomManager.create_new(seed)
 
         self.__default_speaker = QrogueLevelGenerator.__DEFAULT_SPEAKER
@@ -1002,8 +1001,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             if ctx.START_ENERGY():
                 start_energy = parser_util.parse_integer(ctx.integer(integer_index))
 
-        self.__robot = TestBot(CallbackPack.instance().game_over, num_of_qubits, gates, circuit_space, backpack_space,
-                               max_energy, start_energy)
+        self.__robot = robot.BaseBot(CallbackPack.instance().game_over, num_of_qubits, gates, circuit_space,
+                                     backpack_space, max_energy, start_energy)
 
     ##### Meta area #####
 
