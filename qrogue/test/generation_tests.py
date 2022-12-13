@@ -67,16 +67,14 @@ class LevelGenTestCase(test_util.SingletonSetupTestCase):
         end_seed = 5
         failing_seeds = []
 
-        i = 0
         generator = ExpeditionGenerator(0, lambda s: True, lambda s: None, lambda s: None)
-        for seed in range(start_seed, end_seed):
+        for i, seed in enumerate(range(start_seed, end_seed)):
             if i % 1000 == 0:
                 self._print(f"Run {i + 1}): seed = {seed}")
             map_, success = generator.generate((SaveData.instance().get_robot(0), seed))
             if not success:
                 failing_seeds.append((generator, seed))
                 self._print(f"Failed for seed = {seed}")
-            i += 1
 
         if len(failing_seeds) > 0:
             self._print("Failing Seeds:", force=True)
@@ -128,7 +126,6 @@ class LevelGenTestCase(test_util.SingletonSetupTestCase):
                                      south_hallway=hallways[Direction.South])
         print(after_room.to_string())
         """
-
 
     def test_astar(self):
         tile_list = Room.dic_to_tile_list({
