@@ -106,7 +106,8 @@ class Door(WalkTriggerTile):
             else:
                 can_walk = True
             if self.has_explanation:
-                WalkTriggerTile._show_explanation(self._explanation, overwrite=True)  # we overwrite a common popup that may be shown
+                # we overwrite a common popup that may be shown
+                WalkTriggerTile._show_explanation(self._explanation, overwrite=True)
             self._explicit_trigger()
             return can_walk
         else:
