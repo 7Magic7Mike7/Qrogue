@@ -68,7 +68,10 @@ class MapManager:
             self.__rm = RandomManager.create_new(seed)
             self.__show_world = show_world
             self.__start_level = start_level
-            self.__world_memory: Dict[str, WorldMap] = {}    # str -> WorldMap
+            self.__world_memory: Dict[str, WorldMap] = {}
+            self.__expedition_generator = ExpeditionGenerator(seed,
+                                                              SaveData.instance().achievement_manager.check_achievement,
+                                                              self.__trigger_event, self.load_map)
 
             generator = QrogueWorldGenerator(seed, SaveData.instance().player,
                                              SaveData.instance().achievement_manager.check_achievement,
@@ -207,9 +210,7 @@ class MapManager:
             else:
                 difficulty = ExpeditionConfig.DEFAULT_DIFFICULTY
             robot = SaveData.instance().get_robot(0)
-            check_achievement = SaveData.instance().achievement_manager.check_achievement
-            generator = ExpeditionGenerator(map_seed, check_achievement, self.__trigger_event, self.load_map)
-            expedition, success = generator.generate(robot)
+            expedition, success = self.__expedition_generator.generate((robot, map_seed))
             if success:
                 robot.reset()
                 self.__cur_map = expedition
