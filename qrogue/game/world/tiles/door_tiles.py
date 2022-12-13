@@ -81,11 +81,11 @@ class Door(WalkTriggerTile):
 
         if self.__one_way_state is DoorOneWayState.Permanent or \
                 self.__one_way_state is DoorOneWayState.Temporary and not self.is_open:
-            correct_direction = direction is self.__direction
+            is_correct_direction = direction is self.__direction
         else:
             # opposite direction is also fine for non one-way doors or opened temporary one-way doors
-            correct_direction = direction in [self.__direction, self.__direction.opposite()]
-        if correct_direction:
+            is_correct_direction = direction in [self.__direction, self.__direction.opposite()]
+        if is_correct_direction:
             if self.is_open:
                 can_walk = True
             elif self.is_key_locked:
