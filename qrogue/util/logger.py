@@ -74,6 +74,10 @@ class Logger(PyCUILogger):
         if Config.debugging():
             self.info(f"{{DEBUG}} |{msg}", from_pycui=from_pycui)
 
+    def warn(self, msg: str, from_pycui: bool = True, *args, **kwargs) -> None:
+        highlighting = "\n----------------------------------\n"
+        self.info(f"{highlighting}WARNING |{msg}{highlighting}", from_pycui=from_pycui)
+
     def show_error(self, message) -> None:
         self.__error_counter += 1
         self.__error_popup("ERROR", str(message))
