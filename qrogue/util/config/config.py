@@ -165,3 +165,7 @@ class Config:   # todo make singleton and handle access to other configs?
     @staticmethod
     def frame_count() -> int:
         return Config.__frame_count
+
+    @staticmethod
+    def loading_refresh_time() -> float:
+        return 0.2  # in seconds

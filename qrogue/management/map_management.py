@@ -1,7 +1,9 @@
-from typing import Callable, Optional, Dict
+import time
+from threading import Thread
+from typing import Callable, Optional, Dict, List
 
 from qrogue.game.world.dungeon_generator import ExpeditionGenerator, QrogueLevelGenerator, QrogueWorldGenerator
-from qrogue.game.world.map import Map, WorldMap, MapType
+from qrogue.game.world.map import Map, WorldMap, MapType, ExpeditionMap
 from qrogue.game.world.navigation import Coordinate
 from qrogue.graphics.popups import Popup
 from qrogue.util import CommonQuestions, Logger, MapConfig, achievements, RandomManager, Config, TestConfig, ErrorConfig
@@ -45,6 +47,7 @@ def get_next(cur_map: str) -> Optional[str]:
 
 class MapManager:
     __instance = None
+    __QUEUE_SIZE = 2
 
     @staticmethod
     def instance() -> "MapManager":
@@ -72,6 +75,7 @@ class MapManager:
             self.__expedition_generator = ExpeditionGenerator(seed,
                                                               SaveData.instance().achievement_manager.check_achievement,
                                                               self.__trigger_event, self.load_map)
+            self.__expedition_queue: List[ExpeditionMap] = []
 
             generator = QrogueWorldGenerator(seed, SaveData.instance().player,
                                              SaveData.instance().achievement_manager.check_achievement,
@@ -82,7 +86,7 @@ class MapManager:
                 Logger.instance().throw(RuntimeError("Unable to build hub world! Please download again and make sure "
                                                      "to not edit game data."))
             self.__world_memory[MapConfig.hub_world()] = hub_world
-            self.__cur_map = hub_world
+            self.__cur_map: Map = hub_world
             self.__in_level = False
 
             MapManager.__instance = self
@@ -105,6 +109,24 @@ class MapManager:
 
     def __show_spaceship(self):
         self.__show_world(None)
+
+    def fill_expedition_queue(self, callback: Optional[Callable[[], None]] = None, no_thread: bool = False):
+        if len(self.__expedition_queue) >= MapManager.__QUEUE_SIZE:
+            return
+
+        def fill():
+            robot = SaveData.instance().get_robot(0)
+            while len(self.__expedition_queue) < MapManager.__QUEUE_SIZE:
+                expedition, success = self.__expedition_generator.generate((robot, self.__rm.get_seed()))
+                if success:
+                    self.__expedition_queue.append(expedition)
+
+            if callback is not None:
+                callback()
+        if no_thread:
+            fill()
+        else:
+            Thread(target=fill, args=(), daemon=True).start()
 
     def get_restart_message(self) -> str:
         # todo maybe should be handled differently. I'm not satisfied by this approach but for now it works and is
@@ -202,15 +224,21 @@ class MapManager:
                 Logger.instance().error(f"Failed to open the specified level-file: {map_name}", from_pycui=False)
 
         elif map_name.lower().startswith(MapConfig.expedition_map_prefix()):
-            if map_seed is None:
-                map_seed = self.__rm.get_seed(msg="MapMngr_seedForExpedition")
-
             if len(map_name) > len(MapConfig.expedition_map_prefix()):
                 difficulty = int(map_name[len(MapConfig.expedition_map_prefix()):])
             else:
                 difficulty = ExpeditionConfig.DEFAULT_DIFFICULTY
+
             robot = SaveData.instance().get_robot(0)
-            expedition, success = self.__expedition_generator.generate((robot, map_seed))
+            if map_seed is None:
+                while len(self.__expedition_queue) <= 0:
+                    time.sleep(Config.loading_refresh_time())
+                success = True
+                expedition = self.__expedition_queue.pop(0)
+                self.fill_expedition_queue()
+            else:
+                expedition, success = self.__expedition_generator.generate((robot, map_seed))
+
             if success:
                 robot.reset()
                 self.__cur_map = expedition
