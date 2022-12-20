@@ -733,7 +733,7 @@ class BaseBot(Robot):
         super(BaseBot, self).__init__("BaseBot", attributes, backpack, game_over_callback)
 
     def get_img(self):
-        return "R"
+        return "Q"
 
     def description(self) -> str:
         return "The most basic Robot"
