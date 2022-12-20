@@ -555,6 +555,29 @@ class RandomLayoutGenerator:
 class ExpeditionGenerator(DungeonGenerator):
     __MAX_ROOM_GEN_TRIES = 10
 
+    @staticmethod
+    def __create_enemy(enemy_id: int, room_pos: Coordinate, enemy_factory: EnemyFactory,
+                       enemy_groups_by_room: Dict[Coordinate, Dict[int, List[tiles.Enemy]]]) -> tiles.Enemy:
+        enemy: Optional[tiles.Enemy] = None
+
+        def get_entangled_tiles(id_: int) -> List[tiles.Enemy]:
+            if room_pos in enemy_groups_by_room:
+                room_dic = enemy_groups_by_room[room_pos]
+                return room_dic[id_]
+            else:
+                return [enemy]
+
+        def update_entangled_room_groups(new_enemy: tiles.Enemy):
+            if room_pos not in enemy_groups_by_room:
+                enemy_groups_by_room[room_pos] = {}
+            if enemy_id not in enemy_groups_by_room[room_pos]:
+                enemy_groups_by_room[room_pos][enemy_id] = []
+            enemy_groups_by_room[room_pos][enemy_id].append(new_enemy)
+
+        enemy = tiles.Enemy(enemy_factory, get_entangled_tiles, update_entangled_room_groups, enemy_id)
+        update_entangled_room_groups(enemy)
+        return enemy
+
     def __init__(self, seed: int, check_achievement: Callable[[str], bool], trigger_event: Callable[[str], None],
                  load_map_callback: Callable[[str, Optional[Coordinate]], None], width: int = DungeonGenerator.WIDTH,
                  height: int = DungeonGenerator.HEIGHT):
@@ -607,6 +630,7 @@ class ExpeditionGenerator(DungeonGenerator):
             )),
         ]
         enemy_factory_priorities = [0.25, 0.35, 0.3, 0.1]
+        enemy_groups_by_room = {}
 
         rooms: List[List[Optional[Room]]] = [[None for _ in range(self.width)] for _ in range(self.height)]
         spawn_room = None
@@ -663,26 +687,12 @@ class ExpeditionGenerator(DungeonGenerator):
                                              west_hallway=room_hallways[Direction.West],
                                              )
                         elif code == _Code.Wild:
-                            enemies_by_id: Dict[int, List[tiles.Enemy]] = {}
-
-                            def get_entangled_tiles(eid: int) -> List[tiles.Enemy]:
-                                if eid in enemies_by_id:
-                                    return enemies_by_id[eid]
-                                return []
-
-                            def update_entangled_groups(enemy: tiles.Enemy):
-                                if enemy.eid in enemies_by_id:
-                                    enemies_by_id[enemy.eid].append(enemy)
-                                else:
-                                    enemies_by_id[enemy.eid] = [enemy]
-
                             enemy_factory = rm.get_element_prioritized(enemy_factories, enemy_factory_priorities,
                                                                        msg="RandomDG_elemPrioritized")
 
                             def tile_from_tile_data(tile_code: tiles.TileCode, tile_data: Any) -> tiles.Tile:
                                 if tile_code == tiles.TileCode.Enemy:
-                                    return tiles.Enemy(enemy_factory, get_entangled_tiles, update_entangled_groups,
-                                                       e_id=tile_data)
+                                    return self.__create_enemy(tile_data, pos, enemy_factory, enemy_groups_by_room)
                                 elif tile_code == tiles.TileCode.Energy:
                                     return tiles.Energy(tile_data)
                                 elif tile_code == tiles.TileCode.Collectible:
