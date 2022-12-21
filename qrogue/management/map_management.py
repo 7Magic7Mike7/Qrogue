@@ -47,7 +47,7 @@ def get_next(cur_map: str) -> Optional[str]:
 
 class MapManager:
     __instance = None
-    __QUEUE_SIZE = 2
+    __QUEUE_SIZE = 1
 
     @staticmethod
     def instance() -> "MapManager":
