@@ -47,7 +47,7 @@ def get_next(cur_map: str) -> Optional[str]:
 
 class MapManager:
     __instance = None
-    __QUEUE_SIZE = 1
+    __QUEUE_SIZE = 0
 
     @staticmethod
     def instance() -> "MapManager":
@@ -230,7 +230,7 @@ class MapManager:
                 difficulty = ExpeditionConfig.DEFAULT_DIFFICULTY
 
             robot = SaveData.instance().get_robot(0)
-            if map_seed is None:
+            if map_seed is None and MapManager.__QUEUE_SIZE > 0:
                 while len(self.__expedition_queue) <= 0:
                     time.sleep(Config.loading_refresh_time())
                 success = True
