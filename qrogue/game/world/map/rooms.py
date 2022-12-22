@@ -1,7 +1,7 @@
 import math
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Dict, List, Callable, Optional
+from typing import Dict, List, Callable, Optional, Tuple, Union
 
 from qrogue.game import target_factory
 from qrogue.game.logic import Message
@@ -271,8 +271,56 @@ class Room(Area):
         return False
 
     @staticmethod
-    def coordinate_to_index(pos: Coordinate) -> int:
-        return pos.y * Room.INNER_WIDTH + pos.x
+    def coordinate_to_index(pos: Union[Coordinate, Tuple[int, int]], in_room: bool = True) -> int:
+        """
+
+        :param pos: either Coordinate or Tuple of x and y position
+        :param in_room: whether pos is given as in-room position or not (i.e. skip ring of walls or not)
+        :return: index of a row-based tile list corresponding to the given position
+        """
+        if in_room:
+            width = Room.INNER_WIDTH
+        else:
+            width = Room.UNIT_WIDTH
+        if isinstance(pos, Coordinate):
+            x, y = pos.x, pos.y
+        else:
+            x, y = pos
+        return x + y * width
+
+    @staticmethod
+    def index_to_coordinate(index: int, in_room: bool = True) -> Coordinate:
+        """
+
+        :param index: index of a row-based tile list
+        :param in_room: whether index is given as in-room position or not (i.e. skip ring of walls or not)
+        :return: position corresponding to the given index of a row-based tile list
+        """
+        if in_room:
+            width, height = Room.INNER_WIDTH, Room.INNER_HEIGHT
+        else:
+            width, height = Room.UNIT_WIDTH, Room.UNIT_HEIGHT
+        assert 0 <= index < width * height, f"Index = {index} out of range: [0, {width * height}["
+        return Coordinate(index % width, int(index / width))
+
+    @staticmethod
+    def direction_to_hallway_entrance_pos(direction: Direction, in_room: bool = True) -> Coordinate:
+        """
+
+        :param direction: side of the room where the hallway entrance is
+        :param in_room: whether the return value is an in-room position or not (i.e. skip ring of walls or not)
+        :return:
+        """
+        if in_room:
+            # we have to use adapted middles since there is no ring of walls yet
+            in_room_mid_x = Room.MID_X - 1
+            in_room_mid_y = Room.MID_Y - 1
+        else:
+            in_room_mid_x = Room.MID_X
+            in_room_mid_y = Room.MID_Y
+        # up and left destructively interfere with +1, resulting in 0
+        # while right and bottom constructively interfere with +1, resulting in 2
+        return Coordinate(in_room_mid_x * (1 + direction.x), in_room_mid_y * (1 + direction.y))
 
     @staticmethod
     def get_empty_room_tile_list() -> "list of Tiles":
