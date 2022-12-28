@@ -597,6 +597,7 @@ class ExpeditionGenerator(DungeonGenerator):
             seed = self.__rm.get_seed("seed for generating with ExpeditionGenerator")
         else:
             robot, seed = data
+            assert seed is not None, "Did not provide a seed!"
 
         if len(robot.get_available_instructions()) <= 0:
             gates = [instruction.HGate(), instruction.XGate(), instruction.CXGate()]

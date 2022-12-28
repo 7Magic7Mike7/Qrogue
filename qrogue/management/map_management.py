@@ -233,6 +233,8 @@ class MapManager:
                 expedition = self.__expedition_queue.pop(0)
                 self.fill_expedition_queue()
             else:
+                if map_seed is None:
+                    map_seed = self.__rm.get_seed()
                 expedition, success = self.__expedition_generator.generate((robot, map_seed))
 
             if success:
