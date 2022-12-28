@@ -10,7 +10,8 @@ from qrogue.util import ColorConfig as CC, Keys, Logger, PopupConfig, ColorConfi
 class MultilinePopup(PyCuiPopup, MenuImplementation):
     __STATIC_PY_CUI_PADDING = 6     # based on PyCUI "padding" I think
     __QUESTION_SPACING = " " * 7
-    __QUESTION_ARROW = " " * (len(__QUESTION_SPACING) - 4) + "--> "  # -4 due to the length of the arrow
+    __QUESTION_ARROW = "-->"
+    __QUESTION_SELECTION = " " * (len(__QUESTION_SPACING) - (len(__QUESTION_ARROW) + 1)) + (__QUESTION_ARROW + " ")
 
     @staticmethod
     def __get_color_rules():
@@ -200,7 +201,7 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
             text = ""
             for i in range(len(self.__answers)):
                 if i == self.__question_state:
-                    text += MultilinePopup.__QUESTION_ARROW
+                    text += MultilinePopup.__QUESTION_SELECTION
                 else:
                     text += MultilinePopup.__QUESTION_SPACING
                 text += self.__answers[i]
