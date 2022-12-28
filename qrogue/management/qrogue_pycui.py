@@ -196,10 +196,9 @@ class QrogueCUI(PyCUI):
         self.__navigation = NavigationWidgetSet(self.__controls, self.__render, Logger.instance(), self)
 
         self.__explore = ExploreWidgetSet(self.__controls, self.__render, Logger.instance(), self)
-        self.__fight = FightWidgetSet(self.__controls, self.__render, Logger.instance(), self, self.__continue_explore,
-                                      self.__game_over)
+        self.__fight = FightWidgetSet(self.__controls, self.__render, Logger.instance(), self, self.__continue_explore)
         self.__boss_fight = BossFightWidgetSet(self.__controls, self.__render, Logger.instance(), self,
-                                               self.__continue_explore, self.__game_over)
+                                               self.__continue_explore)
         self.__riddle = RiddleWidgetSet(self.__controls, self.__render, Logger.instance(), self,
                                         self.__continue_explore)
         self.__challenge = ChallengeWidgetSet(self.__controls, self.__render, Logger.instance(), self,

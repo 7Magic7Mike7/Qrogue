@@ -1277,9 +1277,8 @@ class TrainingsWidgetSet(ReachTargetWidgetSet):
 
 class FightWidgetSet(ReachTargetWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
-                 continue_exploration_callback: Callable[[], None], game_over_callback: Callable[[], None]):
+                 continue_exploration_callback: Callable[[], None]):
         super(FightWidgetSet, self).__init__(controls, render, logger, root, continue_exploration_callback)
-        self.__game_over_callback = game_over_callback
         self.__flee_check = None
 
     def set_data(self, robot: Robot, target: Enemy, in_expedition: bool):
@@ -1317,9 +1316,8 @@ class FightWidgetSet(ReachTargetWidgetSet):
 
 class BossFightWidgetSet(FightWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
-                 continue_exploration_callback: Callable[[], None], game_over_callback: Callable[[], None]):
-        self.__continue_exploration_callback = continue_exploration_callback
-        super().__init__(controls, render, logger, root, self.__continue_exploration_callback, game_over_callback)
+                 continue_exploration_callback: Callable[[], None]):
+        super().__init__(controls, render, logger, root, continue_exploration_callback)
 
     def set_data(self, robot: Robot, target: Boss, in_expedition: bool):
         super(BossFightWidgetSet, self).set_data(robot, target, in_expedition)
