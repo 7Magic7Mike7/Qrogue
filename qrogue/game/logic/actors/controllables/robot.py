@@ -678,11 +678,14 @@ class Robot(Controllable, ABC):
 
     def on_move(self):
         """
-        Decreases energy every time this Robot moves.
+        Does nothing now!
+        No longer decreases energy every time the Robot moves. This feature turned out to be tedious and doesn't
+        support the game's goal of making you familiar with Quantum Computing in any way.
 
         :return: None
         """
-        self.__attributes.decrease_energy(amount=1)
+        # self.__attributes.decrease_energy(amount=1)
+        pass
 
     def decrease_energy(self, amount: int = 1) -> Tuple[int, bool]:
         """

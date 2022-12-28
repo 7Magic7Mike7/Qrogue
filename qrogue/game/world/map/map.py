@@ -254,6 +254,8 @@ class Map(BaseMap, ABC):
         :return: True if the robot was able to move, False otherwise
         """
         if self.controllable_tile.controllable.game_over_check():
+            # although moving does not cost energy, this can still be True if we didn't get back energy after a puzzle
+            # todo fix somehow since it is awkward to immediately lose after solving a puzzle correctly
             return False
 
         new_pos = self.__controllable_pos + direction
