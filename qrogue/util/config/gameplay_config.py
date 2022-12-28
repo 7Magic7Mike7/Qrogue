@@ -105,6 +105,14 @@ class MapConfig:
     def test_level() -> str:
         return "l0training"
 
+    @staticmethod
+    def level_list() -> List[str]:
+        levels = []
+        for i in range(MapConfig.num_of_lessons()):
+            levels.append(f"l0v{i}")
+        levels += ["l0training", "l0exam"]
+        return levels
+
 
 class CheatConfig:
     __ALL = "aLL"
@@ -199,6 +207,11 @@ class CheatConfig:
             CheatConfig.__popup("Cheats", "This is not a valid Cheat!", PopupConfig.default_pos(),
                                 PopupConfig.default_color())
         return ret
+
+    @staticmethod
+    def use_cheat(code: str) -> bool:
+        assert TestConfig.is_active(), "You are not allowed to cheat outside of testing!"
+        return CheatConfig.__use_cheat(code)
 
 
 def _get_boolean_callback() -> Tuple[Callable[[int], str], Callable[[str], bool]]:

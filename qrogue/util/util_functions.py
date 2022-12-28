@@ -1,4 +1,5 @@
-from typing import Optional
+import enum
+from typing import Optional, Any
 
 __DEFAULT_CHARACTER = " "
 
@@ -82,3 +83,24 @@ def align_string(text: str, line_width: int, left: bool = True, character: str =
         return text + diff * character
     else:
         return diff * character + text
+
+
+def enum_str(value: enum.Enum, skip_type_prefix: bool = True) -> str:
+    text = str(value)
+    if skip_type_prefix:
+        index = text.index(".")
+        return text[index + 1:]
+    return text
+
+
+def my_str(value: Any) -> str:
+    """
+    Just like str() but with special treatment for Enums.
+
+    :param value:
+    :return: string representation of the given value
+    """
+    if isinstance(value, enum.Enum):
+        return enum_str(value)
+    else:
+        return str(value)

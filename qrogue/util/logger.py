@@ -3,7 +3,7 @@ from typing import Callable, Optional, List
 
 from py_cui.debug import PyCUILogger
 
-from qrogue.util import PyCuiColors, TestConfig
+from qrogue.util import PyCuiColors, TestConfig, ErrorConfig
 from qrogue.util.config import PathConfig, Config
 
 
@@ -14,7 +14,7 @@ class Logger(PyCUILogger):
     @staticmethod
     def instance() -> "Logger":
         if Logger.__instance is None:
-            raise Exception("This singleton has not been initialized yet!")
+            raise Exception(ErrorConfig.singleton_no_init("Logger"))
         return Logger.__instance
 
     @staticmethod
@@ -22,17 +22,25 @@ class Logger(PyCUILogger):
         if TestConfig.is_active():
             Logger.__instance = None
         else:
-            raise TestConfig.StateException("Can only reset the singleton \"Logger\" during testing!")
+            raise TestConfig.StateException(ErrorConfig.singleton_reset("Logger"))
 
-    def __init__(self, seed: int):
+    def __init__(self, seed: int, commit: Optional[Callable[[str], None]] = None):
         super().__init__("Qrogue-Logger")
         if Logger.__instance is not None:
-            Logger.__instance.throw(Exception("This class is a singleton!"))
+            Logger.__instance.throw(Exception(ErrorConfig.singleton("Logger")))
         else:
+            if commit is None:
+                save_file = PathConfig.new_log_file(seed)
+
+                def commit_(text: str):
+                    PathConfig.write(save_file, text, may_exist=True, append=True)
+                self.__commit = commit_
+            else:
+                self.__commit = commit
+
             self.__text = ""
             self.__message_popup: Optional[Callable[[str, str, int], None]] = None
             self.__error_popup: Optional[Callable[[str, str], None]] = None
-            self.__save_file = PathConfig.new_log_file(seed)
             self.__buffer: List[str] = [Config.get_log_head(seed)]
             self.__error_counter = 0
             Logger.__instance = self
@@ -66,9 +74,20 @@ class Logger(PyCUILogger):
         if Config.debugging():
             self.info(f"{{DEBUG}} |{msg}", from_pycui=from_pycui)
 
+    def warn(self, msg: str, from_pycui: bool = True, *args, **kwargs) -> None:
+        highlighting = "\n----------------------------------\n"
+        self.info(f"{highlighting}WARNING |{msg}{highlighting}", from_pycui=from_pycui)
+
     def show_error(self, message) -> None:
         self.__error_counter += 1
         self.__error_popup("ERROR", str(message))
+
+    def assertion(self, statement: bool, message, show_popup: bool = False):
+        if Config.debugging():
+            assert statement, str(message)
+        else:
+            if not statement:
+                self.error(message, show_popup, False)
 
     def error(self, message, show: bool = True, from_pycui: bool = True, **kwargs) -> None:
         self.__error_counter += 1
@@ -101,5 +120,5 @@ class Logger(PyCUILogger):
             text = ""
             for log in self.__buffer:
                 text += log + "\n"
-            PathConfig.write(self.__save_file, text, may_exist=True, append=True)
+            self.__commit(text)
             self.__buffer = []

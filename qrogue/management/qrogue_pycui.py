@@ -23,7 +23,7 @@ from qrogue.graphics.widgets import Renderable, SpaceshipWidgetSet, BossFightWid
     ChallengeWidgetSet, ShopWidgetSet, WorkbenchWidgetSet, TrainingsWidgetSet, Widget, TransitionWidgetSet
 from qrogue.util import achievements, common_messages, CheatConfig, Config, GameplayConfig, UIConfig, HelpText, \
     HelpTextType, Logger, PathConfig, MapConfig, Controls, Keys, RandomManager, PyCuiConfig, PyCuiColors, Options, \
-    TestConfig
+    TestConfig, CommonQuestions
 from qrogue.util.achievements import Ach, Unlocks
 from qrogue.util.config import FileTypes, PopupConfig
 from qrogue.util.game_simulator import GameSimulator
@@ -162,6 +162,7 @@ class QrogueCUI(PyCUI):
                      self.__open_challenge, self.__visit_shop, self.__game_over)
         SaveData()
         MapManager(seed, self.__show_world, self.__start_level)
+        MapManager.instance().fill_expedition_queue(lambda: None, no_thread=True)
         Popup.update_check_achievement_function(SaveData.instance().achievement_manager.check_achievement)
         common_messages.set_show_callback(Popup.generic_info)
         common_messages.set_ask_callback(ConfirmationPopup.ask)
@@ -179,7 +180,7 @@ class QrogueCUI(PyCUI):
         # INIT WIDGET SETS
         self.__menu = MenuWidgetSet(self.__controls, self.__render, Logger.instance(), self,
                                     MapManager.instance().load_first_uncleared_map,
-                                    self.__start_playing, self.stop, self.__choose_simulation)
+                                    self.__start_playing, self.__start_expedition, self.stop, self.__choose_simulation)
         self.__transition = TransitionWidgetSet(self.__controls, Logger.instance(), self, self.__render,
                                                 self.set_refresh_timeout)
         self.__pause = PauseMenuWidgetSet(self.__controls, self.__render, Logger.instance(), self,
@@ -465,6 +466,15 @@ class QrogueCUI(PyCUI):
             # load the newest level (exam phase) by
             MapManager.instance().load_first_uncleared_map()
 
+    def __start_expedition(self):
+        if Ach.check_unlocks(Unlocks.Spaceship, SaveData.instance().story_progress):
+            MapManager.instance().load_expedition()
+        else:
+            def _callback(selection: int):
+                if selection == 0:
+                    MapManager.instance().load_expedition()
+            CommonQuestions.SkipStoryTutorial.ask(_callback)
+
     def _switch_to_spaceship(self, data=None):
         self.apply_widget_set(self.__spaceship)
         StoryNarration.returned_to_spaceship()
@@ -482,7 +492,7 @@ class QrogueCUI(PyCUI):
     def _switch_to_training(self, data=None):
         if data:
             robot, enemy = data
-            self.__training.set_data(robot, enemy)
+            self.__training.set_data(robot, enemy, False)
         self.apply_widget_set(self.__training)
 
     def __use_workbench(self, direction: Direction, controllable: Controllable):
@@ -496,7 +506,7 @@ class QrogueCUI(PyCUI):
         if world is None:
             if Ach.check_unlocks(Unlocks.Spaceship, SaveData.instance().story_progress):
                 if Ach.is_most_recent_unlock(Unlocks.Spaceship, SaveData.instance().story_progress) and \
-                    not SaveData.instance().achievement_manager.check_achievement(achievements.EnteredNavigationPanel):
+                   not SaveData.instance().achievement_manager.check_achievement(achievements.EnteredNavigationPanel):
                     self._execute_transition(TransitionText.exam_spaceship(), QrogueCUI._State.Spaceship, None)
                 else:
                     self.__state_machine.change_state(QrogueCUI._State.Spaceship, None)
@@ -568,14 +578,14 @@ class QrogueCUI(PyCUI):
         if data is not None:
             robot = data[0]
             enemy = data[1]
-            self.__fight.set_data(robot, enemy)
+            self.__fight.set_data(robot, enemy, MapManager.instance().in_expedition)
         self.apply_widget_set(self.__fight)
 
     def _switch_to_boss_fight(self, data) -> None:
         if data is not None:
             player = data[0]
             boss = data[1]
-            self.__boss_fight.set_data(player, boss)
+            self.__boss_fight.set_data(player, boss, MapManager.instance().in_expedition)
         self.apply_widget_set(self.__boss_fight)
 
     def __open_riddle(self, robot: Robot, riddle: Riddle):
@@ -585,7 +595,7 @@ class QrogueCUI(PyCUI):
         if data is not None:
             player = data[0]
             riddle = data[1]
-            self.__riddle.set_data(player, riddle)
+            self.__riddle.set_data(player, riddle, MapManager.instance().in_expedition)
         self.apply_widget_set(self.__riddle)
 
     def __open_challenge(self, robot: Robot, challenge: Challenge):
@@ -595,7 +605,7 @@ class QrogueCUI(PyCUI):
         if data is not None:
             robot = data[0]
             challenge = data[1]
-            self.__challenge.set_data(robot, challenge)
+            self.__challenge.set_data(robot, challenge, MapManager.instance().in_expedition)
         self.apply_widget_set(self.__challenge)
 
     def __visit_shop(self, robot: Robot, items: "list of ShopItems"):

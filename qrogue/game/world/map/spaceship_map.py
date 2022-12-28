@@ -78,7 +78,7 @@ class SpaceshipFreeWalkTile(Tile):
 
     def get_img(self):
         #return ColorConfig.colorize(ColorCodes.SPACESHIP_FLOOR, self._invisible)
-        return "."#self._invisible
+        return TileCode.SpaceshipWalk.representation #self._invisible
 
     def is_walkable(self, direction: Direction, robot: Robot) -> bool:
         return True
@@ -126,7 +126,7 @@ class OuterSpaceTile(Tile):
         if self.__is_star:
             if _spaceship_random() < OuterSpaceTile.__STAR_DIE_CHANCE:
                 self.__is_star = False
-            return "*"
+            return TileCode.OuterSpace.representation
         else:
             if _spaceship_random() < OuterSpaceTile.__STAR_BIRTH_CHANCE:
                 self.__is_star = True
@@ -206,14 +206,14 @@ class SpaceshipMap:
             if self.__achievement_manager.check_achievement(achievements.UnlockedWorkbench):
                 tile = SpaceshipTriggerTile(character, self.__use_workbench)
             else:
-                tile = None
+                tile = SpaceshipFreeWalkTile()
         # elif character == SpaceshipTriggerTile.MAP_GATE_LIBRARY_REPRESENTATION:
         #    tile = SpaceshipTriggerTile(character, self.open_gate_library)
         elif character == SpaceshipTriggerTile.QUICKSTART_LEVEL:
             if self.__achievement_manager.check_achievement(achievements.UnlockedQuickStart):
                 tile = SpaceshipTriggerTile(character, self.__load_newest_map)
             else:
-                tile = None
+                tile = SpaceshipFreeWalkTile()
         elif character == SpaceshipTriggerTile.TRAININGS_ROOM:
             def start_training(direction: Direction, controllable: Controllable):
                 self.__start_training(direction)

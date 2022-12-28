@@ -4,8 +4,7 @@ from antlr4 import InputStream, CommonTokenStream
 from antlr4.tree.Tree import TerminalNodeImpl
 
 from qrogue.game.logic import Message, StateVector
-from qrogue.game.logic.actors import Controllable, Riddle
-from qrogue.game.logic.actors.controllables import TestBot
+from qrogue.game.logic.actors import Controllable, Riddle, Robot, robot
 from qrogue.game.logic.actors.puzzles import Challenge
 from qrogue.game.logic.collectibles import Collectible, pickup, instruction, MultiCollectible, Qubit, ShopItem, \
     CollectibleFactory, OrderedCollectibleFactory
@@ -97,7 +96,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
         self.__warnings = 0
         self.__level: Optional[LevelMap] = None
-        self.__robot: Optional[TestBot] = None
+        self.__robot: Optional[Robot] = None
         self.__rm = RandomManager.create_new(seed)
 
         self.__default_speaker = QrogueLevelGenerator.__DEFAULT_SPEAKER
@@ -808,6 +807,12 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             return rooms.AreaType.GateRoom
         elif ctx.TREASURE_LITERAL():
             return rooms.AreaType.TreasureRoom
+        elif ctx.CHALLENGE_LITERAL():
+            return rooms.AreaType.ChallengeRoom
+        elif ctx.PAUSE_LITERAL():
+            return rooms.AreaType.PauseRoom
+        elif ctx.STORY_LITERAL():
+            return rooms.AreaType.StoryRoom
         else:
             self.warning(f"Invalid r_type: {ctx.getText()}")
             return rooms.AreaType.Invalid
@@ -910,12 +915,12 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
     ##### Layout area #####
 
-    def visitLayout(self, ctx: QrogueDungeonParser.LayoutContext) -> List[List[rooms.Room]]:
+    def visitLayout(self, ctx: QrogueDungeonParser.LayoutContext) -> List[List[Optional[rooms.Room]]]:
         # first setup all hallway connections
         for y, hw_row in enumerate(ctx.l_hallway_row()):
             self.__visitL_hallway_row(hw_row, y)
 
-        room_matrix = []
+        room_matrix: List[List[Optional[rooms.Room]]] = []
         for y in range(MapConfig.map_height()):
             row_ctx = ctx.l_room_row(y)
             if row_ctx:
@@ -948,10 +953,10 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
     def __visitL_hallway_row(self, ctx: QrogueDungeonParser.L_hallway_rowContext, y: int) -> None:
         self.__hallway_handling(ctx.children, y, Direction.South)    # connect downwards to the next room row
 
-    def __visitL_room_row(self, ctx: QrogueDungeonParser.L_room_rowContext, y: int) -> List[rooms.Room]:
+    def __visitL_room_row(self, ctx: QrogueDungeonParser.L_room_rowContext, y: int) -> List[Optional[rooms.Room]]:
         self.__hallway_handling(ctx.children, y, Direction.East)     # connect to the right to the next room
 
-        row = []
+        row: List[Optional[rooms.Room]] = []
         x = 0
         for child in ctx.children:
             if parser_util.check_for_overspecified_columns(x, child.symbol.type,
@@ -996,8 +1001,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             if ctx.START_ENERGY():
                 start_energy = parser_util.parse_integer(ctx.integer(integer_index))
 
-        self.__robot = TestBot(CallbackPack.instance().game_over, num_of_qubits, gates, circuit_space, backpack_space,
-                               max_energy, start_energy)
+        self.__robot = robot.BaseBot(CallbackPack.instance().game_over, num_of_qubits, gates, circuit_space,
+                                     backpack_space, max_energy, start_energy)
 
     ##### Meta area #####
 
@@ -1017,7 +1022,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
     ##### Start area #####
 
-    def visitStart(self, ctx: QrogueDungeonParser.StartContext) -> Tuple[MapMetaData, List[List[rooms.Room]]]:
+    def visitStart(self, ctx: QrogueDungeonParser.StartContext) -> Tuple[MapMetaData, List[List[Optional[rooms.Room]]]]:
         # prepare messages (needs to be done first since meta data might reference it
         self.visit(ctx.messages())
 

@@ -1,10 +1,12 @@
-from typing import Callable, Optional, Dict
+import time
+from threading import Thread
+from typing import Callable, Optional, Dict, List
 
 from qrogue.game.world.dungeon_generator import ExpeditionGenerator, QrogueLevelGenerator, QrogueWorldGenerator
-from qrogue.game.world.map import Map, WorldMap, MapType
+from qrogue.game.world.map import Map, WorldMap, MapType, ExpeditionMap
 from qrogue.game.world.navigation import Coordinate
 from qrogue.graphics.popups import Popup
-from qrogue.util import CommonQuestions, Logger, MapConfig, achievements, RandomManager, Config, TestConfig
+from qrogue.util import CommonQuestions, Logger, MapConfig, achievements, RandomManager, Config, TestConfig, ErrorConfig
 
 from qrogue.management.save_data import SaveData
 from qrogue.util.achievements import Ach, Unlocks
@@ -45,11 +47,12 @@ def get_next(cur_map: str) -> Optional[str]:
 
 class MapManager:
     __instance = None
+    __QUEUE_SIZE = 0
 
     @staticmethod
     def instance() -> "MapManager":
         if MapManager.__instance is None:
-            raise Exception("This singleton has not been initialized yet!")
+            Logger.instance().throw(Exception(ErrorConfig.singleton_no_init("MapManager")))
         return MapManager.__instance
 
     @staticmethod
@@ -57,18 +60,22 @@ class MapManager:
         if TestConfig.is_active():
             MapManager.__instance = None
         else:
-            raise TestConfig.StateException("Can only reset the singleton \"MapManager\" during testing!")
+            raise TestConfig.StateException(ErrorConfig.singleton_reset("MapManager"))
 
     def __init__(self, seed: int, show_world: Callable[[Optional[WorldMap]], None],
                  start_level: Callable[[int, Map], None]):
         if MapManager.__instance is not None:
-            Logger.instance().throw(Exception("This class is a singleton!"))
+            Logger.instance().throw(Exception(ErrorConfig.singleton("MapManager")))
         else:
             self.__base_seed = seed
             self.__rm = RandomManager.create_new(seed)
             self.__show_world = show_world
             self.__start_level = start_level
-            self.__world_memory: Dict[str, WorldMap] = {}    # str -> WorldMap
+            self.__world_memory: Dict[str, WorldMap] = {}
+            self.__expedition_generator = ExpeditionGenerator(seed,
+                                                              SaveData.instance().achievement_manager.check_achievement,
+                                                              self.__trigger_event, self.load_map)
+            self.__expedition_queue: List[ExpeditionMap] = []
 
             generator = QrogueWorldGenerator(seed, SaveData.instance().player,
                                              SaveData.instance().achievement_manager.check_achievement,
@@ -79,7 +86,7 @@ class MapManager:
                 Logger.instance().throw(RuntimeError("Unable to build hub world! Please download again and make sure "
                                                      "to not edit game data."))
             self.__world_memory[MapConfig.hub_world()] = hub_world
-            self.__cur_map = hub_world
+            self.__cur_map: Map = hub_world
             self.__in_level = False
 
             MapManager.__instance = self
@@ -96,8 +103,30 @@ class MapManager:
     def in_level(self) -> bool:
         return self.__cur_map.get_type() is MapType.Level
 
+    @property
+    def in_expedition(self) -> bool:
+        return self.__cur_map.get_type() is MapType.Expedition
+
     def __show_spaceship(self):
         self.__show_world(None)
+
+    def fill_expedition_queue(self, callback: Optional[Callable[[], None]] = None, no_thread: bool = False):
+        if len(self.__expedition_queue) >= MapManager.__QUEUE_SIZE:
+            return
+
+        def fill():
+            robot = SaveData.instance().get_robot(0)
+            while len(self.__expedition_queue) < MapManager.__QUEUE_SIZE:
+                expedition, success = self.__expedition_generator.generate((robot, self.__rm.get_seed()))
+                if success:
+                    self.__expedition_queue.append(expedition)
+
+            if callback is not None:
+                callback()
+        if no_thread:
+            fill()
+        else:
+            Thread(target=fill, args=(), daemon=True).start()
 
     def get_restart_message(self) -> str:
         # todo maybe should be handled differently. I'm not satisfied by this approach but for now it works and is
@@ -195,18 +224,23 @@ class MapManager:
                 Logger.instance().error(f"Failed to open the specified level-file: {map_name}", from_pycui=False)
 
         elif map_name.lower().startswith(MapConfig.expedition_map_prefix()):
-            if map_seed is None:
-                map_seed = self.__rm.get_seed(msg="MapMngr_seedForExpedition")
-
             if len(map_name) > len(MapConfig.expedition_map_prefix()):
                 difficulty = int(map_name[len(MapConfig.expedition_map_prefix()):])
             else:
                 difficulty = ExpeditionConfig.DEFAULT_DIFFICULTY
+
             robot = SaveData.instance().get_robot(0)
-            check_achievement = SaveData.instance().achievement_manager.check_achievement
-            generator = ExpeditionGenerator(map_seed, check_achievement, self.__trigger_event, self.load_map)
-            expedition, success = generator.generate(robot)
+            if map_seed is None and MapManager.__QUEUE_SIZE > 0:
+                while len(self.__expedition_queue) <= 0:
+                    time.sleep(Config.loading_refresh_time())
+                success = True
+                expedition = self.__expedition_queue.pop(0)
+                self.fill_expedition_queue()
+            else:
+                expedition, success = self.__expedition_generator.generate((robot, map_seed))
+
             if success:
+                robot.reset()
                 self.__cur_map = expedition
                 self.__in_level = True
                 self.__start_level(map_seed, self.__cur_map)
@@ -290,6 +324,9 @@ class MapManager:
         else:
             map_name = get_next(MapConfig.first_uncleared())
             self.__load_map(map_name, None)
+
+    def load_expedition(self, seed: Optional[int] = None) -> None:
+        self.__load_map(MapConfig.expedition_map_prefix(), None, seed)
 
     def reload(self):
         self.__load_map(self.__cur_map.internal_name, None, self.__cur_map.seed)

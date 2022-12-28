@@ -63,7 +63,7 @@ cc (Wild):
 #############
 m *temporaryOWDs
 
-dd (Wild):
+dd (Story):
 #############
 # o o _ o o #
 # o _ m _ o #
@@ -75,7 +75,7 @@ m 1 *permVsTemp
 c energy 10
 c energy 10
 
-ee (Wild):
+ee (Story):
 #############
 # _ _ m o o #
 # _ o _ o o #
@@ -117,7 +117,7 @@ c key 1 tutorial *joking
 6 *reach2X
 8 *reach2X
 
-hh (Wild):
+hh (Story):
 #############
 # _ _ _ _ _ #
 # _ _ _ _ _ #

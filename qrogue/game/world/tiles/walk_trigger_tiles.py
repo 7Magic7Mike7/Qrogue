@@ -5,7 +5,7 @@ from typing import List, Callable, Any, Optional
 from qrogue.game.logic import Message as LogicalMessage
 from qrogue.game.logic.actors import Controllable, Riddle
 from qrogue.game.logic.actors.puzzles import Challenge
-from qrogue.game.logic.collectibles import Collectible as LogicalCollectible, Energy as LogicalEnergy
+from qrogue.game.logic.collectibles import Collectible as LogicalCollectible, Energy as LogicalEnergy, CollectibleType
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.util import Logger, ColorConfig, CommonQuestions, MapConfig
 
@@ -198,6 +198,13 @@ class Riddler(WalkTriggerTile):
         self.__is_active = True
 
     @property
+    def data(self) -> Optional[int]:
+        if self.__is_active:
+            return self.__riddle.attempts
+        else:
+            return None
+
+    @property
     def _is_active(self) -> bool:
         if self.__is_active:
             if not self.__riddle.is_active:
@@ -212,7 +219,7 @@ class Riddler(WalkTriggerTile):
 
     def get_img(self):
         if self._is_active:
-            return "?"
+            return TileCode.Riddler.representation
         else:
             return self._invisible
 
@@ -245,7 +252,7 @@ class Challenger(WalkTriggerTile):
 
     def get_img(self):
         if self._is_active:
-            return "!"
+            return TileCode.Challenger.representation
         else:
             return self._invisible
 
@@ -261,7 +268,7 @@ class ShopKeeper(WalkTriggerTile):
         return True
 
     def get_img(self):
-        return "$"
+        return TileCode.ShopKeeper.representation
 
     def _copy(self) -> "Tile":
         return ShopKeeper(self.__visit_shop, self.__inventory.copy())
@@ -283,9 +290,16 @@ class Collectible(WalkTriggerTile):
         self.__collectible = collectible
         self.__active = True
 
+    @property
+    def data(self) -> Optional[CollectibleType]:
+        if self.__active:
+            return self.__collectible.type
+        else:
+            return None
+
     def get_img(self):
         if self.__active:
-            return "c"
+            return TileCode.Collectible.representation
         else:
             return self._invisible
 
@@ -314,9 +328,13 @@ class Energy(WalkTriggerTile):
         self.__amount = amount
         self.__active = True
 
+    @property
+    def data(self) -> int:
+        return self.__amount
+
     def get_img(self):
         if self.__active:
-            return "e"
+            return TileCode.Energy.representation
         else:
             return self._invisible
 

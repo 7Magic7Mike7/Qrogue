@@ -35,7 +35,7 @@ c energy 5
 0 [0, 1, 0, 0] energy 10 tutorial *firstPuzzle trigger *solvedFirstPuzzle	// second one is the first one we step on
 0 *reach1X energy 10 tutorial *selectQubit trigger *solvedSecondPuzzle
 
-bb (Wild):
+bb (Gate):
 #############
 # o o _ o o #
 # o o _ o o #

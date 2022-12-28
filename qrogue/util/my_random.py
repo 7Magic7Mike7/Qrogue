@@ -1,7 +1,7 @@
 from random import Random
 from typing import List, Any
 
-from qrogue.util import TestConfig
+from qrogue.util import TestConfig, ErrorConfig
 from qrogue.util.config import Config
 from qrogue.util.logger import Logger
 
@@ -92,7 +92,7 @@ class RandomManager(MyRandom):
     @staticmethod
     def instance() -> MyRandom:
         if RandomManager.__instance is None:
-            Logger.instance().throw(Exception("This singleton has not been initialized yet!"))
+            Logger.instance().throw(Exception(ErrorConfig.singleton_no_init("RandomManager")))
         return RandomManager.__instance
 
     @staticmethod
@@ -108,11 +108,11 @@ class RandomManager(MyRandom):
         if TestConfig.is_active():
             RandomManager.__instance = None
         else:
-            raise TestConfig.StateException("Can only reset the singleton \"Logger\" during testing!")
+            raise TestConfig.StateException(ErrorConfig.singleton_reset("RandomManager"))
 
     def __init__(self, seed: int):
         if RandomManager.__instance is not None:
-            Logger.instance().throw(Exception("This class is a singleton!"))
+            Logger.instance().throw(Exception(ErrorConfig.singleton("RandomManager")))
         else:
             super().__init__(seed)
             RandomManager.__instance = self

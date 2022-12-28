@@ -718,20 +718,25 @@ class Robot(Controllable, ABC):
             return self.__instructions[position]
         return None
 
+    def reset(self):
+        self.reset_circuit()
+        self.__attributes.increase_energy(self.__attributes.max_energy)
 
-class TestBot(Robot):
-    def __init__(self, game_over_callback: Callable[[], None], num_of_qubits: int = 2, gates: List[Instruction] = None,
-                 circuit_space: int = None, backpack_space: int = None, max_energy: int = None,
-                 start_energy: int = None):
+
+class BaseBot(Robot):
+    def __init__(self, game_over_callback: Callable[[], None], num_of_qubits: int = 2,
+                 gates: Optional[List[Instruction]] = None,
+                 circuit_space: Optional[int] = None, backpack_space: Optional[int] = None, max_energy: Optional[int] = None,
+                 start_energy: Optional[int] = None):
         attributes = _Attributes(DummyQubitSet(num_of_qubits), circuit_space, max_energy, start_energy)
         backpack = Backpack(backpack_space, gates)
-        super(TestBot, self).__init__("Testbot", attributes, backpack, game_over_callback)
+        super(BaseBot, self).__init__("BaseBot", attributes, backpack, game_over_callback)
 
     def get_img(self):
-        return "T"
+        return "Q"
 
     def description(self) -> str:
-        return "A Robot for testing, debugging etc."
+        return "The most basic Robot"
 
 
 class LukeBot(Robot):

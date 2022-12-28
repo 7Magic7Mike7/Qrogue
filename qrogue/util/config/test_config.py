@@ -45,3 +45,9 @@ class TestConfig:
     def set_automation(automatic: bool = True):
         TestConfig.__IS_AUTOMATIC = automatic
 
+    @staticmethod
+    def test_seed() -> int:
+        if TestConfig.is_active():
+            return 7
+        else:
+            raise Exception("TestConfig not yet activated!")

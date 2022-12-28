@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Callable
+from typing import Callable, Tuple, Optional
 
 from qrogue.game.logic.actors import Controllable, Robot
 from qrogue.game.world.navigation import Direction
@@ -43,6 +43,13 @@ class Door(WalkTriggerTile):
         self.__event_check = event_check
         self.__check_entanglement_lock_callback = None
 
+    @property
+    def data(self) -> Tuple[Optional[DoorOpenState], Optional[DoorOneWayState], Optional[DoorEntanglementState]]:
+        if self.__open_state == DoorOpenState.Open:
+            # if the door is already opened we ignore the original values
+            return DoorOpenState.Open, DoorOneWayState.NoOneWay, DoorEntanglementState.NotEntangled
+        return self.__open_state, self.__one_way_state, self.__entanglement_state
+
     def set_entanglement(self, check_entanglement_lock: Callable[[], None]):
         self.__check_entanglement_lock_callback = check_entanglement_lock
         self.__entanglement_state = DoorEntanglementState.Undecided
@@ -74,11 +81,11 @@ class Door(WalkTriggerTile):
 
         if self.__one_way_state is DoorOneWayState.Permanent or \
                 self.__one_way_state is DoorOneWayState.Temporary and not self.is_open:
-            correct_direction = direction is self.__direction
+            is_correct_direction = direction is self.__direction
         else:
             # opposite direction is also fine for non one-way doors or opened temporary one-way doors
-            correct_direction = direction in [self.__direction, self.__direction.opposite()]
-        if correct_direction:
+            is_correct_direction = direction in [self.__direction, self.__direction.opposite()]
+        if is_correct_direction:
             if self.is_open:
                 can_walk = True
             elif self.is_key_locked:
@@ -99,7 +106,8 @@ class Door(WalkTriggerTile):
             else:
                 can_walk = True
             if self.has_explanation:
-                WalkTriggerTile._show_explanation(self._explanation, overwrite=True)  # we overwrite a common popup that may be shown
+                # we overwrite a common popup that may be shown
+                WalkTriggerTile._show_explanation(self._explanation, overwrite=True)
             self._explicit_trigger()
             return can_walk
         else:

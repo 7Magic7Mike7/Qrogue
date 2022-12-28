@@ -35,7 +35,7 @@ SR (Spawn):
 #############
 m 1 *movingDone
 
-zz (Wild):
+zz (Pause):
 #############
 # _ _ _ o _ #
 # _ o _ _ _ #
@@ -44,7 +44,7 @@ zz (Wild):
 # _ _ _ o _ #
 #############
 
-aa (Wild):
+aa (Story):
 #############
 # o _ _ _ _ #
 # _ _ o o _ #
@@ -55,7 +55,7 @@ aa (Wild):
 m *lockedDoor
 c *key
 
-bb (Wild):
+bb (Story):
 #############
 # o m _ _ o #
 # o 0 o m _ #
@@ -69,7 +69,7 @@ m *puzzle3
 m *puzzle1
 m *puzzle2
 
-cc (Wild):
+cc (Story):
 #############
 # _ _ _ _ _ #
 # _ _ _ _ _ #

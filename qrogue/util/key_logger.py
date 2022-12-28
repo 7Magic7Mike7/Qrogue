@@ -1,6 +1,6 @@
 import os.path
 
-from qrogue.util import Logger, TestConfig
+from qrogue.util import Logger, TestConfig, ErrorConfig
 from qrogue.util.config import PathConfig, Config
 from qrogue.util.controls import Controls, Keys
 
@@ -70,7 +70,7 @@ class OverWorldKeyLogger(KeyLogger):
     @staticmethod
     def instance() -> "OverWorldKeyLogger":
         if OverWorldKeyLogger.__instance is None:
-            raise Exception("This singleton has not been initialized yet!")
+            Logger.instance().throw(Exception(ErrorConfig.singleton_no_init("OverWorldKeyLogger")))
         return OverWorldKeyLogger.__instance
 
     @staticmethod
@@ -78,11 +78,11 @@ class OverWorldKeyLogger(KeyLogger):
         if TestConfig.is_active():
             OverWorldKeyLogger.__instance = None
         else:
-            raise TestConfig.StateException("Can only reset the singleton \"Logger\" during testing!")
+            raise TestConfig.StateException(ErrorConfig.singleton_reset("OverWorldKeyLogger"))
 
     def __init__(self):
         if OverWorldKeyLogger.__instance is not None:
-            Logger.instance().throw(Exception("This class is a singleton!"))
+            Logger.instance().throw(Exception(ErrorConfig.singleton("OverWorldKeyLogger")))
         else:
             super().__init__()
             OverWorldKeyLogger.__instance = self

@@ -1,4 +1,4 @@
-from typing import List, Callable
+from typing import List, Callable, Optional
 
 from qrogue.game.logic.actors import Controllable
 from qrogue.game.world.map import Map, MapType, Room, MapMetaData
@@ -6,7 +6,7 @@ from qrogue.game.world.navigation import Coordinate
 
 
 class ExpeditionMap(Map):
-    def __init__(self, seed: int, rooms: List[List[Room]], controllable: Controllable, spawn_room: Coordinate,
+    def __init__(self, seed: int, rooms: List[List[Optional[Room]]], controllable: Controllable, spawn_room: Coordinate,
                  check_achievement: Callable[[str], bool], trigger_event: Callable[[str], None]):
         def show_description():
             pass    # expeditions don't have anything to show at the moment
