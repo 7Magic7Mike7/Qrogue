@@ -443,7 +443,7 @@ class Robot(Controllable, ABC):
 
         # apply gates/instructions, create the circuit
         self.__instructions: List[Optional[Instruction]] = [None] * attributes.circuit_space
-        self.update_statevector(use_energy=False)  # to initialize the statevector
+        self.update_statevector(use_energy=False, check_for_game_over=False)  # to initialize the statevector
 
     @property
     def backpack(self) -> Backpack:
@@ -502,15 +502,16 @@ class Robot(Controllable, ABC):
     def use_key(self) -> bool:
         return self.backpack.use_key()
 
-    def update_statevector(self, use_energy: bool = True):
+    def update_statevector(self, use_energy: bool = True, check_for_game_over: bool = True):
         """
         Compiles and simulates the current circuit and saves and returns the resulting StateVector. Can also lead to a
         game over.
 
         :param use_energy: whether the update should cost energy or not, defaults to True
+        :param check_for_game_over: whether we should perform a game over check or not
         :return: None
         """
-        if self.game_over_check():
+        if check_for_game_over and self.game_over_check():
             return
 
         circuit = QuantumCircuit(self.__attributes.num_of_qubits, self.__attributes.num_of_qubits)
@@ -642,7 +643,7 @@ class Robot(Controllable, ABC):
         for instruction in temp:
             self.__remove_instruction(instruction)
         self.__instruction_count = 0
-        self.update_statevector(use_energy=False)
+        self.update_statevector(use_energy=False, check_for_game_over=False)
 
     def get_available_instructions(self) -> List[Instruction]:
         """
@@ -722,8 +723,8 @@ class Robot(Controllable, ABC):
         return None
 
     def reset(self):
-        self.reset_circuit()
         self.__attributes.increase_energy(self.__attributes.max_energy)
+        self.reset_circuit()
 
 
 class BaseBot(Robot):
