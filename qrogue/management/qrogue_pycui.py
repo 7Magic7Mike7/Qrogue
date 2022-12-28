@@ -543,12 +543,19 @@ class QrogueCUI(PyCUI):
         def callback(confirmed: int):
             if confirmed == 0:
                 MapManager.instance().reload()
-            elif Ach.check_unlocks(Unlocks.Spaceship, SaveData.instance().story_progress):
-                self.__state_machine.change_state(QrogueCUI._State.Spaceship, None)
-            else:
-                self.__state_machine.change_state(QrogueCUI._State.Menu, None)
-        ConfirmationPopup.ask(Config.system_name(), f"Your Robot is out of energy. "
-                                                    f"{MapManager.instance().get_restart_message()}", callback)
+            elif confirmed == 1:
+                if Ach.check_unlocks(Unlocks.Spaceship, SaveData.instance().story_progress):
+                    self.__state_machine.change_state(QrogueCUI._State.Spaceship, None)
+                else:
+                    self.__state_machine.change_state(QrogueCUI._State.Menu, None)
+        if MapManager.instance().in_tutorial_world:
+            ConfirmationPopup.ask(Config.system_name(), f"Your Robot is out of energy.\n"
+                                                        f"How do you want to continue?", callback,
+                                                        ["Restart lesson", "Back to menu"])
+        else:
+            ConfirmationPopup.ask(Config.system_name(), f"Your Robot is out of energy. Emergency departure initiated.\n"
+                                                        "Do you want to retry the expedition?",
+                                                        callback, ["Yes", "No"])
 
     def __start_fight(self, robot: Robot, enemy: Enemy, direction: Direction) -> None:
         self.__state_machine.change_state(QrogueCUI._State.Fight, (robot, enemy))

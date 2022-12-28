@@ -100,6 +100,10 @@ class MapManager:
         return self.__cur_map is self.__hub_world
 
     @property
+    def in_tutorial_world(self) -> bool:
+        return self.__get_world(self.__cur_map.internal_name).internal_name == MapConfig.tutorial_world()
+
+    @property
     def in_level(self) -> bool:
         return self.__cur_map.get_type() is MapType.Level
 
@@ -127,14 +131,6 @@ class MapManager:
             fill()
         else:
             Thread(target=fill, args=(), daemon=True).start()
-
-    def get_restart_message(self) -> str:
-        # todo maybe should be handled differently. I'm not satisfied by this approach but for now it works and is
-        #  straight forward.
-        if self.__get_world(self.__cur_map.internal_name).internal_name == MapConfig.tutorial_world():
-            return "Do you want to restart the current lesson?"
-        else:
-            return "Connection lost..."
 
     def __load_world(self, world_name: str) -> Optional[WorldMap]:
         """
