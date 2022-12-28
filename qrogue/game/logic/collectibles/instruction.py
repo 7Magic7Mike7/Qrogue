@@ -155,6 +155,9 @@ class IGate(SingleQubitGate):
     def description(self) -> str:
         return "An I Gate or Identity Gate doesn't alter the Qubit in any way. It can be used as a placeholder."
 
+    def copy(self) -> "Instruction":
+        return IGate()
+
 
 class XGate(SingleQubitGate):
     def __init__(self):
