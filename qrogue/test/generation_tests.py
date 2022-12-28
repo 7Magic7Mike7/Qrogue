@@ -61,8 +61,8 @@ class LevelGenTestCase(test_util.SingletonSetupTestCase):
         self._print(map_)
 
     def test_expedition(self):
-        # ~1m per 900 seeds
-        # 1_000 seeds per ~1.25 minutes (1m15s)
+        # ~1min per 666 seeds
+        # 1_000 seeds per ~1.5min
         start_seed = 0
         end_seed = 5
         failing_seeds = []
