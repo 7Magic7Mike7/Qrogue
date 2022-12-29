@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Callable, Optional, List
+from typing import Callable, Optional, List, Union
 
 from py_cui.debug import PyCUILogger
 
@@ -96,7 +96,9 @@ class Logger(PyCUILogger):
         highlighting = "\n----------------------------------\n"
         self.info(f"{highlighting}ERROR |{message}{highlighting}", from_pycui=from_pycui)
 
-    def throw(self, error: BaseException) -> None:
+    def throw(self, error: Union[BaseException, str]) -> None:
+        if isinstance(error, str):
+            error = Exception(error)
         self.__error_counter += 1
         print(error)
         self.__write(f"[ERROR] {error}")
