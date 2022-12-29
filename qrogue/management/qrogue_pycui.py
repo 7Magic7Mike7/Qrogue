@@ -8,7 +8,7 @@ from py_cui.widget_set import WidgetSet
 
 from qrogue.game.logic import StateVector, collectibles
 from qrogue.game.logic.actors import Boss, Controllable, Enemy, Riddle, Robot
-from qrogue.game.logic.actors.controllables import LukeBot
+from qrogue.game.logic.actors.controllables import BaseBot
 from qrogue.game.logic.actors.puzzles import Challenge
 from qrogue.game.logic.collectibles import Energy
 from qrogue.game.world.map import CallbackPack, SpaceshipMap, WorldMap, Map
@@ -482,9 +482,8 @@ class QrogueCUI(PyCUI):
         self.__state_machine.change_state(QrogueCUI._State.Spaceship, None)
 
     def __start_training(self, direction: Direction):
-        robot = LukeBot(self.__game_over, size=2)
-        for collectible in [collectibles.XGate(), collectibles.XGate(), collectibles.HGate(), collectibles.CXGate()]:
-            robot.give_collectible(collectible)
+        robot = BaseBot(CallbackPack.instance().game_over, num_of_qubits=2,
+                        gates=[collectibles.XGate(), collectibles.XGate(), collectibles.HGate(), collectibles.CXGate()])
         enemy = Enemy(eid=0, target=StateVector([0] * (2**robot.num_of_qubits)), reward=Energy())
         self.__state_machine.change_state(QrogueCUI._State.Training, (robot, enemy))
 
