@@ -5,6 +5,10 @@ from qrogue.util import Logger, MyRandom, RandomManager, ShopConfig
 
 
 class CollectibleFactory:
+    @staticmethod
+    def empty() -> "CollectibleFactory":
+        return CollectibleFactory([None])
+
     def __init__(self, pool: List[Collectible]) -> None:
         if pool is None or len(pool) < 1:
             Logger.instance().throw(Exception(f"invalid pool for CollectibleFactory: {pool}"))
