@@ -50,6 +50,9 @@ class MyBaseWidget(BlockLabel, WidgetWrapper):
             self._column_span = column_span
 
     def set_title(self, title: str) -> None:
+        # cannot easily use the original function to draw the border because the renderer draws it directly
+        if self._draw_border:
+            title = "-" * self._width + "\n" + title
         super(MyBaseWidget, self).set_title(title)
 
     def get_title(self) -> str:
