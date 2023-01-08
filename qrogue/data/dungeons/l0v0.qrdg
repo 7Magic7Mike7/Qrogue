@@ -53,7 +53,7 @@ aa (Story):
 # c _ _ _ _ #
 #############
 m *lockedDoor
-c key 1
+c key 1 tutorial *keyFound
 
 bb (Story):
 #############
@@ -104,6 +104,8 @@ default [none]
 *movingDone Speaker "0" prio "Next: //03Move// through the //02Door//."
 
 *lockedDoor Speaker "0" "The //02Door// to the right looks a bit different. Maybe not all //02Doors// open by simply //03moving// onto them?" "Let's try and check!"
+
+*keyFound Speaker "0" "Great, you found a //02Key//. The //05number of keys// you hold is displayed in the //05HUD// on the //05top left//."
 
 *puzzle1 Speaker "0" prio "The red //010// is a //02Quantum Puzzle//. It will challenge you to reach a certain //02Quantum State//." when *solvedPuzzle then *wrongDirection1
 *puzzle2 Speaker "0" prio "For this you can //03add//, //03move// or //03remove// //02Quantum Gates//. Right now, you have only //05one// //02X Gate// and two slots for placing a gate." when *solvedPuzzle then *wrongDirection2

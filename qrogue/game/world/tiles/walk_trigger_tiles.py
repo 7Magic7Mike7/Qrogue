@@ -321,10 +321,11 @@ class Collectible(WalkTriggerTile):
     def _on_walk(self, direction: Direction, controllable: Controllable) -> bool:
         if self.__active:
             if not self.has_explanation:
-                if Collectible.__pickup_message:
-                    Collectible.__pickup_message(self.__collectible)
-                else:
-                    Logger.instance().error("Collectible's pickup message callback is None!", from_pycui=False)
+                if self.__collectible.type is CollectibleType.Gate:
+                    if Collectible.__pickup_message:
+                        Collectible.__pickup_message(self.__collectible)
+                    else:
+                        Logger.instance().error("Collectible's pickup message callback is None!", from_pycui=False)
             controllable.give_collectible(self.__collectible)
             self.__active = False
             return True
