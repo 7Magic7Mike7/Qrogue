@@ -28,10 +28,6 @@ class SaveData:
         else:
             raise TestConfig.StateException(ErrorConfig.singleton_reset("SaveData"))
 
-    @staticmethod
-    def __empty_save_file() -> str:
-        pass
-
     def __init__(self):
         if SaveData.__instance is not None:
             Logger.instance().throw(Exception(ErrorConfig.singleton("SaveData")))
