@@ -19,7 +19,7 @@ class TileColorer:
         TileCode.Teleport: PyCuiColors.CYAN_ON_BLACK,
         TileCode.Message: PyCuiColors.CYAN_ON_BLACK,
 
-        TileCode.Controllable: PyCuiColors.GREEN_ON_BLACK,
+        TileCode.Controllable: PyCuiColors.WHITE_ON_GREEN,
         TileCode.Npc: PyCuiColors.BLUE_ON_BLACK,
         TileCode.Enemy: PyCuiColors.RED_ON_BLACK,
         TileCode.Boss: PyCuiColors.BLACK_ON_RED,
