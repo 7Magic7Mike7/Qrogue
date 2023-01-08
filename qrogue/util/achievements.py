@@ -50,9 +50,15 @@ class Ach:
     @staticmethod
     def is_story_mission(level_name: str) -> bool:
         # check if level_name is from one of the tutorial lessons
-        if level_name.startswith(MapConfig.tutorial_lesson_prefix()) and \
-                0 <= int(level_name[len(MapConfig.tutorial_lesson_prefix()):]) < MapConfig.num_of_lessons():
-            return True
+        if level_name.startswith(MapConfig.tutorial_lesson_prefix()):
+            level_num = ""
+            while len(MapConfig.tutorial_lesson_prefix()) + len(level_num) < len(level_name):
+                next_char = level_name[len(MapConfig.tutorial_lesson_prefix()) + len(level_num)]
+                if next_char.isdigit():
+                    level_num += next_char
+                else:
+                    break
+            return 0 <= int(level_num) < MapConfig.num_of_lessons()
         return level_name in [
             MapConfig.exam(),
         ]
