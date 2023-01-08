@@ -1,12 +1,10 @@
 Qrogue<
-Name = "Lesson 3: From Ten to Zero"
-Description = Speaker "0" prio 
-"Since you're now at least a bit familiar with //02Puzzles// we decided to introduce you to the //02Energy// system." 
-"//03Updating// your //02Circuit// (e.g. by placing, moving or removing a gate) from now on costs //02Energy// - just as it would in the real world outside of this trainings program."
+Name = "Lesson 3: From Zero to Nine"
+Description = Speaker "0" prio "What if we tell you there are //05not only// //010//s?" "Until now //05everytime// you //03stepped// onto a digit a //02Puzzle// was presented to you. But what if that's just because the //010// represents a //050%// chance to //05skip// the //02Puzzle//?"
 NO_TELEPORTER
 
 // Introduced Concepts:
-// different digits, collapsing, energy, short mention of Superposition
+// different digits, collapsing, short mention of Superposition
 
 [Robot]
 2 qubits [ *xgate, *xgate ]
@@ -15,35 +13,14 @@ maxenergy = 10
 
 [Layout]
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-| __ .. dd 11 cc 11 bb == aa .. __ .. __ |
-| ..    ..    ..    ..    ==    ..    .. |
-| __ .. aa == ee .. SR == ee .. __ .. __ |
+| dd 11 cc 11 bb == aa .. __ .. __ .. __ |
+| ..    ..    ..    ==    ..    ..    .. |
+| __ .. __ .. __ .. SR .. __ .. __ .. __ |
 | ..    ..    ..    ..    ..    ..    .. |
 | __ .. __ .. __ .. __ .. __ .. __ .. __ |
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 [Custom Rooms]
-SR (Spawn):
-#############
-# _ _ _ _ _ #
-# _ o 0 o _ #
-# _ 0 _ 0 _ #
-# _ o 0 o _ #
-# _ _ _ _ _ #
-#############
-0 *reach2X tutorial *energyExpenditure trigger *energyExpUnderstood
-
-ee (Wild):
-#############
-# o o 0 o o #
-# o o _ o o #
-# 0 _ 0 o o #
-# o o o o o #
-# o o o o o #
-#############
-0 *base11 *none
-0 *base11 *none
-0 *base10 energy 2
 
 aa (Wild):
 #############
@@ -51,10 +28,9 @@ aa (Wild):
 # _ o o o o #
 # 3 _ _ _ 9 #
 # _ o o o o #
-# m 0 m _ _ #
+# m 0 _ _ _ #
 #############
 m 1 *newDigits
-m 1 *digitsTutorial
 
 bb (Wild):
 #############
@@ -124,9 +100,6 @@ default *energySmall
 // speaker: 0 = Examiner, 1 = Scientist, 2 = System, 3 = Player
 default Speaker "0"
 
-*energyExpenditure prio "In the //05HUD// on the //05top left// you can see your Qubots //05current// and //05maximum energy//. Updates will //05decrease// the current energy //05by one//. Once you're at //050 current energy//, you have to //05restart the lesson//." "Sometimes you'll get energy back as a //05reward// for solving a //02Puzzle//." when *energyExpUnderstood then *none
-
-*digitsTutorial prio "What if we tell you there are //05not only// //010//s?" "Until now //05everytime// you //03stepped// onto a digit you had to solve a //02Puzzle//. But what if that's just because the //010// represents a //050%// chance to //05skip// the //02Puzzle//?"
 *newDigits Speaker "0" "Could a //013// maybe have a //0530%// chance to skip the //02Puzzle//?"
 
 *remainingDigits Speaker "0" prio "Of course we're talking about //05chances// here. So it is absolutely possible that e.g. you manage to skip the //02Puzzle// of a //011// while having to solve one for a //019//. In //02Quantum Computing// we call this //05undeterministic// behaviour //02Superposition//."
@@ -134,7 +107,7 @@ default Speaker "0"
 *tutCollapse Speaker "0" prio "What is actually happening?" "By //03stepping// on a digit you make it //05collapse//. This means it will either confront you with a //02Puzzle// or not. This can also be //05interpreted// as either //05collapsing to 1// (skip the puzzle) or //05collapsing to 0// (having to solve the puzzle). And as already hinted a //010// has a //050%//, a //015// a //0550%// and a //019// a //0590%// chance to //05collapse to 1//." 
 "That's also why there is no //0110//. It wouldn't make sense to //05always skip// a //02Puzzle//, hence, //05always collapsing to 1//."
 
-*tutCollapseQuantum "In //05Quantum Computing// we usually want such a collapse to happen at the very end of an algorithm to convert the quantum information the qubits hold into classical information (0s and 1s). This is necessary to be able to work with the output outside of quantum computers. However, in real quantum hardware a collapse can also happen due to errors or unwanted influence from the outside - rendering the output mostly useless."
+*tutCollapseQuantum "In //05Quantum Computing// we usually want such a collapse to happen at the very end of an algorithm to convert the quantum information the qubits hold into classical information (0s and 1s). This is necessary to be able to work with the output outside of quantum computers. However, in real quantum hardware a collapse can also happen due to errors or unwanted influence from the outside. That's why many quantum computers need powerful shielding."
 
 *doneMsg Speaker "0" "Nice, seems like you're slowly getting familiar with Quantum Computing."
 

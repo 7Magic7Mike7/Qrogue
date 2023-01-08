@@ -102,7 +102,7 @@ class MyWidgetSet(WidgetSet, Renderable, ABC):
         # globally update HUD based on the progress
         HudConfig.ShowMapName = True
         HudConfig.ShowKeys = True
-        HudConfig.ShowEnergy = Ach.check_unlocks(Unlocks.ShowEnergy, progress)
+        HudConfig.ShowEnergy = False #Ach.check_unlocks(Unlocks.ShowEnergy, progress)
 
     def render(self) -> None:
         self.__base_render(self.get_widget_list())
