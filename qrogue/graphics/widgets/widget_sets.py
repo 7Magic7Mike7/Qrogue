@@ -1197,7 +1197,8 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         if success:
             if reward is None:
                 self._details.set_data(data=(
-                    ["Congratulations! Sadly there is no reward..."],   # todo think about a better message?
+                    [f"Congratulations, you solved the "
+                     f"{ColorConfig.highlight_object('Puzzle')}!"],
                     [self._continue_exploration_callback]
                 ))
             else:
