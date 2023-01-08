@@ -285,9 +285,10 @@ class Collectible(WalkTriggerTile):
             pickup_message_callback("Collectible", f"You picked up: {ColorConfig.highlight_object(name)}\n{desc}")
         Collectible.__pickup_message = pickup_message
 
-    def __init__(self, collectible: LogicalCollectible):
+    def __init__(self, collectible: LogicalCollectible, secret_type: bool = False):
         super().__init__(TileCode.Collectible)
         self.__collectible = collectible
+        self.__secret_type = secret_type
         self.__active = True
 
     @property
@@ -299,7 +300,18 @@ class Collectible(WalkTriggerTile):
 
     def get_img(self):
         if self.__active:
-            return TileCode.Collectible.representation
+            if self.__secret_type or self.__collectible.type is CollectibleType.Pickup:
+                return TileCode.Collectible.representation
+            elif self.__collectible.type is CollectibleType.Key:
+                return TileCode.CollectibleKey.representation
+            elif self.__collectible.type is CollectibleType.Gate:
+                return TileCode.CollectibleGate.representation
+            elif self.__collectible.type is CollectibleType.Qubit:
+                return TileCode.CollectibleQubit.representation
+            elif self.__collectible.type is CollectibleType.Qubit:
+                return TileCode.CollectibleQubit.representation
+            else:
+                return TileCode.Invalid.representation
         else:
             return self._invisible
 
@@ -334,7 +346,7 @@ class Energy(WalkTriggerTile):
 
     def get_img(self):
         if self.__active:
-            return TileCode.Energy.representation
+            return TileCode.CollectibleEnergy.representation
         else:
             return self._invisible
 

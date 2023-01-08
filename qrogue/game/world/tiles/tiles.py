@@ -41,6 +41,12 @@ class TileCode(Enum):
     SpaceshipTrigger = (72, "T")
     OuterSpace = (73, "*")
 
+    CollectibleKey = (501, "k")
+    CollectibleCoin = (502, "€")
+    CollectibleEnergy = (503, "e")
+    CollectibleGate = (520, "g")
+    CollectibleQubit = (560, "q")
+
     def __init__(self, id: int, representation: str):
         self.__id = id
         self.__representation = representation
@@ -61,6 +67,14 @@ class TileCode(Enum):
         return [
             TileCode.Invalid, TileCode.Debug, TileCode.Void, TileCode.FogOfWar,
             TileCode.Message, TileCode.Trigger, TileCode.Teleport, TileCode.Decoration,
+        ]
+
+    @staticmethod
+    def collectible_subtypes() -> List["TileCode"]:
+        return [
+            TileCode.Collectible,
+            TileCode.CollectibleKey, TileCode.CollectibleCoin, TileCode.CollectibleEnergy,
+            TileCode.CollectibleGate, TileCode.CollectibleQubit,
         ]
 
 

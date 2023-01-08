@@ -49,7 +49,11 @@ class ColorRules:
         widget.add_text_color_rule('\d', TileColorer.get_color(TileCode.Enemy), 'contains', match_type='regex')
         widget.add_text_color_rule('#', TileColorer.get_color(TileCode.Wall), 'contains', match_type='regex')
         widget.add_text_color_rule('o', TileColorer.get_color(TileCode.Obstacle), 'contains', match_type='regex')
-        widget.add_text_color_rule('c', TileColorer.get_color(TileCode.Collectible), 'contains', match_type='regex')
+
+        # collectibles
+        for ct in TileCode.collectible_subtypes():
+            widget.add_text_color_rule(ct.representation, TileColorer.get_color(TileCode.Collectible), 'contains',
+                                       match_type='regex')
 
     @staticmethod
     def apply_spaceship_rules(widget: WidgetWrapper):
