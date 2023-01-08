@@ -1,143 +1,133 @@
 Qrogue<
-Name = "Lesson 4: Running in Circles"
-Description = Speaker "0" "This lesson will show you new kinds of //02Doors//. You've already seen //05locked// and //05'normal'// ones."
-"The //01>// you see on the left side of this room is a //02One-way Door//. You can only move through it from //05one side//."
+Name = "Lesson 5: Position? Super!"
+Description = Speaker "0" "Now we will start to really dive into the //05strange world// of //02Quantum Computing//. Do you remember the word //02Superposition// from //05Lesson 3//?"
 NO_TELEPORTER
 
 // Introduced Concepts:
-// open doors, one way doors, event doors (triggered locally in room)
+// H Gate, Challenges
 
 [Robot]
-2 qubits [ *xgate, *xgate ]
+2 qubits [ *xgate, *cxgate ]
 circuit_space = 2
-maxenergy = 100
+maxenergy = 10
 
 [Layout]
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-| __ .. __ .. gg 17 SR 01 aa .. __ .. __ |
-| ..    ..    16    22    12    ..    .. |
-| __ .. __ .. ff .. hh .. bb .. __ .. __ |
-| ..    ..    15    ..    12    ..    .. |
-| __ .. __ .. ee 14 dd 13 cc .. __ .. __ |
+| __ .. __ .. __ .. aa .. __ .. dd .. __ |
+| ..    ..    ..    21    ..    11    .. |
+| __ .. __ .. ff 33 SR == za == cc .. __ |
+| ..    ..    ..    20    ..    11    .. |
+| __ .. __ .. __ .. bb .. __ .. ee .. __ |
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 [Custom Rooms]
 
-SR (Spawn):
+za (Gate):
 #############
-# _ _ _ _ _ #
-# _ _ _ _ _ #
-# _ _ _ _ m #
-# o _ _ _ o #
-# o o _ o o #
+# _ _ o _ _ #
+# _ _ o _ _ #
+# _ 0 c m 0 #
+# _ _ o _ _ #
+# _ _ o _ _ #
 #############
-m 1 *srMsg
-
-aa (Wild):
-#############
-# o o 0 o o #
-# _ _ _ _ _ #
-# _ _ _ _ _ #
-# _ _ _ _ _ #
-# _ _ _ _ _ #
-#############
-0 [0, 0, 1, 0] energy 5
-
-bb (Wild):
-#############
-# o o _ 5 o #
-# o _ 2 o o #
-# _ 0 o o o #
-# o _ 4 o o #
-# o o _ 7 o #
-#############
-0 [0, 0, 1, 0] key 1
+0 *reach2X energy 1
+c gate *hgate
+m 1 *tutHadamard1
+0 *superPos0 energy 5 tutorial *tutHadamard2
 
 cc (Wild):
 #############
-# _ _ 3 _ _ #
-# _ _ 6 _ _ #
-# 1 m 8 _ _ #
-# _ _ _ _ _ #
-# _ _ _ _ 9 #
+# o _ 0 o o #
+# o 2 _ 8 c #
+# m 0 0 o o #
+# o 1 _ 9 c #
+# o _ 0 o o #
 #############
-m *temporaryOWDs
+m 1 *tutHadamard3
+c key 1
+0 *H0X1
+0 *superPos1
+0 *superPos0
+0 *H1X0
+9 *superPos
+8 *superPos
+2 *bbStvs
+1 *bbStvs
 
-dd (Story):
+dd (Wild):
+#############
+# o o o o o #
+# _ o o o _ #
+# _ _ ! _ _ #
+# _ _ _ _ _ #
+# _ _ m _ _ #
+#############
+m 1 *tutChallenges trigger *sawChallenge
+! 2 *H1X1 energy 5 tutorial *tutHnXn1 trigger *challenge1
+c key 1
+
+ee (Wild):
+#############
+# _ _ m _ _ #
+# _ _ _ _ _ #
+# o _ _ _ o #
+# o _ ! _ o #
+# o o _ o o #
+#############
+m 1 *tutChallenges trigger *sawChallenge
+! 2 *H0X0 energy 5 tutorial *tutHnXn0 trigger *challenge0
+
+
+aa (Wild):
+#############
+# _ 4 0 3 _ #
+# _ _ 1 _ _ #
+# o _ _ _ o #
+# o _ 0 _ o #
+# o o _ o o #
+#############
+0 *X1H1 energy 5 tutorial *tutMinus
+0 *positiveStvs
+1 *positiveStvs
+3 *positiveStvs
+4 *positiveStvs
+
+bb (Wild):
 #############
 # o o _ o o #
-# o _ m _ o #
-# _ _ o _ _ #
-# c o o o c #
-# o o o o o #
+# o _ 0 _ o #
+# o _ _ _ o #
+# _ _ 1 _ _ #
+# _ 2 0 5 _ #
 #############
-m 1 *permVsTemp
-c energy 10
-c energy 10
+0 *positiveStvs
+0 *X0H0 energy 5 tutorial *tutMinus
+1 *positiveStvs 
+2 *positiveStvs
+5 *positiveStvs
 
-ee (Story):
+ff (Story):
 #############
-# _ _ m o o #
-# _ o _ o o #
-# _ o _ _ _ #
-# _ o o o o #
-# _ _ _ _ c #
-#############
-m *deadEnd
-c energy 25 trigger *eventDoorIntro
-
-ff (Wild):
-#############
-# o 1 _ o o #
-# o o 9 _ o #
-# o o o 0 5 #
-# o o 8 _ o #
-# o 2 _ o o #
-#############
-0 *base11
-1 *reach2X
-2 *reach2X
-5 *reach2X
-8 *reach2X
-9 *reach2X
-
-gg (Wild):
-#############
-# _ _ _ _ _ #
-# _ 2 0 4 _ #
-# _ 0 c 0 _ #
-# _ 6 0 8 _ #
-# _ _ m _ _ #
-#############
-m 1 *lockedOWD
-c key 1 tutorial *joking
-0 *base11
-2 *reach2X
-4 *reach2X
-6 *reach2X
-8 *reach2X
-
-hh (Story):
-#############
-# _ _ _ _ _ #
-# _ _ _ _ _ #
-# _ _ m _ _ #
-# _ _ _ _ _ #
-# _ _ _ _ _ #
+# 0 _ _ _ 0 #
+# _ o o o _ #
+# _ 0 m o _ #
+# _ o o o _ #
+# 0 _ _ _ 0 #
 #############
 m *doneMsg trigger *done
+0 *X0H0
+0 *H1X0
+0 *HX
+0 *X1H1
+0 *H0X1
 
 
 [Hallways]
-01 (open; ; )
-12 (closed; one way South permanent; )
-13 (closed; one way West; ) trigger *sawTempOneWay
-14 (closed; one way West permanent; )
-15 (event *eventDoorIntro; one way North permanent; )
-16 (locked; one way North permanent; )
-17 (closed; one way East; )
+11 (locked; ; )
+20 (event *challenge0; ; )
+21 (event *challenge1; ; )
 
-22 (locked; ; )
 
 [StateVector Pools]
 custom
@@ -149,13 +139,32 @@ custom
 *reach1X [ *base01, *base10 ]
 *reach2X [ *reach1X, [0, 0, 0, 1] ]
 
+*superPos0 [ [0.707, 0.707, 0, 0] ]
+*superPos1 [ [0.707, 0, 0.707, 0] ]
+*superPos [ *superPos0, *superPos1 ]
+
+*H0X1 [ [0, 0, 0.707, 0.707] ]
+*H1X0 [ [0, 0.707, 0, 0.707] ]
+*H0X0 [ *superPos0 ]
+*H1X1 [ *superPos1 ]
+*X0H0 [ [ 0.707, -0.707, 0, 0 ] ]
+*X1H1 [ [ 0.707, 0, -0.707, 0] ]
+*HX [ *X0H0, *H0X0, *H0X1, *H1X0, *H1X1, *X1H1 ]
+
+*bbStvs [ *reach2X, *superPos ]
+*eeStvs [ *reach2X, *superPos, *H0X1, *H1X0 ]
+
+*positiveStvs [ *reach2X, *superPos, *H0X1, *H1X0 ]
+
 default *reach2X
 
 [Reward Pools]
 custom 
-*key [key 1]
 *energySmall [energy 10]
 *energyBig [energy 20]
+
+*bbPool ordered [energy 5, key 1]
+*ddPool ordered [energy 10, energy 10, energy 5, key 1]
 
 default *energySmall
 
@@ -163,22 +172,22 @@ default *energySmall
 [Messages]
 // highlight text by encapsulating it in "//02abcd//" where "abcd" is the text to highlight and "02" one of the available styles: 01 is for tiles, 02 is for game objects, 03 for actions, 04 for keys on the keyboard and 05 for other words
 // speaker: 0 = Examiner, 1 = Scientist, 2 = System, 3 = Player
-*srMsg Speaker "0" "Technically this here is also a new kind of //02Door//. It's simply an //02Open Door//. Not really anything special about it. Just treat it like a //02Normal Door//."
+default Speaker "0"
 
+*tutHadamard1 Speaker "0" "Now we're talking! With the help of a //02Hadamard Gate// (//02H Gate// for short) you are finally able to leave the realm of //050s// and //051s//. "
+*tutHadamard2 Speaker "0" prio "If applied to a //02Qubit// the //02H Gate// will bring it to a state //05in the middle of 0 and 1//." 
+"No, not //050.5//. It is a bit more //05complex//. "
+*tutHadamard3 Speaker "0" prio "But indeed the state of a //02Qubit// at the output of an //02H Gate// corresponds to a //0550%// chance of it //05collapsing to 0// and a //0550%// chance of it //05collapsing to 1//. You do //05remember// the things you learned in //05lesson 3//, right?"
 
-*temporaryOWDs Speaker "0" prio "The //02One-way Doors// you have seen now were all //05permanent//. You //03walked// through them but you //05couldn't go back//. But there are also //05temporary// ones. Once you //03walked// through them they are //05open forever//." when *sawTempOneWay then *tempOWDSeen
-*tempOWDSeen Speaker "0" "See, the //02One-way Door// is gone and you were able to go back. Now continue to go clockwise!"
+*tutChallenges Speaker "0" prio "The //01!// is a new kind of //02Puzzle//: a //02Challenge//." "It is basically just like a normal //02Puzzle// but with additional constraints like a minimum number of //02Gates// you //05have to use// or a maximum number you are allowed to use." when *sawChallenge then *tutChallengeAgain
+*tutChallengeAgain "Another //02Challenge//!"
 
-*permVsTemp Speaker "0" prio "Note that there is //05no visual difference// between //05permanent// and //05temporary// //02One-way Doors//. You only get to know one's type by walking through it." 
-"During the lessons we //05won't trap you// but on real //05missions// you sometimes have to consider the //05risk//."
+*tutHnXn0 Speaker "0" "You already know this //02Target State//. You can reach it with a single //02H Gate//. But let's try to also use an //02X Gate//." when *challenge1 then *tutHXAgain
+*tutHnXn1 Speaker "0" "You already know this //02Target State//. You can reach it with a single //02H Gate//. But let's try to also use an //02X Gate//." when *challenge0 then *tutHXAgain
+*tutHXAgain Speaker "0" "Again, try to also place your //02X Gate//."
 
-*deadEnd Speaker "0" prio "Looks like a //05dead end//." "But is it reall one? Or is it just some new kind of //02Door// playing with you?" when *eventDoorIntro then *eventDoors
-*eventDoors Speaker "0" prio "Maybe you already guessed it, but this is indeed an //02Event Door//. It's usually //05invisible// but as soon as it is //05triggered// (e.g. by //03picking up// a //02Collectible// or //03solving// a //02Puzzle//) it will //05open//."
+*tutMinus Speaker "0" "Look, the //02Target State// contains a //05negative number//. What a refreshing change!"
 
-*lockedOWD Speaker "0" prio "Did you see that? This //02One-way Door// was //05locked// in addition to its //05one-way// properties. That means you just used the one and only //02Key// you received..."
-
-*joking Speaker "0" "AHAHA, what a luck! There was actually another //02Key//. Now you can finally //03open// the //02Locked Door// in the starting room."
-
-*doneMsg Speaker "0" "Hopefully you weren't too shocked the two times we made you believe you have to redo the lesson. But yeah, you made it. So let's move on!"
+*doneMsg Speaker "0" prio "You've now seen the //02H Gate// alone and in combination with an //02X Gate//." "What do you think will happen if you combine it with a //02CX Gate//?" "Find out in the next lesson!"
 
 >Qrogue

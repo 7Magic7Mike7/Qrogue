@@ -7,7 +7,7 @@ from qrogue.util.config import TestConfig, PopupConfig, PyCuiColors
 class MapConfig:
     @staticmethod
     def num_of_lessons() -> int:
-        return 8  # Lesson 0 to 7
+        return 6  # Lesson 0 to 5
 
     @staticmethod
     def map_width() -> int:
