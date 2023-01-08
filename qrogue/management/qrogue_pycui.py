@@ -253,6 +253,9 @@ class QrogueCUI(PyCUI):
         if Config.debugging():
             self.set_on_draw_update_func(Config.inc_frame_count)
 
+        if SaveData.instance().is_fresh_save:
+            Popup.generic_info("WELCOME TO QROGUE!", HelpText.get(HelpTextType.Welcome))
+
     def _refresh_height_width(self) -> None:
         try:
             super(QrogueCUI, self)._refresh_height_width()
