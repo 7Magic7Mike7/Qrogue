@@ -206,7 +206,8 @@ class QrogueCUI(PyCUI):
         self.__shop = ShopWidgetSet(self.__controls, self.__render, Logger.instance(), self, self.__continue_explore)
 
         widget_sets: List[MyWidgetSet] = [self.__spaceship, self.__training, self.__navigation, self.__explore,
-                                          self.__fight, self.__boss_fight, self.__shop, self.__riddle, self.__workbench]
+                                          self.__fight, self.__boss_fight, self.__shop, self.__riddle, self.__challenge,
+                                          self.__workbench]
         # INIT KEYS
         # add the general keys to everything except Transition, Menu and Pause
         for widget_set in widget_sets:
