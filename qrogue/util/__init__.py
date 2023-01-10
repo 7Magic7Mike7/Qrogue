@@ -11,3 +11,4 @@ from . import util_functions
 # importing
 # none
 
+HelpText.init()

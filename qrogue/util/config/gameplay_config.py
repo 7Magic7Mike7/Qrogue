@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Callable, Tuple, List, Dict, Any
+from typing import Callable, Tuple, List, Dict, Any, Optional
 
 from qrogue.util.config import TestConfig, PopupConfig, PyCuiColors
 
@@ -7,7 +7,7 @@ from qrogue.util.config import TestConfig, PopupConfig, PyCuiColors
 class MapConfig:
     @staticmethod
     def num_of_lessons() -> int:
-        return 8  # Lesson 0 to 7
+        return 6  # Lesson 0 to 5
 
     @staticmethod
     def map_width() -> int:
@@ -260,7 +260,7 @@ class Options(Enum):
     allow_implicit_removal = ("Allow implicit Removal", _get_boolean_callback(), 2, 0,
                               "Allows you to place a gate on an occupied spot, removing the occupying gate in the "
                               "process.")
-    allow_multi_move = ("Allow multi move", _get_boolean_callback(), 2, 0,
+    allow_multi_move = ("Allow multi move", _get_boolean_callback(), 2, 1,
                         "Allows you to move multiple tiles at once by pressing a number followed by a direction.")
     auto_skip_text_animation = ("Auto skip text animation", _get_boolean_callback(), 2, 0,
                                 "During some special scene transitions there will be some animated text describing "
@@ -317,11 +317,14 @@ class GameplayConfig:
     }
 
     @staticmethod
-    def get_options() -> List[Tuple[Options, Callable[[Options], str]]]:
+    def get_options(needed_options: Optional[List[Options]] = None) -> List[Tuple[Options, Callable[[Options], str]]]:
         """
 
         :return: list of [Option, Function to proceed to next value] for all gameplay config options
         """
+        if needed_options is None:
+            needed_options = GameplayConfig.__OPTIONS
+
         def next_(option: Options) -> str:
             # first increment the current index
             next_index = GameplayConfig.__OPTIONS[option] + 1
@@ -330,7 +333,7 @@ class GameplayConfig:
             GameplayConfig.__OPTIONS[option] = next_index
             # then return the corresponding new value
             return option.get_value(next_index)
-        return [(option, next_) for option in GameplayConfig.__OPTIONS]
+        return [(option, next_) for option in needed_options]
 
     @staticmethod
     def get_option_value(option: Options, convert: bool = True) -> Any:

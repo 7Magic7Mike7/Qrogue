@@ -608,11 +608,17 @@ class ExpeditionGenerator(DungeonGenerator):
         gate_factory = GateFactory.default()
         riddle_factory = RiddleFactory.default(robot)
         boss_factory = BossFactory.default(robot)
-        typed_collectible_factory: Dict[CollectibleType, CollectibleFactory] = {
+        typed_collectible_factory: Dict[Optional[CollectibleType], CollectibleFactory] = {
+            None: CollectibleFactory([Energy(1), Energy(1), Energy(3)]),    # default factory
             CollectibleType.Gate: gate_factory,
             CollectibleType.Pickup: CollectibleFactory([Key(1), Energy(5), Energy(10), Energy(10), Energy(15),
                                                         Energy(20)])
         }
+
+        def get_collectible_factory(type_: CollectibleType) -> CollectibleFactory:
+            if type_ in typed_collectible_factory:
+                return typed_collectible_factory[type_]
+            return typed_collectible_factory[None]
 
         gate = gate_factory.produce(rm)
         riddle = riddle_factory.produce(rm)
@@ -699,7 +705,7 @@ class ExpeditionGenerator(DungeonGenerator):
                                 elif tile_code == tiles.TileCode.Energy:
                                     return tiles.Energy(tile_data)
                                 elif tile_code == tiles.TileCode.Collectible:
-                                    return tiles.Collectible(typed_collectible_factory[tile_data].produce(rm))
+                                    return tiles.Collectible(get_collectible_factory(tile_data).produce(rm))
                                 elif tile_code == tiles.TileCode.Wall:
                                     return tiles.Wall()
                                 elif tile_code == tiles.TileCode.Obstacle:

@@ -184,7 +184,8 @@ class QrogueCUI(PyCUI):
         self.__transition = TransitionWidgetSet(self.__controls, Logger.instance(), self, self.__render,
                                                 self.set_refresh_timeout)
         self.__pause = PauseMenuWidgetSet(self.__controls, self.__render, Logger.instance(), self,
-                                          self.__general_continue, SaveData.instance().save, self._switch_to_menu)
+                                          self.__general_continue, SaveData.instance().save, self._switch_to_menu,
+                                          MapManager.instance().reload)
         self.__pause.set_data(None, "Qrogue", SaveData.instance().achievement_manager)
 
         self.__spaceship = SpaceshipWidgetSet(self.__controls, Logger.instance(), self, self.__render)
@@ -206,7 +207,8 @@ class QrogueCUI(PyCUI):
         self.__shop = ShopWidgetSet(self.__controls, self.__render, Logger.instance(), self, self.__continue_explore)
 
         widget_sets: List[MyWidgetSet] = [self.__spaceship, self.__training, self.__navigation, self.__explore,
-                                          self.__fight, self.__boss_fight, self.__shop, self.__riddle, self.__workbench]
+                                          self.__fight, self.__boss_fight, self.__shop, self.__riddle, self.__challenge,
+                                          self.__workbench]
         # INIT KEYS
         # add the general keys to everything except Transition, Menu and Pause
         for widget_set in widget_sets:
@@ -252,6 +254,9 @@ class QrogueCUI(PyCUI):
         # MISC
         if Config.debugging():
             self.set_on_draw_update_func(Config.inc_frame_count)
+
+        if SaveData.instance().is_fresh_save:
+            Popup.generic_info("WELCOME TO QROGUE!", HelpText.get(HelpTextType.Welcome))
 
     def _refresh_height_width(self) -> None:
         try:

@@ -70,7 +70,9 @@ class Door(WalkTriggerTile):
             else:
                 return Door.__INVALID_DIRECTION_IMG
         else:
-            if self.__direction is Direction.East or self.__direction is Direction.West:
+            if self.is_key_locked:
+                return "+"
+            elif self.__direction is Direction.East or self.__direction is Direction.West:
                 return "|"
             else:
                 return "-"

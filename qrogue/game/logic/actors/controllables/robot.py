@@ -127,7 +127,7 @@ class _Attributes:
         if CheatConfig.got_inf_resources():
             return 0    # no decrease in this case
 
-        self.__cur_energy -= amount
+        # self.__cur_energy -= amount    # todo activate again for Expeditions?
         if self.__cur_energy < 0:
             # e.g. if we decrease by 6 then cur_energy is now -2, so actually we were only able to decrease it by 4
             amount += self.__cur_energy

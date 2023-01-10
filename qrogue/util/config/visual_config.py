@@ -11,6 +11,9 @@ class ColorCode(enum.Enum):
     ACTION_HIGHLIGHT = "03"
     KEY_HIGHLIGHT = "04"
     WORD_HIGHLIGHT = "05"
+
+    POPUP_META_INFO = "20"
+
     SPACESHIP_FLOOR = "70"
 
     WRONG_AMPLITUDE = "90"
@@ -46,6 +49,8 @@ class ColorConfig:
         str(ColorCode.ACTION_HIGHLIGHT):    PyCuiColors.RED_ON_WHITE,
         str(ColorCode.KEY_HIGHLIGHT):       PyCuiColors.MAGENTA_ON_WHITE,
         str(ColorCode.WORD_HIGHLIGHT):      PyCuiColors.BLUE_ON_WHITE,
+
+        str(ColorCode.POPUP_META_INFO):     PyCuiColors.WHITE_ON_MAGENTA,
 
         str(ColorCode.WRONG_AMPLITUDE):     PyCuiColors.RED_ON_BLACK,
         str(ColorCode.CORRECT_AMPLITUDE):   PyCuiColors.GREEN_ON_BLACK,
@@ -193,6 +198,10 @@ class PopupConfig:
 
     PADDING_X = 2
     PADDING_Y = 2
+
+    @staticmethod
+    def scroll_indicator() -> str:
+        return "scroll down"
 
     @staticmethod
     def default_color() -> int:

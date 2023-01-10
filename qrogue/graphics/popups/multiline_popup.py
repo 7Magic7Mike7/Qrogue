@@ -4,7 +4,7 @@ from py_cui import ColorRule
 from py_cui.popups import Popup as PyCuiPopup
 from py_cui.ui import MenuImplementation
 
-from qrogue.util import ColorConfig as CC, Keys, Logger, PopupConfig, ColorConfig
+from qrogue.util import ColorConfig as CC, Keys, Logger, PopupConfig, ColorConfig, ColorCode
 
 
 class MultilinePopup(PyCuiPopup, MenuImplementation):
@@ -190,7 +190,9 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
         info_line_y = self._start_y + self.textbox_height + 1
         if len(self.__lines) > self.textbox_height:
             rem_rows = str(len(self.__lines) - counter - self._top_view + 1)
-            rem_rows = self._pageAlignment[:-len(rem_rows)] + rem_rows
+            rem_rows = self._pageAlignment[:-len(rem_rows)] + ColorConfig.colorize(ColorCode.POPUP_META_INFO, rem_rows)
+            prefix = PopupConfig.scroll_indicator()
+            rem_rows = ColorConfig.colorize(ColorCode.POPUP_META_INFO, prefix) + rem_rows[len(prefix):]
             self._renderer.draw_text(self, rem_rows, info_line_y, selected=False)
             info_line_y += 1
 
