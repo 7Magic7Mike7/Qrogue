@@ -40,14 +40,16 @@ class MyWidgetSet(WidgetSet, Renderable, ABC):
 
         if Config.debugging():
             width -= 1  # we need space for frame count
-            frame_count = widget_set.add_block_label('Frame count', 0, UIConfig.WINDOW_WIDTH - 1,
-                                                     row_span=UIConfig.HUD_HEIGHT, column_span=1, center=False)
-            widgets.append(frame_count)
 
         situational_hud = widget_set.add_block_label('Situational', 0, UIConfig.HUD_WIDTH, row_span=UIConfig.HUD_HEIGHT,
                                                      column_span=width, center=False)
         situational_hud.toggle_border()
         widgets.append(situational_hud)
+
+        if Config.debugging():
+            frame_count = widget_set.add_block_label('Frame count', 0, UIConfig.WINDOW_WIDTH - 1,
+                                                     row_span=UIConfig.HUD_HEIGHT, column_span=1, center=False)
+            widgets.append(frame_count)
 
         return HudWidget(MyMultiWidget(widgets))
 
@@ -102,7 +104,7 @@ class MyWidgetSet(WidgetSet, Renderable, ABC):
         # globally update HUD based on the progress
         HudConfig.ShowMapName = True
         HudConfig.ShowKeys = True
-        HudConfig.ShowEnergy = False #Ach.check_unlocks(Unlocks.ShowEnergy, progress)
+        HudConfig.ShowEnergy = False    # Ach.check_unlocks(Unlocks.ShowEnergy, progress)
 
     def render(self) -> None:
         self.__base_render(self.get_widget_list())
@@ -1477,7 +1479,7 @@ class ChallengeWidgetSet(ReachTargetWidgetSet):
             constraints = f"Constraints: Use exactly {target.min_gates} gates."
         else:
             constraints = f"Constraints: Use between {target.min_gates} and {target.max_gates} gates."
-        self._hud.update_situational(f"Flee energy: {self._target.flee_energy}\n{constraints}")
+        self._hud.update_situational(constraints)
 
     def _on_commit_fail(self) -> bool:
         # todo check if it's because the circuit is wrong or the constraints are not fulfilled
