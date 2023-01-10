@@ -1156,8 +1156,11 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
     def __choices_adapt(self) -> bool:
         options = [instruction.selection_str() for instruction in self._robot.backpack]
+        commands = [MyWidgetSet.BACK_STRING]
+        if Ach.check_unlocks(Unlocks.GateRemove, self._progress):
+            commands = ["Remove"] + commands
         self._details.set_data(data=(
-            SelectionWidget.wrap_in_hotkey_str(options) + ["Remove", MyWidgetSet.BACK_STRING],
+            SelectionWidget.wrap_in_hotkey_str(options) + commands,
             [self.__choose_instruction]
         ))
         self._details_content = self._DETAILS_EDIT

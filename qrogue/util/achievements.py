@@ -23,6 +23,7 @@ class Unlocks(enum.Enum):
     ShowEnergy = 30
 
     # puzzle unlocks
+    GateRemove = 52
     CircuitReset = 50
     PuzzleFlee = 51
 
@@ -75,6 +76,8 @@ class Ach:
         elif unlock is Unlocks.ShowEnergy:
             return progress > 0     # Lesson 0 completed
 
+        elif unlock is Unlocks.GateRemove:
+            return progress >= 4    # we are at least in Lesson 4
         elif unlock is Unlocks.CircuitReset:
             return progress >= MapConfig.num_of_lessons()    # all lessons completed
         elif unlock is Unlocks.PuzzleFlee:
