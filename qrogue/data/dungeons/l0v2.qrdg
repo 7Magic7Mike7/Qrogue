@@ -71,13 +71,12 @@ m *doneMsg trigger *done
 [StateVector Pools]
 custom
 
-*base00 [ [1, 0, 0, 0] ]
 *base01 [ [0, 1, 0, 0] ]
 *base10 [ [0, 0, 1, 0] ]
 *base11 [ [0, 0, 0, 1] ]
 
 *reach1X [ *base01, *base10 ]
-*reach2X [ *reach1X, *base00, *base11 ]
+*reach2X [ *reach1X, *base11 ]
 
 default *reach2X
 
