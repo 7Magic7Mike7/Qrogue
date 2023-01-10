@@ -170,8 +170,8 @@ class XGate(SingleQubitGate):
         return " X "
 
     def description(self) -> str:
-        return "In the classical world an X Gate corresponds to an inverter. It swaps the amplitudes of |0> and |1>, " \
-               "hence describing a 180° rotation along the x-axis."
+        return "In the classical world an X Gate corresponds to an inverter. It swaps the amplitudes of |0> and |1>.\n" \
+               "In the quantum world this corresponds to a rotation of 180° along the x-axis, hence the name X Gate."
 
     def copy(self) -> "Instruction":
         return XGate()
@@ -188,7 +188,7 @@ class YGate(SingleQubitGate):
         return " Y "
 
     def description(self) -> str:
-        return "A Y Gate rotates the Qubit along the y-axis by 180."
+        return "A Y Gate rotates the Qubit along the y-axis by 180°."
 
     def copy(self) -> "Instruction":
         return YGate()
@@ -216,7 +216,8 @@ class HGate(SingleQubitGate):
         super().__init__(gates.HGate())
 
     def description(self) -> str:
-        return "The Hadamard Gate is often used to bring Qubits to Superposition."
+        return "The Hadamard Gate is often used to bring Qubits to Superposition. In a simple case this corresponds " \
+               "to a rotation of 90°."
 
     def short_name(self) -> str:
         return "Hadamard"
