@@ -859,7 +859,7 @@ class ExploreWidgetSet(MapWidgetSet):
     def set_data(self, map_: Map) -> None:
         controllable = map_.controllable_tile.controllable
         if isinstance(controllable, Robot):
-            self.__hud.set_data((controllable, map_.name, "TEST"))  # todo fix/remove
+            self.__hud.set_data((controllable, map_.name, ""))  # todo fix/remove
         else:
             self.__hud.reset_data()
         self._map_widget.set_data(map_)
