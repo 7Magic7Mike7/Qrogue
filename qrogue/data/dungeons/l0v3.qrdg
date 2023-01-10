@@ -41,11 +41,11 @@ aa (Wild):
 # _ _ _ 2 _ #
 # _ _ _ _ 4 #
 #############
-0 [0, 0, 1, 0] energy 5 tutorial *tutSingleX trigger *didPuzzle
-1 *reach1X energy 2 tutorial *tutSingleX trigger *didPuzzle
-2 *reach1X energy 2 tutorial *tutSingleX trigger *didPuzzle
-3 *reach1X energy 2 tutorial *tutSingleX trigger *didPuzzle
-4 *reach1X energy 2 tutorial *tutSingleX trigger *didPuzzle
+0 [0, 0, 1, 0] none tutorial *tutSingleX trigger *didPuzzle
+1 *reach1X none tutorial *tutSingleX trigger *didPuzzle
+2 *reach1X none tutorial *tutSingleX trigger *didPuzzle
+3 *reach1X none tutorial *tutSingleX trigger *didPuzzle
+4 *reach1X none tutorial *tutSingleX trigger *didPuzzle
 0 *reach1X
 
 bb (Riddle):
@@ -57,7 +57,7 @@ bb (Riddle):
 # _ _ m _ _ #
 #############
 m 1 *riddleNote
-r 3 [0, 1, 0, 0] energy 10 tutorial *tutTODO trigger *didRiddle
+r 3 [0, 1, 0, 0] key 1 tutorial *tutTODO trigger *didRiddle
 
 cc (Wild):
 #############
@@ -115,15 +115,7 @@ custom
 default *reach1X
 
 [Reward Pools]
-custom 
-*key [key 1]
-*energyTiny [energy 5]
-*energySmall [energy 10]
-*energyMedium [energy 15]
-*energyBig [energy 20]
-*energyHuge [energy 30]
-
-default *energySmall
+default *none
 
 
 [Messages]

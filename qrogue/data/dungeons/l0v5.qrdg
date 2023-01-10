@@ -34,8 +34,8 @@ m 1 *recap1
 
 aa (Story):
 #############
-# c o 0 m _ #
-# m o 0 o _ #
+# m o 0 m _ #
+# _ o 0 o _ #
 # _ o _ o m #
 # _ o m o 1 #
 # 0 0 0 o 9 #
@@ -44,7 +44,6 @@ m 1 *recap3
 m 1 *recap5
 m 1 *recap2
 m 1 *recap4
-c energy 10 trigger *doorEvent
 0 *introXCXH
 
 bb (Wild):
@@ -60,13 +59,14 @@ m 1 *multiDigits
 cc (Pause):
 #############
 # o _ _ _ o #
-# _ o c o _ #
-# _ c 0 c _ #
-# _ o c o _ #
+# _ o _ o _ #
+# 0 _ 0 _ 0 #
+# _ o _ o _ #
 # o _ _ _ o #
 #############
+0 *reachable
 0 *entangledNeg tutorial *inverseEntanglement trigger *sawEntanglement
-c energy 25
+0 *reachable
 
 dd (Wild):
 #############
@@ -77,10 +77,10 @@ dd (Wild):
 # o o 3 2 2 #
 #############
 m 1 *einstein
-1 *reachable energy 50
-2 *reachable energy 50
-3 *reachable energy 50
-4 *reachable energy 50
+1 *reachable
+2 *reachable
+3 *reachable
+4 *reachable
 
 ee (Story):
 #############
@@ -104,7 +104,7 @@ m 1 *tutEntangledTiles
 
 xb (Story):
 #############
-# o o c _ 0 #
+# o o _ _ 0 #
 # o o o o _ #
 # _ o o o m #
 # _ o o o _ #
@@ -112,7 +112,6 @@ xb (Story):
 #############
 m *entangledDoorX1 trigger *enteredXB
 0 *entangledPos tutorial *entHint
-c energy 20
 
 xc (Wild):
 #############
@@ -142,11 +141,10 @@ zb (Story):
 # _ o o o _ #
 # _ o o o m #
 # o o o o _ #
-# o o c _ 0 #
+# o o _ _ 0 #
 #############
 m *entangledDoorZ1 trigger *enteredZB
 0 *entangledPos tutorial *entHint
-c energy 20
 
 zc (Wild):
 #############
@@ -210,11 +208,7 @@ custom
 default *basicHXCX
 
 [Reward Pools]
-custom 
-*energySmall [energy 10]
-*energyBig [energy 20]
-
-default *energySmall
+default *none
 
 
 [Messages]

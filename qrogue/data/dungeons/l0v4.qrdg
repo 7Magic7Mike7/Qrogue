@@ -31,10 +31,10 @@ za (Gate):
 # _ _ o _ _ #
 # _ _ o _ _ #
 #############
-0 *reach2X energy 1
+0 *reach2X none
 c gate *hgate
 m 1 *tutHadamard1
-0 *superPos0 energy 5 tutorial *tutHadamard2
+0 *superPos0 none tutorial *tutHadamard2
 
 cc (Wild):
 #############
@@ -47,7 +47,7 @@ cc (Wild):
 m 1 *tutHadamard3
 c key 1
 0 *H0X1
-0 *superPos1
+0 *superPos1 none
 0 *superPos0
 0 *H1X0
 9 *superPos
@@ -64,8 +64,7 @@ dd (Wild):
 # _ _ m _ _ #
 #############
 m 1 *tutChallenges trigger *sawChallenge
-! 2 *H1X1 energy 5 tutorial *tutHnXn1 trigger *challenge1
-c key 1
+! 2 *H1X1 none tutorial *tutHnXn1 trigger *challenge1
 
 ee (Wild):
 #############
@@ -76,8 +75,7 @@ ee (Wild):
 # o o _ o o #
 #############
 m 1 *tutChallenges trigger *sawChallenge
-! 2 *H0X0 energy 5 tutorial *tutHnXn0 trigger *challenge0
-
+! 2 *H0X0 none tutorial *tutHnXn0 trigger *challenge0
 
 aa (Wild):
 #############
@@ -87,7 +85,7 @@ aa (Wild):
 # o _ 0 _ o #
 # o o _ o o #
 #############
-0 *X1H1 energy 5 tutorial *tutMinus
+0 *X1H1 none tutorial *tutMinus1 trigger *minus1
 0 *positiveStvs
 1 *positiveStvs
 3 *positiveStvs
@@ -102,7 +100,7 @@ bb (Wild):
 # _ 2 0 5 _ #
 #############
 0 *positiveStvs
-0 *X0H0 energy 5 tutorial *tutMinus
+0 *X0H0 none tutorial *tutMinus0 trigger *minus0
 1 *positiveStvs 
 2 *positiveStvs
 5 *positiveStvs
@@ -159,14 +157,7 @@ custom
 default *reach2X
 
 [Reward Pools]
-custom 
-*energySmall [energy 10]
-*energyBig [energy 20]
-
-*bbPool ordered [energy 5, key 1]
-*ddPool ordered [energy 10, energy 10, energy 5, key 1]
-
-default *energySmall
+default *none
 
 
 [Messages]

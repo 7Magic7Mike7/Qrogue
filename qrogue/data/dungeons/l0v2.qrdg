@@ -84,16 +84,9 @@ default *reach2X
 [Reward Pools]
 custom 
 
-*key [key 1]
-*energyTiny [energy 1]
-*energySmall [energy 3]
-*energyMedium [energy 5]
-*energyBig [energy 7]
-*energyHuge [energy 10]
-
 *xgate [gate *x]
 
-default *energySmall
+default *none
 
 [Messages]
 // highlight text by encapsulating it in "//02abcd//" where "abcd" is the text to highlight and "02" one of the available styles: 01 is for tiles, 02 is for game objects, 03 for actions, 04 for keys on the keyboard and 05 for other words
