@@ -658,7 +658,7 @@ class PauseMenuWidgetSet(MyWidgetSet):
 
     def __options(self) -> bool:
         # hide most options for tutorial's sake
-        options = [Options.allow_implicit_removal, Options.allow_multi_move]    # GameplayConfig.get_options()
+        options = GameplayConfig.get_options([Options.allow_implicit_removal, Options.allow_multi_move])
         texts = []
         for op_tup in options:
             op, _ = op_tup
