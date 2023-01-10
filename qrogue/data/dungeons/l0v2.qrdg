@@ -92,11 +92,11 @@ default *none
 // speaker: 0 = Examiner, 1 = Scientist, 2 = System, 3 = Player
 default Speaker "0"
 
-*newDigits Speaker "0" "Could a //013// maybe have a //0530%// chance to skip the //02Puzzle//?"
+*newDigits Speaker "0" pos 5 "Could a //013// maybe have a //0530%// chance to skip the //02Puzzle//?"
 
-*remainingDigits Speaker "0" prio "Of course we're talking about //05chances// here. So it is absolutely possible that e.g. you manage to skip the //02Puzzle// of a //011// while having to solve one for a //019//. In //02Quantum Computing// we call this //05undeterministic// behaviour //02Superposition//."
+*remainingDigits Speaker "0" prio "Of course we're talking about //05chances// here. So it is absolutely possible that e.g. you manage to skip the //02Puzzle// of a //011// while having to solve one for a //019//. In //02Quantum Computing// we call this //05undeterministic// state //02Superposition//."
 
-*tutCollapse Speaker "0" prio "What is actually happening?" "By //03stepping// on a digit you make it //05collapse//. This means it will either confront you with a //02Puzzle// or not. This can also be //05interpreted// as either //05collapsing to 1// (skip the puzzle) or //05collapsing to 0// (having to solve the puzzle). And as already hinted a //010// has a //050%//, a //015// a //0550%// and a //019// a //0590%// chance to //05collapse to 1//." 
+*tutCollapse Speaker "0" prio "What is actually happening?" "By //03stepping// on a digit you make its //05state collapse//. This means it will either confront you with a //02Puzzle// or not. This can also be //05interpreted// as either //05collapsing to 1// (skip the puzzle) or //05collapsing to 0// (having to solve the puzzle). And as already hinted a //010// has a //050%//, a //015// a //0550%// and a //019// a //0590%// chance to //05collapse to 1//." 
 "That's also why there is no //0110//. It wouldn't make sense to //05always skip// a //02Puzzle//, hence, //05always collapsing to 1//."
 
 *tutCollapseQuantum "In //05Quantum Computing// we usually want such a collapse to happen at the very end of an algorithm to convert the quantum information the qubits hold into classical information (0s and 1s). This is necessary to be able to work with the output outside of quantum computers. However, in real quantum hardware a collapse can also happen due to errors or unwanted influence from the outside. That's why many quantum computers need powerful shielding."
