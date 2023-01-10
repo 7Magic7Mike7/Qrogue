@@ -34,7 +34,7 @@ class _HL:
     shop = CC.highlight_object("Shop")
     special_rooms = CC.highlight_object("Special Rooms")
     state = CC.highlight_object("State")
-    state_vectors = CC.highlight_object("StateVectors")
+    #state_vectors = CC.highlight_object("StateVectors")
     target_state = CC.highlight_object("Target State")
     target_stv = CC.highlight_object("Target State Vector")
 
@@ -45,6 +45,7 @@ class _HL:
     editing = CC.highlight_action("editing")
     edits = CC.highlight_action("edits")
     position = CC.highlight_action("position")
+    place = CC.highlight_action("place")
     talk = CC.highlight_action("talk")
 
     # words
@@ -174,15 +175,15 @@ class HelpText:
             "preferred option over simply closing the window!]",
 
         HelpTextType.Fight:
-            f"Basically {_HL.quantum_computing} is just a lot of complex {_HL.mat_vec_mul}. There's the "
-            f"{_HL.circuit_matrix} that is multiplied with an {_HL.input_stv} to result in an {_HL.output_stv}. Your "
-            f"goal is to make the latter {_HL.equal} to the {_HL.target_stv}. The input state vector is always the "
-            f"same, so you can only {_HL.change} the {_HL.circuit_matrix} by {_HL.editing} the circuit.\n"
-            f"First you have to {_HL.choose} and then {_HL.position} a {_HL.gate} (via {_HL.navigation_keys}). "
+            f"Basically {_HL.quantum_computing} is just a lot of complex {_HL.mat_vec_mul}:\n"
+            f"{_HL.circuit_matrix} * {_HL.input_stv} = {_HL.output_stv}\n"
+            f"Your goal is to make the latter {_HL.equal} to the {_HL.target_stv}. While the input state vector always "
+            f"stays the same, you can {_HL.change} the {_HL.circuit_matrix} by {_HL.editing} your circuit.\n"
+            f"First you have to {_HL.choose} and then {_HL.place} a {_HL.gate} (via {_HL.navigation_keys}). "
             f"Afterwards use {_HL.action_keys} to confirm the placement. This will update both {_HL.circuit_matrix} "
             f"and {_HL.output_stv} accordingly. Green numbers in {_HL.output_stv} indicate correct and red incorrect "
             f"values. Once the whole vector is green, {_HL.output_stv} and {_HL.target_stv} are equal and the "
-            f"{_HL.puzzle} solved.",
+            f"{_HL.puzzle} is solved.",
 
         HelpTextType.Riddle:
             f"{_HL.riddles} are very similar to {_HL.puzzles}: There is a {_HL.target_state} you need to reach "
@@ -205,12 +206,8 @@ class HelpText:
 
         HelpTextType.Game:
             f"Qrogue is a game about {_HL.quantum_computing}. You will explore "
-            f"Levels and Expeditions with the help of {_HL.quantum_gates} you can use for your "
-            f"{_HL.quantum_circuit}. But don't expect it to be a cakewalk! "
-            f"There are {_HL.puzzles} challenging you to reach a certain "
-            f"{_HL.quantum_state} everywhere. Your goal is to expand your library of "
-            f"{_HL.quantum_gates} which are hidden throughout the universe "
-            f"or guarded by special {_HL.puzzles}.\n",
+            f"Levels and Expeditions and solve {_HL.puzzles} with the help of {_HL.quantum_gates} to reach even "
+            f"farther places of the universe.\n",
 
         HelpTextType.Pause:
             "In the Pause Menu you can do several things:\n"
@@ -228,7 +225,7 @@ class HelpText:
     @staticmethod
     def init():
         HelpText.__DIC[HelpTextType.Welcome] = HelpText.get(HelpTextType.Game) + \
-            "But before you are allowed to explore the universe you have to complete a trainings program.\n" \
+            "\nBut before you are allowed to explore the universe you have to complete a trainings program.\n" \
             f"Now close this dialog by pressing {_HL.action_keys}. Select {_HL.start_journey} with " \
             f"{_HL.navigation_keys} and confirm your selection with {_HL.action_keys} to begin!"
 
