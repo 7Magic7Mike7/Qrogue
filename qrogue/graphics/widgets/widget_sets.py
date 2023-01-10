@@ -576,11 +576,12 @@ class PauseMenuWidgetSet(MyWidgetSet):
 
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  continue_callback: Callable[[], None], save_callback: Callable[[], Tuple[bool, CommonPopups]],
-                 exit_run_callback: Callable[[], None]):
+                 exit_run_callback: Callable[[], None], restart_callback: Callable[[], None]):
         super().__init__(logger, root, render)
         self.__continue_callback = continue_callback
         self.__save_callback = save_callback
         self.__exit_run = exit_run_callback
+        self.__restart_callback = restart_callback
         self.__achievement_manager = None
 
         self.__hud = MyWidgetSet.create_hud_row(self)
@@ -589,9 +590,10 @@ class PauseMenuWidgetSet(MyWidgetSet):
                                        column_span=UIConfig.PAUSE_CHOICES_WIDTH, center=True)
         self.__choices = SelectionWidget(choices, controls, stay_selected=True)
         self.__choices.set_data(data=(
-            ["Continue", "Save", "Manual", "Achievements", "Options", "Exit"],
-            [self.__continue, self.__save, self.__help, self.__achievements, self.__options, self.__exit]
-        ))
+            ["Continue", "Restart", "Save", "Manual", "Options", "Exit"],
+            [self.__continue, self.__restart, self.__save, self.__help, self.__options,
+             self.__exit]
+        ))  # todo add back achievements
 
         details = self.add_block_label('Details', UIConfig.HUD_HEIGHT, UIConfig.PAUSE_CHOICES_WIDTH,
                                        row_span=UIConfig.WINDOW_HEIGHT-UIConfig.HUD_HEIGHT,
@@ -623,6 +625,10 @@ class PauseMenuWidgetSet(MyWidgetSet):
 
     def __continue(self) -> bool:
         self.__continue_callback()
+        return False
+
+    def __restart(self) -> bool:
+        self.__restart_callback()
         return False
 
     def __save(self) -> bool:
