@@ -285,9 +285,10 @@ class Collectible(WalkTriggerTile):
             pickup_message_callback("Collectible", f"You picked up: {ColorConfig.highlight_object(name)}\n{desc}")
         Collectible.__pickup_message = pickup_message
 
-    def __init__(self, collectible: LogicalCollectible):
+    def __init__(self, collectible: LogicalCollectible, secret_type: bool = False):
         super().__init__(TileCode.Collectible)
         self.__collectible = collectible
+        self.__secret_type = secret_type
         self.__active = True
 
     @property
@@ -299,7 +300,18 @@ class Collectible(WalkTriggerTile):
 
     def get_img(self):
         if self.__active:
-            return TileCode.Collectible.representation
+            if self.__secret_type or self.__collectible.type is CollectibleType.Pickup:
+                return TileCode.Collectible.representation
+            elif self.__collectible.type is CollectibleType.Key:
+                return TileCode.CollectibleKey.representation
+            elif self.__collectible.type is CollectibleType.Gate:
+                return TileCode.CollectibleGate.representation
+            elif self.__collectible.type is CollectibleType.Qubit:
+                return TileCode.CollectibleQubit.representation
+            elif self.__collectible.type is CollectibleType.Qubit:
+                return TileCode.CollectibleQubit.representation
+            else:
+                return TileCode.Invalid.representation
         else:
             return self._invisible
 
@@ -309,10 +321,11 @@ class Collectible(WalkTriggerTile):
     def _on_walk(self, direction: Direction, controllable: Controllable) -> bool:
         if self.__active:
             if not self.has_explanation:
-                if Collectible.__pickup_message:
-                    Collectible.__pickup_message(self.__collectible)
-                else:
-                    Logger.instance().error("Collectible's pickup message callback is None!", from_pycui=False)
+                if self.__collectible.type is CollectibleType.Gate:
+                    if Collectible.__pickup_message:
+                        Collectible.__pickup_message(self.__collectible)
+                    else:
+                        Logger.instance().error("Collectible's pickup message callback is None!", from_pycui=False)
             controllable.give_collectible(self.__collectible)
             self.__active = False
             return True
@@ -322,7 +335,7 @@ class Collectible(WalkTriggerTile):
         return Collectible(self.__collectible)
 
 
-class Energy(WalkTriggerTile):
+class Energy(WalkTriggerTile):  # todo why is this extra and not Collectible?
     def __init__(self, amount: int):
         super().__init__(TileCode.Energy)
         self.__amount = amount
@@ -334,7 +347,7 @@ class Energy(WalkTriggerTile):
 
     def get_img(self):
         if self.__active:
-            return TileCode.Energy.representation
+            return TileCode.CollectibleEnergy.representation
         else:
             return self._invisible
 

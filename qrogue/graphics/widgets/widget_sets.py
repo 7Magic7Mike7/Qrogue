@@ -40,14 +40,16 @@ class MyWidgetSet(WidgetSet, Renderable, ABC):
 
         if Config.debugging():
             width -= 1  # we need space for frame count
-            frame_count = widget_set.add_block_label('Frame count', 0, UIConfig.WINDOW_WIDTH - 1,
-                                                     row_span=UIConfig.HUD_HEIGHT, column_span=1, center=False)
-            widgets.append(frame_count)
 
         situational_hud = widget_set.add_block_label('Situational', 0, UIConfig.HUD_WIDTH, row_span=UIConfig.HUD_HEIGHT,
                                                      column_span=width, center=False)
         situational_hud.toggle_border()
         widgets.append(situational_hud)
+
+        if Config.debugging():
+            frame_count = widget_set.add_block_label('Frame count', 0, UIConfig.WINDOW_WIDTH - 1,
+                                                     row_span=UIConfig.HUD_HEIGHT, column_span=1, center=False)
+            widgets.append(frame_count)
 
         return HudWidget(MyMultiWidget(widgets))
 
@@ -102,7 +104,7 @@ class MyWidgetSet(WidgetSet, Renderable, ABC):
         # globally update HUD based on the progress
         HudConfig.ShowMapName = True
         HudConfig.ShowKeys = True
-        HudConfig.ShowEnergy = Ach.check_unlocks(Unlocks.ShowEnergy, progress)
+        HudConfig.ShowEnergy = False    # Ach.check_unlocks(Unlocks.ShowEnergy, progress)
 
     def render(self) -> None:
         self.__base_render(self.get_widget_list())
@@ -199,8 +201,8 @@ class MenuWidgetSet(MyWidgetSet):
             choices.append("START YOUR JOURNEY\n")
             callbacks.append(self.__start_playing)
 
-        choices.append("START AN EXPEDITION\n")
-        callbacks.append(self.__start_expedition)
+        #choices.append("START AN EXPEDITION\n")
+        #callbacks.append(self.__start_expedition)
 
         # choices.append("OPTIONS\n")  # for more space between the rows we add "\n"
         # callbacks.append(self.__options)
@@ -559,26 +561,25 @@ class PauseMenuWidgetSet(MyWidgetSet):
         [
             "Game",
             "Controls", "Fight",
-            "Riddle", "Shop",
-            "Boss Fight", "Pause",
-            "Options",
+            "Riddle",
+            "Pause",
         ],
         [
             HelpText.get(HelpTextType.Game),
             HelpText.get(HelpTextType.Controls), HelpText.get(HelpTextType.Fight),
-            HelpText.get(HelpTextType.Riddle), HelpText.get(HelpTextType.Shop),
-            HelpText.get(HelpTextType.BossFight), HelpText.get(HelpTextType.Pause),
-            HelpText.get(HelpTextType.Options),
+            HelpText.get(HelpTextType.Riddle),
+            HelpText.get(HelpTextType.Pause),
          ]
     )
 
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  continue_callback: Callable[[], None], save_callback: Callable[[], Tuple[bool, CommonPopups]],
-                 exit_run_callback: Callable[[], None]):
+                 exit_run_callback: Callable[[], None], restart_callback: Callable[[], None]):
         super().__init__(logger, root, render)
         self.__continue_callback = continue_callback
         self.__save_callback = save_callback
         self.__exit_run = exit_run_callback
+        self.__restart_callback = restart_callback
         self.__achievement_manager = None
 
         self.__hud = MyWidgetSet.create_hud_row(self)
@@ -587,9 +588,10 @@ class PauseMenuWidgetSet(MyWidgetSet):
                                        column_span=UIConfig.PAUSE_CHOICES_WIDTH, center=True)
         self.__choices = SelectionWidget(choices, controls, stay_selected=True)
         self.__choices.set_data(data=(
-            ["Continue", "Save", "Manual", "Achievements", "Options", "Exit"],
-            [self.__continue, self.__save, self.__help, self.__achievements, self.__options, self.__exit]
-        ))
+            ["Continue", "Restart", "Save", "Manual", "Options", "Exit"],
+            [self.__continue, self.__restart, self.__save, self.__help, self.__options,
+             self.__exit]
+        ))  # todo add back achievements
 
         details = self.add_block_label('Details', UIConfig.HUD_HEIGHT, UIConfig.PAUSE_CHOICES_WIDTH,
                                        row_span=UIConfig.WINDOW_HEIGHT-UIConfig.HUD_HEIGHT,
@@ -623,6 +625,10 @@ class PauseMenuWidgetSet(MyWidgetSet):
         self.__continue_callback()
         return False
 
+    def __restart(self) -> bool:
+        self.__restart_callback()
+        return False
+
     def __save(self) -> bool:
         _, common_popup = self.__save_callback()
         common_popup.show()
@@ -651,7 +657,8 @@ class PauseMenuWidgetSet(MyWidgetSet):
         return False
 
     def __options(self) -> bool:
-        options = GameplayConfig.get_options()
+        # hide most options for tutorial's sake
+        options = GameplayConfig.get_options([Options.allow_implicit_removal, Options.allow_multi_move])
         texts = []
         for op_tup in options:
             op, _ = op_tup
@@ -852,7 +859,7 @@ class ExploreWidgetSet(MapWidgetSet):
     def set_data(self, map_: Map) -> None:
         controllable = map_.controllable_tile.controllable
         if isinstance(controllable, Robot):
-            self.__hud.set_data((controllable, map_.name, "TEST"))  # todo fix/remove
+            self.__hud.set_data((controllable, map_.name, ""))  # todo fix/remove
         else:
             self.__hud.reset_data()
         self._map_widget.set_data(map_)
@@ -892,6 +899,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
     _DETAILS_INFO_THEN_CHOICES = 2
     _DETAILS_EDIT = 3
     _DETAILS_HELP = 4
+    _DEFAULT_FAIL_MESSAGE = "That's not yet the correct solution."
 
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  continue_exploration_callback: Callable[[], None], flee_choice: str = "Flee"):
@@ -1077,7 +1085,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
                 self.__circuit.widget.reposition(row=UIConfig.HUD_HEIGHT + row_span + 2 * shrinkage)
             elif num_of_qubits == 4:
-
+                # todo problem with 4 qubits: out has not enough space, hence, its coloring doesn't work
                 self.__circuit.widget.reposition(row=UIConfig.HUD_HEIGHT + row_span)
                 self._choices.widget.reposition(row=UIConfig.WINDOW_HEIGHT - 1, row_span=1)
                 self._details.widget.reposition(row=UIConfig.WINDOW_HEIGHT - 1, row_span=1)
@@ -1146,8 +1154,11 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
     def __choices_adapt(self) -> bool:
         options = [instruction.selection_str() for instruction in self._robot.backpack]
+        commands = [MyWidgetSet.BACK_STRING]
+        if Ach.check_unlocks(Unlocks.GateRemove, self._progress):
+            commands = ["Remove"] + commands
         self._details.set_data(data=(
-            SelectionWidget.wrap_in_hotkey_str(options) + ["Remove", MyWidgetSet.BACK_STRING],
+            SelectionWidget.wrap_in_hotkey_str(options) + commands,
             [self.__choose_instruction]
         ))
         self._details_content = self._DETAILS_EDIT
@@ -1197,7 +1208,8 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         if success:
             if reward is None:
                 self._details.set_data(data=(
-                    ["Congratulations! Sadly there is no reward..."],   # todo think about a better message?
+                    [f"Congratulations, you solved the "
+                     f"{ColorConfig.highlight_object('Puzzle')}!"],
                     [self._continue_exploration_callback]
                 ))
             else:
@@ -1277,9 +1289,8 @@ class TrainingsWidgetSet(ReachTargetWidgetSet):
 
 class FightWidgetSet(ReachTargetWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
-                 continue_exploration_callback: Callable[[], None], game_over_callback: Callable[[], None]):
+                 continue_exploration_callback: Callable[[], None]):
         super(FightWidgetSet, self).__init__(controls, render, logger, root, continue_exploration_callback)
-        self.__game_over_callback = game_over_callback
         self.__flee_check = None
 
     def set_data(self, robot: Robot, target: Enemy, in_expedition: bool):
@@ -1289,7 +1300,7 @@ class FightWidgetSet(ReachTargetWidgetSet):
     def _on_commit_fail(self) -> bool:
         if not self._robot.game_over_check():
             self._details.set_data(data=(
-                [f"That's not yet the correct solution."],
+                [self._DEFAULT_FAIL_MESSAGE],
                 [self._empty_callback]
             ))
         self._details_content = ReachTargetWidgetSet._DETAILS_INFO_THEN_EDIT
@@ -1317,9 +1328,8 @@ class FightWidgetSet(ReachTargetWidgetSet):
 
 class BossFightWidgetSet(FightWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
-                 continue_exploration_callback: Callable[[], None], game_over_callback: Callable[[], None]):
-        self.__continue_exploration_callback = continue_exploration_callback
-        super().__init__(controls, render, logger, root, self.__continue_exploration_callback, game_over_callback)
+                 continue_exploration_callback: Callable[[], None]):
+        super().__init__(controls, render, logger, root, continue_exploration_callback)
 
     def set_data(self, robot: Robot, target: Boss, in_expedition: bool):
         super(BossFightWidgetSet, self).set_data(robot, target, in_expedition)
@@ -1429,26 +1439,29 @@ class ShopWidgetSet(MyWidgetSet):
 
 
 class RiddleWidgetSet(ReachTargetWidgetSet):
+    __TRY_PHRASING = "edits"
+
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  continue_exploration_callback: Callable[[None], None]):
         super().__init__(controls, render, logger, root, continue_exploration_callback, "Give Up")
 
     def set_data(self, robot: Robot, target: Riddle, in_expedition: bool) -> None:
         super(RiddleWidgetSet, self).set_data(robot, target, in_expedition)
-        self._hud.set_data((robot, None, f"Remaining attempts: {target.attempts}"))
+        self._hud.set_data((robot, None, f"Remaining {RiddleWidgetSet.__TRY_PHRASING}: {target.attempts}"))
 
     def _on_commit_fail(self) -> bool:
-        if self._target.attempts <= 0:
+        if self._target.can_attempt:
             self._details.set_data(data=(
-                [f"You couldn't solve the riddle within the given attempts. It vanishes together with its reward."],
-                [self._continue_exploration_callback]
+                [self._DEFAULT_FAIL_MESSAGE],
+                [self._empty_callback]
             ))
         else:
             self._details.set_data(data=(
-                [f"Wrong! Remaining attempts: {self._target.attempts}"],
-                [self._empty_callback]
+                [f"You couldn't solve the riddle within the given number of {RiddleWidgetSet.__TRY_PHRASING}. "
+                 f"It vanished together with its reward."],
+                [self._continue_exploration_callback]
             ))
-        self._hud.update_situational(f"Remaining attempts: {self._target.attempts}")
+        self._hud.update_situational(f"Remaining {RiddleWidgetSet.__TRY_PHRASING}: {self._target.attempts}")
         self._details_content = ReachTargetWidgetSet._DETAILS_INFO_THEN_EDIT
         return True
 
@@ -1461,7 +1474,8 @@ class RiddleWidgetSet(ReachTargetWidgetSet):
             self._details_content = ReachTargetWidgetSet._DETAILS_INFO_THEN_EDIT
         else:
             self._details.set_data(data=(
-                ["Abort - but you don't have any attempts left to try again later!", "Continue"],
+                [f"Abort - but you don't have any {RiddleWidgetSet.__TRY_PHRASING} left to try again later!",
+                 "Continue"],
                 [self._continue_exploration_callback, self._empty_callback]
             ))
         return True
@@ -1478,7 +1492,7 @@ class ChallengeWidgetSet(ReachTargetWidgetSet):
             constraints = f"Constraints: Use exactly {target.min_gates} gates."
         else:
             constraints = f"Constraints: Use between {target.min_gates} and {target.max_gates} gates."
-        self._hud.update_situational(f"Flee energy: {self._target.flee_energy}\n{constraints}")
+        self._hud.update_situational(constraints)
 
     def _on_commit_fail(self) -> bool:
         # todo check if it's because the circuit is wrong or the constraints are not fulfilled

@@ -8,7 +8,7 @@ from py_cui.widget_set import WidgetSet
 
 from qrogue.game.logic import StateVector, collectibles
 from qrogue.game.logic.actors import Boss, Controllable, Enemy, Riddle, Robot
-from qrogue.game.logic.actors.controllables import LukeBot
+from qrogue.game.logic.actors.controllables import BaseBot
 from qrogue.game.logic.actors.puzzles import Challenge
 from qrogue.game.logic.collectibles import Energy
 from qrogue.game.world.map import CallbackPack, SpaceshipMap, WorldMap, Map
@@ -184,7 +184,8 @@ class QrogueCUI(PyCUI):
         self.__transition = TransitionWidgetSet(self.__controls, Logger.instance(), self, self.__render,
                                                 self.set_refresh_timeout)
         self.__pause = PauseMenuWidgetSet(self.__controls, self.__render, Logger.instance(), self,
-                                          self.__general_continue, SaveData.instance().save, self._switch_to_menu)
+                                          self.__general_continue, SaveData.instance().save, self._switch_to_menu,
+                                          MapManager.instance().reload)
         self.__pause.set_data(None, "Qrogue", SaveData.instance().achievement_manager)
 
         self.__spaceship = SpaceshipWidgetSet(self.__controls, Logger.instance(), self, self.__render)
@@ -196,10 +197,9 @@ class QrogueCUI(PyCUI):
         self.__navigation = NavigationWidgetSet(self.__controls, self.__render, Logger.instance(), self)
 
         self.__explore = ExploreWidgetSet(self.__controls, self.__render, Logger.instance(), self)
-        self.__fight = FightWidgetSet(self.__controls, self.__render, Logger.instance(), self, self.__continue_explore,
-                                      self.__game_over)
+        self.__fight = FightWidgetSet(self.__controls, self.__render, Logger.instance(), self, self.__continue_explore)
         self.__boss_fight = BossFightWidgetSet(self.__controls, self.__render, Logger.instance(), self,
-                                               self.__continue_explore, self.__game_over)
+                                               self.__continue_explore)
         self.__riddle = RiddleWidgetSet(self.__controls, self.__render, Logger.instance(), self,
                                         self.__continue_explore)
         self.__challenge = ChallengeWidgetSet(self.__controls, self.__render, Logger.instance(), self,
@@ -207,7 +207,8 @@ class QrogueCUI(PyCUI):
         self.__shop = ShopWidgetSet(self.__controls, self.__render, Logger.instance(), self, self.__continue_explore)
 
         widget_sets: List[MyWidgetSet] = [self.__spaceship, self.__training, self.__navigation, self.__explore,
-                                          self.__fight, self.__boss_fight, self.__shop, self.__riddle, self.__workbench]
+                                          self.__fight, self.__boss_fight, self.__shop, self.__riddle, self.__challenge,
+                                          self.__workbench]
         # INIT KEYS
         # add the general keys to everything except Transition, Menu and Pause
         for widget_set in widget_sets:
@@ -253,6 +254,9 @@ class QrogueCUI(PyCUI):
         # MISC
         if Config.debugging():
             self.set_on_draw_update_func(Config.inc_frame_count)
+
+        if SaveData.instance().is_fresh_save:
+            Popup.generic_info("WELCOME TO QROGUE!", HelpText.get(HelpTextType.Welcome))
 
     def _refresh_height_width(self) -> None:
         try:
@@ -483,9 +487,8 @@ class QrogueCUI(PyCUI):
         self.__state_machine.change_state(QrogueCUI._State.Spaceship, None)
 
     def __start_training(self, direction: Direction):
-        robot = LukeBot(self.__game_over, size=2)
-        for collectible in [collectibles.XGate(), collectibles.XGate(), collectibles.HGate(), collectibles.CXGate()]:
-            robot.give_collectible(collectible)
+        robot = BaseBot(CallbackPack.instance().game_over, num_of_qubits=2,
+                        gates=[collectibles.XGate(), collectibles.XGate(), collectibles.HGate(), collectibles.CXGate()])
         enemy = Enemy(eid=0, target=StateVector([0] * (2**robot.num_of_qubits)), reward=Energy())
         self.__state_machine.change_state(QrogueCUI._State.Training, (robot, enemy))
 
@@ -543,12 +546,19 @@ class QrogueCUI(PyCUI):
         def callback(confirmed: int):
             if confirmed == 0:
                 MapManager.instance().reload()
-            elif Ach.check_unlocks(Unlocks.Spaceship, SaveData.instance().story_progress):
-                self.__state_machine.change_state(QrogueCUI._State.Spaceship, None)
-            else:
-                self.__state_machine.change_state(QrogueCUI._State.Menu, None)
-        ConfirmationPopup.ask(Config.system_name(), f"Your Robot is out of energy. "
-                                                    f"{MapManager.instance().get_restart_message()}", callback)
+            elif confirmed == 1:
+                if Ach.check_unlocks(Unlocks.Spaceship, SaveData.instance().story_progress):
+                    self.__state_machine.change_state(QrogueCUI._State.Spaceship, None)
+                else:
+                    self.__state_machine.change_state(QrogueCUI._State.Menu, None)
+        if MapManager.instance().in_tutorial_world:
+            ConfirmationPopup.ask(Config.system_name(), f"Your Robot is out of energy.\n"
+                                                        f"How do you want to continue?", callback,
+                                                        ["Restart lesson", "Back to menu"])
+        else:
+            ConfirmationPopup.ask(Config.system_name(), f"Your Robot is out of energy. Emergency departure initiated.\n"
+                                                        "Do you want to retry the expedition?",
+                                                        callback, ["Yes", "No"])
 
     def __start_fight(self, robot: Robot, enemy: Enemy, direction: Direction) -> None:
         self.__state_machine.change_state(QrogueCUI._State.Fight, (robot, enemy))

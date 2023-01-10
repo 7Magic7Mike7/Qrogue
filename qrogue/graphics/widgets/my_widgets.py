@@ -50,6 +50,9 @@ class MyBaseWidget(BlockLabel, WidgetWrapper):
             self._column_span = column_span
 
     def set_title(self, title: str) -> None:
+        # cannot easily use the original function to draw the border because the renderer draws it directly
+        if self._draw_border:
+            title = "-" * self._width + "\n" + title
         super(MyBaseWidget, self).set_title(title)
 
     def get_title(self) -> str:
@@ -309,6 +312,8 @@ class SimpleWidget(Widget):
 
 
 class HudWidget(Widget):
+    __MAP_NAME = ""
+
     def __init__(self, widget: MyMultiWidget):
         super().__init__(widget)
         self.__robot = None
@@ -318,12 +323,14 @@ class HudWidget(Widget):
 
     def set_data(self, data: Tuple[Robot, Optional[str], Optional[str]]) -> None:
         self.__robot = data[0]
-        if data[1]:
-            self.__map_name = data[1]
-        if data[2]:
+        if data[1] is not None:
+            HudWidget.__MAP_NAME = data[1]
+        if data[2] is not None:
             self.__details = data[2]
         else:
             self.__details = ""
+
+        self.__map_name = HudWidget.__MAP_NAME
 
     def update_situational(self, data: str):
         self.__details = data
@@ -353,7 +360,7 @@ class HudWidget(Widget):
 
         if Config.debugging():
             self.widget.set_title(f"{text}{MyMultiWidget.get_title_separator()}{self.__details}"
-                                  f"{MyMultiWidget.get_title_separator()}{Config.frame_count()}")
+                                  f"{MyMultiWidget.get_title_separator()}Debug\n{Config.frame_count()}")
         else:
             self.widget.set_title(f"{text}{MyMultiWidget.get_title_separator()}{self.__details}")
 

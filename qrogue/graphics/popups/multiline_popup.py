@@ -4,13 +4,14 @@ from py_cui import ColorRule
 from py_cui.popups import Popup as PyCuiPopup
 from py_cui.ui import MenuImplementation
 
-from qrogue.util import ColorConfig as CC, Keys, Logger, PopupConfig, ColorConfig
+from qrogue.util import ColorConfig as CC, Keys, Logger, PopupConfig, ColorConfig, ColorCode
 
 
 class MultilinePopup(PyCuiPopup, MenuImplementation):
     __STATIC_PY_CUI_PADDING = 6     # based on PyCUI "padding" I think
     __QUESTION_SPACING = " " * 7
-    __QUESTION_ARROW = " " * (len(__QUESTION_SPACING) - 4) + "--> "  # -4 due to the length of the arrow
+    __QUESTION_ARROW = "-->"
+    __QUESTION_SELECTION = " " * (len(__QUESTION_SPACING) - (len(__QUESTION_ARROW) + 1)) + (__QUESTION_ARROW + " ")
 
     @staticmethod
     def __get_color_rules():
@@ -189,7 +190,9 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
         info_line_y = self._start_y + self.textbox_height + 1
         if len(self.__lines) > self.textbox_height:
             rem_rows = str(len(self.__lines) - counter - self._top_view + 1)
-            rem_rows = self._pageAlignment[:-len(rem_rows)] + rem_rows
+            rem_rows = self._pageAlignment[:-len(rem_rows)] + ColorConfig.colorize(ColorCode.POPUP_META_INFO, rem_rows)
+            prefix = PopupConfig.scroll_indicator()
+            rem_rows = ColorConfig.colorize(ColorCode.POPUP_META_INFO, prefix) + rem_rows[len(prefix):]
             self._renderer.draw_text(self, rem_rows, info_line_y, selected=False)
             info_line_y += 1
 
@@ -200,7 +203,7 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
             text = ""
             for i in range(len(self.__answers)):
                 if i == self.__question_state:
-                    text += MultilinePopup.__QUESTION_ARROW
+                    text += MultilinePopup.__QUESTION_SELECTION
                 else:
                     text += MultilinePopup.__QUESTION_SPACING
                 text += self.__answers[i]

@@ -7,8 +7,8 @@ from qrogue.util import ShopConfig
 class Pickup(Collectible, ABC):
     __DEFAULT_PRICE = 5 * ShopConfig.base_unit()
 
-    def __init__(self, amount: int):
-        super(Pickup, self).__init__(CollectibleType.Pickup)
+    def __init__(self, amount: int, type_: CollectibleType = CollectibleType.Pickup):
+        super(Pickup, self).__init__(type_)
         if amount <= 0:
             amount = 1
         self._amount = amount
@@ -24,7 +24,7 @@ class Pickup(Collectible, ABC):
 
 class Coin(Pickup):
     def __init__(self, amount: int = 1):
-        super().__init__(amount)
+        super().__init__(amount, type_=CollectibleType.Coin)
 
     def name(self) -> str:
         return "Coin"
@@ -41,7 +41,7 @@ class Coin(Pickup):
 
 class Key(Pickup):
     def __init__(self, amount: int = 1):
-        super().__init__(amount)
+        super().__init__(amount, type_=CollectibleType.Key)
 
     def name(self) -> str:
         return "Key"
@@ -60,7 +60,7 @@ class Key(Pickup):
 
 class Energy(Pickup):
     def __init__(self, amount: int = 10):
-        super().__init__(amount)
+        super().__init__(amount, type_=CollectibleType.Energy)
 
     def name(self) -> str:
         return "Energy"

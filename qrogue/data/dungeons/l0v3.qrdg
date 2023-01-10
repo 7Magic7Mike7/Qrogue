@@ -1,109 +1,142 @@
 Qrogue<
-Name = "Lesson 3: From Zero to Nine"
-Description = Speaker "0" prio "What if we tell you there are //05not only// //010//s?" "Until now //05everytime// you //03stepped// onto a digit a //02Puzzle// was presented to you. But what if that's just because the //010// represents a //050%// chance to //05not contain// a //02Puzzle//?"
+Name = "Lesson 4: Riddling CX?"
+Description = Speaker "0" prio "Now we're getting mysterious!" 
+"This lesson will show you a //05new// kind of //02Puzzle//, //02Gate// as well as //02Doors//."
 NO_TELEPORTER
 
 // Introduced Concepts:
-// different digits, collapsing, short mention of Superposition
+// event and one-way doors, Riddle, CX Gate (2 Qubit Gate)
 
 [Robot]
-2 qubits [ *xgate, *xgate ]
+2 qubits [ *xgate ]
 circuit_space = 2
 maxenergy = 100
 
 [Layout]
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-| __ .. __ .. bb .. cc == dd .. __ .. __ |
-| ..    ..    ==    11    ..    ..    .. |
-| __ .. __ .. aa == SR .. __ .. __ .. __ |
-| ..    ..    ..    ..    ..    ..    .. |
-| __ .. __ .. __ .. __ .. __ .. __ .. __ |
+| __ .. __ .. __ .. ee .. bb .. __ .. __ |
+| ..    ..    ..    11    22    ..    .. |
+| __ .. __ .. __ .. SR 31 aa .. __ .. __ |
+| ..    ..    ..    32    11    ..    .. |
+| __ .. __ .. __ .. dd == cc .. __ .. __ |
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 [Custom Rooms]
 
-aa (Wild):
+SR (Spawn):
 #############
-# _ _ 1 _ _ #
-# _ _ o o o #
-# 3 _ m 0 _ #
-# _ _ o o o #
-# _ _ 2 _ _ #
-#############
-m 1 *newDigits
-
-bb (Wild):
-#############
-# o o o o o #
-# _ 9 c 8 _ #
-# _ 5 6 7 _ #
-# _ _ 4 _ _ #
+# _ o _ o _ #
+# _ o _ o _ #
+# _ o _ o _ #
+# _ o _ o _ #
 # _ _ m _ _ #
 #############
-m 1 *remainingDigits
-c key 1
+m 1 *oneWayDoor
+
+aa (Wild):
+#############
+# _ _ _ _ 3 #
+# _ _ _ 1 _ #
+# m _ 0 _ 0 #
+# _ _ _ 2 _ #
+# _ _ _ _ 4 #
+#############
+m 1 *oneWayDoor2
+0 [0, 0, 1, 0] none tutorial *tutSingleX trigger *didPuzzle
+1 *reach1X none tutorial *tutSingleX trigger *didPuzzle
+2 *reach1X none tutorial *tutSingleX trigger *didPuzzle
+3 *reach1X none tutorial *tutSingleX trigger *didPuzzle
+4 *reach1X none tutorial *tutSingleX trigger *didPuzzle
+0 *reach1X
+
+bb (Riddle):
+#############
+# _ _ _ _ _ #
+# _ _ r _ _ #
+# 0 _ _ _ 0 #
+# _ _ _ _ _ #
+# _ _ m _ _ #
+#############
+m 1 *riddleNote
+r 3 [0, 1, 0, 0] key 1 tutorial *tutTODO trigger *didRiddle
 
 cc (Wild):
 #############
-# o _ _ _ o #
-# _ 1 2 3 _ #
-# _ 4 0 5 _ #
-# _ 6 7 8 _ #
-# o _ m _ o #
+# o o _ _ _ #
+# o o o 0 _ #
+# 8 o o o 7 #
+# _ _ o o _ #
+# _ _ 0 _ c #
 #############
-m 1 *tutCollapse
+c gate *cx tutorial *tutCXGate
+0 *reach1X
+0 *base11
 
-dd (Wild):
+dd (Riddle):
 #############
-# _ _ _ _ 2 #
-# _ _ 4 9 o #
-# _ _ 5 0 m #
-# _ _ 6 1 o #
-# _ _ _ _ 8 #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ r _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+#############
+r 1 *base00 key 1 tutorial *riddle2
+
+ee (Riddle):
+#############
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ m _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
 #############
 m *doneMsg trigger *done
 
 
 [Hallways]
 11 (locked; ; )
+22 (event *didPuzzle; ; ) tutorial *eventDoor
+31 (closed; one way East permanent; )
+32 (closed; one way North permanent; )
 
 [StateVector Pools]
 custom
 
+*base00 [ [1, 0, 0, 0] ]
 *base01 [ [0, 1, 0, 0] ]
 *base10 [ [0, 0, 1, 0] ]
 *base11 [ [0, 0, 0, 1] ]
 
 *reach1X [ *base01, *base10 ]
-*reach2X [ *reach1X, [0, 0, 0, 1] ]
+*reach2X [ *reach1X, *base00, *base11 ]
 
-default *reach2X
+default *reach1X
 
 [Reward Pools]
-custom 
+default *none
 
-*key [key 1]
-*energyTiny [energy 5]
-*energySmall [energy 10]
-*energyMedium [energy 15]
-*energyBig [energy 20]
-*energyHuge [energy 30]
-
-*xgate [gate *x]
-
-default *energySmall
 
 [Messages]
 // highlight text by encapsulating it in "//02abcd//" where "abcd" is the text to highlight and "02" one of the available styles: 01 is for tiles, 02 is for game objects, 03 for actions, 04 for keys on the keyboard and 05 for other words
 // speaker: 0 = Examiner, 1 = Scientist, 2 = System, 3 = Player
 
-*newDigits Speaker "0" "Could a //013// maybe have a //0530%// chance to not contain a //02Puzzle//?"
+default Speaker "0"
 
-*remainingDigits Speaker "0" prio "Of course we're talking about //05chances// here. So it is absolutely possible that e.g. a //011// does not contain a //02Puzzle// while a //019// does. In //02Quantum Computing// we call this //05undeterministic// behaviour //02Superposition//."
+*oneWayDoor "Down there is a //02One-Way Door//. You can only pass through it from one side."
+*oneWayDoor2 "See, you were able to walk through the //02One-way Door// from the other side but now you cannot go through it again from this side."
 
-*tutCollapse Speaker "0" prio "By //03stepping// on a digit you make it //05collapse//. This means it will either show you a //02Puzzle// or not. This can also be //05interpreted// as either //05collapsing to 1// (show a puzzle) or //05collapsing to 0// (don't show a puzzle). And as already mentioned a //010// has a //050%//, a //015// a //0550%// and a //019// a //0590%// chance to //05collapse to 0//." 
-"That's also why there is no //0110//. It wouldn't make sense to //05never show// a //02Puzzle//, hence //05always collapsing to 0//."
+*eventDoor "This //02Door// was not there a few moments ago. That is because it is an //02Event Door// which means it will stay invisible and unpassable until it is triggered by a certain event." "For this one //03solving// a //02Puzzle// //05triggered// it."
 
-*doneMsg Speaker "0" "Nice, seems like you're slowly getting familiar with Quantum Computing."
+*tutSingleX Speaker "0" "One more thing:" "We took one of your //02X Gates//. You will later see why." when *didPuzzle then *none
+
+*riddleNote Speaker "0" prio "The //01?// you see on the top is a //02Riddle//. It's very similar to a //02Puzzle//, yet a bit different. It also shows you a //02Target State// you need to //03reach// to solve it but you //05cannot// //03try// it //05arbitrary often//. It has a predefined //05number of times// you can //03edit// your //02Circuit// before the //02Riddle// gets //05unstable//. Unstable //02Riddles// have a 50% chance to vanish together with their //02Reward// whenever you update." 
+
+*tutTODO prio "On the //05right// part of the //05HUD// you can see how many edits you still have left before the //02Riddle// gets //05unstable//." "" "Should the //02Riddle// //05vanish// before you manage to solve it you have to //03restart// the lesson from the //05Pause Menu//."
+
+*tutCXGate Speaker "0" prio "You picked up: //02CX Gate//" "//02CX Gate// is short for //02Controlled X Gate//. In contrast to the normal //02X Gate// which is placed on //05one qubit// - hence, a //02Single Qubit Gate// - this one is a //02Multi Qubit Gate//. To be precice: it needs to be placed on //05two qubits//. First you have to //03place// the //05C// part. It controls whether the //05X// part is active or not. So if the //02Qubit// at //05C// is //051// the //02Qubit// at //05X// will be //05adapted// accordingly. Otherwise it won't alter the state in any way."
+
+*riddle2 Speaker "0" "Another //02Riddle//! Your //05new// //02Gate// might come in handy."
+
+*doneMsg Speaker "0" "Nice, seems like you're slowly getting familiar with Quantum Computing!"
 
 >Qrogue

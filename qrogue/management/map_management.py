@@ -20,9 +20,7 @@ __MAP_ORDER = {
     "l0v2": "l0v3",
     "l0v3": "l0v4",
     "l0v4": "l0v5",
-    "l0v5": "l0v6",
-    "l0v6": "l0v7",
-    "l0v7": "w0",
+    "l0v5": "w0",
     "l0training": "w0",
     "l0exam": MapConfig.spaceship(),
     "w0": MapConfig.spaceship(),
@@ -100,6 +98,10 @@ class MapManager:
         return self.__cur_map is self.__hub_world
 
     @property
+    def in_tutorial_world(self) -> bool:
+        return self.__get_world(self.__cur_map.internal_name).internal_name == MapConfig.tutorial_world()
+
+    @property
     def in_level(self) -> bool:
         return self.__cur_map.get_type() is MapType.Level
 
@@ -127,14 +129,6 @@ class MapManager:
             fill()
         else:
             Thread(target=fill, args=(), daemon=True).start()
-
-    def get_restart_message(self) -> str:
-        # todo maybe should be handled differently. I'm not satisfied by this approach but for now it works and is
-        #  straight forward.
-        if self.__get_world(self.__cur_map.internal_name).internal_name == MapConfig.tutorial_world():
-            return "Do you want to restart the current lesson?"
-        else:
-            return "Connection lost..."
 
     def __load_world(self, world_name: str) -> Optional[WorldMap]:
         """
@@ -237,6 +231,8 @@ class MapManager:
                 expedition = self.__expedition_queue.pop(0)
                 self.fill_expedition_queue()
             else:
+                if map_seed is None:
+                    map_seed = self.__rm.get_seed()
                 expedition, success = self.__expedition_generator.generate((robot, map_seed))
 
             if success:
