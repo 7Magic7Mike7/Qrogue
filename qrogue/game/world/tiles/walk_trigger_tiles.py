@@ -322,7 +322,7 @@ class Collectible(WalkTriggerTile):
         return Collectible(self.__collectible)
 
 
-class Energy(WalkTriggerTile):
+class Energy(WalkTriggerTile):  # todo why is this extra and not Collectible?
     def __init__(self, amount: int):
         super().__init__(TileCode.Energy)
         self.__amount = amount

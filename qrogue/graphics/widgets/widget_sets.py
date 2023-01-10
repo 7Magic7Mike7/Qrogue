@@ -1077,7 +1077,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
                 self.__circuit.widget.reposition(row=UIConfig.HUD_HEIGHT + row_span + 2 * shrinkage)
             elif num_of_qubits == 4:
-
+                # todo problem with 4 qubits: out has not enough space, hence, its coloring doesn't work
                 self.__circuit.widget.reposition(row=UIConfig.HUD_HEIGHT + row_span)
                 self._choices.widget.reposition(row=UIConfig.WINDOW_HEIGHT - 1, row_span=1)
                 self._details.widget.reposition(row=UIConfig.WINDOW_HEIGHT - 1, row_span=1)
