@@ -30,9 +30,10 @@ aa (Wild):
 # _ o _ o _ #
 # _ _ 0 _ _ #
 #############
-0 *reach1X trigger *solvedSecondPuzzle		// first occurrence in room
+0 *reach1X		// first occurrence in room
 0 [0, 1, 0, 0] tutorial *firstPuzzle trigger *solvedFirstPuzzle		// second occurrence is the first one we step on
-0 *reach1X trigger *solvedSecondPuzzle
+0 *reach1X
+0 *reach1X none tutorial *hotkeys 
 
 bb (Gate):
 #############
@@ -53,7 +54,9 @@ cc (Wild):
 # o _ _ _ o #
 #############
 0 [0, 1, 0, 0] tutorial *firstPuzzle trigger *solvedFirstPuzzle
-0 *reach1X trigger *solvedSecondPuzzle
+0 *reach1X
+0 *reach1X none tutorial *hotkeys
+0 *reach1X
 
 dd (Wild):
 #############
@@ -124,12 +127,10 @@ default *none
 // highlight text by encapsulating it in "//02abcd//" where "abcd" is the text to highlight and "02" one of the available styles: 01 is for tiles, 02 is for game objects, 03 for actions, 04 for keys on the keyboard and 05 for other words
 // speaker: 0 = Examiner, 1 = Scientist, 2 = System, 3 = Player
 
-*firstPuzzle Speaker "0" prio "As already mentionened, we added a //05second// //02Qubit// to your //02Qubot//'s circuit."
-"Just like you can //03choose// the //02Slot// with left and right you can also //03select// the //02Qubit// you want to //03apply// the //02Gate// to with up and down - so, //04WS// or //04Up// and //04Down Arrow Keys//."
-"You should already be familiar with this //02Puzzle//. It's //05basically the same// as the previous one but now with //05two// //02Qubits//." when *solvedFirstPuzzle then *None
+*firstPuzzle Speaker "0" prio pos 5 "Now that you have a //05second// //02Qubit// you can use the //04navigation keys// to not only //03choose// the target //02Slot// but also the target //02Qubit// of a //02Gate// you're placing in your //02Circuit//."
+"The displayed //02Puzzle// should look familiar. It's //05basically the same// as the previous one but now with //05two// //02Qubits//." when *solvedFirstPuzzle then *None
 
-*selectQubit Speaker "0" prio "Just like you can //03choose// the //02Slot// with left and right you can also //03select// the //02Qubit// you want to //03apply// the //02Gate// to with up and down - so, //04WS// or //04Up// and //04Down Arrow Keys//."
-"But whether you need to //03change// the //02Qubit// for this //02Puzzle// or not will remain a secret you have to uncover yourself. Good Luck." when *solvedSecondPuzzle then *None
+*hotkeys "Instead of //03selecting// and //03confirming// //05-Back-// you can also press //04Backspace// as a shortcut."
 
 *doneMsg Speaker "0" "Ready for the next lesson?" "In case you want to pause or stop playing you can press //04Tab// or //04P// to open the //05Pause menu//. Progress is //05saved level-wise// so make sure to not accidentally stop just before finishing a level!"
 
