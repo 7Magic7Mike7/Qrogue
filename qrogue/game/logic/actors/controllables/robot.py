@@ -539,7 +539,8 @@ class Robot(Controllable, ABC):
         :param skip_qargs: whether to skip resetting the qubits of the Instruction or not, defaults to False
         :return: True if we successfully removed the Instruction, False otherwise
         """
-        if instruction and instruction.is_used():   # todo check if we can extend the condition with "and instruction in self.__instructions"
+        # todo check if we can extend the condition with "and instruction in self.__instructions"
+        if instruction and instruction.is_used():
             self.__instructions[instruction.position] = None
             self.__instruction_count -= 1
             instruction.reset(skip_qargs=skip_qargs)
@@ -730,8 +731,8 @@ class Robot(Controllable, ABC):
 class BaseBot(Robot):
     def __init__(self, game_over_callback: Callable[[], None], num_of_qubits: int = 2,
                  gates: Optional[List[Instruction]] = None,
-                 circuit_space: Optional[int] = None, backpack_space: Optional[int] = None, max_energy: Optional[int] = None,
-                 start_energy: Optional[int] = None):
+                 circuit_space: Optional[int] = None, backpack_space: Optional[int] = None,
+                 max_energy: Optional[int] = None, start_energy: Optional[int] = None):
         attributes = _Attributes(DummyQubitSet(num_of_qubits), circuit_space, max_energy, start_energy)
         backpack = Backpack(backpack_space, gates)
         super(BaseBot, self).__init__("BaseBot", attributes, backpack, game_over_callback)
