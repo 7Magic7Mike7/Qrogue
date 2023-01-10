@@ -201,8 +201,8 @@ class MenuWidgetSet(MyWidgetSet):
             choices.append("START YOUR JOURNEY\n")
             callbacks.append(self.__start_playing)
 
-        choices.append("START AN EXPEDITION\n")
-        callbacks.append(self.__start_expedition)
+        #choices.append("START AN EXPEDITION\n")
+        #callbacks.append(self.__start_expedition)
 
         # choices.append("OPTIONS\n")  # for more space between the rows we add "\n"
         # callbacks.append(self.__options)
@@ -659,7 +659,8 @@ class PauseMenuWidgetSet(MyWidgetSet):
         return False
 
     def __options(self) -> bool:
-        options = GameplayConfig.get_options()
+        # hide most options for tutorial's sake
+        options = [Options.allow_implicit_removal, Options.allow_multi_move]    # GameplayConfig.get_options()
         texts = []
         for op_tup in options:
             op, _ = op_tup
