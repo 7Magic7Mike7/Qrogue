@@ -901,6 +901,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
     _DETAILS_INFO_THEN_CHOICES = 2
     _DETAILS_EDIT = 3
     _DETAILS_HELP = 4
+    _DEFAULT_FAIL_MESSAGE = "That's not yet the correct solution."
 
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  continue_exploration_callback: Callable[[], None], flee_choice: str = "Flee"):
@@ -1298,7 +1299,7 @@ class FightWidgetSet(ReachTargetWidgetSet):
     def _on_commit_fail(self) -> bool:
         if not self._robot.game_over_check():
             self._details.set_data(data=(
-                [f"That's not yet the correct solution."],
+                [self._DEFAULT_FAIL_MESSAGE],
                 [self._empty_callback]
             ))
         self._details_content = ReachTargetWidgetSet._DETAILS_INFO_THEN_EDIT
@@ -1437,26 +1438,29 @@ class ShopWidgetSet(MyWidgetSet):
 
 
 class RiddleWidgetSet(ReachTargetWidgetSet):
+    __TRY_PHRASING = "edits"
+
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  continue_exploration_callback: Callable[[None], None]):
         super().__init__(controls, render, logger, root, continue_exploration_callback, "Give Up")
 
     def set_data(self, robot: Robot, target: Riddle, in_expedition: bool) -> None:
         super(RiddleWidgetSet, self).set_data(robot, target, in_expedition)
-        self._hud.set_data((robot, None, f"Remaining attempts: {target.attempts}"))
+        self._hud.set_data((robot, None, f"Remaining {RiddleWidgetSet.__TRY_PHRASING}: {target.attempts}"))
 
     def _on_commit_fail(self) -> bool:
-        if self._target.attempts <= 0:
+        if self._target.can_attempt:
             self._details.set_data(data=(
-                [f"You couldn't solve the riddle within the given attempts. It vanishes together with its reward."],
-                [self._continue_exploration_callback]
+                [self._DEFAULT_FAIL_MESSAGE],
+                [self._empty_callback]
             ))
         else:
             self._details.set_data(data=(
-                [f"Wrong! Remaining attempts: {self._target.attempts}"],
-                [self._empty_callback]
+                [f"You couldn't solve the riddle within the given number of {RiddleWidgetSet.__TRY_PHRASING}. "
+                 f"It vanished together with its reward."],
+                [self._continue_exploration_callback]
             ))
-        self._hud.update_situational(f"Remaining attempts: {self._target.attempts}")
+        self._hud.update_situational(f"Remaining {RiddleWidgetSet.__TRY_PHRASING}: {self._target.attempts}")
         self._details_content = ReachTargetWidgetSet._DETAILS_INFO_THEN_EDIT
         return True
 
@@ -1469,7 +1473,8 @@ class RiddleWidgetSet(ReachTargetWidgetSet):
             self._details_content = ReachTargetWidgetSet._DETAILS_INFO_THEN_EDIT
         else:
             self._details.set_data(data=(
-                ["Abort - but you don't have any attempts left to try again later!", "Continue"],
+                [f"Abort - but you don't have any {RiddleWidgetSet.__TRY_PHRASING} left to try again later!",
+                 "Continue"],
                 [self._continue_exploration_callback, self._empty_callback]
             ))
         return True
