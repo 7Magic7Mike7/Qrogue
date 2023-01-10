@@ -69,7 +69,7 @@ cc (Wild):
 #############
 c gate *cx tutorial *tutCXGate
 0 *reach1X
-0 *base00
+0 *base11
 
 dd (Riddle):
 #############
@@ -79,7 +79,7 @@ dd (Riddle):
 # _ _ _ _ _ #
 # _ _ _ _ _ #
 #############
-r 5 *base11 key 1 tutorial *riddle2
+r 1 *base00 key 1 tutorial *riddle2
 
 
 ee (Riddle):
