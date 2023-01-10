@@ -561,16 +561,14 @@ class PauseMenuWidgetSet(MyWidgetSet):
         [
             "Game",
             "Controls", "Fight",
-            "Riddle", "Shop",
-            "Boss Fight", "Pause",
-            "Options",
+            "Riddle",
+            "Pause",
         ],
         [
             HelpText.get(HelpTextType.Game),
             HelpText.get(HelpTextType.Controls), HelpText.get(HelpTextType.Fight),
-            HelpText.get(HelpTextType.Riddle), HelpText.get(HelpTextType.Shop),
-            HelpText.get(HelpTextType.BossFight), HelpText.get(HelpTextType.Pause),
-            HelpText.get(HelpTextType.Options),
+            HelpText.get(HelpTextType.Riddle),
+            HelpText.get(HelpTextType.Pause),
          ]
     )
 
