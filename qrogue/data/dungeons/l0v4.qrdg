@@ -1,6 +1,6 @@
 Qrogue<
 Name = "Lesson 5: Position? Super!"
-Description = Speaker "0" "Now we will start to really dive into the //05strange world// of //02Quantum Computing//. Do you remember the word //02Superposition// from //05Lesson 3//?"
+Description = Speaker "0" "Now we will start to really dive into the //05strange world// of //02Quantum Computing//. Do you remember //02Superposition// from //05Lesson 3//?"
 NO_TELEPORTER
 
 // Introduced Concepts:
@@ -15,7 +15,7 @@ maxenergy = 10
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 | __ .. __ .. __ .. aa .. __ .. dd .. __ |
 | ..    ..    ..    21    ..    11    .. |
-| __ .. __ .. ff 33 SR == za == cc .. __ |
+| __ .. gg 31 ff 30 SR == za == cc .. __ |
 | ..    ..    ..    20    ..    11    .. |
 | __ .. __ .. __ .. bb .. __ .. ee .. __ |
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -31,7 +31,7 @@ za (Gate):
 # _ _ o _ _ #
 # _ _ o _ _ #
 #############
-0 *reach2X none
+0 *reach2X none tutorial *tutImplicitRemoval
 c gate *hgate
 m 1 *tutHadamard1
 0 *superPos0 none tutorial *tutHadamard2
@@ -46,7 +46,7 @@ cc (Wild):
 #############
 m 1 *tutHadamard3
 c key 1
-0 *H0X1
+0 *H0X1 tutorial *tutHadamard4
 0 *superPos1 none
 0 *superPos0
 0 *H1X0
@@ -105,26 +105,37 @@ bb (Wild):
 2 *positiveStvs
 5 *positiveStvs
 
-ff (Story):
+ff (Wild):
 #############
 # 0 _ _ _ 0 #
 # _ o o o _ #
-# _ 0 m o _ #
+# _ _ 0 o _ #
 # _ o o o _ #
 # 0 _ _ _ 0 #
 #############
-m *doneMsg trigger *done
 0 *X0H0
 0 *H1X0
 0 *HX
 0 *X1H1
 0 *H0X1
 
+gg (Story):
+#############
+# _ _ _ _ _ #
+# _ o o o _ #
+# _ o m _ _ #
+# _ o o o _ #
+# _ _ _ _ _ #
+#############
+m *doneMsg trigger *done
+
 
 [Hallways]
 11 (locked; ; )
 20 (event *challenge0; ; )
 21 (event *challenge1; ; )
+30 (event *minus0; ; )
+31 (event *minus1; ; )
 
 
 [StateVector Pools]
@@ -165,10 +176,13 @@ default *none
 // speaker: 0 = Examiner, 1 = Scientist, 2 = System, 3 = Player
 default Speaker "0"
 
+*tutImplicitRemoval "Now that you have different //02Gates// it can happen that you want to //03remove// one in case you placed the wrong gate(s). That's why we added the //05'Remove'// choice when editing your //02Circuit//." "Currently you have to //05explicitely// //03remove// a gate and //05cannot overwrite// it with another one. In case you want //05to change// that, go to //05'Options'// in the //05Pause Menu// and activate 'implicit removal'."
+
 *tutHadamard1 Speaker "0" "Now we're talking! With the help of a //02Hadamard Gate// (//02H Gate// for short) you are finally able to leave the realm of //050s// and //051s//. "
 *tutHadamard2 Speaker "0" prio "If applied to a //02Qubit// the //02H Gate// will bring it to a state //05in the middle of 0 and 1//." 
 "No, not //050.5//. It is a bit more //05complex//. "
-*tutHadamard3 Speaker "0" prio "But indeed the state of a //02Qubit// at the output of an //02H Gate// corresponds to a //0550%// chance of it //05collapsing to 0// and a //0550%// chance of it //05collapsing to 1//. You do //05remember// the things you learned in //05lesson 3//, right?"
+*tutHadamard3 Speaker "0" prio "But indeed the state of a //02Qubit// at the output of an //02H Gate// corresponds to a //0550%// chance of it //05collapsing to 0// and a //0550%// chance of it //05collapsing to 1//. Do you //05remember// the things you learned in //05Lesson 3//?"
+*tutHadamard4 prio pos 5 "But why does a value of 0.707 not correspond to 70.7%?" "" "That is because in reality a //02State Vector// consists of //05complex numbers// and the //05absolute value// of each number describes a //05probability//. For simplicity's sake we only dive into complex numbers with an imaginary part of 0 - at least for now. Therefore, the absolute value is the same as the //05real part squared//."
 
 *tutChallenges Speaker "0" prio "The //01!// is a new kind of //02Puzzle//: a //02Challenge//." "It is basically just like a normal //02Puzzle// but with additional constraints like a minimum number of //02Gates// you //05have to use// or a maximum number you are allowed to use." when *sawChallenge then *tutChallengeAgain
 *tutChallengeAgain "Another //02Challenge//!"
@@ -177,8 +191,9 @@ default Speaker "0"
 *tutHnXn1 Speaker "0" "You already know this //02Target State//. You can reach it with a single //02H Gate//. But let's try to also use an //02X Gate//." when *challenge0 then *tutHXAgain
 *tutHXAgain Speaker "0" "Again, try to also place your //02X Gate//."
 
-*tutMinus Speaker "0" "Look, the //02Target State// contains a //05negative number//. What a refreshing change!"
+*tutMinus0 Speaker "0" "Look, the //02Target State// contains a //05negative number//. What a refreshing change!" when *minus1 then *none
+*tutMinus1 Speaker "0" "Look, the //02Target State// contains a //05negative number//. What a refreshing change!" when *minus0 then *none
 
-*doneMsg Speaker "0" prio "You've now seen the //02H Gate// alone and in combination with an //02X Gate//." "What do you think will happen if you combine it with a //02CX Gate//?" "Find out in the next lesson!"
+*doneMsg Speaker "0" prio "You've now seen the //02H Gate// alone and in combination with an //02X Gate//." "What do you think will happen if you combine it with a //02CX Gate//?"
 
 >Qrogue
