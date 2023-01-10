@@ -628,6 +628,11 @@ class EmptyRoom(CopyAbleRoom):
 
 
 class SpecialRoom(Room, ABC):
+    # todo check if it should still apply that SpecialRooms can only have one Hallway - adapt Astar in LayoutGenerator
+    # todo if that changes!
+    # todo answering thoughts after some time: If they can have multiple entrances/exits Key placement gets much harder
+    # todo we could not simply place keys in non-special rooms but would also have to check if 1st key is reachable from
+    # todo SpawnRoom, 2nd key from SpawnRoom and one special room, ...
     def __init__(self, type_: AreaType, hallway: Hallway, direction: Direction, tile_dic: Dict[Coordinate, Tile]):
         """
 

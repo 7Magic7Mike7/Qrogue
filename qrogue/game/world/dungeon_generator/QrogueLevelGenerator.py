@@ -25,6 +25,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
     __DEFAULT_NUM_OF_SHOP_ITEMS = 3
     __DEFAULT_NUM_OF_RIDDLE_ATTEMPTS = 7
     __ROBOT_NO_GATES = "none"
+    __FACTORY_NO_REWARD = "none"
     __SPAWN_ROOM_ID = "SR"
     __DEFAULT_SPEAKER = Config.examiner_name()  # todo but later in the game it should default to scientist_name()
 
@@ -243,6 +244,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             return self.__collectible_factories[ref]
 
         ref = parser_util.normalize_reference(ref)
+        if ref == QrogueLevelGenerator.__FACTORY_NO_REWARD:
+            return CollectibleFactory.empty()
         if ref in ['coin', 'coins']:
             pool = [pickup.Coin(1)]
         elif ref in ['key', 'keys']:
@@ -402,6 +405,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
                 return Qubit(self.visit(ctx.integer()))
             else:
                 return Qubit(1)
+        elif ctx.NONE_LITERAL():
+            return None
         else:
             self.warning("No legal collectible specified!")
         return None

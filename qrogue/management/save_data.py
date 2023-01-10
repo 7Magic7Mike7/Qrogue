@@ -4,8 +4,8 @@ from typing import Tuple, Optional
 from qrogue.game.logic.actors import Player, Robot
 from qrogue.game.logic.actors.controllables import BaseBot, LukeBot
 from qrogue.game.world.map import CallbackPack
-from qrogue.util import Logger, PathConfig, AchievementManager, RandomManager, CommonPopups, Config, TestConfig, \
-    ErrorConfig
+from qrogue.util import Logger, PathConfig, FileTypes, AchievementManager, RandomManager, CommonPopups, Config, \
+    TestConfig, ErrorConfig
 from qrogue.util.achievements import Achievement
 
 
@@ -28,16 +28,14 @@ class SaveData:
         else:
             raise TestConfig.StateException(ErrorConfig.singleton_reset("SaveData"))
 
-    @staticmethod
-    def __empty_save_file() -> str:
-        pass
-
     def __init__(self):
         if SaveData.__instance is not None:
             Logger.instance().throw(Exception(ErrorConfig.singleton("SaveData")))
         else:
             self.__player = Player()
             path = PathConfig.find_latest_save_file()
+            # a fresh save has no digit before the file ending
+            self.__is_fresh_save = not path[-len(FileTypes.Save.value)-1].isdigit()
             content = ""
             try:
                 content = PathConfig.read(path, in_user_path=True).splitlines()
@@ -70,6 +68,10 @@ class SaveData:
     @property
     def story_progress(self) -> int:
         return self.achievement_manager.story_progress
+
+    @property
+    def is_fresh_save(self) -> bool:
+        return self.__is_fresh_save
 
     def get_expedition_seed(self) -> int:
         return RandomManager.instance().get_seed(msg="SaveData.get_expedition_seed()")  #7    # todo implement

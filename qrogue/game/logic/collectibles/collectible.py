@@ -5,14 +5,18 @@ from typing import Iterator, List
 
 
 class CollectibleType(Enum):
-    Consumable = 1
-    Gate = 2
-    ActiveItem = 3
-    PassiveItem = 4
-    Pickup = 5
-    Qubit = 6
+    Consumable = 1      # currently unused
+    ActiveItem = 3      # currently unused
+    PassiveItem = 4     # currently unused
 
     Multi = 0   # wraps multiple collectibles
+    Gate = 2
+    Qubit = 6
+
+    Pickup = 5  # for undefined pickups
+    Key = 51
+    Coin = 52
+    Energy = 53
 
 
 def type_str(c_type: CollectibleType) -> str:
