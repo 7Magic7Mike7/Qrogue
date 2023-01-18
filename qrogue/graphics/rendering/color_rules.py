@@ -18,6 +18,7 @@ class TileColorer:
         TileCode.Collectible: PyCuiColors.CYAN_ON_BLACK,
         TileCode.Teleport: PyCuiColors.CYAN_ON_BLACK,
         TileCode.Message: PyCuiColors.CYAN_ON_BLACK,
+        TileCode.Goal: PyCuiColors.GREEN_ON_BLACK,
 
         TileCode.Controllable: PyCuiColors.WHITE_ON_GREEN,
         TileCode.Npc: PyCuiColors.BLUE_ON_BLACK,
@@ -65,6 +66,10 @@ class ColorRules:
         for ct in TileCode.collectible_subtypes():
             widget.add_text_color_rule(ct.representation, TileColorer.get_color(TileCode.Collectible), 'contains',
                                        match_type='regex')
+
+        # goal
+        widget.add_text_color_rule(TileCode.Goal.representation, TileColorer.get_color(TileCode.Goal),
+                                   'contains', match_type='regex')
 
     @staticmethod
     def apply_spaceship_rules(widget: WidgetWrapper):

@@ -17,6 +17,7 @@ class TileCode(Enum):
     FogOfWar = (3, "~")    # tile of a place we cannot see yet
 
     Message = (6, ".")         # tile for displaying a popup message
+    Goal = (61, "G")            # tile for the goal, i.e. end of a level
     Trigger = (9, "T")         # tile that calls a function on walk, i.e. event tile
     Teleport = (91, "t")       # special trigger for teleporting between maps
     Decoration = (11, "d")     # simply displays a specified character
