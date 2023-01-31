@@ -11,7 +11,7 @@ fastjsonschema==2.15.1
 h5py==3.2.1
 idna==3.3
 inflection==0.5.1
-joblib==1.1.0
+joblib==1.2.0
 jsonschema==4.2.1
 lxml==4.9.1
 more-itertools==8.11.0
