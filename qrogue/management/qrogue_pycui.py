@@ -8,7 +8,7 @@ from py_cui.widget_set import WidgetSet
 
 from qrogue.game.logic import StateVector, collectibles
 from qrogue.game.logic.actors import Boss, Controllable, Enemy, Riddle, Robot
-from qrogue.game.logic.actors.controllables import LukeBot
+from qrogue.game.logic.actors.controllables import BaseBot
 from qrogue.game.logic.actors.puzzles import Challenge
 from qrogue.game.logic.collectibles import Energy
 from qrogue.game.world.map import CallbackPack, SpaceshipMap, WorldMap, Map
@@ -23,7 +23,7 @@ from qrogue.graphics.widgets import Renderable, SpaceshipWidgetSet, BossFightWid
     ChallengeWidgetSet, ShopWidgetSet, WorkbenchWidgetSet, TrainingsWidgetSet, Widget, TransitionWidgetSet
 from qrogue.util import achievements, common_messages, CheatConfig, Config, GameplayConfig, UIConfig, HelpText, \
     HelpTextType, Logger, PathConfig, MapConfig, Controls, Keys, RandomManager, PyCuiConfig, PyCuiColors, Options, \
-    TestConfig
+    TestConfig, CommonQuestions
 from qrogue.util.achievements import Ach, Unlocks
 from qrogue.util.config import FileTypes, PopupConfig
 from qrogue.util.game_simulator import GameSimulator
@@ -162,6 +162,7 @@ class QrogueCUI(PyCUI):
                      self.__open_challenge, self.__visit_shop, self.__game_over)
         SaveData()
         MapManager(seed, self.__show_world, self.__start_level)
+        MapManager.instance().fill_expedition_queue(lambda: None, no_thread=True)
         Popup.update_check_achievement_function(SaveData.instance().achievement_manager.check_achievement)
         common_messages.set_show_callback(Popup.generic_info)
         common_messages.set_ask_callback(ConfirmationPopup.ask)
@@ -179,11 +180,12 @@ class QrogueCUI(PyCUI):
         # INIT WIDGET SETS
         self.__menu = MenuWidgetSet(self.__controls, self.__render, Logger.instance(), self,
                                     MapManager.instance().load_first_uncleared_map,
-                                    self.__start_playing, self.stop, self.__choose_simulation)
+                                    self.__start_playing, self.__start_expedition, self.stop, self.__choose_simulation)
         self.__transition = TransitionWidgetSet(self.__controls, Logger.instance(), self, self.__render,
                                                 self.set_refresh_timeout)
         self.__pause = PauseMenuWidgetSet(self.__controls, self.__render, Logger.instance(), self,
-                                          self.__general_continue, SaveData.instance().save, self._switch_to_menu)
+                                          self.__general_continue, SaveData.instance().save, self._switch_to_menu,
+                                          MapManager.instance().reload)
         self.__pause.set_data(None, "Qrogue", SaveData.instance().achievement_manager)
 
         self.__spaceship = SpaceshipWidgetSet(self.__controls, Logger.instance(), self, self.__render)
@@ -195,10 +197,9 @@ class QrogueCUI(PyCUI):
         self.__navigation = NavigationWidgetSet(self.__controls, self.__render, Logger.instance(), self)
 
         self.__explore = ExploreWidgetSet(self.__controls, self.__render, Logger.instance(), self)
-        self.__fight = FightWidgetSet(self.__controls, self.__render, Logger.instance(), self, self.__continue_explore,
-                                      self.__game_over)
+        self.__fight = FightWidgetSet(self.__controls, self.__render, Logger.instance(), self, self.__continue_explore)
         self.__boss_fight = BossFightWidgetSet(self.__controls, self.__render, Logger.instance(), self,
-                                               self.__continue_explore, self.__game_over)
+                                               self.__continue_explore)
         self.__riddle = RiddleWidgetSet(self.__controls, self.__render, Logger.instance(), self,
                                         self.__continue_explore)
         self.__challenge = ChallengeWidgetSet(self.__controls, self.__render, Logger.instance(), self,
@@ -206,7 +207,8 @@ class QrogueCUI(PyCUI):
         self.__shop = ShopWidgetSet(self.__controls, self.__render, Logger.instance(), self, self.__continue_explore)
 
         widget_sets: List[MyWidgetSet] = [self.__spaceship, self.__training, self.__navigation, self.__explore,
-                                          self.__fight, self.__boss_fight, self.__shop, self.__riddle, self.__workbench]
+                                          self.__fight, self.__boss_fight, self.__shop, self.__riddle, self.__challenge,
+                                          self.__workbench]
         # INIT KEYS
         # add the general keys to everything except Transition, Menu and Pause
         for widget_set in widget_sets:
@@ -252,6 +254,9 @@ class QrogueCUI(PyCUI):
         # MISC
         if Config.debugging():
             self.set_on_draw_update_func(Config.inc_frame_count)
+
+        if SaveData.instance().is_fresh_save:
+            Popup.generic_info("WELCOME TO QROGUE!", HelpText.get(HelpTextType.Welcome))
 
     def _refresh_height_width(self) -> None:
         try:
@@ -465,6 +470,15 @@ class QrogueCUI(PyCUI):
             # load the newest level (exam phase) by
             MapManager.instance().load_first_uncleared_map()
 
+    def __start_expedition(self):
+        if Ach.check_unlocks(Unlocks.Spaceship, SaveData.instance().story_progress):
+            MapManager.instance().load_expedition()
+        else:
+            def _callback(selection: int):
+                if selection == 0:
+                    MapManager.instance().load_expedition()
+            CommonQuestions.SkipStoryTutorial.ask(_callback)
+
     def _switch_to_spaceship(self, data=None):
         self.apply_widget_set(self.__spaceship)
         StoryNarration.returned_to_spaceship()
@@ -473,16 +487,15 @@ class QrogueCUI(PyCUI):
         self.__state_machine.change_state(QrogueCUI._State.Spaceship, None)
 
     def __start_training(self, direction: Direction):
-        robot = LukeBot(self.__game_over, size=2)
-        for collectible in [collectibles.XGate(), collectibles.XGate(), collectibles.HGate(), collectibles.CXGate()]:
-            robot.give_collectible(collectible)
+        robot = BaseBot(CallbackPack.instance().game_over, num_of_qubits=2,
+                        gates=[collectibles.XGate(), collectibles.XGate(), collectibles.HGate(), collectibles.CXGate()])
         enemy = Enemy(eid=0, target=StateVector([0] * (2**robot.num_of_qubits)), reward=Energy())
         self.__state_machine.change_state(QrogueCUI._State.Training, (robot, enemy))
 
     def _switch_to_training(self, data=None):
         if data:
             robot, enemy = data
-            self.__training.set_data(robot, enemy)
+            self.__training.set_data(robot, enemy, False)
         self.apply_widget_set(self.__training)
 
     def __use_workbench(self, direction: Direction, controllable: Controllable):
@@ -496,7 +509,7 @@ class QrogueCUI(PyCUI):
         if world is None:
             if Ach.check_unlocks(Unlocks.Spaceship, SaveData.instance().story_progress):
                 if Ach.is_most_recent_unlock(Unlocks.Spaceship, SaveData.instance().story_progress) and \
-                    not SaveData.instance().achievement_manager.check_achievement(achievements.EnteredNavigationPanel):
+                   not SaveData.instance().achievement_manager.check_achievement(achievements.EnteredNavigationPanel):
                     self._execute_transition(TransitionText.exam_spaceship(), QrogueCUI._State.Spaceship, None)
                 else:
                     self.__state_machine.change_state(QrogueCUI._State.Spaceship, None)
@@ -533,12 +546,19 @@ class QrogueCUI(PyCUI):
         def callback(confirmed: int):
             if confirmed == 0:
                 MapManager.instance().reload()
-            elif Ach.check_unlocks(Unlocks.Spaceship, SaveData.instance().story_progress):
-                self.__state_machine.change_state(QrogueCUI._State.Spaceship, None)
-            else:
-                self.__state_machine.change_state(QrogueCUI._State.Menu, None)
-        ConfirmationPopup.ask(Config.system_name(), f"Your Robot is out of energy. "
-                                                    f"{MapManager.instance().get_restart_message()}", callback)
+            elif confirmed == 1:
+                if Ach.check_unlocks(Unlocks.Spaceship, SaveData.instance().story_progress):
+                    self.__state_machine.change_state(QrogueCUI._State.Spaceship, None)
+                else:
+                    self.__state_machine.change_state(QrogueCUI._State.Menu, None)
+        if MapManager.instance().in_tutorial_world:
+            ConfirmationPopup.ask(Config.system_name(), f"Your Robot is out of energy.\n"
+                                                        f"How do you want to continue?", callback,
+                                                        ["Restart lesson", "Back to menu"])
+        else:
+            ConfirmationPopup.ask(Config.system_name(), f"Your Robot is out of energy. Emergency departure initiated.\n"
+                                                        "Do you want to retry the expedition?",
+                                                        callback, ["Yes", "No"])
 
     def __start_fight(self, robot: Robot, enemy: Enemy, direction: Direction) -> None:
         self.__state_machine.change_state(QrogueCUI._State.Fight, (robot, enemy))
@@ -568,14 +588,14 @@ class QrogueCUI(PyCUI):
         if data is not None:
             robot = data[0]
             enemy = data[1]
-            self.__fight.set_data(robot, enemy)
+            self.__fight.set_data(robot, enemy, MapManager.instance().in_expedition)
         self.apply_widget_set(self.__fight)
 
     def _switch_to_boss_fight(self, data) -> None:
         if data is not None:
             player = data[0]
             boss = data[1]
-            self.__boss_fight.set_data(player, boss)
+            self.__boss_fight.set_data(player, boss, MapManager.instance().in_expedition)
         self.apply_widget_set(self.__boss_fight)
 
     def __open_riddle(self, robot: Robot, riddle: Riddle):
@@ -585,7 +605,7 @@ class QrogueCUI(PyCUI):
         if data is not None:
             player = data[0]
             riddle = data[1]
-            self.__riddle.set_data(player, riddle)
+            self.__riddle.set_data(player, riddle, MapManager.instance().in_expedition)
         self.apply_widget_set(self.__riddle)
 
     def __open_challenge(self, robot: Robot, challenge: Challenge):
@@ -595,7 +615,7 @@ class QrogueCUI(PyCUI):
         if data is not None:
             robot = data[0]
             challenge = data[1]
-            self.__challenge.set_data(robot, challenge)
+            self.__challenge.set_data(robot, challenge, MapManager.instance().in_expedition)
         self.apply_widget_set(self.__challenge)
 
     def __visit_shop(self, robot: Robot, items: "list of ShopItems"):

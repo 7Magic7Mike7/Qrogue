@@ -265,12 +265,12 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
 
     ##### Layout area #####
 
-    def visitLayout(self, ctx: QrogueWorldParser.LayoutContext) -> List[List[Room]]:
+    def visitLayout(self, ctx: QrogueWorldParser.LayoutContext) -> List[List[Optional[Room]]]:
         # first setup all hallway connections
         for y, hw_row in enumerate(ctx.l_hallway_row()):
             self.__visitL_hallway_row(hw_row, y)
 
-        room_matrix = []
+        room_matrix: List[List[Optional[Room]]] = []
         for y in range(MapConfig.map_height()):
             row_ctx = ctx.l_room_row(y)
             if row_ctx:
@@ -303,10 +303,10 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
     def __visitL_hallway_row(self, ctx: QrogueWorldParser.L_hallway_rowContext, y: int) -> None:
         self.__hallway_handling(ctx.children, y, Direction.South)  # connect downwards to the next room row
 
-    def __visitL_room_row(self, ctx: QrogueWorldParser.L_room_rowContext, y: int) -> List[Room]:
+    def __visitL_room_row(self, ctx: QrogueWorldParser.L_room_rowContext, y: int) -> List[Optional[Room]]:
         self.__hallway_handling(ctx.children, y, Direction.East)  # connect to the right to the next room
 
-        row = []
+        row: List[Optional[Room]] = []
         x = 0
         for child in ctx.children:
             if parser_util.check_for_overspecified_columns(x, child.symbol.type, QrogueWorldParser.VERTICAL_SEPARATOR):

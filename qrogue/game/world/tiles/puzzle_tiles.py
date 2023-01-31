@@ -9,25 +9,28 @@ from qrogue.util import RandomManager, Logger, CheatConfig, PuzzleConfig
 from qrogue.game.world.tiles import Tile, TileCode, WalkTriggerTile
 
 
-class _EnemyState(Enum):
-    UNDECIDED = 0
-    # FREE = 1
-    FIGHT = 2
-    DEAD = 3
-    FLED = 4
-
-
 class Enemy(WalkTriggerTile):
+    class _EnemyState(Enum):
+        UNDECIDED = 0
+        # FREE = 1
+        FIGHT = 2
+        DEAD = 3
+        FLED = 4
+
     def __init__(self, factory: EnemyFactory, get_entangled_tiles: Callable[[int], List["Enemy"]],
                  update_entangled_groups: Callable[["Enemy"], None], e_id: int = 0):
         super().__init__(TileCode.Enemy)
         self.__factory = factory
-        self.__state = _EnemyState.UNDECIDED
+        self.__state = Enemy._EnemyState.UNDECIDED
         self.__get_entangled_tiles = get_entangled_tiles
         self.__update_entangled_groups = update_entangled_groups
         self.__id = e_id
         self.__rm = RandomManager.create_new()
         self.__enemy = None
+
+    @property
+    def data(self) -> int:
+        return self.eid
 
     @property
     def eid(self) -> int:
@@ -36,8 +39,8 @@ class Enemy(WalkTriggerTile):
     @property
     def _state(self) -> _EnemyState:
         if self.__enemy:
-            if self.__state == _EnemyState.FIGHT and not self.__enemy.is_active:
-                self.__state = _EnemyState.DEAD
+            if self.__state == Enemy._EnemyState.FIGHT and not self.__enemy.is_active:
+                self.__state = Enemy._EnemyState.DEAD
                 self._explicit_trigger()
         return self.__state
 
@@ -54,23 +57,23 @@ class Enemy(WalkTriggerTile):
     def _on_walk(self, direction: Direction, controllable: Controllable) -> bool:
         if isinstance(controllable, Robot):
             robot = controllable
-            if self._state == _EnemyState.UNDECIDED:
+            if self._state == Enemy._EnemyState.UNDECIDED:
                 if self.__measure():
                     self.__fight(robot, direction)
-            elif self._state == _EnemyState.FIGHT:
+            elif self._state == Enemy._EnemyState.FIGHT:
                 self.__fight(robot, direction)
         return False
 
     def get_img(self):
-        if self._state == _EnemyState.DEAD:
+        if self._state == Enemy._EnemyState.DEAD:
             return self._invisible
-        elif self._state == _EnemyState.FLED:
+        elif self._state == Enemy._EnemyState.FLED:
             return self._invisible
         else:
             return str(self.__id)
 
     def _set_state(self, val: _EnemyState) -> None:
-        if self._state == _EnemyState.UNDECIDED:
+        if self._state == Enemy._EnemyState.UNDECIDED:
             self.__state = val
         else:
             if CheatConfig.did_cheat():     # this is a legal state if we used the "Scared Rabbit" cheat
@@ -89,13 +92,13 @@ class Enemy(WalkTriggerTile):
         # first do the randomness check because otherwise cheating could mess with some overall randomness
         if self.__rm.get(msg="Target.__measure()") >= PuzzleConfig.calculate_appearance_chance(self.__id) \
                 or CheatConfig.is_scared_rabbit():
-            state = _EnemyState.FLED
+            state = Enemy._EnemyState.FLED
         else:
-            state = _EnemyState.FIGHT
+            state = Enemy._EnemyState.FIGHT
         for enemy in entangled_tiles:
             enemy._set_state(state)     # this will also set self.__state
 
-        return self.__state is _EnemyState.FIGHT
+        return self.__state is Enemy._EnemyState.FIGHT
 
     def __fight(self, robot: Robot, direction: Direction):
         if self.__enemy is None:

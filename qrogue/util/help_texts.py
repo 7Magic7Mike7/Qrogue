@@ -34,7 +34,7 @@ class _HL:
     shop = CC.highlight_object("Shop")
     special_rooms = CC.highlight_object("Special Rooms")
     state = CC.highlight_object("State")
-    state_vectors = CC.highlight_object("StateVectors")
+    #state_vectors = CC.highlight_object("StateVectors")
     target_state = CC.highlight_object("Target State")
     target_stv = CC.highlight_object("Target State Vector")
 
@@ -45,6 +45,7 @@ class _HL:
     editing = CC.highlight_action("editing")
     edits = CC.highlight_action("edits")
     position = CC.highlight_action("position")
+    place = CC.highlight_action("place")
     talk = CC.highlight_action("talk")
 
     # words
@@ -59,6 +60,7 @@ class _HL:
     difference = CC.highlight_word("Difference")
     display_details = CC.highlight_word("displays details")
     easier = CC.highlight_word("easier")
+    edit_attempts = CC.highlight_word("edit attempts")
     enemy = CC.highlight_object("Enemy")
     entanglement = CC.highlight_word("Entanglement")
     equal = CC.highlight_word("equal")
@@ -99,6 +101,7 @@ class _HL:
     removed = CC.highlight_word("removed")
     reward = CC.highlight_word("Reward")
     serious = CC.highlight_word("serious")
+    start_journey = CC.highlight_word("START YOUR JOURNEY")
     superposition = CC.highlight_word("Superposition")
     two_parenthesis = CC.highlight_word("2)")
     three_parenthesis = CC.highlight_word("3)")
@@ -144,27 +147,18 @@ class HelpTextType(Enum):
 
 class HelpText:
     __DIC = {
-        HelpTextType.Welcome:
-            f"Qrogue is a game about {_HL.quantum_computing}. You will explore "
-            f"Dungeons with the help of {_HL.quantum_gates} you can use for your "
-            f"{_HL.quantum_circuit}. But you are not the only one in the Dungeons! "
-            f"There are {_HL.enemies} challenging you to reach a certain "
-            f"{_HL.quantum_state}. Your goal is to expand your library of "
-            f"{_HL.quantum_gates} which are hidden in "
-            f"{_HL.special_rooms} in the Dungeon or guarded "
-            f"by a {_HL.boss} - a special Enemy that wants to see a "
-            f"{_HL.quantum_algorithm} from you...\n"
-            f"Now let's start! Try to move around with {_HL.navigation_keys} and "
-            f"go to the {_HL.door} ({_HL.door_tile}) at the bottom!"
-            f"\nThe fields with a {_HL.msg_tile} will show you the next steps. "
-            f"Now close this dialog and start playing by pressing {_HL.action_keys}.",
+        HelpTextType.Welcome:   # is initialized in init() to avoid duplicating Game's text
+            #__GAME_TEXT +
+            #f"Now close this dialog by pressing {_HL.action_keys}. Select {_HL.start_journey} with "
+            #f"{_HL.navigation_keys} and confirm your selection with {_HL.action_keys} to start playing!"
+            "Forgot to initialize?",
 
-        HelpTextType.FirstLevelIntroduction:
-            f"Move around by using {_HL.navigation_keys}.",
+        #HelpTextType.FirstLevelIntroduction:
+        #    f"Move around by using {_HL.navigation_keys}.",
 
         HelpTextType.Controls:
-            f"That's the {_HL.manual}. You can always reopen it from the pause menu. Have a look at it and don't "
-            f"forget to scroll down to see everything!\n"
+            #f"That's the {_HL.manual}. You can always reopen it from the pause menu. Have a look at it and don't "
+            #f"forget to scroll down to see everything!\n"
             f"Move                  -   {_HL.navigation_keys}\n"
             f"Navigate menus        -   {_HL.navigation_keys}\n"
             f"Confirm               -   {_HL.action_keys}\n"
@@ -174,23 +168,28 @@ class HelpText:
             f"Reopen last message   -   {_HL.help_keys}\n"
             f"Pause                 -   {_HL.pause_keys}\n"
             f"Selection shortcuts   -   {_HL.shortcuts}\n"
-            #"\n"
-            f"[Should you ever get stuck you can force-quit the game by pressing {_HL.shutdown_keys}. This "
-            "will still save everything so it is the preferred option over simply closing the window!]",
+            "\n"
+            f"[Should you ever get stuck try to open the pause menu with {_HL.pause_keys} and then select continue. "
+            f"This way the game refocuses and renders again. In case this still doesn't help or doesn't even work you "
+            f"can force-quit the game by pressing {_HL.shutdown_keys}. This will still save everything so it is the "
+            "preferred option over simply closing the window!]",
 
         HelpTextType.Fight:
-            f"Basically {_HL.quantum_computing} is just a lot of complex {_HL.mat_vec_mul}. There's an {_HL.input_stv} "
-            f"that is multiplied with the {_HL.circuit_matrix} to result in an {_HL.output_stv}. Your goal is "
-            f"to make the latter {_HL.equal} to the {_HL.target_stv}. The input state vector is always the same, so "
-            f"you can only {_HL.change} the circuit matrix by {_HL.editing} the circuit.\n"
-            f"First you have to {_HL.choose} and then {_HL.position} a {_HL.gate}. Even though there is currently only "
-            f"one position available to you, you still have to confirm placement by pressing {_HL.action_keys}.",
+            f"Basically {_HL.quantum_computing} is just a lot of complex {_HL.mat_vec_mul}:\n"
+            f"{_HL.circuit_matrix} * {_HL.input_stv} = {_HL.output_stv}\n"
+            f"Your goal is to make the latter {_HL.equal} to the {_HL.target_stv}. While the input state vector always "
+            f"stays the same, you can {_HL.change} the {_HL.circuit_matrix} by {_HL.editing} your circuit.\n"
+            f"First you have to {_HL.choose} and then {_HL.place} a {_HL.gate} (via {_HL.navigation_keys}). "
+            f"Afterwards use {_HL.action_keys} to confirm the placement. This will update both {_HL.circuit_matrix} "
+            f"and {_HL.output_stv} accordingly. Green numbers in {_HL.output_stv} indicate correct and red incorrect "
+            f"values. Once the whole vector is green, {_HL.output_stv} and {_HL.target_stv} are equal and the "
+            f"{_HL.puzzle} is solved.",
 
         HelpTextType.Riddle:
             f"{_HL.riddles} are very similar to {_HL.puzzles}: There is a {_HL.target_state} you need to reach "
             f"by adapting your {_HL.circuit}. The main difference is that there's a predefined maximum number of "
-            f"{_HL.edits} for solving it. When you have no more attempts left the Riddle {_HL.vanishes} "
-            f"together with its {_HL.reward} - which is often much better than the ones from Puzzles.",
+            f"{_HL.edits} for solving it. When you have no more {_HL.edit_attempts} left the Riddle {_HL.vanishes} "
+            f"together with its {_HL.reward} - which is often much better than the ones from regular Puzzles.",
 
         HelpTextType.Shop:
             f"In the {_HL.shop} you can exchange {_HL.coins} you got (e.g. from solving Puzzles) for various "
@@ -207,14 +206,8 @@ class HelpText:
 
         HelpTextType.Game:
             f"Qrogue is a game about {_HL.quantum_computing}. You will explore "
-            f"Dungeons with the help of {_HL.quantum_gates} you can use for your "
-            f"{_HL.quantum_circuit}. But you are not the only one in the Dungeons! "
-            f"There are {_HL.enemies} challenging you to reach a certain "
-            f"{_HL.quantum_state}. Your goal is to expand your library of "
-            f"{_HL.quantum_gates} which are hidden in "
-            f"{_HL.special_rooms} in the Dungeon or guarded "
-            f"by a {_HL.boss} - a special Enemy that wants to see a "
-            f"{_HL.quantum_algorithm} from you.\n",
+            f"Levels and Expeditions and solve {_HL.puzzles} with the help of {_HL.quantum_gates} to reach even "
+            f"farther places of the universe.\n",
 
         HelpTextType.Pause:
             "In the Pause Menu you can do several things:\n"
@@ -228,6 +221,13 @@ class HelpText:
             "",
 
     }
+
+    @staticmethod
+    def init():
+        HelpText.__DIC[HelpTextType.Welcome] = HelpText.get(HelpTextType.Game) + \
+            "\nBut before you are allowed to explore the universe you have to complete a trainings program.\n" \
+            f"Now close this dialog by pressing {_HL.action_keys}. Select {_HL.start_journey} with " \
+            f"{_HL.navigation_keys} and confirm your selection with {_HL.action_keys} to begin!"
 
     @staticmethod
     def get(type: HelpTextType) -> str:

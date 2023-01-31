@@ -67,6 +67,7 @@ def __parse_argument(argument: List[str], has_value: bool = False) -> Tuple[bool
 def start_qrogue() -> int:
     __CONSOLE_ARGUMENT = ["--from-console", "-fc"]
     __DEBUG_ARGUMENT = ["--debug", "-d"]
+    __SEED_ARGUMENT = ["--seed", "-s"]                      # seed argument
     __TEST_LEVEL_ARGUMENT = ["--test-level", "-tl"]
     __GAME_DATA_PATH_ARGUMENT = ["--game-data", "-gd"]  # path argument
     __USER_DATA_PATH_ARGUMENT = ["--user-data", "-ud"]  # path argument
@@ -79,19 +80,20 @@ def start_qrogue() -> int:
     test_level, _ = __parse_argument(__TEST_LEVEL_ARGUMENT)
     _, data_folder = __parse_argument(__GAME_DATA_PATH_ARGUMENT, has_value=True)
     _, user_data_folder = __parse_argument(__USER_DATA_PATH_ARGUMENT, has_value=True)
-    _, simulation_path = __parse_argument(__SIMULATION_FILE_ARGUMENT, has_value=True)
-    _, map_path = __parse_argument(__VALIDATE_MAP_ARGUMENT, has_value=True)
+    has_simulation_path, simulation_path = __parse_argument(__SIMULATION_FILE_ARGUMENT, has_value=True)
+    has_map_path, map_path = __parse_argument(__VALIDATE_MAP_ARGUMENT, has_value=True)
+    _, seed = __parse_argument(__SEED_ARGUMENT, has_value=True)
 
-    if map_path:
+    if has_map_path:
         if validate_map(map_path):
             return 0
         else:
             return 1
     else:
-        if simulation_path:
+        if has_simulation_path:
             return simulate_game(simulation_path, from_console, debugging, data_folder, user_data_folder)
         else:
-            return start_game(from_console, debugging, test_level, data_folder, user_data_folder)
+            return start_game(from_console, debugging, test_level, data_folder, user_data_folder, seed)
 
 
 def setup_game(game_data_path: str = "", user_data_path: str = "") -> None:
@@ -112,7 +114,7 @@ def setup_game(game_data_path: str = "", user_data_path: str = "") -> None:
 
 
 def start_game(from_console: bool = False, debugging: bool = False, test_level: bool = False,
-               data_folder: str = None, user_data_folder: str = None) -> int:
+               data_folder: str = None, user_data_folder: str = None, seed: str = None) -> int:
     if PathConfig.load_paths(data_folder, user_data_folder):
         return_code = Config.load()  # NEEDS TO BE THE FIRST THING WE DO!
     else:
@@ -121,7 +123,12 @@ def start_game(from_console: bool = False, debugging: bool = False, test_level: 
         if debugging:
             Config.activate_debugging(test_level)
 
-        seed = random.randint(0, Config.MAX_SEED)
+        if seed is not None and not debugging:
+            print("[Qrogue] Attention! Manual seeds are only available in debug-mode!")
+        if seed is None or not debugging:
+            seed = random.randint(0, Config.MAX_SEED)
+        else:
+            seed = int(seed)
         print(f"[Qrogue] Starting game with seed = {seed}")
         try:
             QrogueCUI(seed).start()

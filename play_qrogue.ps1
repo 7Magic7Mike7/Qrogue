@@ -1,6 +1,7 @@
 ﻿param(
 [Parameter(Mandatory=$false)] $DebugMode,
-[Parameter(Mandatory=$false)] $TestLevel
+[Parameter(Mandatory=$false)] $TestLevel,
+[Parameter(Mandatory=$false)] $Seed
 )
 
 $QROGUE_PATH = Split-Path -Path $MyInvocation.MyCommand.Path -Parent
@@ -35,5 +36,5 @@ $config = Get-Content ${CONFIG_PATH}
 # start game
 $ENV_NAME = ${config} | Select-Object -First 1
 Enter-CondaEnvironment ${ENV_NAME}
-& python ${GAME_PATH} --from-console $DebugMode $TestLevel --user-data "D:\Documents\Studium\Master\3. Semester\Qrogue\QrogueData"
+& python ${GAME_PATH} --from-console $DebugMode $TestLevel $Seed --user-data "D:\Documents\Studium\Master\3. Semester\Qrogue\QrogueData"
 Exit-CondaEnvironment

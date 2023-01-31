@@ -13,6 +13,7 @@ class ControllableType(enum.Enum):
     Player = "M"        # todo add name to constructor?
     Luke = "L"
     Test = "T"
+    Base = "Q"
 
     @staticmethod
     def values() -> List["ControllableType"]:
@@ -20,7 +21,7 @@ class ControllableType(enum.Enum):
 
         :return: list of all ControllableTypes
         """
-        return [ControllableType.Player, ControllableType.Luke, ControllableType.Test]
+        return [ControllableType.Player, ControllableType.Luke, ControllableType.Test, ControllableType.Base]
 
     def __init__(self, abbreviation: str):
         """

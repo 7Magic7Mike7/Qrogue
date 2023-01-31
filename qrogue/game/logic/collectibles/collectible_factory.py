@@ -5,6 +5,10 @@ from qrogue.util import Logger, MyRandom, RandomManager, ShopConfig
 
 
 class CollectibleFactory:
+    @staticmethod
+    def empty() -> "CollectibleFactory":
+        return CollectibleFactory([None])
+
     def __init__(self, pool: List[Collectible]) -> None:
         if pool is None or len(pool) < 1:
             Logger.instance().throw(Exception(f"invalid pool for CollectibleFactory: {pool}"))
@@ -31,7 +35,7 @@ class CollectibleFactory:
                 self.__pool.remove(elem)
             return elem
 
-    def produce(self, rm: Optional[MyRandom]) -> Optional[Collectible]:
+    def produce(self, rm: Optional[MyRandom] = None) -> Optional[Collectible]:
         return self.__produce(rm, remove=False)
 
     def produce_multiple(self, rm: Optional[MyRandom], num_of_elements: int, unique_elements: bool = True) \
@@ -77,8 +81,8 @@ class OrderedCollectibleFactory(CollectibleFactory):
     def __init__(self, pool: List[Collectible]):
         super().__init__(pool)
 
-    def produce(self, rm: Optional[MyRandom]) -> Collectible:
-        return super(OrderedCollectibleFactory, self).produce(None)
+    def produce(self, rm: Optional[MyRandom] = None) -> Collectible:
+        return super(OrderedCollectibleFactory, self).produce()
 
     def produce_multiple(self, rm: Optional[MyRandom], num_of_elements: int, unique_elements: bool = True) \
             -> List[Collectible]:

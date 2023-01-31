@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Tuple
+from typing import Tuple, Optional
 
 from qrogue.game.world.map import Map
 from qrogue.util import MapConfig
@@ -27,5 +27,5 @@ class DungeonGenerator(ABC):
         return self._height
 
     @abstractmethod
-    def generate(self, data) -> Tuple[Map, bool]:
+    def generate(self, data) -> Tuple[Optional[Map], bool]:
         pass

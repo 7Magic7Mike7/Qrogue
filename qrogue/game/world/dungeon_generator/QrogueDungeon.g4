@@ -55,7 +55,7 @@ default_reward_pool : REFERENCE | draw_strategy? collectibles ;      // the defa
 reward_pool : REFERENCE draw_strategy? collectibles ;     // id, pool of collectibles
 collectibles : '[' collectible (LIST_SEPARATOR collectible)* ']' ;
 collectible :   (KEY_LITERAL integer | COIN_LITERAL integer | ENERGY_LITERAL integer | GATE_LITERAL REFERENCE |
-                QUBIT_LITERAL integer?) ;
+                QUBIT_LITERAL integer? | NONE_LITERAL) ;
 
 // TOKEN
 
@@ -81,6 +81,7 @@ COIN_LITERAL : 'coin' ;
 ENERGY_LITERAL : 'energy' ;
 GATE_LITERAL : 'gate' ;
 QUBIT_LITERAL : 'qubit' ;
+NONE_LITERAL : 'none' ;
 
 // trigger tiles
 LEVEL_EVENT : 'LevelEvent' ;

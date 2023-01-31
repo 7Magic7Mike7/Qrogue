@@ -1,7 +1,7 @@
 
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Callable
+from typing import Callable, List
 
 from qrogue.game.logic.actors import Controllable
 from qrogue.game.world.navigation import Direction
@@ -9,37 +9,73 @@ from qrogue.util import CheatConfig
 
 
 class TileCode(Enum):
-    Invalid = -1    # when an error occurs, e.g. a tile at a non-existing position should be retrieved
-    Debug = -2      # displays a digit for debugging
-    Void = 7        # tile outside of the playable area
-    Floor = 0       # simple floor tile without special meaning
-    HallwayEntrance = 5     # depending on the hallway it refers to is either a Floor or Wall
-    FogOfWar = 3    # tile of a place we cannot see yet
+    Invalid = (-1, "§")    # when an error occurs, e.g. a tile at a non-existing position should be retrieved
+    Debug = (-2, "€")      # displays a digit for debugging
+    Void = (7, "_")        # tile outside of the playable area
+    Floor = (0, " ")       # simple floor tile without special meaning
+    HallwayEntrance = (5, " ")     # depending on the hallway it refers to is either a Floor or Wall
+    FogOfWar = (3, "~")    # tile of a place we cannot see yet
 
-    Message = 6         # tile for displaying a popup message
-    Trigger = 9         # tile that calls a function on walk, i.e. event tile
-    Teleport = 91       # special trigger for teleporting between maps
-    Decoration = 11     # simply displays a specified character
+    Message = (6, ".")         # tile for displaying a popup message
+    Trigger = (9, "T")         # tile that calls a function on walk, i.e. event tile
+    Teleport = (91, "t")       # special trigger for teleporting between maps
+    Decoration = (11, "d")     # simply displays a specified character
 
-    Wall = 1
-    Obstacle = 2
-    Door = 4
+    Wall = (1, "#")
+    Obstacle = (2, "o")
+    Door = (4, "|")
 
-    Controllable = 20
-    Npc = 25
-    Enemy = 30
-    Boss = 40
+    Controllable = (20, "C")
+    Npc = (25, "N")
+    Enemy = (30, "E")
+    Boss = (40, "B")
 
-    Collectible = 50
-    Riddler = 51
-    ShopKeeper = 52
-    Energy = 53
-    Challenger = 54
+    Collectible = (50, "c")
+    Riddler = (51, "?")
+    ShopKeeper = (52, "$")
+    Energy = (53, "e")
+    Challenger = (54, "!")
 
-    SpaceshipBlock = 70
-    SpaceshipWalk = 71
-    SpaceshipTrigger = 72
-    OuterSpace = 73
+    SpaceshipBlock = (70, "/")
+    SpaceshipWalk = (71, ".")
+    SpaceshipTrigger = (72, "T")
+    OuterSpace = (73, "*")
+
+    CollectibleKey = (501, "k")
+    CollectibleCoin = (502, "€")
+    CollectibleEnergy = (503, "e")
+    CollectibleGate = (520, "g")
+    CollectibleQubit = (560, "q")
+
+    def __init__(self, id: int, representation: str):
+        self.__id = id
+        self.__representation = representation
+
+    @property
+    def id(self) -> int:
+        return self.__id
+
+    @property
+    def representation(self) -> str:
+        return self.__representation
+
+    def __str__(self):
+        return self.representation
+
+    @staticmethod
+    def special_values() -> List["TileCode"]:
+        return [
+            TileCode.Invalid, TileCode.Debug, TileCode.Void, TileCode.FogOfWar,
+            TileCode.Message, TileCode.Trigger, TileCode.Teleport, TileCode.Decoration,
+        ]
+
+    @staticmethod
+    def collectible_subtypes() -> List["TileCode"]:
+        return [
+            TileCode.Collectible,
+            TileCode.CollectibleKey, TileCode.CollectibleCoin, TileCode.CollectibleEnergy,
+            TileCode.CollectibleGate, TileCode.CollectibleQubit,
+        ]
 
 
 class Tile(ABC):
@@ -49,6 +85,16 @@ class Tile(ABC):
 
     def __init__(self, code: TileCode):
         self.__code = code
+
+    @property
+    def data(self) -> None:
+        """
+        E.g. amount for Energy, logical Collectible for Collectibles, eid for Enemies or None for tiles without any
+        dynamic values (Walls, Floor, ...)
+
+        :return: a representation of the specific tile's data
+        """
+        return None
 
     @property
     def code(self) -> TileCode:
@@ -78,8 +124,12 @@ class Invalid(Tile):
     def __init__(self):
         super().__init__(TileCode.Invalid)
 
+    @property
+    def data(self) -> None:
+        return None
+
     def get_img(self):
-        return "§"
+        return TileCode.Invalid.representation
 
     def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
         return False
@@ -92,6 +142,10 @@ class Debug(Tile):
     def __init__(self, num: int):
         super(Debug, self).__init__(TileCode.Debug)
         self.__num = str(num)[0]
+
+    @property
+    def data(self) -> int:
+        return self.__num
 
     def get_img(self) -> str:
         return self.__num
@@ -106,6 +160,10 @@ class Debug(Tile):
 class Void(Tile):
     def __init__(self):
         super().__init__(TileCode.Floor)
+
+    @property
+    def data(self) -> None:
+        return None
 
     def get_img(self):
         return self._invisible
@@ -125,6 +183,10 @@ class Floor(Tile):
     def __init__(self):
         super().__init__(TileCode.Floor)
 
+    @property
+    def data(self) -> None:
+        return None
+
     def get_img(self):
         return Floor.img()
 
@@ -138,10 +200,14 @@ class Floor(Tile):
 class Wall(Tile):
     @staticmethod
     def img():
-        return "#"
+        return TileCode.Wall.representation
 
     def __init__(self):
         super().__init__(TileCode.Wall)
+
+    @property
+    def data(self) -> None:
+        return None
 
     def get_img(self):
         return Wall.img()
@@ -157,8 +223,12 @@ class Obstacle(Tile):
     def __init__(self):
         super().__init__(TileCode.Obstacle)
 
+    @property
+    def data(self) -> None:
+        return None
+
     def get_img(self):
-        return "o"
+        return TileCode.Obstacle.representation
 
     def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
         return False or CheatConfig.ignore_obstacles()
@@ -171,8 +241,12 @@ class FogOfWar(Tile):
     def __init__(self):
         super().__init__(TileCode.Obstacle)
 
+    @property
+    def data(self) -> None:
+        return None
+
     def get_img(self):
-        return "~"
+        return TileCode.FogOfWar.representation
 
     def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
         return True
@@ -186,6 +260,10 @@ class Decoration(Tile):
         super(Decoration, self).__init__(TileCode.Decoration)
         self.__decoration = decoration
         self.__blocking = blocking
+
+    @property
+    def data(self) -> bool:
+        return self.__blocking
 
     def get_img(self):
         return self.__decoration
@@ -201,6 +279,10 @@ class ControllableTile(Tile):
     def __init__(self, controllable: Controllable):
         super().__init__(TileCode.Controllable)
         self.__controllable = controllable
+
+    @property
+    def data(self) -> str:
+        return self.__controllable.name
 
     def get_img(self):
         return self.__controllable.get_img()
@@ -223,6 +305,10 @@ class NpcTile(Tile):
         self.__name = name
         self.__show_message = show_message_callback
         self.__get_text = get_text_callback
+
+    @property
+    def data(self) -> str:
+        return self.__name
 
     def get_img(self):
         return self.__name[0]

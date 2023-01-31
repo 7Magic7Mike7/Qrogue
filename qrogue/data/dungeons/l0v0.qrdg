@@ -1,9 +1,10 @@
 Qrogue<
 // DONE
-Name = "Lesson 0: Zeros and Ones"
+Name = "Lesson 1: Zeros and Ones"
 Description = Speaker "0" prio "Welcome to the //05'Mission Quniverse' Trainings Program//!"
-"We will teach you how to //03control// the newest //02Quantum Circuit Robots// - or //02Qubots// for short - and how to //03utilize// their //05Quantum Computing// capabilities. At the end of the program an //05Examination Challenge// will await you and the //05Winner// will receive a formidable //05Prize//. So give it your all!" ""
+"We will teach you how to //03control// the newest //02Quantum Circuit Robots// - or //02Qubots// for short - and how to //03utilize// their //05Quantum Computing// capabilities. At the end of the program an //05Examination Trial// will await you. Should you pass you'll get the opportunity to join //05Mission Quniverse//. So give it your all!" ""
 "But first things first:" "//03Move// the //02Qubot// with //04WASD// or //04Arrow Keys//. You can //03close// this message with //04Enter// or //04Space//. You can always //03reopen// the last important message with //04H// if you get stuck."
+"A //05manual// for your //02Qubot// can be found in this room's //05top left corner//."
 NO_TELEPORTER
 
 // Introduced Concepts:
@@ -11,7 +12,7 @@ NO_TELEPORTER
 
 [Robot]
 1 qubits [ *xgate ] 
-circuit_space = 1
+circuit_space = 2
 maxenergy = 100000 // it should not be possible to run out of energy in this level
 
 [Layout]
@@ -27,15 +28,16 @@ maxenergy = 100000 // it should not be possible to run out of energy in this lev
 
 SR (Spawn):
 #############
-# _ _ _ _ _ #
+# m _ _ _ _ #
 # _ _ _ _ _ #
 # _ _ _ _ m #
 # _ _ _ _ _ #
 # _ _ _ _ _ #
 #############
+m *helptextControls
 m 1 *movingDone
 
-zz (Wild):
+zz (Pause):
 #############
 # _ _ _ o _ #
 # _ o _ _ _ #
@@ -44,7 +46,7 @@ zz (Wild):
 # _ _ _ o _ #
 #############
 
-aa (Wild):
+aa (Story):
 #############
 # o _ _ _ _ #
 # _ _ o o _ #
@@ -53,23 +55,24 @@ aa (Wild):
 # c _ _ _ _ #
 #############
 m *lockedDoor
-c *key
+c key 1 tutorial *keyFound
 
-bb (Wild):
+bb (Story):
 #############
-# o m _ _ o #
-# o 0 o m _ #
+# o 0 m _ o #
+# o c o m _ #
 # _ o o o _ #
 # _ m o m _ #
 # o _ _ _ o #
 #############
+c key 1
 0 *base1 tutorial *helptextFight trigger *solvedPuzzle 
 m 1 *puzzle4
 m *puzzle3
 m *puzzle1
 m *puzzle2
 
-cc (Wild):
+cc (Story):
 #############
 # _ _ _ _ _ #
 # _ _ _ _ _ #
@@ -94,7 +97,7 @@ default *base1
 custom
 *key [key 1]
 
-default *key
+default [none]
 
 [Messages]
 // highlight text by encapsulating it in "//02abcd//" where "abcd" is the text to highlight and "02" one of the available styles: 01 is for tiles, 02 is for game objects, 03 for actions, 04 for keys on the keyboard and 05 for other words
@@ -102,14 +105,17 @@ default *key
 
 *movingDone Speaker "0" prio "Next: //03Move// through the //02Door//."
 
-*lockedDoor Speaker "0" "A small hint:" "Some //02Doors// don't open by simply //03moving// onto them. Just //03try// it and you will see!"
+*lockedDoor Speaker "0" "The //02Door// to the right looks a bit different. Maybe not all //02Doors// open by simply //03moving// onto them?" "Let's try and check!"
 
-*puzzle1 Speaker "0" prio "The red //010// is a //02Quantum Puzzle//. It will challenge you to reach a certain //02Quantum State//." when *solvedPuzzle then *wrongDirection
-*puzzle2 Speaker "0" prio "For this you can //03add//, //03move// or //03remove// //02Quantum Gates//. Right now, you only have //05one// //02X Gate// and one slot for placing a gate." when *solvedPuzzle then *wrongDirection
+*keyFound Speaker "0" "Great, you found a //02Key//. The //05number of keys// you hold is displayed in the //05HUD// on the //05top left//."
+
+*puzzle1 Speaker "0" prio "The red //010// is a //02Quantum Puzzle//. It will challenge you to reach a certain //02Quantum State//." when *solvedPuzzle then *wrongDirection1
+*puzzle2 Speaker "0" prio "For this you can //03add//, //03move// or //03remove// //02Quantum Gates//. Right now, you have only //05one// //02X Gate// and two slots for placing a gate." when *solvedPuzzle then *wrongDirection2
 *puzzle3 Speaker "0" prio "No worries. At the beginning we will stay in the //05Classical World// of 0s and 1s. Here an //02X Gate// acts like a //05Not Gate//." when *solvedPuzzle then *puzzleDone
 *puzzle4 Speaker "0" prio "Now //03step// onto the //010// and try your best."
 *puzzleDone Speaker "0" prio "Now you have a //02Key// to //03open// the next //02Door//."
-*wrongDirection Speaker "0" "You're moving in the //05wrong direction//."
+*wrongDirection2 Speaker "0" "Move through the //02Door// to the //05right//."
+*wrongDirection1 Speaker "0" "You're moving in the //05wrong direction//."
 
 *doneMsg "Alright, you successfully //03finished// the //05first// lesson. Now onwards to the //05second// one."
 

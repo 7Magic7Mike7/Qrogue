@@ -127,7 +127,7 @@ class _Attributes:
         if CheatConfig.got_inf_resources():
             return 0    # no decrease in this case
 
-        self.__cur_energy -= amount
+        # self.__cur_energy -= amount    # todo activate again for Expeditions?
         if self.__cur_energy < 0:
             # e.g. if we decrease by 6 then cur_energy is now -2, so actually we were only able to decrease it by 4
             amount += self.__cur_energy
@@ -443,7 +443,7 @@ class Robot(Controllable, ABC):
 
         # apply gates/instructions, create the circuit
         self.__instructions: List[Optional[Instruction]] = [None] * attributes.circuit_space
-        self.update_statevector(use_energy=False)  # to initialize the statevector
+        self.update_statevector(use_energy=False, check_for_game_over=False)  # to initialize the statevector
 
     @property
     def backpack(self) -> Backpack:
@@ -502,15 +502,16 @@ class Robot(Controllable, ABC):
     def use_key(self) -> bool:
         return self.backpack.use_key()
 
-    def update_statevector(self, use_energy: bool = True):
+    def update_statevector(self, use_energy: bool = True, check_for_game_over: bool = True):
         """
         Compiles and simulates the current circuit and saves and returns the resulting StateVector. Can also lead to a
         game over.
 
         :param use_energy: whether the update should cost energy or not, defaults to True
+        :param check_for_game_over: whether we should perform a game over check or not
         :return: None
         """
-        if self.game_over_check():
+        if check_for_game_over and self.game_over_check():
             return
 
         circuit = QuantumCircuit(self.__attributes.num_of_qubits, self.__attributes.num_of_qubits)
@@ -538,7 +539,8 @@ class Robot(Controllable, ABC):
         :param skip_qargs: whether to skip resetting the qubits of the Instruction or not, defaults to False
         :return: True if we successfully removed the Instruction, False otherwise
         """
-        if instruction and instruction.is_used():   # todo check if we can extend the condition with "and instruction in self.__instructions"
+        # todo check if we can extend the condition with "and instruction in self.__instructions"
+        if instruction and instruction.is_used():
             self.__instructions[instruction.position] = None
             self.__instruction_count -= 1
             instruction.reset(skip_qargs=skip_qargs)
@@ -642,7 +644,7 @@ class Robot(Controllable, ABC):
         for instruction in temp:
             self.__remove_instruction(instruction)
         self.__instruction_count = 0
-        self.update_statevector(use_energy=False)
+        self.update_statevector(use_energy=False, check_for_game_over=False)
 
     def get_available_instructions(self) -> List[Instruction]:
         """
@@ -678,11 +680,14 @@ class Robot(Controllable, ABC):
 
     def on_move(self):
         """
-        Decreases energy every time this Robot moves.
+        Does nothing now!
+        No longer decreases energy every time the Robot moves. This feature turned out to be tedious and doesn't
+        support the game's goal of making you familiar with Quantum Computing in any way.
 
         :return: None
         """
-        self.__attributes.decrease_energy(amount=1)
+        # self.__attributes.decrease_energy(amount=1)
+        pass
 
     def decrease_energy(self, amount: int = 1) -> Tuple[int, bool]:
         """
@@ -718,20 +723,25 @@ class Robot(Controllable, ABC):
             return self.__instructions[position]
         return None
 
+    def reset(self):
+        self.__attributes.increase_energy(self.__attributes.max_energy)
+        self.reset_circuit()
 
-class TestBot(Robot):
-    def __init__(self, game_over_callback: Callable[[], None], num_of_qubits: int = 2, gates: List[Instruction] = None,
-                 circuit_space: int = None, backpack_space: int = None, max_energy: int = None,
-                 start_energy: int = None):
+
+class BaseBot(Robot):
+    def __init__(self, game_over_callback: Callable[[], None], num_of_qubits: int = 2,
+                 gates: Optional[List[Instruction]] = None,
+                 circuit_space: Optional[int] = None, backpack_space: Optional[int] = None,
+                 max_energy: Optional[int] = None, start_energy: Optional[int] = None):
         attributes = _Attributes(DummyQubitSet(num_of_qubits), circuit_space, max_energy, start_energy)
         backpack = Backpack(backpack_space, gates)
-        super(TestBot, self).__init__("Testbot", attributes, backpack, game_over_callback)
+        super(BaseBot, self).__init__("BaseBot", attributes, backpack, game_over_callback)
 
     def get_img(self):
-        return "T"
+        return "Q"
 
     def description(self) -> str:
-        return "A Robot for testing, debugging etc."
+        return "The most basic Robot"
 
 
 class LukeBot(Robot):

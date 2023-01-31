@@ -6,7 +6,7 @@ from qiskit import transpile, QuantumCircuit
 from qiskit.providers.aer import StatevectorSimulator
 
 from qrogue.game.logic.collectibles import Instruction
-from qrogue.util import Logger, QuantumSimulationConfig, GameplayConfig, Options
+from qrogue.util import Logger, QuantumSimulationConfig, GameplayConfig, Options, CheatConfig
 from qrogue.util.config import ColorCode, ColorConfig
 from qrogue.util.util_functions import is_power_of_2, center_string, to_binary_string, align_string
 
@@ -149,13 +149,18 @@ class StateVector:
         return [np.round(val.real ** 2 + val.imag ** 2, decimals=QuantumSimulationConfig.DECIMALS)
                 for val in self.__amplitudes]
 
-    def is_equal_to(self, other: "StateVector", tolerance: float = QuantumSimulationConfig.TOLERANCE) -> bool:
+    def is_equal_to(self, other: "StateVector", tolerance: float = QuantumSimulationConfig.TOLERANCE,
+                    ignore_god_mode: bool = False) -> bool:
         """
 
         :param other:
         :param tolerance:
+        :param ignore_god_mode: whether we also want to check for equality when in god mode
         :return:
         """
+        if not ignore_god_mode and CheatConfig.in_god_mode():
+            return True
+
         # other needs at least as many entries as self_value, more are allowed
         #  (so the robot can have more qubits than the enemy)
         if self.size > other.size:

@@ -1,7 +1,7 @@
 from py_cui.renderer import Renderer
 
 from qrogue.game.world.tiles import Tile
-from qrogue.util import ColorConfig, Logger
+from qrogue.util import ColorConfig, Logger, ErrorConfig
 
 
 class TileRenderer:
@@ -16,7 +16,7 @@ class TileRenderer:
     def __init__(self):
         """ Virtually private constructor. """
         if TileRenderer.__instance is not None:
-            Logger.instance().throw(Exception("This class is a singleton!"))
+            Logger.instance().throw(Exception(ErrorConfig.singleton("TileRenderer")))
         else:
             TileRenderer.__instance = self
 

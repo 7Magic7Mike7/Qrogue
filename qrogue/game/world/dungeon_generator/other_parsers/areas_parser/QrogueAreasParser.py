@@ -1,15 +1,13 @@
 # Generated from D:/Documents/pycharm_workspace/Qrogue/qrogue/game/world/dungeon_generator/other_parsers\QrogueAreas.g4 by ANTLR 4.10.1
 # encoding: utf-8
 from __future__ import print_function
-
-import sys
-
 from antlr4 import *
-
+from io import StringIO
+import sys
 
 def serializedATN():
     return [
-        4,1,54,157,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,
+        4,1,57,157,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,
         6,2,7,7,7,2,8,7,8,2,9,7,9,2,10,7,10,2,11,7,11,2,12,7,12,2,13,7,13,
         1,0,1,0,5,0,31,8,0,10,0,12,0,34,9,0,1,0,1,0,1,0,1,0,5,0,40,8,0,10,
         0,12,0,43,9,0,1,0,5,0,46,8,0,10,0,12,0,49,9,0,1,1,1,1,1,1,1,1,5,
@@ -22,44 +20,44 @@ def serializedATN():
         8,11,1,11,1,11,1,11,3,11,135,8,11,1,11,1,11,3,11,139,8,11,1,12,1,
         12,1,13,3,13,144,8,13,1,13,1,13,1,13,3,13,149,8,13,1,13,1,13,3,13,
         153,8,13,3,13,155,8,13,1,13,0,0,14,0,2,4,6,8,10,12,14,16,18,20,22,
-        24,26,0,5,2,0,38,38,48,48,2,0,37,37,49,49,1,0,11,12,1,0,15,21,2,
-        0,39,40,49,49,163,0,28,1,0,0,0,2,50,1,0,0,0,4,61,1,0,0,0,6,69,1,
+        24,26,0,5,2,0,41,41,51,51,2,0,40,40,52,52,1,0,11,12,1,0,15,24,2,
+        0,42,43,52,52,163,0,28,1,0,0,0,2,50,1,0,0,0,4,61,1,0,0,0,6,69,1,
         0,0,0,8,76,1,0,0,0,10,81,1,0,0,0,12,87,1,0,0,0,14,89,1,0,0,0,16,
         91,1,0,0,0,18,93,1,0,0,0,20,100,1,0,0,0,22,103,1,0,0,0,24,140,1,
-        0,0,0,26,143,1,0,0,0,28,32,5,8,0,0,29,31,5,33,0,0,30,29,1,0,0,0,
+        0,0,0,26,143,1,0,0,0,28,32,5,8,0,0,29,31,5,36,0,0,30,29,1,0,0,0,
         31,34,1,0,0,0,32,30,1,0,0,0,32,33,1,0,0,0,33,35,1,0,0,0,34,32,1,
         0,0,0,35,41,3,2,1,0,36,37,3,4,2,0,37,38,3,2,1,0,38,40,1,0,0,0,39,
         36,1,0,0,0,40,43,1,0,0,0,41,39,1,0,0,0,41,42,1,0,0,0,42,47,1,0,0,
-        0,43,41,1,0,0,0,44,46,5,33,0,0,45,44,1,0,0,0,46,49,1,0,0,0,47,45,
-        1,0,0,0,47,48,1,0,0,0,48,1,1,0,0,0,49,47,1,0,0,0,50,51,5,34,0,0,
+        0,43,41,1,0,0,0,44,46,5,36,0,0,45,44,1,0,0,0,46,49,1,0,0,0,47,45,
+        1,0,0,0,47,48,1,0,0,0,48,1,1,0,0,0,49,47,1,0,0,0,50,51,5,37,0,0,
         51,56,7,0,0,0,52,53,7,1,0,0,53,55,7,0,0,0,54,52,1,0,0,0,55,58,1,
         0,0,0,56,54,1,0,0,0,56,57,1,0,0,0,57,59,1,0,0,0,58,56,1,0,0,0,59,
-        60,5,34,0,0,60,3,1,0,0,0,61,63,5,34,0,0,62,64,7,1,0,0,63,62,1,0,
+        60,5,37,0,0,60,3,1,0,0,0,61,63,5,37,0,0,62,64,7,1,0,0,63,62,1,0,
         0,0,64,65,1,0,0,0,65,63,1,0,0,0,65,66,1,0,0,0,66,67,1,0,0,0,67,68,
-        5,34,0,0,68,5,1,0,0,0,69,73,5,9,0,0,70,72,3,8,4,0,71,70,1,0,0,0,
+        5,37,0,0,68,5,1,0,0,0,69,73,5,9,0,0,70,72,3,8,4,0,71,70,1,0,0,0,
         72,75,1,0,0,0,73,71,1,0,0,0,73,74,1,0,0,0,74,7,1,0,0,0,75,73,1,0,
-        0,0,76,77,5,48,0,0,77,78,3,10,5,0,78,79,5,1,0,0,79,80,3,16,8,0,80,
+        0,0,76,77,5,51,0,0,77,78,3,10,5,0,78,79,5,1,0,0,79,80,3,16,8,0,80,
         9,1,0,0,0,81,82,5,2,0,0,82,83,3,12,6,0,83,84,3,14,7,0,84,85,5,3,
         0,0,85,11,1,0,0,0,86,88,7,2,0,0,87,86,1,0,0,0,87,88,1,0,0,0,88,13,
         1,0,0,0,89,90,7,3,0,0,90,15,1,0,0,0,91,92,5,4,0,0,92,17,1,0,0,0,
         93,97,5,10,0,0,94,96,3,20,10,0,95,94,1,0,0,0,96,99,1,0,0,0,97,95,
-        1,0,0,0,97,98,1,0,0,0,98,19,1,0,0,0,99,97,1,0,0,0,100,101,5,49,0,
-        0,101,102,3,22,11,0,102,21,1,0,0,0,103,109,5,2,0,0,104,110,5,22,
-        0,0,105,110,5,23,0,0,106,110,5,24,0,0,107,108,5,25,0,0,108,110,5,
-        50,0,0,109,104,1,0,0,0,109,105,1,0,0,0,109,106,1,0,0,0,109,107,1,
-        0,0,0,110,116,1,0,0,0,111,112,5,5,0,0,112,114,5,28,0,0,113,115,5,
-        26,0,0,114,113,1,0,0,0,114,115,1,0,0,0,115,117,1,0,0,0,116,111,1,
-        0,0,0,116,117,1,0,0,0,117,129,1,0,0,0,118,119,5,27,0,0,119,120,5,
-        6,0,0,120,125,5,49,0,0,121,122,5,35,0,0,122,124,5,49,0,0,123,121,
+        1,0,0,0,97,98,1,0,0,0,98,19,1,0,0,0,99,97,1,0,0,0,100,101,5,52,0,
+        0,101,102,3,22,11,0,102,21,1,0,0,0,103,109,5,2,0,0,104,110,5,25,
+        0,0,105,110,5,26,0,0,106,110,5,27,0,0,107,108,5,28,0,0,108,110,5,
+        53,0,0,109,104,1,0,0,0,109,105,1,0,0,0,109,106,1,0,0,0,109,107,1,
+        0,0,0,110,116,1,0,0,0,111,112,5,5,0,0,112,114,5,31,0,0,113,115,5,
+        29,0,0,114,113,1,0,0,0,114,115,1,0,0,0,115,117,1,0,0,0,116,111,1,
+        0,0,0,116,117,1,0,0,0,117,129,1,0,0,0,118,119,5,30,0,0,119,120,5,
+        6,0,0,120,125,5,52,0,0,121,122,5,38,0,0,122,124,5,52,0,0,123,121,
         1,0,0,0,124,127,1,0,0,0,125,123,1,0,0,0,125,126,1,0,0,0,126,128,
         1,0,0,0,127,125,1,0,0,0,128,130,5,7,0,0,129,118,1,0,0,0,129,130,
-        1,0,0,0,130,131,1,0,0,0,131,134,5,3,0,0,132,133,5,29,0,0,133,135,
-        5,50,0,0,134,132,1,0,0,0,134,135,1,0,0,0,135,138,1,0,0,0,136,137,
-        5,30,0,0,137,139,5,50,0,0,138,136,1,0,0,0,138,139,1,0,0,0,139,23,
-        1,0,0,0,140,141,7,4,0,0,141,25,1,0,0,0,142,144,5,43,0,0,143,142,
-        1,0,0,0,143,144,1,0,0,0,144,154,1,0,0,0,145,155,5,42,0,0,146,149,
-        3,24,12,0,147,149,5,41,0,0,148,146,1,0,0,0,148,147,1,0,0,0,149,152,
-        1,0,0,0,150,151,5,43,0,0,151,153,5,42,0,0,152,150,1,0,0,0,152,153,
+        1,0,0,0,130,131,1,0,0,0,131,134,5,3,0,0,132,133,5,32,0,0,133,135,
+        5,53,0,0,134,132,1,0,0,0,134,135,1,0,0,0,135,138,1,0,0,0,136,137,
+        5,33,0,0,137,139,5,53,0,0,138,136,1,0,0,0,138,139,1,0,0,0,139,23,
+        1,0,0,0,140,141,7,4,0,0,141,25,1,0,0,0,142,144,5,46,0,0,143,142,
+        1,0,0,0,143,144,1,0,0,0,144,154,1,0,0,0,145,155,5,45,0,0,146,149,
+        3,24,12,0,147,149,5,44,0,0,148,146,1,0,0,0,148,147,1,0,0,0,149,152,
+        1,0,0,0,150,151,5,46,0,0,151,153,5,45,0,0,152,150,1,0,0,0,152,153,
         1,0,0,0,153,155,1,0,0,0,154,145,1,0,0,0,154,148,1,0,0,0,155,27,1,
         0,0,0,19,32,41,47,56,65,73,87,97,109,114,116,125,129,134,138,143,
         148,152,154
@@ -79,11 +77,11 @@ class QrogueAreasParser ( Parser ):
                      u"'one way'", u"'['", u"']'", u"'[Layout]'", u"<INVALID>", 
                      u"'[Hallways]'", u"'visible'", u"'foggy'", u"'World'", 
                      u"'Level'", u"'Spawn'", u"'Wild'", u"'Shop'", u"'Riddle'", 
-                     u"'Boss'", u"'Gate'", u"'Treasure'", u"'open'", u"'closed'", 
-                     u"'locked'", u"'event'", u"'permanent'", u"'entangled'", 
-                     u"<INVALID>", u"'tutorial'", u"'trigger'", u"'Qrogue<'", 
-                     u"'>Qrogue'", u"'~'", u"'|'", u"','", u"'#'", u"'..'", 
-                     u"'__'" ]
+                     u"'Boss'", u"'Gate'", u"'Treasure'", u"'Challenge'", 
+                     u"'Pause'", u"'Story'", u"'open'", u"'closed'", u"'locked'", 
+                     u"'event'", u"'permanent'", u"'entangled'", u"<INVALID>", 
+                     u"'tutorial'", u"'trigger'", u"'Qrogue<'", u"'>Qrogue'", 
+                     u"'~'", u"'|'", u"','", u"'#'", u"'..'", u"'__'" ]
 
     symbolicNames = [ u"<INVALID>", u"<INVALID>", u"<INVALID>", u"<INVALID>", 
                       u"<INVALID>", u"<INVALID>", u"<INVALID>", u"<INVALID>", 
@@ -91,7 +89,8 @@ class QrogueAreasParser ( Parser ):
                       u"FOGGY_LITERAL", u"WORLD_LITERAL", u"LEVEL_LITERAL", 
                       u"SPAWN_LITERAL", u"WILD_LITERAL", u"SHOP_LITERAL", 
                       u"RIDDLE_LITERAL", u"BOSS_LITERAL", u"GATE_ROOM_LITERAL", 
-                      u"TREASURE_LITERAL", u"OPEN_LITERAL", u"CLOSED_LITERAL", 
+                      u"TREASURE_LITERAL", u"CHALLENGE_LITERAL", u"PAUSE_LITERAL", 
+                      u"STORY_LITERAL", u"OPEN_LITERAL", u"CLOSED_LITERAL", 
                       u"LOCKED_LITERAL", u"EVENT_LITERAL", u"PERMANENT_LITERAL", 
                       u"ENTANGLED_LITERAL", u"DIRECTION", u"TUTORIAL_LITERAL", 
                       u"TRIGGER_LITERAL", u"HEADER", u"ENDER", u"HORIZONTAL_SEPARATOR", 
@@ -144,39 +143,42 @@ class QrogueAreasParser ( Parser ):
     BOSS_LITERAL=19
     GATE_ROOM_LITERAL=20
     TREASURE_LITERAL=21
-    OPEN_LITERAL=22
-    CLOSED_LITERAL=23
-    LOCKED_LITERAL=24
-    EVENT_LITERAL=25
-    PERMANENT_LITERAL=26
-    ENTANGLED_LITERAL=27
-    DIRECTION=28
-    TUTORIAL_LITERAL=29
-    TRIGGER_LITERAL=30
-    HEADER=31
-    ENDER=32
-    HORIZONTAL_SEPARATOR=33
-    VERTICAL_SEPARATOR=34
-    LIST_SEPARATOR=35
-    WALL=36
-    EMPTY_HALLWAY=37
-    EMPTY_ROOM=38
-    DIGIT=39
-    INTEGER=40
-    FLOAT=41
-    IMAG_NUMBER=42
-    SIGN=43
-    CHARACTER_LOW=44
-    CHARACTER_UP=45
-    CHARACTER=46
-    TEXT=47
-    ROOM_ID=48
-    HALLWAY_ID=49
-    REFERENCE=50
-    WS=51
-    UNIVERSAL_SEPARATOR=52
-    COMMENT=53
-    LINE_COMMENT=54
+    CHALLENGE_LITERAL=22
+    PAUSE_LITERAL=23
+    STORY_LITERAL=24
+    OPEN_LITERAL=25
+    CLOSED_LITERAL=26
+    LOCKED_LITERAL=27
+    EVENT_LITERAL=28
+    PERMANENT_LITERAL=29
+    ENTANGLED_LITERAL=30
+    DIRECTION=31
+    TUTORIAL_LITERAL=32
+    TRIGGER_LITERAL=33
+    HEADER=34
+    ENDER=35
+    HORIZONTAL_SEPARATOR=36
+    VERTICAL_SEPARATOR=37
+    LIST_SEPARATOR=38
+    WALL=39
+    EMPTY_HALLWAY=40
+    EMPTY_ROOM=41
+    DIGIT=42
+    INTEGER=43
+    FLOAT=44
+    IMAG_NUMBER=45
+    SIGN=46
+    CHARACTER_LOW=47
+    CHARACTER_UP=48
+    CHARACTER=49
+    TEXT=50
+    ROOM_ID=51
+    HALLWAY_ID=52
+    REFERENCE=53
+    WS=54
+    UNIVERSAL_SEPARATOR=55
+    COMMENT=56
+    LINE_COMMENT=57
 
     def __init__(self, input, output=sys.stdout):
         super(QrogueAreasParser, self).__init__(input, output=output)
@@ -743,6 +745,15 @@ class QrogueAreasParser ( Parser ):
         def TREASURE_LITERAL(self):
             return self.getToken(QrogueAreasParser.TREASURE_LITERAL, 0)
 
+        def CHALLENGE_LITERAL(self):
+            return self.getToken(QrogueAreasParser.CHALLENGE_LITERAL, 0)
+
+        def PAUSE_LITERAL(self):
+            return self.getToken(QrogueAreasParser.PAUSE_LITERAL, 0)
+
+        def STORY_LITERAL(self):
+            return self.getToken(QrogueAreasParser.STORY_LITERAL, 0)
+
         def getRuleIndex(self):
             return QrogueAreasParser.RULE_r_type
 
@@ -772,7 +783,7 @@ class QrogueAreasParser ( Parser ):
             self.enterOuterAlt(localctx, 1)
             self.state = 89
             _la = self._input.LA(1)
-            if not((((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << QrogueAreasParser.SPAWN_LITERAL) | (1 << QrogueAreasParser.WILD_LITERAL) | (1 << QrogueAreasParser.SHOP_LITERAL) | (1 << QrogueAreasParser.RIDDLE_LITERAL) | (1 << QrogueAreasParser.BOSS_LITERAL) | (1 << QrogueAreasParser.GATE_ROOM_LITERAL) | (1 << QrogueAreasParser.TREASURE_LITERAL))) != 0)):
+            if not((((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << QrogueAreasParser.SPAWN_LITERAL) | (1 << QrogueAreasParser.WILD_LITERAL) | (1 << QrogueAreasParser.SHOP_LITERAL) | (1 << QrogueAreasParser.RIDDLE_LITERAL) | (1 << QrogueAreasParser.BOSS_LITERAL) | (1 << QrogueAreasParser.GATE_ROOM_LITERAL) | (1 << QrogueAreasParser.TREASURE_LITERAL) | (1 << QrogueAreasParser.CHALLENGE_LITERAL) | (1 << QrogueAreasParser.PAUSE_LITERAL) | (1 << QrogueAreasParser.STORY_LITERAL))) != 0)):
                 self._errHandler.recoverInline(self)
             else:
                 self._errHandler.reportMatch(self)

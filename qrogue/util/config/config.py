@@ -7,7 +7,7 @@ from qrogue.util.config import CheatConfig, GameplayConfig, PathConfig, TestConf
 class Config:   # todo make singleton and handle access to other configs?
     __frame_count = 0
     MAX_SEED = 1000000
-    __VERSION = "v0.4.2"
+    __VERSION = "v0.6.2"
     __GAME_CONFIG = "qrogue_game.config"
     __GAMEPLAY_HEAD = "[Gameplay]\n"
     __DEBUG = False
@@ -165,3 +165,7 @@ class Config:   # todo make singleton and handle access to other configs?
     @staticmethod
     def frame_count() -> int:
         return Config.__frame_count
+
+    @staticmethod
+    def loading_refresh_time() -> float:
+        return 0.2  # in seconds

@@ -13,6 +13,7 @@ TEMPLATE_PREFIX = "_"
 EMPTY_ROOM_CODE = "_a"
 EMPTY_HALLWAY_CODE = "_0"
 
+# how the tiles look in the editor is not necessarily the same as they look in the game
 OBSTACLE_TILE = "o"
 PLACE_HOLDER_TILE = "_"
 COLLECTIBLE_TILE = "c"
