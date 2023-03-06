@@ -10,7 +10,7 @@ from py_cui.widget_set import WidgetSet
 from qrogue.game.logic import StateVector
 from qrogue.game.logic.actors import Boss, Enemy, Riddle, Robot
 from qrogue.game.logic.actors.puzzles import Target, Challenge
-from qrogue.game.logic.collectibles import ShopItem, Collectible
+from qrogue.game.logic.collectibles import ShopItem, Collectible, Instruction, GateType
 from qrogue.game.world.map import Map
 from qrogue.game.world.navigation import Direction
 from qrogue.graphics.popups import Popup
@@ -994,7 +994,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                     self.render()
                 elif self._details_content == self._DETAILS_INFO_THEN_HELP:
                     self._details_content = self._DETAILS_HELP
-                    self.__choices_help()
+                    self.__choices_gate_guide()
                     self.render()
                 else:
                     # else we selected a gate and we initiate the placing process
@@ -1023,7 +1023,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
     def __init_choices(self):
         texts = ["Edit", "Gate Guide"]
-        callbacks = [self.__choices_adapt, self.__choices_help]
+        callbacks = [self.__choices_adapt, self.__choices_gate_guide]
 
         if self.__in_expedition or Ach.check_unlocks(Unlocks.CircuitReset, self._progress):
             texts.append("Reset")
@@ -1246,18 +1246,24 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             self.render()
             return False
 
-    def __choices_help(self) -> bool:
-        def show_help_popup(index: int = 0) -> bool:
-            instruction = self._robot.backpack.get(index)
-            if instruction is None:
-                return True
-            else:
-                Popup.generic_info(instruction.name(), instruction.description())
+    def __choices_gate_guide(self) -> bool:
+        gates: List[GateType] = []
+        for instruction in self._robot.backpack:
+            if instruction.gate_type not in gates:
+                # only store each available gate type once
+                gates.append(instruction.gate_type)
+
+        def show_gate_guide(index: int = 0) -> bool:
+            if 0 <= index < len(gates):
+                gate = gates[index]
+                Popup.generic_info(gate.short_name, Instruction.get_description(gate))
                 return False
-        options = [instruction.name() for instruction in self._robot.backpack]
+            return True
+
+        options = [gate.short_name for gate in gates]
         self._details.set_data(data=(
             SelectionWidget.wrap_in_hotkey_str(options) + [MyWidgetSet.BACK_STRING],
-            [show_help_popup]
+            [show_gate_guide]
         ))
         self._details_content = self._DETAILS_HELP
         return True

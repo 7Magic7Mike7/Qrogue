@@ -1,12 +1,32 @@
-
+import enum
 from abc import ABC, abstractmethod
 from typing import Iterator, Optional
 
+import qiskit.circuit
 import qiskit.circuit.library.standard_gates as gates
 from qiskit import QuantumCircuit
 
 from qrogue.game.logic.collectibles import Collectible, CollectibleType
 from qrogue.util import ShopConfig, Logger
+
+
+class GateType(enum.Enum):
+    # unique by their short name
+    IGate = "I"
+    XGate = "X"
+    YGate = "Y"
+    ZGate = "Z"
+    HGate = "Hadamard"
+
+    SwapGate = "Swap"
+    CXGate = "CX"
+
+    def __init__(self, short_name: str):
+        self.__short_name = short_name
+
+    @property
+    def short_name(self) -> str:
+        return self.__short_name
 
 
 class Instruction(Collectible, ABC):
@@ -15,14 +35,39 @@ class Instruction(Collectible, ABC):
     """
     MAX_ABBREVIATION_LEN = 5
     __DEFAULT_PRICE = 15 * ShopConfig.base_unit()
+    __GATE_DESCRIPTIONS = {
+        # GateType -> "description"
+        GateType.IGate: "An I Gate or Identity Gate doesn't alter the Qubit in any way. It can be used as a "
+                        "placeholder.",
+        GateType.XGate: "In the classical world an X Gate corresponds to an inverter. It swaps the amplitudes of |0> "
+                        "and |1>.\nIn the quantum world this corresponds to a rotation of 180° along the x-axis, hence "
+                        "the name X Gate.",
+        GateType.YGate: "A Y Gate rotates the Qubit along the y-axis by 180°.",
+        GateType.ZGate: "A Z Gate rotates the Qubit along the z-axis by 180°.",
+        GateType.HGate: "The Hadamard Gate is often used to bring Qubits to Superposition. In a simple case this "
+                        "corresponds to a rotation of 90°.",
 
-    def __init__(self, instruction, needed_qubits: int):
+        GateType.SwapGate: "As the name suggests, Swap Gates swap the amplitude between two Qubits.",
+        GateType.CXGate: "Applies an X Gate onto its second Qubit if its first Qubit is 1.",
+    }
+
+    @staticmethod
+    def get_description(gate_type: GateType) -> str:
+        assert gate_type in Instruction.__GATE_DESCRIPTIONS, f"Invalid GateType: {gate_type}! No description available."
+        return Instruction.__GATE_DESCRIPTIONS[gate_type]
+
+    def __init__(self, gate_type: GateType, instruction: qiskit.circuit.Gate, needed_qubits: int):
         super().__init__(CollectibleType.Gate)
+        self.__type = gate_type
         self.__instruction = instruction
         self.__needed_qubits = needed_qubits
         self._qargs = []
         self._cargs = []
         self.__position: Optional[int] = None
+
+    @property
+    def gate_type(self) -> GateType:
+        return self.__type
 
     @property
     def num_of_qubits(self) -> int:
@@ -87,11 +132,10 @@ class Instruction(Collectible, ABC):
             return self._qargs[index]
 
     def name(self) -> str:
-        return self.short_name() + " Gate"
+        return f"{self.__type.short_name} Gate"
 
-    @abstractmethod
-    def short_name(self) -> str:
-        pass
+    def description(self) -> str:
+        return Instruction.get_description(self.__type)
 
     @abstractmethod
     def abbreviation(self, qubit: int = 0):
@@ -106,7 +150,7 @@ class Instruction(Collectible, ABC):
 
     def selection_str(self) -> str:
         # Gate (qX, qY, ?, ...)
-        text = f"{self.short_name()} ("
+        text = f"{self.__type.name} ("
         for i in range(self.num_of_qubits - 1):
             if i < len(self._qargs):
                 text += f"q{self._qargs[i]}, "
@@ -138,22 +182,16 @@ class Instruction(Collectible, ABC):
 
 
 class SingleQubitGate(Instruction, ABC):
-    def __init__(self, instruction):
-        super().__init__(instruction, needed_qubits=1)
+    def __init__(self, gate_type: GateType, instruction: qiskit.circuit.Gate):
+        super().__init__(gate_type, instruction, needed_qubits=1)
 
 
 class IGate(SingleQubitGate):
     def __init__(self):
-        super().__init__(gates.IGate())
-
-    def short_name(self) -> str:
-        return "I"
+        super().__init__(GateType.IGate, gates.IGate())
 
     def abbreviation(self, qubit: int = 0):
         return "I"
-
-    def description(self) -> str:
-        return "An I Gate or Identity Gate doesn't alter the Qubit in any way. It can be used as a placeholder."
 
     def copy(self) -> "Instruction":
         return IGate()
@@ -161,17 +199,10 @@ class IGate(SingleQubitGate):
 
 class XGate(SingleQubitGate):
     def __init__(self):
-        super(XGate, self).__init__(gates.XGate())
-
-    def short_name(self) -> str:
-        return "X"
+        super(XGate, self).__init__(GateType.XGate, gates.XGate())
 
     def abbreviation(self, qubit: int = 0):
         return " X "
-
-    def description(self) -> str:
-        return "In the classical world an X Gate corresponds to an inverter. It swaps the amplitudes of |0> and |1>.\n" \
-               "In the quantum world this corresponds to a rotation of 180° along the x-axis, hence the name X Gate."
 
     def copy(self) -> "Instruction":
         return XGate()
@@ -179,16 +210,10 @@ class XGate(SingleQubitGate):
 
 class YGate(SingleQubitGate):
     def __init__(self):
-        super(YGate, self).__init__(gates.YGate())
-
-    def short_name(self) -> str:
-        return "Y"
+        super(YGate, self).__init__(GateType.YGate, gates.YGate())
 
     def abbreviation(self, qubit: int = 0):
         return " Y "
-
-    def description(self) -> str:
-        return "A Y Gate rotates the Qubit along the y-axis by 180°."
 
     def copy(self) -> "Instruction":
         return YGate()
@@ -196,16 +221,10 @@ class YGate(SingleQubitGate):
 
 class ZGate(SingleQubitGate):
     def __init__(self):
-        super(ZGate, self).__init__(gates.ZGate())
-
-    def short_name(self) -> str:
-        return "Z"
+        super(ZGate, self).__init__(GateType.ZGate, gates.ZGate())
 
     def abbreviation(self, qubit: int = 0):
         return " Z "
-
-    def description(self) -> str:
-        return "A Z Gate rotates the Qubit along the z-axis by 180°."
 
     def copy(self) -> "Instruction":
         return ZGate()
@@ -213,14 +232,7 @@ class ZGate(SingleQubitGate):
 
 class HGate(SingleQubitGate):
     def __init__(self):
-        super().__init__(gates.HGate())
-
-    def description(self) -> str:
-        return "The Hadamard Gate is often used to bring Qubits to Superposition. In a simple case this corresponds " \
-               "to a rotation of 90°."
-
-    def short_name(self) -> str:
-        return "Hadamard"
+        super().__init__(GateType.HGate, gates.HGate())
 
     def abbreviation(self, qubit: int = 0):
         return " H "
@@ -237,7 +249,7 @@ class MultiQubitGate(Instruction, ABC):
         if qubit in self._qargs:
             index = self._qargs.index(qubit)
         else:
-            # during placement we need an abbreviation for the next qubit
+            # during placement, we need an abbreviation for the next qubit
             index = len(self._qargs)
         return self._internal_abbreviation(index)
 
@@ -250,22 +262,19 @@ class MultiQubitGate(Instruction, ABC):
 
 
 class DoubleQubitGate(MultiQubitGate, ABC):
-    def __init__(self, instruction):
-        super(DoubleQubitGate, self).__init__(instruction, needed_qubits=2)
+    def __init__(self, gate_type: GateType, instruction: qiskit.circuit.Gate):
+        super(DoubleQubitGate, self).__init__(gate_type, instruction, needed_qubits=2)
 
 
 class SwapGate(DoubleQubitGate):
     def __init__(self):
-        super().__init__(gates.SwapGate())
+        super().__init__(GateType.SwapGate, gates.SwapGate())
 
-    def description(self) -> str:
-        return "As the name suggests, Swap Gates swap the amplitude between two Qubits."
-
-    def short_name(self) -> str:
-        return "Swap"
-
-    def _internal_abbreviation(self, index: int):
-        return [" S1 ", " S0 "][index]
+    def _internal_abbreviation(self, index: int) -> str:
+        if index == 0:
+            return " S0"
+        elif index == 1:
+            return " S1"
 
     def copy(self) -> "Instruction":
         return SwapGate()
@@ -273,16 +282,13 @@ class SwapGate(DoubleQubitGate):
 
 class CXGate(DoubleQubitGate):
     def __init__(self):
-        super().__init__(gates.CXGate())
+        super().__init__(GateType.CXGate, gates.CXGate())
 
-    def short_name(self) -> str:
-        return "CX"
-
-    def _internal_abbreviation(self, index: int):
-        return [" C ", " X "][index]
+    def _internal_abbreviation(self, index: int) -> str:
+        if index == 0:
+            return " C "
+        elif index == 1:
+            return " X "
 
     def copy(self) -> "Instruction":
         return CXGate()
-
-    def description(self) -> str:
-        return f"Applies an X Gate onto its second Qubit if its first Qubit is 1."
