@@ -1,7 +1,53 @@
 from enum import IntEnum
 from typing import List, Tuple, Callable
 
-from py_cui.keys import *
+import py_cui.keys
+
+
+# primary keys
+_PK_UP = py_cui.keys.KEY_UP_ARROW
+_PK_RIGHT = py_cui.keys.KEY_RIGHT_ARROW
+_PK_DOWN = py_cui.keys.KEY_DOWN_ARROW
+_PK_LEFT = py_cui.keys.KEY_LEFT_ARROW
+_PK_CONFIRM = py_cui.keys.KEY_SPACE
+_PK_CANCEL = py_cui.keys.KEY_BACKSPACE
+_PK_SITUATIONAL1 = py_cui.keys.KEY_CTRL_LEFT
+_PK_SITUATIONAL2 = py_cui.keys.KEY_CTRL_RIGHT
+_PK_PAUSE = py_cui.keys.KEY_TAB
+_PK_HELP = py_cui.keys.KEY_H_LOWER
+
+# secondary keys (alternatives to primary keys)
+_SK_UP = [py_cui.keys.KEY_W_LOWER]
+_SK_RIGHT = [py_cui.keys.KEY_D_LOWER]
+_SK_DOWN = [py_cui.keys.KEY_S_LOWER]
+_SK_LEFT = [py_cui.keys.KEY_A_LOWER]
+_SK_CONFIRM = [py_cui.keys.KEY_ENTER]
+_SK_CANCEL = [py_cui.keys.KEY_SHIFT_LEFT, py_cui.keys.KEY_A_UPPER]
+_SK_SITUATIONAL1 = [py_cui.keys.KEY_Q_LOWER]
+_SK_SITUATIONAL2 = [py_cui.keys.KEY_E_LOWER]
+_SK_PAUSE = [py_cui.keys.KEY_P_LOWER]
+_SK_HELP = []   # no alternative
+
+# hot keys (not needed for playing but can be helpful/increase convenience)
+_HOT_KEYS = [
+    [py_cui.keys.KEY_1],
+    [py_cui.keys.KEY_2],
+    [py_cui.keys.KEY_3],
+    [py_cui.keys.KEY_4],
+    [py_cui.keys.KEY_5],
+    [py_cui.keys.KEY_6],
+    [py_cui.keys.KEY_7],
+    [py_cui.keys.KEY_8],
+    [py_cui.keys.KEY_9],
+    [py_cui.keys.KEY_0, 94],    # 94 = ^
+]
+
+# debug keys (not used in normal gameplay)
+_DK_RERENDER = [py_cui.keys.KEY_CTRL_R]
+_DK_PRINT_SCREEN = [py_cui.keys.KEY_CTRL_P]
+_DK_CHEAT_INPUT = [py_cui.keys.KEY_CTRL_I]
+_DK_CHEAT_LIST = [py_cui.keys.KEY_CTRL_L]
+_DK_STOP_SIM = [py_cui.keys.KEY_ESCAPE]
 
 
 class Keys(IntEnum):
@@ -25,12 +71,15 @@ class Keys(IntEnum):
     PopupScrollDownFast = PopupClose + 4
     PopupReopen = PopupClose + 5
 
-    # 14 - 16
+    # 14 - 18
     Action = PopupReopen + 1
     Cancel = Action + 1
-    Pause = Cancel + 1
+    Situational1 = Cancel + 1
+    Situational2 = Situational1 + 1
 
-    # 17 - 26
+    Pause = Situational2 + 1
+
+    # 19 - 28
     HotKey1 = Pause + 1
     HotKey2 = HotKey1 + 1
     HotKey3 = HotKey1 + 2
@@ -42,15 +91,12 @@ class Keys(IntEnum):
     HotKey9 = HotKey1 + 8
     HotKey0 = HotKey1 + 9
 
-    # 27
-    HotKeyCommit = HotKey0 + 1
-
-    # 28 - 30
-    Render = HotKeyCommit + 1
+    # 29 - 31
+    Render = HotKey0 + 1
     PrintScreen = Render + 1
     StopSimulator = PrintScreen + 1
 
-    # 31 - 32
+    # 32 - 33
     CheatInput = StopSimulator + 1
     CheatList = CheatInput + 1
 
@@ -98,53 +144,56 @@ class Keys(IntEnum):
 
 
 class Controls:
-    INVALID_KEY = KEY_ALT_I     # is not allowed to be used as a valid key in the controls!
+    INVALID_KEY = py_cui.keys.KEY_ALT_I     # is not allowed to be used as a valid key in the controls!
+    __KEYS = [
+        # move: 0 - 3
+        [_PK_UP] + _SK_UP,
+        [_PK_RIGHT] + _SK_RIGHT,
+        [_PK_DOWN] + _SK_DOWN,
+        [_PK_LEFT] + _SK_LEFT,
+        # select: 4 - 7
+        [_PK_UP] + _SK_UP,
+        [_PK_RIGHT] + _SK_RIGHT,
+        [_PK_DOWN] + _SK_DOWN,
+        [_PK_LEFT] + _SK_LEFT,
+        # popups: 8 - 13
+        [_PK_CONFIRM] + _SK_CONFIRM,  #[KEY_ESCAPE],     # KEY_ESCAPE is not allowed to be at the first position because then the simulator would stop itself
+        [_PK_UP] + _SK_UP,
+        [_PK_RIGHT] + _SK_RIGHT,
+        [_PK_DOWN] + _SK_DOWN,
+        [_PK_LEFT] + _SK_LEFT,
+        [_PK_HELP],
+        # 14 - 18
+        [_PK_CONFIRM] + _SK_CONFIRM,     # action
+        [_PK_CANCEL] + _SK_CANCEL,  # cancel/back
+        [_PK_SITUATIONAL1] + _SK_SITUATIONAL1,
+        [_PK_SITUATIONAL2] + _SK_SITUATIONAL2,
+        [_PK_PAUSE] + _SK_PAUSE,  # (Escape doesn't work here due to its special purpose for the engine)
+
+        # special purpose hotkeys: 19 - 28
+        _HOT_KEYS[0],  # Fight: Adapt (Add/Remove)
+        _HOT_KEYS[1],  # Fight: Commit
+        _HOT_KEYS[2],  # Fight: Reset
+        _HOT_KEYS[3],  # Fight: Items
+        _HOT_KEYS[4],  # Fight: Help
+        _HOT_KEYS[5],  # Fight: Flee
+        _HOT_KEYS[6],
+        _HOT_KEYS[7],
+        _HOT_KEYS[8],
+        _HOT_KEYS[9],
+
+        # debugging keys: 29 - 31
+        _DK_RERENDER,  # render screen
+        _DK_PRINT_SCREEN,   # print screen
+        _DK_STOP_SIM,   # stop simulator
+        # cheat keys: 32 - 33
+        _DK_CHEAT_INPUT,   # cheat input
+        _DK_CHEAT_LIST,   # cheat list
+    ]
 
     def __init__(self, handle_key_presses: Callable[[int], None]):
         self.__handle_key_presses = handle_key_presses
-        self.__pycui_keys = [
-            # move: 0 - 3
-            [KEY_UP_ARROW, KEY_W_LOWER],
-            [KEY_RIGHT_ARROW, KEY_D_LOWER],
-            [KEY_DOWN_ARROW, KEY_S_LOWER],
-            [KEY_LEFT_ARROW, KEY_A_LOWER],
-            # select: 4 - 7
-            [KEY_UP_ARROW, KEY_W_LOWER],
-            [KEY_RIGHT_ARROW, KEY_D_LOWER],
-            [KEY_DOWN_ARROW, KEY_S_LOWER],
-            [KEY_LEFT_ARROW, KEY_A_LOWER],
-            # popups: 8 - 13
-            [KEY_SPACE, KEY_ENTER, KEY_ESCAPE],     # KEY_ESCAPE is not allowed to be at the first position because then the simulator would stop itself
-            [KEY_UP_ARROW, KEY_W_LOWER],
-            [KEY_DOWN_ARROW, KEY_S_LOWER],
-            [KEY_RIGHT_ARROW, KEY_D_LOWER],
-            [KEY_LEFT_ARROW, KEY_A_LOWER],
-            [KEY_H_LOWER],
-            # 14 - 16
-            [KEY_SPACE, KEY_ENTER],     # action
-            [KEY_BACKSPACE, KEY_A_UPPER, KEY_SHIFT_LEFT],  # cancel/back
-            [KEY_P_LOWER, KEY_TAB],  # pause    (Escape doesn't work here due to its special purpose for the engine)
-
-            # special purpose hotkeys: 17 - 27
-            [KEY_1],  # Fight: Adapt (Add/Remove)
-            [KEY_2],  # Fight: Commit
-            [KEY_3],  # Fight: Reset
-            [KEY_4],  # Fight: Items
-            [KEY_5],  # Fight: Help
-            [KEY_6],  # Fight: Flee
-            [KEY_7],
-            [KEY_8],
-            [KEY_9],
-            [KEY_0, 94],    # 94 = ^
-            [KEY_C_LOWER],  # Fight: Commit
-            # debugging keys: 28 - 30
-            [KEY_CTRL_R],  # render screen
-            [KEY_CTRL_P],   # print screen
-            [KEY_ESCAPE],   # stop simulator
-            # cheat keys: 31 - 32
-            [KEY_CTRL_I],   # cheat input
-            [KEY_CTRL_L],   # cheat list
-        ]
+        self.__pycui_keys = Controls.__KEYS.copy()
 
     def encode(self, key_pressed: int) -> Keys:
         """
