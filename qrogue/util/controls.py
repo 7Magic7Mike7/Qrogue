@@ -117,14 +117,16 @@ class Keys(IntEnum):
     @staticmethod
     def from_index(index: int) -> "Keys":
         if index < len(Keys):
-            values = Keys
+            for i, elem in enumerate(Keys):
+                if i == index:
+                    return elem
+            # performance of above version might be better?
+            # values = [elem for elem in Keys]
+            # return values[index]
         else:
             values = Keys.invalid_values()
-        i = 0
-        for elem in values:
-            if i == index:
-                return elem
-            i += 1
+            if index < len(values):
+                return values[index]
         return Keys.Invalid
 
     def __init__(self, num):
