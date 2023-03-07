@@ -15,6 +15,19 @@ def is_power_of_2(n: int):
     return (n & (n - 1)) == 0
 
 
+def clamp(val: int, minv: int, maxv: int) -> int:
+    """
+    Returns val if minv <= val <= maxv is True. Else either returns minv or maxv, depending on which one is closer to
+    val.
+
+    :param val: the value to clamp
+    :param minv: the minimum value val should be clamped to
+    :param maxv: the maximum value val should be clamped to
+    :return: minv if val < minv, maxv if val > maxv, else val (minv <= val <= maxv)
+    """
+    return max(minv, min(val, maxv))
+
+
 def to_binary_string(num: int, digits: Optional[int] = None, msb: bool = True) -> str:
     """
     Converts a given integer into its binary representation as string.
