@@ -43,15 +43,17 @@ class Popup:
     DimY = Dimension(5, 7, 10, 15)
 
     __DEFAULT_POS = PopupConfig.default_pos()
-    __show_popup: Optional[Callable[[str, str, int, int, Optional[Tuple[int, int]]], None]] = None
+    __show_popup: Optional[Callable[[str, str, int, int, Optional[Tuple[int, int]], Optional[bool]], None]] = None
     __check_achievement: Optional[Callable[[str], bool]] = None
     __popup_queue: List["Popup"] = []
     __cur_popup: Optional["Popup"] = None
-    __last_popup: Optional["Popup"] = None
 
     @staticmethod
-    def update_popup_functions(show_popup_callback: Callable[[str, str, int, int, Optional[Tuple[int, int]]], None]) \
-            -> None:
+    def update_popup_functions(show_popup_callback: Callable[[str, str, int, int, Optional[Tuple[int, int]],
+                                                              Optional[bool]], None]) -> None:
+        """
+        callable(title, text, color, position, dimensions, reopen)
+        """
         Popup.__show_popup = show_popup_callback
 
     @staticmethod
@@ -59,27 +61,16 @@ class Popup:
         Popup.__check_achievement = check_achievement_callback
 
     @staticmethod
-    def clear_last_popup() -> None:
-        Popup.__last_popup = None
-
-    @staticmethod
     def on_close() -> bool:
-        if Popup.__cur_popup:
+        if Popup.__cur_popup is not None:
             Popup.__cur_popup.on_close_callback()
             Popup.__cur_popup.__on_close_callback = None    # clear callback to not execute it when reopening!
-        if Popup.__cur_popup and Popup.__cur_popup.is_reopenable:
-            Popup.__last_popup = Popup.__cur_popup
         Popup.__cur_popup = None
         if len(Popup.__popup_queue) > 0:
             next_popup = Popup.__popup_queue.pop(0)
             next_popup.show()
             return False        # don't fully close popup
         return True     # popup no longer needed so we can fully close it
-
-    @staticmethod
-    def reopen():
-        if Popup.__last_popup and Popup.__cur_popup is None:
-            Popup.__last_popup.show()
 
     @staticmethod
     def message(title: str, text: str, reopen: bool, pos: Optional[int] = None,
@@ -128,12 +119,9 @@ class Popup:
     def from_message(message: Message, overwrite: bool = False):
         if Popup.__check_achievement:
             ret = message.get(Popup.__check_achievement)    # resolve possible alternative messages
-            if ret:
+            if ret is not None:
                 title, text = ret
-                reopen = True
-                # the popup is not reopenable if it has lower priority than the last popup
-                if Popup.__last_popup is not None and Popup.__last_popup.is_reopenable and not message.priority:
-                    reopen = False
+                reopen = message.priority
                 Popup.message(title, text, reopen=reopen, pos=message.position, overwrite=overwrite)
 
     @staticmethod
@@ -144,10 +132,7 @@ class Popup:
                 title, text = ret
                 if Config.debugging():
                     title += f" {{@*{message.id}}}"
-                reopen = True
-                # the popup is not reopenable if it has lower priority than the last popup
-                if Popup.__last_popup is not None and Popup.__last_popup.is_reopenable and not message.priority:
-                    reopen = False
+                reopen = message.priority
                 Popup.message(title, text, reopen, pos=message.position, on_close_callback=on_close_callback)
 
     def __init__(self, title: str, text: str, position: int, color: int = PopupConfig.default_color(),
@@ -184,7 +169,7 @@ class Popup:
             self.__on_close_callback()
 
     def _base_show(self):
-        Popup.__show_popup(self.__title, self.__text, self.__position, self.__color, self.__dimensions)
+        Popup.__show_popup(self.__title, self.__text, self.__position, self.__color, self.__dimensions, self.__reopen)
 
     def _enqueue(self):
         Popup.__popup_queue.append(self)

@@ -754,11 +754,15 @@ class SelectionWidget(Widget):
         return text.startswith(f"[{index}] ")
 
     def __init__(self, widget: WidgetWrapper, controls: Controls, columns: int = 1, is_second: bool = False,
-                 stay_selected: bool = False):
+                 stay_selected: bool = False, on_key_press: Optional[Callable[[Keys], None]] = None):
         super(SelectionWidget, self).__init__(widget)
         self.__columns = columns
         self.__is_second = is_second
         self.__stay_selected = stay_selected
+
+        def okp(key: Keys):
+            if on_key_press is not None: on_key_press(key)
+        self.__on_key_press = okp
         self.__index = 0
         self.__choices = []
         self.__callbacks = []
@@ -891,6 +895,8 @@ class SelectionWidget(Widget):
     def _up(self) -> None:
         if self.num_of_choices <= 1:
             return
+        # only call if the key press changes something (e.g. more than 1 choice)
+        self.__on_key_press(Keys.SelectionUp)
         if self.num_of_choices <= self.__columns or self.__columns == 1:
             self.__single_prev()
         else:
@@ -906,6 +912,8 @@ class SelectionWidget(Widget):
     def _right(self) -> None:
         if self.num_of_choices <= 1:
             return
+        # only call if the key press changes something (e.g. more than 1 choice)
+        self.__on_key_press(Keys.SelectionRight)
         if self.__columns == 1 or self.num_of_choices <= self.__columns:
             self.__single_next()
         else:
@@ -922,6 +930,8 @@ class SelectionWidget(Widget):
     def _down(self) -> None:
         if self.num_of_choices <= 1:
             return
+        # only call if the key press changes something (e.g. more than 1 choice)
+        self.__on_key_press(Keys.SelectionDown)
         if self.num_of_choices <= self.__columns or self.__columns == 1:
             self.__single_next()
         else:
@@ -935,6 +945,8 @@ class SelectionWidget(Widget):
     def _left(self) -> None:
         if self.num_of_choices <= 1:
             return
+        # only call if the key press changes something (e.g. more than 1 choice)
+        self.__on_key_press(Keys.SelectionLeft)
         if self.__columns == 1 or self.num_of_choices <= self.__columns:
             self.__single_prev()
         else:
@@ -949,6 +961,7 @@ class SelectionWidget(Widget):
         self.render()
 
     def __jump_to_index(self, index: int):
+        self.__on_key_press(Keys.hotkeys()[index])      # todo implement more efficiently? On the other hand hotkeys are not that important maybe
         if index < 0:
             self.__index = 0
         elif self.num_of_choices <= index:
@@ -961,6 +974,7 @@ class SelectionWidget(Widget):
         """
         :return: True if the focus should move, False if the focus should stay in this SelectionWidget
         """
+        self.__on_key_press(Keys.Action)
         # if only one callback is given, it needs the index as parameter
         if len(self.__callbacks) == 1 and self.num_of_choices > 1:
             ret = self.__callbacks[0](self.__index)
@@ -973,3 +987,115 @@ class SelectionWidget(Widget):
             return True
         else:
             return ret
+
+
+class HistoricWrapperWidget:
+    def __init__(self, widgets: Tuple[Widget], render_widgets: bool, save_initial_state: bool = True):
+        self.__widgets = widgets
+        self.__history: List[Tuple[str]] = []
+        self.__index = -1
+
+        if render_widgets:
+            for widget in widgets:
+                widget.render()     # update the visuals before potentially saving them
+        if save_initial_state:
+            self.save_state(rerender=True, force=True)
+
+    @property
+    def index(self) -> int:
+        return self.__index
+
+    @property
+    def is_in_past(self) -> bool:
+        return self.__index < len(self.__history) - 1
+
+    @property
+    def _cur_data(self) -> Optional[Tuple[str]]:
+        if 0 <= self.__index < len(self.__history):
+            return self.__history[self.__index]
+        return None
+
+    def save_state(self, rerender: bool = False, force: bool = False):
+        if rerender:
+            for widget in self.__widgets:
+                widget.render()
+        data = tuple([widget.widget.get_title() for widget in self.__widgets])
+
+        # if force is False then data is not saved if it is equal to the latest data
+        if force or len(self.__history) <= 0 or data != self.__history[-1]:
+            self.__history.append(data)
+            self.__index = len(self.__history) - 1  # index points to the last element
+
+    def _back(self, render: bool):
+        self.__index -= 1
+        self.__index = max(self.__index, 0)
+        if render: self.render()
+
+    def _forth(self, render: bool):
+        self.__index += 1
+        self.__index = min(self.__index, len(self.__history) - 1)
+        if render: self.render()
+
+    def travel(self, forth: bool, render: bool = True):
+        if forth:   self._forth(render)
+        else:       self._back(render)
+
+    def jump_to_present(self, render: bool = True):
+        if self.is_in_past:
+            self.__index = len(self.__history) - 1
+            if render: self.render()
+
+    def clean_history(self) -> None:
+        if len(self.__history) > 0:
+            self.__history = [self.__history[-1]]  # only keep the latest element
+            self.__index = 0
+
+    def render(self) -> None:
+        if self._cur_data is not None:
+            assert len(self._cur_data) == len(self.__widgets), "Length of data doesn't match widgets': " \
+                                                               f"{len(self._cur_data)} != {len(self.__widgets)}"
+            for i, widget in enumerate(self.__widgets):
+                widget.widget.set_title(self._cur_data[i])
+                #widget.render()
+
+
+class HistoricProperty(Widget, ABC):
+    def __init__(self, widget: WidgetWrapper):
+        super().__init__(widget)
+        self.__history: List[str] = []
+        self.__index = -1
+
+    @property
+    def index(self) -> int:
+        return self.__index
+
+    @property
+    def _cur_data(self) -> Optional[str]:
+        if 0 <= self.__index < len(self.__history):
+            return self.__history[self.__index]
+        return None
+
+    def add_data(self, data: str, force: bool = False):
+        # if force is False then data is not saved if it is equal to the latest data
+        if force or len(self.__history) <= 0 or data != self.__history[-1]:
+            self.__history.append(data)
+            self.__index = len(self.__history) - 1  # index points to the last element
+
+    def back(self):
+        self.__index -= 1
+        self.__index = max(self.__index, 0)
+
+    def forth(self):
+        self.__index += 1
+        self.__index = min(self.__index, len(self.__history) - 1)
+
+    def clean_history(self) -> None:
+        self.__history = [self.__history[-1]]  # only keep the latest element
+        self.__index = 0
+
+    def render(self) -> None:
+        if self._cur_data is not None:
+            self.widget.set_title(self._cur_data)
+
+
+

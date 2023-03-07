@@ -104,6 +104,80 @@ class QrogueCUI(PyCUI):
             elif self.__cur_state == QrogueCUI._State.Transition:
                 self.__renderer._switch_to_transition(data)
 
+    class _PopupHistory:
+        def __init__(self, show_popup: Callable[[MultilinePopup], None]):
+            self.__show_popup = show_popup
+            self.__history: List[MultilinePopup] = []
+            self.__index = -1
+            self.__remove_on_close = False
+
+        @property
+        def is_empty(self) -> bool:
+            return len(self) <= 0
+
+        @property
+        def present_index(self) -> int:
+            return len(self.__history) - 1
+
+        @property
+        def is_in_present(self) -> bool:
+            return self.__index == self.present_index
+
+        def back(self, show_popup: bool = True):
+            if self.is_empty or self.__index == 0:
+                return  # we already show the oldest popup (or cannot show anything)
+            elif self.__index < 0:
+                self.__index = 0    # show oldest popup for invalid indices
+            else:
+                self.__index -= 1
+
+            if show_popup: self.show()
+
+        def forth(self, show_popup: bool = True):
+            if self.is_empty or self.__index == self.present_index:
+                return  # we already show the most recent popup (or cannot show anything)
+            elif self.__index < 0:
+                self.__index = self.present_index   # show most recent popup for invalid indices
+            else:
+                self.__index += 1
+
+            if show_popup: self.show()
+
+        def jump_to_present(self, show_popup: bool = True):
+            if self.is_empty or self.__index == self.present_index:
+                return  # we already show the most recent popup (or cannot show anything)
+            self.__index = self.present_index
+
+            if show_popup: self.show()
+
+        def show(self):
+            self.__show_popup(self.__history[self.__index])
+
+        def add(self, new_popup: MultilinePopup, is_permanent: bool):
+            """
+            :param new_popup: the popup to add to the history
+            :param is_permanent:  permanent popups stay in the history until it is reset, while non-permanent (i.e.,
+                temporary) popups will be removed after the popup display closes
+            """
+            self.__history.append(new_popup)
+            self.__index = self.present_index
+            self.__remove_on_close = not is_permanent
+
+        def resolve(self, force_remove: bool = False):
+            if self.__remove_on_close or force_remove:
+                self.__history.pop()
+                self.__index = min(self.__index, self.present_index)    # adapt index if it pointed to the removed popup
+                self.__remove_on_close = False
+            else:
+                self.__history[self.present_index].freeze()
+
+        def reset(self):
+            self.__history = []
+            self.__index = -1
+
+        def __len__(self) -> int:
+            return len(self.__history)
+
     @staticmethod
     def start_simulation(simulation_path: str):
         try:
@@ -182,6 +256,12 @@ class QrogueCUI(PyCUI):
         self.__last_key: Optional[int] = None
         self.__focused_widget: Optional[Widget] = self.get_selected_widget()
 
+        # INIT POPUP HISTORY
+        def _show_popup_for_history(historic_popup: MultilinePopup):
+            self.__focused_widget = self.get_selected_widget()
+            self._popup = historic_popup
+        self.__popup_history = self._PopupHistory(_show_popup_for_history)
+
         # INIT WIDGET SETS
         self.__menu = MenuWidgetSet(self.__controls, self.__render, Logger.instance(), self,
                                     MapManager.instance().load_first_uncleared_map,
@@ -217,9 +297,9 @@ class QrogueCUI(PyCUI):
         # INIT KEYS
         # add the general keys to everything except Transition, Menu and Pause
         for widget_set in widget_sets:
-            for widget in widget_set.get_widget_list():
-                widget.widget.add_key_command(self.__controls.get_keys(Keys.Pause), Pausing.pause)
-                widget.widget.add_key_command(self.__controls.get_keys(Keys.PopupReopen), Popup.reopen)
+            widget_set.add_key_command(self.__controls.get_keys(Keys.Pause), Pausing.pause, add_to_widgets=True)
+            widget_set.add_key_command(self.__controls.get_keys(Keys.PopupReopen), self.__popup_history.show,
+                                       add_to_widgets=True)
 
         # debugging keys
         for widget_set in (widget_sets + [self.__transition, self.__menu, self.__pause]):
@@ -445,10 +525,14 @@ class QrogueCUI(PyCUI):
         super(QrogueCUI, self).show_error_popup(title, text)
 
     def __show_message_popup(self, title: str, text: str, position: int, color: int,
-                             dimensions: Optional[Tuple[int, int]] = None) -> None:
+                             dimensions: Optional[Tuple[int, int]] = None, reopen: Optional[bool] = None) -> None:
+        if reopen is None:
+            reopen = False
         self.__focused_widget = self.get_selected_widget()
         self._popup = MultilinePopup(self, title, text, color, self._renderer, self._logger, self.__controls,
-                                     pos=PopupConfig.resolve_position(position), dimensions=dimensions)
+                                     pos=PopupConfig.resolve_position(position), dimensions=dimensions,
+                                     situational_callback=(self.__popup_history.back, self.__popup_history.forth))
+        self.__popup_history.add(self._popup, is_permanent=reopen)
 
     def __show_confirmation_popup(self, title: str, text: str, color: int, callback: Callable[[int], None],
                                   answers: Optional[List[str]]):
@@ -461,6 +545,7 @@ class QrogueCUI(PyCUI):
         self._popup = popups.TextBoxPopup(self, title, color, callback, self._renderer, False, self._logger)
 
     def close_popup(self) -> None:
+        self.__popup_history.resolve()
         super(QrogueCUI, self).close_popup()
         self.move_focus(self.__focused_widget)
         Popup.on_close()
@@ -548,7 +633,7 @@ class QrogueCUI(PyCUI):
     def __start_level(self, seed: int, level: Map) -> None:
         # reset in-level stuff
         SaveData.instance().achievement_manager.reset_level_events()
-        Popup.clear_last_popup()
+        self.__popup_history.reset()
 
         robot = level.controllable_tile.controllable
         if isinstance(robot, Robot):

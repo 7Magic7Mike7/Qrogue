@@ -2,7 +2,7 @@ import threading
 from threading import Timer
 import time
 from abc import abstractmethod, ABC
-from typing import List, Callable, Optional, Tuple
+from typing import List, Callable, Optional, Tuple, Any
 
 import py_cui
 from py_cui.widget_set import WidgetSet
@@ -22,7 +22,8 @@ from qrogue.util.achievements import Ach, Unlocks
 
 from qrogue.graphics.widgets import Renderable, Widget, MyBaseWidget
 from qrogue.graphics.widgets.my_widgets import SelectionWidget, CircuitWidget, MapWidget, SimpleWidget, HudWidget, \
-    OutputStateVectorWidget, CircuitMatrixWidget, TargetStateVectorWidget, InputStateVectorWidget, MyMultiWidget
+    OutputStateVectorWidget, CircuitMatrixWidget, TargetStateVectorWidget, InputStateVectorWidget, MyMultiWidget, \
+    HistoricWrapperWidget
 
 
 class MyWidgetSet(WidgetSet, Renderable, ABC):
@@ -98,6 +99,13 @@ class MyWidgetSet(WidgetSet, Renderable, ABC):
         self._widgets[wid] = new_widget
         self._logger.info('Adding widget {} w/ ID {} of type {}'.format(title, id, str(type(new_widget))))
         return new_widget
+
+    def add_key_command(self, keys: List[int], command: Callable[[], Any], add_to_widgets: bool = False) -> Any:
+        for key in keys:
+            super(MyWidgetSet, self).add_key_command(key, command)
+        if add_to_widgets:
+            for widget in self.get_widget_list():
+                widget.widget.add_key_command(keys, command)
 
     def update_story_progress(self, progress: int):
         self.__progress = progress
@@ -911,7 +919,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self.__num_of_qubits = -1   # needs to be an illegal value because we definitely want to reposition all
         # dependent widgets for the first usage of this WidgetSet
         self._details_content = None
-        self._block_details_back = False
+        self._in_reward_message = False     # _details currently displays the reward message
         self.__in_expedition = False
 
         posy = 0
@@ -960,10 +968,20 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self.__circuit = CircuitWidget(circuit, controls)
         posy += circuit_height
 
+        # wrap the widget that tell us about the puzzle state
+        self.__history_widget = HistoricWrapperWidget((self.__circuit, self.__circuit_matrix, self.__stv_robot),
+                                                      render_widgets=True)
+
+        def jump_to_present(key: Keys):
+            # key doesn't matter since we want to jump back to the present on every key press
+            if GameplayConfig.get_option_value(Options.auto_reset_history, convert=True):
+                self.__history_widget.jump_to_present(render=True)
+
+        # the remaining widgets are the user interface
         choices = self.add_block_label('Choices', posy, 0, row_span=UIConfig.WINDOW_HEIGHT - posy,
                                        column_span=UIConfig.PUZZLE_CHOICES_WIDTH, center=True)
         choices.toggle_border()
-        self._choices = SelectionWidget(choices, controls, columns=self.__CHOICE_COLUMNS)
+        self._choices = SelectionWidget(choices, controls, columns=self.__CHOICE_COLUMNS, on_key_press=jump_to_present)
         self.__init_choices()
 
         details = self.add_block_label('Details', posy, UIConfig.PUZZLE_CHOICES_WIDTH,
@@ -971,7 +989,8 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                                        column_span=UIConfig.WINDOW_WIDTH - UIConfig.PUZZLE_CHOICES_WIDTH, center=True)
         details.toggle_border()
         details.activate_individual_coloring()  # TODO: current reward highlight version is not satisfying
-        self._details = SelectionWidget(details, controls, columns=self.__DETAILS_COLUMNS, is_second=True)
+        self._details = SelectionWidget(details, controls, columns=self.__DETAILS_COLUMNS, is_second=True,
+                                        on_key_press=jump_to_present)
 
         # init action key commands
         def use_choices():
@@ -997,7 +1016,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                     self.__choices_gate_guide()
                     self.render()
                 else:
-                    # else we selected a gate and we initiate the placing process
+                    # else we selected a gate, and we initiate the placing process
                     Widget.move_focus(self.__circuit, self)
         self._details.widget.add_key_command(controls.get_keys(Keys.Cancel), self.__details_back)
         self._details.widget.add_key_command(controls.action, use_details)
@@ -1021,6 +1040,19 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             self.render()
         self.__circuit.widget.add_key_command(controls.get_keys(Keys.Cancel), cancel_circuit)
 
+        # situational keys for travelling through history need to be set last because everything needs to be
+        # initialized first for the hidden render()-call to succeed
+        def travel_history(forth: bool) -> Callable[[], None]:
+            def func():
+                if GameplayConfig.get_option_value(Options.enable_puzzle_history, convert=True):
+                    # block functionality if we are displaying the reward message or are not focused on _details
+                    # (e.g., are manipulating the circuit)
+                    if self._details.widget.is_selected() and not self._in_reward_message:
+                        self.__history_widget.travel(forth, render=True)
+            return func
+        self.add_key_command(controls.get_keys(Keys.Situational1), travel_history(False), add_to_widgets=True)
+        self.add_key_command(controls.get_keys(Keys.Situational2), travel_history(True), add_to_widgets=True)
+
     def __init_choices(self):
         texts = ["Edit", "Gate Guide"]
         callbacks = [self.__choices_adapt, self.__choices_gate_guide]
@@ -1036,7 +1068,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self._choices.set_data(data=(texts, callbacks))
 
     def __details_back(self):
-        if self._block_details_back: return
+        if self._in_reward_message: return
 
         Widget.move_focus(self._choices, self)
         self._choices.validate_index()
@@ -1143,12 +1175,14 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
     def reset(self) -> None:
         self._choices.render_reset()
         self._details.render_reset()
+        self.__history_widget.clean_history()       # todo Note: this also cleans history when going to the pause menu!
 
     def __update_calculation(self, target_reached: bool):
         diff_stv = self._target.state_vector.get_diff(self._robot.state_vector)
 
         self.__circuit_matrix.set_data(self._robot.circuit_matrix)
         self.__stv_robot.set_data((self._robot.state_vector, diff_stv), target_reached=target_reached)
+        self.__history_widget.save_state(rerender=True, force=False)
 
         if diff_stv.is_zero:
             self.__eq_widget.set_data(self._sign_offset + "===")
@@ -1177,12 +1211,12 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                     qubit = cur_instruction.get_qubit_at(0)
                     self._robot.remove_instruction(cur_instruction)
                     self.__circuit.start_gate_placement(cur_instruction, pos, qubit)
-                    self.render()
+                    self.__circuit.render()
                     return True
                 else:
                     if self._robot.is_space_left or GameplayConfig.get_option_value(Options.allow_implicit_removal):
                         self.__circuit.start_gate_placement(cur_instruction)
-                        self.render()
+                        self.__circuit.render()
                         return True
                     else:
                         CommonPopups.NoCircuitSpace.show()
@@ -1211,9 +1245,9 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         if success:
             def give_reward_and_continue():
                 if reward is not None: self._robot.give_collectible(reward)
-                self._block_details_back = False    # undo the blocking since the success notification is over
+                self._in_reward_message = False    # undo the blocking since the success notification is over
                 self._continue_exploration_callback()
-            self._block_details_back = True
+            self._in_reward_message = True
             if reward is None:
                 self._details.set_data(data=(
                     [f"Congratulations, you solved the "
