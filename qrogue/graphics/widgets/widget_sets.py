@@ -1181,12 +1181,12 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                     qubit = cur_instruction.get_qubit_at(0)
                     self._robot.remove_instruction(cur_instruction)
                     self.__circuit.start_gate_placement(cur_instruction, pos, qubit)
-                    self.render()
+                    self.__circuit.render()
                     return True
                 else:
                     if self._robot.is_space_left or GameplayConfig.get_option_value(Options.allow_implicit_removal):
                         self.__circuit.start_gate_placement(cur_instruction)
-                        self.render()
+                        self.__circuit.render()
                         return True
                     else:
                         CommonPopups.NoCircuitSpace.show()
