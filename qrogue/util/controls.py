@@ -110,6 +110,19 @@ class Keys(IntEnum):
         return [Keys.Invalid, Keys.ErrorMarker, Keys.LevelBegin]
 
     @staticmethod
+    def selection_keys() -> "List[Keys]":
+        return [Keys.SelectionUp, Keys.SelectionRight, Keys.SelectionDown, Keys.SelectionLeft]
+
+    @staticmethod
+    def main_keys() -> "List[Keys]":
+        return Keys.selection_keys() + [Keys.Action, Keys.Cancel]
+
+    @staticmethod
+    def hotkeys() -> "List[Keys]":
+        return [Keys.HotKey0, Keys.HotKey1, Keys.HotKey2, Keys.HotKey3, Keys.HotKey4, Keys.HotKey5, Keys.HotKey6,
+                Keys.HotKey7, Keys.HotKey8, Keys.HotKey9]
+
+    @staticmethod
     def from_code(code: int) -> "Keys":
         num = code - 1  # since code = num + 1
         return Keys.from_index(num)
