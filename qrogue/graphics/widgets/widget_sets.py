@@ -22,7 +22,8 @@ from qrogue.util.achievements import Ach, Unlocks
 
 from qrogue.graphics.widgets import Renderable, Widget, MyBaseWidget
 from qrogue.graphics.widgets.my_widgets import SelectionWidget, CircuitWidget, MapWidget, SimpleWidget, HudWidget, \
-    OutputStateVectorWidget, CircuitMatrixWidget, TargetStateVectorWidget, InputStateVectorWidget, MyMultiWidget
+    OutputStateVectorWidget, CircuitMatrixWidget, TargetStateVectorWidget, InputStateVectorWidget, MyMultiWidget, \
+    HistoricWrapperWidget
 
 
 class MyWidgetSet(WidgetSet, Renderable, ABC):
@@ -966,10 +967,18 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self.__circuit = CircuitWidget(circuit, controls)
         posy += circuit_height
 
+        # wrap the widget that tell us about the puzzle state
+        self.__history_widget = HistoricWrapperWidget((self.__circuit, self.__circuit_matrix, self.__stv_robot),
+                                                      render_widgets=True)
+
+        def jump_to_present(key: Keys):
+            self.__history_widget.jump_to_present(render=True)
+
+        # the remaining widgets are the user interface
         choices = self.add_block_label('Choices', posy, 0, row_span=UIConfig.WINDOW_HEIGHT - posy,
                                        column_span=UIConfig.PUZZLE_CHOICES_WIDTH, center=True)
         choices.toggle_border()
-        self._choices = SelectionWidget(choices, controls, columns=self.__CHOICE_COLUMNS)
+        self._choices = SelectionWidget(choices, controls, columns=self.__CHOICE_COLUMNS, on_key_press=jump_to_present)
         self.__init_choices()
 
         details = self.add_block_label('Details', posy, UIConfig.PUZZLE_CHOICES_WIDTH,
@@ -977,7 +986,8 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                                        column_span=UIConfig.WINDOW_WIDTH - UIConfig.PUZZLE_CHOICES_WIDTH, center=True)
         details.toggle_border()
         details.activate_individual_coloring()  # TODO: current reward highlight version is not satisfying
-        self._details = SelectionWidget(details, controls, columns=self.__DETAILS_COLUMNS, is_second=True)
+        self._details = SelectionWidget(details, controls, columns=self.__DETAILS_COLUMNS, is_second=True,
+                                        on_key_press=jump_to_present)
 
         # init action key commands
         def use_choices():
@@ -1003,7 +1013,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                     self.__choices_gate_guide()
                     self.render()
                 else:
-                    # else we selected a gate and we initiate the placing process
+                    # else we selected a gate, and we initiate the placing process
                     Widget.move_focus(self.__circuit, self)
         self._details.widget.add_key_command(controls.get_keys(Keys.Cancel), self.__details_back)
         self._details.widget.add_key_command(controls.action, use_details)
@@ -1026,6 +1036,11 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             Widget.move_focus(self._details, self)
             self.render()
         self.__circuit.widget.add_key_command(controls.get_keys(Keys.Cancel), cancel_circuit)
+
+        # situational keys for travelling through history need to be set last because everything needs to be
+        # initialized first for the hidden render()-call to succeed
+        self.add_key_command(controls.get_keys(Keys.Situational1), self.__history_widget.back, add_to_widgets=True)
+        self.add_key_command(controls.get_keys(Keys.Situational2), self.__history_widget.forth, add_to_widgets=True)
 
     def __init_choices(self):
         texts = ["Edit", "Gate Guide"]
@@ -1147,12 +1162,14 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
     def reset(self) -> None:
         self._choices.render_reset()
         self._details.render_reset()
+        self.__history_widget.clean_history()
 
     def __update_calculation(self, target_reached: bool):
         diff_stv = self._target.state_vector.get_diff(self._robot.state_vector)
 
         self.__circuit_matrix.set_data(self._robot.circuit_matrix)
         self.__stv_robot.set_data((self._robot.state_vector, diff_stv), target_reached=target_reached)
+        self.__history_widget.save_state(rerender=True, force=False)
 
         if diff_stv.is_zero:
             self.__eq_widget.set_data(self._sign_offset + "===")

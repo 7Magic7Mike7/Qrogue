@@ -759,6 +759,7 @@ class SelectionWidget(Widget):
         self.__columns = columns
         self.__is_second = is_second
         self.__stay_selected = stay_selected
+
         def okp(key: Keys):
             if on_key_press is not None: on_key_press(key)
         self.__on_key_press = okp
@@ -986,3 +987,111 @@ class SelectionWidget(Widget):
             return True
         else:
             return ret
+
+
+class HistoricWrapperWidget:
+    def __init__(self, widgets: Tuple[Widget], render_widgets: bool, save_initial_state: bool = True):
+        self.__widgets = widgets
+        self.__history: List[Tuple[str]] = []
+        self.__index = -1
+
+        if render_widgets:
+            for widget in widgets:
+                widget.render()     # update the visuals before potentially saving them
+        if save_initial_state:
+            self.save_state(rerender=True, force=True)
+
+    @property
+    def index(self) -> int:
+        return self.__index
+
+    @property
+    def is_in_past(self) -> bool:
+        return self.__index < len(self.__history) - 1
+
+    @property
+    def _cur_data(self) -> Optional[Tuple[str]]:
+        if 0 <= self.__index < len(self.__history):
+            return self.__history[self.__index]
+        return None
+
+    def save_state(self, rerender: bool = False, force: bool = False):
+        if rerender:
+            for widget in self.__widgets:
+                widget.render()
+        data = tuple([widget.widget.get_title() for widget in self.__widgets])
+
+        # if force is False then data is not saved if it is equal to the latest data
+        if force or len(self.__history) <= 0 or data != self.__history[-1]:
+            self.__history.append(data)
+            self.__index = len(self.__history) - 1  # index points to the last element
+
+    def back(self, render: bool = True):
+        self.__index -= 1
+        self.__index = max(self.__index, 0)
+        if render: self.render()
+
+    def forth(self, render: bool = True):
+        self.__index += 1
+        self.__index = min(self.__index, len(self.__history) - 1)
+        if render: self.render()
+
+    def jump_to_present(self, render: bool = True):
+        if self.is_in_past:
+            self.__index = len(self.__history) - 1
+            if render: self.render()
+
+    def clean_history(self) -> None:
+        if len(self.__history) > 0:
+            self.__history = [self.__history[-1]]  # only keep the latest element
+            self.__index = 0
+
+    def render(self) -> None:
+        if self._cur_data is not None:
+            assert len(self._cur_data) == len(self.__widgets), "Length of data doesn't match widgets': " \
+                                                               f"{len(self._cur_data)} != {len(self.__widgets)}"
+            for i, widget in enumerate(self.__widgets):
+                widget.widget.set_title(self._cur_data[i])
+                #widget.render()
+
+
+class HistoricProperty(Widget, ABC):
+    def __init__(self, widget: WidgetWrapper):
+        super().__init__(widget)
+        self.__history: List[str] = []
+        self.__index = -1
+
+    @property
+    def index(self) -> int:
+        return self.__index
+
+    @property
+    def _cur_data(self) -> Optional[str]:
+        if 0 <= self.__index < len(self.__history):
+            return self.__history[self.__index]
+        return None
+
+    def add_data(self, data: str, force: bool = False):
+        # if force is False then data is not saved if it is equal to the latest data
+        if force or len(self.__history) <= 0 or data != self.__history[-1]:
+            self.__history.append(data)
+            self.__index = len(self.__history) - 1  # index points to the last element
+
+    def back(self):
+        self.__index -= 1
+        self.__index = max(self.__index, 0)
+
+    def forth(self):
+        self.__index += 1
+        self.__index = min(self.__index, len(self.__history) - 1)
+
+    def clean_history(self) -> None:
+        self.__history = [self.__history[-1]]  # only keep the latest element
+        self.__index = 0
+
+    def render(self) -> None:
+        if self._cur_data is not None:
+            self.widget.set_title(self._cur_data)
+
+
+
