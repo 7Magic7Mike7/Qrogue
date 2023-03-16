@@ -754,11 +754,14 @@ class SelectionWidget(Widget):
         return text.startswith(f"[{index}] ")
 
     def __init__(self, widget: WidgetWrapper, controls: Controls, columns: int = 1, is_second: bool = False,
-                 stay_selected: bool = False):
+                 stay_selected: bool = False, on_key_press: Optional[Callable[[Keys], None]] = None):
         super(SelectionWidget, self).__init__(widget)
         self.__columns = columns
         self.__is_second = is_second
         self.__stay_selected = stay_selected
+        def okp(key: Keys):
+            if on_key_press is not None: on_key_press(key)
+        self.__on_key_press = okp
         self.__index = 0
         self.__choices = []
         self.__callbacks = []
@@ -891,6 +894,8 @@ class SelectionWidget(Widget):
     def _up(self) -> None:
         if self.num_of_choices <= 1:
             return
+        # only call if the key press changes something (e.g. more than 1 choice)
+        self.__on_key_press(Keys.SelectionUp)
         if self.num_of_choices <= self.__columns or self.__columns == 1:
             self.__single_prev()
         else:
@@ -906,6 +911,8 @@ class SelectionWidget(Widget):
     def _right(self) -> None:
         if self.num_of_choices <= 1:
             return
+        # only call if the key press changes something (e.g. more than 1 choice)
+        self.__on_key_press(Keys.SelectionRight)
         if self.__columns == 1 or self.num_of_choices <= self.__columns:
             self.__single_next()
         else:
@@ -922,6 +929,8 @@ class SelectionWidget(Widget):
     def _down(self) -> None:
         if self.num_of_choices <= 1:
             return
+        # only call if the key press changes something (e.g. more than 1 choice)
+        self.__on_key_press(Keys.SelectionDown)
         if self.num_of_choices <= self.__columns or self.__columns == 1:
             self.__single_next()
         else:
@@ -935,6 +944,8 @@ class SelectionWidget(Widget):
     def _left(self) -> None:
         if self.num_of_choices <= 1:
             return
+        # only call if the key press changes something (e.g. more than 1 choice)
+        self.__on_key_press(Keys.SelectionLeft)
         if self.__columns == 1 or self.num_of_choices <= self.__columns:
             self.__single_prev()
         else:
@@ -949,6 +960,7 @@ class SelectionWidget(Widget):
         self.render()
 
     def __jump_to_index(self, index: int):
+        self.__on_key_press(Keys.hotkeys()[index])      # todo implement more efficiently? On the other hand hotkeys are not that important maybe
         if index < 0:
             self.__index = 0
         elif self.num_of_choices <= index:
@@ -961,6 +973,7 @@ class SelectionWidget(Widget):
         """
         :return: True if the focus should move, False if the focus should stay in this SelectionWidget
         """
+        self.__on_key_press(Keys.Action)
         # if only one callback is given, it needs the index as parameter
         if len(self.__callbacks) == 1 and self.num_of_choices > 1:
             ret = self.__callbacks[0](self.__index)
