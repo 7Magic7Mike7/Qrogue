@@ -266,6 +266,11 @@ class Options(Enum):
                                 "During some special scene transitions there will be some animated text describing "
                                 "what happened in-between story sections. Skipping this means that the whole text "
                                 "will be shown at once.")
+    enable_puzzle_history = ("Enable puzzle history", _get_boolean_callback(), 2, 1,
+                             "Whether you can navigate through your circuit's history or not while solving a puzzle.")
+    auto_reset_history = ("Auto reset history", _get_boolean_callback(), 2, 1,
+                          "Whether the puzzle history should automatically jump to the present (= last changes) when "
+                          "you navigate through menus.\nNote: Confirming to edit the circuit always resets history.")
 
     def __init__(self, name: str, get_value: Tuple[Callable[[int], str], Callable[[str], Any]], num_of_values: int,
                  default_index: int, description: str):
@@ -313,7 +318,10 @@ class GameplayConfig:
         Options.allow_implicit_removal: Options.allow_implicit_removal.default_index,
 
         Options.allow_multi_move: Options.allow_multi_move.default_index,
-        Options.auto_skip_text_animation: Options.auto_skip_text_animation.default_index
+        Options.auto_skip_text_animation: Options.auto_skip_text_animation.default_index,
+
+        Options.enable_puzzle_history: Options.enable_puzzle_history.default_index,
+        Options.auto_reset_history: Options.auto_reset_history.default_index,
     }
 
     @staticmethod

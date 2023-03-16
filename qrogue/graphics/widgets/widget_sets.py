@@ -972,7 +972,8 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                                                       render_widgets=True)
 
         def jump_to_present(key: Keys):
-            self.__history_widget.jump_to_present(render=True)
+            if GameplayConfig.get_option_value(Options.auto_reset_history, convert=True):
+                self.__history_widget.jump_to_present(render=True)
 
         # the remaining widgets are the user interface
         choices = self.add_block_label('Choices', posy, 0, row_span=UIConfig.WINDOW_HEIGHT - posy,
@@ -1039,8 +1040,15 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
         # situational keys for travelling through history need to be set last because everything needs to be
         # initialized first for the hidden render()-call to succeed
-        self.add_key_command(controls.get_keys(Keys.Situational1), self.__history_widget.back, add_to_widgets=True)
-        self.add_key_command(controls.get_keys(Keys.Situational2), self.__history_widget.forth, add_to_widgets=True)
+        def history_back():
+            if GameplayConfig.get_option_value(Options.enable_puzzle_history, convert=True):
+                self.__history_widget.back(render=True)
+
+        def history_forth():
+            if GameplayConfig.get_option_value(Options.enable_puzzle_history, convert=True):
+                self.__history_widget.forth(render=True)
+        self.add_key_command(controls.get_keys(Keys.Situational1), history_back, add_to_widgets=True)
+        self.add_key_command(controls.get_keys(Keys.Situational2), history_forth, add_to_widgets=True)
 
     def __init_choices(self):
         texts = ["Edit", "Gate Guide"]
@@ -1162,7 +1170,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
     def reset(self) -> None:
         self._choices.render_reset()
         self._details.render_reset()
-        self.__history_widget.clean_history()
+        self.__history_widget.clean_history()       # todo Note: this also cleans history when going to the pause menu!
 
     def __update_calculation(self, target_reached: bool):
         diff_stv = self._target.state_vector.get_diff(self._robot.state_vector)
