@@ -212,9 +212,8 @@ class QrogueCUI(PyCUI):
         # INIT KEYS
         # add the general keys to everything except Transition, Menu and Pause
         for widget_set in widget_sets:
-            for widget in widget_set.get_widget_list():
-                widget.widget.add_key_command(self.__controls.get_keys(Keys.Pause), Pausing.pause)
-                widget.widget.add_key_command(self.__controls.get_keys(Keys.PopupReopen), Popup.reopen)
+            widget_set.add_key_command(self.__controls.get_keys(Keys.Pause), Pausing.pause, add_to_widgets=True)
+            widget_set.add_key_command(self.__controls.get_keys(Keys.PopupReopen), Popup.reopen, add_to_widgets=True)
 
         # debugging keys
         for widget_set in (widget_sets + [self.__transition, self.__menu, self.__pause]):
