@@ -83,7 +83,8 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
     def __init__(self, root, title, text, color, renderer, logger, controls,
                  confirmation_callback: Callable[[int], None] = None, answers: Optional[List] = None,
                  pos: Optional[Tuple[int, int]] = None, dimensions: Optional[Tuple[int, int]] = None):
-        self.__custom_size = None
+        # custom_size needs to be initialized immediately because get_absolute_stop_pos() in init() accesses it
+        self.__custom_size = False
 
         super().__init__(root, title, text, color, renderer, logger)
         self.__controls = controls
@@ -215,9 +216,9 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
     def get_absolute_stop_pos(self) -> Tuple[int, int]:
         # override for custom sizes so we can calculate the stop position based on our custom width and height instead
         # of calculating width and height based on start and stop
-        if self.__custom_size is None:
-            return super(MultilinePopup, self).get_absolute_stop_pos()
-        else:
+        if self.__custom_size:
             start_x, start_y = self.get_absolute_start_pos()
             self._stop_x, self._stop_y = start_x + self._width, start_y + self._height
             return self._stop_x, self._stop_y
+        else:
+            return super(MultilinePopup, self).get_absolute_stop_pos()
