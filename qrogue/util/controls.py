@@ -63,16 +63,16 @@ class Keys(IntEnum):
     SelectionDown = SelectionUp + 2
     SelectionLeft = SelectionUp + 3
 
-    # 8 - 13
+    # 8 - 12
     PopupClose = SelectionLeft + 1
     PopupScrollUp = PopupClose + 1
     PopupScrollDown = PopupClose + 2
     PopupScrollUpFast = PopupClose + 3
     PopupScrollDownFast = PopupClose + 4
-    PopupReopen = PopupClose + 5
 
-    # 14 - 18
-    Action = PopupReopen + 1
+    # 13 - 18
+    Help = PopupScrollDownFast + 1
+    Action = Help + 1
     Cancel = Action + 1
     Situational1 = Cancel + 1
     Situational2 = Situational1 + 1
