@@ -905,10 +905,8 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
     __CHOICE_COLUMNS = 2
     __DETAILS_COLUMNS = 3
     _DETAILS_INFO_THEN_EDIT = 0
-    _DETAILS_INFO_THEN_HELP = 1
     _DETAILS_INFO_THEN_CHOICES = 2
     _DETAILS_EDIT = 3
-    _DETAILS_HELP = 4
     _DEFAULT_FAIL_MESSAGE = "That's not yet the correct solution."
 
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
@@ -1004,22 +1002,25 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             if self._details.use():
                 if self._details_content == self._DETAILS_INFO_THEN_CHOICES or \
                         self._details.index == self._details.num_of_choices - 1 and \
-                        self._details_content in [self._DETAILS_EDIT, self._DETAILS_HELP]:
+                        self._details_content == self._DETAILS_EDIT:
                     # last selection possibility in edit is "Back"
                     self.__details_back()
                 elif self._details_content == self._DETAILS_INFO_THEN_EDIT:
                     self._details_content = self._DETAILS_EDIT
                     self.__choices_adapt()
                     self.render()
-                elif self._details_content == self._DETAILS_INFO_THEN_HELP:
-                    self._details_content = self._DETAILS_HELP
-                    self.__choices_gate_guide()
-                    self.render()
                 else:
                     # else we selected a gate, and we initiate the placing process
                     Widget.move_focus(self.__circuit, self)
         self._details.widget.add_key_command(controls.get_keys(Keys.Cancel), self.__details_back)
         self._details.widget.add_key_command(controls.action, use_details)
+
+        def gate_guide():
+            gates = self._robot.get_available_instructions()
+            if 0 <= self._details.index < len(gates):
+                gate = gates[self._details.index].gate_type
+                Popup.generic_info(gate.short_name, Instruction.get_description(gate))
+        self._details.widget.add_key_command(controls.get_keys(Keys.Help), gate_guide)
 
         def use_circuit():
             success, gate = self.__circuit.place_gate()
@@ -1053,8 +1054,8 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self.add_key_command(controls.get_keys(Keys.Situational2), history_forth, add_to_widgets=True)
 
     def __init_choices(self):
-        texts = ["Edit", "Gate Guide"]
-        callbacks = [self.__choices_adapt, self.__choices_gate_guide]
+        texts = ["Edit"]
+        callbacks = [self.__choices_edit]
 
         if self.__in_expedition or Ach.check_unlocks(Unlocks.CircuitReset, self._progress):
             texts.append("Reset")
@@ -1275,28 +1276,6 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             self.__update_calculation(False)
             self.render()
             return False
-
-    def __choices_gate_guide(self) -> bool:
-        gates: List[GateType] = []
-        for instruction in self._robot.backpack:
-            if instruction.gate_type not in gates:
-                # only store each available gate type once
-                gates.append(instruction.gate_type)
-
-        def show_gate_guide(index: int = 0) -> bool:
-            if 0 <= index < len(gates):
-                gate = gates[index]
-                Popup.generic_info(gate.short_name, Instruction.get_description(gate))
-                return False
-            return True
-
-        options = [gate.short_name for gate in gates]
-        self._details.set_data(data=(
-            SelectionWidget.wrap_in_hotkey_str(options) + [MyWidgetSet.BACK_STRING],
-            [show_gate_guide]
-        ))
-        self._details_content = self._DETAILS_HELP
-        return True
 
     @abstractmethod
     def _on_commit_fail(self) -> bool:
