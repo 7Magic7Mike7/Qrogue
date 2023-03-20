@@ -1007,7 +1007,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                     self.__details_back()
                 elif self._details_content == self._DETAILS_INFO_THEN_EDIT:
                     self._details_content = self._DETAILS_EDIT
-                    self.__choices_adapt()
+                    self.__choices_edit()
                     self.render()
                 else:
                     # else we selected a gate, and we initiate the placing process
@@ -1187,21 +1187,25 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         else:
             self.__eq_widget.set_data(self._sign_offset + "=/=")
 
-    def __choices_adapt(self) -> bool:
-        options = [instruction.selection_str() for instruction in self._robot.backpack]
-        commands = [MyWidgetSet.BACK_STRING]
+    def __choices_edit(self) -> bool:
+        choices, objects = [], []
+        for instruction in self._robot.backpack:
+            choices.append(instruction.selection_str())
+            objects.append(instruction)
+        choices = SelectionWidget.wrap_in_hotkey_str(choices)
+
+        # add commands
         if Ach.check_unlocks(Unlocks.GateRemove, self._progress):
-            commands = ["Remove"] + commands
-        self._details.set_data(data=(
-            SelectionWidget.wrap_in_hotkey_str(options) + commands,
-            [self.__choose_instruction]
-        ))
+            choices.append("Remove")
+        choices.append(MyWidgetSet.BACK_STRING)
+
+        self._details.set_data(data=((choices, objects), [self.__choose_instruction]))
         self._details_content = self._DETAILS_EDIT
         return True
 
     def __choose_instruction(self, index: int) -> bool:
         if 0 <= index < self._robot.backpack.used_capacity:
-            cur_instruction = self._robot.get_stored_instruction(index)
+            cur_instruction = self._details.selected_object
             if cur_instruction is not None:
                 if cur_instruction.is_used():
                     # move the instruction
