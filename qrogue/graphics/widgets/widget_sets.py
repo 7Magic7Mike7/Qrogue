@@ -1321,28 +1321,33 @@ class FightWidgetSet(ReachTargetWidgetSet):
         self.__flee_check = target.flee_check
 
     def _on_commit_fail(self) -> bool:
-        self._robot.game_over_check()
+        if GameplayConfig.get_option_value(Options.energy_mode):
+            self._robot.game_over_check()
         self._details_content = ReachTargetWidgetSet._DETAILS_EDIT
         return True
 
     def _choices_flee(self) -> bool:
-        if self._robot.cur_energy > self._target.flee_energy:
-            damage_taken, _ = self._robot.decrease_energy(amount=self._target.flee_energy)
-            if self.__flee_check():
-                self._details.set_data(data=(
-                    [f"Fled successfully. Your Qubot lost {self._target.flee_energy} energy."],
-                    [self._continue_exploration_callback]
-                ))
+        extra_text = ""
+        if GameplayConfig.get_option_value(Options.energy_mode):
+            if self._robot.cur_energy > self._target.flee_energy:
+                damage_taken, _ = self._robot.decrease_energy(amount=self._target.flee_energy)
+                extra_text = f"Your Qubot lost {damage_taken} energy."
             else:
-                self._details.set_data(data=(
-                    [f"Failed to flee. Your Qubot lost {self._target.flee_energy} energy."],
-                    [self._empty_callback]
-                ))
-                self._details_content = ReachTargetWidgetSet._DETAILS_INFO_THEN_EDIT
-            return True
+                CommonPopups.NotEnoughEnergyToFlee.show()
+                return False    # don't switch to details widget
+
+        if self.__flee_check():
+            self._details.set_data(data=(
+                [f"Fled successfully. {extra_text}"],
+                [self._continue_exploration_callback]
+            ))
         else:
-            CommonPopups.NotEnoughEnergyToFlee.show()
-            return False    # don't switch to details widget
+            self._details.set_data(data=(
+                [f"Failed to flee. {extra_text}"],
+                [self._empty_callback]
+            ))
+            self._details_content = ReachTargetWidgetSet._DETAILS_INFO_THEN_EDIT
+        return True
 
 
 class BossFightWidgetSet(FightWidgetSet):
@@ -1354,7 +1359,8 @@ class BossFightWidgetSet(FightWidgetSet):
         super(BossFightWidgetSet, self).set_data(robot, target, in_expedition)
 
     def _on_commit_fail(self) -> bool:
-        self._robot.decrease_energy(PuzzleConfig.BOSS_FAIL_DAMAGE)
+        if GameplayConfig.get_option_value(Options.energy_mode):
+            self._robot.decrease_energy(PuzzleConfig.BOSS_FAIL_DAMAGE)
         return super(BossFightWidgetSet, self)._on_commit_fail()
 
 
@@ -1509,18 +1515,21 @@ class ChallengeWidgetSet(ReachTargetWidgetSet):
         self._hud.update_situational(constraints)
 
     def _on_commit_fail(self) -> bool:
-        self._robot.game_over_check()
+        if GameplayConfig.get_option_value(Options.energy_mode):
+            self._robot.game_over_check()
         self._details_content = ReachTargetWidgetSet._DETAILS_EDIT
         return True
 
     def _choices_flee(self) -> bool:
-        if self._robot.cur_energy > self._target.flee_energy:
-            damage_taken, _ = self._robot.decrease_energy(amount=self._target.flee_energy)
-            self._details.set_data(data=(
-                ["You successfully fled!"],
-                [self._continue_exploration_callback]
-            ))
-            return True
-        else:
-            CommonPopups.NotEnoughEnergyToFlee.show()
-            return False  # don't switch to details widget
+        if GameplayConfig.get_option_value(Options.energy_mode):
+            if self._robot.cur_energy > self._target.flee_energy:
+                _, _ = self._robot.decrease_energy(amount=self._target.flee_energy)
+            else:
+                CommonPopups.NotEnoughEnergyToFlee.show()
+                return False  # don't switch to details widget
+
+        self._details.set_data(data=(
+            ["You successfully fled!"],
+            [self._continue_exploration_callback]
+        ))
+        return True
