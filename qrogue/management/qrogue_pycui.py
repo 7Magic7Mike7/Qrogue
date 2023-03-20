@@ -275,20 +275,21 @@ class QrogueCUI(PyCUI):
 
         self.__spaceship = SpaceshipWidgetSet(self.__controls, Logger.instance(), self, self.__render)
         self.__training = TrainingsWidgetSet(self.__controls, self.__render, Logger.instance(), self,
-                                             self.__continue_spaceship)
+                                             self.__continue_spaceship, self.__popup_history.show)
         self.__workbench = WorkbenchWidgetSet(self.__controls, Logger.instance(), self,
                                               SaveData.instance().available_robots(), self.__render,
                                               self.__continue_spaceship)
         self.__navigation = NavigationWidgetSet(self.__controls, self.__render, Logger.instance(), self)
 
         self.__explore = ExploreWidgetSet(self.__controls, self.__render, Logger.instance(), self)
-        self.__fight = FightWidgetSet(self.__controls, self.__render, Logger.instance(), self, self.__continue_explore)
+        self.__fight = FightWidgetSet(self.__controls, self.__render, Logger.instance(), self, self.__continue_explore,
+                                      self.__popup_history.show)
         self.__boss_fight = BossFightWidgetSet(self.__controls, self.__render, Logger.instance(), self,
-                                               self.__continue_explore)
+                                               self.__continue_explore, self.__popup_history.show)
         self.__riddle = RiddleWidgetSet(self.__controls, self.__render, Logger.instance(), self,
-                                        self.__continue_explore)
+                                        self.__continue_explore, self.__popup_history.show)
         self.__challenge = ChallengeWidgetSet(self.__controls, self.__render, Logger.instance(), self,
-                                              self.__continue_explore)
+                                              self.__continue_explore, self.__popup_history.show)
         self.__shop = ShopWidgetSet(self.__controls, self.__render, Logger.instance(), self, self.__continue_explore)
 
         widget_sets: List[MyWidgetSet] = [self.__spaceship, self.__training, self.__navigation, self.__explore,
@@ -299,7 +300,7 @@ class QrogueCUI(PyCUI):
         for widget_set in widget_sets:
             widget_set.add_key_command(self.__controls.get_keys(Keys.Pause), Pausing.pause, add_to_widgets=True)
             widget_set.add_key_command(self.__controls.get_keys(Keys.PopupReopen), self.__popup_history.show,
-                                       add_to_widgets=True)
+                                       add_to_widgets=True, overwrite=False)
 
         # debugging keys
         for widget_set in (widget_sets + [self.__transition, self.__menu, self.__pause]):

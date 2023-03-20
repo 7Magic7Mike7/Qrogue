@@ -76,8 +76,9 @@ class Keys(IntEnum):
     Cancel = Action + 1
     Situational1 = Cancel + 1
     Situational2 = Situational1 + 1
+    Help = Situational2 + 1
 
-    Pause = Situational2 + 1
+    Pause = Help + 1
 
     # 19 - 28
     HotKey1 = Pause + 1
@@ -177,12 +178,13 @@ class Controls:
         [_PK_DOWN] + _SK_DOWN,
         [_PK_RIGHT] + _SK_RIGHT,
         [_PK_LEFT] + _SK_LEFT,
-        [_PK_HELP],
+        [_PK_HELP],     # reopen
         # 14 - 18
         [_PK_CONFIRM] + _SK_CONFIRM,     # action
         [_PK_CANCEL] + _SK_CANCEL,  # cancel/back
         [_PK_SITUATIONAL1] + _SK_SITUATIONAL1,
         [_PK_SITUATIONAL2] + _SK_SITUATIONAL2,
+        [_PK_HELP],     # actual help
         [_PK_PAUSE] + _SK_PAUSE,  # (Escape doesn't work here due to its special purpose for the engine)
 
         # special purpose hotkeys: 19 - 28

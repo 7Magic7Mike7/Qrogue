@@ -242,6 +242,10 @@ def _get_float_callback(min_: float, max_: float, steps: int) -> Tuple[Callable[
 
 
 class Options(Enum):
+    energy_mode = ("Energy Mode", _get_boolean_callback(), 2, 0,
+                  "In energy mode every change to your circuit costs energy. You loose if your Robot is out of "
+                  "energy.")
+
     auto_save = ("Auto Save", _get_boolean_callback(), 2, 1,
                  "Whether to automatically save the game on exit or not.")
     auto_reset_circuit = ("Auto Reset Circuit", _get_boolean_callback(), 2, 1,
@@ -307,6 +311,7 @@ class Options(Enum):
 class GameplayConfig:
     __KEY_VALUE_SEPARATOR = "="
     __OPTIONS: Dict[Options, int] = {
+        Options.energy_mode: Options.energy_mode.default_index,
         Options.auto_save: Options.auto_save.default_index,
         Options.auto_reset_circuit: Options.auto_reset_circuit.default_index,
         Options.log_keys: Options.log_keys.default_index,

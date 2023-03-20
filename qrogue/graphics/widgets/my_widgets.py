@@ -1,6 +1,6 @@
 import math
 from abc import ABC, abstractmethod
-from typing import List, Any, Callable, Tuple, Optional, Dict
+from typing import List, Any, Callable, Tuple, Optional, Dict, Union
 
 from py_cui import ColorRule
 from py_cui.widget_set import WidgetSet
@@ -72,9 +72,10 @@ class MyBaseWidget(BlockLabel, WidgetWrapper):
             ColorRule(f"{regex}.*?{regex}", 0, 0, "contains", "regex", [0, 1], False, Logger.instance())
         )
 
-    def add_key_command(self, keys: List[int], command: Callable[[], Any]) -> Any:
+    def add_key_command(self, keys: List[int], command: Callable[[], Any], overwrite: bool = True) -> Any:
         for key in keys:
-            super(MyBaseWidget, self).add_key_command(key, command)
+            if overwrite or key not in self._key_commands:
+                super(MyBaseWidget, self).add_key_command(key, command)
 
 
 class MyMultiWidget(WidgetWrapper):
@@ -254,9 +255,9 @@ class MyMultiWidget(WidgetWrapper):
         for w in self.__widgets:
             w.activate_individual_coloring()
 
-    def add_key_command(self, keys: List[int], command: Callable[[], Any]) -> Any:
+    def add_key_command(self, keys: List[int], command: Callable[[], Any], overwrite: bool = True) -> Any:
         for w in self.__widgets:
-            w.add_key_command(keys, command)
+            w.add_key_command(keys, command, overwrite)
 
     def toggle_border(self):
         for w in self.__widgets:
@@ -764,8 +765,9 @@ class SelectionWidget(Widget):
             if on_key_press is not None: on_key_press(key)
         self.__on_key_press = okp
         self.__index = 0
-        self.__choices = []
-        self.__callbacks = []
+        self.__choices: List[str] = []
+        self.__choice_objects: List = []
+        self.__callbacks: List[Union[Callable[[], bool]], Callable[[int], bool]] = []
         self.widget.add_text_color_rule(f"->", ColorConfig.SELECTION_COLOR, 'contains', match_type='regex')
 
         # init keys
@@ -820,6 +822,12 @@ class SelectionWidget(Widget):
     def index(self) -> int:
         return self.__index
 
+    @property
+    def selected_object(self) -> Any:
+        if self.__choice_objects is not None and self.index < len(self.__choice_objects):
+            return self.__choice_objects[self.index]
+        return None
+
     def _index_of_row_start(self, index: int):
         start_of_last_row = self.columns * (self.rows - 1)
         if index >= start_of_last_row:
@@ -833,17 +841,16 @@ class SelectionWidget(Widget):
             else:
                 self.__choices[index] = text
 
-    def clear_text(self):
-        self.__choices = []
-        self.__callbacks = []
+    def set_data(self, data: "Tuple[Union[List[str], Tuple[List[str], List[Any]]], List[Callable]]") -> None:
+        assert len(data) >= 1, "set_data() called with empty data!"
 
-    def set_data(self, data: "Tuple[List[str], List[Callable]]") -> None:
         self.render_reset()
         self.__choices, self.__callbacks = data
-        choice_length = 0
-        for choice in self.__choices:
-            if len(choice) > choice_length:
-                choice_length = len(choice)
+
+        if isinstance(self.__choices, tuple):
+            self.__choices, self.__choice_objects = self.__choices
+
+        choice_length = max([len(choice) for choice in self.__choices])
         for i in range(len(self.__choices)):
             self.__choices[i] = self.__choices[i].ljust(choice_length)
 
@@ -871,7 +878,9 @@ class SelectionWidget(Widget):
         self.widget.set_title("")
         self.__index = 0
         if self.__is_second:
-            self.clear_text()
+            self.__choices = []
+            self.__choice_objects = []
+            self.__callbacks = []
 
     def validate_index(self) -> bool:
         if self.__index < 0:

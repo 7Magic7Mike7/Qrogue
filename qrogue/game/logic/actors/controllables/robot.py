@@ -127,7 +127,7 @@ class _Attributes:
         if CheatConfig.got_inf_resources():
             return 0    # no decrease in this case
 
-        # self.__cur_energy -= amount    # todo activate again for Expeditions?
+        self.__cur_energy -= amount
         if self.__cur_energy < 0:
             # e.g. if we decrease by 6 then cur_energy is now -2, so actually we were only able to decrease it by 4
             amount += self.__cur_energy
@@ -528,7 +528,7 @@ class Robot(Controllable, ABC):
         result = job.result()
         self.__circuit_matrix = CircuitMatrix(result.get_unitary(circuit,
                                                                  decimals=QuantumSimulationConfig.DECIMALS).data)
-        if use_energy:
+        if use_energy and GameplayConfig.get_option_value(Options.energy_mode):
             self.decrease_energy(amount=1)
 
     def __remove_instruction(self, instruction: Optional[Instruction], skip_qargs: bool = False) -> bool:

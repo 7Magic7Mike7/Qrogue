@@ -28,7 +28,7 @@ from qrogue.graphics.widgets.my_widgets import SelectionWidget, CircuitWidget, M
 
 class MyWidgetSet(WidgetSet, Renderable, ABC):
     """
-    Class that handles different sets of widgets so we can easily switch between different screens.
+    Class that handles different sets of widgets, so we can easily switch between different screens.
     """
 
     @staticmethod
@@ -74,9 +74,9 @@ class MyWidgetSet(WidgetSet, Renderable, ABC):
         title : str
             The title of the block label
         row : int
-            The row value, from the top down
+            The row value, from the top-down
         column : int
-            The column value from the top down
+            The column value from the top-down
         row_span : int
             The number of rows to span across
         column_span : int
@@ -100,12 +100,14 @@ class MyWidgetSet(WidgetSet, Renderable, ABC):
         self._logger.info('Adding widget {} w/ ID {} of type {}'.format(title, id, str(type(new_widget))))
         return new_widget
 
-    def add_key_command(self, keys: List[int], command: Callable[[], Any], add_to_widgets: bool = False) -> Any:
+    def add_key_command(self, keys: List[int], command: Callable[[], Any], add_to_widgets: bool = False,
+                        overwrite: bool = True) -> Any:
         for key in keys:
-            super(MyWidgetSet, self).add_key_command(key, command)
+            if overwrite or key not in self._keybindings:
+                super(MyWidgetSet, self).add_key_command(key, command)
         if add_to_widgets:
             for widget in self.get_widget_list():
-                widget.widget.add_key_command(keys, command)
+                widget.widget.add_key_command(keys, command, overwrite)
 
     def update_story_progress(self, progress: int):
         self.__progress = progress
@@ -231,7 +233,7 @@ class MenuWidgetSet(MyWidgetSet):
         self.__seed = new_seed
         RandomManager.force_seed(new_seed)
         self.__seed_widget.set_data(f"Seed: {self.__seed}")
-        #self.__seed_widget.render()
+        # self.__seed_widget.render()
 
     def get_widget_list(self) -> List[Widget]:
         return [
@@ -253,7 +255,7 @@ class MenuWidgetSet(MyWidgetSet):
 
 class TransitionWidgetSet(MyWidgetSet):
     class TextScroll:
-        __DEFAULT_TEXT_DELAY = 0.01     # 0 can lead to messed up render order so we just use a very small number
+        __DEFAULT_TEXT_DELAY = 0.01     # 0 can lead to messed up render order, so we just use a very small number
         _SLOW = 1.0
         _RELAXED = 0.65
         _MEDIUM = 0.15
@@ -666,7 +668,7 @@ class PauseMenuWidgetSet(MyWidgetSet):
 
     def __options(self) -> bool:
         # hide most options for tutorial's sake
-        options = GameplayConfig.get_options([Options.allow_implicit_removal, Options.allow_multi_move])
+        options = GameplayConfig.get_options() #[Options.allow_implicit_removal, Options.allow_multi_move])
         texts = []
         for op_tup in options:
             op, _ = op_tup
@@ -900,17 +902,14 @@ class NavigationWidgetSet(MapWidgetSet):
 
 
 class ReachTargetWidgetSet(MyWidgetSet, ABC):
-    __CHOICE_COLUMNS = 2
     __DETAILS_COLUMNS = 3
     _DETAILS_INFO_THEN_EDIT = 0
-    _DETAILS_INFO_THEN_HELP = 1
-    _DETAILS_INFO_THEN_CHOICES = 2
+    _DETAILS_SUCCESS = 2
     _DETAILS_EDIT = 3
-    _DETAILS_HELP = 4
-    _DEFAULT_FAIL_MESSAGE = "That's not yet the correct solution."
 
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
-                 continue_exploration_callback: Callable[[], None], flee_choice: str = "Flee"):
+                 continue_exploration_callback: Callable[[], None], reopen_popup_callback: Callable[[], None],
+                 flee_choice: str = "Flee"):
         super().__init__(logger, root, render)
         self.__flee_choice = flee_choice
         self._continue_exploration_callback = continue_exploration_callback
@@ -978,57 +977,48 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                 self.__history_widget.jump_to_present(render=True)
 
         # the remaining widgets are the user interface
-        choices = self.add_block_label('Choices', posy, 0, row_span=UIConfig.WINDOW_HEIGHT - posy,
-                                       column_span=UIConfig.PUZZLE_CHOICES_WIDTH, center=True)
-        choices.toggle_border()
-        self._choices = SelectionWidget(choices, controls, columns=self.__CHOICE_COLUMNS, on_key_press=jump_to_present)
-        self.__init_choices()
-
-        details = self.add_block_label('Details', posy, UIConfig.PUZZLE_CHOICES_WIDTH,
-                                       row_span=UIConfig.WINDOW_HEIGHT - posy,
-                                       column_span=UIConfig.WINDOW_WIDTH - UIConfig.PUZZLE_CHOICES_WIDTH, center=True)
+        details = self.add_block_label('Details', posy, 0, row_span=UIConfig.WINDOW_HEIGHT - posy,
+                                       column_span=UIConfig.WINDOW_WIDTH, center=True)
         details.toggle_border()
         details.activate_individual_coloring()  # TODO: current reward highlight version is not satisfying
         self._details = SelectionWidget(details, controls, columns=self.__DETAILS_COLUMNS, is_second=True,
                                         on_key_press=jump_to_present)
 
-        # init action key commands
-        def use_choices():
-            if self._choices.use():
-                Widget.move_focus(self._details, self)
-                self._choices.render()
-                self._details.render()
-        self._choices.widget.add_key_command(controls.action, use_choices)
-
         def use_details():
             if self._details.use():
-                if self._details_content == self._DETAILS_INFO_THEN_CHOICES or \
-                        self._details.index == self._details.num_of_choices - 1 and \
-                        self._details_content in [self._DETAILS_EDIT, self._DETAILS_HELP]:
-                    # last selection possibility in edit is "Back"
-                    self.__details_back()
+                if self._details_content == self._DETAILS_SUCCESS:
+                    return
+                elif self._details_content == self._DETAILS_EDIT and \
+                        self._details.index == self._details.num_of_choices - 1:
+                    # last selection possibility in edit is for fleeing
+                    self._details_flee()
+                    self._details.render()
                 elif self._details_content == self._DETAILS_INFO_THEN_EDIT:
                     self._details_content = self._DETAILS_EDIT
-                    self.__choices_adapt()
+                    self.__init_details()
                     self.render()
-                elif self._details_content == self._DETAILS_INFO_THEN_HELP:
-                    self._details_content = self._DETAILS_HELP
-                    self.__choices_gate_guide()
-                    self.render()
-                else:
-                    # else we selected a gate, and we initiate the placing process
+                else:   # _details_content == _DETAILS_EDIT
+                    # else we selected a gate or Remove, and we initiate the placing process
                     Widget.move_focus(self.__circuit, self)
-        self._details.widget.add_key_command(controls.get_keys(Keys.Cancel), self.__details_back)
         self._details.widget.add_key_command(controls.action, use_details)
+
+        def gate_guide():
+            gates = self._robot.get_available_instructions()
+            if 0 <= self._details.index < len(gates):
+                gate = gates[self._details.index].gate_type
+                Popup.generic_info(gate.short_name, Instruction.get_description(gate))
+            else:
+                reopen_popup_callback()
+        self._details.widget.add_key_command(controls.get_keys(Keys.Help), gate_guide)
 
         def use_circuit():
             success, gate = self.__circuit.place_gate()
             if success:
                 if self._details.validate_index():
-                    if gate:
-                        self._details.update_text(gate.selection_str(), self._details.index)
+                    if gate is None:
+                        self.__init_details()
                     else:
-                        self.__choices_adapt()
+                        self._details.update_text(gate.selection_str(), self._details.index)
                 self.__choices_commit()
                 Widget.move_focus(self._details, self)
                 self.render()
@@ -1052,28 +1042,6 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             return func
         self.add_key_command(controls.get_keys(Keys.Situational1), travel_history(False), add_to_widgets=True)
         self.add_key_command(controls.get_keys(Keys.Situational2), travel_history(True), add_to_widgets=True)
-
-    def __init_choices(self):
-        texts = ["Edit", "Gate Guide"]
-        callbacks = [self.__choices_adapt, self.__choices_gate_guide]
-
-        if self.__in_expedition or Ach.check_unlocks(Unlocks.CircuitReset, self._progress):
-            texts.append("Reset")
-            callbacks.append(self.__choices_reset)
-
-        if self.__in_expedition or Ach.check_unlocks(Unlocks.PuzzleFlee, self._progress):
-            texts.append(self.__flee_choice)
-            callbacks.append(self._choices_flee)
-
-        self._choices.set_data(data=(texts, callbacks))
-
-    def __details_back(self):
-        if self._in_reward_message: return
-
-        Widget.move_focus(self._choices, self)
-        self._choices.validate_index()
-        self._details.render_reset()
-        self.render()
 
     @property
     def _sign_offset(self) -> str:
@@ -1122,17 +1090,16 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             elif num_of_qubits == 4:
                 # todo problem with 4 qubits: out has not enough space, hence, its coloring doesn't work
                 self.__circuit.widget.reposition(row=UIConfig.HUD_HEIGHT + row_span)
-                self._choices.widget.reposition(row=UIConfig.WINDOW_HEIGHT - 1, row_span=1)
                 self._details.widget.reposition(row=UIConfig.WINDOW_HEIGHT - 1, row_span=1)
             else:
                 self.__circuit.widget.reposition(row=UIConfig.HUD_HEIGHT + row_span + 1)    # + 1 for visuals
 
     def get_main_widget(self) -> WidgetWrapper:
-        return self._choices.widget
+        return self._details.widget
 
     def update_story_progress(self, progress: int):
         super(ReachTargetWidgetSet, self).update_story_progress(progress)
-        self.__init_choices()
+        self.__init_details()
 
     def set_data(self, robot: Robot, target: Target, in_expedition: bool) -> None:
         self._robot = robot
@@ -1155,7 +1122,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self.__update_calculation(False)
         self.__stv_target.set_data(target.state_vector)
 
-        self.__init_choices()
+        self.__init_details()
 
     def get_widget_list(self) -> List[Widget]:
         return [
@@ -1168,12 +1135,10 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             self.__eq_widget,
             self.__stv_target,
             self.__circuit,
-            self._choices,
             self._details
         ]
 
     def reset(self) -> None:
-        self._choices.render_reset()
         self._details.render_reset()
         self.__history_widget.clean_history()       # todo Note: this also cleans history when going to the pause menu!
 
@@ -1189,21 +1154,24 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         else:
             self.__eq_widget.set_data(self._sign_offset + "=/=")
 
-    def __choices_adapt(self) -> bool:
-        options = [instruction.selection_str() for instruction in self._robot.backpack]
-        commands = [MyWidgetSet.BACK_STRING]
+    def __init_details(self):
+        choices, objects = [], []
+        for instruction in self._robot.backpack:
+            choices.append(instruction.selection_str())
+            objects.append(instruction)
+        choices = SelectionWidget.wrap_in_hotkey_str(choices)
+
+        # add commands
         if Ach.check_unlocks(Unlocks.GateRemove, self._progress):
-            commands = ["Remove"] + commands
-        self._details.set_data(data=(
-            SelectionWidget.wrap_in_hotkey_str(options) + commands,
-            [self.__choose_instruction]
-        ))
+            choices.append("Remove")
+        choices.append(self.__flee_choice)
+
+        self._details.set_data(data=((choices, objects), [self.__choose_instruction]))
         self._details_content = self._DETAILS_EDIT
-        return True
 
     def __choose_instruction(self, index: int) -> bool:
         if 0 <= index < self._robot.backpack.used_capacity:
-            cur_instruction = self._robot.get_stored_instruction(index)
+            cur_instruction = self._details.selected_object
             if cur_instruction is not None:
                 if cur_instruction.is_used():
                     # move the instruction
@@ -1262,52 +1230,16 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                     [give_reward_and_continue]
                 ))
 
-            self._details_content = self._DETAILS_INFO_THEN_CHOICES
+            self._details_content = self._DETAILS_SUCCESS
         else:
             self._on_commit_fail()
-
-    def __choices_reset(self) -> bool:
-        if self._robot.has_empty_circuit:
-            self._details.set_data(data=(
-                ["Nothing to reset"],
-                [self._empty_callback]
-            ))
-            self._details_content = self._DETAILS_INFO_THEN_CHOICES
-            return True
-        else:
-            self._robot.reset_circuit()
-            self.__update_calculation(False)
-            self.render()
-            return False
-
-    def __choices_gate_guide(self) -> bool:
-        gates: List[GateType] = []
-        for instruction in self._robot.backpack:
-            if instruction.gate_type not in gates:
-                # only store each available gate type once
-                gates.append(instruction.gate_type)
-
-        def show_gate_guide(index: int = 0) -> bool:
-            if 0 <= index < len(gates):
-                gate = gates[index]
-                Popup.generic_info(gate.short_name, Instruction.get_description(gate))
-                return False
-            return True
-
-        options = [gate.short_name for gate in gates]
-        self._details.set_data(data=(
-            SelectionWidget.wrap_in_hotkey_str(options) + [MyWidgetSet.BACK_STRING],
-            [show_gate_guide]
-        ))
-        self._details_content = self._DETAILS_HELP
-        return True
 
     @abstractmethod
     def _on_commit_fail(self) -> bool:
         pass
 
     @abstractmethod
-    def _choices_flee(self) -> bool:
+    def _details_flee(self) -> bool:
         pass
 
     def _empty_callback(self) -> None:
@@ -1316,14 +1248,14 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
 class TrainingsWidgetSet(ReachTargetWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
-                 back_to_spaceship_callback: Callable[[], None]):
-        super().__init__(controls, render, logger, root, back_to_spaceship_callback, "Done")
+                 back_to_spaceship_callback: Callable[[], None], reopen_popup_callback: Callable[[], None]):
+        super().__init__(controls, render, logger, root, back_to_spaceship_callback, reopen_popup_callback, "Done")
 
     def _on_commit_fail(self) -> bool:
         self._details_content = ReachTargetWidgetSet._DETAILS_EDIT
         return True
 
-    def _choices_flee(self) -> bool:
+    def _details_flee(self) -> bool:
         self._details.set_data(data=(
             ["You return to the Spaceship!"],
             [self._continue_exploration_callback]
@@ -1333,8 +1265,9 @@ class TrainingsWidgetSet(ReachTargetWidgetSet):
 
 class FightWidgetSet(ReachTargetWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
-                 continue_exploration_callback: Callable[[], None]):
-        super(FightWidgetSet, self).__init__(controls, render, logger, root, continue_exploration_callback)
+                 continue_exploration_callback: Callable[[], None], reopen_popup_callback: Callable[[], None]):
+        super(FightWidgetSet, self).__init__(controls, render, logger, root, continue_exploration_callback,
+                                             reopen_popup_callback)
         self.__flee_check = None
 
     def set_data(self, robot: Robot, target: Enemy, in_expedition: bool):
@@ -1342,44 +1275,46 @@ class FightWidgetSet(ReachTargetWidgetSet):
         self.__flee_check = target.flee_check
 
     def _on_commit_fail(self) -> bool:
-        if not self._robot.game_over_check():
-            self._details.set_data(data=(
-                [self._DEFAULT_FAIL_MESSAGE],
-                [self._empty_callback]
-            ))
-        self._details_content = ReachTargetWidgetSet._DETAILS_INFO_THEN_EDIT
+        if GameplayConfig.get_option_value(Options.energy_mode):
+            self._robot.game_over_check()
+        self._details_content = ReachTargetWidgetSet._DETAILS_EDIT
         return True
 
-    def _choices_flee(self) -> bool:
-        if self._robot.cur_energy > self._target.flee_energy:
-            damage_taken, _ = self._robot.decrease_energy(amount=self._target.flee_energy)
-            if self.__flee_check():
-                self._details.set_data(data=(
-                    [f"Fled successfully. Your Qubot lost {self._target.flee_energy} energy."],
-                    [self._continue_exploration_callback]
-                ))
+    def _details_flee(self) -> bool:
+        extra_text = ""
+        if GameplayConfig.get_option_value(Options.energy_mode):
+            if self._robot.cur_energy > self._target.flee_energy:
+                damage_taken, _ = self._robot.decrease_energy(amount=self._target.flee_energy)
+                extra_text = f"Your Qubot lost {damage_taken} energy."
             else:
-                self._details.set_data(data=(
-                    [f"Failed to flee. Your Qubot lost {self._target.flee_energy} energy."],
-                    [self._empty_callback]
-                ))
-                self._details_content = ReachTargetWidgetSet._DETAILS_INFO_THEN_EDIT
-            return True
+                CommonPopups.NotEnoughEnergyToFlee.show()
+                return False    # don't switch to details widget
+
+        if self.__flee_check():
+            self._details.set_data(data=(
+                [f"Fled successfully. {extra_text}"],
+                [self._continue_exploration_callback]
+            ))
         else:
-            CommonPopups.NotEnoughEnergyToFlee.show()
-            return False    # don't switch to details widget
+            self._details.set_data(data=(
+                [f"Failed to flee. {extra_text}"],
+                [self._empty_callback]
+            ))
+            self._details_content = ReachTargetWidgetSet._DETAILS_INFO_THEN_EDIT
+        return True
 
 
 class BossFightWidgetSet(FightWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
-                 continue_exploration_callback: Callable[[], None]):
-        super().__init__(controls, render, logger, root, continue_exploration_callback)
+                 continue_exploration_callback: Callable[[], None], reopen_popup_callback: Callable[[], None]):
+        super().__init__(controls, render, logger, root, continue_exploration_callback, reopen_popup_callback)
 
     def set_data(self, robot: Robot, target: Boss, in_expedition: bool):
         super(BossFightWidgetSet, self).set_data(robot, target, in_expedition)
 
     def _on_commit_fail(self) -> bool:
-        self._robot.decrease_energy(PuzzleConfig.BOSS_FAIL_DAMAGE)
+        if GameplayConfig.get_option_value(Options.energy_mode):
+            self._robot.decrease_energy(PuzzleConfig.BOSS_FAIL_DAMAGE)
         return super(BossFightWidgetSet, self)._on_commit_fail()
 
 
@@ -1486,31 +1421,27 @@ class RiddleWidgetSet(ReachTargetWidgetSet):
     __TRY_PHRASING = "edits"
 
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
-                 continue_exploration_callback: Callable[[None], None]):
-        super().__init__(controls, render, logger, root, continue_exploration_callback, "Give Up")
+                 continue_exploration_callback: Callable[[None], None], reopen_popup_callback: Callable[[], None]):
+        super().__init__(controls, render, logger, root, continue_exploration_callback, reopen_popup_callback,
+                         "Give Up")
 
     def set_data(self, robot: Robot, target: Riddle, in_expedition: bool) -> None:
         super(RiddleWidgetSet, self).set_data(robot, target, in_expedition)
         self._hud.set_data((robot, None, f"Remaining {RiddleWidgetSet.__TRY_PHRASING}: {target.attempts}"))
 
     def _on_commit_fail(self) -> bool:
-        if self._target.can_attempt:
-            self._details.set_data(data=(
-                [self._DEFAULT_FAIL_MESSAGE],
-                [self._empty_callback]
-            ))
-        else:
+        if not self._target.can_attempt:
             self._details.set_data(data=(
                 [f"You couldn't solve the riddle within the given number of {RiddleWidgetSet.__TRY_PHRASING}. "
                  f"It vanished together with its reward."],
                 [self._continue_exploration_callback]
             ))
         self._hud.update_situational(f"Remaining {RiddleWidgetSet.__TRY_PHRASING}: {self._target.attempts}")
-        self._details_content = ReachTargetWidgetSet._DETAILS_INFO_THEN_EDIT
+        self._details_content = ReachTargetWidgetSet._DETAILS_EDIT
         return True
 
-    def _choices_flee(self) -> bool:
-        if self._target.attempts > 0:
+    def _details_flee(self) -> bool:
+        if self._target.can_attempt:
             self._details.set_data(data=(
                 [f"Abort - you can still try again later", "Continue"],
                 [self._continue_exploration_callback, self._empty_callback]
@@ -1527,8 +1458,8 @@ class RiddleWidgetSet(ReachTargetWidgetSet):
 
 class ChallengeWidgetSet(ReachTargetWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
-                 continue_exploration_callback: Callable[[], None]):
-        super().__init__(controls, render, logger, root, continue_exploration_callback)
+                 continue_exploration_callback: Callable[[], None], reopen_popup_callback: Callable[[], None]):
+        super().__init__(controls, render, logger, root, continue_exploration_callback, reopen_popup_callback)
 
     def set_data(self, robot: Robot, target: Challenge, in_expedition: bool) -> None:
         super(ChallengeWidgetSet, self).set_data(robot, target, in_expedition)
@@ -1539,23 +1470,21 @@ class ChallengeWidgetSet(ReachTargetWidgetSet):
         self._hud.update_situational(constraints)
 
     def _on_commit_fail(self) -> bool:
-        # todo check if it's because the circuit is wrong or the constraints are not fulfilled
-        if not self._robot.game_over_check():
-            self._details.set_data(data=(
-                [f"That's not yet the correct solution."],
-                [self._empty_callback]
-            ))
-        self._details_content = ReachTargetWidgetSet._DETAILS_INFO_THEN_EDIT
+        if GameplayConfig.get_option_value(Options.energy_mode):
+            self._robot.game_over_check()
+        self._details_content = ReachTargetWidgetSet._DETAILS_EDIT
         return True
 
-    def _choices_flee(self) -> bool:
-        if self._robot.cur_energy > self._target.flee_energy:
-            damage_taken, _ = self._robot.decrease_energy(amount=self._target.flee_energy)
-            self._details.set_data(data=(
-                ["You successfully fled!"],
-                [self._continue_exploration_callback]
-            ))
-            return True
-        else:
-            CommonPopups.NotEnoughEnergyToFlee.show()
-            return False  # don't switch to details widget
+    def _details_flee(self) -> bool:
+        if GameplayConfig.get_option_value(Options.energy_mode):
+            if self._robot.cur_energy > self._target.flee_energy:
+                _, _ = self._robot.decrease_energy(amount=self._target.flee_energy)
+            else:
+                CommonPopups.NotEnoughEnergyToFlee.show()
+                return False  # don't switch to details widget
+
+        self._details.set_data(data=(
+            ["You successfully fled!"],
+            [self._continue_exploration_callback]
+        ))
+        return True
