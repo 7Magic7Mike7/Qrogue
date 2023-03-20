@@ -1321,12 +1321,8 @@ class FightWidgetSet(ReachTargetWidgetSet):
         self.__flee_check = target.flee_check
 
     def _on_commit_fail(self) -> bool:
-        if not self._robot.game_over_check():
-            self._details.set_data(data=(
-                [self._DEFAULT_FAIL_MESSAGE],
-                [self._empty_callback]
-            ))
-        self._details_content = ReachTargetWidgetSet._DETAILS_INFO_THEN_EDIT
+        self._robot.game_over_check()
+        self._details_content = ReachTargetWidgetSet._DETAILS_EDIT
         return True
 
     def _choices_flee(self) -> bool:
@@ -1473,19 +1469,14 @@ class RiddleWidgetSet(ReachTargetWidgetSet):
         self._hud.set_data((robot, None, f"Remaining {RiddleWidgetSet.__TRY_PHRASING}: {target.attempts}"))
 
     def _on_commit_fail(self) -> bool:
-        if self._target.can_attempt:
-            self._details.set_data(data=(
-                [self._DEFAULT_FAIL_MESSAGE],
-                [self._empty_callback]
-            ))
-        else:
+        if not self._target.can_attempt:
             self._details.set_data(data=(
                 [f"You couldn't solve the riddle within the given number of {RiddleWidgetSet.__TRY_PHRASING}. "
                  f"It vanished together with its reward."],
                 [self._continue_exploration_callback]
             ))
         self._hud.update_situational(f"Remaining {RiddleWidgetSet.__TRY_PHRASING}: {self._target.attempts}")
-        self._details_content = ReachTargetWidgetSet._DETAILS_INFO_THEN_EDIT
+        self._details_content = ReachTargetWidgetSet._DETAILS_EDIT
         return True
 
     def _choices_flee(self) -> bool:
@@ -1518,13 +1509,8 @@ class ChallengeWidgetSet(ReachTargetWidgetSet):
         self._hud.update_situational(constraints)
 
     def _on_commit_fail(self) -> bool:
-        # todo check if it's because the circuit is wrong or the constraints are not fulfilled
-        if not self._robot.game_over_check():
-            self._details.set_data(data=(
-                [f"That's not yet the correct solution."],
-                [self._empty_callback]
-            ))
-        self._details_content = ReachTargetWidgetSet._DETAILS_INFO_THEN_EDIT
+        self._robot.game_over_check()
+        self._details_content = ReachTargetWidgetSet._DETAILS_EDIT
         return True
 
     def _choices_flee(self) -> bool:
