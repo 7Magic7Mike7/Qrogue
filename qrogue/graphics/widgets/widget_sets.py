@@ -1026,10 +1026,10 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             success, gate = self.__circuit.place_gate()
             if success:
                 if self._details.validate_index():
-                    if gate:
-                        self._details.update_text(gate.selection_str(), self._details.index)
+                    if gate is None:
+                        self.__choices_edit()
                     else:
-                        self.__choices_adapt()
+                        self._details.update_text(gate.selection_str(), self._details.index)
                 self.__choices_commit()
                 Widget.move_focus(self._details, self)
                 self.render()
