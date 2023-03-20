@@ -176,7 +176,7 @@ class DummyWidget(WidgetWrapper):
     def activate_individual_coloring(self):
         pass
 
-    def add_key_command(self, keys: List[int], command: Callable[[], Any]) -> Any:
+    def add_key_command(self, keys: List[int], command: Callable[[], Any], overwrite: bool = True) -> Any:
         pass
 
     def set_title(self, title: str) -> None:

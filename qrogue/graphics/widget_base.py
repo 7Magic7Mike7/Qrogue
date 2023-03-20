@@ -66,7 +66,7 @@ class WidgetWrapper(ABC):
         pass
 
     @abstractmethod
-    def add_key_command(self, keys: List[int], command: Callable[[], Any]) -> Any:
+    def add_key_command(self, keys: List[int], command: Callable[[], Any], overwrite: bool = True) -> Any:
         pass
 
     @abstractmethod

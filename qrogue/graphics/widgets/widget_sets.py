@@ -100,12 +100,14 @@ class MyWidgetSet(WidgetSet, Renderable, ABC):
         self._logger.info('Adding widget {} w/ ID {} of type {}'.format(title, id, str(type(new_widget))))
         return new_widget
 
-    def add_key_command(self, keys: List[int], command: Callable[[], Any], add_to_widgets: bool = False) -> Any:
+    def add_key_command(self, keys: List[int], command: Callable[[], Any], add_to_widgets: bool = False,
+                        overwrite: bool = True) -> Any:
         for key in keys:
-            super(MyWidgetSet, self).add_key_command(key, command)
+            if overwrite or key not in self._keybindings:
+                super(MyWidgetSet, self).add_key_command(key, command)
         if add_to_widgets:
             for widget in self.get_widget_list():
-                widget.widget.add_key_command(keys, command)
+                widget.widget.add_key_command(keys, command, overwrite)
 
     def update_story_progress(self, progress: int):
         self.__progress = progress
