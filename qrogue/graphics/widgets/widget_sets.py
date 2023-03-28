@@ -1486,7 +1486,7 @@ class RiddleWidgetSet(ReachTargetWidgetSet):
         return True
 
     def _choices_flee(self) -> bool:
-        if self._target.attempts > 0:
+        if self._target.can_attempt:
             self._details.set_data(data=(
                 [f"Abort - you can still try again later", "Continue"],
                 [self._continue_exploration_callback, self._empty_callback]
