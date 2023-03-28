@@ -26,6 +26,7 @@ setup(
 		'qrogue.game.world.dungeon_generator',
 		'qrogue.game.world.dungeon_generator.dungeon_parser',
 		'qrogue.game.world.dungeon_generator.world_parser',
+		'qrogue.game.world.dungeon_generator.wave_function_collapse',
 		'qrogue.graphics',
 		'qrogue.graphics.rendering',
 		'qrogue.graphics.popups',
@@ -34,7 +35,7 @@ setup(
 	],
 	package_data={"data": ["qrogue/data"]},
 	include_package_data=True,
-	version='0.6.2',
+	version='0.6.2.1',
 	license='MIT',  # Chose a license from here: https://help.github.com/articles/licensing-a-repository
 	description='Qrogue is a modernized Quantum Computing take of the classical game Rogue.',
 	long_description=README,
@@ -42,7 +43,7 @@ setup(
 	author='Michael Artner',
 	author_email='michael.artner@jku.at',
 	url='https://github.com/7Magic7Mike7/Qrogue',
-	download_url='https://github.com/7Magic7Mike7/Qrogue/releases/tag/0.6.2',  # link to Release on GitHub
+	download_url='https://github.com/7Magic7Mike7/Qrogue/releases/tag/0.6.2.1',  # link to Release on GitHub
 	keywords=['Quantum Computing', 'Gamification', 'Video Game', 'PyCUI'],
 	install_requires=[
 		'py-cui==0.1.4',
