@@ -14,6 +14,7 @@ from qrogue.game.logic.actors.controllables.qubit import QubitSet, DummyQubitSet
 from qrogue.game.logic.collectibles import Coin, Collectible, Consumable, Instruction, Key, MultiCollectible, \
     Qubit, Energy
 from qrogue.util import CheatConfig, Config, Logger, GameplayConfig, QuantumSimulationConfig, Options
+from qrogue.util.util_classes import LinkedList
 
 
 # from jkq import ddsim
@@ -238,7 +239,7 @@ class Backpack:
         Adds the given amount of Coins. Fails if amount is less or equal to 0.
 
         :param amount: how many Coins we want to add
-        :return: True if the given amount of Coins were handed out successfully, False otherwise
+        :return: True if the given amount of Coins is handed out successfully, False otherwise
         """
         if amount > 0:
             self.__coin_count += amount
@@ -288,7 +289,7 @@ class Backpack:
 
     def get(self, index: int) -> Optional[Instruction]:
         """
-        Returns the Instruction at the provided index in the storage if index is valid. Otherwise returns None.
+        Returns the Instruction at the provided index in the storage if index is valid. Otherwise, returns None.
 
         :param index: index of the Instruction we want to get
         :return: the Instruction at the given index or None
@@ -314,7 +315,7 @@ class Backpack:
         Removes a given Instruction from the backpack if it's actually stored in it.
 
         :param instruction: the Instruction we want to remove
-        :return: True if the Instruction is in the backpack and we were able to remove it, False otherwise
+        :return: True if the Instruction is in the backpack, and we were able to remove it. False otherwise.
         """
         for i in range(len(self.__storage)):
             if self.__storage[i] == instruction:
@@ -338,7 +339,7 @@ class Backpack:
 
     def get_from_pouch(self, index: int) -> Optional[Consumable]:
         """
-        Returns the Consumable at the provided index in the pouch if index is valid. Otherwise returns None.
+        Returns the Consumable at the provided index in the pouch if index is valid. Otherwise, returns None.
 
         :param index: index of the Consumable we want to get
         :return: the Consumable at the given index or None
@@ -439,10 +440,8 @@ class Robot(Controllable, ABC):
             self.__qubit_indices.append(i)
 
         # initialize gate stuff (columns)
-        self.__instruction_count: int = 0   # how many instructions are currently placed on the circuit
-
         # apply gates/instructions, create the circuit
-        self.__instructions: List[Optional[Instruction]] = [None] * attributes.circuit_space
+        self.__instructions = LinkedList(capacity=self.__attributes.circuit_space)
         self.update_statevector(use_energy=False, check_for_game_over=False)  # to initialize the statevector
 
     @property
@@ -471,7 +470,7 @@ class Robot(Controllable, ABC):
 
     @property
     def has_empty_circuit(self) -> bool:
-        return self.__instruction_count == 0
+        return self.__instructions.is_empty
 
     @property
     def circuit_space(self) -> int:
@@ -483,7 +482,7 @@ class Robot(Controllable, ABC):
 
         :return: True if the backpack has still space for new Instructions, False if it's already full
         """
-        return self.__instruction_count < self.circuit_space
+        return len(self.__instructions) < self.circuit_space
 
     def game_over_check(self) -> bool:
         """
@@ -515,14 +514,12 @@ class Robot(Controllable, ABC):
             return
 
         circuit = QuantumCircuit(self.__attributes.num_of_qubits, self.__attributes.num_of_qubits)
-        for inst in self.__instructions:
-            if inst:
-                inst.append_to(circuit)
+        for inst in self.__instructions: inst.append_to(circuit)
 
         compiled_circuit = transpile(circuit, self.__simulator)
         job = self.__simulator.run(compiled_circuit, shots=1)
         result = job.result()
-        self.__stv = StateVector(result.get_statevector(circuit), num_of_used_gates=self.__instruction_count)
+        self.__stv = StateVector(result.get_statevector(circuit), num_of_used_gates=len(self.__instructions))
 
         job = execute(circuit, self.__backend)
         result = job.result()
@@ -539,10 +536,8 @@ class Robot(Controllable, ABC):
         :param skip_qargs: whether to skip resetting the qubits of the Instruction or not, defaults to False
         :return: True if we successfully removed the Instruction, False otherwise
         """
-        # todo check if we can extend the condition with "and instruction in self.__instructions"
-        if instruction and instruction.is_used():
-            self.__instructions[instruction.position] = None
-            self.__instruction_count -= 1
+        if instruction is not None and instruction.is_used():
+            Logger.instance().assertion(self.__instructions.remove(instruction), "Failed to remove a used instruction!")
             instruction.reset(skip_qargs=skip_qargs)
             return True
         return False
@@ -573,10 +568,10 @@ class Robot(Controllable, ABC):
             return False
 
         if 0 <= position < self.__attributes.circuit_space:
-            if self.__instructions[position]:
-                self.__remove_instruction(self.__instructions[position])
-            self.__instruction_count += 1
-            self.__instructions[position] = instruction
+            inst = self.__instructions.get(position)
+            if inst is not None:    # todo
+                self.__remove_instruction(inst)
+            self.__instructions.insert(instruction, position)
             return instruction.use(position)
         else:
             # illegal position removes the instruction from the circuit if possible
@@ -594,9 +589,10 @@ class Robot(Controllable, ABC):
         """
         if instruction.is_used() and instruction.position != position:
             if 0 <= position < self.__attributes.circuit_space:
-                if self.__instructions[position]:
+                inst = self.__instructions.get(position)
+                if inst is not None:
                     self.__remove_instruction(instruction, skip_qargs=True)
-                    self.__remove_instruction(self.__instructions[position])
+                    self.__remove_instruction(inst)
                 else:
                     self.__remove_instruction(instruction, skip_qargs=True)
                 return self.__place_instruction(instruction, position)
@@ -618,7 +614,7 @@ class Robot(Controllable, ABC):
 
     def use_instruction(self, instruction: Instruction, position: int) -> bool:
         """
-        Tries to put the Instruction corresponding to the given index in the backpack into the robot's circuit.
+        Tries to put the given Instruction into the robot's circuit at the given position.
         If the Instruction is already in-use (put onto the circuit) it is removed instead.
 
         :param instruction: the Instruction we want to use
@@ -640,10 +636,9 @@ class Robot(Controllable, ABC):
 
         :return: None
         """
-        temp = self.__instructions.copy()
-        for instruction in temp:
-            self.__remove_instruction(instruction)
-        self.__instruction_count = 0
+        for instruction in self.__instructions:
+            instruction.reset(skip_qargs=False)
+        self.__instructions.clear()
         self.update_statevector(use_energy=False, check_for_game_over=False)
 
     def get_available_instructions(self) -> List[Instruction]:
@@ -720,7 +715,7 @@ class Robot(Controllable, ABC):
         :return: the Instruction at the given position or None
         """
         if 0 <= position < self.circuit_space:
-            return self.__instructions[position]
+            return self.__instructions.get(position)
         return None
 
     def reset(self):

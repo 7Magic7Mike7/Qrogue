@@ -373,6 +373,7 @@ class CircuitWidget(Widget):
     class PlaceHolderData:
         def __init__(self, gate: Optional[Instruction], pos: int = -1, qubit: int = 0):
             self.gate = gate
+            self.original_place: Tuple[int, int] = pos, qubit
             self.pos = pos
             self.qubit = qubit
 
@@ -432,7 +433,7 @@ class CircuitWidget(Widget):
         if pos is None:
             return False
 
-        # only if we are currently removing a gate or if implicit removal is not allowed we have to check for for other
+        # only if we are currently removing a gate or if implicit removal is not allowed we have to check for other
         # gates
         if self.__place_holder_data.gate is None or \
                 not GameplayConfig.get_option_value(Options.allow_implicit_removal, convert=True):
@@ -460,9 +461,9 @@ class CircuitWidget(Widget):
                 qubit += 1
 
     def __move_right(self):
-        if self.__place_holder_data:
+        if self.__place_holder_data is not None:
             if self.__place_holder_data.can_change_position():
-                self.__change_position(True)
+                self.__change_position(right=True)
 
     def __move_down(self):
         if self.__place_holder_data:
@@ -475,14 +476,15 @@ class CircuitWidget(Widget):
                 qubit -= 1
 
     def __move_left(self):
-        if self.__place_holder_data:
+        if self.__place_holder_data is not None:
             if self.__place_holder_data.can_change_position():
-                self.__change_position(False)
+                self.__change_position(right=False)
 
     def abort_placement(self):
         if self.__place_holder_data is not None:
             if self.__place_holder_data.gate is not None:
                 self.__place_holder_data.gate.reset()
+                self.__place_holder_data.gate
             self.__place_holder_data = None
             self.render()
             # todo
@@ -506,7 +508,7 @@ class CircuitWidget(Widget):
 
         :return: True if gate is fully placed, False otherwise (e.g. more qubits need to be placed)
         """
-        if self.__place_holder_data:
+        if self.__place_holder_data is not None:
             if self.__place_holder_data.gate is None:
                 # remove the instruction
                 gate = self.__robot.gate_used_at(self.__place_holder_data.pos)
@@ -519,7 +521,8 @@ class CircuitWidget(Widget):
                 if self.__place_holder_data.place():
                     self.render()
                     return False, self.__place_holder_data.gate
-                if self.__robot.use_instruction(self.__place_holder_data.gate, self.__place_holder_data.pos):
+
+                elif self.__robot.use_instruction(self.__place_holder_data.gate, self.__place_holder_data.pos):
                     gate = self.__place_holder_data.gate
                     self.__place_holder_data = None
                     return True, gate

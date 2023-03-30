@@ -7,6 +7,7 @@ from .common_messages import CommonPopups, CommonQuestions
 from .my_random import MyRandom, RandomManager
 from .achievements import AchievementManager
 from . import util_functions
+from . import util_classes
 
 # importing
 # none
