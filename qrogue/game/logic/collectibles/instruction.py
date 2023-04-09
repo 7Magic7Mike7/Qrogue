@@ -1,6 +1,6 @@
 import enum
 from abc import ABC, abstractmethod
-from typing import Iterator, Optional
+from typing import Iterator, Optional, List
 
 import qiskit.circuit
 import qiskit.circuit.library.standard_gates as gates
@@ -128,6 +128,9 @@ class Instruction(Collectible, ABC):
 
     def qargs_iter(self) -> Iterator[int]:
         return iter(self._qargs)
+
+    def qargs_copy(self) -> List[int]:
+        return self._qargs.copy()
 
     def get_qubit_at(self, index: int = 0) -> int:
         if 0 <= index < len(self._qargs):

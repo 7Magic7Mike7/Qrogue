@@ -635,7 +635,7 @@ class Robot(Controllable, ABC):
 
         # initialize gate stuff (columns)
         # apply gates/instructions, create the circuit
-        self.__instructions = LinkedList(capacity=self.__attributes.circuit_space)
+        self.__instructions = Robot.CircuitGrid(self.__attributes.num_of_qubits, self.__attributes.circuit_space) #LinkedList(capacity=self.__attributes.circuit_space)
         self.update_statevector(use_energy=False, check_for_game_over=False)  # to initialize the statevector
 
     @property
@@ -676,7 +676,7 @@ class Robot(Controllable, ABC):
 
         :return: True if the backpack has still space for new Instructions, False if it's already full
         """
-        return len(self.__instructions) < self.circuit_space
+        return not self.__instructions.is_full
 
     def game_over_check(self) -> bool:
         """
@@ -762,10 +762,10 @@ class Robot(Controllable, ABC):
             return False
 
         if 0 <= position < self.__attributes.circuit_space:
-            inst = self.__instructions.get(position)
+            inst = self.__instructions.get(instruction.qargs_copy()[0], position)
             if inst is not None:    # todo
                 self.__remove_instruction(inst)
-            self.__instructions.insert(instruction, position)
+            self.__instructions.place(instruction, instruction.qargs_copy(), position)
             return instruction.use(position)
         else:
             # illegal position removes the instruction from the circuit if possible
@@ -783,7 +783,7 @@ class Robot(Controllable, ABC):
         """
         if instruction.is_used() and instruction.position != position:
             if 0 <= position < self.__attributes.circuit_space:
-                inst = self.__instructions.get(position)
+                inst = self.__instructions.get(instruction.qargs_copy()[0], position)   # todo check .get()
                 if inst is not None:
                     self.__remove_instruction(instruction, skip_qargs=True)
                     self.__remove_instruction(inst)
@@ -901,7 +901,7 @@ class Robot(Controllable, ABC):
         assert amount > 0   # todo maybe == 0 is also okay?
         return self.__attributes.increase_energy(amount)
 
-    def gate_used_at(self, position: int) -> Optional[Instruction]:
+    def gate_used_at(self, qubit: int, position: int) -> Optional[Instruction]:
         """
         Returns the Instruction at the given index or None for invalid indices.
 
@@ -909,7 +909,7 @@ class Robot(Controllable, ABC):
         :return: the Instruction at the given position or None
         """
         if 0 <= position < self.circuit_space:
-            return self.__instructions.get(position)
+            return self.__instructions.get(qubit, position)
         return None
 
     def reset(self):

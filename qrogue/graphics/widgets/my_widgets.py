@@ -390,7 +390,7 @@ class CircuitWidget(Widget):
             # if gate is None we search for an occupied position (gate_used_at(pos) is not None)
             # if gate is not None we search for a free position (gate_used_at(pos) is None)
             # hence this xor condition
-            return (self.gate is None) != (robot.gate_used_at(pos) is None)
+            return (self.gate is None) != (robot.gate_used_at(self.qubit, pos) is None)
 
         def place(self) -> bool:
             """
@@ -511,7 +511,7 @@ class CircuitWidget(Widget):
         if self.__place_holder_data is not None:
             if self.__place_holder_data.gate is None:
                 # remove the instruction
-                gate = self.__robot.gate_used_at(self.__place_holder_data.pos)
+                gate = self.__robot.gate_used_at(self.__place_holder_data.qubit, self.__place_holder_data.pos)
                 if gate is not None:
                     self.__robot.remove_instruction(gate)
                     self.__place_holder_data = None
@@ -536,12 +536,13 @@ class CircuitWidget(Widget):
         if self.__robot is not None:
             entry = "-" * (3 + InstructionConfig.MAX_ABBREVIATION_LEN + 3)
             rows = [[entry] * self.__robot.circuit_space for _ in range(self.__robot.num_of_qubits)]
-            for i in range(self.__robot.circuit_space):
-                inst = self.__robot.gate_used_at(i)
-                if inst:
-                    for q in inst.qargs_iter():
-                        inst_str = center_string(inst.abbreviation(q), InstructionConfig.MAX_ABBREVIATION_LEN)
-                        rows[q][i] = f"--{{{inst_str}}}--"
+
+            for qu in range(self.__robot.num_of_qubits):
+                for position in range(self.__robot.circuit_space):
+                    inst = self.__robot.gate_used_at(qu, position)
+                    if inst is not None:
+                        inst_str = center_string(inst.abbreviation(qu), InstructionConfig.MAX_ABBREVIATION_LEN)
+                        rows[qu][position] = f"--{{{inst_str}}}--"
 
             if self.__place_holder_data:
                 gate = self.__place_holder_data.gate
