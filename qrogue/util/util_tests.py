@@ -111,7 +111,7 @@ class MyTestCase(unittest.TestCase):
 
         order = [
             ["C", "A", "G", "B", ],
-            ["E", None, "G", "D", ]
+            ["E", "D", "G", None, ]
         ]
         for qubit in range(num_of_qubits):
             for pos in range(circuit_space):
