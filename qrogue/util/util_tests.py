@@ -85,18 +85,27 @@ class MyTestCase(unittest.TestCase):
         circuit_space = 5
         grid = Robot.CircuitGrid(num_of_qubits, circuit_space)
 
-        placements = [
-            (GateDummy(1, "A"), 0, 1),
-            (GateDummy(1, "B"), 0, 1),
-            (GateDummy(1, "C"), 0, 0),
-
-            (GateDummy(1, "E"), 1, 0),
-
-            (GateDummy(2, "G"), [0, 1], 2),
-            (GateDummy(1, "D"), 1, 2),
+        gates = [
+            MyTestCase.GateDummy(1, "A"),
+            MyTestCase.GateDummy(1, "B"),
+            MyTestCase.GateDummy(1, "C"),
+            MyTestCase.GateDummy(1, "E"),
+            MyTestCase.GateDummy(2, "G"),
+            MyTestCase.GateDummy(1, "D"),
         ]
-        for data in placements:
-            gate, qubit, pos = data
+        positioning = [
+            (0, 1),
+            (0, 1),
+            (0, 0),
+
+            (1, 0),
+
+            ([0, 1], 2),
+            (1, 2),
+        ]
+        for i, data in enumerate(positioning):
+            gate = gates[i]
+            qubit, pos = data
             grid.place(gate, qubit, pos)
             print(grid)
 
@@ -107,9 +116,18 @@ class MyTestCase(unittest.TestCase):
         for qubit in range(num_of_qubits):
             for pos in range(circuit_space):
                 if pos < len(order[qubit]) and order[qubit][pos] is not None:
-                    self.assertEqual(order[qubit][pos], grid.get(qubit, pos).character)
+                    self.assertEqual(order[qubit][pos], grid.get(qubit, pos).abbreviation())
                 else:
                     self.assertEqual(None, grid.get(qubit, pos))
+
+        print("Iterating")
+        gates_copy = gates.copy()
+        text = ""
+        for gate in grid:
+            gates_copy.remove(gate)
+            text += gate.character + ", "
+        print(text[:-2])
+        self.assertEqual(len(gates_copy), 0, f"Didn't iterate over all gates! {gates_copy} is missing")
 
 
 if __name__ == '__main__':
