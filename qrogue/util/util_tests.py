@@ -1,8 +1,30 @@
 import unittest
-from util_classes import LinkedList, CircuitGrid, GateDummy
+from typing import List
+
+from qrogue.game.logic.actors import Robot
+from qrogue.game.logic.collectibles import Instruction, GateType
+from util_classes import LinkedList
 
 
 class MyTestCase(unittest.TestCase):
+    class GateDummy(Instruction):
+        def __init__(self, needed_qubits: int, character: str):
+            import qiskit.circuit.library.standard_gates as gates
+            super().__init__(GateType.DummyGate, gates.IGate(), needed_qubits)
+
+            self.qargs: List[int] = []
+            self.needed_qubits: int = needed_qubits
+            self.character = character[0]
+
+        def abbreviation(self, qubit: int = 0):
+            return self.character
+
+        def copy(self) -> "Instruction":
+            return MyTestCase.GateDummy(self.needed_qubits, self.character)
+
+        def __str__(self):
+            return f"{self.character} ({self.qargs})"
+
     # noinspection GrazieInspection
     def test_linked_list(self):
         content = [1, 2, 3, 4, 5, 6, 7]
@@ -61,7 +83,7 @@ class MyTestCase(unittest.TestCase):
     def test_circuit_grid(self):
         num_of_qubits = 2
         circuit_space = 5
-        grid = CircuitGrid(num_of_qubits, circuit_space)
+        grid = Robot.CircuitGrid(num_of_qubits, circuit_space)
 
         placements = [
             (GateDummy(1, "A"), 0, 1),

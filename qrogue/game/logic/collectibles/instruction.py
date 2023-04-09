@@ -21,6 +21,8 @@ class GateType(enum.Enum):
     SwapGate = "Swap"
     CXGate = "CX"
 
+    DummyGate = "dummy"
+
     def __init__(self, short_name: str):
         self.__short_name = short_name
 
