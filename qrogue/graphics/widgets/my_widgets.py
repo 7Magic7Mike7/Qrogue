@@ -1,4 +1,9 @@
 import math
+
+import qiskit.circuit.library.standard_gates
+
+import qrogue.util.util_functions as uf
+
 from abc import ABC, abstractmethod
 from typing import List, Any, Callable, Tuple, Optional, Dict, Union
 
@@ -13,7 +18,6 @@ from qrogue.game.world.map import Map
 from qrogue.game.world.navigation import Direction
 from qrogue.util import ColorConfig, Controls, Keys, Logger, Config, HudConfig, GameplayConfig, Options
 from qrogue.util.config import QuantumSimulationConfig, InstructionConfig
-from qrogue.util.util_functions import center_string, align_string
 
 from qrogue.graphics import WidgetWrapper
 from qrogue.graphics.rendering import ColorRules
@@ -370,45 +374,146 @@ class HudWidget(Widget):
 
 
 class CircuitWidget(Widget):
-    class PlaceHolderData:
-        def __init__(self, gate: Optional[Instruction], pos: int = -1, qubit: int = 0):
+    class _GateWrapper(Instruction):
+        def __init__(self, gate: Instruction):
+            # treat it as an IGate to not alter the functionality of the circuit
+            super().__init__(gate.type, qiskit.circuit.library.standard_gates.IGate(), gate.num_of_qubits)
+            self.__gate = gate
+
+        def abbreviation(self, qubit: int = 0):
+            return self.__gate.abbreviation(qubit)
+
+        def copy(self) -> Instruction:
+            return CircuitWidget._GateWrapper(self.__gate)
+
+        def extract(self) -> Instruction:
+            for qu in self.qargs_iter():
+                self.__gate.use_qubit(qu)
+            self.__gate.use(self.position)
+            return self.__gate
+
+    class _ActionPlaceHolder(ABC):
+        def __init__(self, grid: Robot.CircuitGrid, gate: Optional[Instruction], pos: int = -1, qubit: int = 0):
+            self.grid = grid
+            #if gate is None: self.gate = None
+            #else: self.gate: CircuitWidget._GateWrapper = CircuitWidget._GateWrapper(gate)
             self.gate = gate
-            self.original_place: Tuple[int, int] = pos, qubit
             self.pos = pos
             self.qubit = qubit
 
-        def resolve(self) -> Tuple[int, int]:
-            return self.pos, self.qubit
-
+        @abstractmethod
         def can_change_position(self) -> bool:
-            return self.gate is None or self.gate.no_qubits_specified
+            pass
 
+        @abstractmethod
         def is_valid_qubit(self, qubit: int) -> bool:
-            return self.gate is None or self.gate.can_use_qubit(qubit)
+            pass
 
-        def is_valid_pos(self, pos: int, robot: Robot) -> bool:
+        @abstractmethod
+        def is_valid_pos(self, pos: int, grid: Robot.CircuitGrid) -> bool:
             # if gate is None we search for an occupied position (gate_used_at(pos) is not None)
             # if gate is not None we search for a free position (gate_used_at(pos) is None)
             # hence this xor condition
-            return (self.gate is None) != (robot.gate_used_at(self.qubit, pos) is None)
+            pass
 
-        def place(self) -> bool:
+        @abstractmethod
+        def perform(self, data: Any = None) -> Tuple[bool, Optional[Instruction]]:
+            """
+
+            :return: True if action needs to be confirmed again, False if it is finished
+            """
+            pass
+
+        @abstractmethod
+        def abort(self):
+            pass
+
+    class _Place(_ActionPlaceHolder):
+        FIX_POSITION = "fix_position"
+
+        def __init__(self, grid: Robot.CircuitGrid, gate: Instruction, pos: int = 0, qubit: int = 0):
+            super().__init__(grid, gate, pos, qubit)
+            self.__fixed_position = False
+
+        def can_change_position(self) -> bool:
+            return not self.__fixed_position and not self.gate.all_qubits_specified
+
+        def is_valid_qubit(self, qubit: int) -> bool:
+            return self.gate.can_use_qubit(qubit)
+
+        def is_valid_pos(self, pos: int, grid: Robot.CircuitGrid) -> bool:
+            # todo: consider implicit removal
+            # if GameplayConfig.get_option_value(Options.allow_implicit_removal, convert=True):
+            # as long as we have space for a new gate every position is valid (at least True for single qubit gates)
+            # todo: test statement for multi qubit gates
+            return True     #grid.get(self.qubit, pos) is None
+
+        def perform(self, data: Any = None) -> bool:
             """
 
             :return: True if more qubits need to be placed, False otherwise
             """
-            if self.gate is not None and self.gate.use_qubit(self.qubit):
+            if data is not None:
+                if CircuitWidget._Place.FIX_POSITION in data:
+                    self.__fixed_position = True
+            if self.gate.use_qubit(self.qubit):
                 if self.qubit > 0:
                     self.qubit -= 1
                 else:
                     self.qubit += 1
+                return False
+
+            if self.grid.place(self.gate, self.pos):
                 return True
+            Logger.instance().error("Place_Gate() did not work correctly", from_pycui=False)
             return False
+
+        def abort(self):
+            self.__fixed_position = False
+            self.grid.remove(self.gate)
+            pass    # todo remove from grid?
+
+    class _Remove(_ActionPlaceHolder):
+        def __init__(self, grid: Robot.CircuitGrid):
+            super().__init__(grid, None, 0, 0)
+
+        def can_change_position(self) -> bool:
+            return True
+
+        def is_valid_qubit(self, qubit: int) -> bool:
+            return True
+
+        def is_valid_pos(self, pos: int, grid: Robot.CircuitGrid) -> bool:
+            return True
+
+        def perform(self, data: Any = None) -> bool:
+            gate = self.grid.get(self.qubit, self.pos)
+            if gate is not None:
+                self.grid.remove(gate)
+            return False    # removing never needs a second step
+
+        def abort(self):
+            pass    # nothing to do
+
+    class _Move(_Place):
+        def __init__(self, grid: Robot.CircuitGrid, gate: Instruction):
+            self.__original_place: Tuple[int, List[int]] = gate.position, gate.qargs_copy()
+            super().__init__(grid, gate, self.__original_place[0], self.__original_place[1][0])
+
+        def perform(self, data: Any = None) -> bool:
+            pass    # todo
+
+        def abort(self):
+            self.grid.remove(self.gate)
+            #self.gate.reset()
+            [self.gate.use_qubit(qu) for qu in self.__original_place[1]]    # set original qubits
+            self.grid.place(self.gate, self.__original_place[0])            # place on original position
 
     def __init__(self, widget: WidgetWrapper, controls: Controls):
         super().__init__(widget)
-        self.__robot: Optional[Robot] = None
-        self.__place_holder_data: Optional[CircuitWidget.PlaceHolderData] = None
+        self.__grid: Optional[Robot.CircuitGrid] = None
+        self.__action: Optional[CircuitWidget._ActionPlaceHolder] = None
+        self.__in_multi_qubit_performance = False
 
         widget.add_key_command(controls.get_keys(Keys.SelectionUp), self.__move_up)
         widget.add_key_command(controls.get_keys(Keys.SelectionRight), self.__move_right)
@@ -416,154 +521,186 @@ class CircuitWidget(Widget):
         widget.add_key_command(controls.get_keys(Keys.SelectionLeft), self.__move_left)
 
     def __change_position(self, right: bool) -> bool:
-        def go_right(position: int) -> Optional[int]:
-            if position + 1 >= self.__robot.circuit_space:
-                return None
-            return position + 1
+        """
+        :param right: whether we try to move to the right or left
+        :return: True if the position changed, otherwise False
+        """
+        def move(position: int, right_: bool) -> Optional[int]:
+            if right_:
+                if position + 1 >= len(self.__grid):  # todo: adapt max value
+                    return None
+                return position + 1
+            else:
+                if position - 1 < 0:
+                    return None
+                return position - 1
 
-        def go_left(position: int) -> Optional[int]:
-            if position - 1 < 0:
-                return None
-            return position - 1
+        while True:
+            pos = move(self.__action.pos, right)
+            if pos is None:
+                return False
+            elif self.__action.is_valid_pos(pos, self.__grid):
+                break
 
-        if right:
-            pos = go_right(self.__place_holder_data.pos)
-        else:
-            pos = go_left(self.__place_holder_data.pos)
-        if pos is None:
-            return False
-
-        # only if we are currently removing a gate or if implicit removal is not allowed we have to check for other
-        # gates
-        if self.__place_holder_data.gate is None or \
-                not GameplayConfig.get_option_value(Options.allow_implicit_removal, convert=True):
-            # go on until we find a valid position for the gate
-            while not self.__place_holder_data.is_valid_pos(pos, self.__robot):
-                if right:
-                    pos = go_right(pos)
-                else:
-                    pos = go_left(pos)
-                if pos is None:
-                    return False
-
-        self.__place_holder_data.pos = pos
-        self.render()
+        self.__action.pos = pos
         return True
 
     def __move_up(self):
-        if self.__place_holder_data:
-            qubit = self.__place_holder_data.qubit + 1
-            while qubit < self.__robot.num_of_qubits:
-                if self.__place_holder_data.is_valid_qubit(qubit):
-                    self.__place_holder_data.qubit = qubit
-                    self.render()
-                    return
+        if self.__action is not None:
+            self.__grid.load()
+
+            qubit = self.__action.qubit + 1
+            while qubit < self.__grid.num_of_qubits:
+                if self.__action.is_valid_qubit(qubit):
+                    break
                 qubit += 1
+            self.__action.qubit = qubit
+
+            if self.__action.gate.all_qubits_specified:
+            #if not self.__in_multi_qubit_performance:
+                self.__action.gate.reset()      # todo maybe skip_position=True?
+            self.__action.perform()
+            self.render()
 
     def __move_right(self):
-        if self.__place_holder_data is not None:
-            if self.__place_holder_data.can_change_position():
-                self.__change_position(right=True)
+        if self.__action is not None:
+            self.__grid.load()
+            if self.__action.can_change_position() and self.__change_position(right=True):
+                self.__action.perform()
+                self.render()
 
     def __move_down(self):
-        if self.__place_holder_data:
-            qubit = self.__place_holder_data.qubit - 1
+        if self.__action is not None:
+            self.__grid.load()
+
+            qubit = self.__action.qubit - 1
             while qubit >= 0:
-                if self.__place_holder_data.is_valid_qubit(qubit):
-                    self.__place_holder_data.qubit = qubit
-                    self.render()
-                    return
+                if self.__action.is_valid_qubit(qubit):
+                    break
                 qubit -= 1
+            self.__action.qubit = qubit
+
+            if self.__action.gate.all_qubits_specified:
+            #if not self.__in_multi_qubit_performance:
+                self.__action.gate.reset()      # todo maybe skip_position=True?
+            self.__action.perform()
+            self.render()
 
     def __move_left(self):
-        if self.__place_holder_data is not None:
-            if self.__place_holder_data.can_change_position():
-                self.__change_position(right=False)
+        if self.__action is not None:
+            self.__grid.load()
+            if self.__action.can_change_position() and self.__change_position(right=False):
+                self.__action.perform()
+                self.render()
 
-    def abort_placement(self):
-        if self.__place_holder_data is not None:
-            if self.__place_holder_data.gate is not None:
-                self.__place_holder_data.gate.reset()
-                self.__place_holder_data.gate
-            self.__place_holder_data = None
-            self.render()
-            # todo
-
-    def start_gate_placement(self, gate: Optional[Instruction], pos: int = -1, qubit: int = 0):
-        self.__place_holder_data = self.PlaceHolderData(gate, pos, qubit)
-        if pos < 0 or self.__robot.circuit_space <= pos:
-            # if we're currently not removing a gate and implicit removal is allowed we can definitely start at any
-            # position
-            if self.__place_holder_data.gate is not None and \
-                    GameplayConfig.get_option_value(Options.allow_implicit_removal, convert=True):
-                self.__place_holder_data.pos = 0
-            else:
-                for i in range(self.__robot.circuit_space):
-                    if self.__place_holder_data.is_valid_pos(i, self.__robot):
-                        self.__place_holder_data.pos = i
-                        break
-
-    def place_gate(self) -> Tuple[bool, Optional[Instruction]]:
+    def __place_gate(self) -> Tuple[bool, Optional[Instruction]]:
         """
 
         :return: True if gate is fully placed, False otherwise (e.g. more qubits need to be placed)
         """
-        if self.__place_holder_data is not None:
-            if self.__place_holder_data.gate is None:
-                # remove the instruction
-                gate = self.__robot.gate_used_at(self.__place_holder_data.qubit, self.__place_holder_data.pos)
-                if gate is not None:
-                    self.__robot.remove_instruction(gate)
-                    self.__place_holder_data = None
-                    self.render()
-                    return True, None
-            else:
-                if self.__place_holder_data.place():
-                    self.render()
-                    return False, self.__place_holder_data.gate
+        if self.__action is None:
+            return False, None
 
-                elif self.__robot.use_instruction(self.__place_holder_data.gate, self.__place_holder_data.pos):
-                    gate = self.__place_holder_data.gate
-                    self.__place_holder_data = None
-                    return True, gate
-                Logger.instance().error("Place_Gate() did not work correctly", from_pycui=False)
+        if self.__action.perform():
+            self.render()
+            return False, self.__action.gate
+
+        else:
+            if self.__grid.place(self.__action.gate, self.__action.pos):  # todo might need a "move" implementation?
+                # if self.__robot.use_instruction(self.__place_holder_data.gate, self.__place_holder_data.pos):
+                gate = self.__action.gate
+                self.__action = None
+                return True, gate
+        Logger.instance().error("Place_Gate() did not work correctly", from_pycui=False)
         return False, None
 
-    def set_data(self, robot: Robot) -> None:
-        self.__robot = robot
+    def start_gate_placement(self, gate: Instruction, pos: int = 0, qubit: int = 0):
+        pos = uf.clamp(pos, 0, self.__grid.circuit_space - 1)
+        self.__action = self._Place(self.__grid, gate, pos, qubit)
+
+        self.__grid.load()      # todo might be unnecessary
+        self.__action.perform()
+        self.render()
+
+    def start_gate_removal(self):
+        self.__action = CircuitWidget._Remove(self.__grid)
+
+    def start_gate_moving(self, gate: Instruction, pos: int = 0, qubit: int = 0):
+        pos = uf.clamp(pos, 0, self.__grid.circuit_space - 1)
+        self.__action = CircuitWidget._Move(self.__grid, gate, pos, qubit)
+
+    def perform_action(self) -> Tuple[bool, Optional[bool]]:
+        if self.__action is None:
+            return False, None
+
+        if isinstance(self.__action, CircuitWidget._Remove):
+            temp_val = None
+        else:
+            temp_val = True
+
+        self.__in_multi_qubit_performance = self.__action.perform({CircuitWidget._Place.FIX_POSITION: True})
+        if self.__in_multi_qubit_performance:
+            self.__action = None
+            self.__grid.save()
+            self.render()
+            return True, temp_val
+        else:
+            self.render()
+            return False, None
+
+    def abort_action(self):
+        if self.__action is not None:
+            self.__action.abort()
+            self.__action = None
+            self.render()
+            # todo
+
+    def set_data(self, grid: Robot.CircuitGrid) -> None:
+        self.__grid = grid
+        self.__grid.save()
 
     def render(self) -> None:
-        if self.__robot is not None:
+        if self.__grid is not None:
             entry = "-" * (3 + InstructionConfig.MAX_ABBREVIATION_LEN + 3)
-            rows = [[entry] * self.__robot.circuit_space for _ in range(self.__robot.num_of_qubits)]
+            row_len = (3 + InstructionConfig.MAX_ABBREVIATION_LEN + 3) * self.__grid.circuit_space
 
-            for qu in range(self.__robot.num_of_qubits):
-                for position in range(self.__robot.circuit_space):
-                    inst = self.__robot.gate_used_at(qu, position)
-                    if inst is not None:
-                        inst_str = center_string(inst.abbreviation(qu), InstructionConfig.MAX_ABBREVIATION_LEN)
-                        rows[qu][position] = f"--{{{inst_str}}}--"
+            rows = []
+            for qu in range(self.__grid.num_of_qubits):
+                row = ""
+                for position in range(self.__grid.circuit_space):
+                    if position == 0: separator = "-"
+                    else: separator = "+"
+                    inst = self.__grid.get(qu, position)
+                    if inst is None:
+                        inst_str = f"-{entry}"
+                    else:
+                        inst_str = uf.center_string(inst.abbreviation(qu), InstructionConfig.MAX_ABBREVIATION_LEN)
+                        if self.__action is not None and inst is self.__action.gate:
+                            inst_str = f"{separator}-- {inst_str} --"
+                        else:
+                            inst_str = f"{separator}--{{{inst_str}}}--"
+                    row += inst_str
+                row = row[:-1]  # remove the trailing "+"
+                rows.append(uf.center_string(row, row_len))
 
-            if self.__place_holder_data:
-                gate = self.__place_holder_data.gate
-                pos = self.__place_holder_data.pos
-                qubit = self.__place_holder_data.qubit
+            """
+            if self.__action:
+                gate = self.__action.gate
+                pos = self.__action.pos
+                qubit = self.__action.qubit
                 if gate is None:
                     rows[qubit][pos] = "--/   /--"
                 else:
                     for q in gate.qargs_iter():
                         rows[q][pos] = f"--{{{gate.abbreviation(q)}}}--"
                     rows[qubit][pos] = f"-- {gate.abbreviation(qubit)} --"
+            """
 
             circ_str = " In "   # for some reason the whitespace in front is needed to center the text correctly
             # place qubits from top to bottom, high to low index
             for q in range(len(rows) - 1, -1, -1):
                 circ_str += f"| q{q} >"
-                row = rows[q]
-                for i in range(len(row)):
-                    circ_str += row[i]
-                    if i < len(row) - 1:
-                        circ_str += "+"
+                circ_str += rows[q]
                 circ_str += f"< q'{q} |"
                 if q == len(rows) - 1:
                     circ_str += " Out"
@@ -875,7 +1012,7 @@ class SelectionWidget(Widget):
 
         if len(rows) > 0:   # simple validity check since some selections are dynamically created during runtime
             max_row_len = max([len(row) for row in rows])
-            aligned_rows = [align_string(row, max_row_len) for row in rows]
+            aligned_rows = [uf.align_string(row, max_row_len) for row in rows]
             self.widget.set_title("\n".join(aligned_rows))
 
     def render_reset(self) -> None:

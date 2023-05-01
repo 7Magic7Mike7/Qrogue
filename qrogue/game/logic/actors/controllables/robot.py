@@ -3,7 +3,7 @@ Author: Artner Michael
 13.06.2021
 """
 from abc import ABC
-from typing import Tuple, List, Callable, Optional, Union
+from typing import Tuple, List, Callable, Optional, Union, Set
 
 from qiskit import QuantumCircuit, transpile, Aer, execute
 from qiskit.providers.aer import StatevectorSimulator
@@ -419,7 +419,7 @@ class Robot(Controllable, ABC):
 
     class CircuitGrid:
         class _CircuitGridIterator:
-            def __init__(self, grid: "CircuitGrid"):
+            def __init__(self, grid: "Robot.CircuitGrid"):
                 self.__grid = grid
                 self.__position = 0
                 self.__qubit = 0
@@ -444,11 +444,11 @@ class Robot(Controllable, ABC):
         def __init__(self, num_of_qubits: int, circuit_space: int):
             self.__num_of_qubits = num_of_qubits  # num of rows
             self.__circuit_space = circuit_space  # num of columns
-            self.__num_of_used_gates = 0  # how many gates are placed in our grid
 
             # rows have to be left-aligned with respect to their other qubits (i.e., no free space is allowed to be in
             # front of a single qubit gate)
             self.__grid: List[List[Optional[Instruction]]] = [[None] * circuit_space for _ in range(num_of_qubits)]
+            self.__save_state: Optional[List[List[Optional[Instruction]]]] = None
 
         @property
         def num_of_qubits(self) -> int:
@@ -469,6 +469,16 @@ class Robot(Controllable, ABC):
                     return False
             return True
 
+        def save(self):
+            self.__save_state = []
+            for row in self.__grid:
+                self.__save_state.append(row.copy())
+
+        def load(self):
+            assert self.__save_state is not None, "Cannot load from None!"
+            self.__grid = self.__save_state
+            self.save()     # otherwise altering grid would influence save_state
+
         def remove(self, gate: Instruction) -> bool:
             place_data: List[Optional[int]] = []
             removal_failed = False
@@ -488,7 +498,6 @@ class Robot(Controllable, ABC):
                 for i, data in enumerate(place_data):
                     qu, pos = data
                     self.__grid[qu][pos] = None
-                self.__num_of_used_gates -= 1
                 return True
 
         def __is_free(self, qubit: int, position: int) -> bool:
@@ -547,9 +556,10 @@ class Robot(Controllable, ABC):
 
             return self.__grid[qubit][position]
 
-        def place(self, gate: Instruction, qubit: Union[int, List[int]], position: int) -> bool:
+        def place(self, gate: Instruction, position: int, overwrite: bool = True) -> bool:
             self.remove(gate)
 
+            qubit = gate.qargs_copy()
             if isinstance(qubit, int): qubit = [qubit]
             assert len(qubit) == gate.num_of_qubits
 
@@ -589,14 +599,20 @@ class Robot(Controllable, ABC):
                     shift_right(qu, position)  # todo cannot shift multi-qubit gates yet!
                     self.__grid[qu][position] = gate
 
-            self.__num_of_used_gates += 1
             return True
 
         def clear(self):
             pass
 
         def __len__(self):
-            return self.__num_of_used_gates
+            # todo test method!
+            gates: Set[Instruction] = set()
+            for qu in range(self.__num_of_qubits):
+                for pos in range(self.__circuit_space):
+                    # we have to iterate over the whole circuit space since multi qubit gates can create empty spaces
+                    # in the middle of a row (even though we always shift to the left as far as possible)
+                    gates.add(self.get(qu, pos))
+            return len(gates)
 
         def __iter__(self):
             return Robot.CircuitGrid._CircuitGridIterator(self)
@@ -641,6 +657,10 @@ class Robot(Controllable, ABC):
     @property
     def backpack(self) -> Backpack:
         return self.__backpack
+
+    @property
+    def grid(self) -> CircuitGrid:
+        return self.__instructions
 
     @property
     def state_vector(self) -> StateVector:
@@ -736,17 +756,6 @@ class Robot(Controllable, ABC):
             return True
         return False
 
-    def remove_instruction(self, instruction: Instruction) -> bool:
-        """
-        Tries to remove the given instruction from the circuit.
-
-        :param instruction: the Instruction to remove
-        :return: True if we successfully removed the Instruction, False otherwise
-        """
-        if instruction in self.__instructions:
-            return self.__remove_instruction(instruction)
-        return False
-
     def __place_instruction(self, instruction: Instruction, position: int) -> bool:
         """
         Tries to place the given instruction at the given position.
@@ -765,7 +774,7 @@ class Robot(Controllable, ABC):
             inst = self.__instructions.get(instruction.qargs_copy()[0], position)
             if inst is not None:    # todo
                 self.__remove_instruction(inst)
-            self.__instructions.place(instruction, instruction.qargs_copy(), position)
+            self.__instructions.place(instruction, position, overwrite=True)
             return instruction.use(position)
         else:
             # illegal position removes the instruction from the circuit if possible
@@ -806,6 +815,17 @@ class Robot(Controllable, ABC):
             return self.backpack.get(index)
         return None
 
+    def remove_instruction(self, instruction: Instruction) -> bool:
+        """
+        Tries to remove the given instruction from the circuit.
+
+        :param instruction: the Instruction to remove
+        :return: True if we successfully removed the Instruction, False otherwise
+        """
+        if instruction in self.__instructions:
+            return self.__remove_instruction(instruction)
+        return False
+
     def use_instruction(self, instruction: Instruction, position: int) -> bool:
         """
         Tries to put the given Instruction into the robot's circuit at the given position.
@@ -816,7 +836,8 @@ class Robot(Controllable, ABC):
         :return: True if we were able to use the Instruction in our circuit
         """
         if instruction.is_used():
-            self.__move_instruction(instruction, position)
+            self.__remove_instruction(instruction)
+            # self.__move_instruction(instruction, position)
         else:
             if self.is_space_left or GameplayConfig.get_option_value(Options.allow_implicit_removal):
                 return self.__place_instruction(instruction, position)
@@ -905,6 +926,7 @@ class Robot(Controllable, ABC):
         """
         Returns the Instruction at the given index or None for invalid indices.
 
+        :param qubit:
         :param position: position of the Instruction in the circuit
         :return: the Instruction at the given position or None
         """

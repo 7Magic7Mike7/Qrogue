@@ -105,8 +105,8 @@ class MyTestCase(unittest.TestCase):
         ]
         for i, data in enumerate(positioning):
             gate = gates[i]
-            qubit, pos = data
-            grid.place(gate, qubit, pos)
+            gate.qargs, pos = data
+            grid.place(gate, pos)
             print(grid)
 
         order = [

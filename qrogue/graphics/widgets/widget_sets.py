@@ -1023,7 +1023,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self._details.widget.add_key_command(controls.get_keys(Keys.Help), gate_guide)
 
         def use_circuit():
-            success, gate = self.__circuit.place_gate()
+            success, gate = self.__circuit.perform_action()     # todo gate variable seems useless or at least misused
             if success:
                 if self._details.validate_index():
                     if gate is None:
@@ -1036,7 +1036,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self.__circuit.widget.add_key_command(controls.action, use_circuit)
 
         def cancel_circuit():
-            self.__circuit.abort_placement()
+            self.__circuit.abort_action()
             Widget.move_focus(self._details, self)
             self.render()
         self.__circuit.widget.add_key_command(controls.get_keys(Keys.Cancel), cancel_circuit)
@@ -1145,7 +1145,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             robot.reset_circuit()
 
         self._hud.set_data((robot, None, None))  # don't overwrite the current map name
-        self.__circuit.set_data(robot)
+        self.__circuit.set_data(robot.grid)
 
         self.__input_stv.set_data(StateVector.create_zero_state_vector(robot.num_of_qubits))
         self.__mul_widget.set_data(self._sign_offset + "x")
@@ -1232,7 +1232,8 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                     CommonPopups.NoGatePlaced.show()
                     return False
                 else:
-                    self.__circuit.start_gate_placement(None)
+                    #self.__circuit.start_gate_placement(None)
+                    self.__circuit.start_gate_removal()
                     self.render()
                     return True
 

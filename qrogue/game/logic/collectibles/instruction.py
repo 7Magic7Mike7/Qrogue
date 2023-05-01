@@ -83,6 +83,10 @@ class Instruction(Collectible, ABC):
     def no_qubits_specified(self) -> bool:
         return len(self._qargs) <= 0
 
+    @property
+    def all_qubits_specified(self) -> bool:
+        return len(self._qargs) == self.num_of_qubits
+
     def can_use_qubit(self, qubit: int) -> bool:
         return qubit not in self._qargs
 
@@ -98,7 +102,7 @@ class Instruction(Collectible, ABC):
             Logger.instance().error("Cannot use the same qubit multiple times!", from_pycui=False)
             return True
         self._qargs.append(qubit)
-        return len(self._qargs) < self.__needed_qubits
+        return not self.all_qubits_specified
 
     def is_used(self) -> bool:
         return self.__position is not None
