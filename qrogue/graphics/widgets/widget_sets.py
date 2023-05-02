@@ -1026,10 +1026,10 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             success, gate = self.__circuit.perform_action()     # todo gate variable seems useless or at least misused
             if success:
                 if self._details.validate_index():
-                    if gate is None:
-                        self.__choices_edit()
-                    else:
-                        self._details.update_text(gate.selection_str(), self._details.index)
+                    # update every text if we don't know the removed gate (and in perform_action() we don't know its
+                    # position in the UI)
+                    if gate is None: self.__choices_edit()
+                    else: self._details.update_text(self._details.selected_object.selection_str(), self._details.index)
                 self.__choices_commit()
                 Widget.move_focus(self._details, self)
                 self.render()

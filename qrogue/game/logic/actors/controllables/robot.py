@@ -498,6 +498,7 @@ class Robot(Controllable, ABC):
                 for i, data in enumerate(place_data):
                     qu, pos = data
                     self.__grid[qu][pos] = None
+                gate.reset()
                 return True
 
         def __is_free(self, qubit: int, position: int) -> bool:
