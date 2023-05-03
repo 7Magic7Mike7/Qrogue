@@ -480,7 +480,6 @@ class CircuitWidget(Widget):
                     self.qubit -= 1
                 else:
                     self.qubit += 1
-                return False
 
             if self.gate.is_done:
                 gate = self.gate.unpack()
@@ -488,7 +487,7 @@ class CircuitWidget(Widget):
             else:
                 gate = self.gate
             if self.grid.place(gate, self.pos):
-                return True
+                return not self.gate.is_done
             Logger.instance().error("Place_Gate() did not work correctly", from_pycui=False)
             return False
 
@@ -518,7 +517,7 @@ class CircuitWidget(Widget):
             if gate is not None:
                 self.grid.remove(gate)
                 #self.gate = CircuitWidget._GateWrapper(gate)
-            return True    # removing never needs a second step
+            return False    # removing never needs a second step
 
         def abort(self):
             pass    # nothing to do
@@ -533,7 +532,6 @@ class CircuitWidget(Widget):
 
         def abort(self):
             self.grid.remove(self.gate)
-            #self.gate.reset()
             [self.gate.use_qubit(qu) for qu in self.__original_place[1]]    # set original qubits
             self.grid.place(self.gate, self.__original_place[0])            # place on original position
 
@@ -672,17 +670,14 @@ class CircuitWidget(Widget):
         if self.__action is None:
             return False, None
 
-        temp_val = None if isinstance(self.__action, CircuitWidget._Remove) else True
-
         self.__in_multi_qubit_performance = self.__action.perform({CircuitWidget._Place.FIX_POSITION: True})
+        self.__grid.save()
+        self.render()
         if self.__in_multi_qubit_performance:
-            self.__action = None
-            self.__grid.save()
-            self.render()
-            return True, temp_val
-        else:
-            self.render()
             return False, None
+        else:
+            self.__action = None
+            return True, None if isinstance(self.__action, CircuitWidget._Remove) else True
 
     def abort_action(self):
         if self.__action is not None:

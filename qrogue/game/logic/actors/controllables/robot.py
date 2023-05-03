@@ -479,7 +479,7 @@ class Robot(Controllable, ABC):
             self.__grid = self.__save_state
             self.save()     # otherwise altering grid would influence save_state
 
-        def remove(self, gate: Instruction) -> bool:
+        def remove(self, gate: Instruction, reset_qubits: bool = True, reset_position: bool = True) -> bool:
             place_data: List[Optional[int]] = []
             removal_failed = False
             for qubit in gate.qargs_iter():
@@ -498,7 +498,7 @@ class Robot(Controllable, ABC):
                 for i, data in enumerate(place_data):
                     qu, pos = data
                     self.__grid[qu][pos] = None
-                gate.reset()
+                gate.reset(skip_qargs=not reset_qubits, skip_position=not reset_position)
                 return True
 
         def __is_free(self, qubit: int, position: int) -> bool:
@@ -558,7 +558,7 @@ class Robot(Controllable, ABC):
             return self.__grid[qubit][position]
 
         def place(self, gate: Instruction, position: int, overwrite: bool = True) -> bool:
-            self.remove(gate)
+            self.remove(gate, reset_qubits=False)
 
             qubit = gate.qargs_copy()
             if isinstance(qubit, int): qubit = [qubit]
