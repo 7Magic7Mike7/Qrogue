@@ -8,6 +8,7 @@ from qiskit import QuantumCircuit
 
 from qrogue.game.logic.collectibles import Collectible, CollectibleType
 from qrogue.util import ShopConfig, Logger
+from qrogue.util.util_classes import RelationalGrid
 
 
 class GateType(enum.Enum):
@@ -301,3 +302,21 @@ class CXGate(DoubleQubitGate):
 
     def copy(self) -> "Instruction":
         return CXGate()
+
+
+class RelationalGridInstruction(RelationalGrid.Item[Instruction]):
+    @property
+    def num_of_rows(self) -> int:
+        return self.value.num_of_qubits
+
+    def row_iter(self) -> Iterator[int]:
+        return self.value.qargs_iter()
+
+    def row_copy(self) -> List[int]:
+        return self.value.qargs_copy()
+
+    def reset(self, skip_rows: bool = False, skip_column: bool = False):
+        self.value.reset(skip_qargs=skip_rows, skip_position=skip_column)
+
+    def __str__(self):
+        return str(self.value)

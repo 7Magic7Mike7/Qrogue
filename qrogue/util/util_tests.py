@@ -1,9 +1,10 @@
 import unittest
-from typing import List
+from typing import List, Tuple, Union
 
 from qrogue.game.logic.actors import Robot
 from qrogue.game.logic.collectibles import Instruction, GateType
-from util_classes import LinkedList
+from qrogue.game.logic.collectibles.instruction import RelationalGridInstruction
+from util_classes import LinkedList, RelationalGrid
 
 
 class MyTestCase(unittest.TestCase):
@@ -80,10 +81,30 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(7, linked_list.get(3), f"Expected 7 but got {linked_list.get(3)} at 3")
         print(linked_list)
 
+    @staticmethod
+    def __place_in_grid(grid: RelationalGrid, gates: List[GateDummy],
+                        positioning: List[Tuple[Union[int, List[int]], int]]):
+        for i, data in enumerate(positioning):
+            gate = gates[i]
+            qargs, pos = data
+            if isinstance(qargs, int): qargs = [qargs]
+            for qu in qargs: gate.use_qubit(qu)
+            grid.place(RelationalGridInstruction(gate), pos)
+            print(grid)
+
+    def __check_order(self, grid: RelationalGrid, expected_order: List[List[GateDummy]]):
+        for row in range(grid.num_of_rows):
+            for col in range(grid.num_of_columns):
+                if row >= len(expected_order) or col >= len(expected_order[row]): expected_item = None
+                else: expected_item = expected_order[row][col]
+
+                item = grid.get(row, col)
+                if item is not None: item = item.value
+
+                self.assertEqual(expected_item, item)
+
     def test_circuit_grid(self):
-        num_of_qubits = 2
-        circuit_space = 5
-        grid = Robot.CircuitGrid(num_of_qubits, circuit_space)
+        grid = RelationalGrid.empty(2, 5)
 
         gates = [
             MyTestCase.GateDummy(1, "A"),
@@ -103,22 +124,14 @@ class MyTestCase(unittest.TestCase):
             ([0, 1], 2),
             (1, 2),
         ]
-        for i, data in enumerate(positioning):
-            gate = gates[i]
-            gate.qargs, pos = data
-            grid.place(gate, pos)
-            print(grid)
+        self.__place_in_grid(grid, gates, positioning)
 
+        A, B, C, E, G, D = gates[0], gates[1], gates[2], gates[3], gates[4], gates[5]
         order = [
-            ["C", "A", "G", "B", ],
-            ["E", "D", "G", None, ]
+            [C, A, G, B, ],
+            [E, D, G, None, ]
         ]
-        for qubit in range(num_of_qubits):
-            for pos in range(circuit_space):
-                if pos < len(order[qubit]) and order[qubit][pos] is not None:
-                    self.assertEqual(order[qubit][pos], grid.get(qubit, pos).abbreviation())
-                else:
-                    self.assertEqual(None, grid.get(qubit, pos))
+        self.__check_order(grid, order)
 
         print("Iterating")
         gates_copy = gates.copy()
@@ -128,6 +141,31 @@ class MyTestCase(unittest.TestCase):
             text += gate.character + ", "
         print(text[:-2])
         self.assertEqual(len(gates_copy), 0, f"Didn't iterate over all gates! {gates_copy} is missing")
+
+    def test_circuit_grid2(self):
+        grid = RelationalGrid.empty(3, 3)
+        gates = [
+            MyTestCase.GateDummy(2, "C"),
+            MyTestCase.GateDummy(1, "X"),
+            MyTestCase.GateDummy(1, "H"),
+        ]
+        positioning = [
+            ([0, 1], 0),
+            (0, 0),
+            (0, 0),
+        ]
+        self.__place_in_grid(grid, gates, positioning)
+
+        C, X, H = gates[0], gates[1], gates[2]
+        order = [
+            [H, X, C],
+            [None, None, C],
+            [None, None, None],
+        ]
+        self.__check_order(grid, order)
+
+
+    # todo test len(grid)!
 
 
 if __name__ == '__main__':
