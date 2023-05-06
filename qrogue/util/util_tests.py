@@ -143,6 +143,33 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(len(gates_copy), 0, f"Didn't iterate over all gates! {gates_copy} is missing")
 
     def test_circuit_grid2(self):
+        # create a chain reaction of shifting multiple multi row items
+        grid = RelationalGrid.empty(3, 4)
+        gates = [
+            MyTestCase.GateDummy(2, "C"),
+            MyTestCase.GateDummy(2, "S"),
+            MyTestCase.GateDummy(1, "X"),
+            MyTestCase.GateDummy(1, "H"),
+        ]
+        positioning = [
+            ([0, 1], 0),
+            ([1, 2], 1),
+            (0, 0),
+            (0, 0),
+        ]
+        self.__place_in_grid(grid, gates, positioning)
+
+        C, S, X, H = gates[0], gates[1], gates[2], gates[3]
+        order = [
+            [H, X, C, None],
+            [None, None, C, S],
+            [None, None, None, S],
+        ]
+        self.__check_order(grid, order)
+
+    def test_circuit_grid3(self):
+        # shift multi row item regardless of row order (e.g., the second row is shifted explicitly while the first row
+        # only shift implicitly)
         grid = RelationalGrid.empty(3, 3)
         gates = [
             MyTestCase.GateDummy(2, "C"),
@@ -151,16 +178,41 @@ class MyTestCase(unittest.TestCase):
         ]
         positioning = [
             ([0, 1], 0),
-            (0, 0),
-            (0, 0),
+            (1, 0),
+            (1, 0),
         ]
         self.__place_in_grid(grid, gates, positioning)
 
         C, X, H = gates[0], gates[1], gates[2]
         order = [
-            [H, X, C],
             [None, None, C],
+            [H, X, C],
             [None, None, None],
+        ]
+        self.__check_order(grid, order)
+
+    def test_circuit_grid4(self):
+        # shift multi row item regardless of row order (e.g., the second row is shifted explicitly while the first row
+        # only shift implicitly)
+        grid = RelationalGrid.empty(2, 4)
+        gates = [
+            MyTestCase.GateDummy(2, "C"),
+            MyTestCase.GateDummy(1, "X"),
+            MyTestCase.GateDummy(2, "S"),
+            MyTestCase.GateDummy(1, "H"),
+        ]
+        positioning = [
+            ([0, 1], 0),
+            (1, 0),
+            ([0, 1], 0),
+            (0, 0),
+        ]
+        self.__place_in_grid(grid, gates, positioning)
+
+        C, X, S, H = gates[0], gates[1], gates[2], gates[3]
+        order = [
+            [H, S, None, C],
+            [None, S, X, C],
         ]
         self.__check_order(grid, order)
 

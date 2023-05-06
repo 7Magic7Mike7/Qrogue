@@ -1,4 +1,5 @@
-from typing import Any, Optional, List
+from abc import ABC, abstractmethod
+from typing import Any, Optional, List, Tuple, Iterator, Set, TypeVar, Generic
 
 
 class LinkedList:
@@ -371,30 +372,39 @@ class RelationalGrid(Generic[T]):
             # we either stopped because there is a gate at og_pos (hence we increase it again) or because og_pos < 0
             return og_pos + 1
 
-        def shift_right(qubit_: int, og_pos: int):
-            if self.__grid[qubit_][og_pos] is None:
-                return  # no need to shift
+        def shift_right(row_: int, og_col: int) -> bool:
+            """
+            :returns: True if we successfully shifted, False if it is not possible to shift
+            """
+            if self.__grid[row_][og_col] is None: return True  # no need to shift
 
             # find the left most free spot after og_pos
-            index = og_pos + 1
-            while index < self.__num_of_columns and self.__grid[qubit_][index] is not None: index += 1
-            # now go back to position and shift everything to the right by 1
-            while index > og_pos:
-                self.__grid[qubit_][index] = self.__grid[qubit_][index - 1]
-                index -= 1
+            cur_col = og_col + 1
+            while self.__grid[row_][cur_col] is not None:
+                cur_col += 1
+                if cur_col >= self.__num_of_columns: return False     # no free spot to the right
 
-        if item.num_of_rows == 1:
-            qubit = qubit[0]
-            position = first_free_spot(qubit,
-                                       position)  # align it to the left by finding the left most viable position
-            shift_right(qubit, position)  # does nothing if the corresponding spot is free
-            self.__grid[qubit][position] = item
-        else:
-            left_most_positions = [first_free_spot(qu, position) for qu in qubit]
-            position = max(left_most_positions)
-            for qu in qubit:
-                shift_right(qu, position)  # todo cannot shift multi-qubit gates yet!
-                self.__grid[qu][position] = item
+            # now go back to position and shift everything to the right by 1
+            while cur_col > og_col:
+                shifting_item = self.__grid[row_][cur_col - 1]
+                for other_row in shifting_item.row_iter():
+                    if other_row != row_:     # single row items never enter this if
+                        # 1. shift everything to the right of shifting_item's other rows
+                        # 2. shift the other rows of shifting_item
+                        # 3. reset the other rows of shifting_item
+                        if not shift_right(other_row, cur_col): return False
+                        self.__grid[other_row][cur_col] = self.__grid[other_row][cur_col - 1]
+                        self.__grid[other_row][cur_col - 1] = None
+                self.__grid[row_][cur_col] = shifting_item
+                cur_col -= 1
+            self.__grid[row_][og_col] = None  # reset the value of the original position
+            return True
+
+        left_most_positions = [first_free_spot(qu, position) for qu in qubit]
+        position = max(left_most_positions)
+        for qu in qubit:
+            shift_right(qu, position)
+            self.__grid[qu][position] = item
 
         return True
 
