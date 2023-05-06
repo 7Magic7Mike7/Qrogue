@@ -3,7 +3,7 @@ Author: Artner Michael
 13.06.2021
 """
 from abc import ABC
-from typing import Tuple, List, Callable, Optional, Union, Set
+from typing import Tuple, List, Callable, Optional
 
 from qiskit import QuantumCircuit, transpile, Aer, execute
 from qiskit.providers.aer import StatevectorSimulator
@@ -13,7 +13,9 @@ from qrogue.game.logic.actors.controllables import Controllable
 from qrogue.game.logic.actors.controllables.qubit import QubitSet, DummyQubitSet
 from qrogue.game.logic.collectibles import Coin, Collectible, Consumable, Instruction, Key, MultiCollectible, \
     Qubit, Energy
+from qrogue.game.logic.collectibles.instruction import RelationalGridInstruction
 from qrogue.util import CheatConfig, Config, Logger, GameplayConfig, QuantumSimulationConfig, Options
+from qrogue.util.util_classes import RelationalGrid
 
 
 # from jkq import ddsim
@@ -417,218 +419,6 @@ class Robot(Controllable, ABC):
         list_.reverse()  # so that list_[i] corresponds to the measured value of qi
         return list_
 
-    class CircuitGrid:
-        class _CircuitGridIterator:
-            def __init__(self, grid: "Robot.CircuitGrid"):
-                self.__grid = grid
-                self.__position = 0
-                self.__qubit = 0
-                self.__cur_gate: Optional[Instruction] = None
-
-            def __next__(self):
-                while self.__position < self.__grid.circuit_space:
-                    while self.__qubit < self.__grid.num_of_qubits:
-                        gate = self.__grid.get(self.__qubit, self.__position)
-                        self.__qubit += 1  # proceed to next qubit
-
-                        # for multi qubit gates we have to make sure to not return the same again
-                        # doesn't work for three qubits yet! E.g.: CX @q0, H @q1, CX @q2        # todo
-                        if gate is not None and gate != self.__cur_gate:
-                            self.__cur_gate = gate
-                            return self.__cur_gate
-
-                    self.__qubit = 0  # reset qubit since we are done with the current position
-                    self.__position += 1  # proceed to next position
-                raise StopIteration
-
-        def __init__(self, num_of_qubits: int, circuit_space: int):
-            self.__num_of_qubits = num_of_qubits  # num of rows
-            self.__circuit_space = circuit_space  # num of columns
-
-            # rows have to be left-aligned with respect to their other qubits (i.e., no free space is allowed to be in
-            # front of a single qubit gate)
-            self.__grid: List[List[Optional[Instruction]]] = [[None] * circuit_space for _ in range(num_of_qubits)]
-            self.__save_state: Optional[List[List[Optional[Instruction]]]] = None
-
-        @property
-        def num_of_qubits(self) -> int:
-            return self.__num_of_qubits
-
-        @property
-        def circuit_space(self) -> int:
-            return self.__circuit_space
-
-        @property
-        def is_empty(self) -> bool:
-            return len(self) == 0
-
-        @property
-        def is_full(self) -> bool:
-            for qu in range(self.__num_of_qubits):
-                if self._has_qubit_free_space(qu):
-                    return False
-            return True
-
-        def save(self):
-            self.__save_state = []
-            for row in self.__grid:
-                self.__save_state.append(row.copy())
-
-        def load(self):
-            assert self.__save_state is not None, "Cannot load from None!"
-            self.__grid = self.__save_state
-            self.save()     # otherwise altering grid would influence save_state
-
-        def remove(self, gate: Instruction, reset_qubits: bool = True, reset_position: bool = True) -> bool:
-            place_data: List[Optional[int]] = []
-            removal_failed = False
-            for qubit in gate.qargs_iter():
-                position = None
-                for pos in range(self.__circuit_space):
-                    val = self.__grid[qubit][pos]
-                    if val == gate:
-                        position = (qubit, pos)
-                        break
-                removal_failed = removal_failed or position is None  # once True, will stay True
-                place_data.append(position)
-
-            if removal_failed:
-                return False
-            else:
-                for i, data in enumerate(place_data):
-                    qu, pos = data
-                    self.__grid[qu][pos] = None
-                gate.reset(skip_qargs=not reset_qubits, skip_position=not reset_position)
-                return True
-
-        def __is_free(self, qubit: int, position: int) -> bool:
-            assert 0 <= qubit < self.__num_of_qubits, \
-                f"Qubit out of bounds: 0 <= {qubit} < {self.__num_of_qubits} is False!"
-            assert 0 <= position < self.__circuit_space, \
-                f"Position out of bounds: 0 <= {position} < {self.__circuit_space} is False!"
-            return self.__grid[qubit][position] is None
-
-        def _qubit_row(self, qubit: int) -> List[Optional[Instruction]]:
-            assert 0 <= qubit < len(self.__grid)
-            return self.__grid[qubit]
-
-        def _num_of_gates_on_qubit(self, qubit: int) -> int:
-            count = 0
-            for val in self._qubit_row(qubit):
-                if val is not None:
-                    count += 1
-            return count
-
-        def _gate_at(self, qubit: int, position: int, relative: bool = True) -> Optional[Instruction]:
-            if relative:
-                assert 0 <= position < self._num_of_gates_on_qubit(qubit)
-                count = -1
-                for val in self._qubit_row(qubit):
-                    if val is not None:
-                        count += 1
-                        if position == count:
-                            return val
-                return None
-            else:
-                assert 0 <= position < len(self._qubit_row(qubit))
-                return self.__grid[qubit][position]
-
-        def _find_pos_for(self, qubit: int, og_position: int):
-            row = self.__grid[qubit]
-            if og_position == 0:
-                pass
-            while True:
-                pass
-
-        def _has_qubit_free_space(self, qubit: int) -> bool:
-            """
-            Whether the given qubit (i.e., grid row) has still a free spot where we could place a gate at.
-            """
-            for val in self.__grid[qubit]:
-                if val is None:
-                    return True
-            return False
-
-        def get(self, qubit: int, position: int) -> Optional[Instruction]:
-            assert 0 <= qubit < self.__num_of_qubits, \
-                f"Qubit out of bounds: 0 <= {qubit} < {self.__num_of_qubits} is False!"
-            assert 0 <= position < self.__circuit_space, \
-                f"Position out of bounds: 0 <= {position} < {self.__circuit_space} is False!"
-
-            return self.__grid[qubit][position]
-
-        def place(self, gate: Instruction, position: int, overwrite: bool = True) -> bool:
-            self.remove(gate, reset_qubits=False)
-
-            qubit = gate.qargs_copy()
-            if isinstance(qubit, int): qubit = [qubit]
-            assert len(qubit) == gate.num_of_qubits
-
-            for qu in qubit:
-                if not self._has_qubit_free_space(qu):
-                    return False
-
-            def first_free_spot(qubit_: int, og_pos: int) -> int:
-                # search the first free spot in front of og_pos (or og_pos if nothing is free)
-                og_pos -= 1
-                while og_pos >= 0 and self.__grid[qubit_][og_pos] is None: og_pos -= 1
-                # we either stopped because there is a gate at og_pos (hence we increase it again) or because og_pos < 0
-                return og_pos + 1
-
-            def shift_right(qubit_: int, og_pos: int):
-                if self.__grid[qubit_][og_pos] is None:
-                    return  # no need to shift
-
-                # find the left most free spot after og_pos
-                index = og_pos + 1
-                while index < self.__circuit_space and self.__grid[qubit_][index] is not None: index += 1
-                # now go back to position and shift everything to the right by 1
-                while index > og_pos:
-                    self.__grid[qubit_][index] = self.__grid[qubit_][index - 1]
-                    index -= 1
-
-            if gate.num_of_qubits == 1:
-                qubit = qubit[0]
-                position = first_free_spot(qubit,
-                                           position)  # align it to the left by finding the left most viable position
-                shift_right(qubit, position)  # does nothing if the corresponding spot is free
-                self.__grid[qubit][position] = gate
-            else:
-                left_most_positions = [first_free_spot(qu, position) for qu in qubit]
-                position = max(left_most_positions)
-                for qu in qubit:
-                    shift_right(qu, position)  # todo cannot shift multi-qubit gates yet!
-                    self.__grid[qu][position] = gate
-
-            return True
-
-        def clear(self):
-            pass
-
-        def __len__(self):
-            # todo test method!
-            gates: Set[Instruction] = set()
-            for qu in range(self.__num_of_qubits):
-                for pos in range(self.__circuit_space):
-                    # we have to iterate over the whole circuit space since multi qubit gates can create empty spaces
-                    # in the middle of a row (even though we always shift to the left as far as possible)
-                    gates.add(self.get(qu, pos))
-            return len(gates)
-
-        def __iter__(self):
-            return Robot.CircuitGrid._CircuitGridIterator(self)
-
-        def __str__(self):
-            text = ""
-            for row in self.__grid:
-                for val in row:
-                    if val is None:
-                        text += "---"
-                    else:
-                        text += f"-{val}-"
-                text += "\n"
-            return text
-
     def __init__(self, name: str, attributes: _Attributes, backpack: Backpack, game_over_callback: Callable[[], None]):
         """
 
@@ -652,7 +442,8 @@ class Robot(Controllable, ABC):
 
         # initialize gate stuff (columns)
         # apply gates/instructions, create the circuit
-        self.__instructions = Robot.CircuitGrid(self.__attributes.num_of_qubits, self.__attributes.circuit_space) #LinkedList(capacity=self.__attributes.circuit_space)
+        self.__instructions: RelationalGrid[Instruction] = RelationalGrid.empty(self.__attributes.num_of_qubits,
+                                                                                self.__attributes.circuit_space)
         self.update_statevector(use_energy=False, check_for_game_over=False)  # to initialize the statevector
 
     @property
@@ -660,7 +451,7 @@ class Robot(Controllable, ABC):
         return self.__backpack
 
     @property
-    def grid(self) -> CircuitGrid:
+    def grid(self) -> RelationalGrid[Instruction]:
         return self.__instructions
 
     @property
@@ -752,7 +543,8 @@ class Robot(Controllable, ABC):
         :return: True if we successfully removed the Instruction, False otherwise
         """
         if instruction is not None and instruction.is_used():
-            Logger.instance().assertion(self.__instructions.remove(instruction), "Failed to remove a used instruction!")
+            Logger.instance().assertion(self.__instructions.remove(RelationalGridInstruction(instruction)),
+                                        "Failed to remove a used instruction!")
             instruction.reset(skip_qargs=skip_qargs)
             return True
         return False
@@ -773,9 +565,9 @@ class Robot(Controllable, ABC):
 
         if 0 <= position < self.__attributes.circuit_space:
             inst = self.__instructions.get(instruction.qargs_copy()[0], position)
-            if inst is not None:    # todo
-                self.__remove_instruction(inst)
-            self.__instructions.place(instruction, position, overwrite=True)
+            if inst is not None:    # todo instead of removing implement "overwrite" in .place
+                self.__remove_instruction(inst.value)
+            self.__instructions.place(RelationalGridInstruction(instruction), position, overwrite=True)
             return instruction.use(position)
         else:
             # illegal position removes the instruction from the circuit if possible
@@ -796,7 +588,7 @@ class Robot(Controllable, ABC):
                 inst = self.__instructions.get(instruction.qargs_copy()[0], position)   # todo check .get()
                 if inst is not None:
                     self.__remove_instruction(instruction, skip_qargs=True)
-                    self.__remove_instruction(inst)
+                    self.__remove_instruction(inst.value)
                 else:
                     self.__remove_instruction(instruction, skip_qargs=True)
                 return self.__place_instruction(instruction, position)

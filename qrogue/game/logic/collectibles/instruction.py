@@ -268,6 +268,21 @@ class MultiQubitGate(Instruction, ABC):
         pass
 
 
+class MultiQubitIdentity(MultiQubitGate):
+    def __init__(self, needed_qubits: int):
+        mqi_circuit = QuantumCircuit(needed_qubits, name='Is')
+        mqi_circuit.i(range(needed_qubits))
+        mqi_gate = mqi_circuit.to_gate()
+
+        super().__init__(GateType.IGate, mqi_gate, needed_qubits)
+
+    def _internal_abbreviation(self, index: int):
+        return f" I{index}"
+
+    def copy(self) -> "Instruction":
+        return MultiQubitIdentity(self.num_of_qubits)
+
+
 ####### Double Qubit Gates #######
 
 
