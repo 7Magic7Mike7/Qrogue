@@ -207,7 +207,6 @@ class RelationalGrid(Generic[T]):
         # rows have to be left-aligned with respect to their other columns (i.e., no free space is allowed to be in
         # front of a single-row item, but as soon as there is a multi-row item there can be)
         self.__grid: List[List[Optional[RelationalGrid.Item[T]]]] = []
-        self.__save_state: Optional[List[List[Optional[RelationalGrid.Item[T]]]]] = None
         self.__num_of_rows = len(grid)
         self.__num_of_columns = max([len(row) for row in grid])
 
@@ -247,16 +246,6 @@ class RelationalGrid(Generic[T]):
                 return False
         return True
 
-    def save(self):
-        self.__save_state = []
-        for row in self.__grid:
-            self.__save_state.append(row.copy())
-
-    def load(self):
-        assert self.__save_state is not None, "Cannot load from None!"
-        self.__grid = self.__save_state
-        self.save()     # otherwise altering grid would influence save_state
-
     def copy(self):
         return RelationalGrid[T](self.__grid)
 
@@ -282,44 +271,12 @@ class RelationalGrid(Generic[T]):
             item.reset(skip_rows=not reset_qubits, skip_column=not reset_position)
             return True
 
-    def __is_free(self, qubit: int, position: int) -> bool:
-        assert 0 <= qubit < self.__num_of_rows, \
-            f"Qubit out of bounds: 0 <= {qubit} < {self.__num_of_rows} is False!"
-        assert 0 <= position < self.__num_of_columns, \
-            f"Position out of bounds: 0 <= {position} < {self.__num_of_columns} is False!"
-        return self.__grid[qubit][position] is None
-
-    def _qubit_row(self, qubit: int) -> List[Optional["RelationalGrid.Item[T]"]]:
-        assert 0 <= qubit < self.__num_of_rows
-        return self.__grid[qubit]
-
-    def _num_of_gates_on_qubit(self, qubit: int) -> int:
-        count = 0
-        for val in self._qubit_row(qubit):
-            if val is not None:
-                count += 1
-        return count
-
-    def _item_at(self, row: int, column: int, relative: bool = True) -> Optional["RelationalGrid.Item[T]"]:
-        if relative:
-            assert 0 <= column < self._num_of_gates_on_qubit(row)
-            count = -1
-            for val in self._qubit_row(row):
-                if val is not None:
-                    count += 1
-                    if column == count:
-                        return val
-            return None
-        else:
-            assert 0 <= column < len(self._qubit_row(row))
-            return self.__grid[row][column]
-
-    def _find_column_for(self, row: int, og_column: int):
-        row = self.__grid[row]
-        if og_column == 0:
-            pass
-        while True:
-            pass
+    def first_used_column_in_row(self, row: int) -> int:
+        for col in range(self.__num_of_columns):
+            item = self.get(row, col)
+            if item is not None:
+                return col
+        return -1   # no item in row
 
     def _has_row_free_space(self, row: int) -> bool:
         """

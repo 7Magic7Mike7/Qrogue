@@ -543,7 +543,7 @@ class CircuitWidget(Widget):
     @staticmethod
     def __dress_instruction_string(inst_str: str, use_separator: bool, include_braces: bool):
         if use_separator: sep = "+"
-        else: sep = ""
+        else: sep = "-"
         if include_braces: return f"{sep}--{{{inst_str}}}--"
         else: return f"{sep}-- {inst_str} --"
 
@@ -688,10 +688,11 @@ class CircuitWidget(Widget):
                 editor = CircuitWidget._RelationalGridEditor(editor_gate, self.__action.qubit)
                 temp_grid.place(editor, self.__action.pos)
 
-            entry = "-" * (3 + InstructionConfig.MAX_ABBREVIATION_LEN + 3)
+            entry = "-" * (3 + InstructionConfig.MAX_ABBREVIATION_LEN + 3) + "-"
 
             rows = [[entry] * self.__grid.num_of_columns for _ in range(self.__grid.num_of_rows)]
             for qu in range(self.__grid.num_of_rows):
+                first_col = temp_grid.first_used_column_in_row(qu)
                 for position in range(self.__grid.num_of_columns):
                     item = temp_grid.get(qu, position)
                     if item is not None:
@@ -700,19 +701,23 @@ class CircuitWidget(Widget):
                         else:
                             inst_str = uf.center_string(item.value.abbreviation(qu),
                                                         InstructionConfig.MAX_ABBREVIATION_LEN)
-                            rows[qu][position] = self.__dress_instruction_string(inst_str, position > 0, True)
+                            rows[qu][position] = self.__dress_instruction_string(inst_str, position > first_col, True)
 
             if self.__action is not None:
                 gate: Optional[RelationalGridInstruction] = self.__action.gate
                 pos = self.__action.pos
                 qubit = self.__action.qubit
                 if gate is None:
-                    rows[qubit][pos] = "--/   /--"
+                    rows[qubit][pos] = "---/   /--"
                 else:
                     for q in gate.row_iter():
-                        rows[q][pos] = f"--{{{gate.value.abbreviation(q)}}}--"
-                    rows[qubit][pos] = f"-- {gate.value.abbreviation(qubit)} --"
-            rows = ["".join(row) for row in rows]
+                        rows[q][pos] = self.__dress_instruction_string(gate.value.abbreviation(q),
+                                                                       pos > temp_grid.first_used_column_in_row(q),
+                                                                       True)
+                    rows[qubit][pos] = self.__dress_instruction_string(gate.value.abbreviation(qubit),
+                                                                       pos > temp_grid.first_used_column_in_row(qubit),
+                                                                       False)
+            rows = ["".join(row) + "-" for row in rows]     # for better symmetry we add a trailing "-"
 
             circ_str = " In "   # for some reason the whitespace in front is needed to center the text correctly
             # place qubits from top to bottom, high to low index
