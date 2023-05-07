@@ -380,7 +380,7 @@ class CircuitWidget(Widget):
             if self.__is_removing:
                 super().__init__(IGate())
             else:
-                gate = value.copy()
+                gate = value.copy(include_args=True)
                 gate.use_qubit(qubit)
                 super().__init__(gate)
 
@@ -684,6 +684,7 @@ class CircuitWidget(Widget):
 
             if self.__action is not None and self.__action.gate is not None:    # don't add a pseudo gate if we want to remove
                 editor_gate = MultiQubitIdentity(self.__action.gate.num_of_rows)
+                for qu in self.__action.gate.row_iter(): editor_gate.use_qubit(qu)
                 editor = CircuitWidget._RelationalGridEditor(editor_gate, self.__action.qubit)
                 temp_grid.place(editor, self.__action.pos)
 

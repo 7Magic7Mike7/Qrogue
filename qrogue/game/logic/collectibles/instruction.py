@@ -152,7 +152,10 @@ class Instruction(Collectible, ABC):
         pass
 
     @abstractmethod
-    def copy(self) -> "Instruction":
+    def copy(self, include_args: bool = False) -> "Instruction":
+        """
+        :param include_args: whether to also copy qargs and cargs
+        """
         pass
 
     def default_price(self) -> int:
@@ -203,8 +206,12 @@ class IGate(SingleQubitGate):
     def abbreviation(self, qubit: int = 0):
         return "I"
 
-    def copy(self) -> "Instruction":
-        return IGate()
+    def copy(self, include_args: bool = False) -> "Instruction":
+        gate = IGate()
+        if include_args:
+            gate._qargs = self._qargs.copy()
+            gate._cargs = self._cargs.copy()
+        return gate
 
 
 class XGate(SingleQubitGate):
@@ -214,8 +221,12 @@ class XGate(SingleQubitGate):
     def abbreviation(self, qubit: int = 0):
         return " X "
 
-    def copy(self) -> "Instruction":
-        return XGate()
+    def copy(self, include_args: bool = False) -> "Instruction":
+        gate = XGate()
+        if include_args:
+            gate._qargs = self._qargs.copy()
+            gate._cargs = self._cargs.copy()
+        return gate
 
 
 class YGate(SingleQubitGate):
@@ -225,8 +236,12 @@ class YGate(SingleQubitGate):
     def abbreviation(self, qubit: int = 0):
         return " Y "
 
-    def copy(self) -> "Instruction":
-        return YGate()
+    def copy(self, include_args: bool = False) -> "Instruction":
+        gate = YGate()
+        if include_args:
+            gate._qargs = self._qargs.copy()
+            gate._cargs = self._cargs.copy()
+        return gate
 
 
 class ZGate(SingleQubitGate):
@@ -236,8 +251,12 @@ class ZGate(SingleQubitGate):
     def abbreviation(self, qubit: int = 0):
         return " Z "
 
-    def copy(self) -> "Instruction":
-        return ZGate()
+    def copy(self, include_args: bool = False) -> "Instruction":
+        gate = ZGate()
+        if include_args:
+            gate._qargs = self._qargs.copy()
+            gate._cargs = self._cargs.copy()
+        return gate
 
 
 class HGate(SingleQubitGate):
@@ -247,8 +266,12 @@ class HGate(SingleQubitGate):
     def abbreviation(self, qubit: int = 0):
         return " H "
 
-    def copy(self) -> "Instruction":
-        return HGate()
+    def copy(self, include_args: bool = False) -> "Instruction":
+        gate = HGate()
+        if include_args:
+            gate._qargs = self._qargs.copy()
+            gate._cargs = self._cargs.copy()
+        return gate
 
 
 ####### Multi Qubit Gates ########
@@ -279,8 +302,12 @@ class MultiQubitIdentity(MultiQubitGate):
     def _internal_abbreviation(self, index: int):
         return f" I{index}"
 
-    def copy(self) -> "Instruction":
-        return MultiQubitIdentity(self.num_of_qubits)
+    def copy(self, include_args: bool = False) -> "Instruction":
+        gate = MultiQubitIdentity(self.num_of_qubits)
+        if include_args:
+            gate._qargs = self._qargs.copy()
+            gate._cargs = self._cargs.copy()
+        return gate
 
 
 ####### Double Qubit Gates #######
@@ -301,8 +328,12 @@ class SwapGate(DoubleQubitGate):
         elif index == 1:
             return " S1"
 
-    def copy(self) -> "Instruction":
-        return SwapGate()
+    def copy(self, include_args: bool = False) -> "Instruction":
+        gate = SwapGate()
+        if include_args:
+            gate._qargs = self._qargs.copy()
+            gate._cargs = self._cargs.copy()
+        return gate
 
 
 class CXGate(DoubleQubitGate):
@@ -315,8 +346,12 @@ class CXGate(DoubleQubitGate):
         elif index == 1:
             return " X "
 
-    def copy(self) -> "Instruction":
-        return CXGate()
+    def copy(self, include_args: bool = False) -> "Instruction":
+        gate = CXGate()
+        if include_args:
+            gate._qargs = self._qargs.copy()
+            gate._cargs = self._cargs.copy()
+        return gate
 
 
 class RelationalGridInstruction(RelationalGrid.Item[Instruction]):
