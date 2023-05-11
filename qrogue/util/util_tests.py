@@ -19,8 +19,12 @@ class MyTestCase(unittest.TestCase):
         def abbreviation(self, qubit: int = 0):
             return self.character
 
-        def copy(self) -> "Instruction":
-            return MyTestCase.GateDummy(self.needed_qubits, self.character)
+        def copy(self, include_args: bool = False) -> "Instruction":
+            gate = MyTestCase.GateDummy(self.needed_qubits, self.character)
+            if include_args:
+                gate._qargs = self._qargs.copy()
+                gate._cargs = self._cargs.copy()
+            return gate
 
         def __str__(self):
             return f"{self.character} ({self.qargs})"
