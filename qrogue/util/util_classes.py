@@ -311,6 +311,48 @@ class RelationalGrid(Generic[T]):
                 return pos, rows
         return -1, []
 
+    def __first_free_spot(self, row: int, og_col: int) -> int:
+        # search the first free spot in front of og_pos (or og_pos if nothing is free)
+        og_col -= 1
+        while og_col >= 0 and self.__grid[row][og_col] is None: og_col -= 1
+        # we either stopped because there is a gate at og_pos (hence we increase it again) or because og_pos < 0
+        return og_col + 1
+
+    def __shift_right(self, row: int, og_col: int) -> int:
+        """
+        :returns: by how many spots we shifted (0 = no shift needed) or -1 if we cannot shift
+        """
+        if self.__grid[row][og_col] is None: return 0  # no need to shift
+
+        # find the left most free spot after og_pos
+        cur_col = og_col
+        while True:
+            cur_col += 1
+            if cur_col >= self.__num_of_columns: return -1  # no free spot to the right
+            if self.__grid[row][cur_col] is None: break
+        distance = cur_col - og_col
+
+        # now go back to position and shift everything to the right by 1
+        while cur_col > og_col:
+            shifting_item = self.__grid[row][cur_col - 1]
+            for other_row in shifting_item.row_iter():
+                if other_row != row:  # single row items never enter this if
+                    # 1. shift everything to the right of shifting_item's other rows
+                    # 2. shift the other rows of shifting_item
+                    # 3. reset the other rows of shifting_item
+                    if self.__shift_right(other_row, cur_col) < 0: return -1
+                    self.__grid[other_row][cur_col] = self.__grid[other_row][cur_col - 1]
+                    self.__grid[other_row][cur_col - 1] = None
+            self.__grid[row][cur_col] = shifting_item
+            cur_col -= 1
+        self.__grid[row][og_col] = None  # reset the value of the original position
+        return distance
+
+    def __undo_shift_right(self, row: int, position: int, num_of_shifts: int):
+        for i in range(num_of_shifts):
+            self.__grid[row][position + i] = self.__grid[row][position + i + 1]
+        self.__grid[row][position + num_of_shifts] = None
+
     def place(self, item: "RelationalGrid.Item[T]", position: int, overwrite: bool = True) -> bool:
         self.remove(item, reset_qubits=False)
 
@@ -322,45 +364,16 @@ class RelationalGrid(Generic[T]):
             if not self._has_row_free_space(qu):
                 return False
 
-        def first_free_spot(qubit_: int, og_pos: int) -> int:
-            # search the first free spot in front of og_pos (or og_pos if nothing is free)
-            og_pos -= 1
-            while og_pos >= 0 and self.__grid[qubit_][og_pos] is None: og_pos -= 1
-            # we either stopped because there is a gate at og_pos (hence we increase it again) or because og_pos < 0
-            return og_pos + 1
-
-        def shift_right(row_: int, og_col: int) -> bool:
-            """
-            :returns: True if we successfully shifted, False if it is not possible to shift
-            """
-            if self.__grid[row_][og_col] is None: return True  # no need to shift
-
-            # find the left most free spot after og_pos
-            cur_col = og_col + 1
-            while self.__grid[row_][cur_col] is not None:
-                cur_col += 1
-                if cur_col >= self.__num_of_columns: return False     # no free spot to the right
-
-            # now go back to position and shift everything to the right by 1
-            while cur_col > og_col:
-                shifting_item = self.__grid[row_][cur_col - 1]
-                for other_row in shifting_item.row_iter():
-                    if other_row != row_:     # single row items never enter this if
-                        # 1. shift everything to the right of shifting_item's other rows
-                        # 2. shift the other rows of shifting_item
-                        # 3. reset the other rows of shifting_item
-                        if not shift_right(other_row, cur_col): return False
-                        self.__grid[other_row][cur_col] = self.__grid[other_row][cur_col - 1]
-                        self.__grid[other_row][cur_col - 1] = None
-                self.__grid[row_][cur_col] = shifting_item
-                cur_col -= 1
-            self.__grid[row_][og_col] = None  # reset the value of the original position
-            return True
-
-        left_most_positions = [first_free_spot(qu, position) for qu in qubit]
+        left_most_positions = [self.__first_free_spot(qu, position) for qu in qubit]
+        nums_of_shifts = []
         position = max(left_most_positions)
-        for qu in qubit:
-            shift_right(qu, position)
+        for i, qu in enumerate(qubit):
+            num_of_shifts = self.__shift_right(qu, position)
+            if num_of_shifts < 0:
+                for j, qq in enumerate(qubit[:i]): self.__undo_shift_right(qq, position, nums_of_shifts[j])
+                return False
+            else:
+                nums_of_shifts.append(num_of_shifts)
             self.__grid[qu][position] = item
 
         return True
@@ -375,13 +388,13 @@ class RelationalGrid(Generic[T]):
         pass
 
     def __len__(self):
-        # todo test method!
         gates: Set["RelationalGrid.Item[T]"] = set()
         for qu in range(self.__num_of_rows):
             for pos in range(self.__num_of_columns):
                 # we have to iterate over the whole circuit space since multi qubit gates can create empty spaces
                 # in the middle of a row (even though we always shift to the left as far as possible)
-                gates.add(self.get(qu, pos))
+                gate = self.get(qu, pos)
+                if gate is not None: gates.add(gate)
         return len(gates)
 
     def __iter__(self):
@@ -397,4 +410,3 @@ class RelationalGrid(Generic[T]):
                     text += f"-{val}-"
             text += "\n"
         return text
-

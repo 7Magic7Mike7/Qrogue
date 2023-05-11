@@ -1,7 +1,6 @@
 import unittest
 from typing import List, Tuple, Union
 
-from qrogue.game.logic.actors import Robot
 from qrogue.game.logic.collectibles import Instruction, GateType
 from qrogue.game.logic.collectibles.instruction import RelationalGridInstruction
 from util_classes import LinkedList, RelationalGrid
@@ -83,14 +82,16 @@ class MyTestCase(unittest.TestCase):
 
     @staticmethod
     def __place_in_grid(grid: RelationalGrid, gates: List[GateDummy],
-                        positioning: List[Tuple[Union[int, List[int]], int]]):
+                        positioning: List[Tuple[Union[int, List[int]], int]]) -> List[bool]:
+        ret_vals = []
         for i, data in enumerate(positioning):
             gate = gates[i]
             qargs, pos = data
             if isinstance(qargs, int): qargs = [qargs]
             for qu in qargs: gate.use_qubit(qu)
-            grid.place(RelationalGridInstruction(gate), pos)
+            ret_vals.append(grid.place(RelationalGridInstruction(gate), pos))
             print(grid)
+        return ret_vals
 
     def __check_order(self, grid: RelationalGrid, expected_order: List[List[GateDummy]]):
         for row in range(grid.num_of_rows):
@@ -216,7 +217,77 @@ class MyTestCase(unittest.TestCase):
         ]
         self.__check_order(grid, order)
 
+    def test_circuit_grid5(self):
+        # test if we correctly undo shifts executed in early rows of a multi row item if a later row fails due to having
+        # not enough space (i.e., not being able to shift)
+        grid = RelationalGrid.empty(3, 4)
+        gates = [
+            MyTestCase.GateDummy(2, "S"),
+            MyTestCase.GateDummy(1, "H"),
+            MyTestCase.GateDummy(1, "A"),
+            MyTestCase.GateDummy(1, "L"),
+            MyTestCase.GateDummy(1, "M"),
+            MyTestCase.GateDummy(1, "N"),
+            MyTestCase.GateDummy(2, "C"),
+        ]
+        positioning = [
+            ([1, 2], 0),
+            (2, 1),
+            (2, 2),
+            (2, 3),
+            (0, 0),
+            (0, 0),
+            ([0, 1], 0),
+        ]
+        placing_success = self.__place_in_grid(grid, gates, positioning)
+        for i, success in enumerate(placing_success):
+            if i == len(placing_success) - 1:
+                self.assertFalse(success, "Last gate was successfully placed even though it should have failed!")
+            else:
+                self.assertTrue(success, f"Somehow failed to place the {i}th gate.")
 
+    def test_circuit_grid_shift_right(self):
+        # test if the private method __shift_right() returns the correct number of executed shifts
+        grid = RelationalGrid.empty(1, 4)
+        for _ in range(3):
+            gate = MyTestCase.GateDummy(1, "A")
+            gate.use_qubit(0)
+            grid.place(RelationalGridInstruction(gate), 0)
+        val = grid._RelationalGrid__shift_right(0, 0)
+        self.assertEqual(val, 3)
+
+    def test_circuit_grid_len(self):
+        grid = RelationalGrid.empty(2, 4)
+        gates = [
+            MyTestCase.GateDummy(1, "A"),
+            MyTestCase.GateDummy(1, "B"),
+            MyTestCase.GateDummy(2, "C"),
+            MyTestCase.GateDummy(1, "D"),
+            MyTestCase.GateDummy(1, "E"),
+            MyTestCase.GateDummy(1, "F"),
+            MyTestCase.GateDummy(1, "G"),
+            MyTestCase.GateDummy(1, "X"),
+        ]
+        positioning = [
+            (0, 0),
+            (0, 0),
+            ([0, 1], 0),
+            (0, 0),
+            (1, 0),
+            (1, 0),
+            (1, 0),
+            (1, 0),
+        ]
+        for i, data in enumerate(positioning):
+            gate = gates[i]
+            qargs, pos = data
+            if isinstance(qargs, int): qargs = [qargs]
+            for qu in qargs: gate.use_qubit(qu)
+            if grid.place(RelationalGridInstruction(gate), pos):
+                grid_len = len(grid)
+                self.assertEqual(i+1, grid_len, f"Expected len()={i+1} but got {grid_len}!")
+            else:
+                pass
     # todo test len(grid)!
 
 
