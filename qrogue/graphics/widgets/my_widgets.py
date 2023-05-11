@@ -532,10 +532,26 @@ class CircuitWidget(Widget):
         self.__grid: Optional[RelationalGrid[Instruction]] = None
         self.__action: Optional[CircuitWidget._ActionPlaceHolder] = None
 
-        widget.add_key_command(controls.get_keys(Keys.SelectionUp), self.__move_up)
-        widget.add_key_command(controls.get_keys(Keys.SelectionRight), self.__move_right)
-        widget.add_key_command(controls.get_keys(Keys.SelectionDown), self.__move_down)
-        widget.add_key_command(controls.get_keys(Keys.SelectionLeft), self.__move_left)
+        def move_up():
+            if self.__action is not None and self.__change_qubit(up=True):
+                self.render()
+
+        def move_right():
+            if self.__action is not None and self.__action.can_change_position() and self.__change_position(right=True):
+                self.render()
+
+        def move_down():
+            if self.__action is not None and self.__change_qubit(up=False):
+                self.render()
+
+        def move_left():
+            if self.__action is not None and self.__action.can_change_position() and self.__change_position(right=False):
+                self.render()
+
+        widget.add_key_command(controls.get_keys(Keys.SelectionUp), move_up)
+        widget.add_key_command(controls.get_keys(Keys.SelectionRight), move_right)
+        widget.add_key_command(controls.get_keys(Keys.SelectionDown), move_down)
+        widget.add_key_command(controls.get_keys(Keys.SelectionLeft), move_left)
 
     def __change_position(self, right: bool) -> bool:
         """
@@ -580,26 +596,6 @@ class CircuitWidget(Widget):
 
         self.__action.qubit = qubit
         return True
-
-    def __move_up(self):
-        if self.__action is not None:
-            if self.__change_qubit(up=True):
-                self.render()
-
-    def __move_right(self):
-        if self.__action is not None:
-            if self.__action.can_change_position() and self.__change_position(right=True):
-                self.render()
-
-    def __move_down(self):
-        if self.__action is not None:
-            if self.__change_qubit(up=False):
-                self.render()
-
-    def __move_left(self):
-        if self.__action is not None:
-            if self.__action.can_change_position() and self.__change_position(right=False):
-                self.render()
 
     def __place_gate(self) -> Tuple[bool, Optional[Instruction]]:
         """
