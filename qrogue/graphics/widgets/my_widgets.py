@@ -401,24 +401,6 @@ class CircuitWidget(Widget):
         def reset(self, skip_rows: bool = False, skip_column: bool = False):
             pass
 
-    class _RelationalGridString(RelationalGrid.Item[str]):
-        def __init__(self, value: Instruction, qubit: int):
-            super().__init__(value.abbreviation(qubit))
-            self.__gate = value
-
-        @property
-        def num_of_rows(self) -> int:
-            return self.__gate.num_of_qubits
-
-        def row_iter(self) -> Iterator[int]:
-            return self.__gate.qargs_iter()
-
-        def row_copy(self) -> List[int]:
-            return self.__gate.qargs_copy()
-
-        def reset(self, skip_rows: bool = False, skip_column: bool = False):
-            pass
-
     class _ActionPlaceHolder(ABC):
         def __init__(self, grid: RelationalGrid, gate: Optional[Instruction], pos: int = -1, qubit: int = 0):
             self.grid = grid
@@ -447,7 +429,7 @@ class CircuitWidget(Widget):
             pass
 
         @abstractmethod
-        def perform(self, data: Any = None) -> Tuple[bool, Optional[Instruction]]:
+        def perform(self) -> Tuple[bool, Optional[Instruction]]:
             """
 
             :return: True if action needs to be confirmed again, False if it is finished
@@ -459,8 +441,6 @@ class CircuitWidget(Widget):
             pass
 
     class _Place(_ActionPlaceHolder):
-        FIX_POSITION = "fix_position"
-
         def __init__(self, grid: RelationalGrid, gate: Instruction, pos: int = 0, qubit: int = 0):
             super().__init__(grid, gate, pos, qubit)
 
@@ -480,7 +460,7 @@ class CircuitWidget(Widget):
             # todo: test statement for multi qubit gates
             return True     # grid.get(self.qubit, pos) is None
 
-        def perform(self, data: Any = None) -> bool:
+        def perform(self) -> bool:
             """
 
             :return: False if more qubits need to be placed (we continue the current action), True otherwise
@@ -517,7 +497,7 @@ class CircuitWidget(Widget):
         def is_valid_pos(self, pos: int, grid: RelationalGrid) -> bool:
             return True     # grid.get(pos, self.qubit) is not None
 
-        def perform(self, data: Any = None) -> bool:
+        def perform(self) -> bool:
             gate = self.grid.get(self.qubit, self.pos)
             if gate is not None:
                 self.grid.remove(gate)
@@ -532,7 +512,7 @@ class CircuitWidget(Widget):
             self.__original_place: Tuple[int, List[int]] = gate.position, gate.qargs_copy()
             super().__init__(grid, gate, self.__original_place[0], self.__original_place[1][0])
 
-        def perform(self, data: Any = None) -> bool:
+        def perform(self) -> bool:
             pass    # todo
 
         def abort(self):
@@ -551,7 +531,6 @@ class CircuitWidget(Widget):
         super().__init__(widget)
         self.__grid: Optional[RelationalGrid[Instruction]] = None
         self.__action: Optional[CircuitWidget._ActionPlaceHolder] = None
-        self.__in_multi_qubit_performance = False
 
         widget.add_key_command(controls.get_keys(Keys.SelectionUp), self.__move_up)
         widget.add_key_command(controls.get_keys(Keys.SelectionRight), self.__move_right)
@@ -659,9 +638,9 @@ class CircuitWidget(Widget):
         if self.__action is None:
             return False, None
 
-        self.__in_multi_qubit_performance = self.__action.perform({CircuitWidget._Place.FIX_POSITION: True})
+        in_multi_row_performance = self.__action.perform()
         self.render()
-        if self.__in_multi_qubit_performance:
+        if in_multi_row_performance:
             was_removing = isinstance(self.__action, CircuitWidget._Remove)
             self.__action = None
             return True, None if was_removing else True
