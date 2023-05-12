@@ -432,7 +432,7 @@ class CircuitWidget(Widget):
         def perform(self) -> Tuple[bool, Optional[Instruction]]:
             """
 
-            :return: True if action needs to be confirmed again, False if it is finished
+            :return: True if action is finished, False if it needs more confirmation (e.g. multi row items)
             """
             pass
 
@@ -463,7 +463,7 @@ class CircuitWidget(Widget):
         def perform(self) -> bool:
             """
 
-            :return: False if more qubits need to be placed (we continue the current action), True otherwise
+            :return: True if action is finished, False if more qubits need to be placed (we continue the current action)
             """
             if self.gate.value.use_qubit(self.qubit):
                 if self.qubit > 0:
@@ -630,18 +630,22 @@ class CircuitWidget(Widget):
         pos = uf.clamp(pos, 0, self.__grid.num_of_columns - 1)
         self.__action = CircuitWidget._Move(self.__grid, gate)
 
-    def perform_action(self) -> Tuple[bool, Optional[bool]]:
+    def perform_action(self) -> Tuple[bool, bool]:
+        """
+        :returns: first a bool describing whether the action is finished and second a bool describing whether "Remove"
+                    was the performed action
+        """
         if self.__action is None:
-            return False, None
+            return False, False
 
-        in_multi_row_performance = self.__action.perform()
+        action_finished = self.__action.perform()
         self.render()
-        if in_multi_row_performance:
+        if action_finished:
             was_removing = isinstance(self.__action, CircuitWidget._Remove)
             self.__action = None
-            return True, None if was_removing else True
+            return True, not was_removing
         else:
-            return False, None
+            return False, False
 
     def abort_action(self):
         if self.__action is not None:
