@@ -4,7 +4,7 @@ from typing import Any, Optional, List, Tuple, Iterator, Set, TypeVar, Generic
 
 class LinkedList:
     class _Node:
-        def __init__(self, val: Any, next_: Optional["_Node"] = None):
+        def __init__(self, val: Any, next_: Optional["LinkedList._Node"] = None):
             self.val = val
             self.next = next_
 

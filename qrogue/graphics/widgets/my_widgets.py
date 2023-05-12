@@ -883,7 +883,7 @@ class SelectionWidget(Widget):
     @staticmethod
     def wrap_in_hotkey_str(options: List[str]) -> List[str]:
         if len(options) <= 1:
-            return options      # no explicit hotkeys if there are not multiple options
+            return options      # no explicit hotkeys if there aren't multiple options
         wrapped_options = []
         for i, option in enumerate(options):
             wrapped_options.append(SelectionWidget._wrap_in_hotkey_str(option, i))
@@ -1244,6 +1244,3 @@ class HistoricProperty(Widget, ABC):
     def render(self) -> None:
         if self._cur_data is not None:
             self.widget.set_title(self._cur_data)
-
-
-
