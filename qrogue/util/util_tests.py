@@ -27,7 +27,7 @@ class MyTestCase(unittest.TestCase):
             return gate
 
         def __str__(self):
-            return f"{self.character} ({self.qargs})"
+            return self.character
 
     # noinspection GrazieInspection
     def test_linked_list(self):
