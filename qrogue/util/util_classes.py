@@ -261,6 +261,10 @@ class MyGrid(Generic[T], ABC):
         pass
 
     @abstractmethod
+    def is_valid_place(self, row: int, column: int) -> bool:
+        pass
+
+    @abstractmethod
     def place(self, item: "MyGrid.Item[T]", column: int, overwrite: bool = True) -> bool:
         """
         :return: True if item was successfully placed, False otherwise
@@ -360,11 +364,15 @@ class RelationalGrid(MyGrid[T]):
 
         super().__init__(prepared_grid)
 
-    def copy(self):
-        return RelationalGrid[T](self._raw_copy())
-
     def get(self, row: int, column: int) -> Optional["MyGrid.Item[T]"]:
         return self._get(row, column)
+
+    def is_valid_place(self, row: int, column: int) -> bool:
+        if 0 <= row < self.num_of_rows and 0 <= column < self.num_of_columns:
+            if column == 0: return True
+            # place is not valid if there is an empty space in front (todo: not True for secondary rows etc!)
+            return not self.is_free(row, column - 1)
+        return False
 
     def __first_free_spot(self, row: int, og_col: int) -> int:
         # search the first free spot in front of og_pos (or og_pos if nothing is free)
@@ -455,5 +463,75 @@ class RelationalGrid(MyGrid[T]):
             item.reset(skip_rows=not reset_qubits, skip_column=not reset_position)
             return True
 
-    def clear(self):
-        pass
+    def copy(self):
+        return RelationalGrid[T](self._raw_copy())
+
+
+class AbsoluteGrid(MyGrid[T]):
+    @staticmethod
+    def empty(num_of_rows: int, num_of_columns: int) -> "AbsoluteGrid[T]":
+        grid: List[List[Optional[MyGrid.Item[T]]]] = [[None] * num_of_columns for _ in range(num_of_rows)]
+        return AbsoluteGrid[T](grid)
+
+    def __init__(self, grid: List[List[Optional[MyGrid.Item[T]]]]):
+        num_of_columns = max([len(row) for row in grid])
+        # extend every row that is smaller than the longest row
+        grid = [row + [None] * (num_of_columns - len(row)) for row in grid]
+        super().__init__(grid)
+
+    def get(self, row: int, column: int) -> MyGrid.Item[T]:
+        return self._get(row, column)
+
+    def is_valid_place(self, row: int, column: int) -> bool:
+        return 0 <= row < self.num_of_rows and 0 <= column < self.num_of_columns
+
+    def place(self, item: "MyGrid.Item[T]", column: int, overwrite: bool = True) -> bool:
+        __MODE = True
+        if __MODE:
+            if overwrite:
+                for row in item.row_iter():
+                    # remove existing items to overwrite them
+                    existing_item = self._get(row, column)
+                    if existing_item is not None: self.remove(existing_item)
+                    self._set(row, column, item)
+                return True
+
+            else:
+                # check if we can place the item
+                for row in item.row_iter():
+                    if not self.is_free(row, column):
+                        return False
+                # then simply place it since there is no other item in its way
+                for row in item.row_iter():
+                    self._set(row, column, item)
+                return True
+
+        else:
+            self.remove(item, reset_qubits=False)
+
+            qubit = item.row_copy()
+            if isinstance(qubit, int): qubit = [qubit]
+            assert len(qubit) == item.num_of_rows
+
+            for qu in qubit:
+                if not self._has_row_free_space(qu):
+                    return False
+
+            position = column
+            for i, qu in enumerate(qubit):
+                self._set(qu, position, item)
+
+            return True
+
+    def remove(self, item: "MyGrid.Item[T]", reset_qubits: bool = True, reset_position: bool = True) -> bool:
+        for col in range(self.num_of_columns):
+            for row in range(self.num_of_rows):
+                val = self._get(row, col)
+                if val == item:
+                    for r in item.row_iter(): self._reset(r, col)
+                    item.reset(skip_rows=not reset_qubits, skip_column=not reset_position)
+                    return True
+        return False
+
+    def copy(self) -> "MyGrid":
+        return AbsoluteGrid(self._raw_copy())
