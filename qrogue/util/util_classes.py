@@ -238,7 +238,7 @@ class MyGrid(Generic[T], ABC):
         self._validate_col(col)
         return self.__grid[row][col]
 
-    def _is_free(self, row: int, col: int) -> bool:
+    def is_free(self, row: int, col: int) -> bool:
         self._validate_row(row)
         self._validate_col(col)
         return self.__grid[row][col] is None
@@ -369,7 +369,7 @@ class RelationalGrid(MyGrid[T]):
     def __first_free_spot(self, row: int, og_col: int) -> int:
         # search the first free spot in front of og_pos (or og_pos if nothing is free)
         og_col -= 1
-        while og_col >= 0 and self._is_free(row, og_col): og_col -= 1
+        while og_col >= 0 and self.is_free(row, og_col): og_col -= 1
         # we either stopped because there is a gate at og_pos (hence we increase it again) or because og_pos < 0
         return og_col + 1
 
@@ -377,14 +377,14 @@ class RelationalGrid(MyGrid[T]):
         """
         :returns: by how many spots we shifted (0 = no shift needed) or -1 if we cannot shift
         """
-        if self._is_free(row, og_col): return 0  # no need to shift
+        if self.is_free(row, og_col): return 0  # no need to shift
 
         # find the left most free spot after og_pos
         cur_col = og_col
         while True:
             cur_col += 1
             if cur_col >= self.num_of_columns: return -1  # no free spot to the right
-            if self._is_free(row, cur_col): break
+            if self.is_free(row, cur_col): break
         distance = cur_col - og_col
 
         # now go back to position and shift everything to the right by 1
