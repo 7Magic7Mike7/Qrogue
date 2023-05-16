@@ -458,7 +458,9 @@ class CircuitWidget(Widget):
             # if GameplayConfig.get_option_value(Options.allow_implicit_removal, convert=True):
             # as long as we have space for a new gate every position is valid (at least True for single qubit gates)
             # todo: test statement for multi qubit gates
-            return True     # grid.get(self.qubit, pos) is None
+            if self.gate.value.no_qubits_specified:
+                return self.grid.is_valid_place(self.qubit, pos)
+            return False     # grid.get(self.qubit, pos) is None
 
         def perform(self) -> bool:
             """
