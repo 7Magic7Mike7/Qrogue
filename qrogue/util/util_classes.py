@@ -149,7 +149,7 @@ class _LinkedListIterator:
 T = TypeVar('T')
 
 
-class RelationalGrid(Generic[T]):
+class MyGrid(Generic[T], ABC):
     class Item(Generic[T], ABC):
         def __init__(self, value: T):
             self.__val = value
@@ -175,12 +175,12 @@ class RelationalGrid(Generic[T]):
         def reset(self, skip_rows: bool = False, skip_column: bool = False):
             pass
 
-    class _RelationalGridIterator:
-        def __init__(self, grid: "RelationalGrid[T]"):
+    class _MyGridIterator:
+        def __init__(self, grid: "MyGrid[T]"):
             self.__grid = grid
             self.__column = 0
             self.__row = 0
-            self.__cur_item: Optional[RelationalGrid.Item[T]] = None
+            self.__cur_item: Optional[MyGrid.Item[T]] = None
 
         def __next__(self) -> T:
             while self.__column < self.__grid.num_of_columns:
@@ -198,34 +198,15 @@ class RelationalGrid(Generic[T]):
                 self.__column += 1  # proceed to next column
             raise StopIteration
 
-    @staticmethod
-    def empty(num_of_rows: int, num_of_columns: int) -> "RelationalGrid[T]":
-        grid: List[List[Optional[RelationalGrid.Item[T]]]] = [[None] * num_of_columns for _ in range(num_of_rows)]
-        return RelationalGrid[T](grid)
+    def __init__(self, grid: List[List[Optional["MyGrid.Item[T]"]]]):
+        assert len(grid) > 0, "Grid has empty first dimension!"
+        assert len(grid[0]) > 0, "Grid has empty second dimension!"
+        for i in range(1, len(grid)):
+            assert len(grid[i]) == len(grid[0]), "Grid is not rectangular!"
 
-    def __init__(self, grid: List[List[Optional["RelationalGrid.Item[T]"]]]):
-        # rows have to be left-aligned with respect to their other columns (i.e., no free space is allowed to be in
-        # front of a single-row item, but as soon as there is a multi-row item there can be)
-        self.__grid: List[List[Optional[RelationalGrid.Item[T]]]] = []
+        self.__grid: List[List[Optional[MyGrid.Item[T]]]] = grid
         self.__num_of_rows = len(grid)
-        self.__num_of_columns = max([len(row) for row in grid])
-
-        # adapt every row to have the same number of columns
-        for row in grid: row += [None] * (self.__num_of_columns - len(row))
-
-        # shift row elements to the left if there is empty space in front
-        shift_amount = 0
-        for col in range(self.__num_of_columns):
-            empty_column = True
-            for row in range(self.__num_of_rows):
-                if grid[row][col] is not None:
-                    empty_column = False
-                    break
-            if empty_column: shift_amount += 1
-            else: break
-        if shift_amount == self.__num_of_columns: shift_amount = 0  # no need to shift if everything is empty
-
-        for row in grid: self.__grid.append(row[shift_amount:].copy() + [None] * shift_amount)
+        self.__num_of_columns = len(grid[0])
 
     @property
     def num_of_rows(self) -> int:
@@ -246,37 +227,53 @@ class RelationalGrid(Generic[T]):
                 return False
         return True
 
-    def copy(self):
-        return RelationalGrid[T](self.__grid)
+    def _validate_row(self, value: int):
+        assert 0 <= value < self.num_of_rows, f"Illegal row-index! 0 <= {value} < {self.num_of_rows} is False!"
 
-    def remove(self, item: "RelationalGrid.Item[T]", reset_qubits: bool = True, reset_position: bool = True) -> bool:
-        place_data: List[Optional[int]] = []
-        removal_failed = False
-        for qubit in item.row_iter():
-            position = None
-            for pos in range(self.__num_of_columns):
-                val = self.__grid[qubit][pos]
-                if val == item:
-                    position = (qubit, pos)
-                    break
-            removal_failed = removal_failed or position is None  # once True, will stay True
-            place_data.append(position)
+    def _validate_col(self, value: int):
+        assert 0 <= value < self.num_of_columns, f"Illegal col-index! 0 <= {value} < {self.num_of_columns} is False!"
 
-        if removal_failed:
-            return False
-        else:
-            for i, data in enumerate(place_data):
-                qu, pos = data
-                self.__grid[qu][pos] = None
-            item.reset(skip_rows=not reset_qubits, skip_column=not reset_position)
-            return True
+    def _get(self, row: int, col: int) -> Optional[Item[T]]:
+        self._validate_row(row)
+        self._validate_col(col)
+        return self.__grid[row][col]
 
-    def first_used_column_in_row(self, row: int) -> int:
-        for col in range(self.__num_of_columns):
-            item = self.get(row, col)
-            if item is not None:
-                return col
-        return -1   # no item in row
+    def _is_free(self, row: int, col: int) -> bool:
+        self._validate_row(row)
+        self._validate_col(col)
+        return self.__grid[row][col] is None
+
+    def _set(self, row: int, col: int, item: "MyGrid.Item[T]"):
+        self._validate_row(row)
+        self._validate_col(col)
+        self.__grid[row][col] = item
+
+    def _reset(self, row: int, col: int):
+        self._validate_row(row)
+        self._validate_col(col)
+        self.__grid[row][col] = None
+
+    def _raw_copy(self) -> List[List[Optional["MyGrid.Item[T]"]]]:
+        return [row.copy() for row in self.__grid]
+
+    @abstractmethod
+    def get(self, row: int, column: int) -> "MyGrid.Item[T]":
+        pass
+
+    @abstractmethod
+    def place(self, item: "MyGrid.Item[T]", column: int, overwrite: bool = True) -> bool:
+        """
+        :return: True if item was successfully placed, False otherwise
+        """
+        pass
+
+    @abstractmethod
+    def remove(self, item: "MyGrid.Item[T]", reset_qubits: bool = True, reset_position: bool = True) -> bool:
+        pass
+
+    @abstractmethod
+    def copy(self) -> "MyGrid":
+        pass
 
     def _has_row_free_space(self, row: int) -> bool:
         """
@@ -287,118 +284,32 @@ class RelationalGrid(Generic[T]):
                 return True
         return False
 
-    def get(self, row: int, column: int) -> Optional["RelationalGrid.Item[T]"]:
-        assert 0 <= row < self.__num_of_rows, \
-            f"Row out of bounds: 0 <= {row} < {self.__num_of_rows} is False!"
-        assert 0 <= column < self.__num_of_columns, \
-            f"Position out of bounds: 0 <= {column} < {self.__num_of_columns} is False!"
-
-        return self.__grid[row][column]
-
-    def find(self, item: "RelationalGrid.Item[T]") -> Tuple[int, List[int]]:
-        """
-        :return: Tuple of column and rows or (-1, []) if the item was not found
-        """
-        rows = []
-        # for every position we check if gate uses one or more qubits
-        for pos in range(self.__num_of_columns):
-            for qu in range(self.__num_of_rows):
-                found_gate = self.get(qu, pos)
-                if found_gate is item:
-                    rows.append(qu)
-            if len(rows) > 0:
-                assert len(rows) == item.num_of_rows, "Not all rows seem to be at the same column!"
-                return pos, rows
-        return -1, []
-
-    def __first_free_spot(self, row: int, og_col: int) -> int:
-        # search the first free spot in front of og_pos (or og_pos if nothing is free)
-        og_col -= 1
-        while og_col >= 0 and self.__grid[row][og_col] is None: og_col -= 1
-        # we either stopped because there is a gate at og_pos (hence we increase it again) or because og_pos < 0
-        return og_col + 1
-
-    def __shift_right(self, row: int, og_col: int) -> int:
-        """
-        :returns: by how many spots we shifted (0 = no shift needed) or -1 if we cannot shift
-        """
-        if self.__grid[row][og_col] is None: return 0  # no need to shift
-
-        # find the left most free spot after og_pos
-        cur_col = og_col
-        while True:
-            cur_col += 1
-            if cur_col >= self.__num_of_columns: return -1  # no free spot to the right
-            if self.__grid[row][cur_col] is None: break
-        distance = cur_col - og_col
-
-        # now go back to position and shift everything to the right by 1
-        while cur_col > og_col:
-            shifting_item = self.__grid[row][cur_col - 1]
-            for other_row in shifting_item.row_iter():
-                if other_row != row:  # single row items never enter this if
-                    # 1. shift everything to the right of shifting_item's other rows
-                    # 2. shift the other rows of shifting_item
-                    # 3. reset the other rows of shifting_item
-                    if self.__shift_right(other_row, cur_col) < 0: return -1
-                    self.__grid[other_row][cur_col] = self.__grid[other_row][cur_col - 1]
-                    self.__grid[other_row][cur_col - 1] = None
-            self.__grid[row][cur_col] = shifting_item
-            cur_col -= 1
-        self.__grid[row][og_col] = None  # reset the value of the original position
-        return distance
-
-    def __undo_shift_right(self, row: int, position: int, num_of_shifts: int):
-        for i in range(num_of_shifts):
-            self.__grid[row][position + i] = self.__grid[row][position + i + 1]
-        self.__grid[row][position + num_of_shifts] = None
-
-    def place(self, item: "RelationalGrid.Item[T]", position: int, overwrite: bool = True) -> bool:
-        self.remove(item, reset_qubits=False)
-
-        qubit = item.row_copy()
-        if isinstance(qubit, int): qubit = [qubit]
-        assert len(qubit) == item.num_of_rows
-
-        for qu in qubit:
-            if not self._has_row_free_space(qu):
-                return False
-
-        left_most_positions = [self.__first_free_spot(qu, position) for qu in qubit]
-        nums_of_shifts = []
-        position = max(left_most_positions)
-        for i, qu in enumerate(qubit):
-            num_of_shifts = self.__shift_right(qu, position)
-            if num_of_shifts < 0:
-                for j, qq in enumerate(qubit[:i]): self.__undo_shift_right(qq, position, nums_of_shifts[j])
-                return False
-            else:
-                nums_of_shifts.append(num_of_shifts)
-            self.__grid[qu][position] = item
-
-        return True
-
-    def replace(self, placed_gate: "RelationalGrid.Item[T]", new_gate: "RelationalGrid.Item[T]") -> bool:
-        pos, qargs = self.find(placed_gate)
-        if 0 <= pos < self.__num_of_columns:
-            pass        # todo doesn't work as I planned (I think) because _WrapperGate has 1 qubit but the new_gate can have multiple
-        return False
+    def first_used_column_in_row(self, row: int) -> int:
+        for col in range(self.__num_of_columns):
+            item = self.get(row, col)
+            if item is not None:
+                return col
+        return -1   # no item in row
 
     def clear(self):
-        pass
+        for col in range(self.num_of_columns):
+            for row in range(self.num_of_rows):
+                item = self.__grid[row][col]
+                if item is not None: item.reset()
+                self.__grid[row][col] = None
 
     def __len__(self):
-        gates: Set["RelationalGrid.Item[T]"] = set()
+        items: Set["MyGrid.Item[T]"] = set()
         for qu in range(self.__num_of_rows):
             for pos in range(self.__num_of_columns):
-                # we have to iterate over the whole circuit space since multi qubit gates can create empty spaces
+                # we have to iterate over all columns since multi row items can create empty spaces
                 # in the middle of a row (even though we always shift to the left as far as possible)
-                gate = self.get(qu, pos)
-                if gate is not None: gates.add(gate)
-        return len(gates)
+                item = self.get(qu, pos)
+                if item is not None: items.add(item)
+        return len(items)
 
     def __iter__(self):
-        return RelationalGrid._RelationalGridIterator(self)
+        return MyGrid._MyGridIterator(self)
 
     def __str__(self):
         text = ""
@@ -410,3 +321,133 @@ class RelationalGrid(Generic[T]):
                     text += f"-{val}-"
             text += "\n"
         return text
+
+
+class RelationalGrid(MyGrid[T]):
+    @staticmethod
+    def empty(num_of_rows: int, num_of_columns: int) -> "RelationalGrid[T]":
+        grid: List[List[Optional[MyGrid.Item[T]]]] = [[None] * num_of_columns for _ in range(num_of_rows)]
+        return RelationalGrid[T](grid)
+
+    def __init__(self, grid: List[List[Optional["MyGrid.Item[T]"]]]):
+        # rows have to be left-aligned with respect to their other columns (i.e., no free space is allowed to be in
+        # front of a single-row item, but as soon as there is a multi-row item there can be)
+        prepared_grid: List[List[Optional[MyGrid.Item[T]]]] = []
+        num_of_columns = max([len(row) for row in grid])
+
+        # adapt every row to have the same number of columns
+        for row in grid: row += [None] * (num_of_columns - len(row))
+
+        # shift row elements to the left if there is empty space in front
+        shift_amount = 0
+        for col in range(num_of_columns):
+            empty_column = True
+            for row in grid:
+                if row[col] is not None:
+                    empty_column = False
+                    break
+            if empty_column: shift_amount += 1
+            else: break
+        if shift_amount == num_of_columns: shift_amount = 0  # no need to shift if everything is empty
+
+        for row in grid: prepared_grid.append(row[shift_amount:].copy() + [None] * shift_amount)
+
+        super().__init__(prepared_grid)
+
+    def copy(self):
+        return RelationalGrid[T](self._raw_copy())
+
+    def get(self, row: int, column: int) -> Optional["MyGrid.Item[T]"]:
+        return self._get(row, column)
+
+    def __first_free_spot(self, row: int, og_col: int) -> int:
+        # search the first free spot in front of og_pos (or og_pos if nothing is free)
+        og_col -= 1
+        while og_col >= 0 and self._is_free(row, og_col): og_col -= 1
+        # we either stopped because there is a gate at og_pos (hence we increase it again) or because og_pos < 0
+        return og_col + 1
+
+    def __shift_right(self, row: int, og_col: int) -> int:
+        """
+        :returns: by how many spots we shifted (0 = no shift needed) or -1 if we cannot shift
+        """
+        if self._is_free(row, og_col): return 0  # no need to shift
+
+        # find the left most free spot after og_pos
+        cur_col = og_col
+        while True:
+            cur_col += 1
+            if cur_col >= self.num_of_columns: return -1  # no free spot to the right
+            if self._is_free(row, cur_col): break
+        distance = cur_col - og_col
+
+        # now go back to position and shift everything to the right by 1
+        while cur_col > og_col:
+            shifting_item = self._get(row, cur_col - 1)
+            for other_row in shifting_item.row_iter():
+                if other_row != row:  # single row items never enter this if
+                    # 1. shift everything to the right of shifting_item's other rows
+                    # 2. shift the other rows of shifting_item
+                    # 3. reset the other rows of shifting_item
+                    if self.__shift_right(other_row, cur_col) < 0: return -1
+                    self._set(other_row, cur_col, self._get(other_row, cur_col - 1))
+                    self._reset(other_row, cur_col - 1)
+            self._set(row, cur_col, shifting_item)
+            cur_col -= 1
+        self._reset(row, og_col)  # reset the value of the original position
+        return distance
+
+    def __undo_shift_right(self, row: int, position: int, num_of_shifts: int):
+        for i in range(num_of_shifts):
+            self._set(row, position + i, self._get(row, position + i + 1))
+        self._reset(row, position + num_of_shifts)
+
+    def place(self, item: "MyGrid.Item[T]", column: int, overwrite: bool = True) -> bool:
+        self.remove(item, reset_qubits=False)
+
+        qubit = item.row_copy()
+        if isinstance(qubit, int): qubit = [qubit]
+        assert len(qubit) == item.num_of_rows
+
+        for qu in qubit:
+            if not self._has_row_free_space(qu):
+                return False
+
+        left_most_positions = [self.__first_free_spot(qu, column) for qu in qubit]
+        nums_of_shifts = []
+        position = max(left_most_positions)
+        for i, qu in enumerate(qubit):
+            num_of_shifts = self.__shift_right(qu, position)
+            if num_of_shifts < 0:
+                for j, qq in enumerate(qubit[:i]): self.__undo_shift_right(qq, position, nums_of_shifts[j])
+                return False
+            else:
+                nums_of_shifts.append(num_of_shifts)
+            self._set(qu, position, item)
+
+        return True
+
+    def remove(self, item: "MyGrid.Item[T]", reset_qubits: bool = True, reset_position: bool = True) -> bool:
+        place_data: List[Optional[int]] = []
+        removal_failed = False
+        for qubit in item.row_iter():
+            position = None
+            for pos in range(self.num_of_columns):
+                val = self._get(qubit, pos)
+                if val == item:
+                    position = (qubit, pos)
+                    break
+            removal_failed = removal_failed or position is None  # once True, will stay True
+            place_data.append(position)
+
+        if removal_failed:
+            return False
+        else:
+            for i, data in enumerate(place_data):
+                qu, pos = data
+                self._reset(qu, pos)
+            item.reset(skip_rows=not reset_qubits, skip_column=not reset_position)
+            return True
+
+    def clear(self):
+        pass
