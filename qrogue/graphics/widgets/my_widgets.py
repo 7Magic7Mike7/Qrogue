@@ -634,12 +634,13 @@ class CircuitWidget(Widget):
             return False, False
 
         action_finished = self.__action.perform()
-        self.render()
         if action_finished:
             was_removing = isinstance(self.__action, CircuitWidget._Remove)
             self.__action = None
+            self.render()
             return True, not was_removing
         else:
+            self.render()
             return False, False
 
     def abort_action(self):
