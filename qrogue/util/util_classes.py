@@ -308,6 +308,12 @@ class MyGrid(Generic[T], ABC):
                 if item is not None: items.add(item)
         return len(items)
 
+    def __contains__(self, value):
+        for item in self:
+            if value == item.value:
+                return True
+        return False
+
     def __iter__(self):
         return MyGrid._MyGridIterator(self)
 
