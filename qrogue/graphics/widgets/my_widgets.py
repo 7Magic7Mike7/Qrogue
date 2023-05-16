@@ -12,7 +12,7 @@ from py_cui.widgets import BlockLabel
 from qrogue.game.logic import StateVector
 from qrogue.game.logic.actors import Robot, CircuitMatrix
 from qrogue.game.logic.collectibles import Instruction
-from qrogue.game.logic.collectibles.instruction import RelationalGridInstruction, IGate, MultiQubitIdentity
+from qrogue.game.logic.collectibles.instruction import MyGridInstruction, IGate, MultiQubitIdentity
 from qrogue.game.world.map import Map
 from qrogue.game.world.navigation import Direction
 from qrogue.util import ColorConfig, Controls, Keys, Logger, Config, HudConfig
@@ -21,7 +21,7 @@ from qrogue.util.config import QuantumSimulationConfig, InstructionConfig
 from qrogue.graphics import WidgetWrapper
 from qrogue.graphics.rendering import ColorRules
 from qrogue.graphics.widgets import Renderable
-from qrogue.util.util_classes import RelationalGrid
+from qrogue.util.util_classes import MyGrid
 
 
 class MyBaseWidget(BlockLabel, WidgetWrapper):
@@ -374,7 +374,7 @@ class HudWidget(Widget):
 
 
 class CircuitWidget(Widget):
-    class _RelationalGridEditor(RelationalGrid.Item[Instruction]):
+    class _MyGridEditor(MyGrid.Item[Instruction]):
         def __init__(self, value: Optional[Instruction], qubit: int):
             self.__is_removing = value is None
             if self.__is_removing:
@@ -402,10 +402,10 @@ class CircuitWidget(Widget):
             pass
 
     class _ActionPlaceHolder(ABC):
-        def __init__(self, grid: RelationalGrid, gate: Optional[Instruction], pos: int = -1, qubit: int = 0):
+        def __init__(self, grid: MyGrid, gate: Optional[Instruction], pos: int = -1, qubit: int = 0):
             self.grid = grid
             if gate is None: self.gate = None
-            else: self.gate: RelationalGridInstruction = RelationalGridInstruction(gate)
+            else: self.gate: MyGridInstruction = MyGridInstruction(gate)
             self.pos = pos
             self.qubit = qubit
 
@@ -422,7 +422,7 @@ class CircuitWidget(Widget):
             pass
 
         @abstractmethod
-        def is_valid_pos(self, pos: int, grid: RelationalGrid) -> bool:
+        def is_valid_pos(self, pos: int, grid: MyGrid) -> bool:
             # if gate is None we search for an occupied position (gate_used_at(pos) is not None)
             # if gate is not None we search for a free position (gate_used_at(pos) is None)
             # hence this xor condition
@@ -441,7 +441,7 @@ class CircuitWidget(Widget):
             pass
 
     class _Place(_ActionPlaceHolder):
-        def __init__(self, grid: RelationalGrid, gate: Instruction, pos: int = 0, qubit: int = 0):
+        def __init__(self, grid: MyGrid, gate: Instruction, pos: int = 0, qubit: int = 0):
             super().__init__(grid, gate, pos, qubit)
 
         def can_reset_qubits(self) -> bool:
@@ -453,7 +453,7 @@ class CircuitWidget(Widget):
         def is_valid_qubit(self, qubit: int) -> bool:
             return self.gate.value.can_use_qubit(qubit)
 
-        def is_valid_pos(self, pos: int, grid: RelationalGrid) -> bool:
+        def is_valid_pos(self, pos: int, grid: MyGrid) -> bool:
             # todo: consider implicit removal
             # if GameplayConfig.get_option_value(Options.allow_implicit_removal, convert=True):
             # as long as we have space for a new gate every position is valid (at least True for single qubit gates)
@@ -482,7 +482,7 @@ class CircuitWidget(Widget):
             pass    # todo remove from grid?
 
     class _Remove(_ActionPlaceHolder):
-        def __init__(self, grid: RelationalGrid):
+        def __init__(self, grid: MyGrid):
             super().__init__(grid, None, 0, 0)
 
         def can_reset_qubits(self) -> bool:
@@ -494,7 +494,7 @@ class CircuitWidget(Widget):
         def is_valid_qubit(self, qubit: int) -> bool:
             return True
 
-        def is_valid_pos(self, pos: int, grid: RelationalGrid) -> bool:
+        def is_valid_pos(self, pos: int, grid: MyGrid) -> bool:
             return True     # grid.get(pos, self.qubit) is not None
 
         def perform(self) -> bool:
@@ -508,7 +508,7 @@ class CircuitWidget(Widget):
             pass    # nothing to do
 
     class _Move(_Place):
-        def __init__(self, grid: RelationalGrid, gate: Instruction):
+        def __init__(self, grid: MyGrid, gate: Instruction):
             self.__original_place: Tuple[int, List[int]] = gate.position, gate.qargs_copy()
             super().__init__(grid, gate, self.__original_place[0], self.__original_place[1][0])
 
@@ -529,7 +529,7 @@ class CircuitWidget(Widget):
 
     def __init__(self, widget: WidgetWrapper, controls: Controls):
         super().__init__(widget)
-        self.__grid: Optional[RelationalGrid[Instruction]] = None
+        self.__grid: Optional[MyGrid[Instruction]] = None
         self.__action: Optional[CircuitWidget._ActionPlaceHolder] = None
 
         def move_up():
@@ -654,7 +654,7 @@ class CircuitWidget(Widget):
             self.render()
             # todo
 
-    def set_data(self, grid: RelationalGrid) -> None:
+    def set_data(self, grid: MyGrid) -> None:
         self.__grid = grid
 
     def render(self) -> None:
@@ -664,7 +664,7 @@ class CircuitWidget(Widget):
             if self.__action is not None and self.__action.gate is not None:    # don't add a pseudo gate if we want to remove
                 editor_gate = MultiQubitIdentity(self.__action.gate.num_of_rows)
                 for qu in self.__action.gate.row_iter(): editor_gate.use_qubit(qu)
-                editor = CircuitWidget._RelationalGridEditor(editor_gate, self.__action.qubit)
+                editor = CircuitWidget._MyGridEditor(editor_gate, self.__action.qubit)
                 temp_grid.place(editor, self.__action.pos)
 
             entry = "-" * (3 + InstructionConfig.MAX_ABBREVIATION_LEN + 3) + "-"
@@ -675,7 +675,7 @@ class CircuitWidget(Widget):
                 for position in range(self.__grid.num_of_columns):
                     item = temp_grid.get(qu, position)
                     if item is not None:
-                        if self.__action is not None and isinstance(item, CircuitWidget._RelationalGridEditor):
+                        if self.__action is not None and isinstance(item, CircuitWidget._MyGridEditor):
                             pass
                         else:
                             inst_str = uf.center_string(item.value.abbreviation(qu),
@@ -683,7 +683,7 @@ class CircuitWidget(Widget):
                             rows[qu][position] = self.__dress_instruction_string(inst_str, position > first_col, True)
 
             if self.__action is not None:
-                gate: Optional[RelationalGridInstruction] = self.__action.gate
+                gate: Optional[MyGridInstruction] = self.__action.gate
                 pos = self.__action.pos
                 qubit = self.__action.qubit
                 if gate is None:

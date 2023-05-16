@@ -13,7 +13,7 @@ from qrogue.game.logic.actors.controllables import Controllable
 from qrogue.game.logic.actors.controllables.qubit import QubitSet, DummyQubitSet
 from qrogue.game.logic.collectibles import Coin, Collectible, Consumable, Instruction, Key, MultiCollectible, \
     Qubit, Energy
-from qrogue.game.logic.collectibles.instruction import RelationalGridInstruction
+from qrogue.game.logic.collectibles.instruction import MyGridInstruction
 from qrogue.util import CheatConfig, Config, Logger, GameplayConfig, QuantumSimulationConfig, Options
 from qrogue.util.util_classes import RelationalGrid, MyGrid
 
@@ -543,7 +543,7 @@ class Robot(Controllable, ABC):
         :return: True if we successfully removed the Instruction, False otherwise
         """
         if instruction is not None and instruction.is_used():
-            Logger.instance().assertion(self.__instructions.remove(RelationalGridInstruction(instruction)),
+            Logger.instance().assertion(self.__instructions.remove(MyGridInstruction(instruction)),
                                         "Failed to remove a used instruction!")
             instruction.reset(skip_qargs=skip_qargs)
             return True
@@ -567,7 +567,7 @@ class Robot(Controllable, ABC):
             inst = self.__instructions.get(instruction.qargs_copy()[0], position)
             if inst is not None:    # todo instead of removing implement "overwrite" in .place
                 self.__remove_instruction(inst.value)
-            self.__instructions.place(RelationalGridInstruction(instruction), position, overwrite=True)
+            self.__instructions.place(MyGridInstruction(instruction), position, overwrite=True)
             return instruction.use(position)
         else:
             # illegal position removes the instruction from the circuit if possible

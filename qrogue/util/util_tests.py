@@ -2,7 +2,7 @@ import unittest
 from typing import List, Tuple, Union
 
 from qrogue.game.logic.collectibles import Instruction, GateType
-from qrogue.game.logic.collectibles.instruction import RelationalGridInstruction
+from qrogue.game.logic.collectibles.instruction import MyGridInstruction
 from util_classes import LinkedList, RelationalGrid
 
 
@@ -93,7 +93,7 @@ class MyTestCase(unittest.TestCase):
             qargs, pos = data
             if isinstance(qargs, int): qargs = [qargs]
             for qu in qargs: gate.use_qubit(qu)
-            ret_vals.append(grid.place(RelationalGridInstruction(gate), pos))
+            ret_vals.append(grid.place(MyGridInstruction(gate), pos))
             print(grid)
         return ret_vals
 
@@ -256,7 +256,7 @@ class MyTestCase(unittest.TestCase):
         for _ in range(3):
             gate = MyTestCase.GateDummy(1, "A")
             gate.use_qubit(0)
-            grid.place(RelationalGridInstruction(gate), 0)
+            grid.place(MyGridInstruction(gate), 0)
         val = grid._RelationalGrid__shift_right(0, 0)
         self.assertEqual(val, 3)
 
@@ -287,7 +287,7 @@ class MyTestCase(unittest.TestCase):
             qargs, pos = data
             if isinstance(qargs, int): qargs = [qargs]
             for qu in qargs: gate.use_qubit(qu)
-            if grid.place(RelationalGridInstruction(gate), pos):
+            if grid.place(MyGridInstruction(gate), pos):
                 grid_len = len(grid)
                 self.assertEqual(i+1, grid_len, f"Expected len()={i+1} but got {grid_len}!")
             else:
