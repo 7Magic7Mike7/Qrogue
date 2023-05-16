@@ -521,6 +521,15 @@ class CircuitWidget(Widget):
             self.grid.place(self.gate, self.__original_place[0])            # place on original position
 
     @staticmethod
+    def __move(val: int, maximum: int, increase: bool) -> Optional[int]:
+        if increase:
+            if val + 1 >= maximum: return None
+            else: return val + 1
+        else:
+            if val - 1 < 0: return None
+            else: return val - 1
+
+    @staticmethod
     def __dress_instruction_string(inst_str: str, use_separator: bool, include_braces: bool):
         if use_separator: sep = "+"
         else: sep = "-"
@@ -558,17 +567,9 @@ class CircuitWidget(Widget):
         :param right: whether we try to move to the right or left
         :return: True if the position changed, otherwise False
         """
-        def move(position: int, right_: bool) -> Optional[int]:
-            if right_:
-                if position + 1 >= len(self.__grid): return None
-                else: return position + 1
-            else:
-                if position - 1 < 0: return None
-                else: return position - 1
-
         pos = self.__action.pos
         while True:
-            pos = move(pos, right)
+            pos = self.__move(pos, self.__grid.num_of_columns, increase=right)
             if pos is None:
                 return False
             elif self.__action.is_valid_pos(pos, self.__grid):
@@ -578,17 +579,9 @@ class CircuitWidget(Widget):
         return True
 
     def __change_qubit(self, up: bool) -> bool:
-        def move(qu: int, up_: bool) -> Optional[int]:
-            if up_:
-                if qu + 1 >= self.__grid.num_of_rows: return None
-                else: return qu + 1
-            else:
-                if qu - 1 < 0: return None
-                else: return qu - 1
-
         qubit = self.__action.qubit
         while True:
-            qubit = move(qubit, up)
+            qubit = self.__move(qubit, self.__grid.num_of_rows, increase=up)
             if qubit is None:
                 return False
             elif self.__action.is_valid_qubit(qubit):
