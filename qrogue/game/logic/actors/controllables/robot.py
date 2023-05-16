@@ -15,7 +15,7 @@ from qrogue.game.logic.collectibles import Coin, Collectible, Consumable, Instru
     Qubit, Energy
 from qrogue.game.logic.collectibles.instruction import RelationalGridInstruction
 from qrogue.util import CheatConfig, Config, Logger, GameplayConfig, QuantumSimulationConfig, Options
-from qrogue.util.util_classes import RelationalGrid
+from qrogue.util.util_classes import RelationalGrid, MyGrid
 
 
 # from jkq import ddsim
@@ -442,7 +442,7 @@ class Robot(Controllable, ABC):
 
         # initialize gate stuff (columns)
         # apply gates/instructions, create the circuit
-        self.__instructions: RelationalGrid[Instruction] = RelationalGrid.empty(self.__attributes.num_of_qubits,
+        self.__instructions: MyGrid[Instruction] = RelationalGrid.empty(self.__attributes.num_of_qubits,
                                                                                 self.__attributes.circuit_space)
         self.update_statevector(use_energy=False, check_for_game_over=False)  # to initialize the statevector
 
@@ -451,7 +451,7 @@ class Robot(Controllable, ABC):
         return self.__backpack
 
     @property
-    def grid(self) -> RelationalGrid[Instruction]:
+    def grid(self) -> MyGrid[Instruction]:
         return self.__instructions
 
     @property
