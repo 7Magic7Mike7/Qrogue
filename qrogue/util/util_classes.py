@@ -446,7 +446,7 @@ class RelationalGrid(MyGrid[T]):
         removal_failed = False
         for qubit in item.row_iter():
             position = None
-            for pos in range(self.num_of_columns):
+            for pos in range(self.num_of_columns):  # todo might make more sense to switch inner and outer loop?
                 val = self._get(qubit, pos)
                 if val == item:
                     position = (qubit, pos)
@@ -535,3 +535,7 @@ class AbsoluteGrid(MyGrid[T]):
 
     def copy(self) -> "MyGrid":
         return AbsoluteGrid(self._raw_copy())
+
+
+# todo grid that defines "maximum depth" instead of "num_of_columns"? Would make conceptually more sense and it's more
+# intuitive why we would not allow placing an item between two rows of a multi row item
