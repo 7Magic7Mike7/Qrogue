@@ -77,7 +77,7 @@ class Ach:
             return progress > 0     # Lesson 0 completed
 
         elif unlock is Unlocks.GateRemove:
-            return progress >= 4    # we are at least in Lesson 4
+            return True     # unlock from the beginning to avoid confusion and complicated implicit removal (via cancel)
         elif unlock is Unlocks.CircuitReset:
             return progress >= MapConfig.num_of_lessons()    # all lessons completed
         elif unlock is Unlocks.PuzzleFlee:

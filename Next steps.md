@@ -33,7 +33,18 @@ For upcoming v0.4
 
 
 # Ideas #
-- Wave Function Collapse algorithm to create random maps instead of the current approach
++ Wave Function Collapse algorithm to create random maps instead of the current approach
+- when defeated by a puzzle, give option to continue trying in the trainings environment
+- Expeditions with hard difficulty are not generated room-wise but dynamically based on WFC (would need tunneling though)
+- fleeing pushes you back to your previous position? Else you could continue without having to solve a Puzzle, so special rewards could only be given as direct reward (bad for visuals since you don't see that)
+  - would make it possible to unlock from the beginning (though we have to take care of events)
+- overhaul puzzle UI:
+  - add "Move" choice
+  - only list unplaced gates (gets rid of positional details which are not needed if "Move" is an option)
+  - "Remove" is used until player cancels (back) or circuit is empty (gets rid of "Reset")
+  - maybe also add "Place" ("Edit" would be to general since move and remove also edit) option? 
+  - this way the old "Confirm" can be done implicitely by going back after you're finished with placing/moving/removing and we don't have to implicitely commit on every change
+  - don't tell the player all the time that the puzzle is not yet solved (they can see it cause the output is still red)
 
 # Finished #
 - raise Errors in Logger instead of arbitrary positions, so we can actually log them!

@@ -168,6 +168,8 @@ class Message(WalkTriggerTile):
 
     def get_img(self):
         if self.__times > 0:
+            if self.__message.id == "donemsg":
+                return TileCode.Goal.representation
             return "."
         else:
             return self._invisible

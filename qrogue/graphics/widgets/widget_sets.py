@@ -911,6 +911,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self.__num_of_qubits = -1   # needs to be an illegal value because we definitely want to reposition all
         # dependent widgets for the first usage of this WidgetSet
         self._details_content = None
+        self._block_details_back = False
         self.__in_expedition = False
 
         posy = 0
@@ -1035,6 +1036,8 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self._choices.set_data(data=(texts, callbacks))
 
     def __details_back(self):
+        if self._block_details_back: return
+
         Widget.move_focus(self._choices, self)
         self._choices.validate_index()
         self._details.render_reset()
@@ -1206,19 +1209,20 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self.__update_calculation(success)
         self.render()
         if success:
+            def give_reward_and_continue():
+                if reward is not None: self._robot.give_collectible(reward)
+                self._block_details_back = False    # undo the blocking since the success notification is over
+                self._continue_exploration_callback()
+            self._block_details_back = True
             if reward is None:
                 self._details.set_data(data=(
                     [f"Congratulations, you solved the "
                      f"{ColorConfig.highlight_object('Puzzle')}!"],
-                    [self._continue_exploration_callback]
+                    [give_reward_and_continue]
                 ))
             else:
                 Logger.instance().assertion(isinstance(reward, Collectible),
                                             f"Error! Reward is not a Collectible: {reward}")
-
-                def give_reward_and_continue():
-                    self._robot.give_collectible(reward)
-                    self._continue_exploration_callback()
                 self._details.set_data(data=(
                     [f"Congratulations! Your reward: {ColorConfig.highlight_object(reward.to_string())}"],
                     [give_reward_and_continue]

@@ -1,5 +1,6 @@
 import time
 from enum import Enum
+from threading import Thread
 from typing import List, Callable, Optional, Any, Tuple
 
 from py_cui import PyCUI
@@ -33,6 +34,9 @@ from qrogue.management import MapManager, Pausing, SaveData, StoryNarration, Tra
 
 
 class QrogueCUI(PyCUI):
+    # how many seconds to wait after starting to mark initialization as complete (relevant for input handling)
+    __INIT_DELAY = 0.1
+
     class _State(Enum):
         Menu = 0
         Pause = 1
@@ -134,6 +138,7 @@ class QrogueCUI(PyCUI):
             return False
 
     def __init__(self, seed: int, width: int = UIConfig.WINDOW_WIDTH, height: int = UIConfig.WINDOW_HEIGHT):
+        self.__init_complete = False
         super().__init__(width, height)
         self.set_title(f"Qrogue {Config.version()}")
         self.__controls = Controls(self._handle_key_presses)
@@ -311,6 +316,16 @@ class QrogueCUI(PyCUI):
 
     def start(self):
         self.__render([self.__cur_widget_set])
+
+        # We don't want to handle accidental input on startup of the game (e.g., during play-testing this once closed
+        # the introduction popup before it even was visible to the player) so we set our init_complete-flag to True
+        # after a short delay. Needs to be in an extra thread so _handle_key_presses() can try to handle the accidental
+        # input. Otherwise, the input queue would not be cleared and the problem only delayed.
+        def call_me():
+            time.sleep(QrogueCUI.__INIT_DELAY)
+            self.__init_complete = True
+        Thread(target=call_me).start()
+
         super(QrogueCUI, self).start()
 
     def __choose_simulation(self):
@@ -357,6 +372,9 @@ class QrogueCUI(PyCUI):
         return False
 
     def _handle_key_presses(self, key_pressed):
+        # ignore all input before we completed initialization
+        if not self.__init_complete: return
+
         if key_pressed == 0:    # skips the "empty" key press during initialization
             return
         if key_pressed == PyCuiConfig.KEY_CTRL_Q:
