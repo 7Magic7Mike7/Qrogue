@@ -215,7 +215,7 @@ class HelpText:
             f"{_HL.help_} - If you ever feel stuck and don't remember how certain stuff in the game works select "
             f"this menu and we will try to help you.\n"
             f"{_HL.options} - Configure some Options of the game, like font size or coloring.\n"
-            f"{_HL.exit_} - Exit the current Level or Expedition and return to the Spaceship.\n",
+            f"{_HL.exit_} - Exit the current Level or Expedition .\n",
 
         HelpTextType.Options:
             "",
