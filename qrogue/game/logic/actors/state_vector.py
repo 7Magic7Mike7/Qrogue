@@ -134,6 +134,15 @@ class StateVector:
         return True
 
     @property
+    def is_classical(self) -> bool:
+        for val in self.__amplitudes:
+            # if there is an imaginary part or the real part is anything except 0 or 1, the StateVector is not classical
+            if val.imag != 0 or val.real not in [0, 1]:
+                return False
+        # if the sum is 1, we have exactly one 1 and everything else is 0 -> we have a classical state
+        return sum(self.__amplitudes) == 1
+
+    @property
     def num_of_used_gates(self) -> int:
         return self.__num_of_used_gates
 

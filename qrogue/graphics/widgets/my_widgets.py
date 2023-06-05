@@ -13,7 +13,7 @@ from qrogue.game.world.map import Map
 from qrogue.game.world.navigation import Direction
 from qrogue.util import ColorConfig, Controls, Keys, Logger, Config, HudConfig, GameplayConfig, Options
 from qrogue.util.config import QuantumSimulationConfig, InstructionConfig
-from qrogue.util.util_functions import center_string, align_string
+from qrogue.util.util_functions import center_string, align_string, to_binary_string
 
 from qrogue.graphics import WidgetWrapper
 from qrogue.graphics.rendering import ColorRules
@@ -404,9 +404,21 @@ class CircuitWidget(Widget):
                 return True
             return False
 
+    @staticmethod
+    def __circuit_qubit_value(stv: StateVector, qubit: int):
+        if stv is not None and stv.is_classical:
+            index = stv.to_value().index(1)    # find where the amplitude is 1
+            # get the respective qubit values but in lsb, so we can use $qubit directly as index
+            values = to_binary_string(index, stv.num_of_qubits, msb=False)
+            return f"= {values[qubit]} "
+        else:
+            return ""
+
     def __init__(self, widget: WidgetWrapper, controls: Controls):
         super().__init__(widget)
         self.__robot: Optional[Robot] = None
+        self.__output: Optional[StateVector] = None
+        self.__input: Optional[StateVector] = None
         self.__place_holder_data: Optional[CircuitWidget.PlaceHolderData] = None
 
         widget.add_key_command(controls.get_keys(Keys.SelectionUp), self.__move_up)
@@ -526,8 +538,12 @@ class CircuitWidget(Widget):
                 Logger.instance().error("Place_Gate() did not work correctly", from_pycui=False)
         return False, None
 
-    def set_data(self, robot: Robot) -> None:
-        self.__robot = robot
+    def set_data(self, data: Tuple[Robot, Optional[Tuple[StateVector, StateVector]]]) -> None:
+        self.__robot, vectors = data
+        if vectors is None:
+            self.__input, self.__output = None, None
+        else:
+            self.__input, self.__output = vectors
 
     def render(self) -> None:
         if self.__robot is not None:
@@ -554,13 +570,13 @@ class CircuitWidget(Widget):
             circ_str = " In "   # for some reason the whitespace in front is needed to center the text correctly
             # place qubits from top to bottom, high to low index
             for q in range(len(rows) - 1, -1, -1):
-                circ_str += f"| q{q} >"
+                circ_str += f"| q{q} {CircuitWidget.__circuit_qubit_value(self.__input, q)}>"
                 row = rows[q]
                 for i in range(len(row)):
                     circ_str += row[i]
                     if i < len(row) - 1:
                         circ_str += "+"
-                circ_str += f"< q'{q} |"
+                circ_str += f"< q'{q} {CircuitWidget.__circuit_qubit_value(self.__output, q)}|"
                 if q == len(rows) - 1:
                     circ_str += " Out"
                 circ_str += "\n"

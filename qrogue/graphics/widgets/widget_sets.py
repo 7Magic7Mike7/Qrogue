@@ -1105,7 +1105,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         super(ReachTargetWidgetSet, self).update_story_progress(progress)
         self.__init_details()
 
-    def set_data(self, robot: Robot, target: Target, in_expedition: bool) -> None:
+    def set_data(self, robot: Robot, target: Target, in_expedition: bool, tutorial_data) -> None:
         self._robot = robot
         self._target = target
         self.__in_expedition = in_expedition
@@ -1118,7 +1118,11 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             robot.reset_circuit()
 
         self._hud.set_data((robot, None, None))  # don't overwrite the current map name
-        self.__circuit.set_data(robot)
+        if tutorial_data:
+            vectors = StateVector.create_zero_state_vector(target.state_vector.num_of_qubits), target.state_vector
+        else:
+            vectors = None
+        self.__circuit.set_data((robot, vectors))
 
         self.__input_stv.set_data(StateVector.create_zero_state_vector(robot.num_of_qubits))
         self.__mul_widget.set_data(self._sign_offset + "x")
@@ -1274,8 +1278,8 @@ class FightWidgetSet(ReachTargetWidgetSet):
                                              reopen_popup_callback)
         self.__flee_check = None
 
-    def set_data(self, robot: Robot, target: Enemy, in_expedition: bool):
-        super(FightWidgetSet, self).set_data(robot, target, in_expedition)
+    def set_data(self, robot: Robot, target: Enemy, in_expedition: bool, tutorial_data):
+        super(FightWidgetSet, self).set_data(robot, target, in_expedition, tutorial_data)
         self.__flee_check = target.flee_check
 
     def _on_commit_fail(self) -> bool:
@@ -1313,8 +1317,8 @@ class BossFightWidgetSet(FightWidgetSet):
                  continue_exploration_callback: Callable[[bool], None], reopen_popup_callback: Callable[[], None]):
         super().__init__(controls, render, logger, root, continue_exploration_callback, reopen_popup_callback)
 
-    def set_data(self, robot: Robot, target: Boss, in_expedition: bool):
-        super(BossFightWidgetSet, self).set_data(robot, target, in_expedition)
+    def set_data(self, robot: Robot, target: Boss, in_expedition: bool, tutorial_data):
+        super(BossFightWidgetSet, self).set_data(robot, target, in_expedition, tutorial_data)
 
     def _on_commit_fail(self) -> bool:
         if GameplayConfig.get_option_value(Options.energy_mode):
@@ -1429,8 +1433,8 @@ class RiddleWidgetSet(ReachTargetWidgetSet):
         super().__init__(controls, render, logger, root, continue_exploration_callback, reopen_popup_callback,
                          "Give Up")
 
-    def set_data(self, robot: Robot, target: Riddle, in_expedition: bool) -> None:
-        super(RiddleWidgetSet, self).set_data(robot, target, in_expedition)
+    def set_data(self, robot: Robot, target: Riddle, in_expedition: bool, tutorial_data) -> None:
+        super(RiddleWidgetSet, self).set_data(robot, target, in_expedition, tutorial_data)
         self._hud.set_data((robot, None, f"Remaining {RiddleWidgetSet.__TRY_PHRASING}: {target.attempts}"))
 
     def _on_commit_fail(self) -> bool:
@@ -1465,8 +1469,8 @@ class ChallengeWidgetSet(ReachTargetWidgetSet):
                  continue_exploration_callback: Callable[[bool], None], reopen_popup_callback: Callable[[], None]):
         super().__init__(controls, render, logger, root, continue_exploration_callback, reopen_popup_callback)
 
-    def set_data(self, robot: Robot, target: Challenge, in_expedition: bool) -> None:
-        super(ChallengeWidgetSet, self).set_data(robot, target, in_expedition)
+    def set_data(self, robot: Robot, target: Challenge, in_expedition: bool, tutorial_data) -> None:
+        super(ChallengeWidgetSet, self).set_data(robot, target, in_expedition, tutorial_data)
         if target.min_gates == target.max_gates:
             constraints = f"Constraints: Use exactly {target.min_gates} gates."
         else:

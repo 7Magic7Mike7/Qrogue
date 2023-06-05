@@ -109,6 +109,10 @@ class MapManager:
     def in_expedition(self) -> bool:
         return self.__cur_map.get_type() is MapType.Expedition
 
+    @property
+    def show_qubit_values(self) -> bool:    # todo think of a better name?
+        return True     # todo find naming scheme for maps for this?
+
     def __show_spaceship(self):
         self.__show_world(None)
 

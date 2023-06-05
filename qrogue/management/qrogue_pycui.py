@@ -599,7 +599,7 @@ class QrogueCUI(PyCUI):
     def _switch_to_training(self, data=None):
         if data:
             robot, enemy = data
-            self.__training.set_data(robot, enemy, False)
+            self.__training.set_data(robot, enemy, False, False)
         self.apply_widget_set(self.__training)
 
     def __use_workbench(self, direction: Direction, controllable: Controllable):
@@ -698,14 +698,16 @@ class QrogueCUI(PyCUI):
         if data is not None:
             robot = data[0]
             enemy = data[1]
-            self.__fight.set_data(robot, enemy, MapManager.instance().in_expedition)
+            self.__fight.set_data(robot, enemy, MapManager.instance().in_expedition,
+                                  MapManager.instance().show_qubit_values)
         self.apply_widget_set(self.__fight)
 
     def _switch_to_boss_fight(self, data) -> None:
         if data is not None:
             player = data[0]
             boss = data[1]
-            self.__boss_fight.set_data(player, boss, MapManager.instance().in_expedition)
+            self.__boss_fight.set_data(player, boss, MapManager.instance().in_expedition,
+                                       MapManager.instance().show_qubit_values)
         self.apply_widget_set(self.__boss_fight)
 
     def __open_riddle(self, robot: Robot, riddle: Riddle):
@@ -715,7 +717,8 @@ class QrogueCUI(PyCUI):
         if data is not None:
             player = data[0]
             riddle = data[1]
-            self.__riddle.set_data(player, riddle, MapManager.instance().in_expedition)
+            self.__riddle.set_data(player, riddle, MapManager.instance().in_expedition,
+                                   MapManager.instance().show_qubit_values)
         self.apply_widget_set(self.__riddle)
 
     def __open_challenge(self, robot: Robot, challenge: Challenge):
@@ -725,7 +728,8 @@ class QrogueCUI(PyCUI):
         if data is not None:
             robot = data[0]
             challenge = data[1]
-            self.__challenge.set_data(robot, challenge, MapManager.instance().in_expedition)
+            self.__challenge.set_data(robot, challenge, MapManager.instance().in_expedition,
+                                      MapManager.instance().show_qubit_values)
         self.apply_widget_set(self.__challenge)
 
     def __visit_shop(self, robot: Robot, items: "list of ShopItems"):
