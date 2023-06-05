@@ -1,7 +1,7 @@
 import time
 from enum import Enum
 from threading import Thread
-from typing import List, Callable, Optional, Any, Tuple
+from typing import List, Callable, Optional, Any, Tuple, Union
 
 from py_cui import PyCUI
 from py_cui import popups
@@ -679,14 +679,20 @@ class QrogueCUI(PyCUI):
             Popup.generic_info("Pause", HelpText.get(HelpTextType.Pause))
             SaveData.instance().achievement_manager.add_to_achievement(achievements.EnteredPauseMenu, 1)
 
-    def _switch_to_explore(self, data) -> None:
+    def _switch_to_explore(self, data: Optional[Union[Map, Tuple[Optional[Map], Optional[bool]]]]) -> None:
         if data is not None:
-            map_ = data
-            self.__explore.set_data(map_)
+            if isinstance(data, Map):
+                self.__explore.set_data(data)
+            else:
+                map_, undo_last_move = data
+                if map_ is not None:
+                    self.__explore.set_data(map_)
+                if undo_last_move:
+                    self.__explore.undo_last_move()
         self.apply_widget_set(self.__explore)
 
-    def __continue_explore(self) -> None:
-        self.__state_machine.change_state(QrogueCUI._State.Explore, None)
+    def __continue_explore(self, undo_last_move: bool = False) -> None:
+        self.__state_machine.change_state(QrogueCUI._State.Explore, (None, undo_last_move))
 
     def _switch_to_fight(self, data) -> None:
         if data is not None:

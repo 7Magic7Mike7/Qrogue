@@ -219,6 +219,7 @@ class Map(BaseMap, ABC):
 
         self.__controllable_tile = tiles.ControllableTile(controllable)
         self.__controllable_pos = BaseMap._calculate_pos(spawn_room, Coordinate(Area.MID_X, Area.MID_Y))
+        self.__move_direction = Direction.Center    # initially we didn't move in any direction
 
         self.__cur_area = self.room_at(spawn_room.x, spawn_room.y)
         if self.__cur_area is None:
@@ -278,9 +279,21 @@ class Map(BaseMap, ABC):
                 tile.trigger(direction, self.controllable_tile.controllable, self.__trigger_event)
 
             self.__controllable_pos = new_pos
+            self.__move_direction = direction
             return True
         else:
             return False
+
+    def undo_last_move(self) -> bool:
+        """
+        Tries to undo the last movement (i.e., move in the opposite direction). Fails at the beginning of a Map when
+        there was no movement yet or if something blocks the Controllable to move back (e.g., directional doors).
+
+        :return: True if we were able to undo the last move, False otherwise
+        """
+        if self.__move_direction is Direction.Center: return False
+
+        return self.move(self.__move_direction.opposite())
 
     def tunnel(self, pos_of_room: Coordinate, pos_in_room: Optional[Coordinate]) -> bool:
         if pos_in_room is None:

@@ -866,6 +866,9 @@ class ExploreWidgetSet(MapWidgetSet):
         self.__hud = MyWidgetSet.create_hud_row(self)
         ColorRules.apply_map_rules(self._map_widget.widget)
 
+    def undo_last_move(self) -> bool:
+        return self._map_widget.undo_last_move()
+
     def set_data(self, map_: Map) -> None:
         controllable = map_.controllable_tile.controllable
         if isinstance(controllable, Robot):
@@ -908,11 +911,12 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
     _DETAILS_EDIT = 3
 
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
-                 continue_exploration_callback: Callable[[], None], reopen_popup_callback: Callable[[], None],
+                 continue_exploration_callback: Callable[[bool], None], reopen_popup_callback: Callable[[], None],
                  flee_choice: str = "Flee"):
         super().__init__(logger, root, render)
         self.__flee_choice = flee_choice
-        self._continue_exploration_callback = continue_exploration_callback
+        self._continue_exploration_callback = lambda: continue_exploration_callback(False)
+        self._continue_and_undo_callback = lambda: continue_exploration_callback(True)
         self._robot: Optional[Robot] = None
         self._target: Optional[Target] = None
         self.__num_of_qubits = -1   # needs to be an illegal value because we definitely want to reposition all
@@ -1265,7 +1269,7 @@ class TrainingsWidgetSet(ReachTargetWidgetSet):
 
 class FightWidgetSet(ReachTargetWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
-                 continue_exploration_callback: Callable[[], None], reopen_popup_callback: Callable[[], None]):
+                 continue_exploration_callback: Callable[[bool], None], reopen_popup_callback: Callable[[], None]):
         super(FightWidgetSet, self).__init__(controls, render, logger, root, continue_exploration_callback,
                                              reopen_popup_callback)
         self.__flee_check = None
@@ -1293,7 +1297,7 @@ class FightWidgetSet(ReachTargetWidgetSet):
         if self.__flee_check():
             self._details.set_data(data=(
                 [f"Fled successfully. {extra_text}"],
-                [self._continue_exploration_callback]
+                [self._continue_and_undo_callback]
             ))
         else:
             self._details.set_data(data=(
@@ -1306,7 +1310,7 @@ class FightWidgetSet(ReachTargetWidgetSet):
 
 class BossFightWidgetSet(FightWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
-                 continue_exploration_callback: Callable[[], None], reopen_popup_callback: Callable[[], None]):
+                 continue_exploration_callback: Callable[[bool], None], reopen_popup_callback: Callable[[], None]):
         super().__init__(controls, render, logger, root, continue_exploration_callback, reopen_popup_callback)
 
     def set_data(self, robot: Robot, target: Boss, in_expedition: bool):
@@ -1421,7 +1425,7 @@ class RiddleWidgetSet(ReachTargetWidgetSet):
     __TRY_PHRASING = "edits"
 
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
-                 continue_exploration_callback: Callable[[None], None], reopen_popup_callback: Callable[[], None]):
+                 continue_exploration_callback: Callable[[bool], None], reopen_popup_callback: Callable[[], None]):
         super().__init__(controls, render, logger, root, continue_exploration_callback, reopen_popup_callback,
                          "Give Up")
 
@@ -1444,21 +1448,21 @@ class RiddleWidgetSet(ReachTargetWidgetSet):
         if self._target.can_attempt:
             self._details.set_data(data=(
                 [f"Abort - you can still try again later", "Continue"],
-                [self._continue_exploration_callback, self._empty_callback]
+                [self._continue_and_undo_callback, self._empty_callback]
             ))
             self._details_content = ReachTargetWidgetSet._DETAILS_INFO_THEN_EDIT
         else:
             self._details.set_data(data=(
                 [f"Abort - but you don't have any {RiddleWidgetSet.__TRY_PHRASING} left to try again later!",
                  "Continue"],
-                [self._continue_exploration_callback, self._empty_callback]
+                [self._continue_and_undo_callback, self._empty_callback]
             ))
         return True
 
 
 class ChallengeWidgetSet(ReachTargetWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
-                 continue_exploration_callback: Callable[[], None], reopen_popup_callback: Callable[[], None]):
+                 continue_exploration_callback: Callable[[bool], None], reopen_popup_callback: Callable[[], None]):
         super().__init__(controls, render, logger, root, continue_exploration_callback, reopen_popup_callback)
 
     def set_data(self, robot: Robot, target: Challenge, in_expedition: bool) -> None:
@@ -1485,6 +1489,6 @@ class ChallengeWidgetSet(ReachTargetWidgetSet):
 
         self._details.set_data(data=(
             ["You successfully fled!"],
-            [self._continue_exploration_callback]
+            [self._continue_and_undo_callback]
         ))
         return True

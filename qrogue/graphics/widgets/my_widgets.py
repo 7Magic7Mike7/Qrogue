@@ -575,7 +575,7 @@ class MapWidget(Widget):
     def __init__(self, widget: WidgetWrapper):
         super().__init__(widget)
         self.__map_started = False
-        self.__map = None
+        self.__map: Optional[Map] = None
         self.__backup = None
 
     def set_data(self, map_: Map) -> None:
@@ -606,6 +606,11 @@ class MapWidget(Widget):
 
     def move(self, direction: Direction) -> bool:
         return self.__map.move(direction)
+
+    def undo_last_move(self) -> bool:
+        if self.__map is not None:
+            return self.__map.undo_last_move()
+        return False
 
 
 class StateVectorWidget(Widget):
