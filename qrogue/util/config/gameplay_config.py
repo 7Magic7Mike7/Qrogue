@@ -243,8 +243,8 @@ def _get_float_callback(min_: float, max_: float, steps: int) -> Tuple[Callable[
 
 class Options(Enum):
     energy_mode = ("Energy Mode", _get_boolean_callback(), 2, 0,
-                  "In energy mode every change to your circuit costs energy. You loose if your Robot is out of "
-                  "energy.")
+                   "In energy mode every change to your circuit costs energy. You loose if your Robot is out of "
+                   "energy.")
 
     auto_save = ("Auto Save", _get_boolean_callback(), 2, 1,
                  "Whether to automatically save the game on exit or not.")
