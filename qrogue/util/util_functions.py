@@ -1,4 +1,5 @@
 import enum
+import math
 from typing import Optional, Any
 
 __DEFAULT_CHARACTER = " "
@@ -37,6 +38,8 @@ def to_binary_string(num: int, digits: Optional[int] = None, msb: bool = True) -
     :param msb: whether to place the most or least significant bit(s) first
     :return:
     """
+    if digits is None:
+        digits = int(math.ceil(math.log2(num)))
     str_rep = ""
     i = 0
     while True:
