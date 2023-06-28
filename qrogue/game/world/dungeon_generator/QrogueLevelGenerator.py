@@ -2,12 +2,14 @@ from typing import Callable, List, Tuple, Dict, Optional, Set
 
 from antlr4 import InputStream, CommonTokenStream
 from antlr4.tree.Tree import TerminalNodeImpl
+from qiskit import QuantumCircuit
 
 from qrogue.game.logic import Message, StateVector
 from qrogue.game.logic.actors import Controllable, Riddle, Robot, robot
 from qrogue.game.logic.actors.puzzles import Challenge
 from qrogue.game.logic.collectibles import Collectible, pickup, instruction, MultiCollectible, Qubit, ShopItem, \
     CollectibleFactory, OrderedCollectibleFactory
+from qrogue.game.logic.collectibles.instruction import MultiQubitGate, SingleQubitGate, InstructionManager, Instruction
 from qrogue.game.target_factory import EnemyFactory, ExplicitTargetDifficulty
 from qrogue.game.world import tiles
 from qrogue.game.world.map import CallbackPack, LevelMap, rooms, MapMetaData
@@ -446,14 +448,65 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
     ##### StateVector Pool area #####
 
+    def visitCircuit_gate_single(self, ctx: QrogueDungeonParser.Circuit_gate_singleContext) -> List[Instruction]:
+        qubit_index = int(ctx.QUBIT_SPECIFIER().getText()[1:])
+        gates: List[Instruction] = []
+        for gate_spec in ctx.GATE_SPECIFIER():
+            name = gate_spec.getText()[1:]
+            gate = InstructionManager.from_name(name)
+            if gate is None:
+                parser_util.error(f"Invalid gate name: {name}")
+                continue
+            gate.use_qubit(qubit_index)
+            gates.append(gate)
+        return gates
+
+    def visitCircuit_gate_multi(self, ctx: QrogueDungeonParser.Circuit_gate_multiContext) -> Optional[Instruction]:
+        name = ctx.GATE_SPECIFIER().getText()[1:]
+        gate = InstructionManager.from_name(name)
+        if gate is None:
+            parser_util.error(f"Invalid gate name: {name}")
+            return None
+
+        num_provided_qubits = len(ctx.QUBIT_SPECIFIER())
+        if gate.num_of_qubits > num_provided_qubits:
+            parser_util.error(f"Not enough qubits provided! {gate.num_of_qubits} are needed but only "
+                              f"{num_provided_qubits} are specified.")
+            return None
+        elif gate.num_of_qubits < num_provided_qubits:
+            parser_util.warning(f"Too much qubits provided. {gate.num_of_qubits} are needed but {num_provided_qubits} "
+                                f"are specified. The last {num_provided_qubits - gate.num_of_qubits} qubits are "
+                                f"ignored.")
+
+        for qubit_spec in ctx.QUBIT_SPECIFIER():
+            qubit = int(qubit_spec.getText()[1:])
+            gate.use_qubit(qubit)
+
+        return gate
+
+    def visitCircuit_stv(self, ctx: QrogueDungeonParser.Circuit_stvContext) -> StateVector:
+        num_qubits = parser_util.parse_integer(ctx)
+
+        gates: List[Instruction] = []
+        for single_spec in ctx.circuit_gate_single():
+            gates += self.visit(single_spec)
+        for multi_spec in ctx.circuit_gate_multi():
+            gate = self.visit(multi_spec)
+            if gate is not None: gates.append(gate)
+
+        return StateVector.from_gates(gates, num_qubits)
+
     def visitStv(self, ctx: QrogueDungeonParser.StvContext) -> StateVector:
-        amplitudes = []
-        for cn in ctx.complex_number():
-            amplitudes.append(self.visit(cn))
-        if not StateVector.check_amplitudes(amplitudes):
-            self.warning(f"Invalid amplitudes for StateVector: {amplitudes}! Using 0-only basis state instead.")
-            amplitudes = [1] + [0] * (2 ** self.__robot.num_of_qubits - 1)
-        return StateVector(amplitudes)
+        if ctx.circuit_stv():
+            return self.visit(ctx.circuit_stv())
+        else:
+            amplitudes = []
+            for cn in ctx.complex_number():
+                amplitudes.append(self.visit(cn))
+            if not StateVector.check_amplitudes(amplitudes):
+                self.warning(f"Invalid amplitudes for StateVector: {amplitudes}! Using 0-only basis state instead.")
+                amplitudes = [1] + [0] * (2 ** self.__robot.num_of_qubits - 1)
+            return StateVector(amplitudes)
 
     def visitStv_ref(self, ctx: QrogueDungeonParser.Stv_refContext) -> List[StateVector]:
         if ctx.stv():
@@ -613,6 +666,13 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             reward = reward_factory.produce(self.__rm)
         return stv, reward
 
+    def visitInput_stv(self, ctx: QrogueDungeonParser.Input_stvContext) -> StateVector:
+        if ctx.REFERENCE():
+            difficulty = self.__load_target_difficulty(ctx.REFERENCE())
+            return difficulty.create_statevector(self.__robot, self.__rm)
+        else:
+            return self.visit(ctx.stv())
+
     def visitRiddle_descriptor(self, ctx: QrogueDungeonParser.Riddle_descriptorContext) -> tiles.Riddler:
         attempts = self.visit(ctx.integer())
         stv, reward = self.visit(ctx.puzzle_parameter())
@@ -742,6 +802,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         else:
             # don't use ref_index here because it will always be 0 if present
             difficulty = self.__load_target_difficulty(ctx.REFERENCE(0))
+
+        input_stv = self.visit(ctx.input_stv()) if ctx.input_stv() else None
 
         enemy_factory = EnemyFactory(self.__cbp.start_fight, difficulty, 1)
         if reward_factory:  # if a reward pool was specified we use it
