@@ -1,6 +1,6 @@
 import enum
 from abc import ABC, abstractmethod
-from typing import Iterator, Optional
+from typing import Iterator, Optional, Set, Dict
 
 import qiskit.circuit
 import qiskit.circuit.library.standard_gates as gates
@@ -12,21 +12,27 @@ from qrogue.util import ShopConfig, Logger
 
 class GateType(enum.Enum):
     # unique by their short name
-    IGate = "I"
-    XGate = "X"
-    YGate = "Y"
-    ZGate = "Z"
-    HGate = "Hadamard"
+    IGate = "I", {"Identity"}
+    XGate = "X", {"Pauli X", "Pauli-X"}
+    YGate = "Y", {"Pauli Y", "Pauli-Y"}
+    ZGate = "Z", {"Pauli Z", "Pauli-Z"}
+    HGate = "H", {"Hadamard"}
 
-    SwapGate = "Swap"
-    CXGate = "CX"
+    SwapGate = "Swap", set()
+    CXGate = "CX", {"Controlled X", "CNOT", "Controlled NOT"}
 
-    def __init__(self, short_name: str):
+    def __init__(self, short_name: str, other_names: Set[str]):
         self.__short_name = short_name
+        self.__names = other_names
+        self.__names.add(short_name)
 
     @property
     def short_name(self) -> str:
         return self.__short_name
+
+    @property
+    def names(self) -> Set[str]:
+        return self.__names
 
 
 class Instruction(Collectible, ABC):
@@ -292,3 +298,25 @@ class CXGate(DoubleQubitGate):
 
     def copy(self) -> "Instruction":
         return CXGate()
+
+
+class InstructionManager:
+    __GATES: Dict[GateType, Instruction] = {
+        GateType.IGate: IGate(),
+
+        GateType.XGate: XGate(),
+        GateType.YGate: YGate(),
+        GateType.ZGate: ZGate(),
+
+        GateType.HGate: HGate(),
+
+        GateType.SwapGate: SwapGate(),
+        GateType.CXGate: CXGate(),
+    }
+
+    @staticmethod
+    def from_name(name: str) -> Optional[Instruction]:
+        for val in GateType:
+            if name in val.names:
+                return InstructionManager.__GATES[val]
+        return None
