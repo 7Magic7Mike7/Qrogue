@@ -11,14 +11,17 @@ class Target(ABC):
     Base class for fight-/puzzle-targets.
     """
 
-    def __init__(self, target: StateVector, reward: Collectible):
+    def __init__(self, target: StateVector, reward: Collectible, input_: Optional[StateVector] = None):
         """
         Creates a Target with a given target state vector and a reward.
         :param target: the StateVector to reach
         :param reward: the Collectible to get as a reward
+        :param input_: the StateVector to start with (all |0> by default)
         """
         self.__target: StateVector = target
         self.__reward: Collectible = reward
+        self.__input: StateVector = StateVector.create_zero_state_vector(target.num_of_qubits) if input_ is None \
+            else input_
         self.__is_active: bool = True
 
     @property
@@ -30,9 +33,13 @@ class Target(ABC):
         return self.__target
 
     @property
+    def input_stv(self) -> StateVector:
+        return self.__input
+
+    @property
     def is_active(self) -> bool:
         """
-        By default Targets are active. They turn inactive as soon as their StateVector is reached.
+        By default, Targets are active. They turn inactive as soon as their StateVector is reached.
 
         :return: whether this Target is still active or not
         """

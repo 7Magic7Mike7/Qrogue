@@ -1105,7 +1105,13 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         super(ReachTargetWidgetSet, self).update_story_progress(progress)
         self.__init_details()
 
-    def set_data(self, robot: Robot, target: Target, in_expedition: bool, tutorial_data) -> None:
+    def set_data(self, robot: Robot, target: Target, in_expedition: bool, tutorial_data: Any) -> None:
+        """
+        :param robot: the Robot that tries to solve the puzzle
+        :param target: the Target of which the Robot should reach the StateVector
+        :param in_expedition: whether we're currently in a randomly generated expedition or level
+        :param tutorial_data: additional data we might need for tutorial purposes
+        """
         self._robot = robot
         self._target = target
         self.__in_expedition = in_expedition
@@ -1119,12 +1125,12 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
         self._hud.set_data((robot, None, None))  # don't overwrite the current map name
         if tutorial_data:
-            vectors = StateVector.create_zero_state_vector(target.state_vector.num_of_qubits), target.state_vector
+            vectors = target.input_stv, target.state_vector
         else:
             vectors = None
         self.__circuit.set_data((robot, vectors))
 
-        self.__input_stv.set_data(StateVector.create_zero_state_vector(robot.num_of_qubits))
+        self.__input_stv.set_data(target.input_stv)
         self.__mul_widget.set_data(self._sign_offset + "x")
         self.__result_widget.set_data(self._sign_offset + "=")
         self.__update_calculation(False)
