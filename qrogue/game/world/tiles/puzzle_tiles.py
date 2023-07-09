@@ -1,7 +1,7 @@
 from enum import Enum
-from typing import Callable, List
+from typing import Callable, List, Optional
 
-from qrogue.game.logic.actors import Controllable, Robot, Boss as BossActor
+from qrogue.game.logic.actors import Controllable, Robot, Enemy as EnemyActor, Boss as BossActor
 from qrogue.game.target_factory import EnemyFactory
 from qrogue.game.world.navigation import Direction
 from qrogue.util import RandomManager, Logger, CheatConfig, PuzzleConfig
@@ -17,8 +17,8 @@ class Enemy(WalkTriggerTile):
         DEAD = 3
         FLED = 4
 
-    def __init__(self, factory: EnemyFactory, get_entangled_tiles: Callable[[int], List["Enemy"]],
-                 update_entangled_groups: Callable[["Enemy"], None], e_id: int = 0):
+    def __init__(self, factory: EnemyFactory, get_entangled_tiles: Callable[[int], List[EnemyActor]],
+                 update_entangled_groups: Callable[[EnemyActor], None], e_id: int = 0):
         super().__init__(TileCode.Enemy)
         self.__factory = factory
         self.__state = Enemy._EnemyState.UNDECIDED
@@ -26,7 +26,7 @@ class Enemy(WalkTriggerTile):
         self.__update_entangled_groups = update_entangled_groups
         self.__id = e_id
         self.__rm = RandomManager.create_new()
-        self.__enemy = None
+        self.__enemy: Optional[EnemyActor] = None
 
     @property
     def data(self) -> int:
