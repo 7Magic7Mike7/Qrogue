@@ -441,7 +441,7 @@ class Robot(Controllable, ABC):
         # initialize gate stuff (columns)
         self.__instruction_count: int = 0   # how many instructions are currently placed on the circuit
 
-        # apply gates/instructions, create the circuit
+        # initialize based on empty circuit
         self.__instructions: List[Optional[Instruction]] = [None] * attributes.circuit_space
         self.update_statevector(use_energy=False, check_for_game_over=False)  # to initialize the statevector
 
@@ -502,15 +502,14 @@ class Robot(Controllable, ABC):
     def use_key(self) -> bool:
         return self.backpack.use_key()
 
-    def update_statevector(self, use_energy: bool = True, check_for_game_over: bool = True,
-                           input_stv: Optional[StateVector] = None):
+    def update_statevector(self, input_stv: StateVector, use_energy: bool = True, check_for_game_over: bool = True):
         """
         Compiles and simulates the current circuit and saves and returns the resulting StateVector. Can also lead to a
         game over.
 
+        :param input_stv: custom StateVector used as input
         :param use_energy: whether the update should cost energy or not, defaults to True
         :param check_for_game_over: whether we should perform a game over check or not
-        :param input_stv: optional custom StateVector used as input, default is used if None is provided
         :return: None
         """
         if check_for_game_over and self.game_over_check():
