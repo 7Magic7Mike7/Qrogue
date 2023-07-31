@@ -1133,8 +1133,10 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self.__input_stv.set_data(target.input_stv)
         self.__mul_widget.set_data(self._sign_offset + "x")
         self.__result_widget.set_data(self._sign_offset + "=")
-        self.__update_calculation(False)
         self.__stv_target.set_data(target.state_vector)
+
+        self._robot.update_statevector(input_stv=target.input_stv, use_energy=False, check_for_game_over=False)
+        self.__update_calculation(False)
 
         self.__init_details()
 
@@ -1220,7 +1222,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         if self._target is None:
             Logger.instance().error("Error! Target is not set!", from_pycui=False)
             return False
-        self._robot.update_statevector()
+        self._robot.update_statevector(input_stv=self._target.input_stv)
         success, reward = self._target.is_reached(self._robot.state_vector)
         self.__update_calculation(success)
         self.render()

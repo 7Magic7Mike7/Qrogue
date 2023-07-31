@@ -6,7 +6,7 @@ from qiskit import transpile, QuantumCircuit
 from qiskit.providers.aer import StatevectorSimulator
 
 from qrogue.game.logic.collectibles import Instruction
-from qrogue.util import Logger, QuantumSimulationConfig, GameplayConfig, Options, CheatConfig
+from qrogue.util import Logger, QuantumSimulationConfig, GameplayConfig, Options, CheatConfig, Config
 from qrogue.util.config import ColorCode, ColorConfig
 from qrogue.util.util_functions import is_power_of_2, center_string, to_binary_string, align_string
 
@@ -260,8 +260,18 @@ class StateVector:
 
 
 class CircuitMatrix:
-    def __init__(self, matrix: List[List[complex]]):
+    @staticmethod
+    def create_identity(num_of_qubits: int) -> "CircuitMatrix":
+        matrix = []
+        for i in range(2**num_of_qubits):
+            row = [0] * 2**num_of_qubits
+            row[i] = 1
+            matrix.append(row)
+        return CircuitMatrix(matrix, num_of_used_gates=0)
+
+    def __init__(self, matrix: List[List[complex]], num_of_used_gates: int):
         self.__matrix = matrix
+        self.__num_of_used_gates = num_of_used_gates
 
     @property
     def size(self) -> int:
@@ -270,6 +280,24 @@ class CircuitMatrix:
     @property
     def num_of_qubits(self) -> int:
         return int(np.log2(self.size))
+
+    @property
+    def num_of_used_gates(self) -> int:
+        return self.__num_of_used_gates
+
+    def multiply(self, stv: StateVector) -> Optional[StateVector]:  # todo improve performance?
+        if self.num_of_qubits == stv.num_of_qubits:
+            values = []
+            for row in self.__matrix:
+                val = 0
+                for i, entry in enumerate(row):
+                    val += entry * stv.at(i)
+                values.append(val)
+            return StateVector(values, stv.num_of_used_gates + self.num_of_used_gates)
+        else:
+            Logger.instance().error(f"@multiply: CircuitMatrix (=#{self.num_of_qubits}) and Stv (={stv.num_of_qubits}) "
+                                    f"don't have the same number of qubits!", show=Config.debugging(), from_pycui=False)
+            return None
 
     def to_string(self, space_per_value: int = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER) -> str:
         spacing = " "

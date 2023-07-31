@@ -502,13 +502,15 @@ class Robot(Controllable, ABC):
     def use_key(self) -> bool:
         return self.backpack.use_key()
 
-    def update_statevector(self, use_energy: bool = True, check_for_game_over: bool = True):
+    def update_statevector(self, use_energy: bool = True, check_for_game_over: bool = True,
+                           input_stv: Optional[StateVector] = None):
         """
         Compiles and simulates the current circuit and saves and returns the resulting StateVector. Can also lead to a
         game over.
 
         :param use_energy: whether the update should cost energy or not, defaults to True
         :param check_for_game_over: whether we should perform a game over check or not
+        :param input_stv: optional custom StateVector used as input, default is used if None is provided
         :return: None
         """
         if check_for_game_over and self.game_over_check():
@@ -519,15 +521,20 @@ class Robot(Controllable, ABC):
             if inst:
                 inst.append_to(circuit)
 
-        compiled_circuit = transpile(circuit, self.__simulator)
-        job = self.__simulator.run(compiled_circuit, shots=1)
-        result = job.result()
-        self.__stv = StateVector(result.get_statevector(circuit), num_of_used_gates=self.__instruction_count)
-
         job = execute(circuit, self.__backend)
         result = job.result()
         self.__circuit_matrix = CircuitMatrix(result.get_unitary(circuit,
-                                                                 decimals=QuantumSimulationConfig.DECIMALS).data)
+                                                                 decimals=QuantumSimulationConfig.DECIMALS).data,
+                                              num_of_used_gates=len(self.__instructions))
+
+        if input_stv is None:   # todo: input_stv might only be None if the circuit is empty (reset or initialized)
+            compiled_circuit = transpile(circuit, self.__simulator)
+            job = self.__simulator.run(compiled_circuit, shots=1)
+            result = job.result()
+            self.__stv = StateVector(result.get_statevector(circuit), num_of_used_gates=self.__instruction_count)
+        else:
+            self.__stv = self.__circuit_matrix.multiply(input_stv)
+
         if use_energy and GameplayConfig.get_option_value(Options.energy_mode):
             self.decrease_energy(amount=1)
 

@@ -805,7 +805,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
         input_stv = self.visit(ctx.input_stv()) if ctx.input_stv() else None
 
-        enemy_factory = EnemyFactory(self.__cbp.start_fight, difficulty, 1)
+        enemy_factory = EnemyFactory(self.__cbp.start_fight, difficulty, 1, input_stv)
         if reward_factory:  # if a reward pool was specified we use it
             enemy_factory.set_custom_reward_factory(reward_factory)
         # else we use the default one either of the loaded difficulty or it already is default_collectible_factory

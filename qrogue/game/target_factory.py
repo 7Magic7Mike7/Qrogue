@@ -1,4 +1,4 @@
-from typing import List, Callable
+from typing import List, Callable, Optional, Union
 
 from qrogue.game.logic.actors import StateVector
 from qrogue.game.logic.actors.controllables import Robot
@@ -14,7 +14,7 @@ class TargetDifficulty:
     A class that handles all parameters that define the difficulty of a fight.
     """
 
-    def __init__(self, num_of_instructions: int, rewards):
+    def __init__(self, num_of_instructions: int, rewards: Union[List[Collectible], CollectibleFactory]):
         """
 
         :param num_of_instructions: number of Instructions used to create a target StateVector
@@ -84,9 +84,14 @@ class ExplicitTargetDifficulty(TargetDifficulty):
             self.__order_index += 1
             if self.__order_index >= len(self.__pool):
                 self.__order_index = 0
-            return self.__pool[self.__order_index]
+            stv = self.__pool[self.__order_index]
         else:
-            return rm.get_element(self.__pool, msg="ExplicitTargetDiff_selectStv")
+            stv = rm.get_element(self.__pool, msg="ExplicitTargetDiff_selectStv")
+
+        if stv.num_of_qubits != robot.num_of_qubits:
+            Logger.instance().error(f"Stv (={stv}) from pool does not have correct number of qubits (="
+                                    f"{robot.num_of_qubits})!", show=False, from_pycui=False)
+        return stv
 
     def copy_pool(self) -> List[StateVector]:
         return self.__pool.copy()
@@ -119,7 +124,7 @@ class EnemyFactory:
     """
 
     def __init__(self, start_fight_callback: Callable[[Robot, Enemy, Direction], None], difficulty: TargetDifficulty,
-                 default_flee_chance: float = 0.5):
+                 default_flee_chance: float = 0.5, input_stv: Optional[StateVector] = None):
         """
 
         :param difficulty: difficulty of the enemy we produce
@@ -127,6 +132,7 @@ class EnemyFactory:
         self.__start_fight = start_fight_callback
         self.__difficulty = difficulty
         self.__default_flee_chance = default_flee_chance
+        self.__input_stv = input_stv
         self.__custom_reward_factory = None
 
     def set_custom_reward_factory(self, factory: CollectibleFactory):
@@ -146,7 +152,11 @@ class EnemyFactory:
             reward = self.__custom_reward_factory.produce(rm)
         else:
             reward = self.__difficulty.produce_reward(rm)
-        return Enemy(eid, stv, reward)
+        if self.__input_stv is not None and self.__input_stv.num_of_qubits != robot.num_of_qubits:
+            Logger.instance().error(f"InputStv (={self.__input_stv}) has wrong number of qubits (="
+                                    f"{robot.num_of_qubits})!", show=False, from_pycui=False)
+            self.__input_stv = None     # reset to use default input
+        return Enemy(eid, stv, reward, input_=self.__input_stv)
 
     def start(self, robot: Robot, enemy: Enemy, direction: Direction):
         self.__start_fight(robot, enemy, direction)
