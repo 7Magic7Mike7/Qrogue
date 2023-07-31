@@ -3,7 +3,7 @@ from typing import Tuple, Optional
 
 from qrogue.game.logic.actors import StateVector
 from qrogue.game.logic.collectibles import Collectible
-from qrogue.util import CheatConfig
+from qrogue.util import Logger
 
 
 class Target(ABC):
@@ -11,18 +11,24 @@ class Target(ABC):
     Base class for fight-/puzzle-targets.
     """
 
-    def __init__(self, target: StateVector, reward: Collectible, input_: Optional[StateVector] = None):
+    def __init__(self, target: StateVector, reward: Collectible, input_: Optional[StateVector] = None,
+                 allow_target_input_equality: bool = False):
         """
         Creates a Target with a given target state vector and a reward.
         :param target: the StateVector to reach
         :param reward: the Collectible to get as a reward
         :param input_: the StateVector to start with (all |0> by default)
+        :param allow_target_input_equality: whether target and input are allowed to be equal (would make basic puzzles
+        be solved from the beginning, hence default is False)
         """
         self.__target: StateVector = target
         self.__reward: Collectible = reward
         self.__input: StateVector = StateVector.create_zero_state_vector(target.num_of_qubits) if input_ is None \
             else input_
         self.__is_active: bool = True
+
+        if not allow_target_input_equality and self.__target.is_equal_to(self.__input, ignore_god_mode=True):
+            Logger.instance().warn(f"@Target.init(): target is equal to input (={self.__target})!", from_pycui=False)
 
     @property
     def state_vector(self) -> StateVector:
