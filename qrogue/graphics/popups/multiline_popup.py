@@ -244,6 +244,10 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
             return super(MultilinePopup, self).get_absolute_stop_pos()
 
     def freeze(self):
+        """
+        The popup will be normalized to have the default size and position. Additionally, questions are transformed into
+        statements with the current answer being the final/saved answer.
+        """
         if self._is_question:
             # without a confirmation_callback the popup is not regarded as questions and hence the answer cannot change
             self.__confirmation_callback = None

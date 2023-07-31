@@ -323,6 +323,12 @@ class HudWidget(Widget):
         self.__render_duration = None
 
     def set_data(self, data: Tuple[Robot, Optional[str], Optional[str]]) -> None:
+        """
+        :param data: Tuple of up to three data-items
+                - data[0]: Robot
+                - data[1]: name of the current map
+                - data[2]: text for the situational HUD
+        """
         self.__robot = data[0]
         if data[1] is not None:
             HudWidget.__MAP_NAME = data[1]
