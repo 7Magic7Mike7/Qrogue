@@ -443,7 +443,14 @@ class Robot(Controllable, ABC):
 
         # initialize based on empty circuit
         self.__instructions: List[Optional[Instruction]] = [None] * attributes.circuit_space
-        self.update_statevector(use_energy=False, check_for_game_over=False)  # to initialize the statevector
+
+        if False:
+            # todo: for whatever reason this code is slower than calling below method which executes a simulation...
+            # todo: (measured execution time is faster, but something is slowed down because the startup time of levels increases)
+            self.__stv = StateVector.create_zero_state_vector(self.num_of_qubits)
+            self.__circuit_matrix = CircuitMatrix.create_identity(self.num_of_qubits)
+        else:
+            self.update_statevector(None, use_energy=False, check_for_game_over=False)
 
     @property
     def backpack(self) -> Backpack:
@@ -650,7 +657,8 @@ class Robot(Controllable, ABC):
         for instruction in temp:
             self.__remove_instruction(instruction)
         self.__instruction_count = 0
-        self.update_statevector(use_energy=False, check_for_game_over=False)
+        self.__stv = StateVector.create_zero_state_vector(self.num_of_qubits)
+        self.__circuit_matrix = CircuitMatrix.create_identity(self.num_of_qubits)
 
     def get_available_instructions(self) -> List[Instruction]:
         """
