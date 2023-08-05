@@ -168,7 +168,7 @@ class QrogueCUI(PyCUI):
                 self.__history.pop()
                 self.__index = min(self.__index, self.present_index)    # adapt index if it pointed to the removed popup
                 self.__remove_on_close = False
-            else:
+            elif 0 <= self.present_index < len(self.__history):     # if is needed to not crash on level loading error
                 self.__history[self.present_index].freeze()
 
         def reset(self):
