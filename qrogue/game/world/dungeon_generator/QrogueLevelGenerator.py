@@ -30,6 +30,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
     __FACTORY_NO_REWARD = "none"
     __SPAWN_ROOM_ID = "SR"
     __DEFAULT_SPEAKER = Config.examiner_name()  # todo but later in the game it should default to scientist_name()
+    __QUICK_MSG_ID = 0
 
     @staticmethod
     def __normalize_reference(reference: str) -> str:
@@ -734,7 +735,12 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             times = self.visit(ctx.integer())
         else:
             times = -1      # = always show
-        message = self.__load_message(ctx.REFERENCE())
+        if ctx.REFERENCE() is None:
+            message = Message.create_with_title(f"_qumsg{self.__QUICK_MSG_ID}", title=self.__default_speaker,
+                                                text=parser_util.text_to_str(ctx), priority=False)
+            self.__QUICK_MSG_ID += 1
+        else:
+            message = self.__load_message(ctx.REFERENCE())
         return tiles.Message(message, times)
 
     def visitCollectible_descriptor(self, ctx: QrogueDungeonParser.Collectible_descriptorContext) -> tiles.Collectible:
@@ -1085,12 +1091,13 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             message = self.__load_message(ctx.REFERENCE())
         else:
             message = None
-        return MapMetaData(name, message, ctx.NO_TELEPORTER() is None, self.__show_description)
+        return MapMetaData(name, message, ctx.NO_TELEPORTER() is None, self.__show_description,
+                           ctx.SHOW_INDIV_QUBITS() is not None)
 
     ##### Start area #####
 
     def visitStart(self, ctx: QrogueDungeonParser.StartContext) -> Tuple[MapMetaData, List[List[Optional[rooms.Room]]]]:
-        # prepare messages (needs to be done first since meta data might reference it
+        # prepare messages (needs to be done first since metadata might reference it
         self.visit(ctx.messages())
 
         # retrieve the map's meta data

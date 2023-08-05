@@ -19,11 +19,12 @@ class MapType(enum.Enum):
 
 class MapMetaData:
     def __init__(self, name: Optional[str], description: Optional[Message], has_teleporter: bool,
-                 show_description: Callable[[], None]):
+                 show_description: Callable[[], None], show_individual_qubits: bool = False):
         self.name = name
         self.description = description
         self.has_teleporter = has_teleporter
         self.__show_description = show_description
+        self.show_individual_qubits = show_individual_qubits
 
     def show_description(self):
         self.__show_description()
@@ -241,6 +242,10 @@ class Map(BaseMap, ABC):
     @property
     def controllable_pos(self) -> Coordinate:
         return self.__controllable_pos
+
+    @property
+    def show_individual_qubits(self) -> bool:
+        return self._meta_data.show_individual_qubits
 
     def _is_done(self) -> bool:
         return self.__check_achievement(MapConfig.done_event_id())

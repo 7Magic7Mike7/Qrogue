@@ -10,7 +10,8 @@ start  :    HEADER meta
 
 meta :  ('Name' '=' TEXT)?
         ('Description' '=' (message_body | REFERENCE))?
-        (NO_TELEPORTER | WITH_TELEPORTER)? ;
+        (NO_TELEPORTER | WITH_TELEPORTER)?
+        SHOW_INDIV_QUBITS? ;
 
 robot : ROBOT DIGIT 'qubits' '[' REFERENCE (LIST_SEPARATOR REFERENCE)* ']'
         (CIRCUIT_SPACE '=' integer)? (BACKPACK_SPACE '=' integer)?
@@ -30,7 +31,7 @@ t_descriptor : 't' (trigger_descriptor | teleport_descriptor) ;
 trigger_descriptor : (LEVEL_EVENT | GLOBAL_ACHIEVEMENT)? REFERENCE ;
 teleport_descriptor : (LOCAL_TUNNEL ROOM_ID integer?) |     // no integer given equals middle of room
                       (GLOBAL_TELEPORT REFERENCE) ;
-message_descriptor : 'm' integer? REFERENCE ;    // #times displayed, reference to the text that should be shown
+message_descriptor : 'm' integer? (REFERENCE | TEXT) ;    // #times displayed, reference to the text that should be shown
 collectible_descriptor : 'c' ((REFERENCE integer?) | collectible) ; // id of reward pool to draw from, number of rewards to draw (note: template pools like *key provide "normal" collectibles)
 energy_descriptor : 'e' integer ;    // amount
 shop_descriptor : '$' integer (REFERENCE | collectibles) ;   // num of items to draw, reward pool id or collectible list
@@ -68,6 +69,7 @@ collectible :   (KEY_LITERAL integer | COIN_LITERAL integer | ENERGY_LITERAL int
 SR_TELEPORTER : (('spawnroom' | 'SPAWNROOM' | 'sr' | 'SR' )'_'?)?  ('teleporter' | 'TELEPORTER') ;
 NO_TELEPORTER : ('exclude' | 'EXCLUDE' | 'no' | 'NO') '_'? SR_TELEPORTER ;
 WITH_TELEPORTER : ('include' | 'INCLUDE' | 'with' | 'WITH') '_'? SR_TELEPORTER ;
+SHOW_INDIV_QUBITS : ('show' | 'SHOW') '_'? ('individual' | 'indiv' | 'INDIVIDUAL' | 'INDIV') '_'? ('qubits' | 'QUBITS') ;
 
 // headlines (encapsulated in '[' ']')
 ROBOT : '[Robot]' ;
