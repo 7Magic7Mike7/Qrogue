@@ -11,7 +11,7 @@ from qrogue.util import CheatConfig
 class TileCode(Enum):
     Invalid = (-1, "§")    # when an error occurs, e.g. a tile at a non-existing position should be retrieved
     Debug = (-2, "€")      # displays a digit for debugging
-    Void = (7, "_")        # tile outside of the playable area
+    Void = (7, "_")        # tile outside the playable area
     Floor = (0, " ")       # simple floor tile without special meaning
     HallwayEntrance = (5, " ")     # depending on the hallway it refers to is either a Floor or Wall
     FogOfWar = (3, "~")    # tile of a place we cannot see yet

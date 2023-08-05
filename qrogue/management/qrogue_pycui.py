@@ -587,7 +587,10 @@ class QrogueCUI(PyCUI):
         self.apply_widget_set(self.__spaceship)
         StoryNarration.returned_to_spaceship()
 
-    def __continue_spaceship(self) -> None:
+    def __continue_spaceship(self, undo_last_move: bool = False) -> None:
+        """
+        :param undo_last_move: not used here but needed for other continue-callbacks
+        """
         self.__state_machine.change_state(QrogueCUI._State.Spaceship, None)
 
     def __start_training(self, direction: Direction):

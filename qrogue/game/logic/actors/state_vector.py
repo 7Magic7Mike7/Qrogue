@@ -152,8 +152,9 @@ class StateVector:
 
     def to_value(self) -> List[float]:
         """
+        Returns a list of amplitudes corresponding to this StateVector.
 
-        :return:
+        :return: List of amplitudes
         """
         return [np.round(val.real ** 2 + val.imag ** 2, decimals=QuantumSimulationConfig.DECIMALS)
                 for val in self.__amplitudes]
