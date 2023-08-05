@@ -311,6 +311,9 @@ class SimpleWidget(Widget):
         self.__text = ""
         self.widget.set_title("")
 
+    def __str__(self):
+        return f"SimpleWidget(\"{self.__text}\")"
+
 
 class HudWidget(Widget):
     __MAP_NAME = ""

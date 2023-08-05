@@ -75,7 +75,7 @@ class Area(ABC):
         self.__was_visited = False
 
     @property
-    def _id(self) -> int:
+    def id(self) -> int:
         return self.__id
 
     @property
@@ -215,14 +215,21 @@ class Hallway(Area):
 
     def make_visible(self):
         super(Hallway, self).make_visible()
+        r1id, r2id = None, None
         if self.__room1:
+            r1id = self.__room1.id
             self.__room1.in_sight()
-        else:
-            Logger.instance().debug("room1 is None!", from_pycui=False)
         if self.__room2:
+            r2id = self.__room2.id
             self.__room2.in_sight()
-        else:
-            Logger.instance().debug("room2 is None!", from_pycui=False)
+
+        if r1id is None and r2id is None:
+            Logger.instance().debug(f"#hw{self.id}: room1 and room2 is None!", from_pycui=False)
+        elif r1id is None:
+            Logger.instance().debug(f"#hw{self.id}: room2=#r{r2id} but room1 is None!", from_pycui=False)
+        elif r2id is None:
+            Logger.instance().debug(f"#hw{self.id}: room1=#r{r1id} but room2 is None!", from_pycui=False)
+
 
     def get_row_str(self, row: int) -> str:
         if self.__hide:
@@ -253,7 +260,7 @@ class Hallway(Area):
             orientation = "-"
         else:
             orientation = "|"
-        return f"HW{self._id}: {self.__room1} {orientation} {self.__room2}"
+        return f"HW{self.id}: {self.__room1} {orientation} {self.__room2}"
 
 
 class Room(Area):
@@ -455,7 +462,7 @@ class Room(Area):
         return text
 
     def __str__(self) -> str:
-        return self.abbreviation() + str(self._id)
+        return self.abbreviation() + str(self.id)
 
 
 class CopyAbleRoom(Room, ABC):
