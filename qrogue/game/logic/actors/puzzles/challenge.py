@@ -4,7 +4,7 @@ from qrogue.game.logic.actors import StateVector
 from qrogue.game.logic.collectibles import Collectible, Instruction
 
 from qrogue.game.logic.actors.puzzles import Target
-from qrogue.util import CheatConfig
+from qrogue.util import CheatConfig, Logger, Config
 
 
 class Challenge(Target):
@@ -30,6 +30,11 @@ class Challenge(Target):
 
     def is_reached(self, state_vector: StateVector) -> Tuple[bool, Optional[Collectible]]:
         # first check if the additional constraints are met
+        if state_vector.num_of_used_gates is None:
+            Logger.instance().error(f"Challenge.is_reached() got state_vector with no number of used gates specified!",
+                                    show=Config.debugging(), from_pycui=False)
+            return super(Challenge, self).is_reached(state_vector)  # we cannot check the num_of_gates constraint
+
         if self.__min_gates <= state_vector.num_of_used_gates <= self.__max_gates or CheatConfig.in_god_mode():
             return super(Challenge, self).is_reached(state_vector)
         return False, None

@@ -593,7 +593,7 @@ class QrogueCUI(PyCUI):
     def __start_training(self, direction: Direction):
         robot = BaseBot(CallbackPack.instance().game_over, num_of_qubits=2,
                         gates=[collectibles.XGate(), collectibles.XGate(), collectibles.HGate(), collectibles.CXGate()])
-        enemy = Enemy(eid=0, target=StateVector([0] * (2**robot.num_of_qubits)), reward=Energy())
+        enemy = Enemy(eid=0, target=StateVector([0] * (2**robot.num_of_qubits), num_of_used_gates=0), reward=Energy())
         self.__state_machine.change_state(QrogueCUI._State.Training, (robot, enemy))
 
     def _switch_to_training(self, data=None):

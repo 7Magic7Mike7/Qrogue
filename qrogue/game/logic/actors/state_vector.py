@@ -101,7 +101,7 @@ class StateVector:
     @staticmethod
     def create_zero_state_vector(num_of_qubits: int) -> "StateVector":
         amplitudes = [1] + [0] * (2**num_of_qubits - 1)
-        return StateVector(amplitudes)
+        return StateVector(amplitudes, num_of_used_gates=0)
 
     @staticmethod
     def from_gates(gates: List[Instruction], num_of_qubits: int) -> "StateVector":

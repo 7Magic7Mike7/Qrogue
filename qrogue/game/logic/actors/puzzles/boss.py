@@ -46,5 +46,5 @@ class Boss(Enemy, ABC):
 
 class DummyBoss(Boss):
     def __init__(self):
-        stv = StateVector([1, 0, 0, 0, 0, 0, 0, 0])
+        stv = StateVector([1, 0, 0, 0, 0, 0, 0, 0], num_of_used_gates=0)
         super(DummyBoss, self).__init__(stv, Coin(3))
