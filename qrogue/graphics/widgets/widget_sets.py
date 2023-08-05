@@ -1047,6 +1047,16 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self.add_key_command(controls.get_keys(Keys.Situational1), travel_history(False), add_to_widgets=True)
         self.add_key_command(controls.get_keys(Keys.Situational2), travel_history(True), add_to_widgets=True)
 
+        # clear some widgets if the player hasn't unlocked the equations yet
+        if not Ach.check_unlocks(Unlocks.ShowEquation, self._progress):
+            self.__input_stv.render_reset()
+            self.__mul_widget.render_reset()
+            self.__circuit_matrix.render_reset()
+            self.__result_widget.render_reset()
+            self.__stv_robot.render_reset()
+            self.__eq_widget.render_reset()
+            self.__stv_target.render_reset()
+
     @property
     def _sign_offset(self) -> str:
         return "\n" * (1 + 2 ** (self._robot.num_of_qubits - 1))  # 1 (headline) + middle of actual Stv
@@ -1130,10 +1140,11 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             vectors = None
         self.__circuit.set_data((robot, vectors))
 
-        self.__input_stv.set_data(target.input_stv)
-        self.__mul_widget.set_data(self._sign_offset + "x")
-        self.__result_widget.set_data(self._sign_offset + "=")
-        self.__stv_target.set_data(target.state_vector)
+        if Ach.check_unlocks(Unlocks.ShowEquation, self._progress):
+            self.__input_stv.set_data(target.input_stv)
+            self.__mul_widget.set_data(self._sign_offset + "x")
+            self.__result_widget.set_data(self._sign_offset + "=")
+            self.__stv_target.set_data(target.state_vector)
 
         self._robot.update_statevector(input_stv=target.input_stv, use_energy=False, check_for_game_over=False)
         self.__update_calculation(False)
@@ -1159,16 +1170,17 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self.__history_widget.clean_history()       # todo Note: this also cleans history when going to the pause menu!
 
     def __update_calculation(self, target_reached: bool):
-        diff_stv = self._target.state_vector.get_diff(self._robot.state_vector)
+        if Ach.check_unlocks(Unlocks.ShowEquation, self._progress):
+            diff_stv = self._target.state_vector.get_diff(self._robot.state_vector)
 
-        self.__circuit_matrix.set_data(self._robot.circuit_matrix)
-        self.__stv_robot.set_data((self._robot.state_vector, diff_stv), target_reached=target_reached)
-        self.__history_widget.save_state(rerender=True, force=False)
+            self.__circuit_matrix.set_data(self._robot.circuit_matrix)
+            self.__stv_robot.set_data((self._robot.state_vector, diff_stv), target_reached=target_reached)
+            self.__history_widget.save_state(rerender=True, force=False)
 
-        if diff_stv.is_zero:
-            self.__eq_widget.set_data(self._sign_offset + "===")
-        else:
-            self.__eq_widget.set_data(self._sign_offset + "=/=")
+            if diff_stv.is_zero:
+                self.__eq_widget.set_data(self._sign_offset + "===")
+            else:
+                self.__eq_widget.set_data(self._sign_offset + "=/=")
 
     def __init_details(self):
         choices, objects = [], []

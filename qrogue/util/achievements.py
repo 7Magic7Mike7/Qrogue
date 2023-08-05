@@ -23,6 +23,7 @@ class Unlocks(enum.Enum):
     ShowEnergy = 30
 
     # puzzle unlocks
+    ShowEquation = 55   # whether to show the matrix vector multiplication above the circuit
     GateRemove = 52
     CircuitReset = 50
     PuzzleFlee = 51
@@ -41,6 +42,8 @@ class Unlocks(enum.Enum):
 
 
 class Ach:
+    # completing a level increases progress by 1, hence below constants refer to the number of completed levels
+    __SHOW_EQUATION = 2
     __EXAM_DONE_PROGRESS = 9
     STORY_DONE_PROGRESS = 100
 
@@ -76,6 +79,8 @@ class Ach:
         elif unlock is Unlocks.ShowEnergy:
             return progress > 0     # Lesson 0 completed
 
+        elif unlock is Unlocks.ShowEquation:
+            return progress >= Ach.__SHOW_EQUATION
         elif unlock is Unlocks.GateRemove:
             return True     # unlock from the beginning to avoid confusion and complicated implicit removal (via cancel)
         elif unlock is Unlocks.CircuitReset:
