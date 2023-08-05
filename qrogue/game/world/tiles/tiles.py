@@ -146,7 +146,7 @@ class Debug(Tile):
 
     @property
     def data(self) -> int:
-        return self.__num
+        return int(self.__num)
 
     def get_img(self) -> str:
         return self.__num
