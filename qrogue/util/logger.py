@@ -68,7 +68,9 @@ class Logger(PyCUILogger):
         if from_pycui:
             self.__write(f"{{PyCUI}}{time_str}: {message}")
         else:
-            self.__write(f"{{Qrogue}}{time_str}: {message}")
+            text = f"{{Qrogue}}{time_str}: {message}"
+            self.__write(text)
+            print(text)
 
     def debug(self, msg: str, from_pycui: bool = True, *args, **kwargs) -> None:
         if Config.debugging():
