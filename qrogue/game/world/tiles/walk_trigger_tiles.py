@@ -290,6 +290,9 @@ class Collectible(WalkTriggerTile):
 
     def __init__(self, collectible: LogicalCollectible, secret_type: bool = False):
         super().__init__(TileCode.Collectible)
+        if collectible is None:
+            Logger.instance().warn("Collectible is None!", from_pycui=False)
+            collectible = LogicalScore()
         self.__collectible = collectible
         self.__secret_type = secret_type
         self.__active = True
