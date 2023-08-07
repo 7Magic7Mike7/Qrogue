@@ -27,10 +27,72 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
     __DEFAULT_NUM_OF_SHOP_ITEMS = 3
     __DEFAULT_NUM_OF_RIDDLE_ATTEMPTS = 7
     __ROBOT_NO_GATES = "none"
-    __FACTORY_NO_REWARD = "none"
     __SPAWN_ROOM_ID = "SR"
     __DEFAULT_SPEAKER = Config.examiner_name()  # todo but later in the game it should default to scientist_name()
     __QUICK_MSG_ID = 0
+    __QUICK_MSG_PREFIX = "_qumsg"
+    __HELP_TEXT_PREFIX = "helptext"
+
+    class _StaticTemplates:
+        @staticmethod
+        def is_pickup_none(ref: str) -> bool:
+            return ref == 'none'
+
+        @staticmethod
+        def is_pickup_coin(ref: str) -> bool:
+            return ref in ['coin', 'coins']
+
+        @staticmethod
+        def is_pickup_key(ref: str) -> bool:
+            return ref in ['key', 'keys']
+
+        @staticmethod
+        def is_pickup_energy(ref: str) -> bool:
+            return ref in ['energy']
+
+        @staticmethod
+        def is_gate_x(ref: str) -> bool:
+            return ref in ['x', 'xgate']
+
+        @staticmethod
+        def is_gate_y(ref: str) -> bool:
+            return ref in ['y', 'ygate']
+
+        @staticmethod
+        def is_gate_z(ref: str) -> bool:
+            return ref in ['z', 'zgate']
+
+        @staticmethod
+        def is_gate_h(ref: str) -> bool:
+            return ref in ['h', 'hgate', 'hadamard', 'hadamardgate']
+
+        @staticmethod
+        def is_gate_cx(ref: str) -> bool:
+            return ref in ['cx', 'cxgate']
+
+        @staticmethod
+        def is_gate_swap(ref: str) -> bool:
+            return ref in ['swap', 'swapgate']
+
+        @staticmethod
+        def is_gate_i(ref: str) -> bool:
+            return ref in ['i', 'igate']
+
+        @staticmethod
+        def is_dir_north(dir_str: str) -> bool:
+            return dir_str == "North"
+
+        @staticmethod
+        def is_dir_east(dir_str: str) -> bool:
+            return dir_str == "East"
+
+        @staticmethod
+        def is_dir_south(dir_str: str) -> bool:
+            return dir_str == "South"
+
+        @staticmethod
+        def is_dir_west(dir_str: str) -> bool:
+            return dir_str == "West"
 
     @staticmethod
     def __normalize_reference(reference: str) -> str:
@@ -247,13 +309,13 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             return self.__collectible_factories[ref]
 
         ref = parser_util.normalize_reference(ref)
-        if ref == QrogueLevelGenerator.__FACTORY_NO_REWARD:
+        if QrogueLevelGenerator._StaticTemplates.is_pickup_none(ref):
             return CollectibleFactory.empty()
-        if ref in ['coin', 'coins']:
-            pool = [pickup.Coin(1)]
-        elif ref in ['key', 'keys']:
-            pool = [pickup.Key(1)]
-        elif ref in ['energy']:
+        elif QrogueLevelGenerator._StaticTemplates.is_pickup_coin(ref):
+            pool = [pickup.Coin()]
+        elif QrogueLevelGenerator._StaticTemplates.is_pickup_key(ref):
+            pool = [pickup.Key()]
+        elif QrogueLevelGenerator._StaticTemplates.is_pickup_energy(ref):
             pool = [pickup.Energy()]
         else:
             self.warning(f"Imports not yet supported: {ref}. Choosing from default_reward_factory!")
@@ -275,20 +337,20 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
     def __load_gate(self, reference: QrogueDungeonParser.REFERENCE) -> instruction.Instruction:
         ref = parser_util.normalize_reference(reference.getText())
-        if ref in ['x', 'xgate']:
+        if QrogueLevelGenerator._StaticTemplates.is_gate_x(ref):
             return instruction.XGate()
-        elif ref in ['y', 'ygate']:
+        elif QrogueLevelGenerator._StaticTemplates.is_gate_y(ref):
             return instruction.YGate()
-        elif ref in ['z', 'zgate']:
+        elif QrogueLevelGenerator._StaticTemplates.is_gate_z(ref):
             return instruction.ZGate()
-        elif ref in ['h', 'hgate', 'hadamard', 'hadamarggate']:
+        elif QrogueLevelGenerator._StaticTemplates.is_gate_h(ref):
             return instruction.HGate()
-        elif ref in ['cx', 'cxgate']:
+        elif QrogueLevelGenerator._StaticTemplates.is_gate_cx(ref):
             return instruction.CXGate()
-        elif ref in ['swap', 'swapgate']:
+        elif QrogueLevelGenerator._StaticTemplates.is_gate_swap(ref):
             return instruction.SwapGate()
 
-        elif ref not in ['i', 'igate']:
+        elif not QrogueLevelGenerator._StaticTemplates.is_gate_i(ref):
             self.warning(f"Unknown gate reference: {reference}. Returning I Gate instead.")
         return instruction.IGate()
 
@@ -299,8 +361,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         norm_ref = parser_util.normalize_reference(ref)
         if norm_ref in self.__messages:
             return self.__messages[norm_ref]
-        elif norm_ref.startswith("helptext"):
-            help_text_type = norm_ref[len("helptext"):]
+        elif norm_ref.startswith(QrogueLevelGenerator.__HELP_TEXT_PREFIX):
+            help_text_type = norm_ref[len(QrogueLevelGenerator.__HELP_TEXT_PREFIX):]
             help_text = HelpText.load(help_text_type)
             if help_text:
                 # todo check if we really want to prioritize help texts
@@ -562,13 +624,13 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         one_way_state = tiles.DoorOneWayState.NoOneWay
         if ctx.DIRECTION():
             dir_str = ctx.DIRECTION().getText()
-            if dir_str == "North":
+            if QrogueLevelGenerator._StaticTemplates.is_dir_north(dir_str):
                 direction = Direction.North
-            elif dir_str == "East":
+            elif QrogueLevelGenerator._StaticTemplates.is_dir_east(dir_str):
                 direction = Direction.East
-            elif dir_str == "South":
+            elif QrogueLevelGenerator._StaticTemplates.is_dir_south(dir_str):
                 direction = Direction.South
-            elif dir_str == "West":
+            elif QrogueLevelGenerator._StaticTemplates.is_dir_west(dir_str):
                 direction = Direction.West
             if ctx.PERMANENT_LITERAL():
                 one_way_state = tiles.DoorOneWayState.Permanent
@@ -736,8 +798,9 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         else:
             times = -1      # = always show
         if ctx.REFERENCE() is None:
-            message = Message.create_with_title(f"_qumsg{self.__QUICK_MSG_ID}", title=self.__default_speaker,
-                                                text=parser_util.text_to_str(ctx), priority=False)
+            message = Message.create_with_title(f"{self.__QUICK_MSG_PREFIX}{self.__QUICK_MSG_ID}",
+                                                title=self.__default_speaker, text=parser_util.text_to_str(ctx),
+                                                priority=False)
             self.__QUICK_MSG_ID += 1
         else:
             message = self.__load_message(ctx.REFERENCE())
