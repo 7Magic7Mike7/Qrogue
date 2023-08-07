@@ -13,7 +13,7 @@ from qrogue.game.world.map import Map
 from qrogue.game.world.navigation import Direction
 from qrogue.util import ColorConfig, Controls, Keys, Logger, Config, HudConfig, GameplayConfig, Options
 from qrogue.util.config import QuantumSimulationConfig, InstructionConfig
-from qrogue.util.util_functions import center_string, align_string, to_binary_string
+from qrogue.util.util_functions import center_string, align_string, to_binary_string, int_to_fixed_len_str
 
 from qrogue.graphics import WidgetWrapper
 from qrogue.graphics.rendering import ColorRules
@@ -317,6 +317,7 @@ class SimpleWidget(Widget):
 
 class HudWidget(Widget):
     __MAP_NAME = ""
+    __SCORE_LENGTH = 5
 
     def __init__(self, widget: MyMultiWidget):
         super().__init__(widget)
@@ -359,6 +360,8 @@ class HudWidget(Widget):
         if HudConfig.ShowMapName and self.__map_name:
             text += f"{self.__map_name}\n"
         if self.__robot:
+            if HudConfig.ShowScore:
+                text += f"Score: {int_to_fixed_len_str(self.__robot.score, length=HudWidget.__SCORE_LENGTH)}  "
             if HudConfig.ShowEnergy:
                 text += f"Energy: {self.__robot.cur_energy} / {self.__robot.max_energy}   \t"
             if HudConfig.ShowKeys:

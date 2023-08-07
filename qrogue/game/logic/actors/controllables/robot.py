@@ -12,7 +12,7 @@ from qrogue.game.logic.actors import StateVector, CircuitMatrix
 from qrogue.game.logic.actors.controllables import Controllable
 from qrogue.game.logic.actors.controllables.qubit import QubitSet, DummyQubitSet
 from qrogue.game.logic.collectibles import Coin, Collectible, Consumable, Instruction, Key, MultiCollectible, \
-    Qubit, Energy
+    Qubit, Energy, Score
 from qrogue.util import CheatConfig, Config, Logger, GameplayConfig, QuantumSimulationConfig, Options
 
 
@@ -426,6 +426,7 @@ class Robot(Controllable, ABC):
         :param game_over_callback: for stopping the game if the Robot dies
         """
         super().__init__(name)
+        self.__score: int = 0
         self.__attributes: _Attributes = attributes
         self.__backpack: Backpack = backpack
         self.__game_over: Callable[[], None] = game_over_callback
@@ -465,6 +466,10 @@ class Robot(Controllable, ABC):
         return self.__circuit_matrix
 
     @property
+    def score(self) -> int:
+        return self.__score
+
+    @property
     def cur_energy(self) -> int:
         return self.__attributes.cur_energy
 
@@ -502,6 +507,9 @@ class Robot(Controllable, ABC):
             self.__game_over()
             return True
         return False
+
+    def reset_score(self):
+        self.__score = 0
 
     def key_count(self) -> int:     # cannot be a property since it is an abstractmethod in Controllable
         return self.backpack.key_count
@@ -674,7 +682,9 @@ class Robot(Controllable, ABC):
         :param collectible: the Collectible we want to give this Robot
         :return: None
         """
-        if isinstance(collectible, Coin):
+        if isinstance(collectible, Score):
+            self.__score += collectible.amount
+        elif isinstance(collectible, Coin):
             self.backpack.give_coin(collectible.amount)
         elif isinstance(collectible, Key):
             self.backpack.give_key(collectible.amount)

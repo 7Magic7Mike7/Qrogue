@@ -1,7 +1,7 @@
 from abc import ABC
 
 from qrogue.game.logic.collectibles import Collectible, CollectibleType
-from qrogue.util import ShopConfig
+from qrogue.util import ShopConfig, Logger
 
 
 class Pickup(Collectible, ABC):
@@ -23,6 +23,23 @@ class Pickup(Collectible, ABC):
 
     def __str__(self):
         return self.to_string()
+
+
+class Score(Pickup):
+    def __init__(self, amount: int = 100):
+        if amount < 0:
+            Logger.instance().warn(f"Negative amount (={amount}) defined! Will use 0 instead.")
+            amount = 0
+        super().__init__(amount, type_=CollectibleType.Score)
+
+    def name(self) -> str:
+        return "Score"
+
+    def description(self) -> str:
+        return "Score describes how well you performed in a level."
+
+    def to_string(self) -> str:
+        return f"Score #{self.amount}"
 
 
 class Coin(Pickup):

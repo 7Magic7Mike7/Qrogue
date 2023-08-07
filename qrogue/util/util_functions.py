@@ -120,3 +120,18 @@ def my_str(value: Any) -> str:
         return enum_str(value)
     else:
         return str(value)
+
+
+def int_to_fixed_len_str(value: int, length: int) -> str:
+    """
+    Returns a formatted string like "007" if value=7 and length=3.
+    If value is too big (e.g., it has more than $length digits) length is ignored and value is just transformed to its
+    normal string representation (e.g., value=123 and length=1 returns "123").
+
+    :param value: the integer we want to represent
+    :param length: the length of the formatted string
+    :return: 0-padded string representation of $value with a length of $length or len(value)
+    """
+    if len(str(value)) > length:
+        return str(value)
+    return f"{{0:0{length}d}}".format(value)

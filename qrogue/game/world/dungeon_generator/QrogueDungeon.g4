@@ -60,8 +60,9 @@ reward_pools : REWARD_POOLS ('custom' reward_pool+)? 'default' default_reward_po
 default_reward_pool : REFERENCE | draw_strategy? collectibles ;      // the default pool can either be an ID or a list of collectibles
 reward_pool : REFERENCE draw_strategy? collectibles ;     // id, pool of collectibles
 collectibles : '[' collectible (LIST_SEPARATOR collectible)* ']' ;
-collectible :   (KEY_LITERAL integer | COIN_LITERAL integer | ENERGY_LITERAL integer | GATE_LITERAL REFERENCE |
-                QUBIT_LITERAL integer? | NONE_LITERAL) ;
+collectible :   ((SCORE_LITERAL | KEY_LITERAL | COIN_LITERAL | ENERGY_LITERAL) integer |
+                GATE_LITERAL REFERENCE | QUBIT_LITERAL integer? |
+                NONE_LITERAL) ;
 
 // TOKEN
 
@@ -83,6 +84,7 @@ CIRCUIT_SPACE : ('circuit' | 'CIRCUIT') '_'? ('space' | 'SPACE') ;
 BACKPACK_SPACE : ('backpack' | 'BACKPACK') '_'? ('space' | 'SPACE') ;
 
 // collectible tiles (token used for easier identification in generator)
+SCORE_LITERAL : 'score' ;
 KEY_LITERAL : 'key' ;
 COIN_LITERAL : 'coin' ;
 ENERGY_LITERAL : 'energy' ;

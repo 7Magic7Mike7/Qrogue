@@ -265,6 +265,7 @@ class UIConfig:
 
 
 class HudConfig:
+    ShowScore = True
     ShowMapName = False
     ShowEnergy = False
     ShowKeys = False

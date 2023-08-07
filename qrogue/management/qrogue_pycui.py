@@ -643,6 +643,7 @@ class QrogueCUI(PyCUI):
         if isinstance(robot, Robot):
             self.__key_logger.reinit(level.seed, level.internal_name)  # the seed used to build the Map
             OverWorldKeyLogger.instance().level_start(level.internal_name)
+            robot.reset_score()     # reset the score at the start of each level
 
             self.__pause.set_data(robot, level.name, SaveData.instance().achievement_manager)
             self.__state_machine.change_state(QrogueCUI._State.Explore, level)

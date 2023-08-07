@@ -45,6 +45,7 @@ class TileCode(Enum):
     CollectibleKey = (501, "k")
     CollectibleCoin = (502, "€")
     CollectibleEnergy = (503, "e")
+    CollectibleScore = (504, "s")
     CollectibleGate = (520, "g")
     CollectibleQubit = (560, "q")
 

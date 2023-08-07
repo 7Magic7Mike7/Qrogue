@@ -17,6 +17,7 @@ class CollectibleType(Enum):
     Key = 51
     Coin = 52
     Energy = 53
+    Score = 54
 
 
 def type_str(c_type: CollectibleType) -> str:

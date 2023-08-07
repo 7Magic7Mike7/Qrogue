@@ -39,6 +39,10 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             return ref == 'none'
 
         @staticmethod
+        def is_pickup_score(ref: str) -> bool:
+            return ref in ['score']
+
+        @staticmethod
         def is_pickup_coin(ref: str) -> bool:
             return ref in ['coin', 'coins']
 
@@ -311,6 +315,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         ref = parser_util.normalize_reference(ref)
         if QrogueLevelGenerator._StaticTemplates.is_pickup_none(ref):
             return CollectibleFactory.empty()
+        elif QrogueLevelGenerator._StaticTemplates.is_pickup_score(ref):
+            pool = [pickup.Score()]
         elif QrogueLevelGenerator._StaticTemplates.is_pickup_coin(ref):
             pool = [pickup.Coin()]
         elif QrogueLevelGenerator._StaticTemplates.is_pickup_key(ref):
@@ -454,7 +460,10 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
     ##### Reward Pool area #####
 
     def visitCollectible(self, ctx: QrogueDungeonParser.CollectibleContext) -> Optional[Collectible]:
-        if ctx.KEY_LITERAL():
+        if ctx.SCORE_LITERAL():
+            val = self.visit(ctx.integer())
+            return pickup.Score(val)
+        elif ctx.KEY_LITERAL():
             val = self.visit(ctx.integer())
             return pickup.Key(val)
         elif ctx.COIN_LITERAL():
