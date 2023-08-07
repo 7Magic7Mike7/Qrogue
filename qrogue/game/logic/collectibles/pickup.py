@@ -21,6 +21,9 @@ class Pickup(Collectible, ABC):
         # the higher the amount the less the additional price (based on harmonic numbers)
         return int(sum([Pickup.__DEFAULT_PRICE / (i+1) for i in range(self._amount)]))
 
+    def __str__(self):
+        return self.to_string()
+
 
 class Coin(Pickup):
     def __init__(self, amount: int = 1):
@@ -34,9 +37,6 @@ class Coin(Pickup):
 
     def to_string(self):
         return f"{self.amount}$"
-
-    def __str__(self) -> str:
-        return self.to_string()
 
 
 class Key(Pickup):
@@ -54,9 +54,6 @@ class Key(Pickup):
             return f"{self.amount} keys"
         return f"{self.amount} key"
 
-    def __str__(self) -> str:
-        return self.to_string()
-
 
 class Energy(Pickup):
     def __init__(self, amount: int = 10):
@@ -73,6 +70,3 @@ class Energy(Pickup):
 
     def default_price(self) -> int:
         return 2 + int(self.amount / 7)
-
-    def __str__(self) -> str:
-        return self.to_string()
