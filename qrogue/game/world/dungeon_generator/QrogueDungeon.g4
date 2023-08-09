@@ -42,7 +42,8 @@ challenge_descriptor : '!' integer integer? puzzle_parameter ;  // min number of
 puzzle_parameter : (REFERENCE | stv) (REFERENCE | collectible) input_stv? ;    // stv pool id, reward pool id
 input_stv: ('input' | 'i') '=' (REFERENCE | stv) ;      // input statevector (pool id or explicit)
 
-circuit_stv: NUM_QUBITS_SPECIFIER '=' DIGIT ':' (circuit_gate_single | circuit_gate_multi)+ ;
+circuit_stv: NUM_QUBITS_SPECIFIER '=' DIGIT ':' (circuit_gate_single | circuit_gate_multi)
+             (',' (circuit_gate_single | circuit_gate_multi))* ;
 circuit_gate_single: (GATE_SPECIFIER | '[' GATE_SPECIFIER (',' GATE_SPECIFIER)* ']') '@' QUBIT_SPECIFIER ;
 circuit_gate_multi: GATE_SPECIFIER '@' '[' QUBIT_SPECIFIER ',' QUBIT_SPECIFIER+ ']' ;   // gCX @ [q0, q1]
 
