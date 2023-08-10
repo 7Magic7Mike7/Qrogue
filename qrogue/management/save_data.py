@@ -49,7 +49,7 @@ class SaveData:
                 achievement = Achievement.from_string(content[i])
                 if achievement:
                     achievement_list.append(achievement)
-            self.__achievements = AchievementManager(achievement_list)
+            AchievementManager(achievement_list)
 
             self.__available_robots = [
                 BaseBot(CallbackPack.instance().game_over),
@@ -59,7 +59,7 @@ class SaveData:
 
     @property
     def achievement_manager(self) -> AchievementManager:
-        return self.__achievements
+        return AchievementManager.instance()
 
     @property
     def player(self) -> Player:

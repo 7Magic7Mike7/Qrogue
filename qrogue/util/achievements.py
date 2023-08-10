@@ -1,7 +1,7 @@
 import enum
 from typing import List
 
-from qrogue.util import MapConfig
+from qrogue.util import MapConfig, ErrorConfig, Logger
 
 FinishedTutorial = "CompletedTutorial"
 EnteredPauseMenu = "EnteredPauseMenu"
@@ -206,19 +206,30 @@ class Achievement:
 
 class AchievementManager:
     __DISPLAY_STRING_INDENT = "  "
+    __instance = None
+
+    @staticmethod
+    def instance() -> "AchievementManager":
+        if AchievementManager.__instance is None:
+            Logger.instance().throw(Exception(ErrorConfig.singleton_no_init("AchievementManager")))
+        return AchievementManager.__instance
 
     def __init__(self, achievements: List[Achievement]):
-        self.__storage = {}
-        self.__temp_level_storage = {}
+        if AchievementManager.__instance is not None:
+            Logger.instance().throw(Exception(ErrorConfig.singleton("AchievementManager")))
+        else:
+            self.__storage = {}
+            self.__temp_level_storage = {}
 
-        story_counter = 0
-        for achievement in achievements:
-            if achievement.type is not AchievementType.Implicit:
-                if achievement.type is AchievementType.Story and achievement.is_done():
-                    story_counter += 1
-                self.__storage[achievement.name] = achievement
-        self.__storage[Ach.story()] = Achievement(Ach.story(), AchievementType.Implicit, story_counter,
-                                                  Ach.STORY_DONE_PROGRESS)
+            story_counter = 0
+            for achievement in achievements:
+                if achievement.type is not AchievementType.Implicit:
+                    if achievement.type is AchievementType.Story and achievement.is_done():
+                        story_counter += 1
+                    self.__storage[achievement.name] = achievement
+            self.__storage[Ach.story()] = Achievement(Ach.story(), AchievementType.Implicit, story_counter,
+                                                      Ach.STORY_DONE_PROGRESS)
+            AchievementManager.__instance = self
 
     @property
     def story_progress(self) -> int:
