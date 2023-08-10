@@ -26,6 +26,8 @@ class Target(ABC):
         self.__input: StateVector = StateVector.create_zero_state_vector(target.num_of_qubits) if input_ is None \
             else input_
         self.__is_active: bool = True
+        # how often the target was checked (i.e., if it was reached) - can be used to determine the rewarded score
+        self.__checks: int = 0
 
         if not allow_target_input_equality and self.__target.is_equal_to(self.__input, ignore_god_mode=True):
             Logger.instance().warn(f"@Target.init(): target is equal to input (={self.__target})!", from_pycui=False)
@@ -59,6 +61,16 @@ class Target(ABC):
         """
         return 1
 
+    @property
+    def checks(self) -> int:
+        """
+        Counts how often a player checked if the target StateVector was reached. Is used to determine the score gained
+        from solving puzzles etc.
+
+        :return: how often is_reached() was called
+        """
+        return self.__checks
+
     def is_reached(self, state_vector: StateVector) -> Tuple[bool, Optional[Collectible]]:
         """
         Checks if the given StateVector is equal to the Target's StateVector. If so, this Target is set inactive and
@@ -67,6 +79,7 @@ class Target(ABC):
         :param state_vector: the StateVector to check for equality
         :return: True and a Collectible if the Target is reached, False and None otherwise
         """
+        self.__checks += 1
         if self.__target.is_equal_to(state_vector):
             self._on_reached()
             self.__is_active = False

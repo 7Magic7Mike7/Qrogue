@@ -508,6 +508,12 @@ class Robot(Controllable, ABC):
             return True
         return False
 
+    def increase_score(self, amount: int):
+        if amount < 0:
+            Logger.instance().error(f"Tried to increase score by a negative amount: {amount}!", from_pycui=False)
+            return
+        self.__score += amount
+
     def reset_score(self):
         self.__score = 0
 

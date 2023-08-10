@@ -17,7 +17,7 @@ from qrogue.graphics.popups import Popup
 from qrogue.graphics.rendering import ColorRules
 from qrogue.graphics.widget_base import WidgetWrapper
 from qrogue.util import CommonPopups, Config, Controls, GameplayConfig, HelpText, HelpTextType, Logger, PathConfig, \
-    RandomManager, AchievementManager, Keys, UIConfig, HudConfig, ColorConfig, Options, PuzzleConfig
+    RandomManager, AchievementManager, Keys, UIConfig, HudConfig, ColorConfig, Options, PuzzleConfig, ScoreConfig
 from qrogue.util.achievements import Ach, Unlocks
 
 from qrogue.graphics.widgets import Renderable, Widget, MyBaseWidget
@@ -1231,6 +1231,10 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self.__update_calculation(success)
         self.render()
         if success:
+            self._robot.increase_score(ScoreConfig.get_puzzle_score(self._target.checks,
+                                                                    self._robot.state_vector.num_of_used_gates,
+                                                                    self._target.state_vector.num_of_used_gates))
+
             def give_reward_and_continue() -> bool:
                 if reward is not None: self._robot.give_collectible(reward)
                 self._in_reward_message = False    # undo the blocking since the success notification is over

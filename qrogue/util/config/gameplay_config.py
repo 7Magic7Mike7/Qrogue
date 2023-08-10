@@ -418,6 +418,105 @@ class PuzzleConfig:
         return max(1, eid * 2)
 
 
+class ScoreConfig:
+    # sometimes we cannot provide an expected number of gates (so value = 0) so we need a default to work with
+    __DEFAULT_EXPECTED_GATES: int = 5
+    _BONUS_FACTOR: float = 2
+    _PENALTY_FACTOR: float = 0.7
+    _CHECKS_BONUS_MULT: float = 0.2
+    _CHECKS_PENALTY_MULT: float = 1.2
+    _USED_WEIGHT: float = 0.6
+    _CHECKS_WEIGHT: float = 1 - _USED_WEIGHT
+    # base score one gets for solving a puzzle etc.
+    _BASE_SCORE: int = 100
+    _PUZZLE_MULT: float = 1
+    _RIDDLE_MULT: float = 1.5
+    _CHALLENGE_MULT: float = 1.5
+    # bonus score one can get for solving a puzzle etc. in a low amount of steps
+    __PUZZLE_BONUS: int = int(_BASE_SCORE * _PUZZLE_MULT)
+    __RIDDLE_BONUS: int = int(_BASE_SCORE * _RIDDLE_MULT)
+    __CHALLENGE_BONUS: int = int(_BASE_SCORE * _CHALLENGE_MULT * 1.5)
+
+    @staticmethod
+    def _f_bonus(ratio: float, factor: float) -> float:
+        # ratio should be < 1
+        # gives a higher value the smaller ratio is
+        return 1 + (1 + factor) * 2**(-ratio) - (1 + factor) * 0.5  # 0.5=2**-1, so to normalize it to 1 for ratio==1
+
+    @staticmethod
+    def _f_penalty(ratio: float, factor: float) -> float:
+        # ratio should be < 1
+        # gives a smaller value the smaller ratio is
+        return (1 + factor)**ratio - factor
+
+    @staticmethod
+    def _get_ratio(checks: int, used_gates: int, expected_gates: int) -> float:
+        """
+        Returns a 0 <= value < 2.5 that is higher the better checks and used_gates performs compared to expected_gates.
+        This means the lower checks and used_gates are than expected_gates the higher the returned value. Let us
+        distinguish three main cases:
+            - checks == used_gates == expected_gates: The returned ratio is 1.0 since the puzzle was solved as expected.
+            - used_gates < expected_gates: A better solution was found, so a ratio >1.0 is returned. The penalty for needing many checks is kept low.
+            - used_gates > expected_gates: A worse solution was found, so a ratio <1.0 is returned. The penalty for needing many checks is increased.
+        Keep in mind that checks can never be smaller than used_gates. Therefore, if no combined gates are used
+        expected_gates is also the number of expected checks.
+
+        :param checks: how often it was checked if the target was reached
+        :param used_gates: how many gates were used to reach the target
+        :param expected_gates: how many gates were expected to be needed to reach the target
+
+        :return: a ratio determining how good a puzzle was solved
+        """
+        assert not (used_gates is None and expected_gates is not None), f"used_gates is None but expected_gates is " \
+                                                                        f"{expected_gates}!"
+        if used_gates is None or used_gates <= 0:
+            used_gates = 1
+        if expected_gates is None or expected_gates <= 0:
+            # just skip possible bonus since this should only happen for unimportant puzzles
+            # and this way we still get a nice curve only depending on checks
+            expected_gates = used_gates
+        bonus_factor = ScoreConfig._BONUS_FACTOR
+        penalty_factor = ScoreConfig._PENALTY_FACTOR
+
+        # expected_gates is also the expected number of checks since you cannot have less checks than gates
+        # todo: above is False if we implement combining gates! But good combinations would be rewarded, so it should
+        #  be fine
+        if used_gates < expected_gates:
+            used_exp_val = ScoreConfig._f_bonus(used_gates / expected_gates, bonus_factor)
+            # shrink penalty if we used fewer gates
+            penalty_factor *= ScoreConfig._CHECKS_BONUS_MULT
+        elif used_gates > expected_gates:
+            used_exp_val = ScoreConfig._f_penalty(expected_gates / used_gates, penalty_factor)
+            # increase penalty if we used more gates (> 1 could lead to negative numbers though)
+            penalty_factor = penalty_factor * ScoreConfig._CHECKS_PENALTY_MULT
+        else:
+            used_exp_val = 1
+
+        if checks < expected_gates:
+            checks_exp_val = ScoreConfig._f_bonus(checks / expected_gates, bonus_factor)
+        elif checks > expected_gates:
+            checks_exp_val = ScoreConfig._f_penalty(expected_gates / checks, penalty_factor)
+        else:
+            checks_exp_val = 1
+
+        # in our value range it's not possible to get negative values, but theoretically it is
+        return max(used_exp_val * ScoreConfig._USED_WEIGHT + checks_exp_val * ScoreConfig._CHECKS_WEIGHT, 0)
+
+    @staticmethod
+    def get_puzzle_score(checks: int, used_gates: int, expected_gates: int) -> int:
+        """
+        Returns a base score plus bonus score depending on how well the puzzle was solved.
+
+        :param checks: how many steps where takes to reach the target
+        :param used_gates: how many gates where used in the final circuit
+        :param expected_gates: how many gates where used to create the target StateVector
+
+        :return: a score that is bigger the lower checks and used_gates are compared to expected_gates
+        """
+        ratio = ScoreConfig._get_ratio(checks, used_gates, expected_gates)
+        return ScoreConfig._BASE_SCORE + int(ScoreConfig.__PUZZLE_BONUS * ratio)
+
+
 class QuantumSimulationConfig:
     DECIMALS = 3
     TOLERANCE = 0.1
