@@ -536,16 +536,18 @@ class Robot(Controllable, ABC):
         if check_for_game_over and self.game_over_check():
             return
 
+        num_of_used_gates: int = 0      # cannot use len(instructions) since this contains None values
         circuit = QuantumCircuit(self.__attributes.num_of_qubits, self.__attributes.num_of_qubits)
         for inst in self.__instructions:
-            if inst:
+            if inst is not None:
+                num_of_used_gates += 1
                 inst.append_to(circuit)
 
         job = execute(circuit, self.__backend)
         result = job.result()
         self.__circuit_matrix = CircuitMatrix(result.get_unitary(circuit,
                                                                  decimals=QuantumSimulationConfig.DECIMALS).data,
-                                              num_of_used_gates=len(self.__instructions))
+                                              num_of_used_gates)
 
         if input_stv is None:   # todo: input_stv might only be None if the circuit is empty (reset or initialized)
             compiled_circuit = transpile(circuit, self.__simulator)
