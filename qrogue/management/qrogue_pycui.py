@@ -395,7 +395,7 @@ class QrogueCUI(PyCUI):
             # since _draw is only called once, we have to set the timeout manually for the screen
             self._stdscr.timeout(self._refresh_timeout)
 
-    def start(self):
+    def start(self, level_name: Optional[str] = None):
         self.__render([self.__cur_widget_set])
 
         # We don't want to handle accidental input on startup of the game (e.g., during play-testing this once closed
@@ -406,6 +406,9 @@ class QrogueCUI(PyCUI):
             time.sleep(QrogueCUI.__INIT_DELAY)
             self.__init_complete = True
         Thread(target=call_me).start()
+
+        if level_name is not None:
+            MapManager.instance().load_map(level_name, None, None)
 
         super(QrogueCUI, self).start()
 
