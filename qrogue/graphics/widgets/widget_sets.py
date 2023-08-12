@@ -1033,7 +1033,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self.add_key_command(controls.get_keys(Keys.Situational2), travel_history(True), add_to_widgets=True)
 
         # clear some widgets if the player hasn't unlocked the equations yet
-        if not Ach.check_unlocks(Unlocks.ShowEquation, self._progress):
+        if not AchievementManager.instance().check_unlocks(Unlocks.ShowEquation):
             self.__input_stv.render_reset()
             self.__mul_widget.render_reset()
             self.__circuit_matrix.render_reset()
@@ -1125,7 +1125,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             vectors = None
         self.__circuit.set_data((robot, vectors))
 
-        if Ach.check_unlocks(Unlocks.ShowEquation, self._progress):
+        if AchievementManager.instance().check_unlocks(Unlocks.ShowEquation):
             self.__input_stv.set_data(target.input_stv)
             self.__mul_widget.set_data(self._sign_offset + "x")
             self.__result_widget.set_data(self._sign_offset + "=")
@@ -1155,7 +1155,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self.__history_widget.clean_history()       # todo Note: this also cleans history when going to the pause menu!
 
     def __update_calculation(self, target_reached: bool):
-        if Ach.check_unlocks(Unlocks.ShowEquation, self._progress):
+        if AchievementManager.instance().check_unlocks(Unlocks.ShowEquation):
             diff_stv = self._target.state_vector.get_diff(self._robot.state_vector)
 
             self.__circuit_matrix.set_data(self._robot.circuit_matrix)

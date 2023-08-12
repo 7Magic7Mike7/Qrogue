@@ -13,28 +13,38 @@ EnteredNavigationPanel = "EnteredNavigationPanel"
 
 
 class Unlocks(enum.Enum):
-    # global unlocks
-
     # menu unlocks
-    MainMenuContinue = 10
-    MainMenuPlay = 11
+    MainMenuContinue = (10, "MainMenuContinue")
+    MainMenuPlay = (11, "MainMenuPlay")
 
     # hud unlocks
-    ShowEnergy = 30
+    ShowEnergy = (30, "ShowEnergy")
 
     # puzzle unlocks
-    ShowEquation = 55   # whether to show the matrix vector multiplication above the circuit
-    GateRemove = 52
-    CircuitReset = 50
-    PuzzleFlee = 51
+    ShowEquation = (55, "ShowEquation")   # whether to show the matrix vector multiplication above the circuit
+    GateRemove = (52, "GateRemove")
+    CircuitReset = (50, "CircuitReset")
+    PuzzleFlee = (51, "PuzzleFlee")
 
     # level unlocks
-    ProceedChoice = 90
+    ProceedChoice = (90, "ProceedChoice")
 
     # spaceship unlocks
-    Spaceship = 100
-    Navigation = 130
-    FreeNavigation = 131
+    Spaceship = (100, "Spaceship")
+    Navigation = (130, "Navigation")
+    FreeNavigation = (131, "FreeNavigation")
+
+    def __init__(self, id_: int, name: str):
+        self.__id = id_
+        self.__name = f"Unlocked{name}"
+
+    @property
+    def id(self) -> int:
+        return self.__id
+
+    @property
+    def name(self) -> str:
+        return self.__name
 
     @staticmethod
     def in_map_reference() -> str:
@@ -80,7 +90,7 @@ class Ach:
             return progress > 0     # Lesson 0 completed
 
         elif unlock is Unlocks.ShowEquation:
-            return progress >= Ach.__SHOW_EQUATION
+            return AchievementManager.instance().check_unlocks(Unlocks.ShowEquation)
         elif unlock is Unlocks.GateRemove:
             return True     # unlock from the beginning to avoid confusion and complicated implicit removal (via cancel)
         elif unlock is Unlocks.CircuitReset:
@@ -256,6 +266,9 @@ class AchievementManager:
                     return Ach.check_unlocks(val, self.story_progress)
             return False
         return False
+
+    def check_unlocks(self, unlocks: Unlocks) -> bool:
+        return self.check_achievement(unlocks.name.lower())
 
     def reset_level_events(self):
         self.__temp_level_storage.clear()
