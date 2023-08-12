@@ -255,6 +255,8 @@ def validate_map(path: str, is_level: bool = True, in_base_path: bool = True) ->
 
 
 def play_level(level_name: str, debugging: bool = False, data_folder: str = None, seed: str = None) -> int:
+    # NOTE: This does not reset or set any achievements! Therefore, the level might not play the same as if you would
+    # play it normally for the first time.
     if PathConfig.load_paths(data_folder, None):
         return_code = Config.load()  # NEEDS TO BE THE FIRST THING WE DO!
     else:
