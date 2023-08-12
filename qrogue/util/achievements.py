@@ -353,3 +353,6 @@ class AchievementManager:
                 for achievement in type_text[a_type]:
                     text += f"{AchievementManager.__DISPLAY_STRING_INDENT}{achievement}\n"
         return text
+
+    def __str__(self) -> str:
+        return self.to_string()
