@@ -80,10 +80,10 @@ class Ach:
     @staticmethod
     def check_unlocks(unlock: Unlocks, progress: int) -> bool:
         if unlock is Unlocks.MainMenuContinue:
-            # something was already completed so continue is no longer the same than a fresh start
+            # something was already completed so continue is no longer the same as a fresh start
             return progress > 0
         elif unlock is Unlocks.MainMenuPlay:
-            # from now on we can choose with which level we want to to continue
+            # from now on we can choose with which level we want to continue
             return progress > Ach.__EXAM_DONE_PROGRESS + 1
 
         elif unlock is Unlocks.ShowEnergy:

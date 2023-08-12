@@ -399,7 +399,7 @@ class QrogueCUI(PyCUI):
         self.__render([self.__cur_widget_set])
 
         # We don't want to handle accidental input on startup of the game (e.g., during play-testing this once closed
-        # the introduction popup before it even was visible to the player) so we set our init_complete-flag to True
+        # the introduction popup before it was even visible to the player) so we set our init_complete-flag to True
         # after a short delay. Needs to be in an extra thread so _handle_key_presses() can try to handle the accidental
         # input. Otherwise, the input queue would not be cleared and the problem only delayed.
         def call_me():
