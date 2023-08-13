@@ -16,7 +16,7 @@ def __init_singletons(seed: int):
     Config.load()
     Config.activate_debugging()
 
-    def log_print(title: str, text: str):
+    def log_print(title: str, text: str, position: Optional[int] = None):
         #print(f"\"{title}\": {text}")
         pass
 

@@ -53,7 +53,7 @@ def game_over():
     print("game over")
 
 
-def message_popup(title: str, text: str, reopen: Optional[bool] = None, position: Optional[int] = None):
+def message_popup(title: str, text: str, position: Optional[int] = None):
     print("----------------------------------------")
     print(f"[{title}]")
     print(text)
