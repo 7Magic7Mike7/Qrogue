@@ -206,8 +206,10 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
                 title, text = ret
                 self.__show_message(title, text, None, self.__meta_data.description.position)
 
-    def warning(self, text: str):
-        parser_util.warning(text)
+    def warning(self, text: str, loc_details: Optional[str] = None):
+        loc_details = "" if loc_details is None else "~" + loc_details
+        level_name = "[meta_data uninitialized]" if self.__meta_data is None else self.__meta_data.name
+        parser_util.warning(text, f"{level_name}{loc_details}")
         self.__warnings += 1
 
     def generate(self, file_name: str, in_dungeon_folder: bool = True) -> Tuple[Optional[LevelMap], bool]:
@@ -288,7 +290,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         elif tile_code is tiles.TileCode.Obstacle:
             return tiles.Obstacle()
         else:
-            self.warning(f"Unknown tile specified: {tile_str}. Using a Floor-Tile instead.")
+            self.warning(f"Unknown tile without default-value specified: {tile_str}. Using a Floor-Tile instead.")
             return tiles.Floor()
 
     def __get_draw_strategy(self, ctx: QrogueDungeonParser.Draw_strategyContext):
@@ -392,19 +394,21 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         if room_id in self.__rooms:
             room = self.__rooms[room_id]
             if room.type is rooms.AreaType.SpawnRoom:
-                if self.__spawn_pos:
-                    self.warning("A second SpawnRoom was defined! Ignoring the first one "
-                                 "and using this one as SpawnRoom.")
-                self.__spawn_pos = Coordinate(x, y)
+                spawn_pos = Coordinate(x, y)
+                if self.__spawn_pos is not None:
+                    self.warning(f"A second SpawnRoom was defined! Ignoring the first one @{self.__spawn_pos} and "
+                                 f"using the new one @{spawn_pos} instead.")
+                self.__spawn_pos = spawn_pos
             return room.copy(hw_dic)
         elif room_id == self.__SPAWN_ROOM_ID:
             room = rooms.SpawnRoom(self.__load_map, None, hw_dic[Direction.North], hw_dic[Direction.East],
                                    hw_dic[Direction.South], hw_dic[Direction.West],
                                    place_teleporter=self.__meta_data.has_teleporter)
-            if self.__spawn_pos:
-                self.warning("A second SpawnRoom was defined! Ignoring the first one and using this one as "
-                             "SpawnRoom.")
-            self.__spawn_pos = Coordinate(x, y)
+            spawn_pos = Coordinate(x, y)
+            if self.__spawn_pos is not None:
+                self.warning(f"A second SpawnRoom was defined! Ignoring the first one @{self.__spawn_pos} and "
+                             f"using the new one @{spawn_pos} instead.")
+            self.__spawn_pos = spawn_pos
             return room
         elif room_id[0] == '_':
             # todo handle templates
@@ -455,7 +459,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
                 try:
                     message.resolve_message_ref(alt_message)
                 except ValueError as ve:
-                    self.warning("Message-cycle found: " + str(ve))
+                    self.warning("Message-cycle found: " + str(ve), message.id)
 
     ##### Reward Pool area #####
 
@@ -546,9 +550,9 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
                               f"{num_provided_qubits} are specified.")
             return None
         elif gate.num_of_qubits < num_provided_qubits:
-            parser_util.warning(f"Too much qubits provided. {gate.num_of_qubits} are needed but {num_provided_qubits} "
-                                f"are specified. The last {num_provided_qubits - gate.num_of_qubits} qubits are "
-                                f"ignored.")
+            self.warning(f"Too much qubits provided. {gate.num_of_qubits} are needed but {num_provided_qubits} "
+                         f"are specified. The last {num_provided_qubits - gate.num_of_qubits} qubits are "
+                         f"ignored.", name)
 
         for qubit_spec in ctx.QUBIT_SPECIFIER():
             qubit = int(qubit_spec.getText()[1:])

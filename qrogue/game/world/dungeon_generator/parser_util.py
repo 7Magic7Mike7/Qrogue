@@ -27,10 +27,8 @@ SHOP_KEEPER_TILE = "$"
 FLOOR_TILE = " "
 
 
-def warning(text: str):
-    Logger.instance().println("Warning: " + text)
-    if Config.debugging():
-        print("Warning", text)
+def warning(text: str, location: str):
+    Logger.instance().warn(f"@{location}: {text}", from_pycui=False)
 
 
 def error(text: str):
