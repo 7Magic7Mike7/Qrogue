@@ -769,6 +769,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
     def visitTrigger_descriptor(self, ctx: QrogueDungeonParser.Trigger_descriptorContext) -> tiles.Trigger:
         if ctx.GLOBAL_ACHIEVEMENT():
             ref = MapConfig.global_event_prefix() + parser_util.normalize_reference(ctx.REFERENCE().getText())
+        elif ctx.UNLOCK():
+            ref = MapConfig.unlock_prefix() + parser_util.normalize_reference(ctx.REFERENCE().getText())
         else:   # ctx.LEVEL_ACHIEVEMENT() is the default value so we don't have to check for it
             ref = parser_util.normalize_reference(ctx.REFERENCE().getText())
 
@@ -923,6 +925,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             if ctx.TRIGGER_LITERAL():
                 if ctx.GLOBAL_EVENT_REFERENCE():
                     event_id = parser_util.normalize_reference(ctx.GLOBAL_EVENT_REFERENCE().getText())
+                elif ctx.UNLOCK_REFERENCE():
+                    event_id = parser_util.normalize_reference(ctx.UNLOCK_REFERENCE().getText())
                 else:
                     event_id = parser_util.normalize_reference(ctx.REFERENCE(ref_index).getText())
                 tile.set_event(event_id)

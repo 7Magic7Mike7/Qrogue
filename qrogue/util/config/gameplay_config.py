@@ -50,6 +50,10 @@ class MapConfig:
         return "global_event_"
 
     @staticmethod
+    def unlock_prefix() -> str:
+        return "unlock_"
+
+    @staticmethod
     def next_map_string() -> str:
         return "next"
 

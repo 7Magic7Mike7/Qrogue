@@ -26,9 +26,9 @@ tile :  'o' | 't' | 'm' | DIGIT | 'c' | 'e' | 'r' | '!' | '$' | '_' ;    // obst
 tile_descriptor : (t_descriptor | message_descriptor |
                   enemy_descriptor | collectible_descriptor | energy_descriptor | riddle_descriptor |
                   challenge_descriptor | shop_descriptor)
-                  (TUTORIAL_LITERAL REFERENCE)? (TRIGGER_LITERAL (REFERENCE | GLOBAL_EVENT_REFERENCE))? ;  // winning a fight or picking up a collectible can also trigger an event
+                  (TUTORIAL_LITERAL REFERENCE)? (TRIGGER_LITERAL (REFERENCE | GLOBAL_EVENT_REFERENCE | UNLOCK_REFERENCE))? ;  // winning a fight or picking up a collectible can also trigger an event
 t_descriptor : 't' (trigger_descriptor | teleport_descriptor) ;
-trigger_descriptor : (LEVEL_EVENT | GLOBAL_ACHIEVEMENT)? REFERENCE ;
+trigger_descriptor : (LEVEL_EVENT | GLOBAL_ACHIEVEMENT | UNLOCK)? REFERENCE ;
 teleport_descriptor : (LOCAL_TUNNEL ROOM_ID integer?) |     // no integer given equals middle of room
                       (GLOBAL_TELEPORT REFERENCE) ;
 message_descriptor : 'm' integer? (REFERENCE | TEXT) ;    // #times displayed, reference to the text that should be shown
@@ -96,7 +96,9 @@ NONE_LITERAL : 'none' ;
 // trigger tiles
 LEVEL_EVENT : 'LevelEvent' ;
 GLOBAL_ACHIEVEMENT : 'GlobalAchievement' ;
+UNLOCK : 'Unlocked' ;
 GLOBAL_EVENT_REFERENCE : '*' 'global_event_' (CHARACTER | DIGIT)+ ;  // same as reference but with 'globalEvent_' prefix
+UNLOCK_REFERENCE : '*' 'unlock_'  (CHARACTER | DIGIT)+ ;  // same as reference but with 'unlock_' prefix
 
 // teleport tiles
 LOCAL_TUNNEL : 'tunnel' ;
