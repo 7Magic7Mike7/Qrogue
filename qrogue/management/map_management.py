@@ -9,7 +9,7 @@ from qrogue.graphics.popups import Popup
 from qrogue.util import CommonQuestions, Logger, MapConfig, achievements, RandomManager, Config, TestConfig, ErrorConfig
 
 from qrogue.management.save_data import SaveData
-from qrogue.util.achievements import Ach, Unlocks
+from qrogue.util.achievements import Unlocks, AchievementManager
 from qrogue.util.config.gameplay_config import ExpeditionConfig
 
 __MAP_ORDER = {
@@ -268,7 +268,7 @@ class MapManager:
             self.__in_level = False
             self.__show_world(self.__get_world(self.__cur_map.internal_name))
         elif self.__cur_map is self.__hub_world or \
-                not Ach.check_unlocks(Unlocks.FreeNavigation, SaveData.instance().story_progress):
+                not AchievementManager.instance().check_unlocks(Unlocks.FreeNavigation):
             # we return to the default world if we are currently in the hub-world or haven't unlocked it yet
             self.__show_world(None)
         else:
@@ -303,7 +303,7 @@ class MapManager:
             elif self.__cur_map.get_type() is MapType.Expedition:
                 SaveData.instance().achievement_manager.add_to_achievement(achievements.CompletedExpedition, 1)
 
-            if Ach.check_unlocks(Unlocks.ProceedChoice, SaveData.instance().story_progress):
+            if AchievementManager.instance().check_unlocks(Unlocks.ProceedChoice):
                 CommonQuestions.ProceedToNextMap.ask(self.__proceed)
             else:
                 self.__proceed()

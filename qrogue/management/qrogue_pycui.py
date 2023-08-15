@@ -25,7 +25,7 @@ from qrogue.graphics.widgets import Renderable, SpaceshipWidgetSet, BossFightWid
 from qrogue.util import achievements, common_messages, CheatConfig, Config, GameplayConfig, UIConfig, HelpText, \
     HelpTextType, Logger, PathConfig, MapConfig, Controls, Keys, RandomManager, PyCuiConfig, PyCuiColors, Options, \
     TestConfig, CommonQuestions
-from qrogue.util.achievements import Ach, Unlocks
+from qrogue.util.achievements import Ach, Unlocks, AchievementManager
 from qrogue.util.config import FileTypes, PopupConfig
 from qrogue.util.game_simulator import GameSimulator
 from qrogue.util.key_logger import KeyLogger, OverWorldKeyLogger
@@ -324,8 +324,8 @@ class QrogueCUI(PyCUI):
                 self._switch_to_menu(None)
 
         def open_world_view(direction: Direction, controllable: Controllable):
-            if Ach.check_unlocks(Unlocks.Navigation, SaveData.instance().story_progress):
-                if Ach.check_unlocks(Unlocks.FreeNavigation, SaveData.instance().story_progress):
+            if AchievementManager.instance().check_unlocks(Unlocks.Navigation):
+                if AchievementManager.instance().check_unlocks(Unlocks.FreeNavigation):
                     MapManager.instance().load_map(MapConfig.hub_world(), None)
                 else:
                     MapManager.instance().load_map(MapConfig.first_world(), None)
@@ -571,14 +571,14 @@ class QrogueCUI(PyCUI):
         self.apply_widget_set(self.__menu)
 
     def __start_playing(self):
-        if Ach.check_unlocks(Unlocks.Spaceship, SaveData.instance().story_progress):
+        if AchievementManager.instance().check_unlocks(Unlocks.Spaceship):
             self.__state_machine.change_state(QrogueCUI._State.Spaceship, SaveData.instance())
         else:
             # load the newest level (exam phase) by
             MapManager.instance().load_first_uncleared_map()
 
     def __start_expedition(self):
-        if Ach.check_unlocks(Unlocks.Spaceship, SaveData.instance().story_progress):
+        if AchievementManager.instance().check_unlocks(Unlocks.Spaceship):
             MapManager.instance().load_expedition()
         else:
             def _callback(selection: int):
@@ -617,7 +617,7 @@ class QrogueCUI(PyCUI):
 
     def __show_world(self, world: WorldMap = None) -> None:
         if world is None:
-            if Ach.check_unlocks(Unlocks.Spaceship, SaveData.instance().story_progress):
+            if AchievementManager.instance().check_unlocks(Unlocks.Spaceship):
                 if Ach.is_most_recent_unlock(Unlocks.Spaceship, SaveData.instance().story_progress) and \
                    not SaveData.instance().achievement_manager.check_achievement(achievements.EnteredNavigationPanel):
                     self._execute_transition(TransitionText.exam_spaceship(), QrogueCUI._State.Spaceship, None)
@@ -658,7 +658,7 @@ class QrogueCUI(PyCUI):
             if confirmed == 0:
                 MapManager.instance().reload()
             elif confirmed == 1:
-                if Ach.check_unlocks(Unlocks.Spaceship, SaveData.instance().story_progress):
+                if AchievementManager.instance().check_unlocks(Unlocks.Spaceship):
                     self.__state_machine.change_state(QrogueCUI._State.Spaceship, None)
                 else:
                     self.__state_machine.change_state(QrogueCUI._State.Menu, None)
