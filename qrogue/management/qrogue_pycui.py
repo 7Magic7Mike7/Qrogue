@@ -686,7 +686,7 @@ class QrogueCUI(PyCUI):
         self.__state_machine.change_state(QrogueCUI._State.Pause, None)
         if not SaveData.instance().achievement_manager.check_achievement(achievements.EnteredPauseMenu):
             Popup.generic_info("Pause", HelpText.get(HelpTextType.Pause))
-            SaveData.instance().achievement_manager.add_to_achievement(achievements.EnteredPauseMenu, 1)
+            AchievementManager.instance().trigger_global_event(achievements.EnteredPauseMenu, 1)
 
     def _switch_to_explore(self, data: Optional[Union[Map, Tuple[Optional[Map], Optional[bool]]]]) -> None:
         if data is not None:
