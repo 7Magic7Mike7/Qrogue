@@ -416,31 +416,6 @@ class CircuitWidget(Widget):
                 return True
             return False
 
-    @staticmethod
-    def __circuit_input_value(input_stv: Optional[StateVector], qubit: int) -> str:
-        if input_stv is not None and input_stv.is_classical:
-            index = input_stv.to_value().index(1)    # find where the amplitude is 1
-            # get the respective qubit values but in lsb, so we can use $qubit directly as index
-            values = to_binary_string(index, input_stv.num_of_qubits, msb=False)
-            return f"= {values[qubit]} "
-        else:
-            return ""
-
-    @staticmethod
-    def __circuit_output_value(output_stv: Optional[StateVector], target_stv: Optional[StateVector], qubit: int) -> str:
-        if output_stv is not None and output_stv.is_classical and target_stv is not None and target_stv.is_classical:
-            index = output_stv.to_value().index(1)    # find where the amplitude is 1
-            # get the respective qubit values but in lsb, so we can use $qubit directly as index
-            out_values = to_binary_string(index, output_stv.num_of_qubits, msb=False)
-            index = target_stv.to_value().index(1)
-            target_values = to_binary_string(index, target_stv.num_of_qubits, msb=False)
-            equality = '=' if out_values[qubit] == target_values[qubit] else '/'
-            return f"= {out_values[qubit]} =" \
-                   f"{equality}" \
-                   f"= {target_values[qubit]}"
-        else:
-            return ""
-
     def __init__(self, widget: WidgetWrapper, controls: Controls):
         super().__init__(widget)
         self.__robot: Optional[Robot] = None
@@ -452,6 +427,33 @@ class CircuitWidget(Widget):
         widget.add_key_command(controls.get_keys(Keys.SelectionRight), self.__move_right)
         widget.add_key_command(controls.get_keys(Keys.SelectionDown), self.__move_down)
         widget.add_key_command(controls.get_keys(Keys.SelectionLeft), self.__move_left)
+
+    def __circuit_input_value(self, qubit: int) -> str:
+        if self.__input is not None and self.__input.is_classical \
+                and self.__target is not None and self.__target.is_classical \
+                and self.__robot.state_vector.is_classical:     # robot.state_vector cannot be None
+            index = self.__input.to_value().index(1)    # find where the amplitude is 1
+            # get the respective qubit values but in lsb, so we can use $qubit directly as index
+            values = to_binary_string(index, self.__input.num_of_qubits, msb=False)
+            return f"= {values[qubit]} "
+        else:
+            return ""
+
+    def __circuit_output_value(self, qubit: int) -> str:
+        if self.__input is not None and self.__input.is_classical \
+                and self.__target is not None and self.__target.is_classical \
+                and self.__robot.state_vector.is_classical:     # robot.state_vector cannot be None
+            index = self.__robot.state_vector.to_value().index(1)    # find where the amplitude is 1
+            # get the respective qubit values but in lsb, so we can use $qubit directly as index
+            out_values = to_binary_string(index, self.__robot.state_vector.num_of_qubits, msb=False)
+            index = self.__target.to_value().index(1)
+            target_values = to_binary_string(index, self.__target.num_of_qubits, msb=False)
+            equality = '=' if out_values[qubit] == target_values[qubit] else '/'
+            return f"= {out_values[qubit]} =" \
+                   f"{equality}" \
+                   f"= {target_values[qubit]}"
+        else:
+            return ""
 
     def __change_position(self, right: bool) -> bool:
         def go_right(position: int) -> Optional[int]:
@@ -597,14 +599,13 @@ class CircuitWidget(Widget):
             circ_str = " In "   # for some reason the whitespace in front is needed to center the text correctly
             # place qubits from top to bottom, high to low index
             for q in range(len(rows) - 1, -1, -1):
-                circ_str += f"| q{q} {CircuitWidget.__circuit_input_value(self.__input, q)}>"
+                circ_str += f"| q{q} {self.__circuit_input_value(q)}>"
                 row = rows[q]
                 for i in range(len(row)):
                     circ_str += row[i]
                     if i < len(row) - 1:
                         circ_str += "+"
-                circ_str += f"< q'{q} " \
-                            f"{CircuitWidget.__circuit_output_value(self.__robot.state_vector, self.__target, q)}|"
+                circ_str += f"< q'{q} {self.__circuit_output_value(q)}|"
                 if q == len(rows) - 1:
                     circ_str += " Out"
                 circ_str += "\n"
