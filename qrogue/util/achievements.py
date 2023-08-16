@@ -7,8 +7,6 @@ from qrogue.util import MapConfig, ErrorConfig, Logger
 FinishedTutorial = "CompletedTutorial"
 EnteredPauseMenu = "EnteredPauseMenu"
 CompletedExpedition = "CompletedExpedition"
-UnlockedWorkbench = "UnlockedWorkbench"
-UnlockedQuickStart = "UnlockedQuickStart"
 EnteredNavigationPanel = "EnteredNavigationPanel"
 
 
@@ -31,8 +29,10 @@ class Unlocks(enum.Enum):
 
     # spaceship unlocks
     Spaceship = (100, "Spaceship")      # unlocked after Tutorial
+    Workbench = (110, "Workbench")      # unlocking not yet implemented
     Navigation = (130, "Navigation")    # unlocked after Tutorial
     FreeNavigation = (131, "FreeNavigation")    # unlocked never
+    QuickStart = (140, "QuickStart")    # unlocking not yet implemented
 
     def __init__(self, id_: int, name: str):
         self.__id = id_
