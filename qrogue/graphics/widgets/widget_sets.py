@@ -193,7 +193,7 @@ class MenuWidgetSet(MyWidgetSet):
     def __update_selection(self):
         choices = []
         callbacks = []
-        if Ach.check_unlocks(Unlocks.MainMenuPlay, self._progress):
+        if AchievementManager.instance().check_unlocks(Unlocks.MainMenuPlay):
             choices.append("CONTINUE\n")
             callbacks.append(self.__quick_start)
             choices.append("PLAY\n")
@@ -203,7 +203,7 @@ class MenuWidgetSet(MyWidgetSet):
                 choices.append("SIMULATOR\n")
                 callbacks.append(self.__choose_simulation)
 
-        elif Ach.check_unlocks(Unlocks.MainMenuContinue, self._progress):
+        elif AchievementManager.instance().check_unlocks(Unlocks.MainMenuContinue):
             choices.append("CONTINUE JOURNEY\n")
             callbacks.append(self.__quick_start)
 
@@ -590,7 +590,6 @@ class PauseMenuWidgetSet(MyWidgetSet):
         self.__save_callback = save_callback
         self.__exit_run = exit_run_callback
         self.__restart_callback = restart_callback
-        self.__achievement_manager = None
 
         self.__hud = MyWidgetSet.create_hud_row(self)
 
@@ -598,10 +597,10 @@ class PauseMenuWidgetSet(MyWidgetSet):
                                        column_span=UIConfig.PAUSE_CHOICES_WIDTH, center=True)
         self.__choices = SelectionWidget(choices, controls, stay_selected=True)
         self.__choices.set_data(data=(
-            ["Continue", "Restart", "Save", "Manual", "Options", "Exit"],
-            [self.__continue, self.__restart, self.__save, self.__help, self.__options,
+            ["Continue", "Restart", "Save", "Manual", "Achievements", "Options", "Exit"],
+            [self.__continue, self.__restart, self.__save, self.__help, self.__achievements, self.__options,
              self.__exit]
-        ))  # todo add back achievements
+        ))
 
         details = self.add_block_label('Details', UIConfig.HUD_HEIGHT, UIConfig.PAUSE_CHOICES_WIDTH,
                                        row_span=UIConfig.WINDOW_HEIGHT-UIConfig.HUD_HEIGHT,
@@ -659,11 +658,8 @@ class PauseMenuWidgetSet(MyWidgetSet):
         return True
 
     def __achievements(self) -> bool:
-        if self.__achievement_manager:
-            text = self.__achievement_manager.to_display_string()
-            Popup.generic_info("Current Achievement status", text)
-        else:
-            Popup.generic_info("Error", "No achievements available yet!")
+        text = AchievementManager.instance().to_display_string()
+        Popup.generic_info("Current Achievement status", text)
         return False
 
     def __options(self) -> bool:
@@ -734,7 +730,6 @@ class PauseMenuWidgetSet(MyWidgetSet):
     def set_data(self, robot: Optional[Robot], map_name: str, achievement_manager: AchievementManager):
         # todo maybe needs some overhaul?
         self.__hud.set_data((robot, map_name, None))
-        self.__achievement_manager = achievement_manager
 
     def reset(self) -> None:
         self.__choices.render_reset()
@@ -1177,10 +1172,10 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         choices = SelectionWidget.wrap_in_hotkey_str(choices)
 
         # add commands
-        if Ach.check_unlocks(Unlocks.GateRemove, self._progress):
+        if AchievementManager.instance().check_unlocks(Unlocks.GateRemove):
             choices.append("Remove")
             callbacks.append(self.__remove)
-        if Ach.check_unlocks(Unlocks.PuzzleFlee, self._progress):
+        if AchievementManager.instance().check_unlocks(Unlocks.PuzzleFlee):
             choices.append(self.__flee_choice)
             callbacks.append(self.__flee)      # just return True to change back to previous screen
 
