@@ -181,7 +181,11 @@ class Instruction(Collectible, ABC):
         return self.name()
 
     def __str__(self) -> str:
-        return self.to_string()
+        text = self.to_string()
+        if self.__position is not None: text += f" [pos={self.__position}]"
+        if len(self._qargs) > 0: text += f" @q{self._qargs[0]}"
+        for i in range(1, len(self._qargs)): text += f", {self._qargs[i]}"
+        return text
 
 
 ####### Single Qubit Gates #######
