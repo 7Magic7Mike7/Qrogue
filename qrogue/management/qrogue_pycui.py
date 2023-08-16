@@ -498,6 +498,8 @@ class QrogueCUI(PyCUI):
         super(QrogueCUI, self)._initialize_widget_renderer()
 
     def move_focus(self, widget: WidgetWrapper, auto_press_buttons: bool = True) -> None:
+        if widget is None:
+            Logger.instance().throw(Exception("Widget to focus is None!"))
         if isinstance(widget, PyCuiConfig.PyCuiWidget):
             super(QrogueCUI, self).move_focus(widget, auto_press_buttons)
         else:
