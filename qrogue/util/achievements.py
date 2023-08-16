@@ -3,9 +3,9 @@ from typing import List, Dict
 
 from qrogue.util import MapConfig, ErrorConfig, Logger
 
+# global events
 FinishedTutorial = "CompletedTutorial"
 EnteredPauseMenu = "EnteredPauseMenu"
-FirstDoorUnlocked = "UnlockedDoor"
 CompletedExpedition = "CompletedExpedition"
 UnlockedWorkbench = "UnlockedWorkbench"
 UnlockedQuickStart = "UnlockedQuickStart"
