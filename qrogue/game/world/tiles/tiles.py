@@ -77,6 +77,7 @@ class TileCode(Enum):
             TileCode.Collectible,
             TileCode.CollectibleKey, TileCode.CollectibleCoin, TileCode.CollectibleEnergy,
             TileCode.CollectibleGate, TileCode.CollectibleQubit,
+            TileCode.CollectibleScore,
         ]
 
 
