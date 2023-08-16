@@ -900,7 +900,7 @@ class NavigationWidgetSet(MapWidgetSet):
 
 
 class ReachTargetWidgetSet(MyWidgetSet, ABC):
-    __DETAILS_COLUMNS = 3
+    __DETAILS_COLUMNS = 4
 
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  continue_exploration_callback: Callable[[bool], None], reopen_popup_callback: Callable[[], None],
