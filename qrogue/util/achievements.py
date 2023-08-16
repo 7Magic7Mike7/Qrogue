@@ -243,8 +243,8 @@ class AchievementManager:
         if AchievementManager.__instance is not None:
             Logger.instance().throw(Exception(ErrorConfig.singleton("AchievementManager")))
         else:
-            self.__storage = {}
-            self.__temp_level_storage = {}
+            self.__storage: Dict[str, Achievement] = {}
+            self.__temp_level_storage: Dict[str, Achievement] = {}
 
             story_counter = 0
             for achievement in achievements:
