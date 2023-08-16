@@ -1,5 +1,5 @@
 import enum
-from typing import List
+from typing import List, Dict
 
 from qrogue.util import MapConfig, ErrorConfig, Logger
 
@@ -14,37 +14,37 @@ EnteredNavigationPanel = "EnteredNavigationPanel"
 
 class Unlocks(enum.Enum):
     # menu unlocks
-    MainMenuContinue = (10, "MainMenuContinue")
-    MainMenuPlay = (11, "MainMenuPlay")
+    MainMenuContinue = (10, "MainMenuContinue")     # unlocked after Level 0
+    MainMenuPlay = (11, "MainMenuPlay")             # unlocked after first "real" level (i.e., after spaceship)
 
     # hud unlocks
-    ShowEnergy = (30, "ShowEnergy")
+    ShowEnergy = (30, "ShowEnergy")     # unlocked after Level 0
 
     # puzzle unlocks
     ShowEquation = (55, "ShowEquation")   # whether to show the matrix vector multiplication above the circuit
-    GateRemove = (52, "GateRemove")
-    CircuitReset = (50, "CircuitReset")
-    PuzzleFlee = (51, "PuzzleFlee")
+    GateRemove = (52, "GateRemove")     # unlocked automatically
+    CircuitReset = (50, "CircuitReset")     # unlocked after Tutorial
+    PuzzleFlee = (51, "PuzzleFlee")     # unlocked in Level 1
 
     # level unlocks
-    ProceedChoice = (90, "ProceedChoice")
+    ProceedChoice = (90, "ProceedChoice")   # unlocked after all Tutorial levels (right before Exam)
 
     # spaceship unlocks
-    Spaceship = (100, "Spaceship")
-    Navigation = (130, "Navigation")
-    FreeNavigation = (131, "FreeNavigation")
+    Spaceship = (100, "Spaceship")      # unlocked after Tutorial
+    Navigation = (130, "Navigation")    # unlocked after Tutorial
+    FreeNavigation = (131, "FreeNavigation")    # unlocked never
 
     def __init__(self, id_: int, name: str):
         self.__id = id_
-        self.__name = f"Unlocked{name}"
+        self.__name = name
 
     @property
     def id(self) -> int:
         return self.__id
 
     @property
-    def name(self) -> str:
-        return self.__name
+    def ach_name(self) -> str:
+        return self.__name.lower()
 
     @staticmethod
     def in_map_reference() -> str:
@@ -56,6 +56,16 @@ class Ach:
     __SHOW_EQUATION = 2
     __EXAM_DONE_PROGRESS = 9
     STORY_DONE_PROGRESS = 100
+
+    __LEVEL_COMPLETION_UNLOCKS: Dict[str, List[Unlocks]] = {
+        "l0v0": [Unlocks.MainMenuContinue, Unlocks.ShowEnergy, ]
+    }
+
+    @staticmethod
+    def get_level_completion_unlocks(level_name: str) -> List[Unlocks]:
+        if level_name in Ach.__LEVEL_COMPLETION_UNLOCKS:
+            return Ach.__LEVEL_COMPLETION_UNLOCKS[level_name]
+        return []
 
     @staticmethod
     def story() -> str:
@@ -132,11 +142,12 @@ class AchievementType(enum.Enum):
     Event = 5    # in-level event
     Expedition = 6
     Implicit = 7    # e.g. overall story score is an implicit achievement, hence it's not explicitly saved
+    Unlock = 8      # one of the Unlocks
 
     @staticmethod
     def get_display_order() -> "List[AchievementType]":
         return [
-            AchievementType.Secret, AchievementType.Misc,
+            AchievementType.Secret, AchievementType.Unlock, AchievementType.Misc,
             AchievementType.Expedition, AchievementType.World, AchievementType.Level,
             AchievementType.Story, AchievementType.Implicit,
         ]
@@ -154,6 +165,10 @@ class Achievement:
             score = float(data[2])
             done_score = float(data[3])
             return Achievement(name, atype, score, done_score)
+
+    @staticmethod
+    def from_unlock(unlock: Unlocks) -> "Achievement":
+        return Achievement(unlock.ach_name, AchievementType.Unlock, 1, 1)
 
     # todo add unlock-date?
     def __init__(self, name: str, atype: AchievementType, score: float, done_score: float):
@@ -252,6 +267,12 @@ class AchievementManager:
             # add one step to the story achievement since we completed the latest progress
             self.__storage[Ach.story()].add_score(1)
 
+    def _store_achievement(self, achievement: Achievement):
+        if achievement.name in self.__storage:
+            self.__storage[achievement.name].add_score(achievement.score)
+        else:
+            self.__storage[achievement.name] = achievement
+
     def check_achievement(self, name: str) -> bool:
         if name in self.__temp_level_storage:
             achievement = self.__temp_level_storage[name]
@@ -262,13 +283,13 @@ class AchievementManager:
         elif name.startswith(Unlocks.in_map_reference()):   # so we can check for unlocks in levels and worlds if needed
             unlock_name = name[len(Unlocks.in_map_reference()):].lower()
             for val in Unlocks.__members__.values():
-                if val.name.lower() == unlock_name:
+                if val.ach_name == unlock_name:
                     return Ach.check_unlocks(val, self.story_progress)
             return False
         return False
 
     def check_unlocks(self, unlocks: Unlocks) -> bool:
-        return self.check_achievement(unlocks.name.lower())
+        return self.check_achievement(unlocks.ach_name)
 
     def reset_level_events(self):
         self.__temp_level_storage.clear()
@@ -282,16 +303,45 @@ class AchievementManager:
         if name in self.__storage:
             self.__storage[name].add_score(score)
 
+    def trigger_global_event(self, name: str, score: float = 1):
+        """
+        Triggers a global event by creating or adding to the corresponding achievement.
+
+        :param name: name of the event (needs to be unique)
+        :param score: by how much the event should progress (only relevant if it can be triggered multiple times from
+                        different sources
+        """
+        self._store_achievement(Achievement(name, AchievementType.Event, score, score))
+
+    def trigger_unlock(self, name: str, score: float = 1):
+        """
+        Triggers an unlock by creating or adding to the corresponding achievement.
+
+        :param name: name of the event (needs to be unique)
+        :param score: by how much the event should progress (only relevant if it can be triggered multiple times from
+                        different sources
+        """
+        self._store_achievement(Achievement(name, AchievementType.Unlock, score, score))
+
     def trigger_event(self, name: str, score: float = 1):
+        """
+        Triggers an event (either global or local/level-wise) by creating or adding to the corresponding achievement.
+
+        :param name: name of the event (needs to be unique)
+        :param score: by how much the event should progress (only relevant if it can be triggered multiple times from
+                        different sources
+        """
         if name.startswith(MapConfig.global_event_prefix()):
             name = name[len(MapConfig.global_event_prefix()):]  # remove prefix
-            storage = self.__storage
+            self.trigger_global_event(name)
+        elif name.startswith(MapConfig.unlock_prefix()):
+            name = name[len(MapConfig.unlock_prefix()):]    # remove prefix
+            self.trigger_unlock(name)
         else:
-            storage = self.__temp_level_storage
-        if name in storage:
-            storage[name].add_score(score)
-        else:
-            storage[name] = Achievement(name, AchievementType.Event, score, score)
+            if name in self.__temp_level_storage:
+                self.__temp_level_storage[name].add_score(score)
+            else:
+                self.__temp_level_storage[name] = Achievement(name, AchievementType.Event, score, score)
 
     def progressed_in_story(self, progress: str):
         if progress not in self.__storage:
@@ -301,6 +351,9 @@ class AchievementManager:
             self.__on_achievement_completion(achievement)
 
     def finished_level(self, level: str, display_name: str = None) -> bool:
+        for unlock in Ach.get_level_completion_unlocks(level):
+            self._store_achievement(Achievement.from_unlock(unlock))
+
         if level in self.__storage and self.__storage[level].is_done():
             return False
         else:
