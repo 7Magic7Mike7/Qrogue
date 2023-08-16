@@ -88,43 +88,6 @@ class Ach:
         ]
 
     @staticmethod
-    def check_unlocks(unlock: Unlocks, progress: int) -> bool:
-        if unlock is Unlocks.MainMenuContinue:
-            # something was already completed so continue is no longer the same as a fresh start
-            return progress > 0
-        elif unlock is Unlocks.MainMenuPlay:
-            # from now on we can choose with which level we want to continue
-            return progress > Ach.__EXAM_DONE_PROGRESS + 1
-
-        elif unlock is Unlocks.ShowEnergy:
-            return progress > 0     # Lesson 0 completed
-
-        elif unlock is Unlocks.ShowEquation:
-            return AchievementManager.instance().check_unlocks(Unlocks.ShowEquation)
-        elif unlock is Unlocks.GateRemove:
-            return True     # unlock from the beginning to avoid confusion and complicated implicit removal (via cancel)
-        elif unlock is Unlocks.CircuitReset:
-            return progress >= MapConfig.num_of_lessons()    # all lessons completed
-        elif unlock is Unlocks.PuzzleFlee:
-            return progress >= MapConfig.num_of_lessons()
-
-        elif unlock is Unlocks.ProceedChoice:
-            # instead of automatically proceeding to the next level we now have a choice
-            return progress >= Ach.__EXAM_DONE_PROGRESS - 1    # when we unlocked the world view (right before the exam)
-
-        elif unlock is Unlocks.Spaceship:
-            # we can now use the spaceship
-            return progress >= Ach.__EXAM_DONE_PROGRESS
-        elif unlock is Unlocks.Navigation:
-            # we can now freely choose between levels in the current world
-            return progress >= Ach.__EXAM_DONE_PROGRESS
-        elif unlock is Unlocks.FreeNavigation:
-            # we can now choose between worlds and not only levels in a given world
-            return False    # todo implement
-
-        raise NotImplementedError(f"Unlock \"{unlock}\" not implemented yet!")
-
-    @staticmethod
     def is_most_recent_unlock(unlock: Unlocks, progress: int) -> bool:
         if unlock is Unlocks.Spaceship:
             # we can now use the spaceship
@@ -281,10 +244,7 @@ class AchievementManager:
             achievement = self.__storage[name]
             return achievement.is_done()
         elif name.startswith(Unlocks.in_map_reference()):   # so we can check for unlocks in levels and worlds if needed
-            unlock_name = name[len(Unlocks.in_map_reference()):].lower()
-            for val in Unlocks.__members__.values():
-                if val.ach_name == unlock_name:
-                    return Ach.check_unlocks(val, self.story_progress)
+            Logger.instance().error(f"Tried to check the Unlock \"{name}\" with check_achievement()!")
             return False
         return False
 
