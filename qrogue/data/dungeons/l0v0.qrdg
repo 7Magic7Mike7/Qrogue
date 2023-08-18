@@ -1,25 +1,26 @@
 Qrogue<
-// DONE
+// TODO
 Name = "Lesson 1: Zeros and Ones"
 Description = Speaker "0" prio "Welcome to the //05'Mission Quniverse' Trainings Program//!"
-"We will teach you how to //03control// the newest //02Quantum Circuit Robots// - or //02Qubots// for short - and how to //03utilize// their //05Quantum Computing// capabilities. At the end of the program an //05Examination Trial// will await you. Should you pass you'll get the opportunity to join //05Mission Quniverse//. So give it your all!" ""
-"But first things first:" "//03Move// the //02Qubot// with //04WASD// or //04Arrow Keys//. You can //03close// this message with //04Enter// or //04Space//. You can always //03reopen// the last important message with //04H// if you get stuck."
-"A //05manual// for your //02Qubot// can be found in this room's //05top left corner//."
+"Today we will teach you how to //03control// the newest //02Quantum Circuit Robots// - or //02Qubots// for short - and how to //03utilize// their //05Quantum Computing// capabilities. Let's start by moving to the //05next room// with //04WASD// or //04Arrow Keys//."
+"You can close this message with //04Enter// or //04Space//."
+
 NO_TELEPORTER
+SHOW_INDIVIDUAL_QUBITS
 
 // Introduced Concepts:
-// Moving, Keys, Locked Doors, Puzzles
+// Moving, Popup controls, Menu navigation, Messages/Hints, Keys + Locked Doors, 0-Enemies + classical Puzzles, Goal
 
 [Robot]
-1 qubits [ *xgate ] 
-circuit_space = 2
+2 qubits [ *xgate ] 
+circuit_space = 1
 maxenergy = 100000 // it should not be possible to run out of energy in this level
 
 [Layout]
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-| __ .. __ .. __ .. __ .. __ .. __ .. __ |
-| ..    ..    ..    ..    ..    ..    .. |
-| __ .. SR == zz == aa 11 bb 11 cc .. __ |
+| __ .. __ .. SR == aa == bb .. __ .. __ |
+| ..    ..    ..    11    ..    ..    .. |
+| __ .. __ .. __ .. cc 11 dd == ee .. __ |
 | ..    ..    ..    ..    ..    ..    .. |
 | __ .. __ .. __ .. __ .. __ .. __ .. __ |
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -28,51 +29,66 @@ maxenergy = 100000 // it should not be possible to run out of energy in this lev
 
 SR (Spawn):
 #############
-# m _ _ _ _ #
 # _ _ _ _ _ #
-# _ _ _ _ m #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
 # _ _ _ _ _ #
 # _ _ _ _ _ #
 #############
-m *helptextControls
-m 1 *movingDone
-
-zz (Pause):
-#############
-# _ _ _ o _ #
-# _ o _ _ _ #
-# _ o _ o _ #
-# _ o _ _ _ #
-# _ _ _ o _ #
-#############
+//0 [0, 1, 0, 0] input=[0, 0, 0, 1] tutorial *puzzleFight trigger *solvedPuzzle
+//r 7 [0, 1, 0, 0] key 1
 
 aa (Story):
 #############
-# o _ _ _ _ #
-# _ _ o o _ #
-# m o _ _ _ #
-# o o o o _ #
-# c _ _ _ _ #
+# o o o o o #
+# o o o o o #
+# _ o o o _ #
+# _ o o o _ #
+# _ _ m _ _ #
 #############
-m *lockedDoor
-c key 1 tutorial *keyFound
+m 1 *lockedDoor
 
 bb (Story):
 #############
-# o 0 m _ o #
-# o c o m _ #
-# _ o o o _ #
-# _ m o m _ #
-# o _ _ _ o #
+# o o o o o #
+# _ _ o o o #
+# _ m _ c o #
+# _ _ o o o #
+# o o o o o #
 #############
-c key 1
-0 *base1 tutorial *helptextFight trigger *solvedPuzzle 
-m 1 *puzzle4
-m *puzzle3
-m *puzzle1
-m *puzzle2
+c key 1 tutorial *keyFound
+m 1 *reopenMsgLog
 
 cc (Story):
+#############
+# o o m _ o #
+# o o o m _ #
+# o o o o _ #
+# c o o m _ #
+# 0 _ m _ o #
+#############
+c key 1 trigger *pickedUpKey
+0 *base01 input=*base00 tutorial *puzzleFight trigger *solvedPuzzle
+m 1 *puzzle1
+m 1 *puzzle2
+m 1 *puzzle3
+m *puzzle4
+
+dd (Wild):
+#############
+# o o o o o #
+# o o o o 0 #
+# m _ 0 _ m #
+# o o o o 0 #
+# o o o o o #
+#############
+m 1 *goal
+m 1 *optional
+0 *base00 input=*base10
+0 *base01 input=*base11
+0 *base11 input=*base01
+
+ee (Story):
 #############
 # _ _ _ _ _ #
 # _ _ _ _ _ #
@@ -89,33 +105,44 @@ m *doneMsg trigger *done
 
 [StateVector Pools]
 custom
-*base1 [ [0, 1] ]
+*base00 [ {num_qubits=2: gI @ q0} ]
+*base01 [ {num_qubits=2: gX @ q0} ]
+*base10 [ {num_qubits=2: gX @ q1} ]
+*base11 [ {num_qubits=2: gX @ q0, gX @ q1} ]
 
-default *base1
+default *base01
 
 [Reward Pools]
-custom
-*key [key 1]
-
 default [none]
 
 [Messages]
 // highlight text by encapsulating it in "//02abcd//" where "abcd" is the text to highlight and "02" one of the available styles: 01 is for tiles, 02 is for game objects, 03 for actions, 04 for keys on the keyboard and 05 for other words
 // speaker: 0 = Examiner, 1 = Scientist, 2 = System, 3 = Player
+default Speaker "0"
 
-*movingDone Speaker "0" prio "Next: //03Move// through the //02Door//."
+*lockedDoor prio pos5 "The //02Door// down there looks a bit different. We will need to find something to open it. Let's check the room to the right!"
 
-*lockedDoor Speaker "0" "The //02Door// to the right looks a bit different. Maybe not all //02Doors// open by simply //03moving// onto them?" "Let's try and check!"
+*keyFound prio "Great, you found a //02Key//. The //05number of keys// you hold is displayed in the //05HUD// on the //05top left//."
 
-*keyFound Speaker "0" "Great, you found a //02Key//. The //05number of keys// you hold is displayed in the //05HUD// on the //05top left//."
+*reopenMsgLog prio "By the way, should you ever forget what your current goal is you can open the message log with //04H// and scroll through its history with //04Q// and //04E//."
 
-*puzzle1 Speaker "0" prio "The red //010// is a //02Quantum Puzzle//. It will challenge you to reach a certain //02Quantum State//." when *solvedPuzzle then *wrongDirection1
-*puzzle2 Speaker "0" prio "For this you can //03add//, //03move// or //03remove// //02Quantum Gates//. Right now, you have only //05one// //02X Gate// and two slots for placing a gate." when *solvedPuzzle then *wrongDirection2
-*puzzle3 Speaker "0" prio "No worries. At the beginning we will stay in the //05Classical World// of 0s and 1s. Here an //02X Gate// acts like a //05Not Gate//." when *solvedPuzzle then *puzzleDone
-*puzzle4 Speaker "0" prio "Now //03step// onto the //010// and try your best."
-*puzzleDone Speaker "0" prio "Now you have a //02Key// to //03open// the next //02Door//."
-*wrongDirection2 Speaker "0" "Move through the //02Door// to the //05right//."
-*wrongDirection1 Speaker "0" "You're moving in the //05wrong direction//."
+*movingDone prio "Next: //03Move// through the //02Door//."
+
+
+*puzzleFight prio pos1 "In the //05middle// of the screen you can see your //02Quantum Circuit// which is currently empty. On its left you see the values of the input (qu)bits. On the right side you see the current as well as expected output values. The //02Puzzle// is solved if your Circuit outputs the expected values."
+"At the //05bottom// you can select whether to place or remove a Gate from your Circuit via //04WASD// or //04Arrow Keys//. Confirming your selection with //04Enter// or //04Space// shows you a preview in your Circuit which you can update (i.e., where to place or remove a gate) and confirm again with the usual keys. After that your output will be recalculated and updated accordingly."
+"Pressing //04H// while a //02Gate// is selected will show you a brief description of what the //02Gate// does. Now try to solve your first //02Puzzle//!"
+
+*puzzle1 prio pos1 "The red //010// in the bottom left corner is a //02Quantum Puzzle//. It will challenge you to reach a certain //02Quantum State//."
+*puzzle2 prio "For this you can //03add//, //03move// or //03remove// //02Quantum Gates//. Currently you only have //05one// //02X Gate// to place."
+*puzzle3 prio "No worries, for now we will stay in the //05Classical World// of 0s and 1s. Here an //02X Gate// acts like a //05Not Gate//."
+*puzzle4 prio pos1 "Now //03step// onto the //010// and try your best." when *solvedPuzzle then *puzzleDone
+*puzzleDone prio "Now you can go and pick up the //02Key// //01k//." when *pickedUpKey then *keyPickedUp
+*keyPickedUp prio "Now you have a //02Key// to //03open// the next //02Door//."
+
+*goal prio "The //05goal// in each level is to find... well, the goal. It is depicted as green //01G// and can often be found in the room farthest from your starting position."
+*optional pos5 "The two remaining //010//s are optional //02Puzzle//s. You can try to solve them if you want but it's not necessary to complete the level. You can also just continue to the next room."
+"[Some messages - like this one - are not important to complete a level. Hence, they will not reappear in your message log to keep it clean and full of useful information.]"
 
 *doneMsg "Alright, you successfully //03finished// the //05first// lesson. Now onwards to the //05second// one."
 
