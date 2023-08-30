@@ -44,8 +44,14 @@ class GateType(enum.Enum):
     def description(self) -> str:
         return self.__description
 
-    def names(self) -> Set[str]:
-        return self.__names
+    def is_in_names(self, name: str) -> bool:
+        if name in self.__names:
+            return True
+        name = name.lower()
+        for n in self.__names:
+            if name == n.lower():
+                return True
+        return False
 
 
 class Instruction(Collectible, ABC):
@@ -314,6 +320,6 @@ class InstructionManager:
     @staticmethod
     def from_name(name: str) -> Optional[Instruction]:
         for val in GateType:
-            if name in val.names:
+            if val.is_in_names(name):
                 return InstructionManager.__GATES[val]
         return None
