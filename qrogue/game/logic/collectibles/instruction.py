@@ -2,12 +2,14 @@ import enum
 from abc import ABC, abstractmethod
 from typing import Iterator, Optional, Set, Dict
 
+import math
 import qiskit.circuit
 import qiskit.circuit.library.standard_gates as gates
 from qiskit import QuantumCircuit
 
 from qrogue.game.logic.collectibles import Collectible, CollectibleType
 from qrogue.util import ShopConfig, Logger
+from qrogue.util.util_functions import rad2deg
 
 
 class GateType(enum.Enum):
@@ -24,6 +26,14 @@ class GateType(enum.Enum):
     HGate = "H", {"Hadamard"}, \
             "The Hadamard Gate is often used to bring Qubits to Superposition. In a simple case (i.e., phase is 0) " \
             "this corresponds to a rotation of 90° along the x-axis."
+
+    SGate = "S", {"Phase", "P"}, \
+            "The S Gate can change the phase of a qubit by multiplying its |1> with i. It is equivalent to a " \
+            "rotation along the z-axis by 90°."
+    RYGate = "RY", {"Rotational Y", "Rot Y"}, \
+             "The RY Gate conducts a rotation along the y-axis by a certain angle. In our case the angle is 90°."
+    RZGate = "RZ", {"Rotational Z", "Rot Z"}, \
+             "The RZ Gate conducts a rotation along the z-axis by a certain angle. In our case the angle is 90°."
 
     SwapGate = "Swap", set(), \
                "As the name suggests, Swap Gates swap the amplitude between two Qubits."
@@ -250,6 +260,66 @@ class HGate(SingleQubitGate):
         return HGate()
 
 
+class SGate(SingleQubitGate):
+    def __init__(self):
+        super().__init__(GateType.SGate, gates.SGate())
+
+    def abbreviation(self, qubit: int = 0):
+        return " S "
+
+    def copy(self) -> "Instruction":
+        return SGate()
+
+
+class RotationGate(SingleQubitGate, ABC):
+    _DEFAULT_ANGLE = math.pi / 2
+
+    def __init__(self, gate_type: GateType, instruction: qiskit.circuit.Gate, angle: float):
+        super().__init__(gate_type, instruction)
+        self.__angle = angle
+
+    @property
+    def angle(self) -> float:
+        return self.__angle
+
+    def description(self) -> str:
+        desc = super().description()   # remove the stated default angle at the end
+        # find indices of "°" and the whitespace before that, so we can replace the angle value.
+        degree_index = desc.find("°")
+        if degree_index <= 0:
+            Logger.instance().error(f"No \"°\" in the description of {self.type}!")
+            return desc
+        space_index = desc[:degree_index].rfind(" ")
+
+        # round and skip potential ".00"s
+        angle = str(round(rad2deg(self.angle), 2))
+        if angle.endswith(".00"): angle = angle[:-3]
+
+        return f"{desc[:space_index]} {angle}{desc[degree_index:]}"
+
+
+class RYGate(RotationGate):
+    def __init__(self, angle: float = RotationGate._DEFAULT_ANGLE):
+        super().__init__(GateType.RYGate, gates.RYGate(theta=angle), angle)
+
+    def abbreviation(self, qubit: int = 0):
+        return " RY"
+
+    def copy(self) -> "Instruction":
+        return RYGate(self.angle)
+
+
+class RZGate(RotationGate):
+    def __init__(self, angle: float = RotationGate._DEFAULT_ANGLE):
+        super().__init__(GateType.RZGate, gates.RZGate(phi=angle), angle)
+
+    def abbreviation(self, qubit: int = 0):
+        return " RZ"
+
+    def copy(self) -> "Instruction":
+        return RZGate(self.angle)
+
+
 ####### Multi Qubit Gates ########
 
 
@@ -312,6 +382,10 @@ class InstructionManager:
         GateType.ZGate: ZGate(),
 
         GateType.HGate: HGate(),
+        GateType.SGate: SGate(),
+
+        GateType.RYGate: RYGate(),
+        GateType.RZGate: RZGate(),
 
         GateType.SwapGate: SwapGate(),
         GateType.CXGate: CXGate(),

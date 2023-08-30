@@ -29,6 +29,10 @@ def clamp(val: int, minv: int, maxv: int) -> int:
     return max(minv, min(val, maxv))
 
 
+def rad2deg(rad: float) -> float:
+    return rad * 180 / math.pi
+
+
 def to_binary_string(num: int, digits: Optional[int] = None, msb: bool = True) -> str:
     """
     Converts a given integer into its binary representation as string.
