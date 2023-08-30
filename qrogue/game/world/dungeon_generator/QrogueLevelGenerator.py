@@ -55,34 +55,6 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             return ref in ['energy']
 
         @staticmethod
-        def is_gate_x(ref: str) -> bool:
-            return ref in ['x', 'xgate']
-
-        @staticmethod
-        def is_gate_y(ref: str) -> bool:
-            return ref in ['y', 'ygate']
-
-        @staticmethod
-        def is_gate_z(ref: str) -> bool:
-            return ref in ['z', 'zgate']
-
-        @staticmethod
-        def is_gate_h(ref: str) -> bool:
-            return ref in ['h', 'hgate', 'hadamard', 'hadamardgate']
-
-        @staticmethod
-        def is_gate_cx(ref: str) -> bool:
-            return ref in ['cx', 'cxgate']
-
-        @staticmethod
-        def is_gate_swap(ref: str) -> bool:
-            return ref in ['swap', 'swapgate']
-
-        @staticmethod
-        def is_gate_i(ref: str) -> bool:
-            return ref in ['i', 'igate']
-
-        @staticmethod
         def is_dir_north(dir_str: str) -> bool:
             return dir_str == "North"
 
@@ -345,22 +317,14 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
     def __load_gate(self, reference: QrogueDungeonParser.REFERENCE) -> instruction.Instruction:
         ref = parser_util.normalize_reference(reference.getText())
-        if QrogueLevelGenerator._StaticTemplates.is_gate_x(ref):
-            return instruction.XGate()
-        elif QrogueLevelGenerator._StaticTemplates.is_gate_y(ref):
-            return instruction.YGate()
-        elif QrogueLevelGenerator._StaticTemplates.is_gate_z(ref):
-            return instruction.ZGate()
-        elif QrogueLevelGenerator._StaticTemplates.is_gate_h(ref):
-            return instruction.HGate()
-        elif QrogueLevelGenerator._StaticTemplates.is_gate_cx(ref):
-            return instruction.CXGate()
-        elif QrogueLevelGenerator._StaticTemplates.is_gate_swap(ref):
-            return instruction.SwapGate()
+        # remove "gate" if it was added at the end
+        if ref.endswith("gate"): ref = ref[:-len("gate")]
 
-        elif not QrogueLevelGenerator._StaticTemplates.is_gate_i(ref):
+        gate = InstructionManager.from_name(ref)
+        if gate is None:
             self.warning(f"Unknown gate reference: {reference}. Returning I Gate instead.")
-        return instruction.IGate()
+            return instruction.IGate()
+        return gate
 
     def __load_message(self, reference: QrogueDungeonParser.REFERENCE) -> Message:
         ref = reference.getText()
