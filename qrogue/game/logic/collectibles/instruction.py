@@ -12,25 +12,38 @@ from qrogue.util import ShopConfig, Logger
 
 class GateType(enum.Enum):
     # unique by their short name
-    IGate = "I", {"Identity"}
-    XGate = "X", {"Pauli X", "Pauli-X"}
-    YGate = "Y", {"Pauli Y", "Pauli-Y"}
-    ZGate = "Z", {"Pauli Z", "Pauli-Z"}
-    HGate = "H", {"Hadamard"}
+    IGate = "I", {"Identity"}, \
+            "An I Gate or Identity Gate doesn't alter the Qubit in any way. It can be used as a placeholder."
+    XGate = "X", {"Pauli X", "Pauli-X"}, \
+            "In the classical world an X Gate corresponds to an inverter. It swaps the amplitudes of |0> and |1>.\n" \
+            "In the quantum world this corresponds to a rotation of 180° along the x-axis, hence the name X Gate."
+    YGate = "Y", {"Pauli Y", "Pauli-Y"}, \
+            "A Y Gate rotates the Qubit along the y-axis by 180°."
+    ZGate = "Z", {"Pauli Z", "Pauli-Z"}, \
+            "A Z Gate rotates the Qubit along the z-axis by 180°."
+    HGate = "H", {"Hadamard"}, \
+            "The Hadamard Gate is often used to bring Qubits to Superposition. In a simple case (i.e., phase is 0) " \
+            "this corresponds to a rotation of 90° along the x-axis."
 
-    SwapGate = "Swap", set()
-    CXGate = "CX", {"Controlled X", "CNOT", "Controlled NOT"}
+    SwapGate = "Swap", set(), \
+               "As the name suggests, Swap Gates swap the amplitude between two Qubits."
+    CXGate = "CX", {"Controlled X", "CNOT", "Controlled NOT"}, \
+             "Applies an X Gate onto its second Qubit if its first Qubit is 1."
 
-    def __init__(self, short_name: str, other_names: Set[str]):
+    def __init__(self, short_name: str, other_names: Set[str], description: str):
         self.__short_name = short_name
         self.__names = other_names
         self.__names.add(short_name)
+        self.__description = description
 
     @property
     def short_name(self) -> str:
         return self.__short_name
 
     @property
+    def description(self) -> str:
+        return self.__description
+
     def names(self) -> Set[str]:
         return self.__names
 
@@ -41,26 +54,6 @@ class Instruction(Collectible, ABC):
     """
     MAX_ABBREVIATION_LEN = 5
     __DEFAULT_PRICE = 15 * ShopConfig.base_unit()
-    __GATE_DESCRIPTIONS = {
-        # GateType -> "description"
-        GateType.IGate: "An I Gate or Identity Gate doesn't alter the Qubit in any way. It can be used as a "
-                        "placeholder.",
-        GateType.XGate: "In the classical world an X Gate corresponds to an inverter. It swaps the amplitudes of |0> "
-                        "and |1>.\nIn the quantum world this corresponds to a rotation of 180° along the x-axis, hence "
-                        "the name X Gate.",
-        GateType.YGate: "A Y Gate rotates the Qubit along the y-axis by 180°.",
-        GateType.ZGate: "A Z Gate rotates the Qubit along the z-axis by 180°.",
-        GateType.HGate: "The Hadamard Gate is often used to bring Qubits to Superposition. In a simple case this "
-                        "corresponds to a rotation of 90°.",
-
-        GateType.SwapGate: "As the name suggests, Swap Gates swap the amplitude between two Qubits.",
-        GateType.CXGate: "Applies an X Gate onto its second Qubit if its first Qubit is 1.",
-    }
-
-    @staticmethod
-    def get_description(gate_type: GateType) -> str:
-        assert gate_type in Instruction.__GATE_DESCRIPTIONS, f"Invalid GateType: {gate_type}! No description available."
-        return Instruction.__GATE_DESCRIPTIONS[gate_type]
 
     def __init__(self, gate_type: GateType, instruction: qiskit.circuit.Gate, needed_qubits: int):
         super().__init__(CollectibleType.Gate)
@@ -141,7 +134,7 @@ class Instruction(Collectible, ABC):
         return f"{self.__type.short_name} Gate"
 
     def description(self) -> str:
-        return Instruction.get_description(self.__type)
+        return self.__type.description
 
     @abstractmethod
     def abbreviation(self, qubit: int = 0):

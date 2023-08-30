@@ -989,8 +989,8 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         def gate_guide():
             gates = self._robot.get_available_instructions()
             if 0 <= self._details.index < len(gates):
-                gate = gates[self._details.index].gate_type
-                Popup.generic_info(gate.short_name, Instruction.get_description(gate))
+                gate = gates[self._details.index]
+                Popup.generic_info(gate.gate_type.short_name, gate.description())
             else:
                 reopen_popup_callback()
         self._details.widget.add_key_command(controls.get_keys(Keys.Help), gate_guide)
