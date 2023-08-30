@@ -686,8 +686,7 @@ class InputStateVectorWidget(StateVectorWidget):
         super().__init__(widget, headline)
 
     def set_data(self, state_vector: StateVector) -> None:
-        # here we only need 1 space per value because every value is either 1 or 0
-        self._stv_str_rep = self._headline + state_vector.to_string(space_per_value=1)
+        self._stv_str_rep = self._headline + state_vector.to_string()
 
 
 class OutputStateVectorWidget(StateVectorWidget):
