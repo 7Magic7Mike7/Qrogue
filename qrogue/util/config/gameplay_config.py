@@ -523,8 +523,10 @@ class ScoreConfig:
 
 class QuantumSimulationConfig:
     DECIMALS = 3
+    COMPLEX_DECIMALS = 2    # complex numbers need more space and therefore might show fewer decimals
     TOLERANCE = 0.1
     MAX_SPACE_PER_NUMBER = 1 + 1 + 1 + DECIMALS  # sign + "0" + "." + DECIMALS
+    MAX_SPACE_PER_COMPLEX_NUMBER = 1 + 1 + COMPLEX_DECIMALS + 1 + 1 + COMPLEX_DECIMALS + 1  # sign, . & j and decimals
     MAX_PERCENTAGE_SPACE = 3
 
 

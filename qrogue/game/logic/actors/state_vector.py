@@ -28,20 +28,30 @@ def _generate_ket(qubit: int, num_of_qubits: int) -> str:
 
 
 def _wrap_in_ket_notation(number: complex, qubit: int, num_of_qubits: int,
-                          space_per_value: int = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER, coloring: bool = False,
+                          decimals: Optional[int] = None, space_per_value: Optional[int] = None, coloring: bool = False,
                           correct_amplitude: bool = False, show_percentage: bool = False):
     """
 
     :param number:
     :param qubit:
     :param num_of_qubits:
+    :param decimals:
     :param space_per_value:
     :param coloring:
     :param correct_amplitude:
     :param show_percentage:
     :return:
     """
-    value = f"{center_string(StateVector.complex_to_string(number), space_per_value)}"
+    is_complex = number.real != 0 and number.imag != 0
+    if decimals is None:
+        if is_complex: decimals = QuantumSimulationConfig.COMPLEX_DECIMALS
+        else: decimals = QuantumSimulationConfig.DECIMALS
+    if space_per_value is None:
+        if is_complex: space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_COMPLEX_NUMBER
+        elif number.imag != 0: space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER + 1   # add the extra "j"
+        else: space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER
+
+    value = f"{center_string(StateVector.complex_to_string(number, decimals), space_per_value)}"
     if coloring:
         if correct_amplitude:
             value = ColorConfig.colorize(ColorCode.CORRECT_AMPLITUDE, value)
@@ -69,19 +79,32 @@ class StateVector:
         return False
 
     @staticmethod
-    def complex_to_string(val: complex) -> str:
-        val = np.round(val, QuantumSimulationConfig.DECIMALS)
+    def complex_to_string(val: complex, decimals: Optional[int] = None) -> str:
+        if decimals is None:
+            if val.real != 0 and val.imag != 0: decimals = QuantumSimulationConfig.COMPLEX_DECIMALS
+            else: decimals = QuantumSimulationConfig.DECIMALS
+
+        val = np.round(val, decimals)
         if val.imag == 0:
             text = f"{val.real:g}"  # g turns 0.0 to 0
         elif val.real == 0:
             text = f"{val.imag:g}j"
         else:
-            if val.imag == 1:
-                text = f"{val.real:g}+j"
-            elif val.imag == -1:
-                text = f"{val.real:g}-j"
+            if val.real != 0 and val.real != 1 and val.real != -1:
+                real = f"{val.real:g}"
+                if real[0] == "0": real = real[1:]    # remove the redundant "0" in front of "0.x", resulting in ".x"
+                else: real = real[0] + real[2:]     # remove the redundant "0" after the sign, resulting in "-.x"
             else:
-                text = str(val)[1:-1]    # remove the parentheses
+                real = str(val.real)    # real is now either "0" or "1" or "-1"
+            if val.imag == 1:
+                text = f"{real}+j"
+            elif val.imag == -1:
+                text = f"{real}-j"
+            else:
+                imag = f"{val.imag:g}"
+                if imag[0] == "0": imag = imag[1:]    # remove the redundant "0" in front of "0.x", resulting in ".x"
+                else: imag = imag[0] + imag[2:]     # remove the redundant "0" after the sign, resulting in "-.x"
+                text = f"{real}{imag}j"
         # skip "-" in front if the text starts with "-0" and the value is actually 0 (so no more comma)
         if text.startswith("-0") and (len(text) == 2 or len(text) > 2 and text[2] != "."):
             text = text[1:]
@@ -141,6 +164,25 @@ class StateVector:
                 return False
         # if the sum is 1, we have exactly one 1 and everything else is 0 -> we have a classical state
         return sum(self.__amplitudes) == 1
+
+    @property
+    def is_real(self) -> bool:
+        for val in self.__amplitudes:
+            if val.imag != 0:
+                return False
+        return True
+
+    @property
+    def is_imag(self) -> bool:
+        for val in self.__amplitudes:
+            if val.real != 0:
+                return False
+        return True
+
+    @property
+    def is_complex(self) -> bool:
+        # if it's neither pure real nor pure imaginary it has to be mixed and therefore complex
+        return not self.is_real and not self.is_imag
 
     @property
     def num_of_used_gates(self) -> int:
@@ -218,13 +260,20 @@ class StateVector:
                 diff[i] = self.__amplitudes[i] - other.__amplitudes[i]
             return StateVector(diff)
 
-    def wrap_in_qubit_conf(self, index: int, space_per_value: int = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER,
-                           coloring: bool = False, correct_amplitude: bool = False, show_percentage: bool = False) \
-            -> str:
-        return _wrap_in_ket_notation(self.at(index), index, self.num_of_qubits, space_per_value, coloring,
+    def wrap_in_qubit_conf(self, index: int, space_per_value: Optional[int] = None, coloring: bool = False,
+                           correct_amplitude: bool = False, show_percentage: bool = False) -> str:
+        # don't use default decimals since we don't want it to be dependent on individual entries but rather decide
+        # based on whether the vector itself is complex or not
+        decimals = QuantumSimulationConfig.COMPLEX_DECIMALS if self.is_complex else QuantumSimulationConfig.DECIMALS
+        if space_per_value is None:
+            if self.is_complex: space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_COMPLEX_NUMBER
+            elif self.is_imag: space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER + 1   # add the "j"
+            else: space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER
+
+        return _wrap_in_ket_notation(self.at(index), index, self.num_of_qubits, decimals, space_per_value, coloring,
                                      correct_amplitude, show_percentage)
 
-    def to_string(self, space_per_value: int = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER) -> str:
+    def to_string(self, space_per_value: Optional[int] = None) -> str:
         text = ""
         for i in range(self.size):
             text += self.wrap_in_qubit_conf(i, space_per_value)
@@ -270,6 +319,22 @@ class CircuitMatrix:
             matrix.append(row)
         return CircuitMatrix(matrix, num_of_used_gates=0)
 
+    @staticmethod
+    def check_validity(matrix: List[List[complex]]) -> bool:
+        col_sum: List[float] = [0] * len(matrix)
+        for row in matrix:
+            row_sum = 0
+            for i, val in enumerate(row):
+                res_val = abs(val)**2
+                row_sum += res_val
+                col_sum[i] += res_val
+            if row_sum < 1 - QuantumSimulationConfig.TOLERANCE or 1 + QuantumSimulationConfig.TOLERANCE < row_sum:
+                return False
+        for val in col_sum:
+            if val < 1 - QuantumSimulationConfig.TOLERANCE or 1 + QuantumSimulationConfig.TOLERANCE < val:
+                return False
+        return True
+
     def __init__(self, matrix: List[List[complex]], num_of_used_gates: int):
         self.__matrix = matrix
         self.__num_of_used_gates = num_of_used_gates
@@ -286,6 +351,37 @@ class CircuitMatrix:
     def num_of_used_gates(self) -> int:
         return self.__num_of_used_gates
 
+    @property
+    def is_classical(self) -> bool:
+        mat_sum = 0
+        for row in self.__matrix:
+            for val in row:
+                if val != 0 and val != 1:
+                    return False
+                mat_sum += val
+        return mat_sum == self.size     # there needs to be one 1 per row
+
+    @property
+    def is_real(self) -> bool:
+        for row in self.__matrix:
+            for val in row:
+                if val.imag != 0:
+                    return False
+        return True
+
+    @property
+    def is_imag(self) -> bool:
+        for row in self.__matrix:
+            for val in row:
+                if val.real != 0:
+                    return False
+        return True
+
+    @property
+    def is_complex(self) -> bool:
+        # if it's neither pure real nor pure imaginary it has to be mixed and therefore complex
+        return not self.is_real and not self.is_imag
+
     def multiply(self, stv: StateVector) -> Optional[StateVector]:  # todo improve performance?
         if self.num_of_qubits == stv.num_of_qubits:
             values = []
@@ -301,7 +397,12 @@ class CircuitMatrix:
                                     f"don't have the same number of qubits!", show=Config.debugging(), from_pycui=False)
             return None
 
-    def to_string(self, space_per_value: int = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER) -> str:
+    def to_string(self, space_per_value: Optional[int] = None) -> str:
+        if space_per_value is None:
+            if self.is_complex: space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_COMPLEX_NUMBER
+            elif self.is_imag: space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER + 1
+            else: space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER
+
         spacing = " "
         if GameplayConfig.get_option_value(Options.show_ket_notation, convert=True):
             padding = len(_generate_ket(0, self.num_of_qubits)) + len(spacing)  # also add the space after the ket
