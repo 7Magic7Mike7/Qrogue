@@ -1,6 +1,6 @@
 Qrogue<
-Name = "Lesson 5: Position? Super!"
-Description = Speaker "0" "Now we will start to really dive into the //05strange world// of //02Quantum Computing//. Do you remember //02Superposition// from //05Lesson 3//?"
+Name = "Lesson 5"
+Description = Speaker "0" "TODO?"
 NO_TELEPORTER
 
 // Introduced Concepts:
@@ -13,159 +13,121 @@ maxenergy = 10
 
 [Layout]
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-| __ .. __ .. __ .. aa .. __ .. dd .. __ |
-| ..    ..    ..    21    ..    11    .. |
-| __ .. gg 31 ff 30 SR == za == cc .. __ |
-| ..    ..    ..    20    ..    11    .. |
-| __ .. __ .. __ .. bb .. __ .. ee .. __ |
+| __ .. an == am == al == ak .. __ .. __ |
+| ..    21    ==    ==    20    ..    .. |
+| __ .. cc == dd 11 ee 11 gg == SR .. __ |
+| ..    20    ==    ==    21    ..    .. |
+| __ .. bn == bm == bl == bk .. __ .. __ |
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 [Custom Rooms]
 
-za (Gate):
+SR (Spawn):
 #############
-# _ _ o _ _ #
-# _ _ o _ _ #
-# _ 0 c m 0 #
-# _ _ o _ _ #
-# _ _ o _ _ #
-#############
-0 *reach2X none tutorial *tutImplicitRemoval
-c gate *hgate
-m 1 *tutHadamard1
-0 *superPos0 none tutorial *tutHadamard2
-
-cc (Wild):
-#############
-# o _ 0 o o #
-# o 2 _ 8 c #
-# m 0 0 o o #
-# o 1 _ 9 c #
-# o _ 0 o o #
-#############
-m 1 *tutHadamard3
-c key 1
-0 *H0X1 tutorial *tutHadamard4
-0 *superPos1 none
-0 *superPos0
-0 *H1X0
-9 *superPos
-8 *superPos
-2 *bbStvs
-1 *bbStvs
-
-dd (Wild):
-#############
-# o o o o o #
-# _ o o o _ #
-# _ _ ! _ _ #
 # _ _ _ _ _ #
-# _ _ m _ _ #
-#############
-m 1 *tutChallenges trigger *sawChallenge
-! 2 *H1X1 none tutorial *tutHnXn1 trigger *challenge1
-
-ee (Wild):
-#############
-# _ _ m _ _ #
 # _ _ _ _ _ #
-# o _ _ _ o #
-# o _ ! _ o #
-# o o _ o o #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
 #############
-m 1 *tutChallenges trigger *sawChallenge
-! 2 *H0X0 none tutorial *tutHnXn0 trigger *challenge0
-
-aa (Wild):
-#############
-# _ 4 0 3 _ #
-# _ _ 1 _ _ #
-# o _ _ _ o #
-# o _ 0 _ o #
-# o o _ o o #
-#############
-0 *X1H1 none tutorial *tutMinus1 trigger *minus1
-0 *positiveStvs
-1 *positiveStvs
-3 *positiveStvs
-4 *positiveStvs
-
-bb (Wild):
-#############
-# o o _ o o #
-# o _ 0 _ o #
-# o _ _ _ o #
-# _ _ 1 _ _ #
-# _ 2 0 5 _ #
-#############
-0 *positiveStvs
-0 *X0H0 none tutorial *tutMinus0 trigger *minus0
-1 *positiveStvs 
-2 *positiveStvs
-5 *positiveStvs
-
-ff (Wild):
-#############
-# 0 _ _ _ 0 #
-# _ o o o _ #
-# _ _ 0 o _ #
-# _ o o o _ #
-# 0 _ _ _ 0 #
-#############
-0 *X0H0
-0 *H1X0
-0 *HX
-0 *X1H1
-0 *H0X1
 
 gg (Story):
 #############
 # _ _ _ _ _ #
-# _ o o o _ #
-# _ o m _ _ #
-# _ o o o _ #
+# o o o o _ #
+# _ _ m 0 _ #
+# o o o o _ #
 # _ _ _ _ _ #
 #############
 m *doneMsg trigger *done
 
+ak (Wild):
+#############
+# _ _ _ _ _ #
+# o 0 o 0 _ #
+# _ _ _ o _ #
+# 2 3 _ 0 _ #
+# 1 4 _ o _ #
+#############
+
+bk (Wild):
+#############
+# 1 4 _ o _ #
+# 2 3 _ 0 _ #
+# _ _ _ o _ #
+# o 0 o 0 _ #
+# _ _ _ _ _ #
+#############
+
+al (Wild):
+#############
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ o o o _ #
+# _ o c o _ #
+#############
+c score 200
+
+bl (Wild):
+#############
+# _ o c o _ #
+# _ o o o _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+#############
+c score 200
+
+am (Wild):
+#############
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ o o o _ #
+# _ o ! o _ #
+#############
+
+bm (Wild):
+#############
+# _ o ! o _ #
+# _ o o o _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+#############
+
+an (Wild):
+#############
+# 2 _ 5 5 9 #
+# _ o o o _ #
+# 7 o 0 4 _ #
+# 7 o 1 o o #
+# 9 _ _ o o #
+#############
+
+bn (Wild):
+#############
+# _ _ _ o o #
+# _ o _ o o #
+# _ o _ _ _ #
+# _ o o o _ #
+# _ _ _ _ _ #
+#############
+
 
 [Hallways]
 11 (locked; ; )
-20 (event *challenge0; ; )
-21 (event *challenge1; ; )
-30 (event *minus0; ; )
-31 (event *minus1; ; )
+20 (closed; one way North; )
+21 (closed; one way South; )
 
 
 [StateVector Pools]
 custom
 
-*base01 [ [0, 1, 0, 0] ]
-*base10 [ [0, 0, 1, 0] ]
-*base11 [ [0, 0, 0, 1] ]
 
-*reach1X [ *base01, *base10 ]
-*reach2X [ *reach1X, [0, 0, 0, 1] ]
-
-*superPos0 [ [0.707, 0.707, 0, 0] ]
-*superPos1 [ [0.707, 0, 0.707, 0] ]
-*superPos [ *superPos0, *superPos1 ]
-
-*H0X1 [ [0, 0, 0.707, 0.707] ]
-*H1X0 [ [0, 0.707, 0, 0.707] ]
-*H0X0 [ *superPos0 ]
-*H1X1 [ *superPos1 ]
-*X0H0 [ [ 0.707, -0.707, 0, 0 ] ]
-*X1H1 [ [ 0.707, 0, -0.707, 0] ]
-*HX [ *X0H0, *H0X0, *H0X1, *H1X0, *H1X1, *X1H1 ]
-
-*bbStvs [ *reach2X, *superPos ]
-*eeStvs [ *reach2X, *superPos, *H0X1, *H1X0 ]
-
-*positiveStvs [ *reach2X, *superPos, *H0X1, *H1X0 ]
-
-default *reach2X
+default [[1, 0, 0, 0]]
 
 [Reward Pools]
 default *none
@@ -176,23 +138,6 @@ default *none
 // speaker: 0 = Examiner, 1 = Scientist, 2 = System, 3 = Player
 default Speaker "0"
 
-*tutImplicitRemoval "Now that you have different //02Gates// it can happen that you want to //03remove// one in case you placed the wrong gate(s). That's why we added the //05'Remove'// choice when editing your //02Circuit//." "Currently you have to //05explicitely// //03remove// a gate and //05cannot overwrite// it with another one. In case you want //05to change// that, go to //05'Options'// in the //05Pause Menu// and activate 'implicit removal'."
-
-*tutHadamard1 Speaker "0" "Now we're talking! With the help of a //02Hadamard Gate// (//02H Gate// for short) you are finally able to leave the realm of //050s// and //051s//. "
-*tutHadamard2 Speaker "0" prio "If applied to a //02Qubit// the //02H Gate// will bring it to a state //05in the middle of 0 and 1//." 
-"No, not //050.5//. It is a bit more //05complex//. "
-*tutHadamard3 Speaker "0" prio "But indeed the state of a //02Qubit// at the output of an //02H Gate// corresponds to a //0550%// chance of it //05collapsing to 0// and a //0550%// chance of it //05collapsing to 1//. Do you //05remember// the things you learned in //05Lesson 3//?"
-*tutHadamard4 prio pos 5 "But why does a value of 0.707 not correspond to 70.7%?" "" "That is because in reality a //02State Vector// consists of //05complex numbers// and the //05absolute value// of each number describes a //05probability//. For simplicity's sake we only dive into complex numbers with an imaginary part of 0 - at least for now. Therefore, the absolute value is the same as the //05real part squared//."
-
-*tutChallenges Speaker "0" prio "The //01!// is a new kind of //02Puzzle//: a //02Challenge//." "It is basically just like a normal //02Puzzle// but with additional constraints like a minimum number of //02Gates// you //05have to use// or a maximum number you are allowed to use." when *sawChallenge then *tutChallengeAgain
-*tutChallengeAgain "Another //02Challenge//!"
-
-*tutHnXn0 Speaker "0" "You already know this //02Target State//. You can reach it with a single //02H Gate//. But let's try to also use an //02X Gate//." when *challenge1 then *tutHXAgain
-*tutHnXn1 Speaker "0" "You already know this //02Target State//. You can reach it with a single //02H Gate//. But let's try to also use an //02X Gate//." when *challenge0 then *tutHXAgain
-*tutHXAgain Speaker "0" "Again, try to also place your //02X Gate//."
-
-*tutMinus0 Speaker "0" "Look, the //02Target State// contains a //05negative number//. What a refreshing change!" when *minus1 then *none
-*tutMinus1 Speaker "0" "Look, the //02Target State// contains a //05negative number//. What a refreshing change!" when *minus0 then *none
 
 *doneMsg Speaker "0" prio "You've now seen the //02H Gate// alone and in combination with an //02X Gate//." "What do you think will happen if you combine it with a //02CX Gate//?"
 
