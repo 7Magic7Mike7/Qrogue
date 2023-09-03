@@ -390,8 +390,8 @@ class CircuitMatrix:
                 for i, entry in enumerate(row):
                     val += entry * stv.at(i)
                 values.append(val)
-            return StateVector(values, self.num_of_used_gates + 0 if stv.num_of_used_gates is None
-                                                                    else stv.num_of_used_gates)
+            return StateVector(values, self.num_of_used_gates +
+                               (0 if stv.num_of_used_gates is None else stv.num_of_used_gates))
         else:
             Logger.instance().error(f"@multiply: CircuitMatrix (=#{self.num_of_qubits}) and Stv (={stv.num_of_qubits}) "
                                     f"don't have the same number of qubits!", show=Config.debugging(), from_pycui=False)
