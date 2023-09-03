@@ -139,3 +139,17 @@ def int_to_fixed_len_str(value: int, length: int) -> str:
     if len(str(value)) > length:
         return str(value)
     return f"{{0:0{length}d}}".format(value)
+
+
+def open_folder(path: str):
+    import os
+    import platform
+    import subprocess
+
+    # todo test for non-Windows
+    if platform.system() == "Windows":
+        os.startfile(path)
+    elif platform.system() == "Darwin":
+        subprocess.Popen(["open", path])
+    else:
+        subprocess.Popen(["xdg-open", path])
