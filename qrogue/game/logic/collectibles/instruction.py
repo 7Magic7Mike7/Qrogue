@@ -395,5 +395,5 @@ class InstructionManager:
     def from_name(name: str) -> Optional[Instruction]:
         for val in GateType:
             if val.is_in_names(name):
-                return InstructionManager.__GATES[val]
+                return InstructionManager.__GATES[val].copy()
         return None
