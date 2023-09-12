@@ -8,7 +8,7 @@ from qiskit.providers.aer import StatevectorSimulator
 from qrogue.game.logic.collectibles import Instruction
 from qrogue.util import Logger, QuantumSimulationConfig, GameplayConfig, Options, CheatConfig, Config
 from qrogue.util.config import ColorCode, ColorConfig
-from qrogue.util.util_functions import is_power_of_2, center_string, to_binary_string, align_string
+from qrogue.util.util_functions import is_power_of_2, center_string, to_binary_string, align_string, complex2string
 
 
 def _generate_ket(qubit: int, num_of_qubits: int) -> str:
@@ -83,34 +83,7 @@ class StateVector:
         if decimals is None:
             if val.real != 0 and val.imag != 0: decimals = QuantumSimulationConfig.COMPLEX_DECIMALS
             else: decimals = QuantumSimulationConfig.DECIMALS
-
-        val = np.round(val, decimals)
-        if val.imag == 0:
-            text = f"{val.real:g}"  # g turns 0.0 to 0
-        elif val.real == 0:
-            text = f"{val.imag:g}j"
-        else:
-            if val.real != 0 and val.real != 1 and val.real != -1:
-                real = f"{val.real:g}"
-                if real[0] == "0": real = real[1:]    # remove the redundant "0" in front of "0.x", resulting in ".x"
-                else: real = real[0] + real[2:]     # remove the redundant "0" after the sign, resulting in "-.x"
-            else:
-                real = str(val.real)    # real is now either "0" or "1" or "-1"
-            if val.imag == 1:
-                text = f"{real}+j"
-            elif val.imag == -1:
-                text = f"{real}-j"
-            else:
-                imag = f"{val.imag:g}"
-                if imag[0] == "0":  # remove the redundant "0" in front of "0.x", resulting in ".x"
-                    imag = f"+{imag[1:]}"
-                else:   # remove the redundant "0" after the sign, resulting in "-.x"
-                    imag = imag[0] + imag[2:]
-                text = f"{real}{imag}j"
-        # skip "-" in front if the text starts with "-0" and the value is actually 0 (so no more comma)
-        if text.startswith("-0") and (len(text) == 2 or len(text) > 2 and text[2] != "."):
-            text = text[1:]
-        return text
+        return complex2string(val, decimals)
 
     @staticmethod
     def complex_to_amplitude_percentage_string(val: complex,

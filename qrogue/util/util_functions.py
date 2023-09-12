@@ -1,5 +1,6 @@
 import enum
 import math
+import numpy as np
 from typing import Optional, Any
 
 __DEFAULT_CHARACTER = " "
@@ -31,6 +32,38 @@ def clamp(val: int, minv: int, maxv: int) -> int:
 
 def rad2deg(rad: float) -> float:
     return rad * 180 / math.pi
+
+
+def complex2string(val: complex, decimals: int) -> str:
+    val = np.round(val, decimals)
+    if val.imag == 0:
+        text = f"{val.real:g}"  # g turns 0.0 to 0
+    elif val.real == 0:
+        text = f"{val.imag:g}j"
+    else:
+        if val.real != 0 and val.real != 1 and val.real != -1:
+            real = f"{val.real:g}"
+            if real[0] == "0":
+                real = real[1:]  # remove the redundant "0" in front of "0.x", resulting in ".x"
+            else:
+                real = real[0] + real[2:]  # remove the redundant "0" after the sign, resulting in "-.x"
+        else:
+            real = str(val.real)  # real is now either "0" or "1" or "-1"
+        if val.imag == 1:
+            text = f"{real}+j"
+        elif val.imag == -1:
+            text = f"{real}-j"
+        else:
+            imag = f"{val.imag:g}"
+            if imag[0] == "0":  # remove the redundant "0" in front of "0.x", resulting in ".x"
+                imag = f"+{imag[1:]}"
+            else:  # remove the redundant "0" after the sign, resulting in "-.x"
+                imag = imag[0] + imag[2:]
+            text = f"{real}{imag}j"
+    # skip "-" in front if the text starts with "-0" and the value is actually 0 (so no more comma)
+    if text.startswith("-0") and (len(text) == 2 or len(text) > 2 and text[2] != "."):
+        text = text[1:]  # I think this can never happen since we throw away 0 real- or imag-parts
+    return text
 
 
 def to_binary_string(num: int, digits: Optional[int] = None, msb: bool = True) -> str:
