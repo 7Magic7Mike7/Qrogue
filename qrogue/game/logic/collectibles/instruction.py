@@ -1,50 +1,64 @@
 import enum
 from abc import ABC, abstractmethod
-from typing import Iterator, Optional, Set, Dict
+from typing import Iterator, Optional, Set, Dict, List
 
 import math
 import qiskit.circuit
 import qiskit.circuit.library.standard_gates as gates
-from qiskit import QuantumCircuit
+from qiskit import QuantumCircuit, transpile
+from qiskit.providers.aer import StatevectorSimulator
 
+from qrogue.game.logic.base import StateVector, CircuitMatrix
 from qrogue.game.logic.collectibles import Collectible, CollectibleType
-from qrogue.util import ShopConfig, Logger
+from qrogue.util import ShopConfig, Logger, AchievementManager
+from qrogue.util.achievements import Unlocks
 from qrogue.util.util_functions import rad2deg
 
 
 class GateType(enum.Enum):
     # unique by their short name
     IGate = "I", {"Identity"}, \
-            "An I Gate or Identity Gate doesn't alter the Qubit in any way. It can be used as a placeholder."
+            "An I Gate or Identity Gate doesn't alter the Qubit in any way. It can be used as a placeholder.", \
+            [[1, 0], [0, 1]]
     XGate = "X", {"Pauli X", "Pauli-X"}, \
             "In the classical world an X Gate corresponds to an inverter. It swaps the amplitudes of |0> and |1>.\n" \
-            "In the quantum world this corresponds to a rotation of 180° along the x-axis, hence the name X Gate."
+            "In the quantum world this corresponds to a rotation of 180° along the x-axis, hence the name X Gate.", \
+            [[0, 1], [1, 0]]
     YGate = "Y", {"Pauli Y", "Pauli-Y"}, \
-            "A Y Gate rotates the Qubit along the y-axis by 180°."
+            "A Y Gate rotates the Qubit along the y-axis by 180°.", \
+            [[0, complex(0, -1)], [complex(0, 1), 0]]
     ZGate = "Z", {"Pauli Z", "Pauli-Z"}, \
-            "A Z Gate rotates the Qubit along the z-axis by 180°."
+            "A Z Gate rotates the Qubit along the z-axis by 180°.", \
+            [[1, 0], [0, -1]]
     HGate = "H", {"Hadamard"}, \
             "The Hadamard Gate is often used to bring Qubits to Superposition. In a simple case (i.e., phase is 0) " \
-            "this corresponds to a rotation of 90° along the x-axis."
+            "this corresponds to a rotation of 90° along the x-axis.", \
+            [[1/math.sqrt(2), 1/math.sqrt(2)], [1/math.sqrt(2), -1/math.sqrt(2)]]
 
     SGate = "S", {"Phase", "P"}, \
             "The S Gate can change the phase of a qubit by multiplying its |1> with i. It is equivalent to a " \
-            "rotation along the z-axis by 90°."
+            "rotation along the z-axis by 90°.", \
+            [[1, 0], [0, complex(0, 1)]]
     RYGate = "RY", {"Rotational Y", "Rot Y"}, \
-             "The RY Gate conducts a rotation along the y-axis by a certain angle. In our case the angle is 90°."
+             "The RY Gate conducts a rotation along the y-axis by a certain angle. In our case the angle is 90°.", \
+             [[math.cos(math.pi/2 / 2), -math.sin(math.pi/2 / 2)], [math.sin(math.pi/2 / 2), math.cos(math.pi/2 / 2)]]
     RZGate = "RZ", {"Rotational Z", "Rot Z"}, \
-             "The RZ Gate conducts a rotation along the z-axis by a certain angle. In our case the angle is 90°."
+             "The RZ Gate conducts a rotation along the z-axis by a certain angle. In our case the angle is 90°.", \
+             [[math.e ** (complex(0, -1) * math.pi/2 / 2), 0], [0, math.e ** (complex(0, 1) * math.pi/2 / 2)]]
 
     SwapGate = "Swap", set(), \
-               "As the name suggests, Swap Gates swap the amplitude between two Qubits."
+               "As the name suggests, Swap Gates swap the amplitude between two Qubits.", \
+               [[1, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]]
     CXGate = "CX", {"Controlled X", "CNOT", "Controlled NOT"}, \
-             "Applies an X Gate onto its second Qubit if its first Qubit is 1."
+             "Applies an X Gate onto its second Qubit if its first Qubit is 1.", \
+             [[1, 0, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0], [0, 1, 0, 0]]
 
-    def __init__(self, short_name: str, other_names: Set[str], description: str):
+    def __init__(self, short_name: str, other_names: Set[str], description: str, matrix: List[List[complex]]):
         self.__short_name = short_name
         self.__names = other_names
         self.__names.add(short_name)
         self.__description = description
+        self.__matrix = CircuitMatrix(matrix, num_of_used_gates=0)
 
     @property
     def short_name(self) -> str:
@@ -53,6 +67,10 @@ class GateType(enum.Enum):
     @property
     def description(self) -> str:
         return self.__description
+
+    @property
+    def matrix(self) -> CircuitMatrix:
+        return self.__matrix
 
     def is_in_names(self, name: str) -> bool:
         if name in self.__names:
@@ -70,6 +88,17 @@ class Instruction(Collectible, ABC):
     """
     MAX_ABBREVIATION_LEN = 5
     __DEFAULT_PRICE = 15 * ShopConfig.base_unit()
+
+    @staticmethod
+    def compute_stv(instructions: List["Instruction"], num_of_qubits: int) -> "StateVector":
+        circuit = QuantumCircuit(num_of_qubits, num_of_qubits)
+        for instruction in instructions:
+            instruction.append_to(circuit)
+        simulator = StatevectorSimulator()
+        compiled_circuit = transpile(circuit, simulator)
+        # We only do 1 shot since we don't need any measurement but the StateVector
+        job = simulator.run(compiled_circuit, shots=1)
+        return StateVector(job.result().get_statevector(), num_of_used_gates=len(instructions))
 
     def __init__(self, gate_type: GateType, instruction: qiskit.circuit.Gate, needed_qubits: int):
         super().__init__(CollectibleType.Gate)
@@ -150,11 +179,17 @@ class Instruction(Collectible, ABC):
         return f"{self.__type.short_name} Gate"
 
     def description(self) -> str:
-        return self.__type.description
+        if AchievementManager.instance().check_unlocks(Unlocks.ShowEquation):
+            return self.__type.description + "\n\nMatrix:\n" + self._matrix_string()
+        else:
+            return self.__type.description
 
     @abstractmethod
     def abbreviation(self, qubit: int = 0):
         pass
+
+    def _matrix_string(self) -> str:
+        return self.gate_type.matrix.to_string()
 
     @abstractmethod
     def copy(self) -> "Instruction":

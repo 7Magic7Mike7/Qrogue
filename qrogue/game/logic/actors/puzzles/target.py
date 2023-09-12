@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Tuple, Optional
 
-from qrogue.game.logic.actors import StateVector
+from qrogue.game.logic.base import StateVector
 from qrogue.game.logic.collectibles import Collectible
 from qrogue.util import Logger
 

@@ -1,6 +1,6 @@
 from typing import List, Tuple, Optional
 
-from qrogue.game.logic.actors import StateVector
+from qrogue.game.logic.base import StateVector
 from qrogue.game.logic.collectibles import Collectible, Instruction
 
 from qrogue.game.logic.actors.puzzles import Target

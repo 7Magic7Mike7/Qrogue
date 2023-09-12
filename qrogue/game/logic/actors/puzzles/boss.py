@@ -1,7 +1,7 @@
 
 from abc import ABC
 
-from qrogue.game.logic.actors import StateVector
+from qrogue.game.logic.base import StateVector
 from qrogue.game.logic.collectibles import Collectible, Coin
 from qrogue.util import PuzzleConfig
 

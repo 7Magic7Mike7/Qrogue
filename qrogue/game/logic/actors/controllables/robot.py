@@ -8,9 +8,9 @@ from typing import Tuple, List, Callable, Optional
 from qiskit import QuantumCircuit, transpile, Aer, execute
 from qiskit.providers.aer import StatevectorSimulator
 
-from qrogue.game.logic.actors import StateVector, CircuitMatrix
 from qrogue.game.logic.actors.controllables import Controllable
 from qrogue.game.logic.actors.controllables.qubit import QubitSet, DummyQubitSet
+from qrogue.game.logic.base import StateVector, CircuitMatrix
 from qrogue.game.logic.collectibles import Coin, Collectible, Consumable, Instruction, Key, MultiCollectible, \
     Qubit, Energy, Score
 from qrogue.util import CheatConfig, Config, Logger, GameplayConfig, QuantumSimulationConfig, Options

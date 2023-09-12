@@ -1,6 +1,6 @@
 from typing import List, Callable, Optional, Union
 
-from qrogue.game.logic.actors import StateVector
+from qrogue.game.logic.base import StateVector
 from qrogue.game.logic.actors.controllables import Robot
 from qrogue.game.logic.actors.puzzles import Enemy, Target, Riddle, Boss
 from qrogue.game.logic.collectibles import Collectible, CollectibleFactory, Instruction, CXGate, SwapGate, HGate, \
@@ -58,7 +58,7 @@ class TargetDifficulty:
             while instruction.use_qubit(rm.get_element(qubits, remove=True, msg="TargetDiff_selectQubit")):
                 pass
             instructions.append(instruction)
-        return StateVector.from_gates(instructions, num_of_qubits)
+        return Instruction.compute_stv(instructions, num_of_qubits)
 
 
 class ExplicitTargetDifficulty(TargetDifficulty):
@@ -221,7 +221,7 @@ class BossFactory:
                 used_gates.append(gate)
 
         reward = self.__rm.get_element(self.__reward_pool, msg="BossFactory_reward")
-        return Boss(StateVector.from_gates(used_gates, self.__robot.num_of_qubits), reward)
+        return Boss(Instruction.compute_stv(used_gates, self.__robot.num_of_qubits), reward)
 
     def __prepare_gate(self, gate: Instruction, qubit_count, qubits) -> bool:
         gate_qubits = qubits.copy()

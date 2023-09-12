@@ -2,29 +2,11 @@ from collections import Iterator
 from typing import List, Optional
 
 import numpy as np
-from qiskit import transpile, QuantumCircuit
-from qiskit.providers.aer import StatevectorSimulator
 
-from qrogue.game.logic.collectibles import Instruction
-from qrogue.util import Logger, QuantumSimulationConfig, GameplayConfig, Options, CheatConfig, Config
+from qrogue.util import Logger, QuantumSimulationConfig, GameplayConfig, Options, CheatConfig
 from qrogue.util.config import ColorCode, ColorConfig
-from qrogue.util.util_functions import is_power_of_2, center_string, to_binary_string, align_string, complex2string
-
-
-def _generate_ket(qubit: int, num_of_qubits: int) -> str:
-    """
-    Generates a str for the ket notation of the given qubit. num_of_qubits is also needed to determine the number of
-    leading 0s needed.
-    Examples:
-        - _generate_ket(1, 2) == "|01>"
-        - _generate_ket(0, 1) == "|0>"
-        - _generate_ket(3, 4) == "|0011>"
-
-    :param qubit: the id (in terms of MSB-LSB) of the given qubit
-    :param num_of_qubits: the number of qubits in the StateVector
-    :return: ket notation of the given qubit as str
-    """
-    return f"|{to_binary_string(qubit, num_of_qubits)}>"
+from qrogue.util.quantum_functions import generate_ket, verify_stv_amplitudes
+from qrogue.util.util_functions import center_string, align_string, complex2string
 
 
 def _wrap_in_ket_notation(number: complex, qubit: int, num_of_qubits: int,
@@ -51,7 +33,7 @@ def _wrap_in_ket_notation(number: complex, qubit: int, num_of_qubits: int,
         elif number.imag != 0: space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER + 1   # add the extra "j"
         else: space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER
 
-    value = f"{center_string(StateVector.complex_to_string(number, decimals), space_per_value)}"
+    value = f"{center_string(complex2string(number, decimals), space_per_value)}"
     if coloring:
         if correct_amplitude:
             value = ColorConfig.colorize(ColorCode.CORRECT_AMPLITUDE, value)
@@ -65,7 +47,7 @@ def _wrap_in_ket_notation(number: complex, qubit: int, num_of_qubits: int,
         value += f"  ({percentage})"
 
     if GameplayConfig.get_option_value(Options.show_ket_notation, convert=True):
-        return f"{_generate_ket(qubit, num_of_qubits)}  {value}"
+        return f"{generate_ket(qubit, num_of_qubits)}  {value}"
     else:
         return value
 
@@ -73,17 +55,7 @@ def _wrap_in_ket_notation(number: complex, qubit: int, num_of_qubits: int,
 class StateVector:
     @staticmethod
     def check_amplitudes(amplitudes: List[complex]):
-        if is_power_of_2(len(amplitudes)):
-            amp_sum = sum([c.real**2 + c.imag**2 for c in amplitudes])
-            return 1 - QuantumSimulationConfig.TOLERANCE <= amp_sum <= 1 + QuantumSimulationConfig.TOLERANCE
-        return False
-
-    @staticmethod
-    def complex_to_string(val: complex, decimals: Optional[int] = None) -> str:
-        if decimals is None:
-            if val.real != 0 and val.imag != 0: decimals = QuantumSimulationConfig.COMPLEX_DECIMALS
-            else: decimals = QuantumSimulationConfig.DECIMALS
-        return complex2string(val, decimals)
+        return verify_stv_amplitudes(amplitudes, QuantumSimulationConfig.TOLERANCE)
 
     @staticmethod
     def complex_to_amplitude_percentage_string(val: complex,
@@ -100,17 +72,6 @@ class StateVector:
     def create_zero_state_vector(num_of_qubits: int) -> "StateVector":
         amplitudes = [1] + [0] * (2**num_of_qubits - 1)
         return StateVector(amplitudes, num_of_used_gates=0)
-
-    @staticmethod
-    def from_gates(gates: List[Instruction], num_of_qubits: int) -> "StateVector":
-        circuit = QuantumCircuit(num_of_qubits, num_of_qubits)
-        for instruction in gates:
-            instruction.append_to(circuit)
-        simulator = StatevectorSimulator()
-        compiled_circuit = transpile(circuit, simulator)
-        # We only do 1 shot since we don't need any measurement but the StateVector
-        job = simulator.run(compiled_circuit, shots=1)
-        return StateVector(job.result().get_statevector(), num_of_used_gates=len(gates))
 
     def __init__(self, amplitudes: List[complex], num_of_used_gates: Optional[int] = None):
         self.__amplitudes = amplitudes
@@ -284,126 +245,3 @@ class StateVector:
         return iter(self.__amplitudes)
 
 
-class CircuitMatrix:
-    @staticmethod
-    def create_identity(num_of_qubits: int) -> "CircuitMatrix":
-        matrix = []
-        for i in range(2**num_of_qubits):
-            row = [0] * 2**num_of_qubits
-            row[i] = 1
-            matrix.append(row)
-        return CircuitMatrix(matrix, num_of_used_gates=0)
-
-    @staticmethod
-    def check_validity(matrix: List[List[complex]]) -> bool:
-        col_sum: List[float] = [0] * len(matrix)
-        for row in matrix:
-            row_sum = 0
-            for i, val in enumerate(row):
-                res_val = abs(val)**2
-                row_sum += res_val
-                col_sum[i] += res_val
-            if row_sum < 1 - QuantumSimulationConfig.TOLERANCE or 1 + QuantumSimulationConfig.TOLERANCE < row_sum:
-                return False
-        for val in col_sum:
-            if val < 1 - QuantumSimulationConfig.TOLERANCE or 1 + QuantumSimulationConfig.TOLERANCE < val:
-                return False
-        return True
-
-    def __init__(self, matrix: List[List[complex]], num_of_used_gates: int):
-        self.__matrix = matrix
-        self.__num_of_used_gates = num_of_used_gates
-
-    @property
-    def size(self) -> int:
-        return len(self.__matrix)
-
-    @property
-    def num_of_qubits(self) -> int:
-        return int(np.log2(self.size))
-
-    @property
-    def num_of_used_gates(self) -> int:
-        return self.__num_of_used_gates
-
-    @property
-    def is_classical(self) -> bool:
-        mat_sum = 0
-        for row in self.__matrix:
-            for val in row:
-                if val != 0 and val != 1:
-                    return False
-                mat_sum += val
-        return mat_sum == self.size     # there needs to be one 1 per row
-
-    @property
-    def is_real(self) -> bool:
-        for row in self.__matrix:
-            for val in row:
-                if val.imag != 0:
-                    return False
-        return True
-
-    @property
-    def is_imag(self) -> bool:
-        for row in self.__matrix:
-            for val in row:
-                if val.real != 0:
-                    return False
-        return True
-
-    @property
-    def is_complex(self) -> bool:
-        # if it's neither pure real nor pure imaginary it has to be mixed and therefore complex
-        return not self.is_real and not self.is_imag
-
-    def multiply(self, stv: StateVector) -> Optional[StateVector]:  # todo improve performance?
-        if self.num_of_qubits == stv.num_of_qubits:
-            values = []
-            for row in self.__matrix:
-                val = 0
-                for i, entry in enumerate(row):
-                    val += entry * stv.at(i)
-                values.append(val)
-            return StateVector(values, self.num_of_used_gates +
-                               (0 if stv.num_of_used_gates is None else stv.num_of_used_gates))
-        else:
-            Logger.instance().error(f"@multiply: CircuitMatrix (=#{self.num_of_qubits}) and Stv (={stv.num_of_qubits}) "
-                                    f"don't have the same number of qubits!", show=Config.debugging(), from_pycui=False)
-            return None
-
-    def to_string(self, space_per_value: Optional[int] = None) -> str:
-        if space_per_value is None:
-            if self.is_complex: space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_COMPLEX_NUMBER
-            elif self.is_imag: space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER + 1
-            else: space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER
-
-        spacing = " "
-        if GameplayConfig.get_option_value(Options.show_ket_notation, convert=True):
-            padding = len(_generate_ket(0, self.num_of_qubits)) + len(spacing)  # also add the space after the ket
-            text = " " * padding   # we need to pad the rows' |qubits> prefix
-            for i in range(self.size):
-                # space_per_value + 1 due to the trailing space
-                text += center_string(_generate_ket(i, self.num_of_qubits), space_per_value)
-                text += spacing
-            text += "\n"
-        else:
-            text = "\n"
-        for i, row in enumerate(self.__matrix):
-            if GameplayConfig.get_option_value(Options.show_ket_notation, convert=True):
-                text += _generate_ket(i, self.num_of_qubits)
-                text += spacing
-            for val in row:
-                text += center_string(StateVector.complex_to_string(val), space_per_value)
-                text += spacing
-            text += "\n"
-        return text
-
-    def __str__(self) -> str:
-        text = "CircuitMatrix("
-        for row in self.__matrix:
-            for val in row:
-                text += f"{np.round(val, QuantumSimulationConfig.DECIMALS)}, "
-            text += "\n"
-        text = text[:-2] + ")"
-        return text

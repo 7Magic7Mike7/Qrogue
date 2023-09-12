@@ -7,7 +7,7 @@ from typing import List, Callable, Optional, Tuple, Any
 import py_cui
 from py_cui.widget_set import WidgetSet
 
-from qrogue.game.logic import StateVector
+from qrogue.game.logic.base import StateVector
 from qrogue.game.logic.actors import Boss, Enemy, Riddle, Robot
 from qrogue.game.logic.actors.puzzles import Target, Challenge
 from qrogue.game.logic.collectibles import ShopItem, Collectible, Instruction, GateType

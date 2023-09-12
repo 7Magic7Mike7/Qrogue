@@ -7,10 +7,11 @@ from py_cui import PyCUI
 from py_cui import popups
 from py_cui.widget_set import WidgetSet
 
-from qrogue.game.logic import StateVector, collectibles
+from qrogue.game.logic import collectibles
 from qrogue.game.logic.actors import Boss, Controllable, Enemy, Riddle, Robot
 from qrogue.game.logic.actors.controllables import BaseBot
 from qrogue.game.logic.actors.puzzles import Challenge
+from qrogue.game.logic.base import StateVector
 from qrogue.game.logic.collectibles import Energy
 from qrogue.game.world.map import CallbackPack, SpaceshipMap, WorldMap, Map
 from qrogue.game.world.navigation import Direction

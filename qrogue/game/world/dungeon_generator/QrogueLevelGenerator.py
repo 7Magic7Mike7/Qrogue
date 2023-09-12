@@ -2,11 +2,11 @@ from typing import Callable, List, Tuple, Dict, Optional, Set
 
 from antlr4 import InputStream, CommonTokenStream
 from antlr4.tree.Tree import TerminalNodeImpl
-from qiskit import QuantumCircuit
 
-from qrogue.game.logic import Message, StateVector
+from qrogue.game.logic import Message
 from qrogue.game.logic.actors import Controllable, Riddle, Robot, robot
 from qrogue.game.logic.actors.puzzles import Challenge
+from qrogue.game.logic.base import StateVector
 from qrogue.game.logic.collectibles import Collectible, pickup, instruction, MultiCollectible, Qubit, ShopItem, \
     CollectibleFactory, OrderedCollectibleFactory
 from qrogue.game.logic.collectibles.instruction import MultiQubitGate, SingleQubitGate, InstructionManager, Instruction
@@ -534,7 +534,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             gate = self.visit(multi_spec)
             if gate is not None: gates.append(gate)
 
-        return StateVector.from_gates(gates, num_qubits)
+        return Instruction.compute_stv(gates, num_qubits)
 
     def visitStv(self, ctx: QrogueDungeonParser.StvContext) -> StateVector:
         if ctx.circuit_stv():
