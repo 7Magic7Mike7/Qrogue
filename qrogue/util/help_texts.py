@@ -205,7 +205,7 @@ class HelpText:
             "Good luck!",
 
         HelpTextType.Game:
-            f"Qrogue is a game about {_HL.quantum_computing}. You will explore "
+            f"QRogue is a game about {_HL.quantum_computing}. You will explore "
             f"Levels and Expeditions and solve {_HL.puzzles} with the help of {_HL.quantum_gates} to reach even "
             f"farther places of the universe.\n",
 
