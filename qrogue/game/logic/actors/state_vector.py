@@ -102,8 +102,10 @@ class StateVector:
                 text = f"{real}-j"
             else:
                 imag = f"{val.imag:g}"
-                if imag[0] == "0": imag = imag[1:]    # remove the redundant "0" in front of "0.x", resulting in ".x"
-                else: imag = imag[0] + imag[2:]     # remove the redundant "0" after the sign, resulting in "-.x"
+                if imag[0] == "0":  # remove the redundant "0" in front of "0.x", resulting in ".x"
+                    imag = f"+{imag[1:]}"
+                else:   # remove the redundant "0" after the sign, resulting in "-.x"
+                    imag = imag[0] + imag[2:]
                 text = f"{real}{imag}j"
         # skip "-" in front if the text starts with "-0" and the value is actually 0 (so no more comma)
         if text.startswith("-0") and (len(text) == 2 or len(text) > 2 and text[2] != "."):
