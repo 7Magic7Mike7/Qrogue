@@ -1,7 +1,7 @@
 # exporting
 from .config import *
 from .controls import Controls, Keys
-from .help_texts import HelpText, HelpTextType
+from .help_texts import HelpText, load_help_text
 from .logger import Logger
 from .common_messages import CommonPopups, CommonQuestions
 from .my_random import MyRandom, RandomManager

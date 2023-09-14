@@ -132,7 +132,7 @@ class _HL:
     teleport_tile = CC.highlight_tile("t")
 
 
-class HelpTextType(Enum):
+class HelpText(Enum):
     Controls = f"Move                  -   {_HL.navigation_keys}\n" \
             f"Navigate menus        -   {_HL.navigation_keys}\n" \
             f"Confirm               -   {_HL.action_keys}\n" \
@@ -205,13 +205,11 @@ class HelpTextType(Enum):
         return self.__text
 
 
-class HelpText:
-    @staticmethod
-    def load(type_: str) -> Optional[str]:
-        for key in HelpTextType:
-            if key.name.lower() == type_.lower():
-                return key.text
-        return None
+def load_help_text(type_: str) -> Optional[str]:
+    for key in HelpText:
+        if key.name.lower() == type_.lower():
+            return key.text
+    return None
 
 
 class StoryTextType(Enum):

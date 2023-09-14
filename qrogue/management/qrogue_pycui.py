@@ -24,7 +24,7 @@ from qrogue.graphics.widgets import Renderable, SpaceshipWidgetSet, BossFightWid
     FightWidgetSet, MenuWidgetSet, MyWidgetSet, NavigationWidgetSet, PauseMenuWidgetSet, RiddleWidgetSet, \
     ChallengeWidgetSet, ShopWidgetSet, WorkbenchWidgetSet, TrainingsWidgetSet, Widget, TransitionWidgetSet
 from qrogue.util import achievements, common_messages, CheatConfig, Config, GameplayConfig, UIConfig, HelpText, \
-    HelpTextType, Logger, PathConfig, MapConfig, Controls, Keys, RandomManager, PyCuiConfig, PyCuiColors, Options, \
+    Logger, PathConfig, MapConfig, Controls, Keys, RandomManager, PyCuiConfig, PyCuiColors, Options, \
     TestConfig, CommonQuestions
 from qrogue.util.achievements import Ach, Unlocks, AchievementManager
 from qrogue.util.config import FileTypes, PopupConfig
@@ -343,7 +343,7 @@ class QrogueCUI(PyCUI):
             self.set_on_draw_update_func(Config.inc_frame_count)
 
         if SaveData.instance().is_fresh_save:
-            Popup.generic_info("WELCOME TO QROGUE!", HelpTextType.Welcome.text)
+            Popup.generic_info("WELCOME TO QROGUE!", HelpText.Welcome.text)
 
     def _refresh_height_width(self) -> None:
         try:
@@ -686,7 +686,7 @@ class QrogueCUI(PyCUI):
     def __pause_game(self) -> None:
         self.__state_machine.change_state(QrogueCUI._State.Pause, None)
         if not SaveData.instance().achievement_manager.check_achievement(achievements.EnteredPauseMenu):
-            Popup.generic_info("Pause", HelpTextType.Pause.text)
+            Popup.generic_info("Pause", HelpText.Pause.text)
             AchievementManager.instance().trigger_global_event(achievements.EnteredPauseMenu, 1)
 
     def _switch_to_explore(self, data: Optional[Union[Map, Tuple[Optional[Map], Optional[bool]]]]) -> None:

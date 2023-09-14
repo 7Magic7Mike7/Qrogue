@@ -14,7 +14,7 @@ from qrogue.game.target_factory import EnemyFactory, ExplicitTargetDifficulty
 from qrogue.game.world import tiles
 from qrogue.game.world.map import CallbackPack, LevelMap, rooms, MapMetaData
 from qrogue.game.world.navigation import Coordinate, Direction
-from qrogue.util import Config, HelpText, MapConfig, PathConfig, Logger, CommonQuestions, RandomManager
+from qrogue.util import Config, MapConfig, PathConfig, Logger, CommonQuestions, RandomManager, load_help_text
 
 from qrogue.game.world.dungeon_generator import parser_util
 from qrogue.game.world.dungeon_generator.dungeon_parser.QrogueDungeonLexer import QrogueDungeonLexer
@@ -335,7 +335,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             return self.__messages[norm_ref]
         elif norm_ref.startswith(QrogueLevelGenerator.__HELP_TEXT_PREFIX):
             help_text_type = norm_ref[len(QrogueLevelGenerator.__HELP_TEXT_PREFIX):]
-            help_text = HelpText.load(help_text_type)
+            help_text = load_help_text(help_text_type)
             if help_text:
                 # todo check if we really want to prioritize help texts
                 return Message.create_with_title(norm_ref, Config.system_name(), help_text, True, None)

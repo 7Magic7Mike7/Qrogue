@@ -16,7 +16,7 @@ from qrogue.game.world.navigation import Direction
 from qrogue.graphics.popups import Popup
 from qrogue.graphics.rendering import ColorRules
 from qrogue.graphics.widget_base import WidgetWrapper
-from qrogue.util import CommonPopups, Config, Controls, GameplayConfig, HelpText, HelpTextType, Logger, PathConfig, \
+from qrogue.util import CommonPopups, Config, Controls, GameplayConfig, HelpText, Logger, PathConfig, \
     RandomManager, AchievementManager, Keys, UIConfig, HudConfig, ColorConfig, Options, PuzzleConfig, ScoreConfig
 from qrogue.util.achievements import Ach, Unlocks
 
@@ -630,9 +630,9 @@ class PauseMenuWidgetSet(MyWidgetSet):
         return False
 
     def __help(self) -> bool:
-        texts = [enum_str(val, skip_type_prefix=True) for val in HelpTextType] + [MyWidgetSet.BACK_STRING]
+        texts = [enum_str(val, skip_type_prefix=True) for val in HelpText] + [MyWidgetSet.BACK_STRING]
         callbacks = []
-        for val in HelpTextType:
+        for val in HelpText:
             def func() -> bool:
                 Popup.generic_info(enum_str(val, skip_type_prefix=True), val.text)
                 return False
