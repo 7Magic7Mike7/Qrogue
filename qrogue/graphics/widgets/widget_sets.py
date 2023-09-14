@@ -24,6 +24,7 @@ from qrogue.graphics.widgets import Renderable, Widget, MyBaseWidget
 from qrogue.graphics.widgets.my_widgets import SelectionWidget, CircuitWidget, MapWidget, SimpleWidget, HudWidget, \
     OutputStateVectorWidget, CircuitMatrixWidget, TargetStateVectorWidget, InputStateVectorWidget, MyMultiWidget, \
     HistoricWrapperWidget
+from qrogue.util.util_functions import enum_str
 
 
 class MyWidgetSet(WidgetSet, Renderable, ABC):
@@ -567,21 +568,6 @@ class TransitionWidgetSet(MyWidgetSet):
 
 
 class PauseMenuWidgetSet(MyWidgetSet):
-    __HELP_TEXTS = (
-        [
-            "Game",
-            "Controls", "Fight",
-            "Riddle",
-            "Pause",
-        ],
-        [
-            HelpText.get(HelpTextType.Game),
-            HelpText.get(HelpTextType.Controls), HelpText.get(HelpTextType.Fight),
-            HelpText.get(HelpTextType.Riddle),
-            HelpText.get(HelpTextType.Pause),
-         ]
-    )
-
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  continue_callback: Callable[[], None], save_callback: Callable[[], Tuple[bool, CommonPopups]],
                  exit_run_callback: Callable[[], None], restart_callback: Callable[[], None]):
@@ -644,17 +630,14 @@ class PauseMenuWidgetSet(MyWidgetSet):
         return False
 
     def __help(self) -> bool:
-        self.__details.set_data(data=(
-            PauseMenuWidgetSet.__HELP_TEXTS[0] + [MyWidgetSet.BACK_STRING],
-            [self.__help_text]
-        ))
-        return True
-
-    def __help_text(self, index: int = 0) -> bool:
-        if index < len(PauseMenuWidgetSet.__HELP_TEXTS[0]):
-            Popup.generic_info(f"{PauseMenuWidgetSet.__HELP_TEXTS[0][index]}",
-                               PauseMenuWidgetSet.__HELP_TEXTS[1][index])
-            return False
+        texts = [enum_str(val, skip_type_prefix=True) for val in HelpTextType] + [MyWidgetSet.BACK_STRING]
+        callbacks = []
+        for val in HelpTextType:
+            def func() -> bool:
+                Popup.generic_info(enum_str(val, skip_type_prefix=True), val.text)
+                return False
+            callbacks.append(func)
+        self.__details.set_data(data=(texts, callbacks))
         return True
 
     def __achievements(self) -> bool:

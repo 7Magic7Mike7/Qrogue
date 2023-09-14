@@ -133,111 +133,84 @@ class _HL:
 
 
 class HelpTextType(Enum):
-    Controls = 0
-    Fight = 1
-    Riddle = 2
-    Shop = 3
-    BossFight = 4
-    Game = 5
-    Pause = 6
-    Options = 7
-    Welcome = 8
-    FirstLevelIntroduction = 9
+    Controls = f"Move                  -   {_HL.navigation_keys}\n" \
+            f"Navigate menus        -   {_HL.navigation_keys}\n" \
+            f"Confirm               -   {_HL.action_keys}\n" \
+            f"Cancel/Back           -   {_HL.cancel_keys}\n" \
+            f"Scroll in message     -   {_HL.navigation_keys}\n" \
+            f"Close message         -   {_HL.action_keys}\n" \
+            f"Reopen last message   -   {_HL.help_keys}\n" \
+            f"Pause                 -   {_HL.pause_keys}\n" \
+            f"Selection shortcuts   -   {_HL.shortcuts}\n" \
+            "\n" \
+            f"[Should you ever get stuck try to open the pause menu with {_HL.pause_keys} and then select continue. " \
+            f"This way the game refocuses and renders again. In case this still doesn't help or doesn't even work you "\
+            f"can force-quit the game by pressing {_HL.shutdown_keys}. This will still save everything so it is the " \
+            "preferred option over simply closing the window!]"  # let's not mention ESC since it could lead to bugs
+
+    Fight = \
+        f"Basically {_HL.quantum_computing} is just a lot of complex {_HL.mat_vec_mul}:\n" \
+        f"{_HL.circuit_matrix} * {_HL.input_stv} = {_HL.output_stv}\n" \
+        f"Your goal is to make the latter {_HL.equal} to the {_HL.target_stv}. While the input state vector " \
+        f"always stays the same, you can {_HL.change} the {_HL.circuit_matrix} by {_HL.editing} your circuit.\n" \
+        f"First you have to {_HL.choose} and then {_HL.place} a {_HL.gate} (via {_HL.navigation_keys}). " \
+        f"Afterwards use {_HL.action_keys} to confirm the placement. This will update both {_HL.circuit_matrix} " \
+        f"and {_HL.output_stv} accordingly. Green numbers in {_HL.output_stv} indicate correct and red incorrect " \
+        f"values. Once the whole vector is green, {_HL.output_stv} and {_HL.target_stv} are equal and the " \
+        f"{_HL.puzzle} is solved."
+
+    Riddle = \
+        f"{_HL.riddles} are very similar to {_HL.puzzles}: There is a {_HL.target_state} you need to reach " \
+        f"by adapting your {_HL.circuit}. The main difference is that there's a predefined maximum number of " \
+        f"{_HL.edits} for solving it. When you have no more {_HL.edit_attempts} left the Riddle {_HL.vanishes} " \
+        f"together with its {_HL.reward} - which is often much better than the ones from regular Puzzles."
+
+    Shop = \
+        f"In the {_HL.shop} you can exchange {_HL.coins} you got (e.g. from solving Puzzles) for various " \
+        f"{_HL.collec}. On the left side is a {_HL.list_} of everything you can {_HL.buy}. Navigate as usual with " \
+        f"{_HL.navigation_keys} and select something with {_HL.action_keys} to see more {_HL.details} on the right " \
+        f"side. There you can also buy it.\n" \
+        f"{_HL.leave} obviously makes you leave the {_HL.shop}. You can always {_HL.reenter} it later if you want!"
+
+    BossFight = \
+        f"Now it's getting {_HL.serious}! You are fighting against {_HL.bell}. For the {_HL.state} you need to reach " \
+        f"to defeat Bell your two {_HL.qubits} will always have to be the same: either {_HL.both0} or {_HL.both1}.\n" \
+        f"This is called {_HL.entanglement}.\n\n" \
+        "Good luck!"  # todo make more generic
+
+    Game = \
+        f"QRogue is a game about {_HL.quantum_computing}. You will explore " \
+        f"Levels and Expeditions and solve {_HL.puzzles} with the help of {_HL.quantum_gates} to reach even " \
+        f"farther places of the universe.\n"
+
+    Pause = \
+        "In the Pause Menu you can do several things:\n" \
+        f"{_HL.continue_} - Leave the Pause Menu and continue where you stopped.\n" \
+        f"{_HL.help_} - If you ever feel stuck and don't remember how certain stuff in the game works select " \
+        f"this menu and we will try to help you.\n" \
+        f"{_HL.options} - Configure some Options of the game, like font size or coloring.\n" \
+        f"{_HL.exit_} - Exit the current Level or Expedition .\n"
+
+    Options = "7"
+    Welcome = Game + \
+        "\nBut before you are allowed to explore the universe you have to complete a trainings program.\n" \
+        f"Now close this dialog by pressing {_HL.action_keys}. Select {_HL.start_journey} with " \
+        f"{_HL.navigation_keys} and confirm your selection with {_HL.action_keys} to begin!"
+
+    def __init__(self, text: str):
+        self.__text = text
+
+    @property
+    def text(self) -> str:
+        return self.__text
 
 
 class HelpText:
-    __DIC = {
-        HelpTextType.Welcome:   # is initialized in init() to avoid duplicating Game's text
-            #__GAME_TEXT +
-            #f"Now close this dialog by pressing {_HL.action_keys}. Select {_HL.start_journey} with "
-            #f"{_HL.navigation_keys} and confirm your selection with {_HL.action_keys} to start playing!"
-            "Forgot to initialize?",
-
-        #HelpTextType.FirstLevelIntroduction:
-        #    f"Move around by using {_HL.navigation_keys}.",
-
-        HelpTextType.Controls:
-            #f"That's the {_HL.manual}. You can always reopen it from the pause menu. Have a look at it and don't "
-            #f"forget to scroll down to see everything!\n"
-            f"Move                  -   {_HL.navigation_keys}\n"
-            f"Navigate menus        -   {_HL.navigation_keys}\n"
-            f"Confirm               -   {_HL.action_keys}\n"
-            f"Cancel/Back           -   {_HL.cancel_keys}\n"
-            f"Scroll in message     -   {_HL.navigation_keys}\n"
-            f"Close message         -   {_HL.action_keys}\n"  # let's not mention ESC since it could lead to bugs
-            f"Reopen last message   -   {_HL.help_keys}\n"
-            f"Pause                 -   {_HL.pause_keys}\n"
-            f"Selection shortcuts   -   {_HL.shortcuts}\n"
-            "\n"
-            f"[Should you ever get stuck try to open the pause menu with {_HL.pause_keys} and then select continue. "
-            f"This way the game refocuses and renders again. In case this still doesn't help or doesn't even work you "
-            f"can force-quit the game by pressing {_HL.shutdown_keys}. This will still save everything so it is the "
-            "preferred option over simply closing the window!]",
-
-        HelpTextType.Fight:
-            f"Basically {_HL.quantum_computing} is just a lot of complex {_HL.mat_vec_mul}:\n"
-            f"{_HL.circuit_matrix} * {_HL.input_stv} = {_HL.output_stv}\n"
-            f"Your goal is to make the latter {_HL.equal} to the {_HL.target_stv}. While the input state vector always "
-            f"stays the same, you can {_HL.change} the {_HL.circuit_matrix} by {_HL.editing} your circuit.\n"
-            f"First you have to {_HL.choose} and then {_HL.place} a {_HL.gate} (via {_HL.navigation_keys}). "
-            f"Afterwards use {_HL.action_keys} to confirm the placement. This will update both {_HL.circuit_matrix} "
-            f"and {_HL.output_stv} accordingly. Green numbers in {_HL.output_stv} indicate correct and red incorrect "
-            f"values. Once the whole vector is green, {_HL.output_stv} and {_HL.target_stv} are equal and the "
-            f"{_HL.puzzle} is solved.",
-
-        HelpTextType.Riddle:
-            f"{_HL.riddles} are very similar to {_HL.puzzles}: There is a {_HL.target_state} you need to reach "
-            f"by adapting your {_HL.circuit}. The main difference is that there's a predefined maximum number of "
-            f"{_HL.edits} for solving it. When you have no more {_HL.edit_attempts} left the Riddle {_HL.vanishes} "
-            f"together with its {_HL.reward} - which is often much better than the ones from regular Puzzles.",
-
-        HelpTextType.Shop:
-            f"In the {_HL.shop} you can exchange {_HL.coins} you got (e.g. from solving Puzzles) for various "
-            f"{_HL.collec}. On the left side is a {_HL.list_} of everything you can {_HL.buy}. Navigate as usual with "
-            f"{_HL.navigation_keys} and select something with {_HL.action_keys} to see more {_HL.details} on the right "
-            f"side. There you can also buy it.\n"
-            f"{_HL.leave} obviously makes you leave the {_HL.shop}. You can always {_HL.reenter} it later if you want!",
-
-        HelpTextType.BossFight:  # todo make more generic
-            f"Now it's getting {_HL.serious}! You are fighting against {_HL.bell}. For the {_HL.state} you need to reach to "
-            f"defeat Bell your two {_HL.qubits} will always have to be the same: either {_HL.both0} or {_HL.both1}.\n"
-            f"This is called {_HL.entanglement}.\n\n"
-            "Good luck!",
-
-        HelpTextType.Game:
-            f"QRogue is a game about {_HL.quantum_computing}. You will explore "
-            f"Levels and Expeditions and solve {_HL.puzzles} with the help of {_HL.quantum_gates} to reach even "
-            f"farther places of the universe.\n",
-
-        HelpTextType.Pause:
-            "In the Pause Menu you can do several things:\n"
-            f"{_HL.continue_} - Leave the Pause Menu and continue where you stopped.\n"
-            f"{_HL.help_} - If you ever feel stuck and don't remember how certain stuff in the game works select "
-            f"this menu and we will try to help you.\n"
-            f"{_HL.options} - Configure some Options of the game, like font size or coloring.\n"
-            f"{_HL.exit_} - Exit the current Level or Expedition .\n",
-
-        HelpTextType.Options:
-            "",
-
-    }
-
-    @staticmethod
-    def init():
-        HelpText.__DIC[HelpTextType.Welcome] = HelpText.get(HelpTextType.Game) + \
-            "\nBut before you are allowed to explore the universe you have to complete a trainings program.\n" \
-            f"Now close this dialog by pressing {_HL.action_keys}. Select {_HL.start_journey} with " \
-            f"{_HL.navigation_keys} and confirm your selection with {_HL.action_keys} to begin!"
-
-    @staticmethod
-    def get(type: HelpTextType) -> str:
-        return HelpText.__DIC[type]
-
     @staticmethod
     def load(type_: str) -> Optional[str]:
-        for key in HelpText.__DIC.keys():
+        for key in HelpTextType:
             if key.name.lower() == type_.lower():
-                return HelpText.__DIC[key]
+                return key.text
         return None
 
 
