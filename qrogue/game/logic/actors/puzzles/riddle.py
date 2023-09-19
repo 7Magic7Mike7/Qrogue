@@ -1,6 +1,6 @@
 from typing import Tuple, Optional
 
-from qrogue.game.logic.base import StateVector
+from qrogue.game.logic.base import StateVector, CircuitMatrix
 from qrogue.game.logic.collectibles import Collectible
 from qrogue.util import RandomManager
 
@@ -50,8 +50,8 @@ class Riddle(Target):
         """
         return 0
 
-    def is_reached(self, state_vector: StateVector) -> Tuple[bool, Optional[Collectible]]:
-        success, reward = super(Riddle, self).is_reached(state_vector)
+    def is_reached(self, state_vector: StateVector, circ_matrix: CircuitMatrix) -> Tuple[bool, Optional[Collectible]]:
+        success, reward = super(Riddle, self).is_reached(state_vector, circ_matrix)
         if success:
             assert reward is not None  # riddles always need to give a reward
         else:

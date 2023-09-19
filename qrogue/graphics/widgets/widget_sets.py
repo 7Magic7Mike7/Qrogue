@@ -1205,7 +1205,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             Logger.instance().error("Error! Target is not set!", from_pycui=False)
             return False
         self._robot.update_statevector(input_stv=self._target.input_stv)
-        success, reward = self._target.is_reached(self._robot.state_vector)
+        success, reward = self._target.is_reached(self._robot.state_vector, self._robot.circuit_matrix)
         self.__update_calculation(success)
         self.render()
         if success:

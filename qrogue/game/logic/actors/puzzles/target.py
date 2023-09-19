@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Tuple, Optional
 
-from qrogue.game.logic.base import StateVector
+from qrogue.game.logic.base import StateVector, CircuitMatrix
 from qrogue.game.logic.collectibles import Collectible
 from qrogue.util import Logger
 
@@ -71,12 +71,13 @@ class Target(ABC):
         """
         return self.__checks
 
-    def is_reached(self, state_vector: StateVector) -> Tuple[bool, Optional[Collectible]]:
+    def is_reached(self, state_vector: StateVector, circ_matrix: CircuitMatrix) -> Tuple[bool, Optional[Collectible]]:
         """
         Checks if the given StateVector is equal to the Target's StateVector. If so, this Target is set inactive and
         will provide its reward.
 
         :param state_vector: the StateVector to check for equality
+        :param circ_matrix: the CircuitMatrix used to create state_vector
         :return: True and a Collectible if the Target is reached, False and None otherwise
         """
         self.__checks += 1
