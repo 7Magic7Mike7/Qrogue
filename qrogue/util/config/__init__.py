@@ -7,3 +7,6 @@ from .gameplay_config import GameplayConfig, CheatConfig, MapConfig, PuzzleConfi
     QuantumSimulationConfig, ShopConfig, InstructionConfig, Options
 from .error_config import ErrorConfig
 from .config import Config
+
+
+GameplayConfig.init_options()

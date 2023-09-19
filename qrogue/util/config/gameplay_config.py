@@ -319,26 +319,14 @@ class GameplayConfig:
         Experienced = 1
 
     __KEY_VALUE_SEPARATOR = "="
-    __OPTIONS: Dict[Options, int] = {
-        Options.energy_mode: Options.energy_mode.default_index,
-        Options.auto_save: Options.auto_save.default_index,
-        Options.auto_reset_circuit: Options.auto_reset_circuit.default_index,
-        Options.log_keys: Options.log_keys.default_index,
-
-        Options.gameplay_key_pause: Options.gameplay_key_pause.default_index,
-        Options.simulation_key_pause: Options.simulation_key_pause.default_index,
-
-        Options.show_ket_notation: Options.show_ket_notation.default_index,
-        Options.allow_implicit_removal: Options.allow_implicit_removal.default_index,
-
-        Options.allow_multi_move: Options.allow_multi_move.default_index,
-        Options.auto_skip_text_animation: Options.auto_skip_text_animation.default_index,
-
-        Options.enable_puzzle_history: Options.enable_puzzle_history.default_index,
-        Options.auto_reset_history: Options.auto_reset_history.default_index,
-    }
+    __OPTIONS: Dict[Options, int] = { }
 
     __KNOWLEDGE_MODE: _KnowledgeMode = _KnowledgeMode.Newbie
+
+    @staticmethod
+    def init_options():
+        for val in Options:
+            GameplayConfig.__OPTIONS[val] = val.default_index
 
     @staticmethod
     def get_options(needed_options: Optional[List[Options]] = None) -> List[Tuple[Options, Callable[[Options], str]]]:
