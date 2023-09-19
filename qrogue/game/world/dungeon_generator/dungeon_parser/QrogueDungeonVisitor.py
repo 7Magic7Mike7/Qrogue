@@ -84,6 +84,11 @@ class QrogueDungeonVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by QrogueDungeonParser#boss_descriptor.
+    def visitBoss_descriptor(self, ctx:QrogueDungeonParser.Boss_descriptorContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by QrogueDungeonParser#riddle_descriptor.
     def visitRiddle_descriptor(self, ctx:QrogueDungeonParser.Riddle_descriptorContext):
         return self.visitChildren(ctx)
@@ -101,6 +106,11 @@ class QrogueDungeonVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by QrogueDungeonParser#input_stv.
     def visitInput_stv(self, ctx:QrogueDungeonParser.Input_stvContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by QrogueDungeonParser#boss_puzzle.
+    def visitBoss_puzzle(self, ctx:QrogueDungeonParser.Boss_puzzleContext):
         return self.visitChildren(ctx)
 
 

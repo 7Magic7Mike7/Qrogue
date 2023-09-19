@@ -1304,10 +1304,17 @@ class FightWidgetSet(ReachTargetWidgetSet):
         return True
 
 
-class BossFightWidgetSet(FightWidgetSet):
+class BossFightWidgetSet(ReachTargetWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  continue_exploration_callback: Callable[[bool], None], reopen_popup_callback: Callable[[], None]):
         super().__init__(controls, render, logger, root, continue_exploration_callback, reopen_popup_callback)
+
+    def _details_flee(self) -> bool:
+        self._details.set_data(data=(
+            ["You fled to try again later."],
+            [self._continue_and_undo_callback]
+        ))
+        return True
 
     def set_data(self, robot: Robot, target: Boss, in_expedition: bool, tutorial_data):
         super(BossFightWidgetSet, self).set_data(robot, target, in_expedition, tutorial_data)

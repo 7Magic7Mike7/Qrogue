@@ -20,11 +20,12 @@ robot : ROBOT DIGIT 'qubits' '[' REFERENCE (LIST_SEPARATOR REFERENCE)* ']'
 // building the non-template rooms used in the layout (note: template rooms are pre-defined rooms)
 room_content : WALL* r_row+ WALL* tile_descriptor* ;
 r_row : WALL tile+ WALL ;
-tile :  'o' | 't' | 'm' | DIGIT | 'c' | 'e' | 'r' | '!' | '$' | '_' ;    // obstacle, trigger, message, enemy, collectible,
-                                                                         // energy, riddle, challenge, shop, floor
+tile :  'o' | 't' | 'm' | DIGIT | 'b' | 'c' | 'e' | 'r' | '!' | '$' | '_' ;    // obstacle, trigger, message, enemy,
+                                                                               // boss, collectible, energy, riddle,
+                                                                               // challenge, shop, floor
 // further describing the tiles used in the room
 tile_descriptor : (t_descriptor | message_descriptor |
-                  enemy_descriptor | collectible_descriptor | energy_descriptor | riddle_descriptor |
+                  enemy_descriptor | boss_descriptor | collectible_descriptor | energy_descriptor | riddle_descriptor |
                   challenge_descriptor | shop_descriptor)
                   (TUTORIAL_LITERAL REFERENCE)? (TRIGGER_LITERAL (REFERENCE | GLOBAL_EVENT_REFERENCE | UNLOCK_REFERENCE))? ;  // winning a fight or picking up a collectible can also trigger an event
 t_descriptor : 't' (trigger_descriptor | teleport_descriptor) ;
@@ -36,11 +37,13 @@ collectible_descriptor : 'c' ((REFERENCE integer?) | collectible) ; // id of rew
 energy_descriptor : 'e' integer ;    // amount
 shop_descriptor : '$' integer (REFERENCE | collectibles) ;   // num of items to draw, reward pool id or collectible list
 
-enemy_descriptor : DIGIT (REFERENCE | stv) (REFERENCE | collectible)? input_stv?;    // enemy, target stv (pool id or explicit), reward (pool id or explicit)
+enemy_descriptor : DIGIT (REFERENCE | stv) (REFERENCE | collectible)? input_stv? ;    // enemy, target stv (pool id or explicit), reward (pool id or explicit)
+boss_descriptor : 'b' '[' boss_puzzle (',' boss_puzzle)* ']' (REFERENCE | collectible) ;   // list of (target, input) and reward
 riddle_descriptor : 'r' integer puzzle_parameter ;   // attempts
 challenge_descriptor : '!' integer integer? puzzle_parameter ;  // min number of gates, max number of gates
 puzzle_parameter : (REFERENCE | stv) (REFERENCE | collectible) input_stv? ;    // stv pool id, reward pool id
-input_stv: ('input' | 'i') '=' (REFERENCE | stv) ;      // input statevector (pool id or explicit)
+input_stv : ('input' | 'i') '=' (REFERENCE | stv) ;      // input statevector (pool id or explicit)
+boss_puzzle : (REFERENCE | stv) input_stv ;
 
 circuit_stv: NUM_QUBITS_SPECIFIER '=' DIGIT ':' (circuit_gate_single | circuit_gate_multi)
              (',' (circuit_gate_single | circuit_gate_multi))* ;

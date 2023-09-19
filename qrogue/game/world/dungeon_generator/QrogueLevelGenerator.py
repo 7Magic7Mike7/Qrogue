@@ -4,7 +4,7 @@ from antlr4 import InputStream, CommonTokenStream
 from antlr4.tree.Tree import TerminalNodeImpl
 
 from qrogue.game.logic import Message
-from qrogue.game.logic.actors import Controllable, Riddle, Robot, robot
+from qrogue.game.logic.actors import Controllable, Riddle, Robot, robot, Boss as BossActor
 from qrogue.game.logic.actors.puzzles import Challenge
 from qrogue.game.logic.base import StateVector
 from qrogue.game.logic.collectibles import Collectible, pickup, instruction, MultiCollectible, Qubit, ShopItem, \
@@ -113,6 +113,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             return parser_util.MESSAGE_TILE
         elif tile_code is tiles.TileCode.Energy:
             return parser_util.ENERGY_TILE
+        elif tile_code is tiles.TileCode.Boss:
+            return parser_util.BOSS_TILE
         elif tile_code is tiles.TileCode.Riddler:
             return parser_util.RIDDLER_TILE
         elif tile_code is tiles.TileCode.Challenger:
@@ -805,6 +807,30 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
                 collectible = self.__default_collectible_factory.produce(self.__rm)
         return tiles.Collectible(collectible)
 
+    def visitBoss_descriptor(self, ctx: QrogueDungeonParser.Boss_descriptorContext) -> tiles.Boss:
+        puzzles = []
+        for boss_puzzle in ctx.boss_puzzle():
+            puzzles.append(self.visit(boss_puzzle))
+
+        if ctx.collectible():
+            reward = self.visit(ctx.collectible())
+        elif ctx.REFERENCE():
+            reward = self.__load_collectible_factory(ctx.REFERENCE()).produce(self.__rm)
+        else:
+            # if neither a collectible nor a reference to a reward_factory is given we use the default one
+            reward = self.__default_collectible_factory.produce(self.__rm)
+
+        return tiles.Boss(BossActor(puzzles, reward), self.__cbp.start_boss_fight, self.__cbp.game_over)    # todo replace game_over
+
+    def visitBoss_puzzle(self, ctx: QrogueDungeonParser.Boss_puzzleContext) -> Tuple[StateVector, StateVector]:
+        if ctx.REFERENCE():
+            difficulty = self.__load_target_difficulty(ctx.REFERENCE())
+            target_stv = difficulty.create_statevector(self.__robot, self.__rm)
+        else:
+            target_stv = self.visit(ctx.stv())
+        input_stv = self.visit(ctx.input_stv())
+        return target_stv, input_stv
+
     def visitEnemy_descriptor(self, ctx: QrogueDungeonParser.Enemy_descriptorContext) -> tiles.Enemy:
         enemy = None
         if self.__cur_room_id:
@@ -870,6 +896,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             tile = self.visit(ctx.t_descriptor())
         elif ctx.enemy_descriptor():
             tile = self.visit(ctx.enemy_descriptor())
+        elif ctx.boss_descriptor():
+            tile = self.visit(ctx.boss_descriptor())
         elif ctx.collectible_descriptor():
             tile = self.visit(ctx.collectible_descriptor())
         elif ctx.energy_descriptor():

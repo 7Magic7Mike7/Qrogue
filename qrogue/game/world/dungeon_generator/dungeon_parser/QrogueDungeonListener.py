@@ -143,6 +143,15 @@ class QrogueDungeonListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by QrogueDungeonParser#boss_descriptor.
+    def enterBoss_descriptor(self, ctx:QrogueDungeonParser.Boss_descriptorContext):
+        pass
+
+    # Exit a parse tree produced by QrogueDungeonParser#boss_descriptor.
+    def exitBoss_descriptor(self, ctx:QrogueDungeonParser.Boss_descriptorContext):
+        pass
+
+
     # Enter a parse tree produced by QrogueDungeonParser#riddle_descriptor.
     def enterRiddle_descriptor(self, ctx:QrogueDungeonParser.Riddle_descriptorContext):
         pass
@@ -176,6 +185,15 @@ class QrogueDungeonListener(ParseTreeListener):
 
     # Exit a parse tree produced by QrogueDungeonParser#input_stv.
     def exitInput_stv(self, ctx:QrogueDungeonParser.Input_stvContext):
+        pass
+
+
+    # Enter a parse tree produced by QrogueDungeonParser#boss_puzzle.
+    def enterBoss_puzzle(self, ctx:QrogueDungeonParser.Boss_puzzleContext):
+        pass
+
+    # Exit a parse tree produced by QrogueDungeonParser#boss_puzzle.
+    def exitBoss_puzzle(self, ctx:QrogueDungeonParser.Boss_puzzleContext):
         pass
 
 
