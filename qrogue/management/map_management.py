@@ -10,36 +10,48 @@ from qrogue.util import CommonQuestions, Logger, MapConfig, achievements, Random
 
 from qrogue.management.save_data import SaveData
 from qrogue.util.achievements import Unlocks, AchievementManager
-from qrogue.util.config.gameplay_config import ExpeditionConfig
+from qrogue.util.config.gameplay_config import ExpeditionConfig, GameplayConfig
 
-__MAP_ORDER = {
-    #MapConfig.spaceship(): MapConfig.intro_level(),
-    MapConfig.first_uncleared(): MapConfig.intro_level(),
-    MapConfig.intro_level(): "l0v1",
-    "l0v1": "l0v2",
-    "l0v2": "l0v3",
-    "l0v3": "l0v4",
-    "l0v4": "l0v5",
-    "l0v5": "w0",
-    "l0training": "w0",
-    "l0exam": MapConfig.spaceship(),
-    "w0": MapConfig.spaceship(),
+__MAP_ORDER: Dict[int, Dict[str, str]] = {
+    # map names:
+    #   - the first character determines if it's a level ("l") or world ("w")
+    #   - the second character determines to which world the map belongs to
+    #   - the third character determines if the level differs based on knowledge mode, followed by the corresponding
+    #     digit of the knowledge mode
+    #   - last digit for levels is used to order the levels (only for structure, not used in game logic)
+    #   - alternatively maps can also start with "expedition" to mark them as generated
+    0: {
+        #MapConfig.spaceship(): MapConfig.intro_level(),
+        MapConfig.first_uncleared(): "l0k0v0",
+        "l0k0v0": "l0k0v1",
+        "l0k0v1": "l0k0v2",
+        "l0k0v2": "l0k0v3",
+        "l0k0v3": "l0k0v4",
+        "l0k0v4": "l0k0v5",
+        "l0k0v5": "w0",
+        "l0training": "w0",
+        "l0exam": MapConfig.spaceship(),
+        "w0": MapConfig.spaceship(),
 
-    MapConfig.hub_world(): "l0v0",
+        MapConfig.hub_world(): "l0v0",
+    },
+    1: {
+        MapConfig.first_uncleared(): "l0k1v0",
+    },
 }
 
 
 def get_next(cur_map: str) -> Optional[str]:
     if cur_map == MapConfig.first_uncleared():
-        next_map = __MAP_ORDER[cur_map]
+        next_map = __MAP_ORDER[GameplayConfig.get_knowledge_mode()][cur_map]
         while SaveData.instance().achievement_manager.check_achievement(next_map):
-            if next_map in __MAP_ORDER:
-                next_map = __MAP_ORDER[next_map]
+            if next_map in __MAP_ORDER[GameplayConfig.get_knowledge_mode()]:
+                next_map = __MAP_ORDER[GameplayConfig.get_knowledge_mode()][next_map]
             else:
                 break
         return next_map
-    elif cur_map in __MAP_ORDER:
-        return __MAP_ORDER[cur_map]
+    elif cur_map in __MAP_ORDER[GameplayConfig.get_knowledge_mode()]:
+        return __MAP_ORDER[GameplayConfig.get_knowledge_mode()][cur_map]
     return None
 
 

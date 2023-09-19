@@ -343,7 +343,11 @@ class QrogueCUI(PyCUI):
             self.set_on_draw_update_func(Config.inc_frame_count)
 
         if SaveData.instance().is_fresh_save:
-            Popup.generic_info("WELCOME TO QROGUE!", HelpText.Welcome.text)
+            def knowledge_question(index: int):
+                if index == 0: GameplayConfig.set_newbie_mode()
+                else: GameplayConfig.set_experienced_mode()
+            ConfirmationPopup.ask("WELCOME TO QROGUE!", HelpText.Welcome.text, knowledge_question,
+                                  ["Quantum Newbie", "Quantum Experienced"])
 
     def _refresh_height_width(self) -> None:
         try:

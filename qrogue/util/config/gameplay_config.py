@@ -1,3 +1,4 @@
+import enum
 from enum import Enum
 from typing import Callable, Tuple, List, Dict, Any, Optional
 
@@ -113,7 +114,7 @@ class MapConfig:
     def level_list() -> List[str]:
         levels = []
         for i in range(MapConfig.num_of_lessons()):
-            levels.append(f"l0v{i}")
+            levels.append(f"l0k0v{i}")
         levels += ["l0training", "l0exam"]
         return levels
 
@@ -313,6 +314,10 @@ class Options(Enum):
 
 
 class GameplayConfig:
+    class _KnowledgeMode(enum.Enum):
+        Newbie = 0
+        Experienced = 1
+
     __KEY_VALUE_SEPARATOR = "="
     __OPTIONS: Dict[Options, int] = {
         Options.energy_mode: Options.energy_mode.default_index,
@@ -332,6 +337,8 @@ class GameplayConfig:
         Options.enable_puzzle_history: Options.enable_puzzle_history.default_index,
         Options.auto_reset_history: Options.auto_reset_history.default_index,
     }
+
+    __KNOWLEDGE_MODE: _KnowledgeMode = _KnowledgeMode.Newbie
 
     @staticmethod
     def get_options(needed_options: Optional[List[Options]] = None) -> List[Tuple[Options, Callable[[Options], str]]]:
@@ -391,6 +398,26 @@ class GameplayConfig:
             except KeyError:
                 return False
         return True
+
+    @staticmethod
+    def set_newbie_mode():
+        GameplayConfig.__KNOWLEDGE_MODE = GameplayConfig._KnowledgeMode.Newbie
+
+    @staticmethod
+    def set_experienced_mode():
+        GameplayConfig.__KNOWLEDGE_MODE = GameplayConfig._KnowledgeMode.Experienced
+
+    @staticmethod
+    def get_knowledge_mode() -> int:
+        return GameplayConfig.__KNOWLEDGE_MODE.value
+
+    @staticmethod
+    def is_newbie_mode():
+        return GameplayConfig.__KNOWLEDGE_MODE == GameplayConfig._KnowledgeMode.Newbie
+
+    @staticmethod
+    def is_experienced_mode():
+        return GameplayConfig.__KNOWLEDGE_MODE == GameplayConfig._KnowledgeMode.Experienced
 
     @staticmethod
     def auto_save() -> bool:
