@@ -201,7 +201,7 @@ class MapManager:
             self.__in_level = False
             self.__show_world(self.__cur_map)
 
-        elif map_name[0].lower().startswith(MapConfig.world_map_prefix()):
+        elif map_name.lower().startswith(MapConfig.world_map_prefix()):
             try:
                 world = self.__load_world(map_name)
                 if world is not None:
