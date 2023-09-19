@@ -187,11 +187,11 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
             elif key_pressed in self.__controls.get_keys(Keys.PopupUp):
                 self.__up()
             elif key_pressed in self.__controls.get_keys(Keys.PopupLeft):
-                self.__up_fast()
+                self.__down_fast()
             elif key_pressed in self.__controls.get_keys(Keys.PopupDown):
                 self.__down()
             elif key_pressed in self.__controls.get_keys(Keys.PopupRight):
-                self.__down_fast()
+                self.__up_fast()
 
     def _draw(self):
         """Overrides base class draw function

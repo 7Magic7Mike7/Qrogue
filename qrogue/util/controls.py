@@ -67,8 +67,8 @@ class Keys(IntEnum):
     PopupClose = SelectionLeft + 1
     PopupUp = PopupClose + 1
     PopupDown = PopupClose + 2
-    PopupLeft = PopupClose + 3
-    PopupRight = PopupClose + 4
+    PopupRight = PopupClose + 3
+    PopupLeft = PopupClose + 4
     PopupReopen = PopupClose + 5
 
     # 14 - 18
