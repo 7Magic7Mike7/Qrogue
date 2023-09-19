@@ -55,9 +55,9 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
                 if last_whitespace == -1:
                     cur_width = width + character_removals
                 else:
-                    cur_width = last_whitespace
+                    cur_width = last_whitespace + 1
 
-                next_line = cur_part[:cur_width].lstrip()
+                next_line = cur_part[:cur_width].strip()
                 if len(next_line) > 0:
                     # check if next_line ends with an un-terminated color rule
                     last_highlight = next_line.rfind(CC.TEXT_HIGHLIGHT)
@@ -77,7 +77,7 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
             if prepend:
                 split_text.append(prepend + paragraph[index:].strip())
             else:
-                split_text.append(paragraph[index:].strip())
+                split_text.append(paragraph[index:].rstrip())
         return [" " * padding + line + " " * padding for line in split_text]
 
     def __init__(self, root, title, text, color, renderer, logger, controls,
