@@ -9,9 +9,9 @@ from qrogue.util import CheatConfig, Logger, Config
 
 class Challenge(Target):
     def __init__(self, target: StateVector, reward: Collectible, min_gates: int, max_gates: int,
-                 allowed_gates: List[Instruction] = None):
+                 allowed_gates: List[Instruction] = None, input_: Optional[StateVector] = None):
         # allow target and input to be equal since other constraints can still make it challenging
-        super().__init__(target, reward, allow_target_input_equality=True)
+        super().__init__(target, reward, input_, allow_target_input_equality=True)
         self.__min_gates = min_gates
         self.__max_gates = max_gates
         self.__allowed_gates = allowed_gates    # not yet usable!

@@ -690,7 +690,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         return tiles.ShopKeeper(self.__cbp.visit_shop, [ShopItem(item) for item in items])
 
     def visitPuzzle_parameter(self, ctx: QrogueDungeonParser.Puzzle_parameterContext) \
-            -> Tuple[StateVector, Collectible]:
+            -> Tuple[StateVector, Collectible, Optional[StateVector]]:
         ref_index = 0
         if ctx.stv():
             stv = self.visit(ctx.stv())
@@ -704,7 +704,10 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         else:
             reward_factory = self.__load_collectible_factory(ctx.REFERENCE(ref_index))
             reward = reward_factory.produce(self.__rm)
-        return stv, reward
+
+        input_stv = self.visit(ctx.input_stv()) if ctx.input_stv() else None
+
+        return stv, reward, input_stv
 
     def visitInput_stv(self, ctx: QrogueDungeonParser.Input_stvContext) -> StateVector:
         if ctx.REFERENCE():
@@ -715,8 +718,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
     def visitRiddle_descriptor(self, ctx: QrogueDungeonParser.Riddle_descriptorContext) -> tiles.Riddler:
         attempts = self.visit(ctx.integer())
-        stv, reward = self.visit(ctx.puzzle_parameter())
-        riddle = Riddle(stv, reward, attempts)
+        stv, reward, input_stv = self.visit(ctx.puzzle_parameter())
+        riddle = Riddle(stv, reward, attempts, input_stv)
         return tiles.Riddler(self.__cbp.open_riddle, riddle)
 
     def visitChallenge_descriptor(self, ctx: QrogueDungeonParser.Challenge_descriptorContext) -> tiles.Challenger:
@@ -726,8 +729,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         else:
             max_gates = min_gates
 
-        stv, reward = self.visit(ctx.puzzle_parameter())
-        challenge = Challenge(stv, reward, min_gates, max_gates)
+        stv, reward, input_stv = self.visit(ctx.puzzle_parameter())
+        challenge = Challenge(stv, reward, min_gates, max_gates, input_=input_stv)
         return tiles.Challenger(self.__cbp.open_challenge, challenge)
 
     def visitEnergy_descriptor(self, ctx: QrogueDungeonParser.Energy_descriptorContext) -> tiles.Tile:
