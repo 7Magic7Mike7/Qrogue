@@ -1240,6 +1240,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                     [f"Congratulations! Your reward: {ColorConfig.highlight_object(reward.to_string())}"],
                     [give_reward_and_continue]
                 ))
+            self._on_success()
         else:
             self._on_commit_fail()
 
@@ -1247,6 +1248,10 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self.__init_details()
         self._details.render()
         return False  # stay in details
+
+    def _on_success(self):
+        # needed for boss fights to reset changes
+        pass
 
     @abstractmethod
     def _on_commit_fail(self) -> bool:
@@ -1317,16 +1322,23 @@ class BossFightWidgetSet(ReachTargetWidgetSet):
                  continue_exploration_callback: Callable[[bool], None], reopen_popup_callback: Callable[[], None]):
         super().__init__(controls, render, logger, root, continue_exploration_callback, reopen_popup_callback,
                          dynamic_input=True, dynamic_target=True)
+        self.__prev_circuit_space = 0
 
     def _details_flee(self) -> bool:
         self._details.set_data(data=(
             ["You fled to try again later."],
             [self._continue_and_undo_callback]
         ))
+        self._robot.reset_static_gate(self.__prev_circuit_space)
         return True
 
     def set_data(self, robot: Robot, target: Boss, in_expedition: bool, tutorial_data):
         super(BossFightWidgetSet, self).set_data(robot, target, in_expedition, tutorial_data)
+        self.__prev_circuit_space = robot.circuit_space
+        robot.add_static_gate(target.static_gate)
+
+    def _on_success(self):
+        self._robot.reset_static_gate(self.__prev_circuit_space)
 
     def _on_commit_fail(self) -> bool:
         if GameplayConfig.get_option_value(Options.energy_mode):

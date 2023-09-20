@@ -3,7 +3,7 @@ from abc import ABC
 from typing import Tuple, List, Optional
 
 from qrogue.game.logic.base import StateVector, CircuitMatrix
-from qrogue.game.logic.collectibles import Collectible, Coin
+from qrogue.game.logic.collectibles import Collectible, Coin, Instruction
 from qrogue.util import PuzzleConfig
 
 from .target import Target
@@ -16,15 +16,22 @@ class Boss(Target, ABC):
 
     __BOSS_ID: int = 0
 
-    def __init__(self, puzzles: List[Tuple[StateVector, StateVector]], reward: Collectible):
+    def __init__(self, puzzles: List[Tuple[StateVector, StateVector]], reward: Collectible,
+                 static_gate: Optional[Instruction] = None):
         """
         Creates a boss enemy with a list of specified target and input StateVectors and a specified reward.
 
         :param puzzles: list of (target stv, input stv)
-        :param reward:
+        :param reward: the reward for winning against the boss
+        :param static_gate: an optional gate statically placed in the middle of the robot's circuit
         """
         self.__puzzles = puzzles
+        self.__static_gate = static_gate
         self.__index = 0
+
+        if self.__static_gate is not None:
+            for i in range(self.__static_gate.num_of_qubits):
+                self.__static_gate.use_qubit(i)
 
         super().__init__(lambda: self.__puzzles[self.__index][0], reward, lambda: self.__puzzles[self.__index][1])
 
@@ -35,6 +42,10 @@ class Boss(Target, ABC):
     @property
     def index(self) -> int:
         return self.__index
+
+    @property
+    def static_gate(self) -> Optional[Instruction]:
+        return self.__static_gate
 
     def is_reached(self, state_vector: StateVector, circ_matrix: CircuitMatrix) -> Tuple[bool, Optional[Collectible]]:
         end_index = self.__index

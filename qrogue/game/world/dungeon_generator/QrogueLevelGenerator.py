@@ -526,7 +526,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
         return gate
 
-    def visitCircuit_stv(self, ctx: QrogueDungeonParser.Circuit_stvContext) -> StateVector:
+    def visitCircuit_stv(self, ctx: QrogueDungeonParser.Circuit_stvContext) -> Tuple[List[Instruction], int]:
         num_qubits = parser_util.parse_integer(ctx)
 
         gates: List[Instruction] = []
@@ -536,11 +536,12 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             gate = self.visit(multi_spec)
             if gate is not None: gates.append(gate)
 
-        return Instruction.compute_stv(gates, num_qubits)
+        return gates, num_qubits
 
     def visitStv(self, ctx: QrogueDungeonParser.StvContext) -> StateVector:
         if ctx.circuit_stv():
-            return self.visit(ctx.circuit_stv())
+            gates, num_qubits = self.visit(ctx.circuit_stv())
+            return Instruction.compute_stv(gates, num_qubits)
         else:
             amplitudes = []
             for cn in ctx.complex_number():
@@ -812,6 +813,12 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         for boss_puzzle in ctx.boss_puzzle():
             puzzles.append(self.visit(boss_puzzle))
 
+        if ctx.GATE_LITERAL():
+            gates, num_qubits = self.visit(ctx.circuit_stv())
+            static_gate = instruction.CombinedGates(gates, num_qubits)
+        else:
+            static_gate = None
+
         if ctx.collectible():
             reward = self.visit(ctx.collectible())
         elif ctx.REFERENCE():
@@ -820,7 +827,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             # if neither a collectible nor a reference to a reward_factory is given we use the default one
             reward = self.__default_collectible_factory.produce(self.__rm)
 
-        return tiles.Boss(BossActor(puzzles, reward), self.__cbp.start_boss_fight, self.__cbp.game_over)    # todo replace game_over
+        return tiles.Boss(BossActor(puzzles, reward, static_gate), self.__cbp.start_boss_fight, self.__cbp.game_over)    # todo replace game_over
 
     def visitBoss_puzzle(self, ctx: QrogueDungeonParser.Boss_puzzleContext) -> Tuple[StateVector, StateVector]:
         if ctx.REFERENCE():

@@ -5,7 +5,7 @@ from typing import Iterator, Optional, Set, Dict, List
 import math
 import qiskit.circuit
 import qiskit.circuit.library.standard_gates as gates
-from qiskit import QuantumCircuit, transpile
+from qiskit import QuantumCircuit, transpile, QuantumRegister
 from qiskit.providers.aer import StatevectorSimulator
 
 from qrogue.game.logic.base import StateVector, CircuitMatrix
@@ -52,6 +52,10 @@ class GateType(enum.Enum):
     CXGate = "CX", {"Controlled X", "CNOT", "Controlled NOT"}, \
              "Applies an X Gate onto its second Qubit if its first Qubit is 1.", \
              [[1, 0, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0], [0, 1, 0, 0]]
+
+    Combined = "co", set(), \
+               "This gate is a combination of multiple gates and acts like a blackbox.", \
+               [[0, 0], [0, 0]]
 
     def __init__(self, short_name: str, other_names: Set[str], description: str, matrix: List[List[complex]]):
         self.__short_name = short_name
@@ -406,6 +410,26 @@ class CXGate(DoubleQubitGate):
 
     def copy(self) -> "Instruction":
         return CXGate()
+
+
+####### Combined Gates #######
+
+class CombinedGates(Instruction):
+    def __init__(self, instructions: List[Instruction], needed_qubits: int, label: Optional[str] = None):
+        if label is None: label = "BlackBox"
+        circuit = QuantumCircuit(QuantumRegister(needed_qubits))
+        for inst in instructions: inst.append_to(circuit)
+        instruction = circuit.to_gate(label=label)
+
+        super().__init__(GateType.Combined, instruction, needed_qubits)
+        self.__instruction = instruction
+        self.__inst_list = instructions
+
+    def abbreviation(self, qubit: int = 0):
+        return " ? "
+
+    def copy(self) -> "Instruction":
+        return CombinedGates(self.__inst_list, self.__instruction.num_qubits, self.__instruction.label)
 
 
 class InstructionManager:
