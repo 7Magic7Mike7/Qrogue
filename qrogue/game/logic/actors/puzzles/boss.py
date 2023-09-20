@@ -37,20 +37,18 @@ class Boss(Target, ABC):
         return self.__index
 
     def is_reached(self, state_vector: StateVector, circ_matrix: CircuitMatrix) -> Tuple[bool, Optional[Collectible]]:
-        # the last index we need to check is either the one before self.__index or the very last possible index
-        end_index = self.__index - 1 if self.__index > 0 else len(self.__puzzles) - 1
+        end_index = self.__index
         reward = None
-        while self.__index != end_index:    # todo this way we do not necessarily see the different puzzles
+        while self.__index != end_index or reward is None:    # todo this way we do not see the different puzzles if the player solves it in less steps than the number of puzzles
             res, reward = super().is_reached(state_vector, circ_matrix)
-
+            # return False if the current puzzle was not reached
+            if not res:
+                return False, None
+            # otherwise continue with next puzzle
             # update index (+ start again at 0 if we would get out of bounds)
             self.__index += 1
             if self.__index >= len(self.__puzzles):
                 self.__index = 0
-
-            # return False if the current puzzle was not reached
-            if not res: return False, None
-            # otherwise continue with next puzzle
 
         # if the loop stopped than every puzzle was solved correctly
         return True, reward

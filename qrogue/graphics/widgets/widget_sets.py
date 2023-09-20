@@ -887,9 +887,11 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  continue_exploration_callback: Callable[[bool], None], reopen_popup_callback: Callable[[], None],
-                 flee_choice: str = "Flee"):
+                 flee_choice: str = "Flee", dynamic_input: bool = True, dynamic_target: bool = True):
         super().__init__(logger, root, render)
         self.__flee_choice = flee_choice
+        self.__dynamic_input = dynamic_input
+        self.__dynamic_target = dynamic_target
         self._continue_exploration_callback = lambda: continue_exploration_callback(False)
         self._continue_and_undo_callback = lambda: continue_exploration_callback(True)
         self._robot: Optional[Robot] = None
@@ -947,8 +949,10 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         posy += circuit_height
 
         # wrap the widget that tell us about the puzzle state
-        self.__history_widget = HistoricWrapperWidget((self.__circuit, self.__circuit_matrix, self.__stv_robot),
-                                                      render_widgets=True)
+        historic_widgets = [self.__circuit, self.__circuit_matrix, self.__stv_robot]
+        if self.__dynamic_target: historic_widgets.append(self.__stv_target)
+        if self.__dynamic_input: historic_widgets.append(self.__input_stv)
+        self.__history_widget = HistoricWrapperWidget(historic_widgets, render_widgets=True)
 
         def jump_to_present(key: Keys):
             # key doesn't matter since we want to jump back to the present on every key press
@@ -1138,6 +1142,10 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
             self.__circuit_matrix.set_data(self._robot.circuit_matrix)
             self.__stv_robot.set_data((self._robot.state_vector, diff_stv), target_reached=target_reached)
+
+            if self.__dynamic_input: self.__input_stv.set_data(self._target.input_stv)
+            if self.__dynamic_target: self.__stv_target.set_data(self._target.state_vector)
+
             self.__history_widget.save_state(rerender=True, force=False)
 
             if diff_stv.is_zero:
@@ -1307,7 +1315,8 @@ class FightWidgetSet(ReachTargetWidgetSet):
 class BossFightWidgetSet(ReachTargetWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  continue_exploration_callback: Callable[[bool], None], reopen_popup_callback: Callable[[], None]):
-        super().__init__(controls, render, logger, root, continue_exploration_callback, reopen_popup_callback)
+        super().__init__(controls, render, logger, root, continue_exploration_callback, reopen_popup_callback,
+                         dynamic_input=True, dynamic_target=True)
 
     def _details_flee(self) -> bool:
         self._details.set_data(data=(

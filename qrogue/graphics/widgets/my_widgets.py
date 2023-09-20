@@ -1048,7 +1048,7 @@ class SelectionWidget(Widget):
 
 
 class HistoricWrapperWidget:
-    def __init__(self, widgets: Tuple[Widget], render_widgets: bool, save_initial_state: bool = True):
+    def __init__(self, widgets: List[Widget], render_widgets: bool, save_initial_state: bool = True):
         self.__widgets = widgets
         self.__history: List[Tuple[str]] = []
         self.__index = -1
