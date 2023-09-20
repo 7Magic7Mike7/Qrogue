@@ -510,7 +510,7 @@ class Robot(Controllable, ABC):
 
         :return: True if the Robot is game over, False otherwise
         """
-        if self.__attributes.cur_energy <= 0:
+        if self.cur_energy <= 0:
             self.__game_over()
             return True
         return False
@@ -570,7 +570,7 @@ class Robot(Controllable, ABC):
             return
 
         num_of_used_gates: int = 0      # cannot use len(instructions) since this contains None values
-        circuit = QuantumCircuit(self.__attributes.num_of_qubits, self.__attributes.num_of_qubits)
+        circuit = QuantumCircuit(self.num_of_qubits, self.num_of_qubits)
         for inst in self.__instructions:
             if inst is not None:
                 num_of_used_gates += 1
@@ -640,7 +640,7 @@ class Robot(Controllable, ABC):
         if self.__static_gate is not None and position == self.__static_gate.position:
             return False  # player cannot overwrite the static gate
 
-        if 0 <= position < self.__attributes.circuit_space:
+        if 0 <= position < self.circuit_space:
             if self.__instructions[position]:
                 self.__remove_instruction(self.__instructions[position])
             self.__instruction_count += 1
@@ -663,7 +663,7 @@ class Robot(Controllable, ABC):
         if instruction.is_used() and instruction.position != position:
             if instruction is self.__static_gate: return False  # player cannot move the static gate
 
-            if 0 <= position < self.__attributes.circuit_space:
+            if 0 <= position < self.circuit_space:
                 if self.__instructions[position]:
                     self.__remove_instruction(instruction, skip_qargs=True)
                     self.__remove_instruction(self.__instructions[position])
