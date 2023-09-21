@@ -235,9 +235,11 @@ class MapManager:
 
         elif map_name.lower().startswith(MapConfig.expedition_map_prefix()):
             if len(map_name) > len(MapConfig.expedition_map_prefix()):
-                difficulty = int(map_name[len(MapConfig.expedition_map_prefix()):])
+                # difficulty = int(map_name[len(MapConfig.expedition_map_prefix()):])
+                map_seed = int(map_name[len(MapConfig.expedition_map_prefix()):])
             else:
-                difficulty = ExpeditionConfig.DEFAULT_DIFFICULTY
+                # difficulty = ExpeditionConfig.DEFAULT_DIFFICULTY
+                map_seed = None
 
             robot = SaveData.instance().get_robot(0)
             if map_seed is None and MapManager.__QUEUE_SIZE > 0:
