@@ -73,6 +73,7 @@ class Logger(PyCUILogger):
             print(text)
 
     def debug(self, msg: str, from_pycui: bool = True, *args, **kwargs) -> None:
+        if from_pycui and msg.startswith("Generated fragments"): return
         if Config.debugging():
             self.info(f"{{DEBUG}} |{msg}", from_pycui=from_pycui)
 
