@@ -645,6 +645,7 @@ class QrogueCUI(PyCUI):
         self.apply_widget_set(self.__navigation)
 
     def __start_level(self, seed: int, level: Map) -> None:
+        Logger.instance().info(f"Starting level {level.internal_name} with seed={seed}.")
         # reset in-level stuff
         SaveData.instance().achievement_manager.reset_level_events()
         self.__popup_history.reset()
@@ -654,6 +655,7 @@ class QrogueCUI(PyCUI):
             self.__key_logger.reinit(level.seed, level.internal_name)  # the seed used to build the Map
             OverWorldKeyLogger.instance().level_start(level.internal_name)
             robot.reset_score()     # reset the score at the start of each level
+            AchievementManager.instance().restart_level_timer()
 
             self.__pause.set_data(robot, level.name, SaveData.instance().achievement_manager)
             self.__state_machine.change_state(QrogueCUI._State.Explore, level)

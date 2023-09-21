@@ -1,9 +1,20 @@
+import datetime
 import enum
 import math
 import numpy as np
-from typing import Optional, Any
+from typing import Optional, Any, Tuple
 
 __DEFAULT_CHARACTER = " "
+
+
+def cur_datetime() -> datetime:
+    return datetime.datetime.now()
+
+
+def time_diff(time1: datetime, time2: datetime) -> Tuple[int, str]:
+    # '2023-09-20 20:55:54.036295'
+    diff = abs(time1 - time2)
+    return diff.seconds, diff
 
 
 def is_power_of_2(n: int):

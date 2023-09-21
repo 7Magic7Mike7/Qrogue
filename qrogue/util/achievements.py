@@ -2,6 +2,7 @@ import enum
 from typing import List, Dict
 
 from qrogue.util import MapConfig, ErrorConfig, Logger
+from qrogue.util.util_functions import cur_datetime, time_diff
 
 # global events
 FinishedTutorial = "CompletedTutorial"
@@ -208,6 +209,7 @@ class AchievementManager:
         else:
             self.__storage: Dict[str, Achievement] = {}
             self.__temp_level_storage: Dict[str, Achievement] = {}
+            self.__level_start_timestamp = cur_datetime()
 
             story_counter = 0
             for achievement in achievements:
@@ -222,6 +224,9 @@ class AchievementManager:
     @property
     def story_progress(self) -> int:
         return int(self.__storage[Ach.story()].score)
+
+    def restart_level_timer(self):
+        self.__level_start_timestamp = cur_datetime()
 
     def __on_achievement_completion(self, achievement: Achievement):
         assert achievement.is_done()
@@ -311,6 +316,10 @@ class AchievementManager:
             self.__on_achievement_completion(achievement)
 
     def finished_level(self, level: str, display_name: str = None) -> bool:
+        level_end_time_stamp = cur_datetime()
+        level_duration, _ = time_diff(self.__level_start_timestamp, level_end_time_stamp)
+        Logger.instance().info(f"Finished level {level} after {level_duration}s.", from_pycui=False)
+
         for unlock in Ach.get_level_completion_unlocks(level):
             self._store_achievement(Achievement.from_unlock(unlock))
 
