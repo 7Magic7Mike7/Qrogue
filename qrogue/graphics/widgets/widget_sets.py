@@ -24,7 +24,7 @@ from qrogue.graphics.widgets import Renderable, Widget, MyBaseWidget
 from qrogue.graphics.widgets.my_widgets import SelectionWidget, CircuitWidget, MapWidget, SimpleWidget, HudWidget, \
     OutputStateVectorWidget, CircuitMatrixWidget, TargetStateVectorWidget, InputStateVectorWidget, MyMultiWidget, \
     HistoricWrapperWidget
-from qrogue.util.util_functions import enum_str
+from qrogue.util.util_functions import enum_str, cur_datetime, time_diff
 
 
 class MyWidgetSet(WidgetSet, Renderable, ABC):
@@ -884,6 +884,7 @@ class NavigationWidgetSet(MapWidgetSet):
 
 class ReachTargetWidgetSet(MyWidgetSet, ABC):
     __DETAILS_COLUMNS = 4
+    __ATTEMPT_ID = 0
 
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  continue_exploration_callback: Callable[[bool], None], reopen_popup_callback: Callable[[], None],
@@ -901,6 +902,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self._details_content = None
         self._in_reward_message = False     # _details currently displays the reward message
         self.__in_expedition = False
+        self.__puzzle_timer = cur_datetime()
 
         posy = 0
         posx = 0
@@ -1119,6 +1121,15 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self.__init_details()
         self.__history_widget.clean_history()   # clean/reset history
 
+        self.__puzzle_timer = cur_datetime()
+        # log info about the puzzle
+        # increment id here so we don't have duplicate ids if a level gets restarted or exited from the menu
+        ReachTargetWidgetSet.__ATTEMPT_ID += 1
+        info_msg = f"[attempt id={ReachTargetWidgetSet.__ATTEMPT_ID}] Starting puzzle...\n" \
+                   f"input={target.input_stv}\n" \
+                   f"target={target.state_vector}"
+        Logger.instance().info(info_msg, from_pycui=False)
+
     def get_widget_list(self) -> List[Widget]:
         return [
             self._hud,
@@ -1213,6 +1224,11 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         # last selection possibility in edit is for fleeing
         self._details_flee()
         self._details.render()
+
+        duration, _ = time_diff(self.__puzzle_timer, cur_datetime())
+        Logger.instance().info(f"[attempt id={ReachTargetWidgetSet.__ATTEMPT_ID}]\n"
+                               f"Fled from puzzle after {duration}s "
+                               f"and {self._target.checks} steps.", from_pycui=False)
         return False    # stay in details
 
     def __choices_commit(self):
@@ -1257,8 +1273,17 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         return False  # stay in details
 
     def _on_success(self):
-        # needed for boss fights to reset changes
-        pass
+        duration, _ = time_diff(self.__puzzle_timer, cur_datetime())
+        instructions_str = ""
+        for pos in range(self._robot.circuit_space):
+            inst = self._robot.gate_used_at(pos)
+            if inst is not None:
+                instructions_str += f"{inst}, "
+        instructions_str = instructions_str[:-2]    # remove trailing ", "
+        info_msg = f"[attempt id={ReachTargetWidgetSet.__ATTEMPT_ID}]\n" \
+                   f"Solved puzzle after {duration}s in {self._target.checks} steps. \n" \
+                   f"Used: {instructions_str}"
+        Logger.instance().info(info_msg, from_pycui=False)
 
     @abstractmethod
     def _on_commit_fail(self) -> bool:
@@ -1348,6 +1373,7 @@ class BossFightWidgetSet(ReachTargetWidgetSet):
             self.save_puzzle_to_history(input_stv, target_stv)
 
     def _on_success(self):
+        super()._on_success()
         self._robot.reset_static_gate(self.__prev_circuit_space)
 
     def _on_commit_fail(self) -> bool:
