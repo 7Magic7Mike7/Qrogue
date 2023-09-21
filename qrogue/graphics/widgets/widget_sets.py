@@ -1117,6 +1117,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self.__update_calculation(False)
 
         self.__init_details()
+        self.__history_widget.clean_history()   # clean/reset history
 
     def get_widget_list(self) -> List[Widget]:
         return [
@@ -1134,7 +1135,13 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
     def reset(self) -> None:
         self._details.render_reset()
-        self.__history_widget.clean_history()       # todo Note: this also cleans history when going to the pause menu!
+
+    def save_puzzle_to_history(self, input_stv: StateVector, target_stv: StateVector):
+        self.__input_stv.set_data(input_stv)
+        self.__stv_target.set_data(target_stv)
+        # we don't know equality, and we don't care for this preview
+        self.__eq_widget.set_data(self._sign_offset + "=?=")
+        self.__history_widget.save_state(rerender=True, force=False)
 
     def __update_calculation(self, target_reached: bool):
         if AchievementManager.instance().check_unlocks(Unlocks.ShowEquation):
@@ -1336,6 +1343,9 @@ class BossFightWidgetSet(ReachTargetWidgetSet):
         super(BossFightWidgetSet, self).set_data(robot, target, in_expedition, tutorial_data)
         self.__prev_circuit_space = robot.circuit_space
         robot.add_static_gate(target.static_gate)
+
+        for target_stv, input_stv in target.puzzles:
+            self.save_puzzle_to_history(input_stv, target_stv)
 
     def _on_success(self):
         self._robot.reset_static_gate(self.__prev_circuit_space)

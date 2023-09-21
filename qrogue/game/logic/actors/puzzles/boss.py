@@ -3,7 +3,7 @@ from abc import ABC
 from typing import Tuple, List, Optional
 
 from qrogue.game.logic.base import StateVector, CircuitMatrix
-from qrogue.game.logic.collectibles import Collectible, Coin, Instruction
+from qrogue.game.logic.collectibles import Collectible, Coin, Instruction, instruction as gates
 from qrogue.util import PuzzleConfig
 
 from .target import Target
@@ -44,6 +44,10 @@ class Boss(Target, ABC):
         return self.__index
 
     @property
+    def puzzles(self) -> List[Tuple[StateVector, StateVector]]:
+        return self.__puzzles.copy()
+
+    @property
     def static_gate(self) -> Optional[Instruction]:
         return self.__static_gate
 
@@ -75,3 +79,20 @@ class DummyBoss(Boss):
     def __init__(self):
         stv = StateVector([1, 0, 0, 0, 0, 0, 0, 0], num_of_used_gates=0)
         super(DummyBoss, self).__init__(stv, Coin(3))
+
+
+class AntiEntangleBoss(Boss):
+    def __init__(self, reward: Collectible):
+        comb_gate = gates.CombinedGates([
+            gates.HGate().setup([0]), gates.CXGate().setup([0, 1]), gates.XGate().setup([0])
+        ], 2, label="Anti Entanglement").setup([0, 1])
+        target1 = Instruction.compute_stv([comb_gate], 2)
+        target2 = Instruction.compute_stv([comb_gate, gates.XGate().setup([0])], 2)
+        basis_states = StateVector.create_basis_states(num_of_qubits=2)
+        puzzles = [
+            (target1, basis_states[0]),
+            (target1, basis_states[1]),
+            (target2, basis_states[2]),
+            (target2, basis_states[3]),
+        ]
+        super().__init__(puzzles, reward)

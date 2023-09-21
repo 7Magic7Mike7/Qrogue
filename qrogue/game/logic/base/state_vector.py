@@ -73,6 +73,15 @@ class StateVector:
         amplitudes = [1] + [0] * (2**num_of_qubits - 1)
         return StateVector(amplitudes, num_of_used_gates=0)
 
+    @staticmethod
+    def create_basis_states(num_of_qubits: int) -> List["StateVector"]:
+        states = []
+        for i in range(2**num_of_qubits):
+            amplitudes = [0] * 2**num_of_qubits
+            amplitudes[i] = 1
+            states.append(StateVector(amplitudes, num_of_used_gates=0))
+        return states
+
     def __init__(self, amplitudes: List[complex], num_of_used_gates: Optional[int] = None):
         self.__amplitudes = amplitudes
         self.__num_of_used_gates = num_of_used_gates

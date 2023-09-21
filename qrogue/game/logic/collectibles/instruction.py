@@ -163,6 +163,26 @@ class Instruction(Collectible, ABC):
             return True
         return False
 
+    def setup(self, qargs: List[int], cargs: Optional[List[int]] = None, position: Optional[int] = None) \
+            -> "Instruction":
+        """
+        Function used to programmatically set up a gate in one go after instantiation.
+        """
+        if len(qargs) > self.__needed_qubits:
+            Logger.instance().warn(f"Instruction.setup(): {len(qargs)} qubits provided but only {self.__needed_qubits} "
+                                   f"needed. Ignoring the over-specified ones.", from_pycui=False)
+        if len(qargs) < self.__needed_qubits:
+            Logger.instance().warn(f"Instruction.setup(): {len(qargs)} qubits provided but {self.__needed_qubits} "
+                                   f"needed. Things might not work correctl due to under-specified qubits.",
+                                   from_pycui=False)
+        for qubit in qargs:
+            self.use_qubit(qubit)
+        if cargs is not None:
+            self._cargs = cargs
+        if position is not None:
+            self.use(position)
+        return self
+
     def reset(self, skip_qargs: bool = False, skip_position: bool = False):
         if not skip_qargs:
             self._qargs = []

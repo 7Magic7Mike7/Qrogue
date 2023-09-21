@@ -5,7 +5,7 @@ from antlr4.tree.Tree import TerminalNodeImpl
 
 from qrogue.game.logic import Message
 from qrogue.game.logic.actors import Controllable, Riddle, Robot, robot, Boss as BossActor
-from qrogue.game.logic.actors.puzzles import Challenge
+from qrogue.game.logic.actors.puzzles import Challenge, boss
 from qrogue.game.logic.base import StateVector
 from qrogue.game.logic.collectibles import Collectible, pickup, instruction, MultiCollectible, Qubit, ShopItem, \
     CollectibleFactory, OrderedCollectibleFactory
@@ -69,6 +69,13 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         @staticmethod
         def is_dir_west(dir_str: str) -> bool:
             return dir_str == "West"
+
+        @staticmethod
+        def get_boss(ref: QrogueDungeonParser.REFERENCE, reward: Collectible) -> Optional[BossActor]:
+            ref = parser_util.normalize_reference(ref.getText())
+            if ref in ["antientangle", "antientanglement"]:
+                return boss.AntiEntangleBoss(reward)
+            return None
 
     @staticmethod
     def __normalize_reference(reference: str) -> str:
@@ -809,25 +816,30 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         return tiles.Collectible(collectible)
 
     def visitBoss_descriptor(self, ctx: QrogueDungeonParser.Boss_descriptorContext) -> tiles.Boss:
-        puzzles = []
-        for boss_puzzle in ctx.boss_puzzle():
-            puzzles.append(self.visit(boss_puzzle))
-
-        if ctx.GATE_LITERAL():
-            gates, num_qubits = self.visit(ctx.circuit_stv())
-            static_gate = instruction.CombinedGates(gates, num_qubits)
-        else:
-            static_gate = None
-
+        ref_index = 1 if ctx.boss_puzzle(0) is None else 0
         if ctx.collectible():
             reward = self.visit(ctx.collectible())
-        elif ctx.REFERENCE():
+        elif ctx.REFERENCE(ref_index):
             reward = self.__load_collectible_factory(ctx.REFERENCE()).produce(self.__rm)
         else:
             # if neither a collectible nor a reference to a reward_factory is given we use the default one
             reward = self.__default_collectible_factory.produce(self.__rm)
 
-        return tiles.Boss(BossActor(puzzles, reward, static_gate), self.__cbp.start_boss_fight, self.__cbp.game_over)    # todo replace game_over
+        if ctx.boss_puzzle(0) is None:
+            boss_actor = QrogueLevelGenerator._StaticTemplates.get_boss(ctx.REFERENCE(0), reward)
+        else:
+            puzzles = []
+            for boss_puzzle in ctx.boss_puzzle():
+                puzzles.append(self.visit(boss_puzzle))
+
+            if ctx.GATE_LITERAL():
+                gates, num_qubits = self.visit(ctx.circuit_stv())
+                static_gate = instruction.CombinedGates(gates, num_qubits)
+            else:
+                static_gate = None
+            boss_actor = BossActor(puzzles, reward, static_gate)
+
+        return tiles.Boss(boss_actor, self.__cbp.start_boss_fight, self.__cbp.game_over)    # todo replace game_over
 
     def visitBoss_puzzle(self, ctx: QrogueDungeonParser.Boss_puzzleContext) -> Tuple[StateVector, StateVector]:
         if ctx.REFERENCE():
