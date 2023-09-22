@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Optional
+from typing import Optional, List
 
 from qrogue.util.config import ColorConfig as CC
 
@@ -263,6 +263,9 @@ class HelpText(Enum):
         f"{_HL.circuit} before they get {_HL.unstable}. Unstable {_HL.riddles} have a 50% chance to {_HL.vanish} " \
         f"together with their {_HL.reward} whenever you update your {_HL.circuit}."
 
+    Challenge = \
+        "TODO"
+
     Shop = \
         f"In the {_HL.shop} you can exchange {_HL.coins} you got (e.g. from solving Puzzles) for various " \
         f"{_HL.collec}. On the left side is a {_HL.list_} of everything you can {_HL.buy}. Navigate as usual with " \
@@ -301,6 +304,15 @@ class HelpText(Enum):
     @property
     def text(self) -> str:
         return self.__text
+
+
+def get_filtered_help_texts() -> List[HelpText]:
+    return [
+        HelpText.Game,
+        HelpText.Controls, HelpText.Fight, HelpText.Ket, HelpText.ParallelGates, HelpText.SerialGates,
+        HelpText.Riddle, #HelpText.Challenge,
+        HelpText.Pause,
+    ]
 
 
 def load_help_text(type_: str) -> Optional[str]:

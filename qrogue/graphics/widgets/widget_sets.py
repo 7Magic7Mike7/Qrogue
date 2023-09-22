@@ -17,7 +17,8 @@ from qrogue.graphics.popups import Popup
 from qrogue.graphics.rendering import ColorRules
 from qrogue.graphics.widget_base import WidgetWrapper
 from qrogue.util import CommonPopups, Config, Controls, GameplayConfig, HelpText, Logger, PathConfig, \
-    RandomManager, AchievementManager, Keys, UIConfig, HudConfig, ColorConfig, Options, PuzzleConfig, ScoreConfig
+    RandomManager, AchievementManager, Keys, UIConfig, HudConfig, ColorConfig, Options, PuzzleConfig, ScoreConfig, \
+    get_filtered_help_texts
 from qrogue.util.achievements import Ach, Unlocks
 
 from qrogue.graphics.widgets import Renderable, Widget, MyBaseWidget
@@ -630,13 +631,20 @@ class PauseMenuWidgetSet(MyWidgetSet):
         return False
 
     def __help(self) -> bool:
-        texts = [enum_str(val, skip_type_prefix=True) for val in HelpText] + [MyWidgetSet.BACK_STRING]
+        texts = [enum_str(val, skip_type_prefix=True) for val in get_filtered_help_texts()] + [MyWidgetSet.BACK_STRING]
         callbacks = []
-        for val in HelpText:
-            def func() -> bool:
+
+        def func(val: HelpText) -> Callable[[], bool]:
+            def cb():
                 Popup.generic_info(enum_str(val, skip_type_prefix=True), val.text)
                 return False
-            callbacks.append(func)
+            return cb
+        for val in get_filtered_help_texts():
+            callbacks.append(func(val))
+
+        def back() -> bool:
+            return True
+        callbacks.append(back)
         self.__details.set_data(data=(texts, callbacks))
         return True
 
