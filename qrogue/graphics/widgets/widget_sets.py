@@ -1512,17 +1512,10 @@ class RiddleWidgetSet(ReachTargetWidgetSet):
         return True
 
     def _details_flee(self) -> bool:
-        if self._target.can_attempt:
-            self._details.set_data(data=(
-                [f"Abort - you can still try again later", "Continue"],
-                [self._continue_and_undo_callback, self._fleeing_failed_callback]
-            ))
-        else:
-            self._details.set_data(data=(
-                [f"Abort - but you don't have any {RiddleWidgetSet.__TRY_PHRASING} left to try again later!",
-                 "Continue"],
-                [self._continue_and_undo_callback, self._fleeing_failed_callback]
-            ))
+        self._details.set_data(data=(
+            [f"Abort - you can still try again later", "Continue"],
+            [self._continue_and_undo_callback, self._fleeing_failed_callback]
+        ))
         return True
 
 
