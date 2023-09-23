@@ -3,7 +3,7 @@ from abc import ABC
 from typing import Tuple, List, Optional
 
 from qrogue.game.logic.base import StateVector, CircuitMatrix
-from qrogue.game.logic.collectibles import Collectible, Coin, Instruction, instruction as gates
+from qrogue.game.logic.collectibles import Collectible, Score, Instruction, instruction as gates
 from qrogue.util import PuzzleConfig
 
 from .target import Target
@@ -77,8 +77,14 @@ class Boss(Target, ABC):
 
 class DummyBoss(Boss):
     def __init__(self):
-        stv = StateVector([1, 0, 0, 0, 0, 0, 0, 0], num_of_used_gates=0)
-        super(DummyBoss, self).__init__(stv, Coin(3))
+        # needs the player to implement a SwapGate
+        puzzles = [
+            (Instruction.compute_stv([gates.XGate().setup([0])], 2),
+             Instruction.compute_stv([gates.XGate().setup([1])], 2)),
+            (Instruction.compute_stv([gates.XGate().setup([1])], 2),
+             Instruction.compute_stv([gates.XGate().setup([0])], 2)),
+        ]
+        super(DummyBoss, self).__init__(puzzles, Score(1000))
 
 
 class AntiEntangleBoss(Boss):
