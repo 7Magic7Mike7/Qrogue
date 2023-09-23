@@ -21,7 +21,8 @@ class GateType(enum.Enum):
             "An I Gate or Identity Gate doesn't alter the Qubit in any way. It can be used as a placeholder.", \
             [[1, 0], [0, 1]]
     XGate = "X", {"Pauli X", "Pauli-X"}, \
-            "In the classical world an X Gate corresponds to an inverter. It swaps the amplitudes of |0> and |1>.\n" \
+            "In the classical world an X Gate corresponds to an inverter or Not Gate.\n" \
+            "It swaps the amplitudes of |0> and |1>.\n" \
             "In the quantum world this corresponds to a rotation of 180° along the x-axis, hence the name X Gate.", \
             [[0, 1], [1, 0]]
     YGate = "Y", {"Pauli Y", "Pauli-Y"}, \
@@ -50,7 +51,7 @@ class GateType(enum.Enum):
                "As the name suggests, Swap Gates swap the amplitude between two Qubits.", \
                [[1, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]]
     CXGate = "CX", {"Controlled X", "CNOT", "Controlled NOT"}, \
-             "Applies an X Gate onto its second Qubit if its first Qubit is 1.", \
+             "Applies an X Gate onto its second Qubit (=target) if its first Qubit (=control) is 1.", \
              [[1, 0, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0], [0, 1, 0, 0]]
 
     Combined = "co", set(), \
