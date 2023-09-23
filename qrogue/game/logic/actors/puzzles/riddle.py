@@ -12,7 +12,7 @@ class Riddle(Target):
     A Target with a restricted amount of attempts to reach its StateVector.
     """
 
-    __UNSTABLE_PROBABILITY = 0.65   # todo only for tutorial! Should be 0.5 later
+    __UNSTABLE_PROBABILITY = 0.5
 
     def __init__(self, target: StateVector, reward: Collectible, attempts: int = 1,
                  input_: Optional[StateVector] = None):
