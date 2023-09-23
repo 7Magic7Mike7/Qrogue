@@ -13,7 +13,7 @@ class Config:   # todo make singleton and handle access to other configs?
     __DEBUG = False
     __TEST_LEVEL = False
 
-    __HEADER = "Qrogue "
+    __HEADER = "QRogue "
     __SEED_HEAD = "Seed="
     __TIME_HEAD = "Time="
     __CONFIG_HEAD = "[Config]"
