@@ -1,22 +1,23 @@
 Qrogue<
+// not used at the moment
 Name = "Lesson 5"
-Description = Speaker "0" "TODO?"
+Description = Speaker "0" "Maybe you've already stumbled across it when trying to solve previous //02Puzzles//. But not only digits in a room can be entangled. You can also create entanglement of qubits in your //02Circuit//."
 NO_TELEPORTER
 
 // Introduced Concepts:
-// ?
+// Entanglement in Puzzles, Boss fight?
 
 [Robot]
-2 qubits [ *xgate, *cxgate ]
-circuit_space = 2
+2 qubits [ *xgate, *cxgate, *hgate ]
+circuit_space = 4
 maxenergy = 10
 
 [Layout]
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 | __ .. an == am == al == ak .. __ .. __ |
-| ..    21    ==    ==    20    ..    .. |
+| ..    21    ==    ..    20    ..    .. |
 | __ .. cc == dd 11 ee 11 gg == SR .. __ |
-| ..    20    ==    ==    21    ..    .. |
+| ..    20    ==    ..    21    ..    .. |
 | __ .. bn == bm == bl == bk .. __ .. __ |
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -29,18 +30,31 @@ SR (Spawn):
 # _ _ _ _ _ #
 # _ _ _ _ _ #
 # _ _ _ _ _ #
+# _ _ b _ _ #
+#############
+b *antiEntangle key 1
+
+ab (Story):
+#############
+# _ _ _ _ _ #
+# o _ _ _ o #
+# _ 0 _ 0 _ #
+# o _ _ _ o #
 # _ _ _ _ _ #
 #############
+0 *entanglement1 tutorial *entanglement1
+0 *entanglement0 tutorial *entanglement0
 
 gg (Story):
 #############
 # _ _ _ _ _ #
 # o o o o _ #
-# _ _ m 0 _ #
+# _ _ m 0 m #
 # o o o o _ #
 # _ _ _ _ _ #
 #############
 m *doneMsg trigger *done
+m 1 *entangledDoors
 
 ak (Wild):
 #############
@@ -65,20 +79,18 @@ al (Wild):
 # _ _ _ _ _ #
 # _ _ _ _ _ #
 # _ _ _ _ _ #
-# _ o o o _ #
-# _ o c o _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
 #############
-c score 200
 
 bl (Wild):
 #############
-# _ o c o _ #
-# _ o o o _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
 # _ _ _ _ _ #
 # _ _ _ _ _ #
 # _ _ _ _ _ #
 #############
-c score 200
 
 am (Wild):
 #############
@@ -116,11 +128,42 @@ bn (Wild):
 # _ _ _ _ _ #
 #############
 
+cc (Wild):
+#############
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+#############
+
+dd (Wild):
+#############
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+#############
+
+ee (Wild):
+#############
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+#############
+//b *antiEntangle
 
 [Hallways]
 11 (locked; ; )
 20 (closed; one way North; )
 21 (closed; one way South; )
+//71 (closed; ; entangled [72])
+//72 (closed; ; entangled [71])
+//73 (closed; ; entangled [74])
+//74 (closed; ; entangled [73])
 
 
 [StateVector Pools]
@@ -148,7 +191,7 @@ custom
 *entanglement1 [ {num_qubits=2: gH @q1, gCX @[q1, q0]} ]
 *entanglement [ *entanglement0, *entanglement1 ]
 
-default [[1, 0, 0, 0]]
+default *allGates
 
 [Reward Pools]
 default *none
@@ -159,7 +202,10 @@ default *none
 // speaker: 0 = Examiner, 1 = Scientist, 2 = System, 3 = Player
 default Speaker "0"
 
+*entanglement0 prio "You already know that the CX Gate only changes the state if its control (first qubit) is 1. But with the H Gate we can create a state that is both 0 and 1 so what do you think happens if we input such a state as control?"
 
-*doneMsg Speaker "0" prio "You've now seen the //02H Gate// alone and in combination with an //02X Gate//." "What do you think will happen if you combine it with a //02CX Gate//?"
+*entanglement1 prio "As you saw, using a non-classical state as control //05entangles// the //02Qubits//. This way they will always collapse to the same value - either both are 0 or both are 1. Just like same digits to in a room." "But entanglement can also work the other way around. Let's build a circuit where q0 and q1 always output different values, e.g., when one collapses to 0 the other must collapse 1."
+
+*doneMsg prio "todo"
 
 >Qrogue

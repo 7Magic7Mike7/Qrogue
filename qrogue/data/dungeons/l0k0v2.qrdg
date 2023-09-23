@@ -1,11 +1,11 @@
 Qrogue<
-Name = "Lesson 3: From Zero to Nine"
-Description = Speaker "0" prio "Now that you're already somewhat familiar with basic circuits we will introduce you to the underlying matrix-vector multiplication."
+Name = "Lesson 3: Matrix-vector multiplication matters very much"
+Description = Speaker "0" prio "Since you already know how to deal with basic //02Circuits//, we will now introduce you to the underlying //05matrix-vector multiplication//."
 NO_TELEPORTER
 SHOW_INDIVIDUAL_QUBITS
 
 // Introduced Concepts:
-// matrix vector multiplication, ket notation, kronecker product
+// matrix vector multiplication, ket notation, kronecker product, puzzle history
 
 [Robot]
 1 qubits [ *xgate ]
@@ -110,49 +110,50 @@ default *none
 // speaker: 0 = Examiner, 1 = Scientist, 2 = System, 3 = Player
 default Speaker "0"
 
-*circuitEquation prio pos5 "Above your //02Circuit// you can see the aforementioned matrix-vector multiplication." 
-"The values of the input and output qubits as well as their target values are reflected in the In, Out and Target State Vector, respectively. The Circuit Matrix to the left is calculated based on which gates you place on which qubits in which order. In our classical puzzle it describes whether a 0 as input should be transformed to a 1 and vice versa."
-"Let's start with some very simple //02Puzzles// so you can get the hang of it. Just solve them as you did before and see how this changes the equation."
+*circuitEquation prio pos5 "Above your //02Circuit// you can see the aforementioned //05matrix-vector multiplication//." 
+"The values of the //05input// and //05output// qubits as well as their //05target// values are //05reflected// in the //05In, Out and Target State Vector//, respectively. The //05Circuit Matrix// to the left is //05calculated// based on which //02Gates// you place on which //02Qubits// in which //05order//. In our classical //02Puzzle// it describes whether a 0 as input should be //05transformed// to a 1 and vice versa."
+"Let's start with some very simple //02Puzzles// so you can get the hang of it. Just //05solve// them //05as// you did //05before// and see how this //05changes the equation//."
 
-*ketNotation1 prio pos5 "The new '|?>'-notation you can see around the vectors and matrix is called //05ket-notation//. It describes to which qubit configuration the values correspond to. For example '|0> 1' at ~Target~ means that the target qubit's 0-state should have an amplitude of 1, where the amplitude corresponds to a probability of how likely the described state occurrs."
-"Since our still classical puzzles are deterministic, they will only have amplitudes of 0 (0%) or 1 (100%). So to solve this puzzle you need to prepare a circuit that changes input '1' to output '0' 100% of the time."
+*ketNotation1 prio pos5 "The new //05|?>//-notation you can see //05around// the //05vectors// and //05matrix// is called //02Ket-Notation//. It describes to which !!!!!of the four!!!!! //05qubit configuration// the values correspond to. For example //05|0> 1// at ~Target~ means that the target qubit's //050-state// should have an //05amplitude of 1//, where the amplitude corresponds to a //05probability// of how likely the described //05state occurs//."
+"Since our still classical //02Puzzles// are //05deterministic//, they will //05only// have amplitudes of //050 (0%)// or //051 (100%)//. So to solve this //02Puzzle// you need to prepare a //02Circuit// that changes input '1' to output '0' 100% of the time."
 
-*ketNotation2 prio pos5 "With multiple qubits the possible configurations increase and therefore the ket-notation has to adapt. We still write the qubit configuration in between '|??>' but the qubit order is now important. We start with the most significant qubit, meaning |10> describes the configuration where q1=1 and q0=0 and |01> implies q1=0 and q0=1."
-"In general it looks like this: |qn...q1q0>, where n is the number of qubits-1."
+*ketNotation2 prio pos5 "With multiple //02Qubits// the possible configurations increase and therefore the //02Ket-Notation// has to adapt. We still write the qubit configuration in between //05|??>// but the qubit //05order// is now important. We //05start// with the //05most significant// //02Qubit//, meaning //05|10>// describes the configuration where //05q1=1// and //05q0=0// and |01> implies q1=0 and q0=1."
+"TODO: integrate an example?"
+"In general it looks like this: //05|qn...q1q0>//, where n is the number of qubits - 1."
 
-*pickupQubit "You picked up a second //02Qubit//. Your circuit will now have two qubits again just like in the previous levels."
+*pickupQubit pos5 "You picked up a second //02Qubit//. Your //02Circuit// will now have //05two// //02Qubits// again just like in the previous lessons."
 
-*puzzleHistory prio "Similar to how you can skim through your message history with //04Q// and //04E// while in a message, you can also traverse the history of a puzzle while trying to solve one. This allows you to better see which values changed in the //02Circuit Matrix// after editing and can also be useful later for more complex puzzles to check if you already tried a certain gate combination."
+*puzzleHistory prio "Similar to how you can skim through your message history with //04Q// and //04E// while in a message, you can also //03traverse// the //05history// of the current //02Puzzle// while trying to solve it. This allows you to //05see better// which values //05changed// in the //02Circuit Matrix// after editing and can also be useful later for more complex //02Puzzles// to check if you already tried a certain gate combination."
 
-*kronProd1 prio pos5 "As we saw before, single qubit gates like the X Gate correspond to 2x2 matrices which describe how the gate transforms the two possible inputs (0 and 1). However, circuits with two qubits have four possible inputs (00, 01, 10 and 11) and therefore have to correspond to 4x4 matrices. Hence, to extend the original 2x2 matrix of the X Gate we need to calculate a so-called kronecker product."
+*kronProd1 prio pos5 "As we saw before, //05single qubit// //02Gates// like the //02X Gate// correspond to //052x2 matrices// which describe how the //02Gate// //05transforms// the two possible inputs (0 and 1). However, //02Circuits// with //05two// //02Qubits// have //05four possible inputs// (00, 01, 10 and 11) and therefore have to correspond to //054x4 matrices//. Hence, to //05extend// the original 2x2 matrix of the //02X Gate// we need to //05calculate// a so-called //05kronecker product//."
 ""
-"In this puzzle you need to place your X Gate on q0. But what happens with q1?" 
-"Not performing an operation on it is the same as applying the identity/I Gate (transforming 0 to 0 and 1 to 1) to it. Now to calculate the kronecker product of X (on q0) and I (on q1) we have to 'put X into I' like this:"
+"In this //02Puzzle// you need to place your //02X Gate// on //05q0//. But what happens with //05q1//?" 
+"Not performing an operation on it is the same as //03applying// the identity or //02I Gate// (transforming 0 to 0 and 1 to 1) to it. Now to calculate the //05kronecker product// of X (on q0) and I (on q1) we have to //05put X into I// like this:"
 "    |0>  |1>        |0> |1>"
 "|0> 1*X  0*X  =  |0> X   0 "
 "|1> 0*X  1*X     |1> 0   X "
 ""
-"and furthermore as we unpack X: "
+"and furthermore as we //05unpack// //02X//: "
 "    |00> |01> |10> |11>"
 "|00>  0    1    0    0 "
 "|01>  1    0    0    0 "
 "|10>  0    0    0    1 "
 "|11>  0    0    1    0 "
 
-*kronProd2 prio pos5 "The order of the kronecker product is important as 'putting X into I' results in a different matrix than 'putting I into X'. But if you look at your Circuit you can always go from top to bottom. Just use the top most gate (for our current case with two qubits this is the one applied to q1) as base and put the lower one(s)(for two qubits the one at q0) into it." 
-"But don't worry, you don't have to reverse engineer the matrices all the time. Feel free to experiment to learn how to manipulate the matrix based on how you need to transform the input to reach the target."
+*kronProd2 prio pos5 "The //05order// of the //05kronecker product// is //05important// as //05putting X into I// results in a //05different// matrix than //05putting I into X//. But if you look at your //02Circuit// you can always go from //05top to bottom//. Just use the //05top most// //02Gate// (for our current case with two qubits this is the one applied to q1) as base and //05put the lower// one(s) (for two qubits the one at q0) into it." 
+"But don't worry, you //05don't have to reverse engineer// the matrices all the time. Feel free to //05experiment// to learn how to //03manipulate// the matrix based on how you need to //03transform// the input to reach the target."
 
-*multiply prio pos5 "Now that you know what happens to the Circuit Matrix when applying gates in parallel (kronecker product), let's see what happens if you apply them in series." "Actually, this is as easy as multiplying two matrices. In the current puzzle you need to apply an X Gate first followed by a CX Gate. So we compute a 4x4 matrix for the X Gate like before and then multiply the matrix of the CX Gate (note that this is already a 4x4 matrix since it's a two qubit gate) from the left:"
+*multiply prio pos5 "Now that you know what happens to the //02Circuit Matrix// when applying gates //05in parallel// (kronecker product), let's see what happens if you apply them //05in series//." "Actually, this is as easy as //05multiplying// two matrices. In the current //02Puzzle// you need to apply an //02X Gate// first followed by a //02CX Gate//. So we compute a //054x4 matrix// for the //02X Gate// like before and then //05multiply// the matrix of the //02CX Gate// (note that this is already a 4x4 matrix since it's a two qubit gate) //05from the left//:"
 "    |00> |01> |10> |11>         |00> |01> |10> |11>         |00> |01> |10> |11>"
 "|00>  1    0    0    0      |00>  0    1    0    0      |00>  0    1    0    0 "
 "|01>  0    0    0    1   *  |01>  1    0    0    0   =  |01>  0    0    1    0 "
 "|10>  0    0    1    0      |10>  0    0    0    1      |10>  0    0    0    1 "
 "|11>  0    1    0    0      |11>  0    0    1    0      |11>  1    0    0    0 "
-"If we take a look at column '|00>' - since that's the qubit configuration of our input - we can see that the resulting matrix indeed transforms this state to |11> which is exactly the qubit configuration with an amplitude of 1 in the Target StateVector."
+"If we take a look at the result's column //05|00>// - since that's the qubit configuration of our input - we can see that the resulting matrix indeed //05transforms// this state to //05|11>// which is exactly the qubit configuration with an amplitude of 1 in the //05Target StateVector//."
 ""
-"Again, in general the order of multiplication matters. At first glance it may seem counter-intuitive that the gates are aligned from left to right in the circuit but have to be multiplied from right to left. But if you take a second look at the equation above your circuit you can see that the Input StateVector is on the right side of the matrix. So both the circuit and the calculation simply consider the gate/matrix closer to the input first."
+"Again, in general the //05order// of multiplication matters. At first glance it may seem counter-intuitive that the //02Gates// are aligned from //05left to right// in the //02Circuit// but have to be //05multiplied// from //05right to left//. But if you take a second look at the //05equation above// your //02Circuit// you can see that the //05Input StateVector// is on the //05right// side of the matrix. So both the //02Circuit// and the //05calculation// simply consider the gate/matrix //05closer// to the input first."
 
 *doneMsg "In this lesson we introduced you to the //05underlying math of Quantum Computing//. You don't have to remember everything we told you, you can always //05look things up// in the //02Manual// found in the //02Pause Menu// (//03open// with //04Tab// or //04P//)." 
-"Simply //05keep experimenting// and try solving the Puzzles logically, i.e., analyze how //02In// needs to be transformed to //02Target// (e.g., negate a qubit). It's really just about getting a feeling for the //02Gates// and what they do."
+"Simply //05keep experimenting// and try solving the //02Puzzles// logically, i.e., analyze how //02In// needs to be transformed to //02Target// (e.g., negate a //02Qubit//). It's really just about getting a feeling for the //02Gates// and what they do."
 
 >Qrogue

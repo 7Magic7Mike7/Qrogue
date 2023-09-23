@@ -1,10 +1,10 @@
 Qrogue<
-Name = "Lesson 3: Intrisically Interconnected"
+Name = "Lesson 5: Intrisically Interconnected"
 Description = Speaker "0" prio "In this lesson we will talk about a quantum concept //05Einstein// described as //05'spooky action at a distance'//. If you're not familiar with this quote: no reason to actually be afraid! It's only mind-blowing."
 NO_TELEPORTER
 
 // Introduced Concepts:
-// Riddle, Entangled Digits, Entanglement, Challenge
+// Riddle, Entangled Digits, Challenge
 
 [Robot]
 2 qubits [ *xgate, *cxgate, *hgate ]
@@ -30,15 +30,19 @@ SR (Spawn):
 # _ _ _ _ _ #
 # _ _ _ _ _ #
 #############
+//b [ *base00 input=*base01, *base00 input=*base10 ] gate(num_qubits=2: gX @ q0, gCX @ [q0, q1]) key 1
+b *antiEntangle key 1
+0 *supH
 
 aa (Wild):
 #############
 # 1 _ _ _ 4 #
 # _ o _ o _ #
-# _ _ 0 _ _ #
+# m _ 0 _ _ #
 # _ o _ o _ #
 # 6 _ _ _ 9 #
 #############
+m 1 *multiDigits
 
 bb (Riddle):
 #############
@@ -49,7 +53,9 @@ bb (Riddle):
 # _ _ m _ _ #
 #############
 m 1 *riddleNote
-r 3 *base00 key 1 input=*supH0X1
+r 3 *supH0X1 key 1 input=*base10 tutorial *tutRiddle
+0 *withH input=*reach2X
+0 *withH input=*reach2X
 
 cc (Wild):
 #############
@@ -59,7 +65,19 @@ cc (Wild):
 # 8 o o o _ #
 # 8 8 _ 4 4 #
 #############
-m 1 *entangledDigits
+m 1 *tutEntangledDigits
+1 *withH input=*baseAll
+1 *withH input=*baseAll
+9 *withH input=*baseAll
+9 *withH input=*baseAll
+3 *withH input=*baseAll
+3 *withH input=*baseAll
+3 *withH input=*baseAll
+8 *withH input=*baseAll
+8 *withH input=*baseAll
+8 *withH input=*baseAll
+4 *withH input=*baseAll
+4 *withH input=*baseAll
 
 dd (Wild):
 #############
@@ -69,6 +87,13 @@ dd (Wild):
 # 4 o _ _ _ #
 # 5 _ _ _ 0 #
 #############
+4 *withH input=*baseAll
+4 *withH input=*baseAll
+5 *withH input=*baseAll
+5 *withH input=*baseAll
+7 *withH input=*baseAll
+7 *withH input=*baseAll
+0 *withH input=*baseAll
 
 ee (Wild):
 #############
@@ -76,27 +101,42 @@ ee (Wild):
 # o o ! o o #
 # o _ _ _ o #
 # _ _ _ _ _ #
-# _ _ _ _ _ #
+# _ _ m _ _ #
 #############
-! 2 *supH key 1
+m 1 *challengeNote
+! 2 *supH key 1 tutorial *tutChallenge
 
 ff (Wild):
 #############
 # c _ 1 7 4 #
 # _ o o o _ #
-# 2 o 0 r _ #
+# 2 o 0 r m #
 # 7 o ! o o #
 # 4 1 _ o o #
 #############
+c key 1
+m 1 *pathChoices
+r 4 *supH1X0 key 1 input=*base11
+! 3 *base10 score 500 input=*supH1
+2 *withH input=*baseAll
+1 *withH input=*baseAll
+1 *withH input=*baseAll
+7 *withH input=*baseAll
+7 *withH input=*baseAll
+4 *withH input=*baseAll
+4 *withH input=*baseAll
 
 gg (Riddle):
 #############
-# _ _ _ _ _ #
-# _ _ _ _ _ #
-# _ _ m _ _ #
-# _ _ _ _ _ #
-# _ _ _ _ _ #
+# o _ m _ o #
+# _ o _ o _ #
+# o _ b _ o #
+# _ o _ o _ #
+# o _ m _ o #
 #############
+m 1 *bossMsg
+b [ *entanglement0 input=*base00 ] gate *s tutorial *bossIntro
+//b [ *base00 input=*base01, *base00 input=*base10 ] gate(num_qubits=2: gX @ q0, gCX @ [q0, q1]) key 1
 m *doneMsg trigger *done
 
 
@@ -109,6 +149,7 @@ custom
 *base01 [ {num_qubits=2: gX @ q0} ]
 *base10 [ {num_qubits=2: gX @ q1} ]
 *base11 [ {num_qubits=2: gX @ q0, gX @ q1} ]
+*baseAll [ *base00, *base01, *base10, *base11 ]
 
 *reach1X [ *base01, *base10 ]
 *reach2X [ *reach1X, *base11 ]
@@ -122,13 +163,15 @@ custom
 
 *supHX [ *supH0X1, *supH1X0 ]
 
+*withH [ *supH, *supHX ]
+
 *allGates [ *reach2X, *supH, *supHX ]	// all combinations without entanglement
 
 *entanglement0 [ {num_qubits=2: gH @q0, gCX @[q0, q1]} ]
 *entanglement1 [ {num_qubits=2: gH @q1, gCX @[q1, q0]} ]
 *entanglement [ *entanglement0, *entanglement1 ]
 
-default *reach1X
+default *withH
 
 [Reward Pools]
 default *none
@@ -140,21 +183,28 @@ default *none
 
 default Speaker "0"
 
-*oneWayDoor "Down there is a //02One-Way Door//. You can only pass through it from one side."
-*oneWayDoor2 "See, you were able to walk through the //02One-way Door// from the other side but now you cannot go through it again from this side."
+*riddleNote prio pos5 "The //01?// you see on the top is a //02Riddle//. It's very similar to a //02Puzzle//, yet a bit different. It also shows you a //02Target State// you need to //03reach// to solve it but you //05cannot// //03try// it //05arbitrary often//. It has a predefined //05number of times// you can //03edit// your //02Circuit// before the //02Riddle// gets //05unstable//. Unstable //02Riddles// have a 50% chance to //05vanish// together with their //02Reward// whenever you update your //02Circuit//." 
 
-*eventDoor "This //02Door// was not there a few moments ago. That is because it is an //02Event Door// which means it will stay invisible and unpassable until it is triggered by a certain event." "For this one //03solving// a //02Puzzle// //05triggered// it."
+*tutRiddle prio "On the //05right// part of the //05HUD// you can see how many edits you still have left before the //02Riddle// gets //05unstable//." "" "Should the //02Riddle// //05vanish// before you manage to solve it you have to //03restart// this lesson from the //05Pause Menu//."
 
-*tutSingleX Speaker "0" "One more thing:" "We took one of your //02X Gates//. You will later see why." when *didPuzzle then *none
+*multiDigits prio pos5 "Did you ever question why all digits greater //010// never occurred //05more than once// per room?"
 
-*riddleNote Speaker "0" prio "The //01?// you see on the top is a //02Riddle//. It's very similar to a //02Puzzle//, yet a bit different. It also shows you a //02Target State// you need to //03reach// to solve it but you //05cannot// //03try// it //05arbitrary often//. It has a predefined //05number of times// you can //03edit// your //02Circuit// before the //02Riddle// gets //05unstable//. Unstable //02Riddles// have a 50% chance to vanish together with their //02Reward// whenever you update." 
+*tutEntangledDigits prio pos5 "//05Same// digits are //05entangled//. This means that they //05share// their //02State//. E.g. if a //017// collapses all other //017//s in the room //05immediately collapse// to the //05same classical value// (remember: 0=show puzzle, 1=vanish). Still, the //02Puzzle// they present to you are //05not the same//, so don't confuse this."
+"Technically this is also true for //010//s but you just didn't realize it yet because they //05always// collapse to //050// either way."
 
-*tutTODO prio "On the //05right// part of the //05HUD// you can see how many edits you still have left before the //02Riddle// gets //05unstable//." "" "Should the //02Riddle// //05vanish// before you manage to solve it you have to //03restart// the lesson from the //05Pause Menu//."
+*challengeNote prio "The //01!// is a new kind of //02Puzzle//: a //02Challenge//." "It is basically just like a normal //02Puzzle// but with additional constraints like a minimum number of //02Gates// you //05have to use// or a maximum number you are allowed to use."
 
-*tutCXGate Speaker "0" prio "You picked up: //02CX Gate//" "//02CX Gate// is short for //02Controlled X Gate//. In contrast to the normal //02X Gate// which is placed on //05one qubit// - hence, a //02Single Qubit Gate// - this one is a //02Multi Qubit Gate//. To be precice: it needs to be placed on //05two qubits//. First you have to //03place// the //05C// part. It controls whether the //05X// part is active or not. So if the //02Qubit// at //05C// is //051// the //02Qubit// at //05X// will be //05adapted// accordingly. Otherwise it won't alter the state in any way."
+*tutChallenge prio "On the //05right// part of the //05HUD// you can see the //05constraints// of this //02Challenge//."
 
-*riddle2 Speaker "0" "Another //02Riddle//! Your //05new// //02Gate// might come in handy."
+*pathChoices prio pos5 "This room gives you a choice between two paths:" 
+"- the straight path forces you to solve one //02Riddle//, one //02Puzzle// and one //02Challenge//" 
+"- the longer path at the top requires between 0 and 7 //02Puzzles// to be solved" 
+"Which one will you choose?"
 
-*doneMsg Speaker "0" "Nice, seems like you're slowly getting familiar with Quantum Computing!"
+*bossMsg prio pos4 "There is only one thing left before you successfully finish the trainings program: the obligatory //05Boss Battle//."	//todo continue?
+
+*bossIntro prio "You already saw //02Entanglement// in the same digits of a room. Now it is your turn to //03create// //02Entanglement// in a //02Puzzle//!"
+
+*doneMsg "Congratulations, you're done knowing the basics! You are now ready to use your newly gained //02Gate// in your //05first expedition// of the //02Quniverse//."
 
 >Qrogue

@@ -1,12 +1,12 @@
 Qrogue<
 Name = "Lesson 2: Flee & Control"
-Description = Speaker "0" "TODO"
+Description = Speaker "0" "To have more possibilities and more exciting //02Puzzles// we will give you a new //02Gate// in this lesson and show you how to //03flee// from a //02Puzzle// should you get stuck."
 
 NO_TELEPORTER
 SHOW_INDIVIDUAL_QUBITS
 
 // Introduced Concepts:
-// 2nd spot in Circuit, CX-Gate, Fleeing, Equation, Puzzle History?
+// 2nd spot in Circuit, CX-Gate, Fleeing
 
 [Robot]
 2 qubits [ *xgate ]
@@ -16,7 +16,7 @@ maxenergy = 100000 // it should not be possible to run out of energy in this lev
 [Layout]
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 | __ .. __ .. __ .. ee == ff .. __ .. __ |
-| ..    ..    ..    11    ..    ..    .. |
+| ..    ..    ..    ==    ..    ..    .. |
 | __ .. __ .. SR == aa == bb .. __ .. __ |
 | ..    ..    ..    22    ==    ..    .. |
 | __ .. __ .. __ .. dd == cc .. __ .. __ |
@@ -34,8 +34,8 @@ aa (Wild):
 #############
 m 1 *tutOneWay
 t Unlocked *PuzzleFlee
-0 *base00 input=*base10
-0 *base11 input=*base10 tutorial *tutFlee trigger *unlock_ShowEquation
+0 *base00 input=*base11
+0 *base11 input=*base10 tutorial *tutFlee
 0 *base11 input=*base01
 0 *base00 input=*base01
 
@@ -58,7 +58,6 @@ cc (Gate):
 # _ o _ o _ #
 # o _ _ _ o #
 #############
-//m 1 *permVsTemp	// todo do we actually use both versions?
 c gate *CX
 
 dd (Wild):
@@ -69,11 +68,10 @@ dd (Wild):
 # 0 _ _ o o #
 # o o 0 o o #
 #############
-c key 1
+c score 300
+0 *base10 input=*base01
 0 *reach2X
-0 *reach2X
-0 *reach2X
-0 *base11 input=*base00 tutorial *tutEquation
+0 *base11
 
 ee (Wild):
 #############
@@ -120,18 +118,14 @@ default *none
 // speaker: 0 = Examiner, 1 = Scientist, 2 = System, 3 = Player
 default Speaker "0"
 
-*tutOneWay prio pos5 "Some doors - like the one at the South end of the room - open only from one side. Seems like you need to find a different way to access the room behind it."
+*tutOneWay prio pos5 "Some //02Doors// - like the one at the //05bottom// end of the room - open only from //05one side//. Seems like you need to //05find a different way// to //03access// the room behind it."
 
-*tutFlee prio pos1 "Sometimes you will find //02Puzzles// you cannot solve yet (e.g., due to lacking a specific //02Gate//). In that case you can use your newly unlocked ability 'Flee'." "However, unsolved //02Puzzles// will still keep blocking your way until you come back again and solve them."
+*tutFlee prio pos1 "Sometimes you will find //02Puzzles// you //05cannot solve yet// (e.g., due to lacking a specific //02Gate//). In that case you can use your newly unlocked ability //03Flee//." "However, unsolved //02Puzzles// will still keep //05blocking// your way until you come back again and //03solve// them."
 
 *tutEquation prio "Now that you're familiar with //05classical// //02Puzzles// we will present you with a new component: the underlying Matrix-Vector-Multiplication." "The Gate Help (//04H//) will now additionally show the gates' matrices." "Bla bla"
+// todo what about above message?
 
-
-
-*tutDigits prio "Did I already mention that there are //05not only// //010//s?" "Until now //05everytime// you //03stepped// onto a digit a //02Puzzle// was presented to you. But what if that's just because the //010// represents a //050%// chance to //05skip// the //02Puzzle//?"
-
-*hotkeys "Instead of //03selecting// and //03confirming// //05-Back-// you can also press //04Backspace// as a shortcut."
-
-*doneMsg "Ready for the next lesson?" "In case you want to pause or stop playing you can press //04Tab// or //04P// to open the //05Pause menu//. Progress is //05saved level-wise// so make sure to not accidentally stop just before finishing a level!"	// TODO: makes players pause, but do we want that?
+*doneMsg "How do you like your new //02Gate//? It acts kind of //05classical// but it might have a surprise for you later."
+"Either way, now that you have some //05practice// with //02Puzzles//, let's talk about some //05theory// in the next lesson."
 
 >Qrogue
