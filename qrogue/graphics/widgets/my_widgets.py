@@ -11,7 +11,7 @@ from qrogue.game.logic.actors import Robot
 from qrogue.game.logic.collectibles import Instruction
 from qrogue.game.world.map import Map
 from qrogue.game.world.navigation import Direction
-from qrogue.util import ColorConfig, Controls, Keys, Logger, Config, HudConfig, GameplayConfig, Options
+from qrogue.util import ColorConfig, Controls, Keys, Logger, Config, HudConfig, GameplayConfig, Options, ColorCode
 from qrogue.util.config import QuantumSimulationConfig, InstructionConfig
 from qrogue.util.util_functions import center_string, align_string, to_binary_string, int_to_fixed_len_str
 
@@ -428,6 +428,9 @@ class CircuitWidget(Widget):
         widget.add_key_command(controls.get_keys(Keys.SelectionDown), self.__move_down)
         widget.add_key_command(controls.get_keys(Keys.SelectionLeft), self.__move_left)
 
+        widget.activate_individual_coloring()
+        ColorRules.apply_circuit_rules(widget)
+
     def __circuit_input_value(self, qubit: int) -> str:
         if self.__input is not None and self.__input.is_classical \
                 and self.__target is not None and self.__target.is_classical \
@@ -448,12 +451,12 @@ class CircuitWidget(Widget):
             out_values = to_binary_string(index, self.__robot.state_vector.num_of_qubits, msb=False)
             index = self.__target.to_value().index(1)
             target_values = to_binary_string(index, self.__target.num_of_qubits, msb=False)
-            equality = '=' if out_values[qubit] == target_values[qubit] else '/'
-            return f"= {out_values[qubit]} =" \
-                   f"{equality}" \
-                   f"= {target_values[qubit]}"
+            is_correct = out_values[qubit] == target_values[qubit]
+            equality = ColorConfig.colorize(ColorCode.CORRECT_AMPLITUDE if is_correct else ColorCode.WRONG_AMPLITUDE,
+                                            '=' + ('=' if is_correct else '/') + '=')
+            return f"= {out_values[qubit]}| {equality} <{target_values[qubit]}|"
         else:
-            return ""
+            return "|"
 
     def __change_position(self, right: bool) -> bool:
         def go_right(position: int) -> Optional[int]:
@@ -605,7 +608,7 @@ class CircuitWidget(Widget):
                     circ_str += row[i]
                     if i < len(row) - 1:
                         circ_str += "+"
-                circ_str += f"< q'{q} {self.__circuit_output_value(q)}|"
+                circ_str += f"< q'{q} {self.__circuit_output_value(q)}"
                 if q == len(rows) - 1:
                     circ_str += " Out"
                 circ_str += "\n"
