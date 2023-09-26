@@ -70,7 +70,7 @@ class Logger(PyCUILogger):
         else:
             text = f"{{Qrogue}}{time_str}: {message}"
             self.__write(text)
-            print(text)
+            if Config.debugging(): print(text)
 
     def debug(self, msg: str, from_pycui: bool = True, *args, **kwargs) -> None:
         if from_pycui and msg.startswith("Generated fragments"): return
@@ -110,7 +110,7 @@ class Logger(PyCUILogger):
 
     def println(self, message: str = "", clear: bool = False) -> None:
         message = f"{message}\n"
-        print(message)
+        if Config.debugging(): print(message)
         if clear:
             self.__text = message
         else:
