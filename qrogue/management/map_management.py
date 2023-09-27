@@ -6,11 +6,13 @@ from qrogue.game.world.dungeon_generator import ExpeditionGenerator, QrogueLevel
 from qrogue.game.world.map import Map, WorldMap, MapType, ExpeditionMap
 from qrogue.game.world.navigation import Coordinate
 from qrogue.graphics.popups import Popup
-from qrogue.util import CommonQuestions, Logger, MapConfig, achievements, RandomManager, Config, TestConfig, ErrorConfig
+from qrogue.util import CommonQuestions, Logger, MapConfig, achievements, RandomManager, Config, TestConfig, \
+    ErrorConfig, PathConfig
 
 from qrogue.management.save_data import SaveData
 from qrogue.util.achievements import Unlocks, AchievementManager
 from qrogue.util.config.gameplay_config import ExpeditionConfig, GameplayConfig
+from qrogue.util.util_functions import open_folder
 
 __MAP_ORDER: Dict[int, Dict[str, str]] = {
     # map names:
@@ -73,10 +75,13 @@ class MapManager:
             raise TestConfig.StateException(ErrorConfig.singleton_reset("MapManager"))
 
     def __init__(self, seed: int, show_world: Callable[[Optional[WorldMap]], None],
-                 start_level: Callable[[int, Map], None]):
+                 start_level: Callable[[int, Map], None],
+                 show_input_popup: Callable[[str, int, Callable[[str], None]], None]):
         if MapManager.__instance is not None:
             Logger.instance().throw(Exception(ErrorConfig.singleton("MapManager")))
         else:
+            self.__show_input_popup = show_input_popup  # title: str, color: int, callback: Callable[[str], None]
+
             self.__base_seed = seed
             self.__rm = RandomManager.create_new(seed)
             self.__show_world = show_world
@@ -252,6 +257,23 @@ class MapManager:
                 if map_seed is None:
                     map_seed = self.__rm.get_seed()
                 expedition, success = self.__expedition_generator.generate((robot, map_seed))
+
+                # todo remove for non-user study versions!
+                def time_out_popup():
+                    # color 15 is black over white
+                    self.__show_input_popup("Your time is over. Please tell the researcher.", 15, open_explorer)
+
+                def open_explorer(text: str):
+                    if text.lower() == "open":
+                        open_folder(PathConfig.user_data_path())
+                    else:
+                        time_out_popup()
+
+                def timed_expedition():
+                    time.sleep(5*60)    # 5 minutes timer
+                    time_out_popup()
+
+                Thread(target=timed_expedition, args=(), daemon=True).start()
 
             if success:
                 robot.reset()
