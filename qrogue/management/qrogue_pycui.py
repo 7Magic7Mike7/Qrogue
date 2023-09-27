@@ -12,7 +12,7 @@ from qrogue.game.logic.actors import Boss, Controllable, Enemy, Riddle, Robot
 from qrogue.game.logic.actors.controllables import BaseBot
 from qrogue.game.logic.actors.puzzles import Challenge
 from qrogue.game.logic.base import StateVector
-from qrogue.game.logic.collectibles import Energy
+from qrogue.game.logic.collectibles import Score
 from qrogue.game.world.map import CallbackPack, SpaceshipMap, WorldMap, Map
 from qrogue.game.world.navigation import Direction
 from qrogue.game.world.tiles import WalkTriggerTile, Message, Collectible
@@ -606,7 +606,7 @@ class QrogueCUI(PyCUI):
     def __start_training(self, direction: Direction):
         robot = BaseBot(CallbackPack.instance().game_over, num_of_qubits=2,
                         gates=[collectibles.XGate(), collectibles.XGate(), collectibles.HGate(), collectibles.CXGate()])
-        enemy = Enemy(0, eid=0, target=StateVector([0] * (2**robot.num_of_qubits), num_of_used_gates=0), reward=Energy())
+        enemy = Enemy(0, eid=0, target=StateVector([0] * (2**robot.num_of_qubits), num_of_used_gates=0), reward=Score())
         self.__state_machine.change_state(QrogueCUI._State.Training, (robot, enemy))
 
     def _switch_to_training(self, data=None):
