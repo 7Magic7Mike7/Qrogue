@@ -18,14 +18,14 @@ from qrogue.graphics.rendering import ColorRules
 from qrogue.graphics.widget_base import WidgetWrapper
 from qrogue.util import CommonPopups, Config, Controls, GameplayConfig, HelpText, Logger, PathConfig, \
     RandomManager, AchievementManager, Keys, UIConfig, HudConfig, ColorConfig, Options, PuzzleConfig, ScoreConfig, \
-    get_filtered_help_texts
+    get_filtered_help_texts, CommonQuestions
 from qrogue.util.achievements import Ach, Unlocks
 
 from qrogue.graphics.widgets import Renderable, Widget, MyBaseWidget
 from qrogue.graphics.widgets.my_widgets import SelectionWidget, CircuitWidget, MapWidget, SimpleWidget, HudWidget, \
     OutputStateVectorWidget, CircuitMatrixWidget, TargetStateVectorWidget, InputStateVectorWidget, MyMultiWidget, \
     HistoricWrapperWidget
-from qrogue.util.util_functions import enum_str, cur_datetime, time_diff
+from qrogue.util.util_functions import enum_str, cur_datetime, time_diff, open_folder
 
 
 class MyWidgetSet(WidgetSet, Renderable, ABC):
@@ -191,6 +191,14 @@ class MenuWidgetSet(MyWidgetSet):
         self.__seed_widget = SimpleWidget(seed)
 
         self.__selection.widget.add_key_command(controls.action, self.__selection.use)
+
+        self.__selection.widget.add_key_command(controls.get_keys(Keys.Pause), self.__qrogue_console)
+
+    def __qrogue_console(self):
+        def open_user_data(answer: int):
+            if answer == 0:
+                open_folder(PathConfig.user_data_path())
+        CommonQuestions.OpenUserDataFolder.ask(open_user_data)
 
     def __update_selection(self):
         choices = []
