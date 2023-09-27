@@ -196,6 +196,14 @@ class PathConfig:
         PathConfig.write(PathConfig.__save_file_str(num), now_str + "\n" + text, may_exist=False)
 
     @staticmethod
+    def write_auto_save(text: str):
+        now_str = PathConfig.__now_str()
+        # don't use the same ending because it would mess with __get_save_files_stats()
+        file_path = os.path.join(PathConfig.__SAVE_DATA_FOLDER,
+                                 f"{PathConfig.__SAVE_FILE_PREFIX}{FileTypes.Save.value}_auto")
+        PathConfig.write(file_path, now_str + "\n" + text, may_exist=True)
+
+    @staticmethod
     def find_latest_save_file() -> str:
         _, num = PathConfig.__get_save_files_stats()
         if num >= 0:

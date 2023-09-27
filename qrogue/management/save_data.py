@@ -94,7 +94,7 @@ class SaveData:
             return self.__available_robots[index]
         return None
 
-    def save(self) -> Tuple[bool, CommonPopups]:
+    def save(self, is_auto_save: bool = False) -> Tuple[bool, CommonPopups]:
         if Config.forbid_saving():
             return False, CommonPopups.NoSavingWithCheats
         try:
@@ -103,7 +103,10 @@ class SaveData:
             data += f"{SaveData.__COLLECTIBLE_SECTION}\n"
             data += f"{SaveData.__ACHIEVEMENT_SECTION}\n"
             data += f"{self.achievement_manager.to_string()}\n"
-            PathConfig.new_save_file(data)
+            if is_auto_save:
+                PathConfig.write_auto_save(data)
+            else:
+                PathConfig.new_save_file(data)
             return True, CommonPopups.SavingSuccessful
         except:
             return False, CommonPopups.SavingFailed

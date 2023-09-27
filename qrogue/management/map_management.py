@@ -331,6 +331,7 @@ class MapManager:
             elif self.__cur_map.get_type() is MapType.Level:
                 if SaveData.instance().achievement_manager.finished_level(self.__cur_map.internal_name,
                                                                           self.__cur_map.name):
+                    SaveData.instance().save(is_auto_save=True)     # auto save   # todo update system after user study?
                     # if the level was not finished before, we may increase the score of the world's achievement
                     world = self.__get_world(self.__cur_map.internal_name)
                     if world.is_mandatory_level(self.__cur_map.internal_name):
