@@ -2,7 +2,8 @@ import enum
 from enum import Enum
 from typing import Callable, Tuple, List, Dict, Any, Optional
 
-from qrogue.util.config import TestConfig, PopupConfig, PyCuiColors
+from qrogue.util.config import PathConfig, TestConfig, PopupConfig, PyCuiColors
+from qrogue.util.util_functions import open_folder
 
 
 class MapConfig:
@@ -203,6 +204,8 @@ class CheatConfig:
         elif code in CheatConfig.__CHEATS:
             CheatConfig.__CHEATS[code] = not CheatConfig.__CHEATS[code]
             ret = True
+        elif code.lower().strip() == "userdata":
+            open_folder(PathConfig.user_data_path())
 
         if ret:
             CheatConfig.__popup("Cheats", f"Successfully used the Cheat \"{code}\"", PopupConfig.default_pos(),
