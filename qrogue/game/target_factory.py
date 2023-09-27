@@ -124,7 +124,8 @@ class EnemyFactory:
     """
 
     def __init__(self, start_fight_callback: Callable[[Robot, Enemy, Direction], None], difficulty: TargetDifficulty,
-                 default_flee_chance: float = 0.5, input_stv: Optional[StateVector] = None):
+                 default_flee_chance: float = 0.5, input_stv: Optional[StateVector] = None,
+                 next_id_callback: Optional[Callable[[], int]] = None):
         """
 
         :param difficulty: difficulty of the enemy we produce
@@ -134,6 +135,17 @@ class EnemyFactory:
         self.__default_flee_chance = default_flee_chance
         self.__input_stv = input_stv
         self.__custom_reward_factory = None
+
+        if next_id_callback is None:
+            self.__next_id = 0
+
+            def _next_id() -> int:
+                val = self.__next_id
+                self.__next_id += 1
+                return val
+            self._next_id = _next_id
+        else:
+            self._next_id = next_id_callback
 
     def set_custom_reward_factory(self, factory: CollectibleFactory):
         self.__custom_reward_factory = factory
@@ -156,7 +168,7 @@ class EnemyFactory:
             Logger.instance().error(f"InputStv (={self.__input_stv}) has wrong number of qubits (="
                                     f"{robot.num_of_qubits})!", show=False, from_pycui=False)
             self.__input_stv = None     # reset to use default input
-        return Enemy(eid, stv, reward, input_=self.__input_stv)
+        return Enemy(self._next_id(), eid, stv, reward, input_=self.__input_stv)
 
     def start(self, robot: Robot, enemy: Enemy, direction: Direction):
         self.__start_fight(robot, enemy, direction)
@@ -172,7 +184,7 @@ class ExplicitEnemyFactory(EnemyFactory):
     def produce(self, robot: Robot, rm: MyRandom, eid: int) -> Enemy:
         stv = rm.get_element(self.__stv_pool, msg="ExplicitEnemyFactory_stv")
         reward = rm.get_element(self.__reward_pool, msg="ExplicitEnemyFactory_reward")
-        return Enemy(eid, stv, reward)
+        return Enemy(self._next_id(), eid, stv, reward)
 
 
 class RiddleFactory:
@@ -182,15 +194,28 @@ class RiddleFactory:
         difficulty = RiddleDifficulty(num_of_instructions=4, reward_pool=reward_pool, min_attempts=4, max_attempts=9)
         return RiddleFactory(robot, difficulty)
 
-    def __init__(self, robot: Robot, difficulty: RiddleDifficulty):
+    def __init__(self, robot: Robot, difficulty: RiddleDifficulty,
+                 next_id_callback: Optional[Callable[[], int]] = None):
         self.__robot = robot
         self.__difficulty = difficulty
+        self.__next_id = 0
+
+        if next_id_callback is None:
+            self.__next_id = 0
+
+            def _next_id() -> int:
+                val = self.__next_id
+                self.__next_id += 1
+                return val
+            self._next_id = _next_id
+        else:
+            self._next_id = next_id_callback
 
     def produce(self, rm: MyRandom) -> Riddle:
         stv = self.__difficulty.create_statevector(self.__robot, rm)
         reward = self.__difficulty.produce_reward(rm)
         attempts = self.__difficulty.get_attempts(rm)
-        return Riddle(stv, reward, attempts)
+        return Riddle(self._next_id(), stv, reward, attempts)
 
 
 class BossFactory:
@@ -199,10 +224,23 @@ class BossFactory:
         pool = [CXGate(), SwapGate(), Energy(100)]
         return BossFactory(robot, pool)
 
-    def __init__(self, robot: Robot, reward_pool: List[Collectible]):
+    def __init__(self, robot: Robot, reward_pool: List[Collectible],
+                 next_id_callback: Optional[Callable[[], int]] = None):
         self.__robot = robot
         self.__reward_pool = reward_pool
         self.__rm = RandomManager.create_new()
+        self.__next_id = 0
+
+        if next_id_callback is None:
+            self.__next_id = 0
+
+            def _next_id() -> int:
+                val = self.__next_id
+                self.__next_id += 1
+                return val
+            self._next_id = _next_id
+        else:
+            self._next_id = next_id_callback
 
     def produce(self, include_gates: List[Instruction]) -> Boss:
         used_gates = []

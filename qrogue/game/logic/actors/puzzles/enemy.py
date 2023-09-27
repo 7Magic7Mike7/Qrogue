@@ -12,15 +12,17 @@ class Enemy(Target):
     An Enemy is a Target with a certain chance to flee.
     """
 
-    def __init__(self, eid: int, target: StateVector, reward: Collectible, input_: Optional[StateVector] = None):
+    def __init__(self, id_: int, eid: int, target: StateVector, reward: Collectible,
+                 input_: Optional[StateVector] = None):
         """
         Creates an Enemy-Target with a given target state vector and reward.
-        :param eid: id in [0, 9] to calculate certain properties
+        :param id_: an integer unique per level to identify the target
+        :param eid: enemy id in [0, 9] to calculate certain properties
         :param target: the StateVector to reach
         :param reward: the Collectible to get as a reward
         :param input_: the StateVector to start with (all |0> by default)
         """
-        super().__init__(target, reward, input_)
+        super().__init__(id_, target, reward, input_)
         self.__id: int = eid
         self.__rm: MyRandom = RandomManager.create_new()    # todo shouldn't we provide a seed here???
 

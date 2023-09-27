@@ -14,9 +14,9 @@ class Riddle(Target):
 
     __UNSTABLE_PROBABILITY = 0.5
 
-    def __init__(self, target: StateVector, reward: Collectible, attempts: int = 1,
+    def __init__(self, id_: int, target: StateVector, reward: Collectible, attempts: int = 1,
                  input_: Optional[StateVector] = None):
-        super().__init__(target, reward, input_)
+        super().__init__(id_, target, reward, input_)
         self.__attempts = attempts
         self.__rm = RandomManager.create_new()  # todo does this need to be seeded? I think yes for simulations :(
         self.__can_attempt = True

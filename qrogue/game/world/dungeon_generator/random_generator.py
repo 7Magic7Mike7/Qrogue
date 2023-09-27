@@ -559,7 +559,8 @@ class ExpeditionGenerator(DungeonGenerator):
 
     @staticmethod
     def __create_enemy(enemy_id: int, room_pos: Coordinate, enemy_factory: EnemyFactory,
-                       enemy_groups_by_room: Dict[Coordinate, Dict[int, List[tiles.Enemy]]]) -> tiles.Enemy:
+                       enemy_groups_by_room: Dict[Coordinate, Dict[int, List[tiles.Enemy]]],
+                       next_tile_id: Callable[[], int]) -> tiles.Enemy:
         enemy: Optional[tiles.Enemy] = None
 
         def get_entangled_tiles(id_: int) -> List[tiles.Enemy]:
@@ -576,7 +577,7 @@ class ExpeditionGenerator(DungeonGenerator):
                 enemy_groups_by_room[room_pos][enemy_id] = []
             enemy_groups_by_room[room_pos][enemy_id].append(new_enemy)
 
-        enemy = tiles.Enemy(enemy_factory, get_entangled_tiles, update_entangled_room_groups, enemy_id)
+        enemy = tiles.Enemy(enemy_factory, get_entangled_tiles, update_entangled_room_groups, enemy_id, next_tile_id)
         update_entangled_room_groups(enemy)
         return enemy
 
@@ -588,8 +589,20 @@ class ExpeditionGenerator(DungeonGenerator):
         self.__trigger_event = trigger_event
         self.__load_map = load_map_callback
         self.__rm = RandomManager.create_new(seed)
+        self.__next_target_id = 0
+        self.__next_tile_id = 0
 
         self.__wild_room_generator = WFCRoomGenerator(seed, WFCRoomGenerator.get_level_list()[2:], AreaType.WildRoom)
+
+    def _next_target_id(self) -> int:
+        val = self.__next_target_id
+        self.__next_target_id += 1
+        return val
+
+    def _next_tile_id(self) -> int:
+        val = self.__next_tile_id
+        self.__next_tile_id += 1
+        return val
 
     def generate(self, data: Union[Robot, Tuple[Robot, int]]) -> Tuple[Optional[ExpeditionMap], bool]:
         if isinstance(data, Robot):

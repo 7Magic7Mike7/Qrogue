@@ -11,17 +11,19 @@ class Target(ABC):
     Base class for fight-/puzzle-targets.
     """
 
-    def __init__(self, target: Union[StateVector, Callable[[], StateVector]], reward: Collectible,
+    def __init__(self, id_: int, target: Union[StateVector, Callable[[], StateVector]], reward: Collectible,
                  input_: Optional[Union[StateVector, Callable[[], StateVector]]] = None,
                  allow_target_input_equality: bool = False):
         """
         Creates a Target with a given target state vector and a reward.
+        :param id_: an integer unique per level to identify the target
         :param target: the StateVector to reach or a callable that returns it
         :param reward: the Collectible to get as a reward
         :param input_: the StateVector to start with (all |0> by default) or a callable that returns it
         :param allow_target_input_equality: whether target and input are allowed to be equal (would make basic puzzles
         be solved from the beginning, hence default is False)
         """
+        self.__id = id_
         if isinstance(target, StateVector):
             self.__target: Callable[[], StateVector] = lambda : target
         else:
@@ -42,6 +44,10 @@ class Target(ABC):
 
         if not allow_target_input_equality and self.__target().is_equal_to(self.__input(), ignore_god_mode=True):
             Logger.instance().warn(f"@Target.init(): target is equal to input (={self.__target})!", from_pycui=False)
+
+    @property
+    def id(self) -> int:
+        return self.__id
 
     @property
     def state_vector(self) -> StateVector:

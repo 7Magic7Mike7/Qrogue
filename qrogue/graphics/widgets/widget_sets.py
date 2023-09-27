@@ -892,7 +892,6 @@ class NavigationWidgetSet(MapWidgetSet):
 
 class ReachTargetWidgetSet(MyWidgetSet, ABC):
     __DETAILS_COLUMNS = 4
-    __ATTEMPT_ID = 0
 
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  continue_exploration_callback: Callable[[bool], None], reopen_popup_callback: Callable[[], None],
@@ -1130,9 +1129,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
         self.__puzzle_timer = cur_datetime()
         # log info about the puzzle
-        # increment id here so we don't have duplicate ids if a level gets restarted or exited from the menu
-        ReachTargetWidgetSet.__ATTEMPT_ID += 1
-        info_msg = f"[attempt id={ReachTargetWidgetSet.__ATTEMPT_ID}] Starting puzzle...\n" \
+        info_msg = f"[target id={target.id}] Starting puzzle...\n" \
                    f"input={target.input_stv}\n" \
                    f"target={target.state_vector}"
         Logger.instance().info(info_msg, from_pycui=False)
@@ -1233,7 +1230,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self._details.render()
 
         duration, _ = time_diff(self.__puzzle_timer, cur_datetime())
-        Logger.instance().info(f"[attempt id={ReachTargetWidgetSet.__ATTEMPT_ID}]\n"
+        Logger.instance().info(f"[target id={self._target.id}]\n"
                                f"Fled from puzzle after {duration}s "
                                f"and {self._target.checks} steps.", from_pycui=False)
         return False    # stay in details
@@ -1287,7 +1284,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             if inst is not None:
                 instructions_str += f"{inst}, "
         instructions_str = instructions_str[:-2]    # remove trailing ", "
-        info_msg = f"[attempt id={ReachTargetWidgetSet.__ATTEMPT_ID}]\n" \
+        info_msg = f"[target id={self._target.id}]\n" \
                    f"Solved puzzle after {duration}s in {self._target.checks} steps. \n" \
                    f"Used: {instructions_str}"
         Logger.instance().info(info_msg, from_pycui=False)

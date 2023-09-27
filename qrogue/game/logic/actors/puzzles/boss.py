@@ -16,11 +16,11 @@ class Boss(Target, ABC):
 
     __BOSS_ID: int = 0
 
-    def __init__(self, puzzles: List[Tuple[StateVector, StateVector]], reward: Collectible,
+    def __init__(self, id_: int, puzzles: List[Tuple[StateVector, StateVector]], reward: Collectible,
                  static_gate: Optional[Instruction] = None):
         """
         Creates a boss enemy with a list of specified target and input StateVectors and a specified reward.
-
+        :param id_: an integer unique per level to identify the target
         :param puzzles: list of (target stv, input stv)
         :param reward: the reward for winning against the boss
         :param static_gate: an optional gate statically placed in the middle of the robot's circuit
@@ -33,7 +33,7 @@ class Boss(Target, ABC):
             for i in range(self.__static_gate.num_of_qubits):
                 self.__static_gate.use_qubit(i)
 
-        super().__init__(lambda: self.__puzzles[self.__index][0], reward, lambda: self.__puzzles[self.__index][1])
+        super().__init__(id_, lambda: self.__puzzles[self.__index][0], reward, lambda: self.__puzzles[self.__index][1])
 
     @property
     def flee_energy(self) -> int:
@@ -101,4 +101,4 @@ class AntiEntangleBoss(Boss):
             (target2, basis_states[2]),
             (target2, basis_states[3]),
         ]
-        super().__init__(puzzles, reward)
+        super().__init__(0, puzzles, reward)

@@ -18,13 +18,20 @@ class Enemy(WalkTriggerTile):
         FLED = 4
 
     def __init__(self, factory: EnemyFactory, get_entangled_tiles: Callable[[int], List[EnemyActor]],
-                 update_entangled_groups: Callable[[EnemyActor], None], e_id: int = 0):
+                 update_entangled_groups: Callable[[EnemyActor], None], e_id: int = 0,
+                 tile_id_callback: Callable[[], int] = None):
         super().__init__(TileCode.Enemy)
         self.__factory = factory
         self.__state = Enemy._EnemyState.UNDECIDED
         self.__get_entangled_tiles = get_entangled_tiles
         self.__update_entangled_groups = update_entangled_groups
         self.__id = e_id
+        if tile_id_callback is None:
+            self.__next_tile_id = lambda: -1
+        else:
+            self.__next_tile_id = tile_id_callback
+        self.__tile_id = self.__next_tile_id()
+
         self.__rm = RandomManager.create_new()
         self.__enemy: Optional[EnemyActor] = None
 
@@ -60,6 +67,8 @@ class Enemy(WalkTriggerTile):
             if self._state == Enemy._EnemyState.UNDECIDED:
                 if self.__measure():
                     self.__fight(robot, direction)
+                else:
+                    Logger.instance().info(f"Enemy #{self.__tile_id} vanished.", from_pycui=False)
             elif self._state == Enemy._EnemyState.FIGHT:
                 self.__fight(robot, direction)
         return False
@@ -101,13 +110,15 @@ class Enemy(WalkTriggerTile):
         return self.__state is Enemy._EnemyState.FIGHT
 
     def __fight(self, robot: Robot, direction: Direction):
+        Logger.instance().info(f"Starting fight with #{self.__tile_id}", from_pycui=False)
         if self.__enemy is None:
             # the higher the amplitude the easier it should be to flee
             self.__enemy = self.__factory.produce(robot, self.__rm, self.__id)
         self.__factory.start(robot, self.__enemy, direction)
 
     def _copy(self) -> "Tile":
-        enemy = Enemy(self.__factory, self.__get_entangled_tiles, self.__update_entangled_groups, self.__id)
+        enemy = Enemy(self.__factory, self.__get_entangled_tiles, self.__update_entangled_groups, self.__id,
+                      tile_id_callback=self.__next_tile_id)
         self.__update_entangled_groups(enemy)
         return enemy
 

@@ -606,7 +606,7 @@ class QrogueCUI(PyCUI):
     def __start_training(self, direction: Direction):
         robot = BaseBot(CallbackPack.instance().game_over, num_of_qubits=2,
                         gates=[collectibles.XGate(), collectibles.XGate(), collectibles.HGate(), collectibles.CXGate()])
-        enemy = Enemy(eid=0, target=StateVector([0] * (2**robot.num_of_qubits), num_of_used_gates=0), reward=Energy())
+        enemy = Enemy(0, eid=0, target=StateVector([0] * (2**robot.num_of_qubits), num_of_used_gates=0), reward=Energy())
         self.__state_machine.change_state(QrogueCUI._State.Training, (robot, enemy))
 
     def _switch_to_training(self, data=None):
@@ -645,7 +645,7 @@ class QrogueCUI(PyCUI):
         self.apply_widget_set(self.__navigation)
 
     def __start_level(self, seed: int, level: Map) -> None:
-        Logger.instance().info(f"Starting level {level.internal_name} with seed={seed}.")
+        Logger.instance().info(f"Starting level {level.internal_name} with seed={seed}.", from_pycui=False)
         # reset in-level stuff
         SaveData.instance().achievement_manager.reset_level_events()
         self.__popup_history.reset()

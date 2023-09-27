@@ -153,6 +153,9 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         self.__default_speaker = QrogueLevelGenerator.__DEFAULT_SPEAKER
         self.__messages: Dict[str, Message] = {}
 
+        self.__next_target_id = 0
+        self.__next_tile_id = 0
+
         # "collectible factory" refers to "reward pool" in grammar due to the original purpose, simplicity & readability
         self.__collectible_factories: Dict[str, CollectibleFactory] = {}
         self.__default_collectible_factory: Optional[CollectibleFactory] = None
@@ -244,7 +247,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         tile_code = QrogueLevelGenerator.__tile_str_to_code(tile_str)
         if tile_code is tiles.TileCode.Enemy:
             enemy_id = int(tile_str)
-            enemy = tiles.Enemy(self.__default_enemy_factory, get_entangled_enemies, update_entangled_groups, enemy_id)
+            enemy = tiles.Enemy(self.__default_enemy_factory, get_entangled_enemies, update_entangled_groups, enemy_id,
+                                self._next_tile_id)
             if enemy_id not in enemy_dic:
                 enemy_dic[enemy_id] = []
             enemy_dic[enemy_id].append(enemy)
@@ -259,7 +263,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         elif tile_code is tiles.TileCode.Riddler:
             stv = self.__default_target_difficulty.create_statevector(self.__robot, self.__rm)
             reward = self.__default_collectible_factory.produce(self.__rm)
-            riddle = Riddle(stv, reward, self.__DEFAULT_NUM_OF_RIDDLE_ATTEMPTS)
+            riddle = Riddle(self._next_target_id(), stv, reward, self.__DEFAULT_NUM_OF_RIDDLE_ATTEMPTS)
             return tiles.Riddler(self.__cbp.open_riddle, riddle)
 
         elif tile_code is tiles.TileCode.ShopKeeper:
@@ -287,6 +291,16 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
     def __tunnel_callback(self, room_id: str, pos_in_room: Coordinate):
         self.__level.tunnel(self.__spawn_pos, pos_in_room)  # todo implement correctly
+
+    def _next_target_id(self) -> int:
+        val = self.__next_target_id
+        self.__next_target_id += 1
+        return val
+
+    def _next_tile_id(self) -> int:
+        val = self.__next_tile_id
+        self.__next_tile_id += 1
+        return val
 
     ##### load from references #####
 
@@ -602,7 +616,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             diff_id, target_difficulty = self.visit(stv_pool)
             self.__target_difficulties[diff_id] = target_difficulty
         self.__default_target_difficulty = self.visit(ctx.default_stv_pool())
-        self.__default_enemy_factory = EnemyFactory(self.__cbp.start_fight, self.__default_target_difficulty, 1)
+        self.__default_enemy_factory = EnemyFactory(self.__cbp.start_fight, self.__default_target_difficulty, 1,
+                                                    next_id_callback=self._next_target_id)
 
     ##### Hallway area #####
 
@@ -729,7 +744,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
     def visitRiddle_descriptor(self, ctx: QrogueDungeonParser.Riddle_descriptorContext) -> tiles.Riddler:
         attempts = self.visit(ctx.integer())
         stv, reward, input_stv = self.visit(ctx.puzzle_parameter())
-        riddle = Riddle(stv, reward, attempts, input_stv)
+        riddle = Riddle(self._next_target_id(), stv, reward, attempts, input_stv)
         return tiles.Riddler(self.__cbp.open_riddle, riddle)
 
     def visitChallenge_descriptor(self, ctx: QrogueDungeonParser.Challenge_descriptorContext) -> tiles.Challenger:
@@ -740,7 +755,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             max_gates = min_gates
 
         stv, reward, input_stv = self.visit(ctx.puzzle_parameter())
-        challenge = Challenge(stv, reward, min_gates, max_gates, input_=input_stv)
+        challenge = Challenge(self._next_target_id(), stv, reward, min_gates, max_gates, input_=input_stv)
         return tiles.Challenger(self.__cbp.open_challenge, challenge)
 
     def visitEnergy_descriptor(self, ctx: QrogueDungeonParser.Energy_descriptorContext) -> tiles.Tile:
@@ -837,7 +852,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
                 static_gate = instruction.CombinedGates(gates, num_qubits)
             else:
                 static_gate = None
-            boss_actor = BossActor(puzzles, reward, static_gate)
+            boss_actor = BossActor(self._next_target_id(), puzzles, reward, static_gate)
 
         return tiles.Boss(boss_actor, self.__cbp.start_boss_fight, self.__cbp.game_over)    # todo replace game_over
 
@@ -901,12 +916,14 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
         input_stv = self.visit(ctx.input_stv()) if ctx.input_stv() else None
 
-        enemy_factory = EnemyFactory(self.__cbp.start_fight, difficulty, 1, input_stv)
+        enemy_factory = EnemyFactory(self.__cbp.start_fight, difficulty, 1, input_stv,
+                                     next_id_callback=self._next_target_id)
         if reward_factory:  # if a reward pool was specified we use it
             enemy_factory.set_custom_reward_factory(reward_factory)
         # else we use the default one either of the loaded difficulty or it already is default_collectible_factory
 
-        enemy = tiles.Enemy(enemy_factory, get_entangled_tiles, update_entangled_room_groups, enemy_id)
+        enemy = tiles.Enemy(enemy_factory, get_entangled_tiles, update_entangled_room_groups, enemy_id,
+                            self._next_tile_id)
         #   update_entangled_room_groups(enemy) # by commenting this the original (copied from) tile is not in the list
         return enemy
 
