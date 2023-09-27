@@ -1,7 +1,7 @@
 import enum
 from typing import List, Dict
 
-from qrogue.util import MapConfig, ErrorConfig, Logger
+from qrogue.util import MapConfig, ErrorConfig, Logger, GameplayConfig
 from qrogue.util.util_functions import cur_datetime, time_diff
 
 # global events
@@ -212,12 +212,26 @@ class AchievementManager:
             self.__temp_level_storage: Dict[str, Achievement] = {}
             self.__level_start_timestamp = cur_datetime()
 
+
+            # todo use more dynamic "difficulty" system after user study?
+            newbie_mode_counter = 0
+            expert_mode_counter = 0
+
             story_counter = 0
             for achievement in achievements:
                 if achievement.type is not AchievementType.Implicit:
                     if achievement.type is AchievementType.Story and achievement.is_done():
                         story_counter += 1
                     self.__storage[achievement.name] = achievement
+                    if achievement.name.startswith("l0k"):
+                        if achievement.name.startswith("l0k0"): newbie_mode_counter += 1
+                        elif achievement.name.startswith("l0k1"): expert_mode_counter += 1
+
+            if expert_mode_counter > newbie_mode_counter:
+                GameplayConfig.set_experienced_mode()
+            else:
+                GameplayConfig.set_newbie_mode()
+
             self.__storage[Ach.story()] = Achievement(Ach.story(), AchievementType.Implicit, story_counter,
                                                       Ach.STORY_DONE_PROGRESS)
             AchievementManager.__instance = self
