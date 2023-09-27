@@ -58,6 +58,7 @@ class _HL:
     try_ = CC.highlight_action("try")
 
     # words
+    amplitude = CC.highlight_word("ammplitude")
     amplitude_1 = CC.highlight_word("amplitude of 1")
     arbitrary = CC.highlight_word("arbitrary")
     around = CC.highlight_word("around")
@@ -68,6 +69,7 @@ class _HL:
 
     cannot = CC.highlight_word("cannot")
     chance_based = CC.highlight_word("chance based")
+    collapses = CC.highlight_word("collapses")
     continue_ = CC.highlight_word("Continue")
     details = CC.highlight_word("details")
     deterministic = CC.highlight_word("deterministic")
@@ -256,6 +258,24 @@ class HelpText(Enum):
         f"left. Therefore in both cases simply the gate/matrix {CC.highlight_word('closer')} to the input is " \
         f"considered first."
 
+    Amplitudes = \
+        f"Let's consider the following {_HL.state_vector}:\n" \
+        "|00>  0.707  \n" \
+        "|01>  0.707  \n" \
+        "|10>    0    \n" \
+        "|11>    0    \n" \
+        f"From {_HL.ket_notation} we know that both q0=q1=0 and q0=0, q1=1 have an {_HL.amplitude} of 0.707 while " \
+        f"it's 0 for the remaining qubit configuration (q0=1, q1=0 and q0=q0=1).\n" \
+        f"To transform the amplitude into a probability we have to take it's absolute value squared: abs(0.707)^2 = " \
+        f"0.5 which corresponds to 50%. Just as expected this {_HL.state_vector} {_HL.collapses} 50% of the time to " \
+        f"|00> and the remaining 50% to |01>. It can never collapse to |10> or |11> because these configurations " \
+        f"have an amplitude of 0.\n" \
+        f"Since the probabilities need to add up to 1 (100%), the sum of the " \
+        f"{CC.highlight_word('squared absolute values')} of a {CC.highlight_object('Quantum StateVector')} also need " \
+        f"to be 1.\n" \
+        f"In general {_HL.quantum_state}s are described by {CC.highlight_word('complex values')} so unlike in the " \
+        f"example above it is very important to not forget to apply the absolute operator before squaring."
+
     Riddle = \
         f"{_HL.riddles} are very similar to {_HL.puzzles}, yet a bit different. They also shows you a " \
         f"{_HL.target_state} you need to {_HL.reach} to solve it but you {_HL.cannot} {_HL.try_} it " \
@@ -309,9 +329,10 @@ class HelpText(Enum):
 def get_filtered_help_texts() -> List[HelpText]:
     return [
         HelpText.Game,
-        HelpText.Controls, HelpText.Fight, HelpText.Ket, HelpText.ParallelGates, HelpText.SerialGates,
-        HelpText.Riddle, #HelpText.Challenge,
+        HelpText.Controls,
         HelpText.Pause,
+        HelpText.Fight, HelpText.Ket, HelpText.ParallelGates, HelpText.SerialGates, HelpText.Amplitudes,
+        #HelpText.Riddle, #HelpText.Challenge,
     ]
 
 
