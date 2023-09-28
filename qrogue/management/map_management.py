@@ -29,8 +29,7 @@ __MAP_ORDER: Dict[int, Dict[str, str]] = {
         "l0k0v1": "l0k0v2",
         "l0k0v2": "l0k0v3",
         "l0k0v3": "l0k0v4",
-        "l0k0v4": "l0k0v5",
-        "l0k0v5": "w0",
+        "l0k0v4": f"{MapConfig.expedition_map_prefix()}25",
         "l0training": "w0",
         "l0exam": MapConfig.spaceship(),
         "w0": MapConfig.spaceship(),
@@ -39,6 +38,11 @@ __MAP_ORDER: Dict[int, Dict[str, str]] = {
     },
     1: {
         MapConfig.first_uncleared(): "l0k1v0",
+        "l0k1v0": "l0k1v1",
+        "l0k1v1": "l0k1v2",
+        "l0k1v2": "l0k1v3",
+        "l0k1v3": "l0k1v4",
+        "l0k1v4": f"{MapConfig.expedition_map_prefix()}25",
     },
 }
 
