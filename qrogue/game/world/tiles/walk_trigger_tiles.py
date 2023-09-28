@@ -316,8 +316,10 @@ class Collectible(WalkTriggerTile):
                 return TileCode.CollectibleGate.representation
             elif self.__collectible.type is CollectibleType.Qubit:
                 return TileCode.CollectibleQubit.representation
-            elif self.__collectible.type is CollectibleType.Qubit:
-                return TileCode.CollectibleQubit.representation
+            elif self.__collectible.type is CollectibleType.Coin:
+                return TileCode.CollectibleCoin.representation
+            elif self.__collectible.type is CollectibleType.Energy:
+                return TileCode.CollectibleEnergy.representation
             else:
                 return TileCode.Invalid.representation
         else:
