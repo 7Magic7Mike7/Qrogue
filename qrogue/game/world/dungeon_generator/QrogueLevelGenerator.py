@@ -1213,6 +1213,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
         # retrieve the map's meta data
         self.__meta_data = self.visit(ctx.meta())
+        Logger.instance().info(f"Building map {self.__meta_data.name}", from_pycui=False)
 
         # prepare the robot
         self.visit(ctx.robot())
