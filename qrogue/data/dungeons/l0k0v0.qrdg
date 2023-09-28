@@ -123,7 +123,7 @@ default Speaker "0"
 
 *keyFound prio "Great, you found a //02Key//. The //05number of keys// you hold is displayed in the //05HUD// on the //05top left//."
 
-*reopenMsgLog prio "By the way, should you ever forget what your //05current goal// is you can //03open// the message log with //04H// and //03scroll// through its history with //04Q// and //04E//."
+*reopenMsgLog prio "By the way, should you ever forget what your //05current goal// is you can //03open// the message log with //04H// and //03scroll// through the current lesson's history with //04Q// and //04E//."
 
 *movingDone prio "Next: //03Move// through the //02Door//."
 

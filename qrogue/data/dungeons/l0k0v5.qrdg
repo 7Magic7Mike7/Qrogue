@@ -100,6 +100,7 @@ am (Wild):
 # _ o o o _ #
 # _ o ! o _ #
 #############
+! 2 *supH key 1
 
 bm (Wild):
 #############
@@ -109,6 +110,7 @@ bm (Wild):
 # _ _ _ _ _ #
 # _ _ _ _ _ #
 #############
+! 2 *supH key 1
 
 an (Wild):
 #############
@@ -205,6 +207,8 @@ default Speaker "0"
 *entanglement0 prio "You already know that the CX Gate only changes the state if its control (first qubit) is 1. But with the H Gate we can create a state that is both 0 and 1 so what do you think happens if we input such a state as control?"
 
 *entanglement1 prio "As you saw, using a non-classical state as control //05entangles// the //02Qubits//. This way they will always collapse to the same value - either both are 0 or both are 1. Just like same digits to in a room." "But entanglement can also work the other way around. Let's build a circuit where q0 and q1 always output different values, e.g., when one collapses to 0 the other must collapse 1."
+
+*entangledDoors "todo"
 
 *doneMsg prio "todo"
 

@@ -128,6 +128,6 @@ default Speaker "0"
 *scoreInfo prio pos5 "The blue //01s// in this room is a //02Score// pickup. On the left side of your HUD you can see your current score. It is increased by //03solving// //02Puzzles// and pickups." "Don't worry about it too much though, you'll be able to revisit lessons later and try to beat your highscore!"
 
 *doneMsg "How do you like your new //02Gate//? It acts kind of //05classical// but it might have a surprise for you later."
-"Either way, now that you have some //05practice// with //02Puzzles//, let's talk about some //05theory// in the next lesson."
+"Either way, now that you have some //05practice// with //02Puzzles//, let's recap some //05theory// in the next lesson."
 
 >Qrogue
