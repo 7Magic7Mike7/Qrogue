@@ -59,8 +59,15 @@ class Ach:
     STORY_DONE_PROGRESS = 100
 
     __LEVEL_COMPLETION_UNLOCKS: Dict[str, List[Unlocks]] = {
+        # newbie tutorials
         "l0k0v0": [Unlocks.MainMenuContinue, Unlocks.ShowEnergy, ],
         "l0k0v1": [Unlocks.ShowEquation],
+
+        # experienced tutorials
+        "l0k1v0": [Unlocks.MainMenuContinue, Unlocks.ShowEnergy, ],
+        "l0k1v1": [Unlocks.ShowEquation],
+
+        # other levels
     }
 
     @staticmethod
