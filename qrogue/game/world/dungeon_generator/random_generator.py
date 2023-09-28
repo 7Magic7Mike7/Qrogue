@@ -2,7 +2,7 @@ from enum import IntEnum
 from typing import Callable, Dict, Optional, Tuple, List, Any, Set, Union
 
 from qrogue.game.logic.actors import Robot
-from qrogue.game.logic.collectibles import GateFactory, ShopFactory, Key, instruction, Energy, CollectibleType, \
+from qrogue.game.logic.collectibles import GateFactory, Key, instruction, Score, CollectibleType, \
     CollectibleFactory
 from qrogue.game.target_factory import TargetDifficulty, BossFactory, EnemyFactory, RiddleFactory
 from qrogue.game.world import tiles
@@ -592,6 +592,9 @@ class ExpeditionGenerator(DungeonGenerator):
         self.__next_target_id = 0
         self.__next_tile_id = 0
 
+        self.__remaining_keys = 0
+        self.__room_has_key = False
+
         self.__wild_room_generator = WFCRoomGenerator(seed, WFCRoomGenerator.get_level_list()[2:], AreaType.WildRoom)
 
     def _next_target_id(self) -> int:
@@ -613,7 +616,7 @@ class ExpeditionGenerator(DungeonGenerator):
             assert seed is not None, "Did not provide a seed!"
 
         if len(robot.get_available_instructions()) <= 0:
-            gates = [instruction.HGate(), instruction.XGate(), instruction.CXGate()]
+            gates = [instruction.HGate(), instruction.SGate(), instruction.XGate(), instruction.CXGate()]
             for gate in gates:
                 robot.give_collectible(gate)
 
@@ -622,11 +625,12 @@ class ExpeditionGenerator(DungeonGenerator):
         riddle_factory = RiddleFactory.default(robot)
         boss_factory = BossFactory.default(robot)
         typed_collectible_factory: Dict[Optional[CollectibleType], CollectibleFactory] = {
-            None: CollectibleFactory([Energy(1), Energy(1), Energy(3)]),    # default factory
-            CollectibleType.Gate: gate_factory,
-            CollectibleType.Pickup: CollectibleFactory([Key(1), Energy(5), Energy(10), Energy(10), Energy(15),
-                                                        Energy(20)])
+            None: CollectibleFactory([Score(10)]),    # default factory
+            CollectibleType.Gate: CollectibleFactory([Score(100)]), #gate_factory,
+            CollectibleType.Pickup: CollectibleFactory([Score(50)])
         }
+        self.__remaining_keys = 3
+        self.__room_has_key = False
 
         def get_collectible_factory(type_: CollectibleType) -> CollectibleFactory:
             if type_ in typed_collectible_factory:
@@ -639,17 +643,17 @@ class ExpeditionGenerator(DungeonGenerator):
 
         enemy_factories = [
             EnemyFactory(CallbackPack.instance().start_fight, TargetDifficulty(
-                2, [Energy(5), Energy(10)]
-            )),
+                2, [Score(50)]
+            ), next_id_callback=self._next_target_id),
             EnemyFactory(CallbackPack.instance().start_fight, TargetDifficulty(
-                2, [Energy(5), Key(), Energy(5)]
-            )),
+                2, [Score(100)]
+            ), next_id_callback=self._next_target_id),
             EnemyFactory(CallbackPack.instance().start_fight, TargetDifficulty(
-                3, [Energy(5), Key(), Energy(20)]
-            )),
+                3, [Score(20)]
+            ), next_id_callback=self._next_target_id),
             EnemyFactory(CallbackPack.instance().start_fight, TargetDifficulty(
-                3, [Energy(10), Energy(15), Energy(20)]
-            )),
+                3, [Score(100)]
+            ), next_id_callback=self._next_target_id),
         ]
         enemy_factory_priorities = [0.25, 0.35, 0.3, 0.1]
         enemy_groups_by_room = {}
@@ -661,6 +665,7 @@ class ExpeditionGenerator(DungeonGenerator):
         if layout.generate() and layout.validate():
             for y in range(self.height):
                 for x in range(self.width):
+                    self.__room_has_key = False
                     pos = Coordinate(x, y)
                     code = layout.get_room(pos)
                     if code is not None and code > _Code.Blocked:
@@ -707,17 +712,23 @@ class ExpeditionGenerator(DungeonGenerator):
                                              east_hallway=room_hallways[Direction.East],
                                              south_hallway=room_hallways[Direction.South],
                                              west_hallway=room_hallways[Direction.West],
-                                             )
+                                             place_teleporter=False)
                         elif code == _Code.Wild:
                             enemy_factory = rm.get_element_prioritized(enemy_factories, enemy_factory_priorities,
                                                                        msg="RandomDG_elemPrioritized")
 
                             def tile_from_tile_data(tile_code: tiles.TileCode, tile_data: Any) -> tiles.Tile:
                                 if tile_code == tiles.TileCode.Enemy:
-                                    return self.__create_enemy(tile_data, pos, enemy_factory, enemy_groups_by_room)
-                                elif tile_code == tiles.TileCode.Energy:
-                                    return tiles.Energy(tile_data)
+                                    return self.__create_enemy(tile_data, pos, enemy_factory, enemy_groups_by_room,
+                                                               self._next_tile_id)
+                                elif tile_code == tiles.TileCode.CollectibleScore:
+                                    return tiles.Collectible(Score(tile_data))
                                 elif tile_code == tiles.TileCode.Collectible:
+                                    if self.__remaining_keys > 0 and not self.__room_has_key \
+                                            and rm.get(msg="key placement") > 0.6:
+                                        self.__remaining_keys -= 1
+                                        self.__room_has_key = True
+                                        return tiles.Collectible(Key())
                                     return tiles.Collectible(get_collectible_factory(tile_data).produce(rm))
                                 elif tile_code == tiles.TileCode.Wall:
                                     return tiles.Wall()

@@ -24,7 +24,7 @@ class _Attributes:
     A class that handles some attributes of a Robot.
     """
 
-    __DEFAULT_SPACE = 3
+    __DEFAULT_SPACE = 5
     __DEFAULT_MAX_ENERGY = 100
     __MIN_INIT_ENERGY = 1  # during initialization neither max_energy nor cur_energy must be below this value
 
@@ -802,7 +802,7 @@ class Robot(Controllable, ABC):
 
 
 class BaseBot(Robot):
-    def __init__(self, game_over_callback: Callable[[], None], num_of_qubits: int = 2,
+    def __init__(self, game_over_callback: Callable[[], None], num_of_qubits: int = 3,
                  gates: Optional[List[Instruction]] = None,
                  circuit_space: Optional[int] = None, backpack_space: Optional[int] = None,
                  max_energy: Optional[int] = None, start_energy: Optional[int] = None):
