@@ -259,7 +259,8 @@ class BossFactory:
                 used_gates.append(gate)
 
         reward = self.__rm.get_element(self.__reward_pool, msg="BossFactory_reward")
-        return Boss(Instruction.compute_stv(used_gates, self.__robot.num_of_qubits), reward)
+        return Boss(self._next_id(), [(Instruction.compute_stv(used_gates, self.__robot.num_of_qubits),
+                                      StateVector.create_zero_state_vector(self.__robot.num_of_qubits))], reward)
 
     def __prepare_gate(self, gate: Instruction, qubit_count, qubits) -> bool:
         gate_qubits = qubits.copy()
