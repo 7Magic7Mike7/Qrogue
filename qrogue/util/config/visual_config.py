@@ -187,12 +187,12 @@ class ColorConfig:
 
 class PopupConfig:
     __DEFAULT_POS = 0
-    __TOP_POS = 3
-    __RIGHT_POS = 111
-    __BOT_POS = 22
-    __LEFT_POS = 3
-    __POSITIONS = [
-        None, (None, __TOP_POS), (__RIGHT_POS, __TOP_POS), (__RIGHT_POS, None), (__RIGHT_POS, __BOT_POS),
+    __TOP_POS = 3       # three rows below top
+    __RIGHT_POS = -5    # five columns left of right
+    __BOT_POS = -3      # three rows above bot
+    __LEFT_POS = 5      # five columns right of left
+    __POSITIONS = [     # None = center
+        (None, None), (None, __TOP_POS), (__RIGHT_POS, __TOP_POS), (__RIGHT_POS, None), (__RIGHT_POS, __BOT_POS),
         (None, __BOT_POS), (__LEFT_POS, __BOT_POS), (__LEFT_POS, None), (__LEFT_POS, __TOP_POS)
     ]
 

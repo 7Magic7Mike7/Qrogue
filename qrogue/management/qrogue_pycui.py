@@ -541,7 +541,7 @@ class QrogueCUI(PyCUI):
             reopen = False
         self.__focused_widget = self.get_selected_widget()
         self._popup = MultilinePopup(self, title, text, color, self._renderer, self._logger, self.__controls,
-                                     pos=PopupConfig.resolve_position(position), dimensions=dimensions,
+                                     pos=position, dimensions=dimensions,
                                      situational_callback=(self.__popup_history.back, self.__popup_history.forth))
         self.__popup_history.add(self._popup, is_permanent=reopen)
 

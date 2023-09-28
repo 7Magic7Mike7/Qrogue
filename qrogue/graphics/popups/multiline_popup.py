@@ -12,6 +12,7 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
     __QUESTION_SPACING = " " * 7
     __QUESTION_ARROW = "-->"
     __QUESTION_SELECTION = " " * (len(__QUESTION_SPACING) - (len(__QUESTION_ARROW) + 1)) + (__QUESTION_ARROW + " ")
+    __BASE_DIMENSIONS = 11, 100
 
     @staticmethod
     def __get_color_rules():
@@ -82,10 +83,12 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
 
     def __init__(self, root, title, text, color, renderer, logger, controls,
                  confirmation_callback: Callable[[int], None] = None, answers: Optional[List] = None,
-                 pos: Optional[Tuple[int, int]] = None, dimensions: Optional[Tuple[int, int]] = None,
+                 pos: Optional[int] = None, dimensions: Optional[Tuple[int, int]] = None,
                  situational_callback: Optional[Tuple[Optional[Callable[[], None]], Optional[Callable[[], None]]]] =
                  None):
         # custom_size needs to be initialized immediately because get_absolute_stop_pos() in init() accesses it
+        # we would somehow get stuck in an endless loop if we would manually calculate dimensions, starts and stops
+        #  before init() hence we use this workaround
         self.__custom_size = False
 
         super().__init__(root, title, text, color, renderer, logger)
@@ -96,16 +99,11 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
         else:
             self.__answers = answers
 
-        if pos is not None:
-            if pos[0] is not None:
-                self._start_x = pos[0]
-            if pos[1] is not None:
-                self._start_y = pos[1]
-
-        if dimensions is not None:
-            self.__custom_size = True
-            self._height, self._width = dimensions
-            self._stop_x, self._stop_y = self._start_x + self._width, self._start_y + self._height
+        self.__custom_pos = pos
+        self.__custom_size = True
+        self._height, self._width = MultilinePopup.__BASE_DIMENSIONS if dimensions is None else dimensions
+        self._start_x, self._start_y = self.get_absolute_start_pos()
+        self._stop_x, self._stop_y = self._start_x + self._width, self._start_y + self._height
 
         def _dummy():
             pass
@@ -233,6 +231,30 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
         self._renderer.unset_color_mode(self._color)
         self._renderer.reset_cursor(self)
 
+    def get_absolute_start_pos(self) -> Tuple[int,int]:
+        if self.__custom_size:
+            cui_height, cui_width = self._root.get_absolute_size()
+
+            # start relative to the middle
+            start_x = int((cui_width - self._width) / 2)
+            start_y = int((cui_height - self._height) / 2)
+            # adapt start_x and start_y for custom positions
+            if self.__custom_pos is not None:
+                res_x, res_y = PopupConfig.resolve_position(self.__custom_pos)
+                if res_x is not None:
+                    if res_x > 0:
+                        start_x = res_x
+                    elif res_x < 0:
+                        start_x = cui_width + res_x - self._width
+                if res_y is not None:
+                    if res_y > 0:
+                        start_y = res_y
+                    elif res_y < 0:
+                        start_y = cui_height + res_y - self._height
+            return start_x, start_y
+        else:
+            return super(MultilinePopup, self).get_absolute_start_pos()
+
     def get_absolute_stop_pos(self) -> Tuple[int, int]:
         # override for custom sizes, so we can calculate the stop position based on our custom width and height instead
         # of calculating width and height based on start and stop
@@ -251,5 +273,10 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
         if self._is_question:
             # without a confirmation_callback the popup is not regarded as questions and hence the answer cannot change
             self.__confirmation_callback = None
-        self.__custom_size = False
-        self._start_x, self._start_y = self.get_absolute_start_pos()    # returns the default start position (56, 11)
+
+        # reset position and size
+        self.__custom_pos = PopupConfig.default_pos()
+        self._height, self._width = MultilinePopup.__BASE_DIMENSIONS
+        # recalculate start and stop to be correct after the reset above
+        self._start_x, self._start_y = self.get_absolute_start_pos()
+        self._stop_x, self._stop_y = self.get_absolute_stop_pos()
