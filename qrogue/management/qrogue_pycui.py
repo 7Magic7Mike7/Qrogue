@@ -152,7 +152,9 @@ class QrogueCUI(PyCUI):
             if show_popup: self.show()
 
         def show(self):
-            self.__show_popup(self.__history[self.__index])
+            if 0 <= self.__index < len(self.__history):
+                self.__show_popup(self.__history[self.__index])
+            # else: can happen if a level doesn't start with a message, e.g. expeditions
 
         def add(self, new_popup: MultilinePopup, is_permanent: bool):
             """
