@@ -32,8 +32,7 @@ class GateType(enum.Enum):
             "A Z Gate rotates the Qubit along the z-axis by 180°.", \
             [[1, 0], [0, -1]]
     HGate = "H", {"Hadamard"}, \
-            "The Hadamard Gate is often used to bring Qubits to Superposition. In a simple case (i.e., phase is 0) " \
-            "this corresponds to a rotation of 90° along the x-axis.", \
+            "The Hadamard Gate is often used to bring Qubits into Superposition.", \
             [[1/math.sqrt(2), 1/math.sqrt(2)], [1/math.sqrt(2), -1/math.sqrt(2)]]
 
     SGate = "S", {"Phase", "P"}, \
