@@ -148,17 +148,19 @@ class EnemyFactory:
     It is used by enemy tiles to trigger a fight.
     """
 
-    def __init__(self, start_fight_callback: Callable[[Robot, Enemy, Direction], None], difficulty: TargetDifficulty,
-                 default_flee_chance: float = 0.5, input_stv: Optional[StateVector] = None,
+    def __init__(self, start_fight_callback: Callable[[Robot, Enemy, Direction], None],
+                 target_difficulty: TargetDifficulty, default_flee_chance: float = 0.5,
+                 input_difficulty: Optional[StvDifficulty] = None,
                  next_id_callback: Optional[Callable[[], int]] = None):
         """
 
-        :param difficulty: difficulty of the enemy we produce
+        :param target_difficulty: difficulty of the enemy target we produce
+        :param input_difficulty: difficulty of the input we produce
         """
         self.__start_fight = start_fight_callback
-        self.__difficulty = difficulty
+        self.__target_difficulty = target_difficulty
         self.__default_flee_chance = default_flee_chance
-        self.__input_stv = input_stv
+        self.__input_difficulty = input_difficulty
         self.__custom_reward_factory = None
 
         if next_id_callback is None:
@@ -184,16 +186,16 @@ class EnemyFactory:
         :param eid: id in [0, 9] to calculate certain properties
         :return: a freshly created enemy
         """
-        stv = self.__difficulty.create_statevector(robot, rm)
+        target_stv = self.__target_difficulty.create_statevector(robot, rm)
         if self.__custom_reward_factory:
             reward = self.__custom_reward_factory.produce(rm)
         else:
-            reward = self.__difficulty.produce_reward(rm)
-        if self.__input_stv is not None and self.__input_stv.num_of_qubits != robot.num_of_qubits:
-            Logger.instance().error(f"InputStv (={self.__input_stv}) has wrong number of qubits (="
-                                    f"{robot.num_of_qubits})!", show=False, from_pycui=False)
-            self.__input_stv = None     # reset to use default input
-        return Enemy(self._next_id(), eid, stv, reward, input_=self.__input_stv)
+            reward = self.__target_difficulty.produce_reward(rm)
+
+        if self.__input_difficulty is None: input_stv = None
+        else: input_stv = self.__input_difficulty.create_statevector(robot, rm)
+
+        return Enemy(self._next_id(), eid, target_stv, reward, input_=input_stv)
 
     def start(self, robot: Robot, enemy: Enemy, direction: Direction):
         self.__start_fight(robot, enemy, direction)

@@ -10,7 +10,7 @@ from qrogue.game.logic.base import StateVector
 from qrogue.game.logic.collectibles import Collectible, pickup, instruction, MultiCollectible, Qubit, ShopItem, \
     CollectibleFactory, OrderedCollectibleFactory
 from qrogue.game.logic.collectibles.instruction import MultiQubitGate, SingleQubitGate, InstructionManager, Instruction
-from qrogue.game.target_factory import EnemyFactory, ExplicitTargetDifficulty
+from qrogue.game.target_factory import EnemyFactory, ExplicitTargetDifficulty, ExplicitStvDifficulty
 from qrogue.game.world import tiles
 from qrogue.game.world.map import CallbackPack, LevelMap, rooms, MapMetaData
 from qrogue.game.world.navigation import Coordinate, Direction
@@ -914,9 +914,13 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             # don't use ref_index here because it will always be 0 if present
             difficulty = self.__load_target_difficulty(ctx.REFERENCE(0))
 
-        input_stv = self.visit(ctx.input_stv()) if ctx.input_stv() else None
+        if ctx.input_stv():
+            input_stv = self.visit(ctx.input_stv())
+            input_difficulty = ExplicitStvDifficulty([input_stv])
+        else:
+            input_difficulty = None
 
-        enemy_factory = EnemyFactory(self.__cbp.start_fight, difficulty, 1, input_stv,
+        enemy_factory = EnemyFactory(self.__cbp.start_fight, difficulty, 1, input_difficulty,
                                      next_id_callback=self._next_target_id)
         if reward_factory:  # if a reward pool was specified we use it
             enemy_factory.set_custom_reward_factory(reward_factory)
