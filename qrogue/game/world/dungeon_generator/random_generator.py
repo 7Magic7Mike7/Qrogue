@@ -3,7 +3,7 @@ from typing import Callable, Dict, Optional, Tuple, List, Any, Set, Union
 
 from qrogue.game.logic.actors import Robot
 from qrogue.game.logic.collectibles import GateFactory, Key, instruction, Score, CollectibleType, \
-    CollectibleFactory
+    CollectibleFactory, Instruction
 from qrogue.game.target_factory import TargetDifficulty, BossFactory, EnemyFactory, RiddleFactory
 from qrogue.game.world import tiles
 from qrogue.game.world.dungeon_generator.wave_function_collapse.wfc_generator import WFCRoomGenerator
@@ -637,7 +637,7 @@ class ExpeditionGenerator(DungeonGenerator):
                 return typed_collectible_factory[type_]
             return typed_collectible_factory[None]
 
-        gate = gate_factory.produce(rm)
+        gate: Instruction = gate_factory.produce(rm)
         riddle = riddle_factory.produce(rm)
         dungeon_boss = boss_factory.produce(include_gates=[], input_gates=[gate])
 
