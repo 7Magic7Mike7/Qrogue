@@ -3,35 +3,15 @@ from typing import List, Callable, Optional, Union
 from qrogue.game.logic.base import StateVector
 from qrogue.game.logic.actors.controllables import Robot
 from qrogue.game.logic.actors.puzzles import Enemy, Target, Riddle, Boss
-from qrogue.game.logic.collectibles import Collectible, CollectibleFactory, Instruction, CXGate, SwapGate, HGate, \
-    XGate, Coin, Key, Energy
+from qrogue.game.logic.collectibles import Collectible, CollectibleFactory, Instruction, CXGate, SwapGate, Energy, Score
+from qrogue.game.logic.collectibles.instruction import YGate, ZGate
 from qrogue.game.world.navigation import Direction
 from qrogue.util import Logger, MyRandom, RandomManager
 
 
-class TargetDifficulty:
-    """
-    A class that handles all parameters that define the difficulty of a fight.
-    """
-
-    def __init__(self, num_of_instructions: int, rewards: Union[List[Collectible], CollectibleFactory]):
-        """
-
-        :param num_of_instructions: number of Instructions used to create a target StateVector
-        :param rewards: either a list of Collectibles or a CollectibleFactory for creating a reward when reaching
-        a Target
-        """
+class StvDifficulty:
+    def __init__(self, num_of_instructions: int):
         self.__num_of_instructions = num_of_instructions
-        if isinstance(rewards, list):
-            self.__reward_factory = CollectibleFactory(rewards)
-        elif isinstance(rewards, CollectibleFactory):
-            self.__reward_factory = rewards
-        else:
-            Logger.instance().throw(ValueError(
-                "rewards must be either a list of Collectibles or a CollectibleFactory"))
-
-    def produce_reward(self, rm: MyRandom):
-        return self.__reward_factory.produce(rm)
 
     def create_statevector(self, robot: Robot, rm: MyRandom) -> StateVector:
         """
@@ -54,11 +34,65 @@ class TargetDifficulty:
             # if not remove:
             #     Logger.instance().throw(Exception(
             #         "this should always remove because else we would duplicate instructions"))
-            instruction = rm.get_element(instruction_pool, remove=True, msg="TargetDiff_selectInstruction")
-            while instruction.use_qubit(rm.get_element(qubits, remove=True, msg="TargetDiff_selectQubit")):
+            instruction = rm.get_element(instruction_pool, remove=True, msg="StvDiff_selectInstruction")
+            while instruction.use_qubit(rm.get_element(qubits, remove=True, msg="StvDiff_selectQubit")):
                 pass
             instructions.append(instruction)
         return Instruction.compute_stv(instructions, num_of_qubits)
+
+
+class ExplicitStvDifficulty(StvDifficulty):
+    def __init__(self, pool: List[StateVector], ordered: bool = False):
+        super().__init__(num_of_instructions=-1)
+        self.__pool = pool
+        self.__ordered = ordered
+        self.__order_index = -1
+
+    def create_statevector(self, robot: Robot, rm: MyRandom) -> StateVector:
+        if self.__ordered or rm is None:
+            self.__order_index += 1
+            if self.__order_index >= len(self.__pool):
+                self.__order_index = 0
+            stv = self.__pool[self.__order_index]
+        else:
+            stv = rm.get_element(self.__pool, msg="ExplicitStvDiff_selectStv")
+
+        if stv.num_of_qubits != robot.num_of_qubits:
+            Logger.instance().error(f"Stv (={stv}) from pool does not have correct number of qubits (="
+                                    f"{robot.num_of_qubits})!", show=False, from_pycui=False)
+        return stv
+
+    def copy_pool(self) -> List[StateVector]:
+        return self.__pool.copy()
+
+
+class TargetDifficulty(StvDifficulty):
+    """
+    A class that handles all parameters that define the difficulty of target of a fight.
+    """
+
+    @staticmethod
+    def dummy() -> "TargetDifficulty":
+        return TargetDifficulty(2, [Score(50), Score(100)])
+
+    def __init__(self, num_of_instructions: int, rewards: Union[List[Collectible], CollectibleFactory]):
+        """
+
+        :param num_of_instructions: number of Instructions used to create a target StateVector
+        :param rewards: either a list of Collectibles or a CollectibleFactory for creating a reward when reaching
+        a Target
+        """
+        super().__init__(num_of_instructions)
+        if isinstance(rewards, list):
+            self.__reward_factory = CollectibleFactory(rewards)
+        elif isinstance(rewards, CollectibleFactory):
+            self.__reward_factory = rewards
+        else:
+            Logger.instance().throw(ValueError(
+                "rewards must be either a list of Collectibles or a CollectibleFactory"))
+
+    def produce_reward(self, rm: MyRandom):
+        return self.__reward_factory.produce(rm)
 
 
 class ExplicitTargetDifficulty(TargetDifficulty):
@@ -98,7 +132,7 @@ class ExplicitTargetDifficulty(TargetDifficulty):
 
 
 class RiddleDifficulty(TargetDifficulty):
-    def __init__(self, num_of_instructions: int, reward_pool: "list of Collectibles", min_attempts: int = 1,
+    def __init__(self, num_of_instructions: int, reward_pool: List[Collectible], min_attempts: int = 1,
                  max_attempts: int = 10):
         super().__init__(num_of_instructions, reward_pool)
         self.__min_attempts = min_attempts
@@ -106,15 +140,6 @@ class RiddleDifficulty(TargetDifficulty):
 
     def get_attempts(self, rm: MyRandom) -> int:
         return rm.get_int(self.__min_attempts, self.__max_attempts, msg="RiddleDiff.get_attempts()")
-
-
-class DummyTargetDifficulty(TargetDifficulty):
-    """
-    Dummy implementation of a FightDifficulty class for testing.
-    """
-
-    def __init__(self):
-        super(DummyTargetDifficulty, self).__init__(2, [Coin(1), Coin(3)])
 
 
 class EnemyFactory:
@@ -175,11 +200,11 @@ class EnemyFactory:
 
 
 class ExplicitEnemyFactory(EnemyFactory):
-    def __init__(self, start_fight_callback: Callable[[Robot, Target, Direction], None], stv_pool: [StateVector],
-                 reward_pool: [Collectible]):
+    def __init__(self, start_fight_callback: Callable[[Robot, Target, Direction], None], stv_pool: List[StateVector],
+                 reward_pool: List[Collectible]):
         self.__stv_pool = stv_pool
         self.__reward_pool = reward_pool
-        super().__init__(start_fight_callback, DummyTargetDifficulty())
+        super().__init__(start_fight_callback, TargetDifficulty.dummy())
 
     def produce(self, robot: Robot, rm: MyRandom, eid: int) -> Enemy:
         stv = rm.get_element(self.__stv_pool, msg="ExplicitEnemyFactory_stv")
