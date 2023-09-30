@@ -91,10 +91,16 @@ class OrderedCollectibleFactory(CollectibleFactory):
 
 class GateFactory:
     @staticmethod
-    def default():
+    def default() -> CollectibleFactory:
         return CollectibleFactory(pool=[
             gates.HGate(), gates.XGate(), #gates.YGate(), gates.ZGate(),
             gates.CXGate(), gates.SwapGate(),
+        ])
+
+    @staticmethod
+    def quantum() -> CollectibleFactory:
+        return CollectibleFactory(pool=[
+            gates.HGate(), gates.SGate(), gates.YGate(), gates.ZGate(),
         ])
 
 
