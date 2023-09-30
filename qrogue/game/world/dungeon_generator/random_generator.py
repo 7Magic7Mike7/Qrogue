@@ -639,7 +639,7 @@ class ExpeditionGenerator(DungeonGenerator):
 
         gate = gate_factory.produce(rm)
         riddle = riddle_factory.produce(rm)
-        dungeon_boss = boss_factory.produce([gate])  # todo based on chance also add gates from riddle or shop_items?
+        dungeon_boss = boss_factory.produce(include_gates=[], input_gates=[gate])
 
         enemy_factories = [
             EnemyFactory(CallbackPack.instance().start_fight, TargetDifficulty(

@@ -269,27 +269,41 @@ class BossFactory:
         else:
             self._next_id = next_id_callback
 
-    def produce(self, include_gates: List[Instruction]) -> Boss:
-        used_gates = []
+    def produce(self, include_gates: Optional[List[Instruction]], input_gates: Optional[List[Instruction]] = None) \
+            -> Boss:
+        if include_gates is None: include_gates = []
+        if input_gates is None: input_gates = []
+
+        gates_for_target: List[Instruction] = []
+        gates_for_input: List[Instruction] = []
         qubit_count = [0] * self.__robot.num_of_qubits
         qubits = list(range(self.__robot.num_of_qubits))
 
-        for g in include_gates:
+        for g in input_gates:
+            # stop before we're using more gates than the robot can place
+            if len(gates_for_target) >= self.__robot.circuit_space: break
+
             gate = g.copy()
-            if self.__prepare_gate(gate, qubit_count, qubits):
-                used_gates.append(gate)
+            if self.__prepare_gate(gate, qubit_count, qubits): gates_for_input.append(gate)
+
+        for g in include_gates:
+            # stop before we're using more gates than the robot can place
+            if len(gates_for_target) >= self.__robot.circuit_space: break
+
+            gate = g.copy()
+            if self.__prepare_gate(gate, qubit_count, qubits): gates_for_target.append(gate)
 
         usable_gates = self.__robot.get_available_instructions()
-        while len(usable_gates) > 0:
+        while len(usable_gates) > 0 and len(gates_for_target) < self.__robot.circuit_space:
             gate = self.__rm.get_element(usable_gates, remove=True, msg="BossFactory_selectGate")
             if self.__prepare_gate(gate, qubit_count, qubits):
-                used_gates.append(gate)
+                gates_for_target.append(gate)
 
         reward = self.__rm.get_element(self.__reward_pool, msg="BossFactory_reward")
-        return Boss(self._next_id(), [(Instruction.compute_stv(used_gates, self.__robot.num_of_qubits),
-                                      StateVector.create_zero_state_vector(self.__robot.num_of_qubits))], reward)
+        return Boss(self._next_id(), [(Instruction.compute_stv(gates_for_target, self.__robot.num_of_qubits),
+                                      Instruction.compute_stv(gates_for_input, self.__robot.num_of_qubits))], reward)
 
-    def __prepare_gate(self, gate: Instruction, qubit_count, qubits) -> bool:
+    def __prepare_gate(self, gate: Instruction, qubit_count: List[int], qubits: List[int]) -> bool:
         gate_qubits = qubits.copy()
         while len(gate_qubits) > 0:
             qubit = self.__rm.get_element(gate_qubits, remove=True, msg="BossFactory_selectQubit")
