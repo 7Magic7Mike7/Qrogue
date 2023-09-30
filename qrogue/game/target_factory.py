@@ -217,7 +217,7 @@ class ExplicitEnemyFactory(EnemyFactory):
 class RiddleFactory:
     @staticmethod
     def default(robot: Robot) -> "RiddleFactory":
-        reward_pool = [Key(1)]
+        reward_pool = [YGate(), ZGate()]
         difficulty = RiddleDifficulty(num_of_instructions=4, reward_pool=reward_pool, min_attempts=4, max_attempts=9)
         return RiddleFactory(robot, difficulty)
 
