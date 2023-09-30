@@ -592,8 +592,13 @@ class PauseMenuWidgetSet(MyWidgetSet):
                                        column_span=UIConfig.PAUSE_CHOICES_WIDTH, center=True)
         self.__choices = SelectionWidget(choices, controls, stay_selected=True)
         self.__choices.set_data(data=(
-            ["Continue", "Restart", "Save", "Manual", "Achievements", "Options", "Exit"],
-            [self.__continue, self.__restart, self.__save, self.__help, self.__achievements, self.__options,
+            ["Continue", "Restart", "Save", "Manual",
+             #"Achievements",
+             "Options",
+             "Exit"],
+            [self.__continue, self.__restart, self.__save, self.__help,
+             #self.__achievements,
+             self.__options,
              self.__exit]
         ))
 
