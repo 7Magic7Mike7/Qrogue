@@ -128,7 +128,9 @@ class _HL:
     qubit_configurations = CC.highlight_word("qubit configurations")
     reenter = CC.highlight_word("re-enter")
     removed = CC.highlight_word("removed")
+    restart = CC.highlight_word("Restart")
     reward = CC.highlight_word("Reward")
+    save = CC.highlight_word("Save")
     serious = CC.highlight_word("serious")
     start_journey = CC.highlight_word("START YOUR JOURNEY")
     state_vector = CC.highlight_word("StateVector")
@@ -307,8 +309,10 @@ class HelpText(Enum):
     Pause = \
         "In the Pause Menu you can do several things:\n" \
         f"{_HL.continue_} - Leave the Pause Menu and continue where you stopped.\n" \
-        f"{_HL.help_} - If you ever feel stuck and don't remember how certain stuff in the game works select " \
-        f"this menu and we will try to help you.\n" \
+        f"{_HL.restart} - Restart the current level\n" \
+        f"{_HL.save} - Save your game. Remember that your progress is only saved level-wise." \
+        f"{_HL.help_} - If you ever feel stuck and don't remember how certain stuff in the game works open " \
+        f"the manual and we will try to help you.\n" \
         f"{_HL.options} - Configure some Options of the game, like font size or coloring.\n" \
         f"{_HL.exit_} - Exit the current Level or Expedition .\n"
 
