@@ -625,9 +625,9 @@ class ExpeditionGenerator(DungeonGenerator):
         riddle_factory = RiddleFactory.default(robot)
         boss_factory = BossFactory.default(robot)
         typed_collectible_factory: Dict[Optional[CollectibleType], CollectibleFactory] = {
-            None: CollectibleFactory([Score(10)]),    # default factory
-            CollectibleType.Gate: CollectibleFactory([Score(100)]), #gate_factory,
-            CollectibleType.Pickup: CollectibleFactory([Score(50)])
+            None: CollectibleFactory([Score(100)]),    # default factory
+            CollectibleType.Gate: CollectibleFactory([Score(200)]),
+            CollectibleType.Pickup: CollectibleFactory([Score(150)])
         }
         self.__remaining_keys = 3
         self.__room_has_key = False
@@ -649,10 +649,10 @@ class ExpeditionGenerator(DungeonGenerator):
                 2, [Score(100)]
             ), next_id_callback=self._next_target_id),
             EnemyFactory(CallbackPack.instance().start_fight, TargetDifficulty(
-                3, [Score(20)]
+                3, [Score(150)]
             ), next_id_callback=self._next_target_id),
             EnemyFactory(CallbackPack.instance().start_fight, TargetDifficulty(
-                3, [Score(100)]
+                3, [Score(200)]
             ), next_id_callback=self._next_target_id),
         ]
         enemy_factory_priorities = [0.25, 0.35, 0.3, 0.1]
