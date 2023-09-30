@@ -1,4 +1,5 @@
-from typing import List, Callable, Optional, Union
+from abc import abstractmethod, ABC
+from typing import List, Callable, Optional, Union, Tuple
 
 from qrogue.game.logic.base import StateVector
 from qrogue.game.logic.actors.controllables import Robot
@@ -142,7 +143,31 @@ class RiddleDifficulty(TargetDifficulty):
         return rm.get_int(self.__min_attempts, self.__max_attempts, msg="RiddleDiff.get_attempts()")
 
 
-class EnemyFactory:
+class EnemyFactory(ABC):
+    def __init__(self, start_fight_callback: Callable[[Robot, Enemy, Direction], None],
+                 next_id_callback: Optional[Callable[[], int]] = None):
+        self.__start_fight = start_fight_callback
+
+        if next_id_callback is None:
+            self.__next_id = 0
+
+            def _next_id() -> int:
+                val = self.__next_id
+                self.__next_id += 1
+                return val
+            self._next_id = _next_id
+        else:
+            self._next_id = next_id_callback
+
+    @abstractmethod
+    def produce(self, robot: Robot, rm: MyRandom, eid: int) -> Enemy:
+        pass
+
+    def start(self, robot: Robot, enemy: Enemy, direction: Direction):
+        self.__start_fight(robot, enemy, direction)
+
+
+class EnemyTargetFactory(EnemyFactory):
     """
     This class produces enemies (actors) with a certain difficulty.
     It is used by enemy tiles to trigger a fight.
@@ -157,22 +182,11 @@ class EnemyFactory:
         :param target_difficulty: difficulty of the enemy target we produce
         :param input_difficulty: difficulty of the input we produce
         """
-        self.__start_fight = start_fight_callback
+        super(EnemyTargetFactory, self).__init__(start_fight_callback, next_id_callback)
         self.__target_difficulty = target_difficulty
         self.__default_flee_chance = default_flee_chance
         self.__input_difficulty = input_difficulty
         self.__custom_reward_factory = None
-
-        if next_id_callback is None:
-            self.__next_id = 0
-
-            def _next_id() -> int:
-                val = self.__next_id
-                self.__next_id += 1
-                return val
-            self._next_id = _next_id
-        else:
-            self._next_id = next_id_callback
 
     def set_custom_reward_factory(self, factory: CollectibleFactory):
         self.__custom_reward_factory = factory
@@ -186,7 +200,6 @@ class EnemyFactory:
         :param eid: id in [0, 9] to calculate certain properties
         :return: a freshly created enemy
         """
-        target_stv = self.__target_difficulty.create_statevector(robot, rm)
         if self.__custom_reward_factory:
             reward = self.__custom_reward_factory.produce(rm)
         else:
@@ -197,11 +210,8 @@ class EnemyFactory:
 
         return Enemy(self._next_id(), eid, target_stv, reward, input_=input_stv)
 
-    def start(self, robot: Robot, enemy: Enemy, direction: Direction):
-        self.__start_fight(robot, enemy, direction)
 
-
-class ExplicitEnemyFactory(EnemyFactory):
+class ExplicitEnemyFactory(EnemyTargetFactory):
     def __init__(self, start_fight_callback: Callable[[Robot, Target, Direction], None], stv_pool: List[StateVector],
                  reward_pool: List[Collectible]):
         self.__stv_pool = stv_pool

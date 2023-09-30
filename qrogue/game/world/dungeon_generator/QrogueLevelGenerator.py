@@ -10,7 +10,7 @@ from qrogue.game.logic.base import StateVector
 from qrogue.game.logic.collectibles import Collectible, pickup, instruction, MultiCollectible, Qubit, ShopItem, \
     CollectibleFactory, OrderedCollectibleFactory
 from qrogue.game.logic.collectibles.instruction import MultiQubitGate, SingleQubitGate, InstructionManager, Instruction
-from qrogue.game.target_factory import EnemyFactory, ExplicitTargetDifficulty, ExplicitStvDifficulty
+from qrogue.game.target_factory import EnemyFactory, ExplicitTargetDifficulty, ExplicitStvDifficulty, EnemyTargetFactory
 from qrogue.game.world import tiles
 from qrogue.game.world.map import CallbackPack, LevelMap, rooms, MapMetaData
 from qrogue.game.world.navigation import Coordinate, Direction
@@ -616,8 +616,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             diff_id, target_difficulty = self.visit(stv_pool)
             self.__target_difficulties[diff_id] = target_difficulty
         self.__default_target_difficulty = self.visit(ctx.default_stv_pool())
-        self.__default_enemy_factory = EnemyFactory(self.__cbp.start_fight, self.__default_target_difficulty, 1,
-                                                    next_id_callback=self._next_target_id)
+        self.__default_enemy_factory = EnemyTargetFactory(self.__cbp.start_fight, self.__default_target_difficulty, 1,
+                                                          next_id_callback=self._next_target_id)
 
     ##### Hallway area #####
 
@@ -920,8 +920,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         else:
             input_difficulty = None
 
-        enemy_factory = EnemyFactory(self.__cbp.start_fight, difficulty, 1, input_difficulty,
-                                     next_id_callback=self._next_target_id)
+        enemy_factory = EnemyTargetFactory(self.__cbp.start_fight, difficulty, 1, input_difficulty,
+                                           next_id_callback=self._next_target_id)
         if reward_factory:  # if a reward pool was specified we use it
             enemy_factory.set_custom_reward_factory(reward_factory)
         # else we use the default one either of the loaded difficulty or it already is default_collectible_factory

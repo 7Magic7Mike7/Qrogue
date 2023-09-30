@@ -4,7 +4,7 @@ from typing import Callable, Dict, Optional, Tuple, List, Any, Set, Union
 from qrogue.game.logic.actors import Robot
 from qrogue.game.logic.collectibles import GateFactory, Key, instruction, Score, CollectibleType, \
     CollectibleFactory, Instruction
-from qrogue.game.target_factory import TargetDifficulty, BossFactory, EnemyFactory, RiddleFactory
+from qrogue.game.target_factory import TargetDifficulty, BossFactory, EnemyFactory, RiddleFactory, EnemyTargetFactory
 from qrogue.game.world import tiles
 from qrogue.game.world.dungeon_generator.wave_function_collapse.wfc_generator import WFCRoomGenerator
 from qrogue.game.world.map import CallbackPack, Hallway, WildRoom, SpawnRoom, ShopRoom, RiddleRoom, BossRoom, \
@@ -642,16 +642,16 @@ class ExpeditionGenerator(DungeonGenerator):
         dungeon_boss = boss_factory.produce(include_gates=[], input_gates=[gate])
 
         enemy_factories = [
-            EnemyFactory(CallbackPack.instance().start_fight, TargetDifficulty(
+            EnemyTargetFactory(CallbackPack.instance().start_fight, TargetDifficulty(
                 2, [Score(50)]
             ), next_id_callback=self._next_target_id),
-            EnemyFactory(CallbackPack.instance().start_fight, TargetDifficulty(
+            EnemyTargetFactory(CallbackPack.instance().start_fight, TargetDifficulty(
                 2, [Score(100)]
             ), next_id_callback=self._next_target_id),
-            EnemyFactory(CallbackPack.instance().start_fight, TargetDifficulty(
+            EnemyTargetFactory(CallbackPack.instance().start_fight, TargetDifficulty(
                 3, [Score(150)]
             ), next_id_callback=self._next_target_id),
-            EnemyFactory(CallbackPack.instance().start_fight, TargetDifficulty(
+            EnemyTargetFactory(CallbackPack.instance().start_fight, TargetDifficulty(
                 3, [Score(200)]
             ), next_id_callback=self._next_target_id),
         ]
