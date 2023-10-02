@@ -1,0 +1,145 @@
+Qrogue<
+Name = "Lesson 1: Zeros and Ones"
+Description = Speaker "0" prio "Welcome to the //05'Mission Quniverse' Trainings Program//!"
+"Today we will teach you how to //03control// the newest //02Quantum Circuit Robots// - or //02Qubots// for short - and how to //03utilize// their //05Quantum Computing// capabilities. Let's start by moving to the //05next room// with //04WASD// or //04Arrow Keys//."
+"You can close this message with //04Enter// or //04Space//."
+
+NO_TELEPORTER
+SHOW_INDIVIDUAL_QUBITS
+
+// Introduced Concepts:
+// Moving, Popup controls, Menu navigation, Messages/Hints, Keys + Locked Doors, 0-Enemies + classical Puzzles, Goal
+
+[Robot]
+2 qubits [ *xgate ] 
+circuit_space = 1
+maxenergy = 100000 // it should not be possible to run out of energy in this level
+
+[Layout]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+| __ .. __ .. __ .. __ .. __ .. __ .. __ |
+| ..    ..    ..    ..    ..    ..    .. |
+| __ .. __ .. SR == aa == bb .. __ .. __ |
+| ..    ..    ..    11    ..    ..    .. |
+| __ .. __ .. __ .. cc 11 dd == ee .. __ |
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[Custom Rooms]
+
+SR (Spawn):
+#############
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+#############
+
+aa (Story):
+#############
+# o o o o o #
+# o o o o o #
+# _ o o o _ #
+# _ o o o _ #
+# _ _ m _ _ #
+#############
+m 1 *lockedDoor
+
+bb (Story):
+#############
+# o o o o o #
+# _ _ o o o #
+# _ m _ c o #
+# _ _ o o o #
+# o o o o o #
+#############
+c key 1 tutorial *keyFound
+m 1 *reopenMsgLog
+
+cc (Story):
+#############
+# o o m _ o #
+# o o o m _ #
+# o o o o _ #
+# c o o m _ #
+# 0 _ m _ o #
+#############
+c key 1 trigger *pickedUpKey
+0 *base01 input=*base00 tutorial *puzzleFight trigger *solvedPuzzle
+m 1 *puzzle1
+m 1 *puzzle2
+m 1 *puzzle3
+m *puzzle4
+
+dd (Wild):
+#############
+# o o o o o #
+# o o o o 0 #
+# m _ 0 _ m #
+# o o o o 0 #
+# o o o o o #
+#############
+m 1 *goal
+m 1 *optional
+0 *base00 input=*base10
+0 *base01 input=*base11
+0 *base11 input=*base01
+
+ee (Story):
+#############
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ m _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+#############
+m *doneMsg trigger *done
+
+
+
+[Hallways]
+11 (locked; ; ) trigger *sawLockedDoor
+
+[StateVector Pools]
+custom
+*base00 [ {num_qubits=2: gI @ q0} ]
+*base01 [ {num_qubits=2: gX @ q0} ]
+*base10 [ {num_qubits=2: gX @ q1} ]
+*base11 [ {num_qubits=2: gX @ q0, gX @ q1} ]
+
+default *base01
+
+[Reward Pools]
+default [none]
+
+[Messages]
+// highlight text by encapsulating it in "//02abcd//" where "abcd" is the text to highlight and "02" one of the available styles: 01 is for tiles, 02 is for game objects, 03 for actions, 04 for keys on the keyboard and 05 for other words
+// speaker: 0 = Examiner, 1 = Scientist, 2 = System, 3 = Player
+default Speaker "0"
+
+*lockedDoor prio pos1 "The //02Door// down there looks a bit different. We will need to find something to open it. Let's check the room to the //05right//!"
+
+*keyFound prio "Great, you found a //02Key//. The //05number of keys// you hold is displayed in the //05HUD// on the //05top left//."
+
+*reopenMsgLog prio "By the way, should you ever forget what your //05current goal// is you can //03open// the message log with //04H// and //03scroll// through the current lesson's history with //04Q// and //04E//."
+
+*movingDone prio "Next: //03Move// through the //02Door//."
+
+*puzzle1 prio "The red //010// in the bottom left corner is a //02Quantum Puzzle//. It will challenge you to reach a certain //02Quantum State//."
+*puzzle2 prio "For this you can //03add//, //03move// or //03remove// //02Quantum Gates//. Currently you only have //05one// //02X Gate// to place."
+*puzzle3 prio "For now we will stay in the //05Classical World// of 0s and 1s. There an //02X Gate// acts like a //05Not Gate//."
+*puzzle4 prio "Now //03step// onto the //010// and try your best." when *solvedPuzzle then *puzzleDone
+*puzzleDone prio "Now you can go and pick up the //02Key// //01k//." when *pickedUpKey then *keyPickedUp
+*keyPickedUp prio "Now you have a //02Key// to //03open// the next //02Door//."
+
+*puzzleFight prio pos1 "In the //05middle// of the screen you can see your //02Quantum Circuit// which is currently //05empty//. On its //05left// you see the values of the //05input// (qu)bits. On the //05right// side you see the //05current// as well as //05expected output// values. The //02Puzzle// is solved if your //02Circuit// outputs the expected values."
+"At the //05bottom// you can select whether to //03place// or //03remove// a //02Gate// from your //02Circuit// via //04WASD// or //04Arrow Keys//. Confirming your selection with //04Enter// or //04Space// shows you a //05preview// in your //02Circuit// which you can update (i.e., where to place or remove a gate) and confirm again with the usual keys. After that your output will be //05recalculated// and updated accordingly."
+"Pressing //04H// while a //02Gate// is selected will show you a brief //05description// of what the //02Gate// does. Now try to solve your first //02Puzzle//!"
+
+*goal prio "The //05goal// in each level is to find... well, the //02Goal//. It is depicted as green //01G// and can often be found in the room farthest from your starting position."
+*optional "The two remaining //010//s are //05optional// //02Puzzles//. You can try to solve them if you want but it's //05not mandatory// to complete the level. You can also just continue to the next room." ""
+"[Some messages - like this one - are not important to complete a level. Hence, they will not reappear in your message log to keep it clean and full of useful information.]"
+
+*doneMsg "Alright, you successfully //05finished// the //05first// lesson. Now onwards to the //05second// one."
+
+>Qrogue

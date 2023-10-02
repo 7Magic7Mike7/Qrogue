@@ -85,7 +85,7 @@ class Door(WalkTriggerTile):
                 self.__one_way_state is DoorOneWayState.Temporary and not self.is_open:
             is_correct_direction = direction is self.__direction
         else:
-            # opposite direction is also fine for non one-way doors or opened temporary one-way doors
+            # opposite direction is also fine for non-one-way doors or opened temporary one-way doors
             is_correct_direction = direction in [self.__direction, self.__direction.opposite()]
         if is_correct_direction:
             if self.is_open:
@@ -186,7 +186,7 @@ class Door(WalkTriggerTile):
         """
         Copies a door and assigns a new direction to it. Needed to create Hallways in the text based dungeon creator.
         Since one-way doors already have their direction set normally it doesn't make sense to give them a new one.
-        Hence a copy of a one-way door will by default no longer be a one-way door.
+        Hence, a copy of a one-way door will by default no longer be a one-way door.
         :param new_direction: new direction for the copied door
         :param reset_one_way: whether the door is forced to be one-way or if it should keep its one-way flag unchanged
         :return: a new door with the same attributes except for a new direction

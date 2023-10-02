@@ -130,6 +130,8 @@ class CommonQuestions(Enum):
     SkipStoryTutorial = (Config.system_name(), "Warning: It is recommended to first finish the tutorial parts of the "
                                                "story. Only continue if you're already familiar with Quantum Computing "
                                                "and know what you're doing!")
+    OpenUserDataFolder = (Config.system_name(), "Do you want to open the folder containing your user data with your "
+                                                "system's explorer?")
 
     def __init__(self, title: str, text: str, answers: Optional[List[str]] = None):
         self.__title = title

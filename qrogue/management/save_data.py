@@ -1,12 +1,12 @@
 import os.path
-from typing import Tuple, Optional
+from typing import Tuple, Optional, List
 
 from qrogue.game.logic.actors import Player, Robot
 from qrogue.game.logic.actors.controllables import BaseBot, LukeBot
 from qrogue.game.world.map import CallbackPack
 from qrogue.util import Logger, PathConfig, FileTypes, AchievementManager, RandomManager, CommonPopups, Config, \
-    TestConfig, ErrorConfig
-from qrogue.util.achievements import Achievement
+    TestConfig, ErrorConfig, achievements
+from qrogue.util.achievements import Achievement, Unlocks, AchievementType
 
 
 class SaveData:
@@ -14,6 +14,14 @@ class SaveData:
     __COLLECTIBLE_SECTION = "[Collectibles]"
     __ACHIEVEMENT_SECTION = "[Achievements]"
     __instance = None
+
+    __FRESH_START_ACHIEVEMENTS: List[Achievement] = [
+        Achievement(achievements.CompletedExpedition, AchievementType.Expedition, 0, 100),
+        # worlds
+        Achievement("w0", AchievementType.World, 0, 7),
+        # auto unlocks (i.e., was previously unlocked in a certain way but now unlocked from the very beginning)
+        Achievement.from_unlock(Unlocks.GateRemove),
+    ]
 
     @staticmethod
     def instance() -> "SaveData":
@@ -44,12 +52,14 @@ class SaveData:
                                                             "files so we can fix the issue as soon as possible. "
                                                             "Thank you!"))
             index = content.index(SaveData.__ACHIEVEMENT_SECTION)
-            achievement_list = []
+
+            # add the fresh start achievements or else load everything from the file
+            achievement_list = SaveData.__FRESH_START_ACHIEVEMENTS.copy() if self.__is_fresh_save else []
             for i in range(index + 1, len(content)):
                 achievement = Achievement.from_string(content[i])
                 if achievement:
                     achievement_list.append(achievement)
-            self.__achievements = AchievementManager(achievement_list)
+            AchievementManager(achievement_list)
 
             self.__available_robots = [
                 BaseBot(CallbackPack.instance().game_over),
@@ -59,7 +69,7 @@ class SaveData:
 
     @property
     def achievement_manager(self) -> AchievementManager:
-        return self.__achievements
+        return AchievementManager.instance()
 
     @property
     def player(self) -> Player:
@@ -84,7 +94,7 @@ class SaveData:
             return self.__available_robots[index]
         return None
 
-    def save(self) -> Tuple[bool, CommonPopups]:
+    def save(self, is_auto_save: bool = False) -> Tuple[bool, CommonPopups]:
         if Config.forbid_saving():
             return False, CommonPopups.NoSavingWithCheats
         try:
@@ -93,7 +103,10 @@ class SaveData:
             data += f"{SaveData.__COLLECTIBLE_SECTION}\n"
             data += f"{SaveData.__ACHIEVEMENT_SECTION}\n"
             data += f"{self.achievement_manager.to_string()}\n"
-            PathConfig.new_save_file(data)
+            if is_auto_save:
+                PathConfig.write_auto_save(data)
+            else:
+                PathConfig.new_save_file(data)
             return True, CommonPopups.SavingSuccessful
         except:
             return False, CommonPopups.SavingFailed

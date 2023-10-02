@@ -1,17 +1,18 @@
 import time
 from enum import Enum
 from threading import Thread
-from typing import List, Callable, Optional, Any, Tuple
+from typing import List, Callable, Optional, Any, Tuple, Union
 
 from py_cui import PyCUI
 from py_cui import popups
 from py_cui.widget_set import WidgetSet
 
-from qrogue.game.logic import StateVector, collectibles
+from qrogue.game.logic import collectibles
 from qrogue.game.logic.actors import Boss, Controllable, Enemy, Riddle, Robot
 from qrogue.game.logic.actors.controllables import BaseBot
 from qrogue.game.logic.actors.puzzles import Challenge
-from qrogue.game.logic.collectibles import Energy
+from qrogue.game.logic.base import StateVector
+from qrogue.game.logic.collectibles import Score
 from qrogue.game.world.map import CallbackPack, SpaceshipMap, WorldMap, Map
 from qrogue.game.world.navigation import Direction
 from qrogue.game.world.tiles import WalkTriggerTile, Message, Collectible
@@ -23,9 +24,9 @@ from qrogue.graphics.widgets import Renderable, SpaceshipWidgetSet, BossFightWid
     FightWidgetSet, MenuWidgetSet, MyWidgetSet, NavigationWidgetSet, PauseMenuWidgetSet, RiddleWidgetSet, \
     ChallengeWidgetSet, ShopWidgetSet, WorkbenchWidgetSet, TrainingsWidgetSet, Widget, TransitionWidgetSet
 from qrogue.util import achievements, common_messages, CheatConfig, Config, GameplayConfig, UIConfig, HelpText, \
-    HelpTextType, Logger, PathConfig, MapConfig, Controls, Keys, RandomManager, PyCuiConfig, PyCuiColors, Options, \
+    Logger, PathConfig, MapConfig, Controls, Keys, RandomManager, PyCuiConfig, PyCuiColors, Options, \
     TestConfig, CommonQuestions
-from qrogue.util.achievements import Ach, Unlocks
+from qrogue.util.achievements import Ach, Unlocks, AchievementManager
 from qrogue.util.config import FileTypes, PopupConfig
 from qrogue.util.game_simulator import GameSimulator
 from qrogue.util.key_logger import KeyLogger, OverWorldKeyLogger
@@ -104,6 +105,82 @@ class QrogueCUI(PyCUI):
             elif self.__cur_state == QrogueCUI._State.Transition:
                 self.__renderer._switch_to_transition(data)
 
+    class _PopupHistory:
+        def __init__(self, show_popup: Callable[[MultilinePopup], None]):
+            self.__show_popup = show_popup
+            self.__history: List[MultilinePopup] = []
+            self.__index = -1
+            self.__remove_on_close = False
+
+        @property
+        def is_empty(self) -> bool:
+            return len(self) <= 0
+
+        @property
+        def present_index(self) -> int:
+            return len(self.__history) - 1
+
+        @property
+        def is_in_present(self) -> bool:
+            return self.__index == self.present_index
+
+        def back(self, show_popup: bool = True):
+            if self.is_empty or self.__index == 0:
+                return  # we already show the oldest popup (or cannot show anything)
+            elif self.__index < 0:
+                self.__index = 0    # show oldest popup for invalid indices
+            else:
+                self.__index -= 1
+
+            if show_popup: self.show()
+
+        def forth(self, show_popup: bool = True):
+            if self.is_empty or self.__index == self.present_index:
+                return  # we already show the most recent popup (or cannot show anything)
+            elif self.__index < 0:
+                self.__index = self.present_index   # show most recent popup for invalid indices
+            else:
+                self.__index += 1
+
+            if show_popup: self.show()
+
+        def jump_to_present(self, show_popup: bool = True):
+            if self.is_empty or self.__index == self.present_index:
+                return  # we already show the most recent popup (or cannot show anything)
+            self.__index = self.present_index
+
+            if show_popup: self.show()
+
+        def show(self):
+            if 0 <= self.__index < len(self.__history):
+                self.__show_popup(self.__history[self.__index])
+            # else: can happen if a level doesn't start with a message, e.g. expeditions
+
+        def add(self, new_popup: MultilinePopup, is_permanent: bool):
+            """
+            :param new_popup: the popup to add to the history
+            :param is_permanent:  permanent popups stay in the history until it is reset, while non-permanent (i.e.,
+                temporary) popups will be removed after the popup display closes
+            """
+            self.__history.append(new_popup)
+            self.__index = self.present_index
+            self.__remove_on_close = not is_permanent
+
+        def resolve(self, force_remove: bool = False):
+            if self.__remove_on_close or force_remove:
+                self.__history.pop()
+                self.__index = min(self.__index, self.present_index)    # adapt index if it pointed to the removed popup
+                self.__remove_on_close = False
+            elif 0 <= self.present_index < len(self.__history):     # if is needed to not crash on level loading error
+                self.__history[self.present_index].freeze()
+
+        def reset(self):
+            self.__history = []
+            self.__index = -1
+
+        def __len__(self) -> int:
+            return len(self.__history)
+
     @staticmethod
     def start_simulation(simulation_path: str):
         try:
@@ -166,7 +243,7 @@ class QrogueCUI(PyCUI):
         CallbackPack(self.__start_level, self.__start_fight, self.__start_boss_fight, self.__open_riddle,
                      self.__open_challenge, self.__visit_shop, self.__game_over)
         SaveData()
-        MapManager(seed, self.__show_world, self.__start_level)
+        MapManager(seed, self.__show_world, self.__start_level, self.__show_input_popup)
         MapManager.instance().fill_expedition_queue(lambda: None, no_thread=True)
         Popup.update_check_achievement_function(SaveData.instance().achievement_manager.check_achievement)
         common_messages.set_show_callback(Popup.generic_info)
@@ -182,6 +259,12 @@ class QrogueCUI(PyCUI):
         self.__last_key: Optional[int] = None
         self.__focused_widget: Optional[Widget] = self.get_selected_widget()
 
+        # INIT POPUP HISTORY
+        def _show_popup_for_history(historic_popup: MultilinePopup):
+            self.__focused_widget = self.get_selected_widget()
+            self._popup = historic_popup
+        self.__popup_history = self._PopupHistory(_show_popup_for_history)
+
         # INIT WIDGET SETS
         self.__menu = MenuWidgetSet(self.__controls, self.__render, Logger.instance(), self,
                                     MapManager.instance().load_first_uncleared_map,
@@ -195,20 +278,21 @@ class QrogueCUI(PyCUI):
 
         self.__spaceship = SpaceshipWidgetSet(self.__controls, Logger.instance(), self, self.__render)
         self.__training = TrainingsWidgetSet(self.__controls, self.__render, Logger.instance(), self,
-                                             self.__continue_spaceship)
+                                             self.__continue_spaceship, self.__popup_history.show)
         self.__workbench = WorkbenchWidgetSet(self.__controls, Logger.instance(), self,
                                               SaveData.instance().available_robots(), self.__render,
                                               self.__continue_spaceship)
         self.__navigation = NavigationWidgetSet(self.__controls, self.__render, Logger.instance(), self)
 
         self.__explore = ExploreWidgetSet(self.__controls, self.__render, Logger.instance(), self)
-        self.__fight = FightWidgetSet(self.__controls, self.__render, Logger.instance(), self, self.__continue_explore)
+        self.__fight = FightWidgetSet(self.__controls, self.__render, Logger.instance(), self, self.__continue_explore,
+                                      self.__popup_history.show)
         self.__boss_fight = BossFightWidgetSet(self.__controls, self.__render, Logger.instance(), self,
-                                               self.__continue_explore)
+                                               self.__continue_explore, self.__popup_history.show)
         self.__riddle = RiddleWidgetSet(self.__controls, self.__render, Logger.instance(), self,
-                                        self.__continue_explore)
+                                        self.__continue_explore, self.__popup_history.show)
         self.__challenge = ChallengeWidgetSet(self.__controls, self.__render, Logger.instance(), self,
-                                              self.__continue_explore)
+                                              self.__continue_explore, self.__popup_history.show)
         self.__shop = ShopWidgetSet(self.__controls, self.__render, Logger.instance(), self, self.__continue_explore)
 
         widget_sets: List[MyWidgetSet] = [self.__spaceship, self.__training, self.__navigation, self.__explore,
@@ -217,9 +301,9 @@ class QrogueCUI(PyCUI):
         # INIT KEYS
         # add the general keys to everything except Transition, Menu and Pause
         for widget_set in widget_sets:
-            for widget in widget_set.get_widget_list():
-                widget.widget.add_key_command(self.__controls.get_keys(Keys.Pause), Pausing.pause)
-                widget.widget.add_key_command(self.__controls.get_keys(Keys.PopupReopen), Popup.reopen)
+            widget_set.add_key_command(self.__controls.get_keys(Keys.Pause), Pausing.pause, add_to_widgets=True)
+            widget_set.add_key_command(self.__controls.get_keys(Keys.PopupReopen), self.__popup_history.show,
+                                       add_to_widgets=True, overwrite=False)
 
         # debugging keys
         for widget_set in (widget_sets + [self.__transition, self.__menu, self.__pause]):
@@ -243,8 +327,8 @@ class QrogueCUI(PyCUI):
                 self._switch_to_menu(None)
 
         def open_world_view(direction: Direction, controllable: Controllable):
-            if Ach.check_unlocks(Unlocks.Navigation, SaveData.instance().story_progress):
-                if Ach.check_unlocks(Unlocks.FreeNavigation, SaveData.instance().story_progress):
+            if AchievementManager.instance().check_unlocks(Unlocks.Navigation):
+                if AchievementManager.instance().check_unlocks(Unlocks.FreeNavigation):
                     MapManager.instance().load_map(MapConfig.hub_world(), None)
                 else:
                     MapManager.instance().load_map(MapConfig.first_world(), None)
@@ -261,7 +345,11 @@ class QrogueCUI(PyCUI):
             self.set_on_draw_update_func(Config.inc_frame_count)
 
         if SaveData.instance().is_fresh_save:
-            Popup.generic_info("WELCOME TO QROGUE!", HelpText.get(HelpTextType.Welcome))
+            def knowledge_question(index: int):
+                if index == 0: GameplayConfig.set_newbie_mode()
+                else: GameplayConfig.set_experienced_mode()
+            ConfirmationPopup.ask("WELCOME TO QROGUE!", HelpText.Welcome.text, knowledge_question,
+                                  ["Quantum Newbie", "Quantum Experienced"])
 
     def _refresh_height_width(self) -> None:
         try:
@@ -314,17 +402,20 @@ class QrogueCUI(PyCUI):
             # since _draw is only called once, we have to set the timeout manually for the screen
             self._stdscr.timeout(self._refresh_timeout)
 
-    def start(self):
+    def start(self, level_name: Optional[str] = None):
         self.__render([self.__cur_widget_set])
 
         # We don't want to handle accidental input on startup of the game (e.g., during play-testing this once closed
-        # the introduction popup before it even was visible to the player) so we set our init_complete-flag to True
+        # the introduction popup before it was even visible to the player) so we set our init_complete-flag to True
         # after a short delay. Needs to be in an extra thread so _handle_key_presses() can try to handle the accidental
         # input. Otherwise, the input queue would not be cleared and the problem only delayed.
         def call_me():
             time.sleep(QrogueCUI.__INIT_DELAY)
             self.__init_complete = True
         Thread(target=call_me).start()
+
+        if level_name is not None:
+            MapManager.instance().load_map(level_name, None, None)
 
         super(QrogueCUI, self).start()
 
@@ -414,6 +505,8 @@ class QrogueCUI(PyCUI):
         super(QrogueCUI, self)._initialize_widget_renderer()
 
     def move_focus(self, widget: WidgetWrapper, auto_press_buttons: bool = True) -> None:
+        if widget is None:
+            Logger.instance().throw(Exception("Widget to focus is None!"))
         if isinstance(widget, PyCuiConfig.PyCuiWidget):
             super(QrogueCUI, self).move_focus(widget, auto_press_buttons)
         else:
@@ -445,10 +538,14 @@ class QrogueCUI(PyCUI):
         super(QrogueCUI, self).show_error_popup(title, text)
 
     def __show_message_popup(self, title: str, text: str, position: int, color: int,
-                             dimensions: Optional[Tuple[int, int]] = None) -> None:
+                             dimensions: Optional[Tuple[int, int]] = None, reopen: Optional[bool] = None) -> None:
+        if reopen is None:
+            reopen = False
         self.__focused_widget = self.get_selected_widget()
         self._popup = MultilinePopup(self, title, text, color, self._renderer, self._logger, self.__controls,
-                                     pos=PopupConfig.resolve_position(position), dimensions=dimensions)
+                                     pos=position, dimensions=dimensions,
+                                     situational_callback=(self.__popup_history.back, self.__popup_history.forth))
+        self.__popup_history.add(self._popup, is_permanent=reopen)
 
     def __show_confirmation_popup(self, title: str, text: str, color: int, callback: Callable[[int], None],
                                   answers: Optional[List[str]]):
@@ -461,6 +558,7 @@ class QrogueCUI(PyCUI):
         self._popup = popups.TextBoxPopup(self, title, color, callback, self._renderer, False, self._logger)
 
     def close_popup(self) -> None:
+        self.__popup_history.resolve()
         super(QrogueCUI, self).close_popup()
         self.move_focus(self.__focused_widget)
         Popup.on_close()
@@ -482,14 +580,14 @@ class QrogueCUI(PyCUI):
         self.apply_widget_set(self.__menu)
 
     def __start_playing(self):
-        if Ach.check_unlocks(Unlocks.Spaceship, SaveData.instance().story_progress):
+        if AchievementManager.instance().check_unlocks(Unlocks.Spaceship):
             self.__state_machine.change_state(QrogueCUI._State.Spaceship, SaveData.instance())
         else:
             # load the newest level (exam phase) by
             MapManager.instance().load_first_uncleared_map()
 
     def __start_expedition(self):
-        if Ach.check_unlocks(Unlocks.Spaceship, SaveData.instance().story_progress):
+        if AchievementManager.instance().check_unlocks(Unlocks.Spaceship):
             MapManager.instance().load_expedition()
         else:
             def _callback(selection: int):
@@ -501,19 +599,22 @@ class QrogueCUI(PyCUI):
         self.apply_widget_set(self.__spaceship)
         StoryNarration.returned_to_spaceship()
 
-    def __continue_spaceship(self) -> None:
+    def __continue_spaceship(self, undo_last_move: bool = False) -> None:
+        """
+        :param undo_last_move: not used here but needed for other continue-callbacks
+        """
         self.__state_machine.change_state(QrogueCUI._State.Spaceship, None)
 
     def __start_training(self, direction: Direction):
         robot = BaseBot(CallbackPack.instance().game_over, num_of_qubits=2,
                         gates=[collectibles.XGate(), collectibles.XGate(), collectibles.HGate(), collectibles.CXGate()])
-        enemy = Enemy(eid=0, target=StateVector([0] * (2**robot.num_of_qubits)), reward=Energy())
+        enemy = Enemy(0, eid=0, target=StateVector([0] * (2**robot.num_of_qubits), num_of_used_gates=0), reward=Score())
         self.__state_machine.change_state(QrogueCUI._State.Training, (robot, enemy))
 
     def _switch_to_training(self, data=None):
         if data:
             robot, enemy = data
-            self.__training.set_data(robot, enemy, False)
+            self.__training.set_data(robot, enemy, False, False)
         self.apply_widget_set(self.__training)
 
     def __use_workbench(self, direction: Direction, controllable: Controllable):
@@ -525,7 +626,7 @@ class QrogueCUI(PyCUI):
 
     def __show_world(self, world: WorldMap = None) -> None:
         if world is None:
-            if Ach.check_unlocks(Unlocks.Spaceship, SaveData.instance().story_progress):
+            if AchievementManager.instance().check_unlocks(Unlocks.Spaceship):
                 if Ach.is_most_recent_unlock(Unlocks.Spaceship, SaveData.instance().story_progress) and \
                    not SaveData.instance().achievement_manager.check_achievement(achievements.EnteredNavigationPanel):
                     self._execute_transition(TransitionText.exam_spaceship(), QrogueCUI._State.Spaceship, None)
@@ -546,14 +647,17 @@ class QrogueCUI(PyCUI):
         self.apply_widget_set(self.__navigation)
 
     def __start_level(self, seed: int, level: Map) -> None:
+        Logger.instance().info(f"Starting level {level.internal_name} with seed={seed}.", from_pycui=False)
         # reset in-level stuff
         SaveData.instance().achievement_manager.reset_level_events()
-        Popup.clear_last_popup()
+        self.__popup_history.reset()
 
         robot = level.controllable_tile.controllable
         if isinstance(robot, Robot):
             self.__key_logger.reinit(level.seed, level.internal_name)  # the seed used to build the Map
             OverWorldKeyLogger.instance().level_start(level.internal_name)
+            robot.reset_score()     # reset the score at the start of each level
+            AchievementManager.instance().restart_level_timer()
 
             self.__pause.set_data(robot, level.name, SaveData.instance().achievement_manager)
             self.__state_machine.change_state(QrogueCUI._State.Explore, level)
@@ -565,7 +669,7 @@ class QrogueCUI(PyCUI):
             if confirmed == 0:
                 MapManager.instance().reload()
             elif confirmed == 1:
-                if Ach.check_unlocks(Unlocks.Spaceship, SaveData.instance().story_progress):
+                if AchievementManager.instance().check_unlocks(Unlocks.Spaceship):
                     self.__state_machine.change_state(QrogueCUI._State.Spaceship, None)
                 else:
                     self.__state_machine.change_state(QrogueCUI._State.Menu, None)
@@ -590,30 +694,38 @@ class QrogueCUI(PyCUI):
     def __pause_game(self) -> None:
         self.__state_machine.change_state(QrogueCUI._State.Pause, None)
         if not SaveData.instance().achievement_manager.check_achievement(achievements.EnteredPauseMenu):
-            Popup.generic_info("Pause", HelpText.get(HelpTextType.Pause))
-            SaveData.instance().achievement_manager.add_to_achievement(achievements.EnteredPauseMenu, 1)
+            Popup.generic_info("Pause", HelpText.Pause.text)
+            AchievementManager.instance().trigger_global_event(achievements.EnteredPauseMenu, 1)
 
-    def _switch_to_explore(self, data) -> None:
+    def _switch_to_explore(self, data: Optional[Union[Map, Tuple[Optional[Map], Optional[bool]]]]) -> None:
         if data is not None:
-            map_ = data
-            self.__explore.set_data(map_)
+            if isinstance(data, Map):
+                self.__explore.set_data(data)
+            else:
+                map_, undo_last_move = data
+                if map_ is not None:
+                    self.__explore.set_data(map_)
+                if undo_last_move:
+                    self.__explore.undo_last_move()
         self.apply_widget_set(self.__explore)
 
-    def __continue_explore(self) -> None:
-        self.__state_machine.change_state(QrogueCUI._State.Explore, None)
+    def __continue_explore(self, undo_last_move: bool = False) -> None:
+        self.__state_machine.change_state(QrogueCUI._State.Explore, (None, undo_last_move))
 
     def _switch_to_fight(self, data) -> None:
         if data is not None:
             robot = data[0]
             enemy = data[1]
-            self.__fight.set_data(robot, enemy, MapManager.instance().in_expedition)
+            self.__fight.set_data(robot, enemy, MapManager.instance().in_expedition,
+                                  MapManager.instance().show_individual_qubits)
         self.apply_widget_set(self.__fight)
 
     def _switch_to_boss_fight(self, data) -> None:
         if data is not None:
             player = data[0]
             boss = data[1]
-            self.__boss_fight.set_data(player, boss, MapManager.instance().in_expedition)
+            self.__boss_fight.set_data(player, boss, MapManager.instance().in_expedition,
+                                       MapManager.instance().show_individual_qubits)
         self.apply_widget_set(self.__boss_fight)
 
     def __open_riddle(self, robot: Robot, riddle: Riddle):
@@ -623,7 +735,8 @@ class QrogueCUI(PyCUI):
         if data is not None:
             player = data[0]
             riddle = data[1]
-            self.__riddle.set_data(player, riddle, MapManager.instance().in_expedition)
+            self.__riddle.set_data(player, riddle, MapManager.instance().in_expedition,
+                                   MapManager.instance().show_individual_qubits)
         self.apply_widget_set(self.__riddle)
 
     def __open_challenge(self, robot: Robot, challenge: Challenge):
@@ -633,7 +746,8 @@ class QrogueCUI(PyCUI):
         if data is not None:
             robot = data[0]
             challenge = data[1]
-            self.__challenge.set_data(robot, challenge, MapManager.instance().in_expedition)
+            self.__challenge.set_data(robot, challenge, MapManager.instance().in_expedition,
+                                      MapManager.instance().show_individual_qubits)
         self.apply_widget_set(self.__challenge)
 
     def __visit_shop(self, robot: Robot, items: "list of ShopItems"):

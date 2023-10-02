@@ -6,40 +6,58 @@ from qrogue.game.world.dungeon_generator import ExpeditionGenerator, QrogueLevel
 from qrogue.game.world.map import Map, WorldMap, MapType, ExpeditionMap
 from qrogue.game.world.navigation import Coordinate
 from qrogue.graphics.popups import Popup
-from qrogue.util import CommonQuestions, Logger, MapConfig, achievements, RandomManager, Config, TestConfig, ErrorConfig
+from qrogue.util import CommonQuestions, Logger, MapConfig, achievements, RandomManager, Config, TestConfig, \
+    ErrorConfig, PathConfig
 
 from qrogue.management.save_data import SaveData
-from qrogue.util.achievements import Ach, Unlocks
-from qrogue.util.config.gameplay_config import ExpeditionConfig
+from qrogue.util.achievements import Unlocks, AchievementManager
+from qrogue.util.config.gameplay_config import ExpeditionConfig, GameplayConfig
+from qrogue.util.util_functions import open_folder
 
-__MAP_ORDER = {
-    #MapConfig.spaceship(): MapConfig.intro_level(),
-    MapConfig.first_uncleared(): MapConfig.intro_level(),
-    MapConfig.intro_level(): "l0v1",
-    "l0v1": "l0v2",
-    "l0v2": "l0v3",
-    "l0v3": "l0v4",
-    "l0v4": "l0v5",
-    "l0v5": "w0",
-    "l0training": "w0",
-    "l0exam": MapConfig.spaceship(),
-    "w0": MapConfig.spaceship(),
+__MAP_ORDER: Dict[int, Dict[str, str]] = {
+    # map names:
+    #   - the first character determines if it's a level ("l") or world ("w")
+    #   - the second character determines to which world the map belongs to
+    #   - the third character determines if the level differs based on knowledge mode, followed by the corresponding
+    #     digit of the knowledge mode
+    #   - last digit for levels is used to order the levels (only for structure, not used in game logic)
+    #   - alternatively maps can also start with "expedition" to mark them as generated
+    0: {
+        #MapConfig.spaceship(): MapConfig.intro_level(),
+        MapConfig.first_uncleared(): "l0k0v0",
+        "l0k0v0": "l0k0v1",
+        "l0k0v1": "l0k0v2",
+        "l0k0v2": "l0k0v3",
+        "l0k0v3": "l0k0v4",
+        "l0k0v4": f"{MapConfig.expedition_map_prefix()}25",
+        "l0training": "w0",
+        "l0exam": MapConfig.spaceship(),
+        "w0": MapConfig.spaceship(),
 
-    MapConfig.hub_world(): "l0v0",
+        MapConfig.hub_world(): "l0v0",
+    },
+    1: {
+        MapConfig.first_uncleared(): "l0k1v0",
+        "l0k1v0": "l0k1v1",
+        "l0k1v1": "l0k1v2",
+        "l0k1v2": "l0k1v3",
+        "l0k1v3": "l0k1v4",
+        "l0k1v4": f"{MapConfig.expedition_map_prefix()}25",
+    },
 }
 
 
 def get_next(cur_map: str) -> Optional[str]:
     if cur_map == MapConfig.first_uncleared():
-        next_map = __MAP_ORDER[cur_map]
+        next_map = __MAP_ORDER[GameplayConfig.get_knowledge_mode()][cur_map]
         while SaveData.instance().achievement_manager.check_achievement(next_map):
-            if next_map in __MAP_ORDER:
-                next_map = __MAP_ORDER[next_map]
+            if next_map in __MAP_ORDER[GameplayConfig.get_knowledge_mode()]:
+                next_map = __MAP_ORDER[GameplayConfig.get_knowledge_mode()][next_map]
             else:
                 break
         return next_map
-    elif cur_map in __MAP_ORDER:
-        return __MAP_ORDER[cur_map]
+    elif cur_map in __MAP_ORDER[GameplayConfig.get_knowledge_mode()]:
+        return __MAP_ORDER[GameplayConfig.get_knowledge_mode()][cur_map]
     return None
 
 
@@ -61,10 +79,13 @@ class MapManager:
             raise TestConfig.StateException(ErrorConfig.singleton_reset("MapManager"))
 
     def __init__(self, seed: int, show_world: Callable[[Optional[WorldMap]], None],
-                 start_level: Callable[[int, Map], None]):
+                 start_level: Callable[[int, Map], None],
+                 show_input_popup: Callable[[str, int, Callable[[str], None]], None]):
         if MapManager.__instance is not None:
             Logger.instance().throw(Exception(ErrorConfig.singleton("MapManager")))
         else:
+            self.__show_input_popup = show_input_popup  # title: str, color: int, callback: Callable[[str], None]
+
             self.__base_seed = seed
             self.__rm = RandomManager.create_new(seed)
             self.__show_world = show_world
@@ -108,6 +129,10 @@ class MapManager:
     @property
     def in_expedition(self) -> bool:
         return self.__cur_map.get_type() is MapType.Expedition
+
+    @property
+    def show_individual_qubits(self) -> bool:
+        return self.__cur_map.show_individual_qubits
 
     def __show_spaceship(self):
         self.__show_world(None)
@@ -185,7 +210,7 @@ class MapManager:
             self.__in_level = False
             self.__show_world(self.__cur_map)
 
-        elif map_name[0].lower().startswith(MapConfig.world_map_prefix()):
+        elif map_name.lower().startswith(MapConfig.world_map_prefix()):
             try:
                 world = self.__load_world(map_name)
                 if world is not None:
@@ -219,9 +244,11 @@ class MapManager:
 
         elif map_name.lower().startswith(MapConfig.expedition_map_prefix()):
             if len(map_name) > len(MapConfig.expedition_map_prefix()):
-                difficulty = int(map_name[len(MapConfig.expedition_map_prefix()):])
+                # difficulty = int(map_name[len(MapConfig.expedition_map_prefix()):])
+                map_seed = int(map_name[len(MapConfig.expedition_map_prefix()):])
             else:
-                difficulty = ExpeditionConfig.DEFAULT_DIFFICULTY
+                # difficulty = ExpeditionConfig.DEFAULT_DIFFICULTY
+                map_seed = None
 
             robot = SaveData.instance().get_robot(0)
             if map_seed is None and MapManager.__QUEUE_SIZE > 0:
@@ -234,6 +261,23 @@ class MapManager:
                 if map_seed is None:
                     map_seed = self.__rm.get_seed()
                 expedition, success = self.__expedition_generator.generate((robot, map_seed))
+
+                # todo remove for non-user study versions!
+                def time_out_popup():
+                    # color 15 is black over white
+                    self.__show_input_popup("Your time is over. Please tell the researcher.", 15, open_explorer)
+
+                def open_explorer(text: str):
+                    if text.lower() == "open":
+                        open_folder(PathConfig.user_data_path())
+                    else:
+                        time_out_popup()
+
+                def timed_expedition():
+                    time.sleep(5*60)    # 5 minutes timer
+                    time_out_popup()
+
+                Thread(target=timed_expedition, args=(), daemon=True).start()
 
             if success:
                 robot.reset()
@@ -264,7 +308,7 @@ class MapManager:
             self.__in_level = False
             self.__show_world(self.__get_world(self.__cur_map.internal_name))
         elif self.__cur_map is self.__hub_world or \
-                not Ach.check_unlocks(Unlocks.FreeNavigation, SaveData.instance().story_progress):
+                not AchievementManager.instance().check_unlocks(Unlocks.FreeNavigation):
             # we return to the default world if we are currently in the hub-world or haven't unlocked it yet
             self.__show_world(None)
         else:
@@ -291,6 +335,7 @@ class MapManager:
             elif self.__cur_map.get_type() is MapType.Level:
                 if SaveData.instance().achievement_manager.finished_level(self.__cur_map.internal_name,
                                                                           self.__cur_map.name):
+                    SaveData.instance().save(is_auto_save=True)     # auto save   # todo update system after user study?
                     # if the level was not finished before, we may increase the score of the world's achievement
                     world = self.__get_world(self.__cur_map.internal_name)
                     if world.is_mandatory_level(self.__cur_map.internal_name):
@@ -299,7 +344,7 @@ class MapManager:
             elif self.__cur_map.get_type() is MapType.Expedition:
                 SaveData.instance().achievement_manager.add_to_achievement(achievements.CompletedExpedition, 1)
 
-            if Ach.check_unlocks(Unlocks.ProceedChoice, SaveData.instance().story_progress):
+            if AchievementManager.instance().check_unlocks(Unlocks.ProceedChoice):
                 CommonQuestions.ProceedToNextMap.ask(self.__proceed)
             else:
                 self.__proceed()

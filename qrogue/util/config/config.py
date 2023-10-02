@@ -7,13 +7,13 @@ from qrogue.util.config import CheatConfig, GameplayConfig, PathConfig, TestConf
 class Config:   # todo make singleton and handle access to other configs?
     __frame_count = 0
     MAX_SEED = 1000000
-    __VERSION = "v0.6.3"
+    __VERSION = "v0.7.0"
     __GAME_CONFIG = "qrogue_game.config"
     __GAMEPLAY_HEAD = "[Gameplay]\n"
     __DEBUG = False
     __TEST_LEVEL = False
 
-    __HEADER = "Qrogue "
+    __HEADER = "QRogue "
     __SEED_HEAD = "Seed="
     __TIME_HEAD = "Time="
     __CONFIG_HEAD = "[Config]"

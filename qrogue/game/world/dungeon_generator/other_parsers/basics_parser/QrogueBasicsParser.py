@@ -1,11 +1,12 @@
-# Generated from D:/Documents/pycharm_workspace/Qrogue/qrogue/game/world/dungeon_generator/other_parsers\QrogueBasics.g4 by ANTLR 4.10.1
+# Generated from D:/Workspaces/pycharm-workspace/Qrogue/qrogue/game/world/dungeon_generator/other_parsers\QrogueBasics.g4 by ANTLR 4.12.0
 # encoding: utf-8
-from __future__ import print_function
-
-import sys
-
 from antlr4 import *
-
+from io import StringIO
+import sys
+if sys.version_info[1] > 5:
+	from typing import TextIO
+else:
+	from typing.io import TextIO
 
 def serializedATN():
     return [
@@ -28,22 +29,22 @@ class QrogueBasicsParser ( Parser ):
 
     sharedContextCache = PredictionContextCache()
 
-    literalNames = [ u"<INVALID>", u"<INVALID>", u"'tutorial'", u"'trigger'", 
-                     u"'Qrogue<'", u"'>Qrogue'", u"'~'", u"'|'", u"','", 
-                     u"'#'", u"'..'", u"'__'" ]
+    literalNames = [ "<INVALID>", "<INVALID>", "'tutorial'", "'trigger'", 
+                     "'Qrogue<'", "'>Qrogue'", "'~'", "'|'", "','", "'#'", 
+                     "'..'", "'__'" ]
 
-    symbolicNames = [ u"<INVALID>", u"DIRECTION", u"TUTORIAL_LITERAL", u"TRIGGER_LITERAL", 
-                      u"HEADER", u"ENDER", u"HORIZONTAL_SEPARATOR", u"VERTICAL_SEPARATOR", 
-                      u"LIST_SEPARATOR", u"WALL", u"EMPTY_HALLWAY", u"EMPTY_ROOM", 
-                      u"DIGIT", u"INTEGER", u"FLOAT", u"IMAG_NUMBER", u"SIGN", 
-                      u"CHARACTER_LOW", u"CHARACTER_UP", u"CHARACTER", u"TEXT", 
-                      u"ROOM_ID", u"HALLWAY_ID", u"REFERENCE", u"WS", u"UNIVERSAL_SEPARATOR", 
-                      u"COMMENT", u"LINE_COMMENT" ]
+    symbolicNames = [ "<INVALID>", "DIRECTION", "TUTORIAL_LITERAL", "TRIGGER_LITERAL", 
+                      "HEADER", "ENDER", "HORIZONTAL_SEPARATOR", "VERTICAL_SEPARATOR", 
+                      "LIST_SEPARATOR", "WALL", "EMPTY_HALLWAY", "EMPTY_ROOM", 
+                      "DIGIT", "INTEGER", "FLOAT", "IMAG_NUMBER", "SIGN", 
+                      "CHARACTER_LOW", "CHARACTER_UP", "CHARACTER", "TEXT", 
+                      "ROOM_ID", "HALLWAY_ID", "REFERENCE", "WS", "UNIVERSAL_SEPARATOR", 
+                      "COMMENT", "LINE_COMMENT" ]
 
     RULE_integer = 0
     RULE_complex_number = 1
 
-    ruleNames =  [ u"integer", u"complex_number" ]
+    ruleNames =  [ "integer", "complex_number" ]
 
     EOF = Token.EOF
     DIRECTION=1
@@ -74,9 +75,9 @@ class QrogueBasicsParser ( Parser ):
     COMMENT=26
     LINE_COMMENT=27
 
-    def __init__(self, input, output=sys.stdout):
-        super(QrogueBasicsParser, self).__init__(input, output=output)
-        self.checkVersion("4.10.1")
+    def __init__(self, input:TokenStream, output:TextIO = sys.stdout):
+        super().__init__(input, output)
+        self.checkVersion("4.12.0")
         self._interp = ParserATNSimulator(self, self.atn, self.decisionsToDFA, self.sharedContextCache)
         self._predicates = None
 
@@ -84,9 +85,10 @@ class QrogueBasicsParser ( Parser ):
 
 
     class IntegerContext(ParserRuleContext):
+        __slots__ = 'parser'
 
-        def __init__(self, parser, parent=None, invokingState=-1):
-            super(QrogueBasicsParser.IntegerContext, self).__init__(parent, invokingState)
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
             self.parser = parser
 
         def DIGIT(self):
@@ -101,16 +103,16 @@ class QrogueBasicsParser ( Parser ):
         def getRuleIndex(self):
             return QrogueBasicsParser.RULE_integer
 
-        def enterRule(self, listener):
-            if hasattr(listener, "enterInteger"):
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterInteger" ):
                 listener.enterInteger(self)
 
-        def exitRule(self, listener):
-            if hasattr(listener, "exitInteger"):
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitInteger" ):
                 listener.exitInteger(self)
 
-        def accept(self, visitor):
-            if hasattr(visitor, "visitInteger"):
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitInteger" ):
                 return visitor.visitInteger(self)
             else:
                 return visitor.visitChildren(self)
@@ -127,7 +129,7 @@ class QrogueBasicsParser ( Parser ):
             self.enterOuterAlt(localctx, 1)
             self.state = 4
             _la = self._input.LA(1)
-            if not((((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << QrogueBasicsParser.DIGIT) | (1 << QrogueBasicsParser.INTEGER) | (1 << QrogueBasicsParser.HALLWAY_ID))) != 0)):
+            if not((((_la) & ~0x3f) == 0 and ((1 << _la) & 4206592) != 0)):
                 self._errHandler.recoverInline(self)
             else:
                 self._errHandler.reportMatch(self)
@@ -142,15 +144,16 @@ class QrogueBasicsParser ( Parser ):
 
 
     class Complex_numberContext(ParserRuleContext):
+        __slots__ = 'parser'
 
-        def __init__(self, parser, parent=None, invokingState=-1):
-            super(QrogueBasicsParser.Complex_numberContext, self).__init__(parent, invokingState)
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
             self.parser = parser
 
         def IMAG_NUMBER(self):
             return self.getToken(QrogueBasicsParser.IMAG_NUMBER, 0)
 
-        def SIGN(self, i=None):
+        def SIGN(self, i:int=None):
             if i is None:
                 return self.getTokens(QrogueBasicsParser.SIGN)
             else:
@@ -166,16 +169,16 @@ class QrogueBasicsParser ( Parser ):
         def getRuleIndex(self):
             return QrogueBasicsParser.RULE_complex_number
 
-        def enterRule(self, listener):
-            if hasattr(listener, "enterComplex_number"):
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterComplex_number" ):
                 listener.enterComplex_number(self)
 
-        def exitRule(self, listener):
-            if hasattr(listener, "exitComplex_number"):
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitComplex_number" ):
                 listener.exitComplex_number(self)
 
-        def accept(self, visitor):
-            if hasattr(visitor, "visitComplex_number"):
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitComplex_number" ):
                 return visitor.visitComplex_number(self)
             else:
                 return visitor.visitChildren(self)
@@ -193,7 +196,7 @@ class QrogueBasicsParser ( Parser ):
             self.state = 7
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            if _la==QrogueBasicsParser.SIGN:
+            if _la==16:
                 self.state = 6
                 self.match(QrogueBasicsParser.SIGN)
 
@@ -201,19 +204,19 @@ class QrogueBasicsParser ( Parser ):
             self.state = 18
             self._errHandler.sync(self)
             token = self._input.LA(1)
-            if token in [QrogueBasicsParser.IMAG_NUMBER]:
+            if token in [15]:
                 self.state = 9
                 self.match(QrogueBasicsParser.IMAG_NUMBER)
                 pass
-            elif token in [QrogueBasicsParser.DIGIT, QrogueBasicsParser.INTEGER, QrogueBasicsParser.FLOAT, QrogueBasicsParser.HALLWAY_ID]:
+            elif token in [12, 13, 14, 22]:
                 self.state = 12
                 self._errHandler.sync(self)
                 token = self._input.LA(1)
-                if token in [QrogueBasicsParser.DIGIT, QrogueBasicsParser.INTEGER, QrogueBasicsParser.HALLWAY_ID]:
+                if token in [12, 13, 22]:
                     self.state = 10
                     self.integer()
                     pass
-                elif token in [QrogueBasicsParser.FLOAT]:
+                elif token in [14]:
                     self.state = 11
                     self.match(QrogueBasicsParser.FLOAT)
                     pass
@@ -223,7 +226,7 @@ class QrogueBasicsParser ( Parser ):
                 self.state = 16
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
-                if _la==QrogueBasicsParser.SIGN:
+                if _la==16:
                     self.state = 14
                     self.match(QrogueBasicsParser.SIGN)
                     self.state = 15

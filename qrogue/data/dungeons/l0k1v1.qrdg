@@ -1,0 +1,133 @@
+Qrogue<
+Name = "Lesson 2: Flee & Control"
+Description = Speaker "0" "To have more possibilities and more exciting //02Puzzles// we will give you a //05new// //02Gate// in this lesson and also increase the number of //05slots// (i.e., columns) your //02Circuit// has and show you how to //03flee// from a //02Puzzle// should you get stuck."
+
+NO_TELEPORTER
+SHOW_INDIVIDUAL_QUBITS
+
+// Introduced Concepts:
+// 2nd spot in Circuit, CX-Gate, Fleeing
+
+[Robot]
+2 qubits [ *xgate ]
+circuit_space = 2
+maxenergy = 100000 // it should not be possible to run out of energy in this level
+
+[Layout]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+| __ .. __ .. __ .. ee == ff .. __ .. __ |
+| ..    ..    ..    ==    ..    ..    .. |
+| __ .. __ .. SR == aa == bb .. __ .. __ |
+| ..    ..    ..    22    ==    ..    .. |
+| __ .. __ .. __ .. dd == cc .. __ .. __ |
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[Custom Rooms]
+
+aa (Wild):
+#############
+# o o 0 o o #
+# o o _ o o #
+# m t 0 _ 0 #
+# o o _ o o #
+# o o 0 o o #
+#############
+m 1 *tutOneWay
+t Unlocked *PuzzleFlee
+0 *base00 input=*base11
+0 *base11 input=*base10 tutorial *tutFlee
+0 *base11 input=*base01 tutorial *gateHelp
+0 *base00 input=*base01
+
+bb (Wild):
+#############
+# _ _ _ _ _ #
+# _ o o o _ #
+# m _ _ o _ #
+# o o _ o _ #
+# c 0 _ _ _ #
+#############
+m 1 *scoreInfo
+c score 300
+0 *base11 input=*base00
+
+cc (Gate):
+#############
+# o _ _ _ o #
+# _ o _ o _ #
+# _ _ c _ _ #
+# _ o _ o _ #
+# o _ _ _ o #
+#############
+c gate *CX
+
+dd (Wild):
+#############
+# o o 0 o o #
+# _ _ _ o o #
+# c _ 0 _ _ #
+# _ _ _ o o #
+# o o 0 o o #
+#############
+c score 300
+0 *base10 input=*base01
+0 *base11
+0 *base01
+
+ee (Wild):
+#############
+# o o o o o #
+# o _ 0 _ _ #
+# o 0 _ _ _ #
+# o _ _ _ _ #
+# o _ _ _ o #
+#############
+
+ff (Story):
+#############
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ m _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+#############
+m 1 *doneMsg trigger *done
+
+
+[Hallways]
+11 (locked; ; )
+22 (closed; one way North; )
+
+[StateVector Pools]
+custom
+*base00 [ {num_qubits=2: gI @ q0} ]
+*base01 [ {num_qubits=2: gX @ q0} ]
+*base10 [ {num_qubits=2: gX @ q1} ]
+*base11 [ {num_qubits=2: gX @ q0, gX @ q1} ]
+
+*reach1X [ *base01, *base10 ]
+*reach2X [ *reach1X, *base11 ]
+
+default *reach2X
+
+[Reward Pools]
+default *none
+
+
+[Messages]
+// highlight text by encapsulating it in "//02abcd//" where "abcd" is the text to highlight and "02" one of the available styles: 01 is for tiles, 02 is for game objects, 03 for actions, 04 for keys on the keyboard and 05 for other words
+// speaker: 0 = Examiner, 1 = Scientist, 2 = System, 3 = Player
+default Speaker "0"
+
+*tutOneWay prio pos5 "Some //02Doors// - like the one at the //05bottom// end of the room - open only from //05one side//. Seems like you need to //05find a different way// to //03access// the room behind it."
+
+*tutFlee prio pos1 "Sometimes you will find //02Puzzles// you //05cannot solve yet// (e.g., due to lacking a specific //02Gate//). In that case you can use your newly unlocked ability //03Flee//." "However, unsolved //02Puzzles// will still keep //05blocking// your way until you come back again and //03solve// them."
+
+*gateHelp prio "Pressing //04H// while you have selected a //02Gate// will open up its description." "Of course you can still //03access// your //05message history// by scrolling backwards with //04Q// and then //03traverse// it as before."
+
+*scoreInfo prio pos5 "The blue //01s// in this room is a //02Score// pickup. On the left side of your HUD you can see your current score. It is increased by //03solving// //02Puzzles// and pickups." "Don't worry about it too much though, you'll be able to revisit lessons later and try to beat your highscore!"
+
+*doneMsg "How do you like your new //02Gate//? It acts kind of //05classical// but it might have a surprise for you later."
+"Either way, now that you have some //05practice// with //02Puzzles//, let's recap some //05theory// in the next lesson."
+
+>Qrogue

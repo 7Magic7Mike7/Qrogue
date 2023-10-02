@@ -1,53 +1,44 @@
 Qrogue<
-Name = "Lesson 4: Riddling CX?"
-Description = Speaker "0" prio "Now we're getting mysterious!" 
-"This lesson will show you a //05new// kind of //02Puzzle//, //02Gate// as well as //02Doors//."
+Name = "Lesson 3: Intrisically Interconnected"
+Description = Speaker "0" prio "In this lesson we will talk about a quantum concept //05Einstein// described as //05'spooky action at a distance'//. If you're not familiar with this quote: no reason to actually be afraid! It's only mind-blowing."
 NO_TELEPORTER
 
 // Introduced Concepts:
-// event and one-way doors, Riddle, CX Gate (2 Qubit Gate)
+// Riddle, Entangled Digits, Entanglement, Challenge
 
 [Robot]
-2 qubits [ *xgate ]
-circuit_space = 2
-maxenergy = 100
+2 qubits [ *xgate, *cxgate, *hgate ]
+circuit_space = 3
+maxenergy = 1000000
 
 [Layout]
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-| __ .. __ .. __ .. ee .. bb .. __ .. __ |
-| ..    ..    ..    11    22    ..    .. |
-| __ .. __ .. __ .. SR 31 aa .. __ .. __ |
-| ..    ..    ..    32    11    ..    .. |
-| __ .. __ .. __ .. dd == cc .. __ .. __ |
+| __ .. __ .. ee .. __ .. bb .. __ .. __ |
+| ..    ..    ==    ..    ==    ..    .. |
+| __ .. ff 11 dd == cc 11 aa == SR .. __ |
+| ..    11    ..    ..    ..    ..    .. |
+| __ .. gg .. __ .. __ .. __ .. __ .. __ |
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 [Custom Rooms]
 
 SR (Spawn):
 #############
-# _ o _ o _ #
-# _ o _ o _ #
-# _ o _ o _ #
-# _ o _ o _ #
-# _ _ m _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
 #############
-m 1 *oneWayDoor
 
 aa (Wild):
 #############
-# _ _ _ _ 3 #
-# _ _ _ 1 _ #
-# m _ 0 _ 0 #
-# _ _ _ 2 _ #
-# _ _ _ _ 4 #
+# 1 _ _ _ 4 #
+# _ o _ o _ #
+# _ _ 0 _ _ #
+# _ o _ o _ #
+# 6 _ _ _ 9 #
 #############
-m 1 *oneWayDoor2
-0 [0, 0, 1, 0] none tutorial *tutSingleX trigger *didPuzzle
-1 *reach1X none tutorial *tutSingleX trigger *didPuzzle
-2 *reach1X none tutorial *tutSingleX trigger *didPuzzle
-3 *reach1X none tutorial *tutSingleX trigger *didPuzzle
-4 *reach1X none tutorial *tutSingleX trigger *didPuzzle
-0 *reach1X
 
 bb (Riddle):
 #############
@@ -58,31 +49,47 @@ bb (Riddle):
 # _ _ m _ _ #
 #############
 m 1 *riddleNote
-r 3 [0, 1, 0, 0] key 1 tutorial *tutTODO trigger *didRiddle
+r 3 *base00 key 1 input=*supH0X1
 
 cc (Wild):
 #############
-# o o _ _ _ #
-# o o o 0 _ #
-# 8 o o o 7 #
-# _ _ o o _ #
-# _ _ 0 _ c #
+# 3 3 _ 9 9 #
+# 3 o o o _ #
+# _ 1 2 1 m #
+# 8 o o o _ #
+# 8 8 _ 4 4 #
 #############
-c gate *cx tutorial *tutCXGate
-0 *reach1X
-0 *base11
+m 1 *entangledDigits
 
-dd (Riddle):
+dd (Wild):
 #############
-# _ _ _ _ _ #
-# _ _ _ _ _ #
-# _ _ r _ _ #
-# _ _ _ _ _ #
-# _ _ _ _ _ #
+# o o 7 o o #
+# o o 4 o o #
+# 7 o 5 _ _ #
+# 4 o _ _ _ #
+# 5 _ _ _ 0 #
 #############
-r 1 *base00 key 1 tutorial *riddle2
 
-ee (Riddle):
+ee (Wild):
+#############
+# o o o o o #
+# o o ! o o #
+# o _ _ _ o #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+#############
+! 2 *supH key 1
+
+ff (Wild):
+#############
+# c _ 1 7 4 #
+# _ o o o _ #
+# 2 o 0 r _ #
+# 7 o ! o o #
+# 4 1 _ o o #
+#############
+
+gg (Riddle):
 #############
 # _ _ _ _ _ #
 # _ _ _ _ _ #
@@ -95,20 +102,31 @@ m *doneMsg trigger *done
 
 [Hallways]
 11 (locked; ; )
-22 (event *didPuzzle; ; ) tutorial *eventDoor
-31 (closed; one way East permanent; )
-32 (closed; one way North permanent; )
 
 [StateVector Pools]
 custom
-
-*base00 [ [1, 0, 0, 0] ]
-*base01 [ [0, 1, 0, 0] ]
-*base10 [ [0, 0, 1, 0] ]
-*base11 [ [0, 0, 0, 1] ]
+*base00 [ {num_qubits=2: gI @ q0} ]
+*base01 [ {num_qubits=2: gX @ q0} ]
+*base10 [ {num_qubits=2: gX @ q1} ]
+*base11 [ {num_qubits=2: gX @ q0, gX @ q1} ]
 
 *reach1X [ *base01, *base10 ]
-*reach2X [ *reach1X, *base00, *base11 ]
+*reach2X [ *reach1X, *base11 ]
+
+*supH0 [ {num_qubits=2: gH @ q0} ]
+*supH1 [ {num_qubits=2: gH @ q1} ]
+*supH [ *supH0, *supH1 ]
+
+*supH0X1 [ {num_qubits=2: gH @ q0, gX @ q1} ]
+*supH1X0 [ {num_qubits=2: gH @ q1, gX @ q0} ]
+
+*supHX [ *supH0X1, *supH1X0 ]
+
+*allGates [ *reach2X, *supH, *supHX ]	// all combinations without entanglement
+
+*entanglement0 [ {num_qubits=2: gH @q0, gCX @[q0, q1]} ]
+*entanglement1 [ {num_qubits=2: gH @q1, gCX @[q1, q0]} ]
+*entanglement [ *entanglement0, *entanglement1 ]
 
 default *reach1X
 

@@ -1,9 +1,12 @@
-# Generated from D:/Documents/pycharm_workspace/Qrogue/qrogue/game/world/dungeon_generator/other_parsers\QrogueMessage.g4 by ANTLR 4.10.1
+# Generated from D:/Workspaces/pycharm-workspace/Qrogue/qrogue/game/world/dungeon_generator/other_parsers\QrogueMessage.g4 by ANTLR 4.12.0
 # encoding: utf-8
-from __future__ import print_function
 from antlr4 import *
 from io import StringIO
 import sys
+if sys.version_info[1] > 5:
+	from typing import TextIO
+else:
+	from typing.io import TextIO
 
 def serializedATN():
     return [
@@ -41,22 +44,20 @@ class QrogueMessageParser ( Parser ):
 
     sharedContextCache = PredictionContextCache()
 
-    literalNames = [ u"<INVALID>", u"'default'", u"'pos'", u"'='", u"'[Messages]'", 
-                     u"'when'", u"<INVALID>", u"<INVALID>", u"<INVALID>", 
-                     u"<INVALID>", u"'tutorial'", u"'trigger'", u"'Qrogue<'", 
-                     u"'>Qrogue'", u"'~'", u"'|'", u"','", u"'#'", u"'..'", 
-                     u"'__'" ]
+    literalNames = [ "<INVALID>", "'default'", "'pos'", "'='", "'[Messages]'", 
+                     "'when'", "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "'tutorial'", "'trigger'", "'Qrogue<'", "'>Qrogue'", 
+                     "'~'", "'|'", "','", "'#'", "'..'", "'__'" ]
 
-    symbolicNames = [ u"<INVALID>", u"<INVALID>", u"<INVALID>", u"<INVALID>", 
-                      u"MESSAGES", u"MSG_EVENT", u"MSG_ALTERNATIVE", u"MSG_SPEAKER", 
-                      u"MSG_PRIORITY", u"DIRECTION", u"TUTORIAL_LITERAL", 
-                      u"TRIGGER_LITERAL", u"HEADER", u"ENDER", u"HORIZONTAL_SEPARATOR", 
-                      u"VERTICAL_SEPARATOR", u"LIST_SEPARATOR", u"WALL", 
-                      u"EMPTY_HALLWAY", u"EMPTY_ROOM", u"DIGIT", u"INTEGER", 
-                      u"FLOAT", u"IMAG_NUMBER", u"SIGN", u"CHARACTER_LOW", 
-                      u"CHARACTER_UP", u"CHARACTER", u"TEXT", u"ROOM_ID", 
-                      u"HALLWAY_ID", u"REFERENCE", u"WS", u"UNIVERSAL_SEPARATOR", 
-                      u"COMMENT", u"LINE_COMMENT" ]
+    symbolicNames = [ "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                      "MESSAGES", "MSG_EVENT", "MSG_ALTERNATIVE", "MSG_SPEAKER", 
+                      "MSG_PRIORITY", "DIRECTION", "TUTORIAL_LITERAL", "TRIGGER_LITERAL", 
+                      "HEADER", "ENDER", "HORIZONTAL_SEPARATOR", "VERTICAL_SEPARATOR", 
+                      "LIST_SEPARATOR", "WALL", "EMPTY_HALLWAY", "EMPTY_ROOM", 
+                      "DIGIT", "INTEGER", "FLOAT", "IMAG_NUMBER", "SIGN", 
+                      "CHARACTER_LOW", "CHARACTER_UP", "CHARACTER", "TEXT", 
+                      "ROOM_ID", "HALLWAY_ID", "REFERENCE", "WS", "UNIVERSAL_SEPARATOR", 
+                      "COMMENT", "LINE_COMMENT" ]
 
     RULE_messages = 0
     RULE_message = 1
@@ -64,8 +65,7 @@ class QrogueMessageParser ( Parser ):
     RULE_integer = 3
     RULE_complex_number = 4
 
-    ruleNames =  [ u"messages", u"message", u"message_body", u"integer", 
-                   u"complex_number" ]
+    ruleNames =  [ "messages", "message", "message_body", "integer", "complex_number" ]
 
     EOF = Token.EOF
     T__0=1
@@ -104,9 +104,9 @@ class QrogueMessageParser ( Parser ):
     COMMENT=34
     LINE_COMMENT=35
 
-    def __init__(self, input, output=sys.stdout):
-        super(QrogueMessageParser, self).__init__(input, output=output)
-        self.checkVersion("4.10.1")
+    def __init__(self, input:TokenStream, output:TextIO = sys.stdout):
+        super().__init__(input, output)
+        self.checkVersion("4.12.0")
         self._interp = ParserATNSimulator(self, self.atn, self.decisionsToDFA, self.sharedContextCache)
         self._predicates = None
 
@@ -114,9 +114,10 @@ class QrogueMessageParser ( Parser ):
 
 
     class MessagesContext(ParserRuleContext):
+        __slots__ = 'parser'
 
-        def __init__(self, parser, parent=None, invokingState=-1):
-            super(QrogueMessageParser.MessagesContext, self).__init__(parent, invokingState)
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
             self.parser = parser
 
         def MESSAGES(self):
@@ -128,7 +129,7 @@ class QrogueMessageParser ( Parser ):
         def TEXT(self):
             return self.getToken(QrogueMessageParser.TEXT, 0)
 
-        def message(self, i=None):
+        def message(self, i:int=None):
             if i is None:
                 return self.getTypedRuleContexts(QrogueMessageParser.MessageContext)
             else:
@@ -138,16 +139,16 @@ class QrogueMessageParser ( Parser ):
         def getRuleIndex(self):
             return QrogueMessageParser.RULE_messages
 
-        def enterRule(self, listener):
-            if hasattr(listener, "enterMessages"):
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterMessages" ):
                 listener.enterMessages(self)
 
-        def exitRule(self, listener):
-            if hasattr(listener, "exitMessages"):
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitMessages" ):
                 listener.exitMessages(self)
 
-        def accept(self, visitor):
-            if hasattr(visitor, "visitMessages"):
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitMessages" ):
                 return visitor.visitMessages(self)
             else:
                 return visitor.visitChildren(self)
@@ -167,7 +168,7 @@ class QrogueMessageParser ( Parser ):
             self.state = 14
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            if _la==QrogueMessageParser.T__0:
+            if _la==1:
                 self.state = 11
                 self.match(QrogueMessageParser.T__0)
                 self.state = 12
@@ -179,7 +180,7 @@ class QrogueMessageParser ( Parser ):
             self.state = 19
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            while _la==QrogueMessageParser.REFERENCE:
+            while _la==31:
                 self.state = 16
                 self.message()
                 self.state = 21
@@ -196,12 +197,13 @@ class QrogueMessageParser ( Parser ):
 
 
     class MessageContext(ParserRuleContext):
+        __slots__ = 'parser'
 
-        def __init__(self, parser, parent=None, invokingState=-1):
-            super(QrogueMessageParser.MessageContext, self).__init__(parent, invokingState)
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
             self.parser = parser
 
-        def REFERENCE(self, i=None):
+        def REFERENCE(self, i:int=None):
             if i is None:
                 return self.getTokens(QrogueMessageParser.REFERENCE)
             else:
@@ -220,16 +222,16 @@ class QrogueMessageParser ( Parser ):
         def getRuleIndex(self):
             return QrogueMessageParser.RULE_message
 
-        def enterRule(self, listener):
-            if hasattr(listener, "enterMessage"):
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterMessage" ):
                 listener.enterMessage(self)
 
-        def exitRule(self, listener):
-            if hasattr(listener, "exitMessage"):
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitMessage" ):
                 listener.exitMessage(self)
 
-        def accept(self, visitor):
-            if hasattr(visitor, "visitMessage"):
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitMessage" ):
                 return visitor.visitMessage(self)
             else:
                 return visitor.visitChildren(self)
@@ -251,7 +253,7 @@ class QrogueMessageParser ( Parser ):
             self.state = 28
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            if _la==QrogueMessageParser.MSG_EVENT:
+            if _la==5:
                 self.state = 24
                 self.match(QrogueMessageParser.MSG_EVENT)
                 self.state = 25
@@ -272,15 +274,16 @@ class QrogueMessageParser ( Parser ):
 
 
     class Message_bodyContext(ParserRuleContext):
+        __slots__ = 'parser'
 
-        def __init__(self, parser, parent=None, invokingState=-1):
-            super(QrogueMessageParser.Message_bodyContext, self).__init__(parent, invokingState)
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
             self.parser = parser
 
         def MSG_SPEAKER(self):
             return self.getToken(QrogueMessageParser.MSG_SPEAKER, 0)
 
-        def TEXT(self, i=None):
+        def TEXT(self, i:int=None):
             if i is None:
                 return self.getTokens(QrogueMessageParser.TEXT)
             else:
@@ -295,16 +298,16 @@ class QrogueMessageParser ( Parser ):
         def getRuleIndex(self):
             return QrogueMessageParser.RULE_message_body
 
-        def enterRule(self, listener):
-            if hasattr(listener, "enterMessage_body"):
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterMessage_body" ):
                 listener.enterMessage_body(self)
 
-        def exitRule(self, listener):
-            if hasattr(listener, "exitMessage_body"):
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitMessage_body" ):
                 listener.exitMessage_body(self)
 
-        def accept(self, visitor):
-            if hasattr(visitor, "visitMessage_body"):
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitMessage_body" ):
                 return visitor.visitMessage_body(self)
             else:
                 return visitor.visitChildren(self)
@@ -322,7 +325,7 @@ class QrogueMessageParser ( Parser ):
             self.state = 32
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            if _la==QrogueMessageParser.MSG_SPEAKER:
+            if _la==7:
                 self.state = 30
                 self.match(QrogueMessageParser.MSG_SPEAKER)
                 self.state = 31
@@ -332,7 +335,7 @@ class QrogueMessageParser ( Parser ):
             self.state = 35
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            if _la==QrogueMessageParser.MSG_PRIORITY:
+            if _la==8:
                 self.state = 34
                 self.match(QrogueMessageParser.MSG_PRIORITY)
 
@@ -340,13 +343,13 @@ class QrogueMessageParser ( Parser ):
             self.state = 42
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            if _la==QrogueMessageParser.T__1:
+            if _la==2:
                 self.state = 37
                 self.match(QrogueMessageParser.T__1)
                 self.state = 39
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
-                if _la==QrogueMessageParser.T__2:
+                if _la==3:
                     self.state = 38
                     self.match(QrogueMessageParser.T__2)
 
@@ -364,7 +367,7 @@ class QrogueMessageParser ( Parser ):
                 self.state = 47 
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
-                if not (_la==QrogueMessageParser.TEXT):
+                if not (_la==28):
                     break
 
         except RecognitionException as re:
@@ -377,9 +380,10 @@ class QrogueMessageParser ( Parser ):
 
 
     class IntegerContext(ParserRuleContext):
+        __slots__ = 'parser'
 
-        def __init__(self, parser, parent=None, invokingState=-1):
-            super(QrogueMessageParser.IntegerContext, self).__init__(parent, invokingState)
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
             self.parser = parser
 
         def DIGIT(self):
@@ -394,16 +398,16 @@ class QrogueMessageParser ( Parser ):
         def getRuleIndex(self):
             return QrogueMessageParser.RULE_integer
 
-        def enterRule(self, listener):
-            if hasattr(listener, "enterInteger"):
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterInteger" ):
                 listener.enterInteger(self)
 
-        def exitRule(self, listener):
-            if hasattr(listener, "exitInteger"):
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitInteger" ):
                 listener.exitInteger(self)
 
-        def accept(self, visitor):
-            if hasattr(visitor, "visitInteger"):
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitInteger" ):
                 return visitor.visitInteger(self)
             else:
                 return visitor.visitChildren(self)
@@ -420,7 +424,7 @@ class QrogueMessageParser ( Parser ):
             self.enterOuterAlt(localctx, 1)
             self.state = 49
             _la = self._input.LA(1)
-            if not((((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << QrogueMessageParser.DIGIT) | (1 << QrogueMessageParser.INTEGER) | (1 << QrogueMessageParser.HALLWAY_ID))) != 0)):
+            if not((((_la) & ~0x3f) == 0 and ((1 << _la) & 1076887552) != 0)):
                 self._errHandler.recoverInline(self)
             else:
                 self._errHandler.reportMatch(self)
@@ -435,15 +439,16 @@ class QrogueMessageParser ( Parser ):
 
 
     class Complex_numberContext(ParserRuleContext):
+        __slots__ = 'parser'
 
-        def __init__(self, parser, parent=None, invokingState=-1):
-            super(QrogueMessageParser.Complex_numberContext, self).__init__(parent, invokingState)
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
             self.parser = parser
 
         def IMAG_NUMBER(self):
             return self.getToken(QrogueMessageParser.IMAG_NUMBER, 0)
 
-        def SIGN(self, i=None):
+        def SIGN(self, i:int=None):
             if i is None:
                 return self.getTokens(QrogueMessageParser.SIGN)
             else:
@@ -459,16 +464,16 @@ class QrogueMessageParser ( Parser ):
         def getRuleIndex(self):
             return QrogueMessageParser.RULE_complex_number
 
-        def enterRule(self, listener):
-            if hasattr(listener, "enterComplex_number"):
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterComplex_number" ):
                 listener.enterComplex_number(self)
 
-        def exitRule(self, listener):
-            if hasattr(listener, "exitComplex_number"):
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitComplex_number" ):
                 listener.exitComplex_number(self)
 
-        def accept(self, visitor):
-            if hasattr(visitor, "visitComplex_number"):
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitComplex_number" ):
                 return visitor.visitComplex_number(self)
             else:
                 return visitor.visitChildren(self)
@@ -486,7 +491,7 @@ class QrogueMessageParser ( Parser ):
             self.state = 52
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            if _la==QrogueMessageParser.SIGN:
+            if _la==24:
                 self.state = 51
                 self.match(QrogueMessageParser.SIGN)
 
@@ -494,19 +499,19 @@ class QrogueMessageParser ( Parser ):
             self.state = 63
             self._errHandler.sync(self)
             token = self._input.LA(1)
-            if token in [QrogueMessageParser.IMAG_NUMBER]:
+            if token in [23]:
                 self.state = 54
                 self.match(QrogueMessageParser.IMAG_NUMBER)
                 pass
-            elif token in [QrogueMessageParser.DIGIT, QrogueMessageParser.INTEGER, QrogueMessageParser.FLOAT, QrogueMessageParser.HALLWAY_ID]:
+            elif token in [20, 21, 22, 30]:
                 self.state = 57
                 self._errHandler.sync(self)
                 token = self._input.LA(1)
-                if token in [QrogueMessageParser.DIGIT, QrogueMessageParser.INTEGER, QrogueMessageParser.HALLWAY_ID]:
+                if token in [20, 21, 30]:
                     self.state = 55
                     self.integer()
                     pass
-                elif token in [QrogueMessageParser.FLOAT]:
+                elif token in [22]:
                     self.state = 56
                     self.match(QrogueMessageParser.FLOAT)
                     pass
@@ -516,7 +521,7 @@ class QrogueMessageParser ( Parser ):
                 self.state = 61
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
-                if _la==QrogueMessageParser.SIGN:
+                if _la==24:
                     self.state = 59
                     self.match(QrogueMessageParser.SIGN)
                     self.state = 60

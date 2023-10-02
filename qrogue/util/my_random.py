@@ -1,5 +1,5 @@
 from random import Random
-from typing import List, Any
+from typing import List, Any, Optional
 
 from qrogue.util import TestConfig, ErrorConfig
 from qrogue.util.config import Config
@@ -84,7 +84,7 @@ class RandomManager(MyRandom):
     __instance = None
 
     @staticmethod
-    def create_new(seed: int = None) -> MyRandom:
+    def create_new(seed: Optional[int] = None) -> MyRandom:
         if seed is None:
             seed = RandomManager.instance().get_seed(msg=f"RM.create_new{MyRandom.COUNTER}")
         return MyRandom(seed)

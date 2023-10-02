@@ -19,11 +19,12 @@ class MapType(enum.Enum):
 
 class MapMetaData:
     def __init__(self, name: Optional[str], description: Optional[Message], has_teleporter: bool,
-                 show_description: Callable[[], None]):
+                 show_description: Callable[[], None], show_individual_qubits: bool = False):
         self.name = name
         self.description = description
         self.has_teleporter = has_teleporter
         self.__show_description = show_description
+        self.show_individual_qubits = show_individual_qubits
 
     def show_description(self):
         self.__show_description()
@@ -219,6 +220,7 @@ class Map(BaseMap, ABC):
 
         self.__controllable_tile = tiles.ControllableTile(controllable)
         self.__controllable_pos = BaseMap._calculate_pos(spawn_room, Coordinate(Area.MID_X, Area.MID_Y))
+        self.__move_direction = Direction.Center    # initially we didn't move in any direction
 
         self.__cur_area = self.room_at(spawn_room.x, spawn_room.y)
         if self.__cur_area is None:
@@ -240,6 +242,10 @@ class Map(BaseMap, ABC):
     @property
     def controllable_pos(self) -> Coordinate:
         return self.__controllable_pos
+
+    @property
+    def show_individual_qubits(self) -> bool:
+        return self._meta_data.show_individual_qubits
 
     def _is_done(self) -> bool:
         return self.__check_achievement(MapConfig.done_event_id())
@@ -278,9 +284,21 @@ class Map(BaseMap, ABC):
                 tile.trigger(direction, self.controllable_tile.controllable, self.__trigger_event)
 
             self.__controllable_pos = new_pos
+            self.__move_direction = direction
             return True
         else:
             return False
+
+    def undo_last_move(self) -> bool:
+        """
+        Tries to undo the last movement (i.e., move in the opposite direction). Fails at the beginning of a Map when
+        there was no movement yet or if something blocks the Controllable to move back (e.g., directional doors).
+
+        :return: True if we were able to undo the last move, False otherwise
+        """
+        if self.__move_direction is Direction.Center: return False
+
+        return self.move(self.__move_direction.opposite())
 
     def tunnel(self, pos_of_room: Coordinate, pos_in_room: Optional[Coordinate]) -> bool:
         if pos_in_room is None:

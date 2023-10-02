@@ -8,11 +8,11 @@ from typing import Tuple, List, Callable, Optional
 from qiskit import QuantumCircuit, transpile, Aer, execute
 from qiskit.providers.aer import StatevectorSimulator
 
-from qrogue.game.logic.actors import StateVector, CircuitMatrix
 from qrogue.game.logic.actors.controllables import Controllable
 from qrogue.game.logic.actors.controllables.qubit import QubitSet, DummyQubitSet
+from qrogue.game.logic.base import StateVector, CircuitMatrix
 from qrogue.game.logic.collectibles import Coin, Collectible, Consumable, Instruction, Key, MultiCollectible, \
-    Qubit, Energy
+    Qubit, Energy, Score
 from qrogue.util import CheatConfig, Config, Logger, GameplayConfig, QuantumSimulationConfig, Options
 
 
@@ -24,7 +24,7 @@ class _Attributes:
     A class that handles some attributes of a Robot.
     """
 
-    __DEFAULT_SPACE = 3
+    __DEFAULT_SPACE = 5
     __DEFAULT_MAX_ENERGY = 100
     __MIN_INIT_ENERGY = 1  # during initialization neither max_energy nor cur_energy must be below this value
 
@@ -103,6 +103,12 @@ class _Attributes:
         """
         self.__qubits = self.__qubits.add_qubits(additional_qubits)
 
+    def update_circuit_space(self, new_space: int) -> bool:
+        if new_space <= 0: return False
+
+        self.__space = new_space
+        return True
+
     def increase_energy(self, amount: int) -> int:
         """
         Increases current energy by the given amount up to maximum energy.
@@ -127,7 +133,7 @@ class _Attributes:
         if CheatConfig.got_inf_resources():
             return 0    # no decrease in this case
 
-        # self.__cur_energy -= amount    # todo activate again for Expeditions?
+        self.__cur_energy -= amount
         if self.__cur_energy < 0:
             # e.g. if we decrease by 6 then cur_energy is now -2, so actually we were only able to decrease it by 4
             amount += self.__cur_energy
@@ -426,6 +432,7 @@ class Robot(Controllable, ABC):
         :param game_over_callback: for stopping the game if the Robot dies
         """
         super().__init__(name)
+        self.__score: int = 0
         self.__attributes: _Attributes = attributes
         self.__backpack: Backpack = backpack
         self.__game_over: Callable[[], None] = game_over_callback
@@ -440,10 +447,18 @@ class Robot(Controllable, ABC):
 
         # initialize gate stuff (columns)
         self.__instruction_count: int = 0   # how many instructions are currently placed on the circuit
-
-        # apply gates/instructions, create the circuit
+        # initialize based on empty circuit
         self.__instructions: List[Optional[Instruction]] = [None] * attributes.circuit_space
-        self.update_statevector(use_energy=False, check_for_game_over=False)  # to initialize the statevector
+        # initially there is no static gate (i.e., a gate that cannot be moved and was added by a puzzle)
+        self.__static_gate: Optional[Instruction] = None
+
+        if False:
+            # todo: for whatever reason this code is slower than calling below method which executes a simulation...
+            # todo: (measured execution time is faster, but something is slowed down because the startup time of levels increases)
+            self.__stv = StateVector.create_zero_state_vector(self.num_of_qubits)
+            self.__circuit_matrix = CircuitMatrix.create_identity(self.num_of_qubits)
+        else:
+            self.update_statevector(None, use_energy=False, check_for_game_over=False)
 
     @property
     def backpack(self) -> Backpack:
@@ -456,6 +471,10 @@ class Robot(Controllable, ABC):
     @property
     def circuit_matrix(self) -> CircuitMatrix:
         return self.__circuit_matrix
+
+    @property
+    def score(self) -> int:
+        return self.__score
 
     @property
     def cur_energy(self) -> int:
@@ -491,10 +510,19 @@ class Robot(Controllable, ABC):
 
         :return: True if the Robot is game over, False otherwise
         """
-        if self.__attributes.cur_energy <= 0:
+        if self.cur_energy <= 0:
             self.__game_over()
             return True
         return False
+
+    def increase_score(self, amount: int):
+        if amount < 0:
+            Logger.instance().error(f"Tried to increase score by a negative amount: {amount}!", from_pycui=False)
+            return
+        self.__score += amount
+
+    def reset_score(self):
+        self.__score = 0
 
     def key_count(self) -> int:     # cannot be a property since it is an abstractmethod in Controllable
         return self.backpack.key_count
@@ -502,11 +530,38 @@ class Robot(Controllable, ABC):
     def use_key(self) -> bool:
         return self.backpack.use_key()
 
-    def update_statevector(self, use_energy: bool = True, check_for_game_over: bool = True):
+    def __update_circuit_space(self, new_circuit_space: int):
+        old_instructions = self.__instructions.copy()
+
+        self.__instructions: List[Optional[Instruction]] = [None] * new_circuit_space
+        self.__attributes.update_circuit_space(new_circuit_space)
+
+        # copy all placed instructions
+        for i, inst in enumerate(old_instructions):
+            if inst is not None and i < len(self.__instructions):
+                self.__instructions[i] = inst
+
+    def add_static_gate(self, gate: Instruction):
+        if self.__static_gate is None:
+            if gate is not None:
+                self.__static_gate = gate
+                # expand instructions and place static_gate in its middle
+                prev_circuit_space = self.circuit_space
+                self.__update_circuit_space(prev_circuit_space + 1 + prev_circuit_space)
+                self.__place_instruction(self.__static_gate, prev_circuit_space)
+        else:
+            Logger.instance().error("Static Gate was not reset!", show=False, from_pycui=False)
+
+    def reset_static_gate(self, prev_circuit_space: int):
+        self.__static_gate = None
+        self.__update_circuit_space(prev_circuit_space)
+
+    def update_statevector(self, input_stv: StateVector, use_energy: bool = True, check_for_game_over: bool = True):
         """
         Compiles and simulates the current circuit and saves and returns the resulting StateVector. Can also lead to a
         game over.
 
+        :param input_stv: custom StateVector used as input
         :param use_energy: whether the update should cost energy or not, defaults to True
         :param check_for_game_over: whether we should perform a game over check or not
         :return: None
@@ -514,21 +569,30 @@ class Robot(Controllable, ABC):
         if check_for_game_over and self.game_over_check():
             return
 
-        circuit = QuantumCircuit(self.__attributes.num_of_qubits, self.__attributes.num_of_qubits)
+        num_of_used_gates: int = 0      # cannot use len(instructions) since this contains None values
+        circuit = QuantumCircuit(self.num_of_qubits, self.num_of_qubits)
         for inst in self.__instructions:
-            if inst:
+            if inst is not None:
+                num_of_used_gates += 1
                 inst.append_to(circuit)
-
-        compiled_circuit = transpile(circuit, self.__simulator)
-        job = self.__simulator.run(compiled_circuit, shots=1)
-        result = job.result()
-        self.__stv = StateVector(result.get_statevector(circuit), num_of_used_gates=self.__instruction_count)
+        if self.__static_gate is not None:
+            self.__static_gate.append_to(circuit)
 
         job = execute(circuit, self.__backend)
         result = job.result()
         self.__circuit_matrix = CircuitMatrix(result.get_unitary(circuit,
-                                                                 decimals=QuantumSimulationConfig.DECIMALS).data)
-        if use_energy:
+                                                                 decimals=QuantumSimulationConfig.DECIMALS).data,
+                                              num_of_used_gates)
+
+        if input_stv is None:   # todo: input_stv might only be None if the circuit is empty (reset or initialized)
+            compiled_circuit = transpile(circuit, self.__simulator)
+            job = self.__simulator.run(compiled_circuit, shots=1)
+            result = job.result()
+            self.__stv = StateVector(result.get_statevector(circuit), num_of_used_gates=self.__instruction_count)
+        else:
+            self.__stv = self.__circuit_matrix.multiply(input_stv)
+
+        if use_energy and GameplayConfig.get_option_value(Options.energy_mode):
             self.decrease_energy(amount=1)
 
     def __remove_instruction(self, instruction: Optional[Instruction], skip_qargs: bool = False) -> bool:
@@ -541,6 +605,8 @@ class Robot(Controllable, ABC):
         """
         # todo check if we can extend the condition with "and instruction in self.__instructions"
         if instruction and instruction.is_used():
+            if instruction is self.__static_gate: return False  # player cannot remove the static gate
+
             self.__instructions[instruction.position] = None
             self.__instruction_count -= 1
             instruction.reset(skip_qargs=skip_qargs)
@@ -571,8 +637,10 @@ class Robot(Controllable, ABC):
         if instruction.is_used():
             Logger.instance().throw(RuntimeError("Illegal state: Instruction was not removed before placing!"))
             return False
+        if self.__static_gate is not None and position == self.__static_gate.position:
+            return False  # player cannot overwrite the static gate
 
-        if 0 <= position < self.__attributes.circuit_space:
+        if 0 <= position < self.circuit_space:
             if self.__instructions[position]:
                 self.__remove_instruction(self.__instructions[position])
             self.__instruction_count += 1
@@ -593,7 +661,9 @@ class Robot(Controllable, ABC):
         :return: True if we successfully (re)moved instruction, False otherwise
         """
         if instruction.is_used() and instruction.position != position:
-            if 0 <= position < self.__attributes.circuit_space:
+            if instruction is self.__static_gate: return False  # player cannot move the static gate
+
+            if 0 <= position < self.circuit_space:
                 if self.__instructions[position]:
                     self.__remove_instruction(instruction, skip_qargs=True)
                     self.__remove_instruction(self.__instructions[position])
@@ -644,7 +714,8 @@ class Robot(Controllable, ABC):
         for instruction in temp:
             self.__remove_instruction(instruction)
         self.__instruction_count = 0
-        self.update_statevector(use_energy=False, check_for_game_over=False)
+        self.__stv = StateVector.create_zero_state_vector(self.num_of_qubits)
+        self.__circuit_matrix = CircuitMatrix.create_identity(self.num_of_qubits)
 
     def get_available_instructions(self) -> List[Instruction]:
         """
@@ -660,7 +731,9 @@ class Robot(Controllable, ABC):
         :param collectible: the Collectible we want to give this Robot
         :return: None
         """
-        if isinstance(collectible, Coin):
+        if isinstance(collectible, Score):
+            self.__score += collectible.amount
+        elif isinstance(collectible, Coin):
             self.backpack.give_coin(collectible.amount)
         elif isinstance(collectible, Key):
             self.backpack.give_key(collectible.amount)
@@ -729,7 +802,7 @@ class Robot(Controllable, ABC):
 
 
 class BaseBot(Robot):
-    def __init__(self, game_over_callback: Callable[[], None], num_of_qubits: int = 2,
+    def __init__(self, game_over_callback: Callable[[], None], num_of_qubits: int = 3,
                  gates: Optional[List[Instruction]] = None,
                  circuit_space: Optional[int] = None, backpack_space: Optional[int] = None,
                  max_energy: Optional[int] = None, start_energy: Optional[int] = None):

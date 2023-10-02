@@ -6,6 +6,7 @@ from qrogue.game.world.navigation import Direction, Coordinate
 from qrogue.game.world.tiles import Tile, TileCode, WalkTriggerTile
 from qrogue.game.world.tiles.tiles import NpcTile
 from qrogue.util import Config, achievements, AchievementManager, MapConfig
+from qrogue.util.achievements import Unlocks
 
 SCIENTIST_TILE_REPRESENTATION = Config.scientist_name()[0]
 ascii_spaceship = \
@@ -203,14 +204,14 @@ class SpaceshipMap:
                 self.__load_map(MapConfig.expedition_map_prefix(), None)    # for now we immediately start an expedition
             tile = SpaceshipTriggerTile(character, callback_)
         elif character == SpaceshipTriggerTile.MAP_WORKBENCH_REPRESENTATION:
-            if self.__achievement_manager.check_achievement(achievements.UnlockedWorkbench):
+            if AchievementManager.instance().check_unlocks(Unlocks.Workbench):
                 tile = SpaceshipTriggerTile(character, self.__use_workbench)
             else:
                 tile = SpaceshipFreeWalkTile()
         # elif character == SpaceshipTriggerTile.MAP_GATE_LIBRARY_REPRESENTATION:
         #    tile = SpaceshipTriggerTile(character, self.open_gate_library)
         elif character == SpaceshipTriggerTile.QUICKSTART_LEVEL:
-            if self.__achievement_manager.check_achievement(achievements.UnlockedQuickStart):
+            if AchievementManager.instance().check_unlocks(Unlocks.QuickStart):
                 tile = SpaceshipTriggerTile(character, self.__load_newest_map)
             else:
                 tile = SpaceshipFreeWalkTile()
@@ -255,7 +256,7 @@ class SpaceshipMap:
             self.__stop_playing_callback(direction, controllable)
 
     def __use_workbench(self, direction: Direction, controllable: Controllable):
-        if self.__achievement_manager.check_achievement(achievements.UnlockedWorkbench):
+        if AchievementManager.instance().check_unlocks(Unlocks.Workbench):
             self.__use_workbench_callback(direction, controllable)
 
     def __trigger_event(self, event_id: str):

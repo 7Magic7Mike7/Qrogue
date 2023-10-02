@@ -52,6 +52,11 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
         self.__spawn_pos: Optional[Coordinate] = None
         self.__meta_data = MapMetaData(None, None, False, self.__show_description)
 
+    def warning(self, text: str, loc_details: Optional[str] = None):
+        loc_details = "" if loc_details is None else "~" + loc_details
+        level_name = "[meta_data uninitialized]" if self.__meta_data is None else self.__meta_data.name
+        parser_util.warning(text, f"{level_name}{loc_details}")
+
     def __show_description(self):
         if self.__meta_data.description:
             ret = self.__meta_data.description.get(self.__check_achievement)
@@ -116,10 +121,11 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
     def __load_room(self, reference: str, x: int, y: int) -> Room:
         if reference in self.__rooms:
             if reference.lower() == 'sr':
-                if self.__spawn_pos:
-                    parser_util.warning("A second SpawnRoom was defined! Ignoring the first one "
-                                        "and using this one as SpawnRoom.")
-                self.__spawn_pos = Coordinate(x, y)
+                spawn_pos = Coordinate(x, y)
+                if self.__spawn_pos is not None:
+                    self.warning(f"A second SpawnRoom was defined! Ignoring the first one @{self.__spawn_pos} and "
+                                 f"using the new one @{spawn_pos} instead.")
+                self.__spawn_pos = spawn_pos
             room = self.__rooms[reference]
             hw_dic = parser_util.get_hallways(self.__created_hallways, self.__hallways, Coordinate(x, y))
             return room.copy(hw_dic)
@@ -127,8 +133,8 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
             hw_dic = parser_util.get_hallways(self.__created_hallways, self.__hallways, Coordinate(x, y))
             return Placeholder.empty_room(hw_dic)
         else:
-            parser_util.warning(f"room_id \"{reference}\" not specified and imports not supported for worlds! "
-                                "Placing an empty room instead.")
+            self.warning(f"room_id \"{reference}\" not specified and imports not supported for worlds! "
+                         "Placing an empty room instead.")
             # row.append(rooms.Placeholder.empty_room())
         return SpawnRoom(self.__load_map)
 
@@ -139,7 +145,7 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
         norm_ref = parser_util.normalize_reference(ref)
         if norm_ref in self.__messages:
             return self.__messages[norm_ref]
-        parser_util.warning(f"Unknown text reference: {ref}. Returning \"Message not found!\"")
+        self.warning(f"Unknown text reference: {ref}. Returning \"Message not found!\"")
         return Message.error("Message not found!")
 
     ##### Message area ######
@@ -160,7 +166,7 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
                 try:
                     message.resolve_message_ref(alt_message)
                 except ValueError as ve:
-                    parser_util.warning("Message-cycle found: " + str(ve))
+                    self.warning("Message-cycle found: " + str(ve), message.id)
 
     ##### Hallway area #####
 
@@ -178,11 +184,11 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
                 open_state = DoorOpenState.EventLocked
             else:
                 open_state = DoorOpenState.Open
-                parser_util.warning("Event lock specified without an event id! Ignoring the lock and placing an open "
-                                    "door instead.")
+                self.warning("Event lock specified without an event id! Ignoring the lock and placing an open "
+                             "door instead.")
         else:
             open_state = DoorOpenState.Closed
-            parser_util.warning("Invalid hallway attribute: it is neither locked nor opened nor closed!")
+            self.warning("Invalid hallway attribute: it is neither locked nor opened nor closed!")
         return Door(direction, open_state, DoorOneWayState.NoOneWay, door_check)
 
     def visitHallway(self, ctx: QrogueWorldParser.HallwayContext) -> Tuple[str, Door]:
@@ -278,9 +284,9 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
             else:
                 break
         if ctx.l_room_row(MapConfig.map_height()):
-            parser_util.warning(
-                f"Too much room rows specified. Only maps of size ({MapConfig.map_width()}, "
-                f"{MapConfig.map_height()}) supported. Ignoring over-specified rows.")
+            self.warning(
+                f"Too much room rows specified. Only maps of size ({MapConfig.map_width()}, {MapConfig.map_height()}) "
+                f"supported. Ignoring over-specified rows.")
 
         return room_matrix
 
@@ -288,7 +294,7 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
         x = 0
         for child in ctx_children:
             if parser_util.check_for_overspecified_columns(x, child.symbol.type, QrogueWorldParser.VERTICAL_SEPARATOR):
-                parser_util.warning(
+                self.warning(
                     f"Too much room columns specified. Only maps of size ({MapConfig.map_width()}, "
                     f"{MapConfig.map_height()}) supported. Ignoring over-specified columns.")
                 break
@@ -310,8 +316,8 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
         x = 0
         for child in ctx.children:
             if parser_util.check_for_overspecified_columns(x, child.symbol.type, QrogueWorldParser.VERTICAL_SEPARATOR):
-                parser_util.warning(f"Too much room columns specified. Only maps of size ({MapConfig.map_width()}, "
-                                    f"{MapConfig.map_height()}) supported. Ignoring over-specified columns.")
+                self.warning(f"Too much room columns specified. Only maps of size ({MapConfig.map_width()}, "
+                             f"{MapConfig.map_height()}) supported. Ignoring over-specified columns.")
                 break
 
             if child.symbol.type == QrogueWorldParser.ROOM_ID:

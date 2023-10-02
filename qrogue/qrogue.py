@@ -16,7 +16,7 @@ def __init_singletons(seed: int):
     Config.load()
     Config.activate_debugging()
 
-    def log_print(title: str, text: str):
+    def log_print(title: str, text: str, position: Optional[int] = None):
         #print(f"\"{title}\": {text}")
         pass
 
@@ -74,6 +74,7 @@ def start_qrogue() -> int:
     # __CONTROLS_ARGUMENT = ["--controls", "-c"]          # int argument
     __SIMULATION_FILE_ARGUMENT = ["--simulation-path", "-sp"]   # path argument
     __VALIDATE_MAP_ARGUMENT = ["--validate-map", "-vm"]     # path argument
+    __PLAY_LEVEL_ARGUMENT = ["--play-level", "-pl"]     # str argument
 
     from_console, _ = __parse_argument(__CONSOLE_ARGUMENT)
     debugging, _ = __parse_argument(__DEBUG_ARGUMENT)
@@ -83,6 +84,7 @@ def start_qrogue() -> int:
     has_simulation_path, simulation_path = __parse_argument(__SIMULATION_FILE_ARGUMENT, has_value=True)
     has_map_path, map_path = __parse_argument(__VALIDATE_MAP_ARGUMENT, has_value=True)
     _, seed = __parse_argument(__SEED_ARGUMENT, has_value=True)
+    has_play_level, level2play = __parse_argument(__PLAY_LEVEL_ARGUMENT, has_value=True)
 
     if has_map_path:
         if validate_map(map_path):
@@ -92,6 +94,8 @@ def start_qrogue() -> int:
     else:
         if has_simulation_path:
             return simulate_game(simulation_path, from_console, debugging, data_folder, user_data_folder)
+        elif has_play_level:
+            return play_level(level2play, debugging, data_folder, seed)
         else:
             return start_game(from_console, debugging, test_level, data_folder, user_data_folder, seed)
 
@@ -248,3 +252,37 @@ def validate_map(path: str, is_level: bool = True, in_base_path: bool = True) ->
         print(se)
 
     return not error_occurred
+
+
+def play_level(level_name: str, debugging: bool = False, data_folder: str = None, seed: str = None) -> int:
+    # NOTE: This does not reset or set any achievements! Therefore, the level might not play the same as if you would
+    # play it normally for the first time.
+    if PathConfig.load_paths(data_folder, None):
+        return_code = Config.load()  # NEEDS TO BE THE FIRST THING WE DO!
+    else:
+        return_code = 1
+    if return_code == 0:
+        if seed is not None and not debugging:
+            print("[Qrogue] Attention! Manual seeds are only available in debug-mode!")
+        if seed is None or not debugging:
+            seed = random.randint(0, Config.MAX_SEED)
+        else:
+            seed = int(seed)
+        print(f"[Qrogue] Starting level {level_name} with seed = {seed}")
+        try:
+            QrogueCUI(seed).start(level_name)
+        except PyCuiConfig.OutOfBoundsError:
+            print("---------------------------------------------------------")
+            input("[Qrogue] Press ENTER to close the application")
+            sys.exit(1)
+
+        # flush after the player stopped playing
+        Logger.instance().flush()
+        print("[Qrogue] Successfully flushed all logs and shut down the game without any problems. See you next time!")
+    else:
+        print(f"[Qrogue] Error #{return_code}:")
+        if return_code == 1:
+            print("qrogue.config is invalid. Please check if the second line describes a valid path (the path "
+                  "to your save files). Using special characters in the path could also cause this error so if the "
+                  "path is valid please consider using another one without special characters.")
+    return return_code

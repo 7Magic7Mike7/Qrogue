@@ -1,0 +1,202 @@
+Qrogue<
+Name = "Lesson 5: Intrisically Interconnected"
+Description = Speaker "0" prio "In the final lesson we will talk about a quantum concept //05Einstein// described as //05'spooky action at a distance'//. If you're not familiar with this quote: no reason to actually be afraid! It's only mind-blowing."
+NO_TELEPORTER
+
+// Introduced Concepts:
+// Entangled Digits, Entanglement "Boss"
+
+[Robot]
+2 qubits [ *xgate, *cxgate, *hgate ]
+circuit_space = 3
+maxenergy = 1000000
+
+[Layout]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+| __ .. __ .. __ .. __ .. __ .. __ .. __ |
+| ..    ..    ..    ..    ..    ..    .. |
+| __ .. ff == dd == cc == aa == SR .. __ |
+| ..    ==    ..    ..    ..    ..    .. |
+| __ .. gg 11 hh 11 ii 11 jj .. __ .. __ |
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[Custom Rooms]
+
+SR (Spawn):
+#############
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+#############
+
+aa (Wild):
+#############
+# 1 _ _ _ 4 #
+# _ o _ o _ #
+# m _ 0 _ _ #
+# _ o _ o _ #
+# 6 _ _ _ 9 #
+#############
+m 1 *multiDigits
+1 *withH input=*baseAll
+4 *withH input=*baseAll
+6 *withH input=*baseAll
+9 *withH input=*baseAll
+
+cc (Wild):
+#############
+# 3 3 _ 9 9 #
+# _ o o o _ #
+# _ o o o m #
+# _ o o o _ #
+# 8 8 _ 4 4 #
+#############
+m 1 *tutEntangledDigits
+3 *withH input=*baseAll
+3 *withH input=*baseAll
+9 *withH input=*baseAll
+9 *withH input=*baseAll
+8 *withH input=*baseAll
+8 *withH input=*baseAll
+4 *withH input=*baseAll
+4 *withH input=*baseAll
+
+dd (Wild):
+#############
+# 4 6 7 o o #
+# _ o _ o o #
+# _ o _ _ _ #
+# 7 o _ _ _ #
+# 6 4 _ _ 0 #
+#############
+6 *baseAll input=*withH
+6 *withH input=*baseAll
+4 *withH input=*baseAll
+4 *baseAll input=*withH
+7 *withH input=*baseAll
+7 *withH input=*baseAll
+0 *baseAll input=*withH
+
+ff (Wild):
+#############
+# 1 _ 1 7 5 #
+# 8 o o o _ #
+# 7 o 0 0 m #
+# 5 o 0 o o #
+# _ c _ o o #
+#############
+c key 1
+m 1 *pathChoices
+0 *baseAll input=*withH
+8 *withH input=*baseAll
+1 *withH input=*baseAll
+1 *withH input=*baseAll
+7 *withH input=*baseAll
+7 *withH input=*baseAll
+5 *withH input=*baseAll
+5 *withH input=*baseAll
+
+gg (Story):
+#############
+# o _ _ _ o #
+# _ o _ o _ #
+# c _ m _ _ #
+# _ o _ o _ #
+# o _ c _ o #
+#############
+m 1 *bossMsg
+c key 1
+c key 1
+
+hh (Story):
+#############
+# _ o _ o _ #
+# o _ _ _ o #
+# _ _ o _ _ #
+# o _ _ _ o #
+# _ o _ o _ #
+#############
+
+ii (Story):
+#############
+# _ o _ o _ #
+# _ o _ o _ #
+# _ _ _ _ _ #
+# _ o _ o _ #
+# _ o _ o _ #
+#############
+
+jj (Story):
+#############
+# o _ _ _ o #
+# _ o o o _ #
+# _ _ b _ m #
+# _ o o o _ #
+# o _ _ _ o #
+#############
+b [ *entanglement1 input=*base00 ] gate *s tutorial *bossIntro
+m *doneMsg trigger *done
+
+[Hallways]
+11 (locked; ; )
+
+[StateVector Pools]
+custom
+*base00 [ {num_qubits=2: gI @ q0} ]
+*base01 [ {num_qubits=2: gX @ q0} ]
+*base10 [ {num_qubits=2: gX @ q1} ]
+*base11 [ {num_qubits=2: gX @ q0, gX @ q1} ]
+*baseAll [ *base00, *base01, *base10, *base11 ]
+
+*reach1X [ *base01, *base10 ]
+*reach2X [ *reach1X, *base11 ]
+
+*supH0 [ {num_qubits=2: gH @ q0} ]
+*supH1 [ {num_qubits=2: gH @ q1} ]
+*supH [ *supH0, *supH1 ]
+
+*supH0X1 [ {num_qubits=2: gH @ q0, gX @ q1} ]
+*supH1X0 [ {num_qubits=2: gH @ q1, gX @ q0} ]
+
+*supHX [ *supH0X1, *supH1X0 ]
+
+*withH [ *supH, *supHX ]
+
+*allGates [ *reach2X, *supH, *supHX ]	// all combinations without entanglement
+
+*entanglement0 [ {num_qubits=2: gH @q0, gCX @[q0, q1]} ]
+*entanglement1 [ {num_qubits=2: gH @q1, gCX @[q1, q0]} ]
+*entanglement [ *entanglement0, *entanglement1 ]
+
+default *withH
+
+[Reward Pools]
+default *none
+
+
+[Messages]
+// highlight text by encapsulating it in "//02abcd//" where "abcd" is the text to highlight and "02" one of the available styles: 01 is for tiles, 02 is for game objects, 03 for actions, 04 for keys on the keyboard and 05 for other words
+// speaker: 0 = Examiner, 1 = Scientist, 2 = System, 3 = Player
+
+default Speaker "0"
+
+*multiDigits prio pos5 "Did you ever question why all digits greater //010// never occurred //05more than once// per room?"
+
+*tutEntangledDigits prio pos5 "//05Same// digits are //05entangled//. This means that they //05share// their //02State//. E.g. if a //017// collapses all other //017//s in the room //05immediately collapse// to the //05same classical value// (remember: 0=show puzzle, 1=vanish). Still, the //02Puzzle// they present to you are //05not the same//, so don't confuse this."
+"Technically this is also true for //010//s but you just didn't realize it yet because they //05always// collapse to //050// either way."
+
+*pathChoices prio pos5 "This room gives you a choice between two paths:" 
+"- the straight path forces you to solve three //02Puzzles//" 
+"- the longer path at the top requires between 0 and 7 //02Puzzles// to be solved" 
+"Which one will you choose?"
+
+*bossMsg prio pos1 "There is only one thing left before you successfully finish the trainings program: the obligatory //05Boss Battle//." 
+
+*bossIntro prio "You already saw //02Entanglement// in same digits of a room. But there is also another version of //02Entanglement//. Instead of always collapsing to the same value, this version makes two //02Qubits// always collapse to the opposite value. Meaning if q0 collapses to 0, q1 will collapse to 1 and vice versa."
+"And now it is your turn to //03create// this //05anti-correlated// //02Entanglement//!"
+
+*doneMsg "Congratulations, you're done knowing the basics! You are now ready to use your newly gained //02Gate// in your //05first expedition// of the //02Quniverse//."
+
+>Qrogue

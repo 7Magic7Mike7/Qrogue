@@ -1,7 +1,7 @@
 from enum import Enum
-from typing import Callable, List
+from typing import Callable, List, Optional
 
-from qrogue.game.logic.actors import Controllable, Robot, Boss as BossActor
+from qrogue.game.logic.actors import Controllable, Robot, Enemy as EnemyActor, Boss as BossActor
 from qrogue.game.target_factory import EnemyFactory
 from qrogue.game.world.navigation import Direction
 from qrogue.util import RandomManager, Logger, CheatConfig, PuzzleConfig
@@ -17,16 +17,23 @@ class Enemy(WalkTriggerTile):
         DEAD = 3
         FLED = 4
 
-    def __init__(self, factory: EnemyFactory, get_entangled_tiles: Callable[[int], List["Enemy"]],
-                 update_entangled_groups: Callable[["Enemy"], None], e_id: int = 0):
+    def __init__(self, factory: EnemyFactory, get_entangled_tiles: Callable[[int], List[EnemyActor]],
+                 update_entangled_groups: Callable[[EnemyActor], None], e_id: int = 0,
+                 tile_id_callback: Callable[[], int] = None):
         super().__init__(TileCode.Enemy)
         self.__factory = factory
         self.__state = Enemy._EnemyState.UNDECIDED
         self.__get_entangled_tiles = get_entangled_tiles
         self.__update_entangled_groups = update_entangled_groups
         self.__id = e_id
+        if tile_id_callback is None:
+            self.__next_tile_id = lambda: -1
+        else:
+            self.__next_tile_id = tile_id_callback
+        self.__tile_id = self.__next_tile_id()
+
         self.__rm = RandomManager.create_new()
-        self.__enemy = None
+        self.__enemy: Optional[EnemyActor] = None
 
     @property
     def data(self) -> int:
@@ -60,6 +67,8 @@ class Enemy(WalkTriggerTile):
             if self._state == Enemy._EnemyState.UNDECIDED:
                 if self.__measure():
                     self.__fight(robot, direction)
+                else:
+                    Logger.instance().info(f"Enemy #{self.__tile_id} vanished.", from_pycui=False)
             elif self._state == Enemy._EnemyState.FIGHT:
                 self.__fight(robot, direction)
         return False
@@ -101,13 +110,15 @@ class Enemy(WalkTriggerTile):
         return self.__state is Enemy._EnemyState.FIGHT
 
     def __fight(self, robot: Robot, direction: Direction):
+        Logger.instance().info(f"Starting fight with #{self.__tile_id}", from_pycui=False)
         if self.__enemy is None:
             # the higher the amplitude the easier it should be to flee
             self.__enemy = self.__factory.produce(robot, self.__rm, self.__id)
         self.__factory.start(robot, self.__enemy, direction)
 
     def _copy(self) -> "Tile":
-        enemy = Enemy(self.__factory, self.__get_entangled_tiles, self.__update_entangled_groups, self.__id)
+        enemy = Enemy(self.__factory, self.__get_entangled_tiles, self.__update_entangled_groups, self.__id,
+                      tile_id_callback=self.__next_tile_id)
         self.__update_entangled_groups(enemy)
         return enemy
 
@@ -136,8 +147,8 @@ class Boss(WalkTriggerTile):
         if isinstance(controllable, Robot):
             if self._is_active:
                 self.__on_walk_callback(controllable, self.__boss, direction)
-            else:
-                self.__end_level_callback()
+            #else:
+            #    self.__end_level_callback()
             return True
         else:
             Logger.instance().error(f"Non-Robot walked on Boss! controllable = {controllable}", from_pycui=False)
@@ -147,8 +158,8 @@ class Boss(WalkTriggerTile):
         if self._is_active:
             return "B"
         else:
-            return "t"  # teleport for ending the level
+            return self._invisible
 
     def _copy(self) -> "Tile":
-        # Bosses should not be duplicated in a level anyways, so it doesn't matter if we reference the same BossActor
+        # Bosses should not be duplicated in a level anyway, so it doesn't matter if we reference the same BossActor
         return Boss(self.__boss, self.__on_walk_callback, self.__end_level_callback)

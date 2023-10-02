@@ -1,10 +1,12 @@
 Qrogue<
-Name = "Lesson 2: Twos everywhere"
-Description = Speaker "0" "Lesson 2 will take the //05complexity// to a new level. Previously your Qubot's //02Circuit// had only //05one// //02Qubit//. Now we //05extended// the circuit to //05two// //02Qubits//. It's still //05normal// matrix vector multiplication though."
+Name = "Lesson 2: Flee & Control"
+Description = Speaker "0" "TODO"
+
 NO_TELEPORTER
+SHOW_INDIVIDUAL_QUBITS
 
 // Introduced Concepts:
-// 2nd Qubit, 2nd (X-)Gate
+// 2nd spot in Circuit, CX-Gate, Fleeing, Equation, Puzzle History?
 
 [Robot]
 2 qubits [ *xgate ]
@@ -13,112 +15,106 @@ maxenergy = 100000 // it should not be possible to run out of energy in this lev
 
 [Layout]
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-| __ .. __ .. SR == aa .. __ .. __ .. __ |
-| ..    ..    ==    ==    ..    ..    .. |
-| __ .. __ .. cc == bb == ff .. __ .. __ |
-| ..    ..    ..    ==    11    ..    .. |
-| __ .. __ .. __ .. dd 11 ee .. __ .. __ |
+| __ .. __ .. __ .. ee == ff .. __ .. __ |
+| ..    ..    ..    11    ..    ..    .. |
+| __ .. __ .. SR == aa == bb .. __ .. __ |
+| ..    ..    ..    22    ==    ..    .. |
+| __ .. __ .. __ .. dd == cc .. __ .. __ |
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 [Custom Rooms]
 
 aa (Wild):
 #############
-# _ _ 0 _ _ #
-# _ o _ o _ #
-# 0 _ _ _ 0 #
-# _ o _ o _ #
-# _ _ 0 _ _ #
+# o o 0 o o #
+# o o _ o o #
+# m t 0 _ 0 #
+# o o _ o o #
+# o o 0 o o #
 #############
-0 *reach1X		// first occurrence in room
-0 [0, 1, 0, 0] tutorial *firstPuzzle trigger *solvedFirstPuzzle		// second occurrence is the first one we step on
-0 *reach1X
-0 *reach1X none tutorial *hotkeys 
+m 1 *tutOneWay
+t Unlocked *PuzzleFlee
+0 *base00 input=*base10
+0 *base11 input=*base10 tutorial *tutFlee trigger *unlock_ShowEquation
+0 *base11 input=*base01
+0 *base00 input=*base01
 
-bb (Gate):
+bb (Wild):
 #############
-# o o _ o o #
-# o o _ o o #
+# _ _ _ _ _ #
+# _ o o o _ #
+# _ _ _ o _ #
+# o o _ o _ #
+# c 0 _ _ _ #
+#############
+c score 300
+0 *base11 input=*base00
+
+cc (Gate):
+#############
+# o _ _ _ o #
+# _ o _ o _ #
 # _ _ c _ _ #
-# o o _ o o #
-# o o _ o o #
-#############
-c gate *x
-
-cc (Wild):
-#############
-# o _ _ _ o #
-# _ o 0 o _ #
-# _ 0 _ 0 _ #
-# _ o 0 o _ #
+# _ o _ o _ #
 # o _ _ _ o #
 #############
-0 [0, 1, 0, 0] tutorial *firstPuzzle trigger *solvedFirstPuzzle
-0 *reach1X
-0 *reach1X none tutorial *hotkeys
-0 *reach1X
+//m 1 *permVsTemp	// todo do we actually use both versions?
+c gate *CX
 
 dd (Wild):
 #############
-# o _ 0 _ c #
-# o o _ 0 _ #
-# o o o _ 0 #
-# o o o o _ #
-# o o o o o #
+# o o 0 o o #
+# 0 _ _ o o #
+# c _ 0 _ _ #
+# 0 _ _ o o #
+# o o 0 o o #
 #############
 c key 1
-0 *reach1X *rewDD
-0 *base11 *rewDD
-0 *reach2X *rewDD
+0 *reach2X
+0 *reach2X
+0 *reach2X
+0 *base11 input=*base00 tutorial *tutEquation
 
 ee (Wild):
 #############
-# 0 _ _ o o #
-# _ _ _ o o #
-# _ _ 0 0 o #
-# o o 0 0 _ #
-# o o o _ m #
-#############
-0 *base11
-0 *reach1X
-0 *reach1X
-0 *reach1X
-0 *base11
-m *doneMsg trigger *done
-
-ff (Wild):
-#############
 # o o o o o #
-# _ o o o o #
-# 0 _ o o o #
-# _ 0 _ o o #
-# c _ 0 _ o #
+# o 0 0 _ _ #
+# o 0 _ _ _ #
+# o _ _ _ _ #
+# o _ _ _ o #
 #############
-c key 1
-0 *reach1X *rewFF
-0 *base11 *rewFF
-0 *reach2X *rewFF
+
+ff (Story):
+#############
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ m _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+#############
+m 1 *doneMsg trigger *done
 
 
 [Hallways]
 11 (locked; ; )
+22 (closed; one way North; )
 
 [StateVector Pools]
 custom
-*base01 [ [0, 1, 0, 0] ]
-*base10 [ [0, 0, 1, 0] ]
-*base11 [ [0, 0, 0, 1] ]
+*base00 [ {num_qubits=2: gI @ q0} ]
+*base01 [ {num_qubits=2: gX @ q0} ]
+*base10 [ {num_qubits=2: gX @ q1} ]
+*base11 [ {num_qubits=2: gX @ q0, gX @ q1} ]
 
 *reach1X [ *base01, *base10 ]
-*reach2X [ *reach1X, [0, 0, 0, 1] ]
+*reach2X [ *reach1X, *base11 ]
 
-default *reach1X
+default *reach2X
 
 [Reward Pools]
 custom 
 
 *rewDD ordered [none]
-*rewFF ordered [none]
 
 default *none
 
@@ -126,12 +122,20 @@ default *none
 [Messages]
 // highlight text by encapsulating it in "//02abcd//" where "abcd" is the text to highlight and "02" one of the available styles: 01 is for tiles, 02 is for game objects, 03 for actions, 04 for keys on the keyboard and 05 for other words
 // speaker: 0 = Examiner, 1 = Scientist, 2 = System, 3 = Player
+default Speaker "0"
 
-*firstPuzzle Speaker "0" prio pos 5 "Now that you have a //05second// //02Qubit// you can use the //04navigation keys// to not only //03choose// the target //02Slot// but also the target //02Qubit// of a //02Gate// you're placing in your //02Circuit//."
-"The displayed //02Puzzle// should look familiar. It's //05basically the same// as the previous one but now with //05two// //02Qubits//." when *solvedFirstPuzzle then *None
+*tutOneWay prio pos5 "Some doors - like the one at the South end of the room - open only from one side. Seems like you need to find a different way to access the room behind it."
+
+*tutFlee prio pos1 "Sometimes you will find //02Puzzles// you cannot solve yet (e.g., due to lacking a specific //02Gate//). In that case you can use your newly unlocked ability 'Flee'." "However, unsolved //02Puzzles// will still keep blocking your way until you come back again and solve them."
+
+*tutEquation prio "Now that you're familiar with //05classical// //02Puzzles// we will present you with a new component: the underlying Matrix-Vector-Multiplication." "The Gate Help (//04H//) will now additionally show the gates' matrices." "Bla bla"
+
+
+
+*tutDigits prio "Did I already mention that there are //05not only// //010//s?" "Until now //05everytime// you //03stepped// onto a digit a //02Puzzle// was presented to you. But what if that's just because the //010// represents a //050%// chance to //05skip// the //02Puzzle//?"
 
 *hotkeys "Instead of //03selecting// and //03confirming// //05-Back-// you can also press //04Backspace// as a shortcut."
 
-*doneMsg Speaker "0" "Ready for the next lesson?" "In case you want to pause or stop playing you can press //04Tab// or //04P// to open the //05Pause menu//. Progress is //05saved level-wise// so make sure to not accidentally stop just before finishing a level!"
+*doneMsg "Ready for the next lesson?" "In case you want to pause or stop playing you can press //04Tab// or //04P// to open the //05Pause menu//. Progress is //05saved level-wise// so make sure to not accidentally stop just before finishing a level!"	// TODO: makes players pause, but do we want that?
 
 >Qrogue

@@ -11,7 +11,7 @@ from qrogue.util import CheatConfig
 class TileCode(Enum):
     Invalid = (-1, "§")    # when an error occurs, e.g. a tile at a non-existing position should be retrieved
     Debug = (-2, "€")      # displays a digit for debugging
-    Void = (7, "_")        # tile outside of the playable area
+    Void = (7, "_")        # tile outside the playable area
     Floor = (0, " ")       # simple floor tile without special meaning
     HallwayEntrance = (5, " ")     # depending on the hallway it refers to is either a Floor or Wall
     FogOfWar = (3, "~")    # tile of a place we cannot see yet
@@ -45,6 +45,7 @@ class TileCode(Enum):
     CollectibleKey = (501, "k")
     CollectibleCoin = (502, "€")
     CollectibleEnergy = (503, "e")
+    CollectibleScore = (504, "s")
     CollectibleGate = (520, "g")
     CollectibleQubit = (560, "q")
 
@@ -76,6 +77,7 @@ class TileCode(Enum):
             TileCode.Collectible,
             TileCode.CollectibleKey, TileCode.CollectibleCoin, TileCode.CollectibleEnergy,
             TileCode.CollectibleGate, TileCode.CollectibleQubit,
+            TileCode.CollectibleScore,
         ]
 
 
@@ -146,7 +148,7 @@ class Debug(Tile):
 
     @property
     def data(self) -> int:
-        return self.__num
+        return int(self.__num)
 
     def get_img(self) -> str:
         return self.__num

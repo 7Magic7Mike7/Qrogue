@@ -1,6 +1,6 @@
 from typing import Tuple, Optional
 
-from qrogue.game.logic.actors import StateVector
+from qrogue.game.logic.base import StateVector, CircuitMatrix
 from qrogue.game.logic.collectibles import Collectible
 from qrogue.util import RandomManager
 
@@ -12,10 +12,11 @@ class Riddle(Target):
     A Target with a restricted amount of attempts to reach its StateVector.
     """
 
-    __UNSTABLE_PROBABILITY = 0.65   # todo only for tutorial! Should be 0.5 later
+    __UNSTABLE_PROBABILITY = 0.5
 
-    def __init__(self, target: StateVector, reward: Collectible, attempts: int = 1):
-        super().__init__(target, reward)
+    def __init__(self, id_: int, target: StateVector, reward: Collectible, attempts: int = 1,
+                 input_: Optional[StateVector] = None):
+        super().__init__(id_, target, reward, input_)
         self.__attempts = attempts
         self.__rm = RandomManager.create_new()  # todo does this need to be seeded? I think yes for simulations :(
         self.__can_attempt = True
@@ -49,8 +50,8 @@ class Riddle(Target):
         """
         return 0
 
-    def is_reached(self, state_vector: StateVector) -> Tuple[bool, Optional[Collectible]]:
-        success, reward = super(Riddle, self).is_reached(state_vector)
+    def is_reached(self, state_vector: StateVector, circ_matrix: CircuitMatrix) -> Tuple[bool, Optional[Collectible]]:
+        success, reward = super(Riddle, self).is_reached(state_vector, circ_matrix)
         if success:
             assert reward is not None  # riddles always need to give a reward
         else:

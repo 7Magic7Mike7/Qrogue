@@ -1,7 +1,7 @@
 
 from qrogue.game.logic.actors.controllables import Controllable
 from qrogue.game.logic.collectibles import Collectible, Key
-from qrogue.util import Config
+from qrogue.util import Config, Logger
 
 
 class Player(Controllable):
@@ -47,3 +47,5 @@ class Player(Controllable):
         """
         if isinstance(collectible, Key):
             self.__key_count += 1
+        else:
+            Logger.instance().error(f"Tried to give player non-key collectible: {collectible}.", from_pycui=False)

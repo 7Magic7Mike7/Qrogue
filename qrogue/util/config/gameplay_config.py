@@ -1,7 +1,9 @@
+import enum
 from enum import Enum
 from typing import Callable, Tuple, List, Dict, Any, Optional
 
-from qrogue.util.config import TestConfig, PopupConfig, PyCuiColors
+from qrogue.util.config import PathConfig, TestConfig, PopupConfig, PyCuiColors
+from qrogue.util.util_functions import open_folder
 
 
 class MapConfig:
@@ -48,6 +50,10 @@ class MapConfig:
     @staticmethod
     def global_event_prefix() -> str:
         return "global_event_"
+
+    @staticmethod
+    def unlock_prefix() -> str:
+        return "unlock_"
 
     @staticmethod
     def next_map_string() -> str:
@@ -109,7 +115,7 @@ class MapConfig:
     def level_list() -> List[str]:
         levels = []
         for i in range(MapConfig.num_of_lessons()):
-            levels.append(f"l0v{i}")
+            levels.append(f"l0k0v{i}")
         levels += ["l0training", "l0exam"]
         return levels
 
@@ -198,6 +204,8 @@ class CheatConfig:
         elif code in CheatConfig.__CHEATS:
             CheatConfig.__CHEATS[code] = not CheatConfig.__CHEATS[code]
             ret = True
+        elif code.lower().strip() == "userdata":
+            open_folder(PathConfig.user_data_path())
 
         if ret:
             CheatConfig.__popup("Cheats", f"Successfully used the Cheat \"{code}\"", PopupConfig.default_pos(),
@@ -242,6 +250,10 @@ def _get_float_callback(min_: float, max_: float, steps: int) -> Tuple[Callable[
 
 
 class Options(Enum):
+    energy_mode = ("Energy Mode", _get_boolean_callback(), 2, 0,
+                   "In energy mode every change to your circuit costs energy. You loose if your Robot is out of "
+                   "energy.")
+
     auto_save = ("Auto Save", _get_boolean_callback(), 2, 1,
                  "Whether to automatically save the game on exit or not.")
     auto_reset_circuit = ("Auto Reset Circuit", _get_boolean_callback(), 2, 1,
@@ -266,6 +278,11 @@ class Options(Enum):
                                 "During some special scene transitions there will be some animated text describing "
                                 "what happened in-between story sections. Skipping this means that the whole text "
                                 "will be shown at once.")
+    enable_puzzle_history = ("Enable puzzle history", _get_boolean_callback(), 2, 1,
+                             "Whether you can navigate through your circuit's history or not while solving a puzzle.")
+    auto_reset_history = ("Auto reset history", _get_boolean_callback(), 2, 1,
+                          "Whether the puzzle history should automatically jump to the present (= last changes) when "
+                          "you navigate through menus.\nNote: Confirming to edit the circuit always resets history.")
 
     def __init__(self, name: str, get_value: Tuple[Callable[[int], str], Callable[[str], Any]], num_of_values: int,
                  default_index: int, description: str):
@@ -300,21 +317,19 @@ class Options(Enum):
 
 
 class GameplayConfig:
+    class _KnowledgeMode(enum.Enum):
+        Newbie = 0
+        Experienced = 1
+
     __KEY_VALUE_SEPARATOR = "="
-    __OPTIONS: Dict[Options, int] = {
-        Options.auto_save: Options.auto_save.default_index,
-        Options.auto_reset_circuit: Options.auto_reset_circuit.default_index,
-        Options.log_keys: Options.log_keys.default_index,
+    __OPTIONS: Dict[Options, int] = { }
 
-        Options.gameplay_key_pause: Options.gameplay_key_pause.default_index,
-        Options.simulation_key_pause: Options.simulation_key_pause.default_index,
+    __KNOWLEDGE_MODE: _KnowledgeMode = _KnowledgeMode.Newbie
 
-        Options.show_ket_notation: Options.show_ket_notation.default_index,
-        Options.allow_implicit_removal: Options.allow_implicit_removal.default_index,
-
-        Options.allow_multi_move: Options.allow_multi_move.default_index,
-        Options.auto_skip_text_animation: Options.auto_skip_text_animation.default_index
-    }
+    @staticmethod
+    def init_options():
+        for val in Options:
+            GameplayConfig.__OPTIONS[val] = val.default_index
 
     @staticmethod
     def get_options(needed_options: Optional[List[Options]] = None) -> List[Tuple[Options, Callable[[Options], str]]]:
@@ -376,6 +391,26 @@ class GameplayConfig:
         return True
 
     @staticmethod
+    def set_newbie_mode():
+        GameplayConfig.__KNOWLEDGE_MODE = GameplayConfig._KnowledgeMode.Newbie
+
+    @staticmethod
+    def set_experienced_mode():
+        GameplayConfig.__KNOWLEDGE_MODE = GameplayConfig._KnowledgeMode.Experienced
+
+    @staticmethod
+    def get_knowledge_mode() -> int:
+        return GameplayConfig.__KNOWLEDGE_MODE.value
+
+    @staticmethod
+    def is_newbie_mode():
+        return GameplayConfig.__KNOWLEDGE_MODE == GameplayConfig._KnowledgeMode.Newbie
+
+    @staticmethod
+    def is_experienced_mode():
+        return GameplayConfig.__KNOWLEDGE_MODE == GameplayConfig._KnowledgeMode.Experienced
+
+    @staticmethod
     def auto_save() -> bool:
         return GameplayConfig.get_option_value(Options.auto_save, convert=True)
 
@@ -405,10 +440,111 @@ class PuzzleConfig:
         return max(1, eid * 2)
 
 
+class ScoreConfig:
+    # sometimes we cannot provide an expected number of gates (so value = 0) so we need a default to work with
+    __DEFAULT_EXPECTED_GATES: int = 5
+    _BONUS_FACTOR: float = 2
+    _PENALTY_FACTOR: float = 0.7
+    _CHECKS_BONUS_MULT: float = 0.2
+    _CHECKS_PENALTY_MULT: float = 1.2
+    _USED_WEIGHT: float = 0.6
+    _CHECKS_WEIGHT: float = 1 - _USED_WEIGHT
+    # base score one gets for solving a puzzle etc.
+    _BASE_SCORE: int = 100
+    _PUZZLE_MULT: float = 1
+    _RIDDLE_MULT: float = 1.5
+    _CHALLENGE_MULT: float = 1.5
+    # bonus score one can get for solving a puzzle etc. in a low amount of steps
+    __PUZZLE_BONUS: int = int(_BASE_SCORE * _PUZZLE_MULT)
+    __RIDDLE_BONUS: int = int(_BASE_SCORE * _RIDDLE_MULT)
+    __CHALLENGE_BONUS: int = int(_BASE_SCORE * _CHALLENGE_MULT * 1.5)
+
+    @staticmethod
+    def _f_bonus(ratio: float, factor: float) -> float:
+        # ratio should be < 1
+        # gives a higher value the smaller ratio is
+        return 1 + (1 + factor) * 2**(-ratio) - (1 + factor) * 0.5  # 0.5=2**-1, so to normalize it to 1 for ratio==1
+
+    @staticmethod
+    def _f_penalty(ratio: float, factor: float) -> float:
+        # ratio should be < 1
+        # gives a smaller value the smaller ratio is
+        return (1 + factor)**ratio - factor
+
+    @staticmethod
+    def _get_ratio(checks: int, used_gates: int, expected_gates: int) -> float:
+        """
+        Returns a 0 <= value < 2.5 that is higher the better checks and used_gates performs compared to expected_gates.
+        This means the lower checks and used_gates are than expected_gates the higher the returned value. Let us
+        distinguish three main cases:
+            - checks == used_gates == expected_gates: The returned ratio is 1.0 since the puzzle was solved as expected.
+            - used_gates < expected_gates: A better solution was found, so a ratio >1.0 is returned. The penalty for needing many checks is kept low.
+            - used_gates > expected_gates: A worse solution was found, so a ratio <1.0 is returned. The penalty for needing many checks is increased.
+        Keep in mind that checks can never be smaller than used_gates. Therefore, if no combined gates are used
+        expected_gates is also the number of expected checks.
+
+        :param checks: how often it was checked if the target was reached
+        :param used_gates: how many gates were used to reach the target
+        :param expected_gates: how many gates were expected to be needed to reach the target
+
+        :return: a ratio determining how good a puzzle was solved
+        """
+        assert not (used_gates is None and expected_gates is not None), f"used_gates is None but expected_gates is " \
+                                                                        f"{expected_gates}!"
+        if used_gates is None or used_gates <= 0:
+            used_gates = 1
+        if expected_gates is None or expected_gates <= 0:
+            # just skip possible bonus since this should only happen for unimportant puzzles
+            # and this way we still get a nice curve only depending on checks
+            expected_gates = used_gates
+        bonus_factor = ScoreConfig._BONUS_FACTOR
+        penalty_factor = ScoreConfig._PENALTY_FACTOR
+
+        # expected_gates is also the expected number of checks since you cannot have less checks than gates
+        # todo: above is False if we implement combining gates! But good combinations would be rewarded, so it should
+        #  be fine
+        if used_gates < expected_gates:
+            used_exp_val = ScoreConfig._f_bonus(used_gates / expected_gates, bonus_factor)
+            # shrink penalty if we used fewer gates
+            penalty_factor *= ScoreConfig._CHECKS_BONUS_MULT
+        elif used_gates > expected_gates:
+            used_exp_val = ScoreConfig._f_penalty(expected_gates / used_gates, penalty_factor)
+            # increase penalty if we used more gates (> 1 could lead to negative numbers though)
+            penalty_factor = penalty_factor * ScoreConfig._CHECKS_PENALTY_MULT
+        else:
+            used_exp_val = 1
+
+        if checks < expected_gates:
+            checks_exp_val = ScoreConfig._f_bonus(checks / expected_gates, bonus_factor)
+        elif checks > expected_gates:
+            checks_exp_val = ScoreConfig._f_penalty(expected_gates / checks, penalty_factor)
+        else:
+            checks_exp_val = 1
+
+        # in our value range it's not possible to get negative values, but theoretically it is
+        return max(used_exp_val * ScoreConfig._USED_WEIGHT + checks_exp_val * ScoreConfig._CHECKS_WEIGHT, 0)
+
+    @staticmethod
+    def get_puzzle_score(checks: int, used_gates: int, expected_gates: int) -> int:
+        """
+        Returns a base score plus bonus score depending on how well the puzzle was solved.
+
+        :param checks: how many steps where takes to reach the target
+        :param used_gates: how many gates where used in the final circuit
+        :param expected_gates: how many gates where used to create the target StateVector
+
+        :return: a score that is bigger the lower checks and used_gates are compared to expected_gates
+        """
+        ratio = ScoreConfig._get_ratio(checks, used_gates, expected_gates)
+        return ScoreConfig._BASE_SCORE + int(ScoreConfig.__PUZZLE_BONUS * ratio)
+
+
 class QuantumSimulationConfig:
     DECIMALS = 3
+    COMPLEX_DECIMALS = 2    # complex numbers need more space and therefore might show fewer decimals
     TOLERANCE = 0.1
     MAX_SPACE_PER_NUMBER = 1 + 1 + 1 + DECIMALS  # sign + "0" + "." + DECIMALS
+    MAX_SPACE_PER_COMPLEX_NUMBER = 1 + 1 + COMPLEX_DECIMALS + 1 + 1 + COMPLEX_DECIMALS + 1  # sign, . & j and decimals
     MAX_PERCENTAGE_SPACE = 3
 
 

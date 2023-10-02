@@ -5,7 +5,8 @@ from typing import List, Callable, Any, Optional
 from qrogue.game.logic import Message as LogicalMessage
 from qrogue.game.logic.actors import Controllable, Riddle
 from qrogue.game.logic.actors.puzzles import Challenge
-from qrogue.game.logic.collectibles import Collectible as LogicalCollectible, Energy as LogicalEnergy, CollectibleType
+from qrogue.game.logic.collectibles import Collectible as LogicalCollectible, Energy as LogicalEnergy, \
+    Score as LogicalScore, CollectibleType
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.util import Logger, ColorConfig, CommonQuestions, MapConfig
 
@@ -289,6 +290,9 @@ class Collectible(WalkTriggerTile):
 
     def __init__(self, collectible: LogicalCollectible, secret_type: bool = False):
         super().__init__(TileCode.Collectible)
+        if collectible is None:
+            Logger.instance().warn("Collectible is None!", from_pycui=False)
+            collectible = LogicalScore()
         self.__collectible = collectible
         self.__secret_type = secret_type
         self.__active = True
@@ -304,14 +308,18 @@ class Collectible(WalkTriggerTile):
         if self.__active:
             if self.__secret_type or self.__collectible.type is CollectibleType.Pickup:
                 return TileCode.Collectible.representation
+            elif self.__collectible.type is CollectibleType.Score:
+                return TileCode.CollectibleScore.representation
             elif self.__collectible.type is CollectibleType.Key:
                 return TileCode.CollectibleKey.representation
             elif self.__collectible.type is CollectibleType.Gate:
                 return TileCode.CollectibleGate.representation
             elif self.__collectible.type is CollectibleType.Qubit:
                 return TileCode.CollectibleQubit.representation
-            elif self.__collectible.type is CollectibleType.Qubit:
-                return TileCode.CollectibleQubit.representation
+            elif self.__collectible.type is CollectibleType.Coin:
+                return TileCode.CollectibleCoin.representation
+            elif self.__collectible.type is CollectibleType.Energy:
+                return TileCode.CollectibleEnergy.representation
             else:
                 return TileCode.Invalid.representation
         else:

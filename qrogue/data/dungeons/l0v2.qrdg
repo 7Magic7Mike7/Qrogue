@@ -2,59 +2,130 @@ Qrogue<
 Name = "Lesson 3: From Zero to Nine"
 Description = Speaker "0" prio "What if we tell you there are //05not only// //010//s?" "Until now //05everytime// you //03stepped// onto a digit a //02Puzzle// was presented to you. But what if that's just because the //010// represents a //050%// chance to //05skip// the //02Puzzle//?"
 NO_TELEPORTER
+SHOW_INDIVIDUAL_QUBITS
 
 // Introduced Concepts:
 // different digits, collapsing, short mention of Superposition
 
 [Robot]
-2 qubits [ *xgate, *xgate ]
+2 qubits [ *xgate, *cxgate ]
 circuit_space = 2
-maxenergy = 10
+maxenergy = 100000
 
 [Layout]
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-| dd 11 cc 11 bb == aa .. __ .. __ .. __ |
-| ..    ..    ..    ==    ..    ..    .. |
-| __ .. __ .. __ .. SR .. __ .. __ .. __ |
-| ..    ..    ..    ..    ..    ..    .. |
-| __ .. __ .. __ .. __ .. __ .. __ .. __ |
+| __ .. __ .. hh == gg 11 ee == ff .. __ |
+| ..    ..    ..    ..    ==    ..    .. |
+| __ .. __ .. __ .. __ .. dd .. __ .. __ |
+| ..    ..    ..    ..    11    ..    .. |
+| __ .. __ .. SR == aa == bb == cc .. __ |
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 [Custom Rooms]
 
 aa (Wild):
 #############
-# _ _ 1 _ _ #
-# _ o o o o #
-# 3 _ _ _ 9 #
-# _ o o o o #
-# m 0 _ _ _ #
+# o o o _ _ #
+# o o _ 1 _ #
+# m _ 3 5 _ #
+# o o _ 9 _ #
+# o o o _ _ #
 #############
 m 1 *newDigits
+1 *base10 input=*base00
+3 *base11 input=*base00
+5 *base01 input=*base00
+9 *base00 input=*base11
 
 bb (Wild):
 #############
-# c 7 8 9 _ #
-# 6 _ _ _ _ #
-# 5 0 0 _ m #
-# 4 _ _ _ _ #
-# c 3 2 1 _ #
+# o o _ o o #
+# o 1 _ 5 o #
+# m _ 7 _ _ #
+# o _ _ _ o #
+# o o 9 o o #
 #############
 m 1 *remainingDigits
-c key 1
 
 cc (Wild):
 #############
-# o _ _ _ o #
+# 1 2 _ 3 4 #
+# 0 _ _ _ _ #
+# _ _ _ _ c #
+# 5 _ _ _ _ #
+# 6 7 _ 8 9 #
+#############
+c key 1
+
+dd (Wild):
+#############
+# o _ m _ o #
 # _ 1 2 3 _ #
-# m 4 0 5 m #
+# _ 4 0 5 _ #
 # _ 6 7 8 _ #
-# o _ _ _ o #
+# o _ m _ o #
 #############
 m *tutCollapseQuantum
 m 1 *tutCollapse
 
-dd (Wild):
+ee (Wild):
+#############
+# o _ c _ o #
+# o 0 0 0 o #
+# _ _ _ _ _ #
+# o 0 m 0 o #
+# o o _ o o #
+#############
+m 1 *firstQuantumPuzzles
+c key 1
+0 *supH0 input=*base00
+0 *supHX
+0 *supH0X1 input=*base00
+0 *supH1X0 input=*base00
+0 *supH1 input=*base00
+
+ff (Treasure):
+#############
+# o o o o o #
+# o o o o o #
+# _ _ c o o #
+# o o o o o #
+# o o o o o #
+#############
+c gate *Hgate
+
+gg (Wild):
+#############
+# _ 1 2 3 4 #
+# o o _ o o #
+# 0 _ m _ 9 #
+# o o _ o o #
+# 5 6 7 8 _ #
+#############
+1 *allGates
+2 *allGates
+3 *allGates
+4 *allGates
+0 *supHX
+9 *supH
+5 *allGates
+6 *allGates
+7 *allGates
+8 *allGates
+
+
+hh (Wild):
+#############
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ m _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+#############
+m *doneMsg trigger *done
+
+
+xx (Wild):
 #############
 # 2 _ _ _ _ #
 # o 9 4 _ _ #
@@ -62,7 +133,17 @@ dd (Wild):
 # o 1 6 _ _ #
 # 8 _ _ _ _ #
 #############
-m *doneMsg trigger *done
+
+yy (Treasure):
+#############
+# o o o o o #
+# o o o o o #
+# o o o o o #
+# o o c o o #
+# o o 0 o o #
+#############
+c key 1
+0 *supH
 
 
 [Hallways]
@@ -70,13 +151,24 @@ m *doneMsg trigger *done
 
 [StateVector Pools]
 custom
-
-*base01 [ [0, 1, 0, 0] ]
-*base10 [ [0, 0, 1, 0] ]
-*base11 [ [0, 0, 0, 1] ]
+*base00 [ {num_qubits=2: gI @ q0} ]
+*base01 [ {num_qubits=2: gX @ q0} ]
+*base10 [ {num_qubits=2: gX @ q1} ]
+*base11 [ {num_qubits=2: gX @ q0, gX @ q1} ]
 
 *reach1X [ *base01, *base10 ]
 *reach2X [ *reach1X, *base11 ]
+
+*supH0 [ {num_qubits=2: gH @ q0} ]
+*supH1 [ {num_qubits=2: gH @ q1} ]
+*supH [ *supH0, *supH1 ]
+
+*supH0X1 [ {num_qubits=2: gH @ q0, gX @ q1} ]
+*supH1X0 [ {num_qubits=2: gH @ q1, gX @ q0} ]
+
+*supHX [ *supH0X1, *supH1X0 ]
+
+*allGates [ *reach2X, *supH, *supHX ]	// all combinations without entanglement
 
 default *reach2X
 
@@ -92,15 +184,20 @@ default *none
 // speaker: 0 = Examiner, 1 = Scientist, 2 = System, 3 = Player
 default Speaker "0"
 
-*newDigits Speaker "0" pos 5 "Could a //013// maybe have a //0530%// chance to skip the //02Puzzle//?"
+*newDigits "Could a //013// maybe have a //0530%// chance to skip the //02Puzzle//?"
 
-*remainingDigits Speaker "0" prio "Of course we're talking about //05chances// here. So it is absolutely possible that e.g. you manage to skip the //02Puzzle// of a //011// while having to solve one for a //019//. In //02Quantum Computing// we call this //05undeterministic// state //02Superposition//."
+*remainingDigits prio "Of course we're talking about //05chances// here. So it is absolutely possible that e.g. you manage to skip the //02Puzzle// of a //011// while having to solve one for a //019//. In //02Quantum Computing// we call the //05indeterministic// state causing this behaviour //02Superposition//."
 
-*tutCollapse Speaker "0" prio "What is actually happening?" "By //03stepping// on a digit you make its //05state collapse//. This means it will either confront you with a //02Puzzle// or not. This can also be //05interpreted// as either //05collapsing to 1// (skip the puzzle) or //05collapsing to 0// (having to solve the puzzle). And as already hinted a //010// has a //050%//, a //015// a //0550%// and a //019// a //0590%// chance to //05collapse to 1//." 
-"That's also why there is no //0110//. It wouldn't make sense to //05always skip// a //02Puzzle//, hence, //05always collapsing to 1//."
+*tutCollapse prio pos5 "What is actually happening?" "By //03stepping// on a digit you make its //05state collapse//. This means it will either confront you with a //02Puzzle// or not. This can also be //05interpreted// as either //05collapsing to 1// (skip the puzzle) or //05collapsing to 0// (having to solve the puzzle). And as already hinted //010//s have a //050%//, //015//s a //0550%// and //019//s a //0590%// chance to //05collapse to 1//." 
+"That's also why there is no //0110//. It wouldn't make sense to //05always skip// a //02Puzzle// (i.e., //05always collapsing to 1//)."
 
-*tutCollapseQuantum "In //05Quantum Computing// we usually want such a collapse to happen at the very end of an algorithm to convert the quantum information the qubits hold into classical information (0s and 1s). This is necessary to be able to work with the output outside of quantum computers. However, in real quantum hardware a collapse can also happen due to errors or unwanted influence from the outside. That's why many quantum computers need powerful shielding."
+*tutCollapseQuantum pos5 "In //05Quantum Computing// we usually want such a collapse to happen at the very end of an algorithm to convert the quantum information the qubits hold into classical information (0s and 1s). This is necessary to be able to work with the output outside of quantum computers. However, in real quantum hardware a collapse can also happen due to errors or unwanted influence from the outside. That's why many quantum computers need powerful shielding."
 
-*doneMsg Speaker "0" "Nice, seems like you're slowly getting familiar with Quantum Computing."
+*firstQuantumPuzzles prio "Now that you have some understanding of //02Superposition// we will try to mirror its behaviour to the Puzzles themselves by leaving the purely classical realm."
+"Since they will be your first Quantum Puzzles, we will keep it simple and all Puzzles in this room will start in the zero-state |00>. However, this also means that you first need to find a new //02Gate// that let's you transform the classical zero-state into a quantum state."
+"Also, we can no longer show you the input and output values of the qubits in your circuit. Superposition makes these values ambigious so your only clues are described in the matrix-vector-multiplication."
+
+*doneMsg "Nice, seems like you're slowly getting familiar with Quantum Computing."
+
 
 >Qrogue

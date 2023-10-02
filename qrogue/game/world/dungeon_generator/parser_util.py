@@ -21,16 +21,15 @@ TRIGGER_TILE = "t"
 TELEPORT_TILE = "t"
 MESSAGE_TILE = "m"
 ENERGY_TILE = "e"
+BOSS_TILE = "b"
 RIDDLER_TILE = "r"
 CHALLENGER_TILE = "!"
 SHOP_KEEPER_TILE = "$"
 FLOOR_TILE = " "
 
 
-def warning(text: str):
-    Logger.instance().println("Warning: " + text)
-    if Config.debugging():
-        print("Warning", text)
+def warning(text: str, location: str):
+    Logger.instance().warn(f"@{location}: {text}", from_pycui=False)
 
 
 def error(text: str):
@@ -79,7 +78,7 @@ def get_hallways(hallway_dict: Dict[Coordinate, Dict[Direction, Hallway]],
                     hallway = hallway_dict[neighbor][opposite]
                 else:
                     door = doors[neighbor]
-                    # always make a copy so we don't run into problems if we use a simple hallway multiple times
+                    # always make a copy, so we don't run into problems if we use a simple hallway multiple times
                     if door.is_one_way:
                         if door.direction not in [direction, direction.opposite()]:
                             warning("Found one way door with invalid direction! Horizontal hallways can only "

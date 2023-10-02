@@ -12,6 +12,7 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
     __QUESTION_SPACING = " " * 7
     __QUESTION_ARROW = "-->"
     __QUESTION_SELECTION = " " * (len(__QUESTION_SPACING) - (len(__QUESTION_ARROW) + 1)) + (__QUESTION_ARROW + " ")
+    __BASE_DIMENSIONS = 11, 100
 
     @staticmethod
     def __get_color_rules():
@@ -55,9 +56,9 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
                 if last_whitespace == -1:
                     cur_width = width + character_removals
                 else:
-                    cur_width = last_whitespace
+                    cur_width = last_whitespace + 1
 
-                next_line = cur_part[:cur_width].lstrip()
+                next_line = cur_part[:cur_width].strip()
                 if len(next_line) > 0:
                     # check if next_line ends with an un-terminated color rule
                     last_highlight = next_line.rfind(CC.TEXT_HIGHLIGHT)
@@ -77,13 +78,18 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
             if prepend:
                 split_text.append(prepend + paragraph[index:].strip())
             else:
-                split_text.append(paragraph[index:].strip())
+                split_text.append(paragraph[index:].rstrip())
         return [" " * padding + line + " " * padding for line in split_text]
 
     def __init__(self, root, title, text, color, renderer, logger, controls,
                  confirmation_callback: Callable[[int], None] = None, answers: Optional[List] = None,
-                 pos: Optional[Tuple[int, int]] = None, dimensions: Optional[Tuple[int, int]] = None):
-        self.__custom_size = None
+                 pos: Optional[int] = None, dimensions: Optional[Tuple[int, int]] = None,
+                 situational_callback: Optional[Tuple[Optional[Callable[[], None]], Optional[Callable[[], None]]]] =
+                 None):
+        # custom_size needs to be initialized immediately because get_absolute_stop_pos() in init() accesses it
+        # we would somehow get stuck in an endless loop if we would manually calculate dimensions, starts and stops
+        #  before init() hence we use this workaround
+        self.__custom_size = False
 
         super().__init__(root, title, text, color, renderer, logger)
         self.__controls = controls
@@ -93,16 +99,20 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
         else:
             self.__answers = answers
 
-        if pos:
-            if pos[0] is not None:
-                self._start_x = pos[0]
-            if pos[1] is not None:
-                self._start_y = pos[1]
+        self.__custom_pos = pos
+        self.__custom_size = True
+        self._height, self._width = MultilinePopup.__BASE_DIMENSIONS if dimensions is None else dimensions
+        self._start_x, self._start_y = self.get_absolute_start_pos()
+        self._stop_x, self._stop_y = self._start_x + self._width, self._start_y + self._height
 
-        if dimensions is not None:
-            self.__custom_size = True
-            self._height, self._width = dimensions
-            self._stop_x, self._stop_y = self._start_x + self._width, self._start_y + self._height
+        def _dummy():
+            pass
+        self.__situational_callback1 = _dummy
+        self.__situational_callback2 = _dummy
+        if situational_callback is not None:
+            sit1, sit2 = situational_callback
+            if sit1 is not None: self.__situational_callback1 = sit1
+            if sit2 is not None: self.__situational_callback2 = sit2
 
         self._top_view = 0
         self.__lines = MultilinePopup.__split_text(text, self._width - MultilinePopup.__STATIC_PY_CUI_PADDING,
@@ -148,29 +158,38 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
     def _handle_key_press(self, key_pressed):
         """Overrides base class handle_key_press function
         """
-        if self._is_question:
+        # regarding the idea to move this functionality to Keys.PopupLeft and Keys.PopupRight:
+        # these keys should definitely be used for selecting the answer in question popups, so it would only make it
+        # more inconsistent and confusing im question popups and classical popups have different keys for, e.g.,
+        # navigating through history
+        if key_pressed in self.__controls.get_keys(Keys.Situational1):
+            self.__situational_callback1()
+        elif key_pressed in self.__controls.get_keys(Keys.Situational2):
+            self.__situational_callback2()
+
+        elif self._is_question:
             if key_pressed in self.__controls.get_keys(Keys.Action):
                 self.__confirmation_callback(self.__question_state)
                 self._root.close_popup()
-            elif key_pressed in self.__controls.get_keys(Keys.SelectionRight):
+            elif key_pressed in self.__controls.get_keys(Keys.PopupRight):
                 self.__question_state = min(self.__question_state + 1, len(self.__answers) - 1)
-            elif key_pressed in self.__controls.get_keys(Keys.SelectionLeft):
+            elif key_pressed in self.__controls.get_keys(Keys.PopupLeft):
                 self.__question_state = max(self.__question_state - 1, 0)
-            elif key_pressed in self.__controls.get_keys(Keys.PopupScrollUp):
+            elif key_pressed in self.__controls.get_keys(Keys.PopupUp):
                 self.__up()
-            elif key_pressed in self.__controls.get_keys(Keys.PopupScrollDown):
+            elif key_pressed in self.__controls.get_keys(Keys.PopupDown):
                 self.__down()
         else:
             if key_pressed in self.__controls.get_keys(Keys.PopupClose):
                 self._root.close_popup()
-            elif key_pressed in self.__controls.get_keys(Keys.PopupScrollUp):
+            elif key_pressed in self.__controls.get_keys(Keys.PopupUp):
                 self.__up()
-            elif key_pressed in self.__controls.get_keys(Keys.PopupScrollUpFast):
-                self.__up_fast()
-            elif key_pressed in self.__controls.get_keys(Keys.PopupScrollDown):
-                self.__down()
-            elif key_pressed in self.__controls.get_keys(Keys.PopupScrollDownFast):
+            elif key_pressed in self.__controls.get_keys(Keys.PopupLeft):
                 self.__down_fast()
+            elif key_pressed in self.__controls.get_keys(Keys.PopupDown):
+                self.__down()
+            elif key_pressed in self.__controls.get_keys(Keys.PopupRight):
+                self.__up_fast()
 
     def _draw(self):
         """Overrides base class draw function
@@ -212,12 +231,52 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
         self._renderer.unset_color_mode(self._color)
         self._renderer.reset_cursor(self)
 
-    def get_absolute_stop_pos(self) -> Tuple[int, int]:
-        # override for custom sizes so we can calculate the stop position based on our custom width and height instead
-        # of calculating width and height based on start and stop
-        if self.__custom_size is None:
-            return super(MultilinePopup, self).get_absolute_stop_pos()
+    def get_absolute_start_pos(self) -> Tuple[int,int]:
+        if self.__custom_size:
+            cui_height, cui_width = self._root.get_absolute_size()
+
+            # start relative to the middle
+            start_x = int((cui_width - self._width) / 2)
+            start_y = int((cui_height - self._height) / 2)
+            # adapt start_x and start_y for custom positions
+            if self.__custom_pos is not None:
+                res_x, res_y = PopupConfig.resolve_position(self.__custom_pos)
+                if res_x is not None:
+                    if res_x > 0:
+                        start_x = res_x
+                    elif res_x < 0:
+                        start_x = cui_width + res_x - self._width
+                if res_y is not None:
+                    if res_y > 0:
+                        start_y = res_y
+                    elif res_y < 0:
+                        start_y = cui_height + res_y - self._height
+            return start_x, start_y
         else:
+            return super(MultilinePopup, self).get_absolute_start_pos()
+
+    def get_absolute_stop_pos(self) -> Tuple[int, int]:
+        # override for custom sizes, so we can calculate the stop position based on our custom width and height instead
+        # of calculating width and height based on start and stop
+        if self.__custom_size:
             start_x, start_y = self.get_absolute_start_pos()
             self._stop_x, self._stop_y = start_x + self._width, start_y + self._height
             return self._stop_x, self._stop_y
+        else:
+            return super(MultilinePopup, self).get_absolute_stop_pos()
+
+    def freeze(self):
+        """
+        The popup will be normalized to have the default size and position. Additionally, questions are transformed into
+        statements with the current answer being the final/saved answer.
+        """
+        if self._is_question:
+            # without a confirmation_callback the popup is not regarded as questions and hence the answer cannot change
+            self.__confirmation_callback = None
+
+        # reset position and size
+        self.__custom_pos = PopupConfig.default_pos()
+        self._height, self._width = MultilinePopup.__BASE_DIMENSIONS
+        # recalculate start and stop to be correct after the reset above
+        self._start_x, self._start_y = self.get_absolute_start_pos()
+        self._stop_x, self._stop_y = self.get_absolute_stop_pos()

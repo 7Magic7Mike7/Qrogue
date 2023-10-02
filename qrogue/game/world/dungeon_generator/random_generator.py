@@ -2,9 +2,9 @@ from enum import IntEnum
 from typing import Callable, Dict, Optional, Tuple, List, Any, Set, Union
 
 from qrogue.game.logic.actors import Robot
-from qrogue.game.logic.collectibles import GateFactory, ShopFactory, Key, instruction, Energy, CollectibleType, \
-    CollectibleFactory
-from qrogue.game.target_factory import TargetDifficulty, BossFactory, EnemyFactory, RiddleFactory
+from qrogue.game.logic.collectibles import GateFactory, Key, instruction, Score, CollectibleType, \
+    CollectibleFactory, Instruction
+from qrogue.game.target_factory import PuzzleDifficulty, BossFactory, EnemyFactory, RiddleFactory, EnemyPuzzleFactory
 from qrogue.game.world import tiles
 from qrogue.game.world.dungeon_generator.wave_function_collapse.wfc_generator import WFCRoomGenerator
 from qrogue.game.world.map import CallbackPack, Hallway, WildRoom, SpawnRoom, ShopRoom, RiddleRoom, BossRoom, \
@@ -559,7 +559,8 @@ class ExpeditionGenerator(DungeonGenerator):
 
     @staticmethod
     def __create_enemy(enemy_id: int, room_pos: Coordinate, enemy_factory: EnemyFactory,
-                       enemy_groups_by_room: Dict[Coordinate, Dict[int, List[tiles.Enemy]]]) -> tiles.Enemy:
+                       enemy_groups_by_room: Dict[Coordinate, Dict[int, List[tiles.Enemy]]],
+                       next_tile_id: Callable[[], int]) -> tiles.Enemy:
         enemy: Optional[tiles.Enemy] = None
 
         def get_entangled_tiles(id_: int) -> List[tiles.Enemy]:
@@ -576,7 +577,7 @@ class ExpeditionGenerator(DungeonGenerator):
                 enemy_groups_by_room[room_pos][enemy_id] = []
             enemy_groups_by_room[room_pos][enemy_id].append(new_enemy)
 
-        enemy = tiles.Enemy(enemy_factory, get_entangled_tiles, update_entangled_room_groups, enemy_id)
+        enemy = tiles.Enemy(enemy_factory, get_entangled_tiles, update_entangled_room_groups, enemy_id, next_tile_id)
         update_entangled_room_groups(enemy)
         return enemy
 
@@ -588,8 +589,23 @@ class ExpeditionGenerator(DungeonGenerator):
         self.__trigger_event = trigger_event
         self.__load_map = load_map_callback
         self.__rm = RandomManager.create_new(seed)
+        self.__next_target_id = 0
+        self.__next_tile_id = 0
+
+        self.__remaining_keys = 0
+        self.__room_has_key = False
 
         self.__wild_room_generator = WFCRoomGenerator(seed, WFCRoomGenerator.get_level_list()[2:], AreaType.WildRoom)
+
+    def _next_target_id(self) -> int:
+        val = self.__next_target_id
+        self.__next_target_id += 1
+        return val
+
+    def _next_tile_id(self) -> int:
+        val = self.__next_tile_id
+        self.__next_tile_id += 1
+        return val
 
     def generate(self, data: Union[Robot, Tuple[Robot, int]]) -> Tuple[Optional[ExpeditionMap], bool]:
         if isinstance(data, Robot):
@@ -600,44 +616,41 @@ class ExpeditionGenerator(DungeonGenerator):
             assert seed is not None, "Did not provide a seed!"
 
         if len(robot.get_available_instructions()) <= 0:
-            gates = [instruction.HGate(), instruction.XGate(), instruction.CXGate()]
+            gates = [instruction.HGate(), instruction.SGate(), instruction.XGate(), instruction.CXGate()]
             for gate in gates:
                 robot.give_collectible(gate)
 
         rm = RandomManager.create_new(seed)  # needed for WildRooms
-        gate_factory = GateFactory.default()
+        gate_factory = GateFactory.quantum()
         riddle_factory = RiddleFactory.default(robot)
         boss_factory = BossFactory.default(robot)
         typed_collectible_factory: Dict[Optional[CollectibleType], CollectibleFactory] = {
-            None: CollectibleFactory([Energy(1), Energy(1), Energy(3)]),    # default factory
-            CollectibleType.Gate: gate_factory,
-            CollectibleType.Pickup: CollectibleFactory([Key(1), Energy(5), Energy(10), Energy(10), Energy(15),
-                                                        Energy(20)])
+            None: CollectibleFactory([Score(100)]),    # default factory
+            CollectibleType.Gate: CollectibleFactory([Score(200)]),
+            CollectibleType.Pickup: CollectibleFactory([Score(150)])
         }
+        self.__remaining_keys = 3
+        self.__room_has_key = False
 
         def get_collectible_factory(type_: CollectibleType) -> CollectibleFactory:
             if type_ in typed_collectible_factory:
                 return typed_collectible_factory[type_]
             return typed_collectible_factory[None]
 
-        gate = gate_factory.produce(rm)
+        gate: Instruction = gate_factory.produce(rm)
         riddle = riddle_factory.produce(rm)
-        dungeon_boss = boss_factory.produce([gate])  # todo based on chance also add gates from riddle or shop_items?
+        dungeon_boss = boss_factory.produce(include_gates=[], input_gates=[gate])
 
+        # Difficulties can be misleading since picking one gate can result in CX Gate which does nothing if it's the
+        # only gate on a zero-state. Also picking multiple gates where one is CX has a higher probability of doing
+        # nothing the more qubits we have.
         enemy_factories = [
-            EnemyFactory(CallbackPack.instance().start_fight, TargetDifficulty(
-                2, [Energy(5), Energy(10)]
-            )),
-            EnemyFactory(CallbackPack.instance().start_fight, TargetDifficulty(
-                2, [Energy(5), Key(), Energy(5)]
-            )),
-            EnemyFactory(CallbackPack.instance().start_fight, TargetDifficulty(
-                3, [Energy(5), Key(), Energy(20)]
-            )),
-            EnemyFactory(CallbackPack.instance().start_fight, TargetDifficulty(
-                3, [Energy(10), Energy(15), Energy(20)]
-            )),
+            EnemyPuzzleFactory(CallbackPack.instance().start_fight, self._next_target_id, PuzzleDifficulty(1, 3)),
+            EnemyPuzzleFactory(CallbackPack.instance().start_fight, self._next_target_id, PuzzleDifficulty(2, 2)),
+            EnemyPuzzleFactory(CallbackPack.instance().start_fight, self._next_target_id, PuzzleDifficulty(2, 3)),
+            EnemyPuzzleFactory(CallbackPack.instance().start_fight, self._next_target_id, PuzzleDifficulty(1, 2)),
         ]
+        # factories are picked room-wise
         enemy_factory_priorities = [0.25, 0.35, 0.3, 0.1]
         enemy_groups_by_room = {}
 
@@ -648,6 +661,7 @@ class ExpeditionGenerator(DungeonGenerator):
         if layout.generate() and layout.validate():
             for y in range(self.height):
                 for x in range(self.width):
+                    self.__room_has_key = False
                     pos = Coordinate(x, y)
                     code = layout.get_room(pos)
                     if code is not None and code > _Code.Blocked:
@@ -694,17 +708,23 @@ class ExpeditionGenerator(DungeonGenerator):
                                              east_hallway=room_hallways[Direction.East],
                                              south_hallway=room_hallways[Direction.South],
                                              west_hallway=room_hallways[Direction.West],
-                                             )
+                                             place_teleporter=False)
                         elif code == _Code.Wild:
                             enemy_factory = rm.get_element_prioritized(enemy_factories, enemy_factory_priorities,
                                                                        msg="RandomDG_elemPrioritized")
 
                             def tile_from_tile_data(tile_code: tiles.TileCode, tile_data: Any) -> tiles.Tile:
                                 if tile_code == tiles.TileCode.Enemy:
-                                    return self.__create_enemy(tile_data, pos, enemy_factory, enemy_groups_by_room)
-                                elif tile_code == tiles.TileCode.Energy:
-                                    return tiles.Energy(tile_data)
+                                    return self.__create_enemy(tile_data, pos, enemy_factory, enemy_groups_by_room,
+                                                               self._next_tile_id)
+                                elif tile_code == tiles.TileCode.CollectibleScore:
+                                    return tiles.Collectible(Score(tile_data))
                                 elif tile_code == tiles.TileCode.Collectible:
+                                    if self.__remaining_keys > 0 and not self.__room_has_key \
+                                            and rm.get(msg="key placement") > 0.6:
+                                        self.__remaining_keys -= 1
+                                        self.__room_has_key = True
+                                        return tiles.Collectible(Key())
                                     return tiles.Collectible(get_collectible_factory(tile_data).produce(rm))
                                 elif tile_code == tiles.TileCode.Wall:
                                     return tiles.Wall()

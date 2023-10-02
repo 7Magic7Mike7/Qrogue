@@ -1,13 +1,16 @@
-# Generated from D:/Documents/pycharm_workspace/Qrogue/qrogue/game/world/dungeon_generator\QrogueWorld.g4 by ANTLR 4.10.1
+# Generated from D:/Workspaces/pycharm-workspace/Qrogue/qrogue/game/world/dungeon_generator\QrogueWorld.g4 by ANTLR 4.12.0
 # encoding: utf-8
-from __future__ import print_function
 from antlr4 import *
 from io import StringIO
 import sys
+if sys.version_info[1] > 5:
+	from typing import TextIO
+else:
+	from typing.io import TextIO
 
 def serializedATN():
     return [
-        4,1,66,240,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,
+        4,1,69,240,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,
         6,2,7,7,7,2,8,7,8,2,9,7,9,2,10,7,10,2,11,7,11,2,12,7,12,2,13,7,13,
         2,14,7,14,2,15,7,15,2,16,7,16,2,17,7,17,2,18,7,18,1,0,1,0,1,0,1,
         0,1,0,1,0,3,0,45,8,0,1,0,1,0,1,1,1,1,1,1,3,1,52,8,1,1,1,1,1,1,1,
@@ -66,26 +69,26 @@ def serializedATN():
         0,0,0,151,152,1,0,0,0,152,25,1,0,0,0,153,157,5,44,0,0,154,156,3,
         28,14,0,155,154,1,0,0,0,156,159,1,0,0,0,157,155,1,0,0,0,157,158,
         1,0,0,0,158,27,1,0,0,0,159,157,1,0,0,0,160,161,5,36,0,0,161,162,
-        3,30,15,0,162,29,1,0,0,0,163,169,5,7,0,0,164,170,5,56,0,0,165,170,
-        5,57,0,0,166,170,5,58,0,0,167,168,5,59,0,0,168,170,5,37,0,0,169,
+        3,30,15,0,162,29,1,0,0,0,163,169,5,7,0,0,164,170,5,59,0,0,165,170,
+        5,60,0,0,166,170,5,61,0,0,167,168,5,62,0,0,168,170,5,37,0,0,169,
         164,1,0,0,0,169,165,1,0,0,0,169,166,1,0,0,0,169,167,1,0,0,0,170,
-        176,1,0,0,0,171,172,5,9,0,0,172,174,5,15,0,0,173,175,5,60,0,0,174,
+        176,1,0,0,0,171,172,5,9,0,0,172,174,5,15,0,0,173,175,5,63,0,0,174,
         173,1,0,0,0,174,175,1,0,0,0,175,177,1,0,0,0,176,171,1,0,0,0,176,
-        177,1,0,0,0,177,189,1,0,0,0,178,179,5,61,0,0,179,180,5,10,0,0,180,
+        177,1,0,0,0,177,189,1,0,0,0,178,179,5,64,0,0,179,180,5,10,0,0,180,
         185,5,36,0,0,181,182,5,22,0,0,182,184,5,36,0,0,183,181,1,0,0,0,184,
         187,1,0,0,0,185,183,1,0,0,0,185,186,1,0,0,0,186,188,1,0,0,0,187,
         185,1,0,0,0,188,190,5,11,0,0,189,178,1,0,0,0,189,190,1,0,0,0,190,
         191,1,0,0,0,191,194,5,8,0,0,192,193,5,16,0,0,193,195,5,37,0,0,194,
         192,1,0,0,0,194,195,1,0,0,0,195,198,1,0,0,0,196,197,5,17,0,0,197,
         199,5,37,0,0,198,196,1,0,0,0,198,199,1,0,0,0,199,31,1,0,0,0,200,
-        204,5,62,0,0,201,202,5,12,0,0,202,203,5,65,0,0,203,205,5,34,0,0,
+        204,5,65,0,0,201,202,5,12,0,0,202,203,5,68,0,0,203,205,5,34,0,0,
         204,201,1,0,0,0,204,205,1,0,0,0,205,209,1,0,0,0,206,208,3,34,17,
         0,207,206,1,0,0,0,208,211,1,0,0,0,209,207,1,0,0,0,209,210,1,0,0,
         0,210,33,1,0,0,0,211,209,1,0,0,0,212,213,5,37,0,0,213,218,3,36,18,
-        0,214,215,5,63,0,0,215,216,5,37,0,0,216,217,5,64,0,0,217,219,5,37,
-        0,0,218,214,1,0,0,0,218,219,1,0,0,0,219,35,1,0,0,0,220,221,5,65,
+        0,214,215,5,66,0,0,215,216,5,37,0,0,216,217,5,67,0,0,217,219,5,37,
+        0,0,218,214,1,0,0,0,218,219,1,0,0,0,219,35,1,0,0,0,220,221,5,68,
         0,0,221,223,5,34,0,0,222,220,1,0,0,0,222,223,1,0,0,0,223,225,1,0,
-        0,0,224,226,5,66,0,0,225,224,1,0,0,0,225,226,1,0,0,0,226,232,1,0,
+        0,0,224,226,5,69,0,0,225,224,1,0,0,0,225,226,1,0,0,0,226,232,1,0,
         0,0,227,229,5,13,0,0,228,230,5,2,0,0,229,228,1,0,0,0,229,230,1,0,
         0,0,230,231,1,0,0,0,231,233,5,26,0,0,232,227,1,0,0,0,232,233,1,0,
         0,0,233,235,1,0,0,0,234,236,5,34,0,0,235,234,1,0,0,0,236,237,1,0,
@@ -104,41 +107,41 @@ class QrogueWorldParser ( Parser ):
 
     sharedContextCache = PredictionContextCache()
 
-    literalNames = [ u"<INVALID>", u"'Name'", u"'='", u"'Description'", 
-                     u"'description'", u"'teleport'", u"':'", u"'('", u"')'", 
-                     u"'one way'", u"'['", u"']'", u"'default'", u"'pos'", 
-                     u"'optional'", u"<INVALID>", u"'tutorial'", u"'trigger'", 
-                     u"'Qrogue<'", u"'>Qrogue'", u"'~'", u"'|'", u"','", 
-                     u"'#'", u"'..'", u"'__'", u"<INVALID>", u"<INVALID>", 
-                     u"<INVALID>", u"<INVALID>", u"<INVALID>", u"<INVALID>", 
-                     u"<INVALID>", u"<INVALID>", u"<INVALID>", u"<INVALID>", 
-                     u"<INVALID>", u"<INVALID>", u"<INVALID>", u"<INVALID>", 
-                     u"<INVALID>", u"<INVALID>", u"'[Layout]'", u"<INVALID>", 
-                     u"'[Hallways]'", u"'visible'", u"'foggy'", u"'World'", 
-                     u"'Level'", u"'Spawn'", u"'Wild'", u"'Shop'", u"'Riddle'", 
-                     u"'Boss'", u"'Gate'", u"'Treasure'", u"'open'", u"'closed'", 
-                     u"'locked'", u"'event'", u"'permanent'", u"'entangled'", 
-                     u"'[Messages]'", u"'when'" ]
+    literalNames = [ "<INVALID>", "'Name'", "'='", "'Description'", "'description'", 
+                     "'teleport'", "':'", "'('", "')'", "'one way'", "'['", 
+                     "']'", "'default'", "'pos'", "'optional'", "<INVALID>", 
+                     "'tutorial'", "'trigger'", "'Qrogue<'", "'>Qrogue'", 
+                     "'~'", "'|'", "','", "'#'", "'..'", "'__'", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "<INVALID>", "<INVALID>", "'[Layout]'", 
+                     "<INVALID>", "'[Hallways]'", "'visible'", "'foggy'", 
+                     "'World'", "'Level'", "'Spawn'", "'Wild'", "'Shop'", 
+                     "'Riddle'", "'Boss'", "'Gate'", "'Treasure'", "'Challenge'", 
+                     "'Pause'", "'Story'", "'open'", "'closed'", "'locked'", 
+                     "'event'", "'permanent'", "'entangled'", "'[Messages]'", 
+                     "'when'" ]
 
-    symbolicNames = [ u"<INVALID>", u"<INVALID>", u"<INVALID>", u"<INVALID>", 
-                      u"<INVALID>", u"<INVALID>", u"<INVALID>", u"<INVALID>", 
-                      u"<INVALID>", u"<INVALID>", u"<INVALID>", u"<INVALID>", 
-                      u"<INVALID>", u"<INVALID>", u"OPTIONAL_LEVEL", u"DIRECTION", 
-                      u"TUTORIAL_LITERAL", u"TRIGGER_LITERAL", u"HEADER", 
-                      u"ENDER", u"HORIZONTAL_SEPARATOR", u"VERTICAL_SEPARATOR", 
-                      u"LIST_SEPARATOR", u"WALL", u"EMPTY_HALLWAY", u"EMPTY_ROOM", 
-                      u"DIGIT", u"INTEGER", u"FLOAT", u"IMAG_NUMBER", u"SIGN", 
-                      u"CHARACTER_LOW", u"CHARACTER_UP", u"CHARACTER", u"TEXT", 
-                      u"ROOM_ID", u"HALLWAY_ID", u"REFERENCE", u"WS", u"UNIVERSAL_SEPARATOR", 
-                      u"COMMENT", u"LINE_COMMENT", u"LAYOUT", u"ROOMS", 
-                      u"HALLWAYS", u"VISIBLE_LITERAL", u"FOGGY_LITERAL", 
-                      u"WORLD_LITERAL", u"LEVEL_LITERAL", u"SPAWN_LITERAL", 
-                      u"WILD_LITERAL", u"SHOP_LITERAL", u"RIDDLE_LITERAL", 
-                      u"BOSS_LITERAL", u"GATE_ROOM_LITERAL", u"TREASURE_LITERAL", 
-                      u"OPEN_LITERAL", u"CLOSED_LITERAL", u"LOCKED_LITERAL", 
-                      u"EVENT_LITERAL", u"PERMANENT_LITERAL", u"ENTANGLED_LITERAL", 
-                      u"MESSAGES", u"MSG_EVENT", u"MSG_ALTERNATIVE", u"MSG_SPEAKER", 
-                      u"MSG_PRIORITY" ]
+    symbolicNames = [ "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                      "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                      "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                      "<INVALID>", "<INVALID>", "OPTIONAL_LEVEL", "DIRECTION", 
+                      "TUTORIAL_LITERAL", "TRIGGER_LITERAL", "HEADER", "ENDER", 
+                      "HORIZONTAL_SEPARATOR", "VERTICAL_SEPARATOR", "LIST_SEPARATOR", 
+                      "WALL", "EMPTY_HALLWAY", "EMPTY_ROOM", "DIGIT", "INTEGER", 
+                      "FLOAT", "IMAG_NUMBER", "SIGN", "CHARACTER_LOW", "CHARACTER_UP", 
+                      "CHARACTER", "TEXT", "ROOM_ID", "HALLWAY_ID", "REFERENCE", 
+                      "WS", "UNIVERSAL_SEPARATOR", "COMMENT", "LINE_COMMENT", 
+                      "LAYOUT", "ROOMS", "HALLWAYS", "VISIBLE_LITERAL", 
+                      "FOGGY_LITERAL", "WORLD_LITERAL", "LEVEL_LITERAL", 
+                      "SPAWN_LITERAL", "WILD_LITERAL", "SHOP_LITERAL", "RIDDLE_LITERAL", 
+                      "BOSS_LITERAL", "GATE_ROOM_LITERAL", "TREASURE_LITERAL", 
+                      "CHALLENGE_LITERAL", "PAUSE_LITERAL", "STORY_LITERAL", 
+                      "OPEN_LITERAL", "CLOSED_LITERAL", "LOCKED_LITERAL", 
+                      "EVENT_LITERAL", "PERMANENT_LITERAL", "ENTANGLED_LITERAL", 
+                      "MESSAGES", "MSG_EVENT", "MSG_ALTERNATIVE", "MSG_SPEAKER", 
+                      "MSG_PRIORITY" ]
 
     RULE_start = 0
     RULE_meta = 1
@@ -160,11 +163,10 @@ class QrogueWorldParser ( Parser ):
     RULE_message = 17
     RULE_message_body = 18
 
-    ruleNames =  [ u"start", u"meta", u"room_content", u"r_type", u"integer", 
-                   u"complex_number", u"layout", u"l_room_row", u"l_hallway_row", 
-                   u"rooms", u"room", u"r_attributes", u"r_visibility", 
-                   u"hallways", u"hallway", u"h_attributes", u"messages", 
-                   u"message", u"message_body" ]
+    ruleNames =  [ "start", "meta", "room_content", "r_type", "integer", 
+                   "complex_number", "layout", "l_room_row", "l_hallway_row", 
+                   "rooms", "room", "r_attributes", "r_visibility", "hallways", 
+                   "hallway", "h_attributes", "messages", "message", "message_body" ]
 
     EOF = Token.EOF
     T__0=1
@@ -222,21 +224,24 @@ class QrogueWorldParser ( Parser ):
     BOSS_LITERAL=53
     GATE_ROOM_LITERAL=54
     TREASURE_LITERAL=55
-    OPEN_LITERAL=56
-    CLOSED_LITERAL=57
-    LOCKED_LITERAL=58
-    EVENT_LITERAL=59
-    PERMANENT_LITERAL=60
-    ENTANGLED_LITERAL=61
-    MESSAGES=62
-    MSG_EVENT=63
-    MSG_ALTERNATIVE=64
-    MSG_SPEAKER=65
-    MSG_PRIORITY=66
+    CHALLENGE_LITERAL=56
+    PAUSE_LITERAL=57
+    STORY_LITERAL=58
+    OPEN_LITERAL=59
+    CLOSED_LITERAL=60
+    LOCKED_LITERAL=61
+    EVENT_LITERAL=62
+    PERMANENT_LITERAL=63
+    ENTANGLED_LITERAL=64
+    MESSAGES=65
+    MSG_EVENT=66
+    MSG_ALTERNATIVE=67
+    MSG_SPEAKER=68
+    MSG_PRIORITY=69
 
-    def __init__(self, input, output=sys.stdout):
-        super(QrogueWorldParser, self).__init__(input, output=output)
-        self.checkVersion("4.10.1")
+    def __init__(self, input:TokenStream, output:TextIO = sys.stdout):
+        super().__init__(input, output)
+        self.checkVersion("4.12.0")
         self._interp = ParserATNSimulator(self, self.atn, self.decisionsToDFA, self.sharedContextCache)
         self._predicates = None
 
@@ -244,9 +249,10 @@ class QrogueWorldParser ( Parser ):
 
 
     class StartContext(ParserRuleContext):
+        __slots__ = 'parser'
 
-        def __init__(self, parser, parent=None, invokingState=-1):
-            super(QrogueWorldParser.StartContext, self).__init__(parent, invokingState)
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
             self.parser = parser
 
         def HEADER(self):
@@ -278,16 +284,16 @@ class QrogueWorldParser ( Parser ):
         def getRuleIndex(self):
             return QrogueWorldParser.RULE_start
 
-        def enterRule(self, listener):
-            if hasattr(listener, "enterStart"):
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterStart" ):
                 listener.enterStart(self)
 
-        def exitRule(self, listener):
-            if hasattr(listener, "exitStart"):
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitStart" ):
                 listener.exitStart(self)
 
-        def accept(self, visitor):
-            if hasattr(visitor, "visitStart"):
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitStart" ):
                 return visitor.visitStart(self)
             else:
                 return visitor.visitChildren(self)
@@ -315,7 +321,7 @@ class QrogueWorldParser ( Parser ):
             self.state = 44
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            if _la==QrogueWorldParser.MESSAGES:
+            if _la==65:
                 self.state = 43
                 self.messages()
 
@@ -332,9 +338,10 @@ class QrogueWorldParser ( Parser ):
 
 
     class MetaContext(ParserRuleContext):
+        __slots__ = 'parser'
 
-        def __init__(self, parser, parent=None, invokingState=-1):
-            super(QrogueWorldParser.MetaContext, self).__init__(parent, invokingState)
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
             self.parser = parser
 
         def TEXT(self):
@@ -350,16 +357,16 @@ class QrogueWorldParser ( Parser ):
         def getRuleIndex(self):
             return QrogueWorldParser.RULE_meta
 
-        def enterRule(self, listener):
-            if hasattr(listener, "enterMeta"):
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterMeta" ):
                 listener.enterMeta(self)
 
-        def exitRule(self, listener):
-            if hasattr(listener, "exitMeta"):
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitMeta" ):
                 listener.exitMeta(self)
 
-        def accept(self, visitor):
-            if hasattr(visitor, "visitMeta"):
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitMeta" ):
                 return visitor.visitMeta(self)
             else:
                 return visitor.visitChildren(self)
@@ -377,7 +384,7 @@ class QrogueWorldParser ( Parser ):
             self.state = 51
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            if _la==QrogueWorldParser.T__0:
+            if _la==1:
                 self.state = 48
                 self.match(QrogueWorldParser.T__0)
                 self.state = 49
@@ -389,7 +396,7 @@ class QrogueWorldParser ( Parser ):
             self.state = 59
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            if _la==QrogueWorldParser.T__2:
+            if _la==3:
                 self.state = 53
                 self.match(QrogueWorldParser.T__2)
                 self.state = 54
@@ -397,11 +404,11 @@ class QrogueWorldParser ( Parser ):
                 self.state = 57
                 self._errHandler.sync(self)
                 token = self._input.LA(1)
-                if token in [QrogueWorldParser.T__12, QrogueWorldParser.TEXT, QrogueWorldParser.MSG_SPEAKER, QrogueWorldParser.MSG_PRIORITY]:
+                if token in [13, 34, 68, 69]:
                     self.state = 55
                     self.message_body()
                     pass
-                elif token in [QrogueWorldParser.REFERENCE]:
+                elif token in [37]:
                     self.state = 56
                     self.match(QrogueWorldParser.REFERENCE)
                     pass
@@ -420,9 +427,10 @@ class QrogueWorldParser ( Parser ):
 
 
     class Room_contentContext(ParserRuleContext):
+        __slots__ = 'parser'
 
-        def __init__(self, parser, parent=None, invokingState=-1):
-            super(QrogueWorldParser.Room_contentContext, self).__init__(parent, invokingState)
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
             self.parser = parser
 
         def message_body(self):
@@ -438,16 +446,16 @@ class QrogueWorldParser ( Parser ):
         def getRuleIndex(self):
             return QrogueWorldParser.RULE_room_content
 
-        def enterRule(self, listener):
-            if hasattr(listener, "enterRoom_content"):
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterRoom_content" ):
                 listener.enterRoom_content(self)
 
-        def exitRule(self, listener):
-            if hasattr(listener, "exitRoom_content"):
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitRoom_content" ):
                 listener.exitRoom_content(self)
 
-        def accept(self, visitor):
-            if hasattr(visitor, "visitRoom_content"):
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitRoom_content" ):
                 return visitor.visitRoom_content(self)
             else:
                 return visitor.visitChildren(self)
@@ -465,7 +473,7 @@ class QrogueWorldParser ( Parser ):
             self.state = 62
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            if _la==QrogueWorldParser.OPTIONAL_LEVEL:
+            if _la==14:
                 self.state = 61
                 self.match(QrogueWorldParser.OPTIONAL_LEVEL)
 
@@ -488,12 +496,13 @@ class QrogueWorldParser ( Parser ):
 
 
     class R_typeContext(ParserRuleContext):
+        __slots__ = 'parser'
 
-        def __init__(self, parser, parent=None, invokingState=-1):
-            super(QrogueWorldParser.R_typeContext, self).__init__(parent, invokingState)
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
             self.parser = parser
 
-        def DIGIT(self, i=None):
+        def DIGIT(self, i:int=None):
             if i is None:
                 return self.getTokens(QrogueWorldParser.DIGIT)
             else:
@@ -511,16 +520,16 @@ class QrogueWorldParser ( Parser ):
         def getRuleIndex(self):
             return QrogueWorldParser.RULE_r_type
 
-        def enterRule(self, listener):
-            if hasattr(listener, "enterR_type"):
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterR_type" ):
                 listener.enterR_type(self)
 
-        def exitRule(self, listener):
-            if hasattr(listener, "exitR_type"):
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitR_type" ):
                 listener.exitR_type(self)
 
-        def accept(self, visitor):
-            if hasattr(visitor, "visitR_type"):
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitR_type" ):
                 return visitor.visitR_type(self)
             else:
                 return visitor.visitChildren(self)
@@ -537,7 +546,7 @@ class QrogueWorldParser ( Parser ):
             self.enterOuterAlt(localctx, 1)
             self.state = 69
             _la = self._input.LA(1)
-            if not(_la==QrogueWorldParser.WORLD_LITERAL or _la==QrogueWorldParser.LEVEL_LITERAL):
+            if not(_la==47 or _la==48):
                 self._errHandler.recoverInline(self)
             else:
                 self._errHandler.reportMatch(self)
@@ -547,7 +556,7 @@ class QrogueWorldParser ( Parser ):
             self.state = 72
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            if _la==QrogueWorldParser.DIGIT:
+            if _la==26:
                 self.state = 71
                 self.match(QrogueWorldParser.DIGIT)
 
@@ -564,9 +573,10 @@ class QrogueWorldParser ( Parser ):
 
 
     class IntegerContext(ParserRuleContext):
+        __slots__ = 'parser'
 
-        def __init__(self, parser, parent=None, invokingState=-1):
-            super(QrogueWorldParser.IntegerContext, self).__init__(parent, invokingState)
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
             self.parser = parser
 
         def DIGIT(self):
@@ -581,16 +591,16 @@ class QrogueWorldParser ( Parser ):
         def getRuleIndex(self):
             return QrogueWorldParser.RULE_integer
 
-        def enterRule(self, listener):
-            if hasattr(listener, "enterInteger"):
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterInteger" ):
                 listener.enterInteger(self)
 
-        def exitRule(self, listener):
-            if hasattr(listener, "exitInteger"):
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitInteger" ):
                 listener.exitInteger(self)
 
-        def accept(self, visitor):
-            if hasattr(visitor, "visitInteger"):
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitInteger" ):
                 return visitor.visitInteger(self)
             else:
                 return visitor.visitChildren(self)
@@ -607,7 +617,7 @@ class QrogueWorldParser ( Parser ):
             self.enterOuterAlt(localctx, 1)
             self.state = 76
             _la = self._input.LA(1)
-            if not((((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << QrogueWorldParser.DIGIT) | (1 << QrogueWorldParser.INTEGER) | (1 << QrogueWorldParser.HALLWAY_ID))) != 0)):
+            if not((((_la) & ~0x3f) == 0 and ((1 << _la) & 68920803328) != 0)):
                 self._errHandler.recoverInline(self)
             else:
                 self._errHandler.reportMatch(self)
@@ -622,15 +632,16 @@ class QrogueWorldParser ( Parser ):
 
 
     class Complex_numberContext(ParserRuleContext):
+        __slots__ = 'parser'
 
-        def __init__(self, parser, parent=None, invokingState=-1):
-            super(QrogueWorldParser.Complex_numberContext, self).__init__(parent, invokingState)
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
             self.parser = parser
 
         def IMAG_NUMBER(self):
             return self.getToken(QrogueWorldParser.IMAG_NUMBER, 0)
 
-        def SIGN(self, i=None):
+        def SIGN(self, i:int=None):
             if i is None:
                 return self.getTokens(QrogueWorldParser.SIGN)
             else:
@@ -646,16 +657,16 @@ class QrogueWorldParser ( Parser ):
         def getRuleIndex(self):
             return QrogueWorldParser.RULE_complex_number
 
-        def enterRule(self, listener):
-            if hasattr(listener, "enterComplex_number"):
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterComplex_number" ):
                 listener.enterComplex_number(self)
 
-        def exitRule(self, listener):
-            if hasattr(listener, "exitComplex_number"):
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitComplex_number" ):
                 listener.exitComplex_number(self)
 
-        def accept(self, visitor):
-            if hasattr(visitor, "visitComplex_number"):
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitComplex_number" ):
                 return visitor.visitComplex_number(self)
             else:
                 return visitor.visitChildren(self)
@@ -673,7 +684,7 @@ class QrogueWorldParser ( Parser ):
             self.state = 79
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            if _la==QrogueWorldParser.SIGN:
+            if _la==30:
                 self.state = 78
                 self.match(QrogueWorldParser.SIGN)
 
@@ -681,19 +692,19 @@ class QrogueWorldParser ( Parser ):
             self.state = 90
             self._errHandler.sync(self)
             token = self._input.LA(1)
-            if token in [QrogueWorldParser.IMAG_NUMBER]:
+            if token in [29]:
                 self.state = 81
                 self.match(QrogueWorldParser.IMAG_NUMBER)
                 pass
-            elif token in [QrogueWorldParser.DIGIT, QrogueWorldParser.INTEGER, QrogueWorldParser.FLOAT, QrogueWorldParser.HALLWAY_ID]:
+            elif token in [26, 27, 28, 36]:
                 self.state = 84
                 self._errHandler.sync(self)
                 token = self._input.LA(1)
-                if token in [QrogueWorldParser.DIGIT, QrogueWorldParser.INTEGER, QrogueWorldParser.HALLWAY_ID]:
+                if token in [26, 27, 36]:
                     self.state = 82
                     self.integer()
                     pass
-                elif token in [QrogueWorldParser.FLOAT]:
+                elif token in [28]:
                     self.state = 83
                     self.match(QrogueWorldParser.FLOAT)
                     pass
@@ -703,7 +714,7 @@ class QrogueWorldParser ( Parser ):
                 self.state = 88
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
-                if _la==QrogueWorldParser.SIGN:
+                if _la==30:
                     self.state = 86
                     self.match(QrogueWorldParser.SIGN)
                     self.state = 87
@@ -724,28 +735,29 @@ class QrogueWorldParser ( Parser ):
 
 
     class LayoutContext(ParserRuleContext):
+        __slots__ = 'parser'
 
-        def __init__(self, parser, parent=None, invokingState=-1):
-            super(QrogueWorldParser.LayoutContext, self).__init__(parent, invokingState)
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
             self.parser = parser
 
         def LAYOUT(self):
             return self.getToken(QrogueWorldParser.LAYOUT, 0)
 
-        def l_room_row(self, i=None):
+        def l_room_row(self, i:int=None):
             if i is None:
                 return self.getTypedRuleContexts(QrogueWorldParser.L_room_rowContext)
             else:
                 return self.getTypedRuleContext(QrogueWorldParser.L_room_rowContext,i)
 
 
-        def HORIZONTAL_SEPARATOR(self, i=None):
+        def HORIZONTAL_SEPARATOR(self, i:int=None):
             if i is None:
                 return self.getTokens(QrogueWorldParser.HORIZONTAL_SEPARATOR)
             else:
                 return self.getToken(QrogueWorldParser.HORIZONTAL_SEPARATOR, i)
 
-        def l_hallway_row(self, i=None):
+        def l_hallway_row(self, i:int=None):
             if i is None:
                 return self.getTypedRuleContexts(QrogueWorldParser.L_hallway_rowContext)
             else:
@@ -755,16 +767,16 @@ class QrogueWorldParser ( Parser ):
         def getRuleIndex(self):
             return QrogueWorldParser.RULE_layout
 
-        def enterRule(self, listener):
-            if hasattr(listener, "enterLayout"):
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterLayout" ):
                 listener.enterLayout(self)
 
-        def exitRule(self, listener):
-            if hasattr(listener, "exitLayout"):
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitLayout" ):
                 listener.exitLayout(self)
 
-        def accept(self, visitor):
-            if hasattr(visitor, "visitLayout"):
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitLayout" ):
                 return visitor.visitLayout(self)
             else:
                 return visitor.visitChildren(self)
@@ -784,7 +796,7 @@ class QrogueWorldParser ( Parser ):
             self.state = 96
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            while _la==QrogueWorldParser.HORIZONTAL_SEPARATOR:
+            while _la==20:
                 self.state = 93
                 self.match(QrogueWorldParser.HORIZONTAL_SEPARATOR)
                 self.state = 98
@@ -796,7 +808,7 @@ class QrogueWorldParser ( Parser ):
             self.state = 105
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            while _la==QrogueWorldParser.VERTICAL_SEPARATOR:
+            while _la==21:
                 self.state = 100
                 self.l_hallway_row()
                 self.state = 101
@@ -808,7 +820,7 @@ class QrogueWorldParser ( Parser ):
             self.state = 111
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            while _la==QrogueWorldParser.HORIZONTAL_SEPARATOR:
+            while _la==20:
                 self.state = 108
                 self.match(QrogueWorldParser.HORIZONTAL_SEPARATOR)
                 self.state = 113
@@ -825,36 +837,37 @@ class QrogueWorldParser ( Parser ):
 
 
     class L_room_rowContext(ParserRuleContext):
+        __slots__ = 'parser'
 
-        def __init__(self, parser, parent=None, invokingState=-1):
-            super(QrogueWorldParser.L_room_rowContext, self).__init__(parent, invokingState)
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
             self.parser = parser
 
-        def VERTICAL_SEPARATOR(self, i=None):
+        def VERTICAL_SEPARATOR(self, i:int=None):
             if i is None:
                 return self.getTokens(QrogueWorldParser.VERTICAL_SEPARATOR)
             else:
                 return self.getToken(QrogueWorldParser.VERTICAL_SEPARATOR, i)
 
-        def ROOM_ID(self, i=None):
+        def ROOM_ID(self, i:int=None):
             if i is None:
                 return self.getTokens(QrogueWorldParser.ROOM_ID)
             else:
                 return self.getToken(QrogueWorldParser.ROOM_ID, i)
 
-        def EMPTY_ROOM(self, i=None):
+        def EMPTY_ROOM(self, i:int=None):
             if i is None:
                 return self.getTokens(QrogueWorldParser.EMPTY_ROOM)
             else:
                 return self.getToken(QrogueWorldParser.EMPTY_ROOM, i)
 
-        def HALLWAY_ID(self, i=None):
+        def HALLWAY_ID(self, i:int=None):
             if i is None:
                 return self.getTokens(QrogueWorldParser.HALLWAY_ID)
             else:
                 return self.getToken(QrogueWorldParser.HALLWAY_ID, i)
 
-        def EMPTY_HALLWAY(self, i=None):
+        def EMPTY_HALLWAY(self, i:int=None):
             if i is None:
                 return self.getTokens(QrogueWorldParser.EMPTY_HALLWAY)
             else:
@@ -863,16 +876,16 @@ class QrogueWorldParser ( Parser ):
         def getRuleIndex(self):
             return QrogueWorldParser.RULE_l_room_row
 
-        def enterRule(self, listener):
-            if hasattr(listener, "enterL_room_row"):
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterL_room_row" ):
                 listener.enterL_room_row(self)
 
-        def exitRule(self, listener):
-            if hasattr(listener, "exitL_room_row"):
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitL_room_row" ):
                 listener.exitL_room_row(self)
 
-        def accept(self, visitor):
-            if hasattr(visitor, "visitL_room_row"):
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitL_room_row" ):
                 return visitor.visitL_room_row(self)
             else:
                 return visitor.visitChildren(self)
@@ -891,7 +904,7 @@ class QrogueWorldParser ( Parser ):
             self.match(QrogueWorldParser.VERTICAL_SEPARATOR)
             self.state = 115
             _la = self._input.LA(1)
-            if not(_la==QrogueWorldParser.EMPTY_ROOM or _la==QrogueWorldParser.ROOM_ID):
+            if not(_la==25 or _la==35):
                 self._errHandler.recoverInline(self)
             else:
                 self._errHandler.reportMatch(self)
@@ -899,17 +912,17 @@ class QrogueWorldParser ( Parser ):
             self.state = 120
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            while _la==QrogueWorldParser.EMPTY_HALLWAY or _la==QrogueWorldParser.HALLWAY_ID:
+            while _la==24 or _la==36:
                 self.state = 116
                 _la = self._input.LA(1)
-                if not(_la==QrogueWorldParser.EMPTY_HALLWAY or _la==QrogueWorldParser.HALLWAY_ID):
+                if not(_la==24 or _la==36):
                     self._errHandler.recoverInline(self)
                 else:
                     self._errHandler.reportMatch(self)
                     self.consume()
                 self.state = 117
                 _la = self._input.LA(1)
-                if not(_la==QrogueWorldParser.EMPTY_ROOM or _la==QrogueWorldParser.ROOM_ID):
+                if not(_la==25 or _la==35):
                     self._errHandler.recoverInline(self)
                 else:
                     self._errHandler.reportMatch(self)
@@ -930,24 +943,25 @@ class QrogueWorldParser ( Parser ):
 
 
     class L_hallway_rowContext(ParserRuleContext):
+        __slots__ = 'parser'
 
-        def __init__(self, parser, parent=None, invokingState=-1):
-            super(QrogueWorldParser.L_hallway_rowContext, self).__init__(parent, invokingState)
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
             self.parser = parser
 
-        def VERTICAL_SEPARATOR(self, i=None):
+        def VERTICAL_SEPARATOR(self, i:int=None):
             if i is None:
                 return self.getTokens(QrogueWorldParser.VERTICAL_SEPARATOR)
             else:
                 return self.getToken(QrogueWorldParser.VERTICAL_SEPARATOR, i)
 
-        def HALLWAY_ID(self, i=None):
+        def HALLWAY_ID(self, i:int=None):
             if i is None:
                 return self.getTokens(QrogueWorldParser.HALLWAY_ID)
             else:
                 return self.getToken(QrogueWorldParser.HALLWAY_ID, i)
 
-        def EMPTY_HALLWAY(self, i=None):
+        def EMPTY_HALLWAY(self, i:int=None):
             if i is None:
                 return self.getTokens(QrogueWorldParser.EMPTY_HALLWAY)
             else:
@@ -956,16 +970,16 @@ class QrogueWorldParser ( Parser ):
         def getRuleIndex(self):
             return QrogueWorldParser.RULE_l_hallway_row
 
-        def enterRule(self, listener):
-            if hasattr(listener, "enterL_hallway_row"):
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterL_hallway_row" ):
                 listener.enterL_hallway_row(self)
 
-        def exitRule(self, listener):
-            if hasattr(listener, "exitL_hallway_row"):
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitL_hallway_row" ):
                 listener.exitL_hallway_row(self)
 
-        def accept(self, visitor):
-            if hasattr(visitor, "visitL_hallway_row"):
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitL_hallway_row" ):
                 return visitor.visitL_hallway_row(self)
             else:
                 return visitor.visitChildren(self)
@@ -988,7 +1002,7 @@ class QrogueWorldParser ( Parser ):
             while True:
                 self.state = 126
                 _la = self._input.LA(1)
-                if not(_la==QrogueWorldParser.EMPTY_HALLWAY or _la==QrogueWorldParser.HALLWAY_ID):
+                if not(_la==24 or _la==36):
                     self._errHandler.recoverInline(self)
                 else:
                     self._errHandler.reportMatch(self)
@@ -996,7 +1010,7 @@ class QrogueWorldParser ( Parser ):
                 self.state = 129 
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
-                if not (_la==QrogueWorldParser.EMPTY_HALLWAY or _la==QrogueWorldParser.HALLWAY_ID):
+                if not (_la==24 or _la==36):
                     break
 
             self.state = 131
@@ -1011,15 +1025,16 @@ class QrogueWorldParser ( Parser ):
 
 
     class RoomsContext(ParserRuleContext):
+        __slots__ = 'parser'
 
-        def __init__(self, parser, parent=None, invokingState=-1):
-            super(QrogueWorldParser.RoomsContext, self).__init__(parent, invokingState)
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
             self.parser = parser
 
         def ROOMS(self):
             return self.getToken(QrogueWorldParser.ROOMS, 0)
 
-        def room(self, i=None):
+        def room(self, i:int=None):
             if i is None:
                 return self.getTypedRuleContexts(QrogueWorldParser.RoomContext)
             else:
@@ -1029,16 +1044,16 @@ class QrogueWorldParser ( Parser ):
         def getRuleIndex(self):
             return QrogueWorldParser.RULE_rooms
 
-        def enterRule(self, listener):
-            if hasattr(listener, "enterRooms"):
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterRooms" ):
                 listener.enterRooms(self)
 
-        def exitRule(self, listener):
-            if hasattr(listener, "exitRooms"):
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitRooms" ):
                 listener.exitRooms(self)
 
-        def accept(self, visitor):
-            if hasattr(visitor, "visitRooms"):
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitRooms" ):
                 return visitor.visitRooms(self)
             else:
                 return visitor.visitChildren(self)
@@ -1058,7 +1073,7 @@ class QrogueWorldParser ( Parser ):
             self.state = 137
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            while _la==QrogueWorldParser.ROOM_ID:
+            while _la==35:
                 self.state = 134
                 self.room()
                 self.state = 139
@@ -1075,9 +1090,10 @@ class QrogueWorldParser ( Parser ):
 
 
     class RoomContext(ParserRuleContext):
+        __slots__ = 'parser'
 
-        def __init__(self, parser, parent=None, invokingState=-1):
-            super(QrogueWorldParser.RoomContext, self).__init__(parent, invokingState)
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
             self.parser = parser
 
         def ROOM_ID(self):
@@ -1094,16 +1110,16 @@ class QrogueWorldParser ( Parser ):
         def getRuleIndex(self):
             return QrogueWorldParser.RULE_room
 
-        def enterRule(self, listener):
-            if hasattr(listener, "enterRoom"):
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterRoom" ):
                 listener.enterRoom(self)
 
-        def exitRule(self, listener):
-            if hasattr(listener, "exitRoom"):
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitRoom" ):
                 listener.exitRoom(self)
 
-        def accept(self, visitor):
-            if hasattr(visitor, "visitRoom"):
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitRoom" ):
                 return visitor.visitRoom(self)
             else:
                 return visitor.visitChildren(self)
@@ -1135,9 +1151,10 @@ class QrogueWorldParser ( Parser ):
 
 
     class R_attributesContext(ParserRuleContext):
+        __slots__ = 'parser'
 
-        def __init__(self, parser, parent=None, invokingState=-1):
-            super(QrogueWorldParser.R_attributesContext, self).__init__(parent, invokingState)
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
             self.parser = parser
 
         def r_visibility(self):
@@ -1151,16 +1168,16 @@ class QrogueWorldParser ( Parser ):
         def getRuleIndex(self):
             return QrogueWorldParser.RULE_r_attributes
 
-        def enterRule(self, listener):
-            if hasattr(listener, "enterR_attributes"):
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterR_attributes" ):
                 listener.enterR_attributes(self)
 
-        def exitRule(self, listener):
-            if hasattr(listener, "exitR_attributes"):
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitR_attributes" ):
                 listener.exitR_attributes(self)
 
-        def accept(self, visitor):
-            if hasattr(visitor, "visitR_attributes"):
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitR_attributes" ):
                 return visitor.visitR_attributes(self)
             else:
                 return visitor.visitChildren(self)
@@ -1192,9 +1209,10 @@ class QrogueWorldParser ( Parser ):
 
 
     class R_visibilityContext(ParserRuleContext):
+        __slots__ = 'parser'
 
-        def __init__(self, parser, parent=None, invokingState=-1):
-            super(QrogueWorldParser.R_visibilityContext, self).__init__(parent, invokingState)
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
             self.parser = parser
 
         def VISIBLE_LITERAL(self):
@@ -1206,16 +1224,16 @@ class QrogueWorldParser ( Parser ):
         def getRuleIndex(self):
             return QrogueWorldParser.RULE_r_visibility
 
-        def enterRule(self, listener):
-            if hasattr(listener, "enterR_visibility"):
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterR_visibility" ):
                 listener.enterR_visibility(self)
 
-        def exitRule(self, listener):
-            if hasattr(listener, "exitR_visibility"):
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitR_visibility" ):
                 listener.exitR_visibility(self)
 
-        def accept(self, visitor):
-            if hasattr(visitor, "visitR_visibility"):
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitR_visibility" ):
                 return visitor.visitR_visibility(self)
             else:
                 return visitor.visitChildren(self)
@@ -1233,10 +1251,10 @@ class QrogueWorldParser ( Parser ):
             self.state = 151
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            if _la==QrogueWorldParser.VISIBLE_LITERAL or _la==QrogueWorldParser.FOGGY_LITERAL:
+            if _la==45 or _la==46:
                 self.state = 150
                 _la = self._input.LA(1)
-                if not(_la==QrogueWorldParser.VISIBLE_LITERAL or _la==QrogueWorldParser.FOGGY_LITERAL):
+                if not(_la==45 or _la==46):
                     self._errHandler.recoverInline(self)
                 else:
                     self._errHandler.reportMatch(self)
@@ -1253,15 +1271,16 @@ class QrogueWorldParser ( Parser ):
 
 
     class HallwaysContext(ParserRuleContext):
+        __slots__ = 'parser'
 
-        def __init__(self, parser, parent=None, invokingState=-1):
-            super(QrogueWorldParser.HallwaysContext, self).__init__(parent, invokingState)
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
             self.parser = parser
 
         def HALLWAYS(self):
             return self.getToken(QrogueWorldParser.HALLWAYS, 0)
 
-        def hallway(self, i=None):
+        def hallway(self, i:int=None):
             if i is None:
                 return self.getTypedRuleContexts(QrogueWorldParser.HallwayContext)
             else:
@@ -1271,16 +1290,16 @@ class QrogueWorldParser ( Parser ):
         def getRuleIndex(self):
             return QrogueWorldParser.RULE_hallways
 
-        def enterRule(self, listener):
-            if hasattr(listener, "enterHallways"):
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterHallways" ):
                 listener.enterHallways(self)
 
-        def exitRule(self, listener):
-            if hasattr(listener, "exitHallways"):
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitHallways" ):
                 listener.exitHallways(self)
 
-        def accept(self, visitor):
-            if hasattr(visitor, "visitHallways"):
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitHallways" ):
                 return visitor.visitHallways(self)
             else:
                 return visitor.visitChildren(self)
@@ -1300,7 +1319,7 @@ class QrogueWorldParser ( Parser ):
             self.state = 157
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            while _la==QrogueWorldParser.HALLWAY_ID:
+            while _la==36:
                 self.state = 154
                 self.hallway()
                 self.state = 159
@@ -1317,9 +1336,10 @@ class QrogueWorldParser ( Parser ):
 
 
     class HallwayContext(ParserRuleContext):
+        __slots__ = 'parser'
 
-        def __init__(self, parser, parent=None, invokingState=-1):
-            super(QrogueWorldParser.HallwayContext, self).__init__(parent, invokingState)
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
             self.parser = parser
 
         def HALLWAY_ID(self):
@@ -1332,16 +1352,16 @@ class QrogueWorldParser ( Parser ):
         def getRuleIndex(self):
             return QrogueWorldParser.RULE_hallway
 
-        def enterRule(self, listener):
-            if hasattr(listener, "enterHallway"):
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterHallway" ):
                 listener.enterHallway(self)
 
-        def exitRule(self, listener):
-            if hasattr(listener, "exitHallway"):
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitHallway" ):
                 listener.exitHallway(self)
 
-        def accept(self, visitor):
-            if hasattr(visitor, "visitHallway"):
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitHallway" ):
                 return visitor.visitHallway(self)
             else:
                 return visitor.visitChildren(self)
@@ -1369,9 +1389,10 @@ class QrogueWorldParser ( Parser ):
 
 
     class H_attributesContext(ParserRuleContext):
+        __slots__ = 'parser'
 
-        def __init__(self, parser, parent=None, invokingState=-1):
-            super(QrogueWorldParser.H_attributesContext, self).__init__(parent, invokingState)
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
             self.parser = parser
 
         def OPEN_LITERAL(self):
@@ -1386,7 +1407,7 @@ class QrogueWorldParser ( Parser ):
         def EVENT_LITERAL(self):
             return self.getToken(QrogueWorldParser.EVENT_LITERAL, 0)
 
-        def REFERENCE(self, i=None):
+        def REFERENCE(self, i:int=None):
             if i is None:
                 return self.getTokens(QrogueWorldParser.REFERENCE)
             else:
@@ -1398,7 +1419,7 @@ class QrogueWorldParser ( Parser ):
         def ENTANGLED_LITERAL(self):
             return self.getToken(QrogueWorldParser.ENTANGLED_LITERAL, 0)
 
-        def HALLWAY_ID(self, i=None):
+        def HALLWAY_ID(self, i:int=None):
             if i is None:
                 return self.getTokens(QrogueWorldParser.HALLWAY_ID)
             else:
@@ -1413,7 +1434,7 @@ class QrogueWorldParser ( Parser ):
         def PERMANENT_LITERAL(self):
             return self.getToken(QrogueWorldParser.PERMANENT_LITERAL, 0)
 
-        def LIST_SEPARATOR(self, i=None):
+        def LIST_SEPARATOR(self, i:int=None):
             if i is None:
                 return self.getTokens(QrogueWorldParser.LIST_SEPARATOR)
             else:
@@ -1422,16 +1443,16 @@ class QrogueWorldParser ( Parser ):
         def getRuleIndex(self):
             return QrogueWorldParser.RULE_h_attributes
 
-        def enterRule(self, listener):
-            if hasattr(listener, "enterH_attributes"):
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterH_attributes" ):
                 listener.enterH_attributes(self)
 
-        def exitRule(self, listener):
-            if hasattr(listener, "exitH_attributes"):
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitH_attributes" ):
                 listener.exitH_attributes(self)
 
-        def accept(self, visitor):
-            if hasattr(visitor, "visitH_attributes"):
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitH_attributes" ):
                 return visitor.visitH_attributes(self)
             else:
                 return visitor.visitChildren(self)
@@ -1451,19 +1472,19 @@ class QrogueWorldParser ( Parser ):
             self.state = 169
             self._errHandler.sync(self)
             token = self._input.LA(1)
-            if token in [QrogueWorldParser.OPEN_LITERAL]:
+            if token in [59]:
                 self.state = 164
                 self.match(QrogueWorldParser.OPEN_LITERAL)
                 pass
-            elif token in [QrogueWorldParser.CLOSED_LITERAL]:
+            elif token in [60]:
                 self.state = 165
                 self.match(QrogueWorldParser.CLOSED_LITERAL)
                 pass
-            elif token in [QrogueWorldParser.LOCKED_LITERAL]:
+            elif token in [61]:
                 self.state = 166
                 self.match(QrogueWorldParser.LOCKED_LITERAL)
                 pass
-            elif token in [QrogueWorldParser.EVENT_LITERAL]:
+            elif token in [62]:
                 self.state = 167
                 self.match(QrogueWorldParser.EVENT_LITERAL)
                 self.state = 168
@@ -1475,7 +1496,7 @@ class QrogueWorldParser ( Parser ):
             self.state = 176
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            if _la==QrogueWorldParser.T__8:
+            if _la==9:
                 self.state = 171
                 self.match(QrogueWorldParser.T__8)
                 self.state = 172
@@ -1483,7 +1504,7 @@ class QrogueWorldParser ( Parser ):
                 self.state = 174
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
-                if _la==QrogueWorldParser.PERMANENT_LITERAL:
+                if _la==63:
                     self.state = 173
                     self.match(QrogueWorldParser.PERMANENT_LITERAL)
 
@@ -1493,7 +1514,7 @@ class QrogueWorldParser ( Parser ):
             self.state = 189
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            if _la==QrogueWorldParser.ENTANGLED_LITERAL:
+            if _la==64:
                 self.state = 178
                 self.match(QrogueWorldParser.ENTANGLED_LITERAL)
                 self.state = 179
@@ -1503,7 +1524,7 @@ class QrogueWorldParser ( Parser ):
                 self.state = 185
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
-                while _la==QrogueWorldParser.LIST_SEPARATOR:
+                while _la==22:
                     self.state = 181
                     self.match(QrogueWorldParser.LIST_SEPARATOR)
                     self.state = 182
@@ -1521,7 +1542,7 @@ class QrogueWorldParser ( Parser ):
             self.state = 194
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            if _la==QrogueWorldParser.TUTORIAL_LITERAL:
+            if _la==16:
                 self.state = 192
                 self.match(QrogueWorldParser.TUTORIAL_LITERAL)
                 self.state = 193
@@ -1531,7 +1552,7 @@ class QrogueWorldParser ( Parser ):
             self.state = 198
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            if _la==QrogueWorldParser.TRIGGER_LITERAL:
+            if _la==17:
                 self.state = 196
                 self.match(QrogueWorldParser.TRIGGER_LITERAL)
                 self.state = 197
@@ -1548,9 +1569,10 @@ class QrogueWorldParser ( Parser ):
 
 
     class MessagesContext(ParserRuleContext):
+        __slots__ = 'parser'
 
-        def __init__(self, parser, parent=None, invokingState=-1):
-            super(QrogueWorldParser.MessagesContext, self).__init__(parent, invokingState)
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
             self.parser = parser
 
         def MESSAGES(self):
@@ -1562,7 +1584,7 @@ class QrogueWorldParser ( Parser ):
         def TEXT(self):
             return self.getToken(QrogueWorldParser.TEXT, 0)
 
-        def message(self, i=None):
+        def message(self, i:int=None):
             if i is None:
                 return self.getTypedRuleContexts(QrogueWorldParser.MessageContext)
             else:
@@ -1572,16 +1594,16 @@ class QrogueWorldParser ( Parser ):
         def getRuleIndex(self):
             return QrogueWorldParser.RULE_messages
 
-        def enterRule(self, listener):
-            if hasattr(listener, "enterMessages"):
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterMessages" ):
                 listener.enterMessages(self)
 
-        def exitRule(self, listener):
-            if hasattr(listener, "exitMessages"):
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitMessages" ):
                 listener.exitMessages(self)
 
-        def accept(self, visitor):
-            if hasattr(visitor, "visitMessages"):
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitMessages" ):
                 return visitor.visitMessages(self)
             else:
                 return visitor.visitChildren(self)
@@ -1601,7 +1623,7 @@ class QrogueWorldParser ( Parser ):
             self.state = 204
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            if _la==QrogueWorldParser.T__11:
+            if _la==12:
                 self.state = 201
                 self.match(QrogueWorldParser.T__11)
                 self.state = 202
@@ -1613,7 +1635,7 @@ class QrogueWorldParser ( Parser ):
             self.state = 209
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            while _la==QrogueWorldParser.REFERENCE:
+            while _la==37:
                 self.state = 206
                 self.message()
                 self.state = 211
@@ -1630,12 +1652,13 @@ class QrogueWorldParser ( Parser ):
 
 
     class MessageContext(ParserRuleContext):
+        __slots__ = 'parser'
 
-        def __init__(self, parser, parent=None, invokingState=-1):
-            super(QrogueWorldParser.MessageContext, self).__init__(parent, invokingState)
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
             self.parser = parser
 
-        def REFERENCE(self, i=None):
+        def REFERENCE(self, i:int=None):
             if i is None:
                 return self.getTokens(QrogueWorldParser.REFERENCE)
             else:
@@ -1654,16 +1677,16 @@ class QrogueWorldParser ( Parser ):
         def getRuleIndex(self):
             return QrogueWorldParser.RULE_message
 
-        def enterRule(self, listener):
-            if hasattr(listener, "enterMessage"):
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterMessage" ):
                 listener.enterMessage(self)
 
-        def exitRule(self, listener):
-            if hasattr(listener, "exitMessage"):
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitMessage" ):
                 listener.exitMessage(self)
 
-        def accept(self, visitor):
-            if hasattr(visitor, "visitMessage"):
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitMessage" ):
                 return visitor.visitMessage(self)
             else:
                 return visitor.visitChildren(self)
@@ -1685,7 +1708,7 @@ class QrogueWorldParser ( Parser ):
             self.state = 218
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            if _la==QrogueWorldParser.MSG_EVENT:
+            if _la==66:
                 self.state = 214
                 self.match(QrogueWorldParser.MSG_EVENT)
                 self.state = 215
@@ -1706,15 +1729,16 @@ class QrogueWorldParser ( Parser ):
 
 
     class Message_bodyContext(ParserRuleContext):
+        __slots__ = 'parser'
 
-        def __init__(self, parser, parent=None, invokingState=-1):
-            super(QrogueWorldParser.Message_bodyContext, self).__init__(parent, invokingState)
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
             self.parser = parser
 
         def MSG_SPEAKER(self):
             return self.getToken(QrogueWorldParser.MSG_SPEAKER, 0)
 
-        def TEXT(self, i=None):
+        def TEXT(self, i:int=None):
             if i is None:
                 return self.getTokens(QrogueWorldParser.TEXT)
             else:
@@ -1729,16 +1753,16 @@ class QrogueWorldParser ( Parser ):
         def getRuleIndex(self):
             return QrogueWorldParser.RULE_message_body
 
-        def enterRule(self, listener):
-            if hasattr(listener, "enterMessage_body"):
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterMessage_body" ):
                 listener.enterMessage_body(self)
 
-        def exitRule(self, listener):
-            if hasattr(listener, "exitMessage_body"):
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitMessage_body" ):
                 listener.exitMessage_body(self)
 
-        def accept(self, visitor):
-            if hasattr(visitor, "visitMessage_body"):
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitMessage_body" ):
                 return visitor.visitMessage_body(self)
             else:
                 return visitor.visitChildren(self)
@@ -1756,7 +1780,7 @@ class QrogueWorldParser ( Parser ):
             self.state = 222
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            if _la==QrogueWorldParser.MSG_SPEAKER:
+            if _la==68:
                 self.state = 220
                 self.match(QrogueWorldParser.MSG_SPEAKER)
                 self.state = 221
@@ -1766,7 +1790,7 @@ class QrogueWorldParser ( Parser ):
             self.state = 225
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            if _la==QrogueWorldParser.MSG_PRIORITY:
+            if _la==69:
                 self.state = 224
                 self.match(QrogueWorldParser.MSG_PRIORITY)
 
@@ -1774,13 +1798,13 @@ class QrogueWorldParser ( Parser ):
             self.state = 232
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            if _la==QrogueWorldParser.T__12:
+            if _la==13:
                 self.state = 227
                 self.match(QrogueWorldParser.T__12)
                 self.state = 229
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
-                if _la==QrogueWorldParser.T__1:
+                if _la==2:
                     self.state = 228
                     self.match(QrogueWorldParser.T__1)
 
@@ -1798,7 +1822,7 @@ class QrogueWorldParser ( Parser ):
                 self.state = 237 
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
-                if not (_la==QrogueWorldParser.TEXT):
+                if not (_la==34):
                     break
 
         except RecognitionException as re:

@@ -1,19 +1,19 @@
 import math
 from abc import ABC, abstractmethod
-from typing import List, Any, Callable, Tuple, Optional, Dict
+from typing import List, Any, Callable, Tuple, Optional, Dict, Union
 
 from py_cui import ColorRule
 from py_cui.widget_set import WidgetSet
 from py_cui.widgets import BlockLabel
 
-from qrogue.game.logic import StateVector
-from qrogue.game.logic.actors import Robot, CircuitMatrix
+from qrogue.game.logic.base import StateVector, CircuitMatrix
+from qrogue.game.logic.actors import Robot
 from qrogue.game.logic.collectibles import Instruction
 from qrogue.game.world.map import Map
 from qrogue.game.world.navigation import Direction
-from qrogue.util import ColorConfig, Controls, Keys, Logger, Config, HudConfig, GameplayConfig, Options
+from qrogue.util import ColorConfig, Controls, Keys, Logger, Config, HudConfig, GameplayConfig, Options, ColorCode
 from qrogue.util.config import QuantumSimulationConfig, InstructionConfig
-from qrogue.util.util_functions import center_string, align_string
+from qrogue.util.util_functions import center_string, align_string, to_binary_string, int_to_fixed_len_str
 
 from qrogue.graphics import WidgetWrapper
 from qrogue.graphics.rendering import ColorRules
@@ -72,9 +72,10 @@ class MyBaseWidget(BlockLabel, WidgetWrapper):
             ColorRule(f"{regex}.*?{regex}", 0, 0, "contains", "regex", [0, 1], False, Logger.instance())
         )
 
-    def add_key_command(self, keys: List[int], command: Callable[[], Any]) -> Any:
+    def add_key_command(self, keys: List[int], command: Callable[[], Any], overwrite: bool = True) -> Any:
         for key in keys:
-            super(MyBaseWidget, self).add_key_command(key, command)
+            if overwrite or key not in self._key_commands:
+                super(MyBaseWidget, self).add_key_command(key, command)
 
 
 class MyMultiWidget(WidgetWrapper):
@@ -254,9 +255,9 @@ class MyMultiWidget(WidgetWrapper):
         for w in self.__widgets:
             w.activate_individual_coloring()
 
-    def add_key_command(self, keys: List[int], command: Callable[[], Any]) -> Any:
+    def add_key_command(self, keys: List[int], command: Callable[[], Any], overwrite: bool = True) -> Any:
         for w in self.__widgets:
-            w.add_key_command(keys, command)
+            w.add_key_command(keys, command, overwrite)
 
     def toggle_border(self):
         for w in self.__widgets:
@@ -310,9 +311,13 @@ class SimpleWidget(Widget):
         self.__text = ""
         self.widget.set_title("")
 
+    def __str__(self):
+        return f"SimpleWidget(\"{self.__text}\")"
+
 
 class HudWidget(Widget):
     __MAP_NAME = ""
+    __SCORE_LENGTH = 5
 
     def __init__(self, widget: MyMultiWidget):
         super().__init__(widget)
@@ -322,6 +327,12 @@ class HudWidget(Widget):
         self.__render_duration = None
 
     def set_data(self, data: Tuple[Robot, Optional[str], Optional[str]]) -> None:
+        """
+        :param data: Tuple of up to three data-items
+                - data[0]: Robot
+                - data[1]: name of the current map
+                - data[2]: text for the situational HUD
+        """
         self.__robot = data[0]
         if data[1] is not None:
             HudWidget.__MAP_NAME = data[1]
@@ -349,6 +360,8 @@ class HudWidget(Widget):
         if HudConfig.ShowMapName and self.__map_name:
             text += f"{self.__map_name}\n"
         if self.__robot:
+            if HudConfig.ShowScore:
+                text += f"Score: {int_to_fixed_len_str(self.__robot.score, length=HudWidget.__SCORE_LENGTH)}  "
             if HudConfig.ShowEnergy:
                 text += f"Energy: {self.__robot.cur_energy} / {self.__robot.max_energy}   \t"
             if HudConfig.ShowKeys:
@@ -406,12 +419,44 @@ class CircuitWidget(Widget):
     def __init__(self, widget: WidgetWrapper, controls: Controls):
         super().__init__(widget)
         self.__robot: Optional[Robot] = None
+        self.__input: Optional[StateVector] = None
+        self.__target: Optional[StateVector] = None
         self.__place_holder_data: Optional[CircuitWidget.PlaceHolderData] = None
 
         widget.add_key_command(controls.get_keys(Keys.SelectionUp), self.__move_up)
         widget.add_key_command(controls.get_keys(Keys.SelectionRight), self.__move_right)
         widget.add_key_command(controls.get_keys(Keys.SelectionDown), self.__move_down)
         widget.add_key_command(controls.get_keys(Keys.SelectionLeft), self.__move_left)
+
+        widget.activate_individual_coloring()
+        ColorRules.apply_circuit_rules(widget)
+
+    def __circuit_input_value(self, qubit: int) -> str:
+        if self.__input is not None and self.__input.is_classical \
+                and self.__target is not None and self.__target.is_classical \
+                and self.__robot.state_vector.is_classical:     # robot.state_vector cannot be None
+            index = self.__input.to_value().index(1)    # find where the amplitude is 1
+            # get the respective qubit values but in lsb, so we can use $qubit directly as index
+            values = to_binary_string(index, self.__input.num_of_qubits, msb=False)
+            return f"= {values[qubit]} "
+        else:
+            return ""
+
+    def __circuit_output_value(self, qubit: int) -> str:
+        if self.__input is not None and self.__input.is_classical \
+                and self.__target is not None and self.__target.is_classical \
+                and self.__robot.state_vector.is_classical:     # robot.state_vector cannot be None
+            index = self.__robot.state_vector.to_value().index(1)    # find where the amplitude is 1
+            # get the respective qubit values but in lsb, so we can use $qubit directly as index
+            out_values = to_binary_string(index, self.__robot.state_vector.num_of_qubits, msb=False)
+            index = self.__target.to_value().index(1)
+            target_values = to_binary_string(index, self.__target.num_of_qubits, msb=False)
+            is_correct = out_values[qubit] == target_values[qubit]
+            equality = ColorConfig.colorize(ColorCode.CORRECT_AMPLITUDE if is_correct else ColorCode.WRONG_AMPLITUDE,
+                                            '=' + ('=' if is_correct else '/') + '=')
+            return f"= {out_values[qubit]}| {equality} <{target_values[qubit]}|"
+        else:
+            return "|"
 
     def __change_position(self, right: bool) -> bool:
         def go_right(position: int) -> Optional[int]:
@@ -525,8 +570,12 @@ class CircuitWidget(Widget):
                 Logger.instance().error("Place_Gate() did not work correctly", from_pycui=False)
         return False, None
 
-    def set_data(self, robot: Robot) -> None:
-        self.__robot = robot
+    def set_data(self, data: Tuple[Robot, Optional[Tuple[StateVector, StateVector]]]) -> None:
+        self.__robot, vectors = data
+        if vectors is None:
+            self.__input, self.__target = None, None
+        else:
+            self.__input, self.__target = vectors
 
     def render(self) -> None:
         if self.__robot is not None:
@@ -553,13 +602,13 @@ class CircuitWidget(Widget):
             circ_str = " In "   # for some reason the whitespace in front is needed to center the text correctly
             # place qubits from top to bottom, high to low index
             for q in range(len(rows) - 1, -1, -1):
-                circ_str += f"| q{q} >"
+                circ_str += f"| q{q} {self.__circuit_input_value(q)}>"
                 row = rows[q]
                 for i in range(len(row)):
                     circ_str += row[i]
                     if i < len(row) - 1:
                         circ_str += "+"
-                circ_str += f"< q'{q} |"
+                circ_str += f"< q'{q} {self.__circuit_output_value(q)}"
                 if q == len(rows) - 1:
                     circ_str += " Out"
                 circ_str += "\n"
@@ -574,7 +623,7 @@ class MapWidget(Widget):
     def __init__(self, widget: WidgetWrapper):
         super().__init__(widget)
         self.__map_started = False
-        self.__map = None
+        self.__map: Optional[Map] = None
         self.__backup = None
 
     def set_data(self, map_: Map) -> None:
@@ -606,6 +655,11 @@ class MapWidget(Widget):
     def move(self, direction: Direction) -> bool:
         return self.__map.move(direction)
 
+    def undo_last_move(self) -> bool:
+        if self.__map is not None:
+            return self.__map.undo_last_move()
+        return False
+
 
 class StateVectorWidget(Widget):
     def __init__(self, widget: WidgetWrapper, headline: str):
@@ -635,8 +689,7 @@ class InputStateVectorWidget(StateVectorWidget):
         super().__init__(widget, headline)
 
     def set_data(self, state_vector: StateVector) -> None:
-        # here we only need 1 space per value because every value is either 1 or 0
-        self._stv_str_rep = self._headline + state_vector.to_string(space_per_value=1)
+        self._stv_str_rep = self._headline + state_vector.to_string()
 
 
 class OutputStateVectorWidget(StateVectorWidget):
@@ -754,14 +807,19 @@ class SelectionWidget(Widget):
         return text.startswith(f"[{index}] ")
 
     def __init__(self, widget: WidgetWrapper, controls: Controls, columns: int = 1, is_second: bool = False,
-                 stay_selected: bool = False):
+                 stay_selected: bool = False, on_key_press: Optional[Callable[[Keys], None]] = None):
         super(SelectionWidget, self).__init__(widget)
         self.__columns = columns
         self.__is_second = is_second
         self.__stay_selected = stay_selected
+
+        def okp(key: Keys):
+            if on_key_press is not None: on_key_press(key)
+        self.__on_key_press = okp
         self.__index = 0
-        self.__choices = []
-        self.__callbacks = []
+        self.__choices: List[str] = []
+        self.__choice_objects: List = []
+        self.__callbacks: List[Union[Callable[[], bool]], Callable[[int], bool]] = []
         self.widget.add_text_color_rule(f"->", ColorConfig.SELECTION_COLOR, 'contains', match_type='regex')
 
         # init keys
@@ -816,6 +874,12 @@ class SelectionWidget(Widget):
     def index(self) -> int:
         return self.__index
 
+    @property
+    def selected_object(self) -> Any:
+        if self.__choice_objects is not None and self.index < len(self.__choice_objects):
+            return self.__choice_objects[self.index]
+        return None
+
     def _index_of_row_start(self, index: int):
         start_of_last_row = self.columns * (self.rows - 1)
         if index >= start_of_last_row:
@@ -829,17 +893,16 @@ class SelectionWidget(Widget):
             else:
                 self.__choices[index] = text
 
-    def clear_text(self):
-        self.__choices = []
-        self.__callbacks = []
+    def set_data(self, data: "Tuple[Union[List[str], Tuple[List[str], List[Any]]], List[Callable]]") -> None:
+        assert len(data) >= 1, "set_data() called with empty data!"
 
-    def set_data(self, data: "Tuple[List[str], List[Callable]]") -> None:
         self.render_reset()
         self.__choices, self.__callbacks = data
-        choice_length = 0
-        for choice in self.__choices:
-            if len(choice) > choice_length:
-                choice_length = len(choice)
+
+        if isinstance(self.__choices, tuple):
+            self.__choices, self.__choice_objects = self.__choices
+
+        choice_length = max([len(choice) for choice in self.__choices])
         for i in range(len(self.__choices)):
             self.__choices[i] = self.__choices[i].ljust(choice_length)
 
@@ -867,7 +930,9 @@ class SelectionWidget(Widget):
         self.widget.set_title("")
         self.__index = 0
         if self.__is_second:
-            self.clear_text()
+            self.__choices = []
+            self.__choice_objects = []
+            self.__callbacks = []
 
     def validate_index(self) -> bool:
         if self.__index < 0:
@@ -891,6 +956,8 @@ class SelectionWidget(Widget):
     def _up(self) -> None:
         if self.num_of_choices <= 1:
             return
+        # only call if the key press changes something (e.g. more than 1 choice)
+        self.__on_key_press(Keys.SelectionUp)
         if self.num_of_choices <= self.__columns or self.__columns == 1:
             self.__single_prev()
         else:
@@ -906,6 +973,8 @@ class SelectionWidget(Widget):
     def _right(self) -> None:
         if self.num_of_choices <= 1:
             return
+        # only call if the key press changes something (e.g. more than 1 choice)
+        self.__on_key_press(Keys.SelectionRight)
         if self.__columns == 1 or self.num_of_choices <= self.__columns:
             self.__single_next()
         else:
@@ -922,6 +991,8 @@ class SelectionWidget(Widget):
     def _down(self) -> None:
         if self.num_of_choices <= 1:
             return
+        # only call if the key press changes something (e.g. more than 1 choice)
+        self.__on_key_press(Keys.SelectionDown)
         if self.num_of_choices <= self.__columns or self.__columns == 1:
             self.__single_next()
         else:
@@ -935,6 +1006,8 @@ class SelectionWidget(Widget):
     def _left(self) -> None:
         if self.num_of_choices <= 1:
             return
+        # only call if the key press changes something (e.g. more than 1 choice)
+        self.__on_key_press(Keys.SelectionLeft)
         if self.__columns == 1 or self.num_of_choices <= self.__columns:
             self.__single_prev()
         else:
@@ -949,6 +1022,7 @@ class SelectionWidget(Widget):
         self.render()
 
     def __jump_to_index(self, index: int):
+        self.__on_key_press(Keys.hotkeys()[index])      # todo implement more efficiently? On the other hand hotkeys are not that important maybe
         if index < 0:
             self.__index = 0
         elif self.num_of_choices <= index:
@@ -961,6 +1035,7 @@ class SelectionWidget(Widget):
         """
         :return: True if the focus should move, False if the focus should stay in this SelectionWidget
         """
+        self.__on_key_press(Keys.Action)
         # if only one callback is given, it needs the index as parameter
         if len(self.__callbacks) == 1 and self.num_of_choices > 1:
             ret = self.__callbacks[0](self.__index)
@@ -973,3 +1048,115 @@ class SelectionWidget(Widget):
             return True
         else:
             return ret
+
+
+class HistoricWrapperWidget:
+    def __init__(self, widgets: List[Widget], render_widgets: bool, save_initial_state: bool = True):
+        self.__widgets = widgets
+        self.__history: List[Tuple[str]] = []
+        self.__index = -1
+
+        if render_widgets:
+            for widget in widgets:
+                widget.render()     # update the visuals before potentially saving them
+        if save_initial_state:
+            self.save_state(rerender=True, force=True)
+
+    @property
+    def index(self) -> int:
+        return self.__index
+
+    @property
+    def is_in_past(self) -> bool:
+        return self.__index < len(self.__history) - 1
+
+    @property
+    def _cur_data(self) -> Optional[Tuple[str]]:
+        if 0 <= self.__index < len(self.__history):
+            return self.__history[self.__index]
+        return None
+
+    def save_state(self, rerender: bool = False, force: bool = False):
+        if rerender:
+            for widget in self.__widgets:
+                widget.render()
+        data = tuple([widget.widget.get_title() for widget in self.__widgets])
+
+        # if force is False then data is not saved if it is equal to the latest data
+        if force or len(self.__history) <= 0 or data != self.__history[-1]:
+            self.__history.append(data)
+            self.__index = len(self.__history) - 1  # index points to the last element
+
+    def _back(self, render: bool):
+        self.__index -= 1
+        self.__index = max(self.__index, 0)
+        if render: self.render()
+
+    def _forth(self, render: bool):
+        self.__index += 1
+        self.__index = min(self.__index, len(self.__history) - 1)
+        if render: self.render()
+
+    def travel(self, forth: bool, render: bool = True):
+        if forth:   self._forth(render)
+        else:       self._back(render)
+
+    def jump_to_present(self, render: bool = True):
+        if self.is_in_past:
+            self.__index = len(self.__history) - 1
+            if render: self.render()
+
+    def clean_history(self) -> None:
+        if len(self.__history) > 0:
+            self.__history = [self.__history[-1]]  # only keep the latest element
+            self.__index = 0
+
+    def render(self) -> None:
+        if self._cur_data is not None:
+            assert len(self._cur_data) == len(self.__widgets), "Length of data doesn't match widgets': " \
+                                                               f"{len(self._cur_data)} != {len(self.__widgets)}"
+            for i, widget in enumerate(self.__widgets):
+                widget.widget.set_title(self._cur_data[i])
+                #widget.render()
+
+
+class HistoricProperty(Widget, ABC):
+    def __init__(self, widget: WidgetWrapper):
+        super().__init__(widget)
+        self.__history: List[str] = []
+        self.__index = -1
+
+    @property
+    def index(self) -> int:
+        return self.__index
+
+    @property
+    def _cur_data(self) -> Optional[str]:
+        if 0 <= self.__index < len(self.__history):
+            return self.__history[self.__index]
+        return None
+
+    def add_data(self, data: str, force: bool = False):
+        # if force is False then data is not saved if it is equal to the latest data
+        if force or len(self.__history) <= 0 or data != self.__history[-1]:
+            self.__history.append(data)
+            self.__index = len(self.__history) - 1  # index points to the last element
+
+    def back(self):
+        self.__index -= 1
+        self.__index = max(self.__index, 0)
+
+    def forth(self):
+        self.__index += 1
+        self.__index = min(self.__index, len(self.__history) - 1)
+
+    def clean_history(self) -> None:
+        self.__history = [self.__history[-1]]  # only keep the latest element
+        self.__index = 0
+
+    def render(self) -> None:
+        if self._cur_data is not None:
+            self.widget.set_title(self._cur_data)
+
+
+

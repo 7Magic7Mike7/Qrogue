@@ -1,8 +1,7 @@
 # exporting
-from .state_vector import StateVector, CircuitMatrix
 from .controllables import Controllable, Player, Robot
 from .controllables import robot
-from .puzzles import Enemy, Boss, Riddle
+from .puzzles import Enemy, Boss, Riddle, Challenge
 
 # importing
 # +collectibles (Instruction)
