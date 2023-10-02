@@ -4,7 +4,7 @@ from typing import Callable, Dict, Optional, Tuple, List, Any, Set, Union
 from qrogue.game.logic.actors import Robot
 from qrogue.game.logic.collectibles import GateFactory, Key, instruction, Score, CollectibleType, \
     CollectibleFactory, Instruction
-from qrogue.game.target_factory import TargetDifficulty, BossFactory, EnemyFactory, RiddleFactory, EnemyTargetFactory
+from qrogue.game.target_factory import PuzzleDifficulty, BossFactory, EnemyFactory, RiddleFactory, EnemyPuzzleFactory
 from qrogue.game.world import tiles
 from qrogue.game.world.dungeon_generator.wave_function_collapse.wfc_generator import WFCRoomGenerator
 from qrogue.game.world.map import CallbackPack, Hallway, WildRoom, SpawnRoom, ShopRoom, RiddleRoom, BossRoom, \
@@ -641,20 +641,16 @@ class ExpeditionGenerator(DungeonGenerator):
         riddle = riddle_factory.produce(rm)
         dungeon_boss = boss_factory.produce(include_gates=[], input_gates=[gate])
 
+        # Difficulties can be misleading since picking one gate can result in CX Gate which does nothing if it's the
+        # only gate on a zero-state. Also picking multiple gates where one is CX has a higher probability of doing
+        # nothing the more qubits we have.
         enemy_factories = [
-            EnemyTargetFactory(CallbackPack.instance().start_fight, TargetDifficulty(
-                2, [Score(50)]
-            ), next_id_callback=self._next_target_id),
-            EnemyTargetFactory(CallbackPack.instance().start_fight, TargetDifficulty(
-                2, [Score(100)]
-            ), next_id_callback=self._next_target_id),
-            EnemyTargetFactory(CallbackPack.instance().start_fight, TargetDifficulty(
-                3, [Score(150)]
-            ), next_id_callback=self._next_target_id),
-            EnemyTargetFactory(CallbackPack.instance().start_fight, TargetDifficulty(
-                3, [Score(200)]
-            ), next_id_callback=self._next_target_id),
+            EnemyPuzzleFactory(CallbackPack.instance().start_fight, self._next_target_id, PuzzleDifficulty(1, 3)),
+            EnemyPuzzleFactory(CallbackPack.instance().start_fight, self._next_target_id, PuzzleDifficulty(2, 2)),
+            EnemyPuzzleFactory(CallbackPack.instance().start_fight, self._next_target_id, PuzzleDifficulty(2, 3)),
+            EnemyPuzzleFactory(CallbackPack.instance().start_fight, self._next_target_id, PuzzleDifficulty(1, 2)),
         ]
+        # factories are picked room-wise
         enemy_factory_priorities = [0.25, 0.35, 0.3, 0.1]
         enemy_groups_by_room = {}
 

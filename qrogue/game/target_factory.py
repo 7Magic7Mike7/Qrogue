@@ -143,6 +143,53 @@ class RiddleDifficulty(TargetDifficulty):
         return rm.get_int(self.__min_attempts, self.__max_attempts, msg="RiddleDiff.get_attempts()")
 
 
+class PuzzleDifficulty:
+    @staticmethod
+    def __create_stv(pool: List[Instruction], num_gates: int, num_qubits: int, rm: MyRandom) -> StateVector:
+        instructions = []
+        for i in range(num_gates):
+            # choose random gates on random qubits and cbits
+            qubits = list(range(num_qubits))
+            instruction = rm.get_element(pool, remove=True, msg="PuzzleDiff_selectInstruction")
+            while instruction.use_qubit(rm.get_element(qubits, remove=True, msg="PuzzleDiff_selectQubit")):
+                pass
+            instructions.append(instruction)
+        return Instruction.compute_stv(instructions, num_qubits)
+
+    def __init__(self, num_input_gates: int, num_target_gates: int):
+        self.__num_input_gates = num_input_gates
+        self.__num_target_gates = num_target_gates
+
+    def produce(self, robot: Robot, rm: MyRandom) -> Tuple[StateVector, StateVector]:
+        instruction_pool = robot.get_available_instructions()
+        max_num_gates = min(robot.circuit_space, len(instruction_pool))
+        if self.__num_input_gates + self.__num_target_gates > max_num_gates:
+            num_input_gates = max(1, max_num_gates - self.__num_target_gates)
+            # in case num_target_gates itself is bigger than max_num_gates we have to update it too
+            num_target_gates = max_num_gates - num_input_gates
+        else:
+            num_input_gates, num_target_gates = self.__num_input_gates, self.__num_target_gates
+
+        input_stv = PuzzleDifficulty.__create_stv(instruction_pool, min(num_input_gates, robot.circuit_space),
+                                                  robot.num_of_qubits, rm)
+
+        # check if we have to re-roll (i.e., input and target are the same
+        max_rerolls = 10
+        target_stv = PuzzleDifficulty.__create_stv(instruction_pool.copy(), min(num_target_gates, robot.circuit_space),
+                                                   robot.num_of_qubits, rm)
+        while input_stv.get_diff(target_stv).is_zero and max_rerolls > 0:
+            target_stv = PuzzleDifficulty.__create_stv(instruction_pool.copy(),
+                                                       min(num_target_gates, robot.circuit_space),
+                                                       robot.num_of_qubits, rm)
+            max_rerolls -= 1
+
+        # if max_rerolls > 0 we know that the loop above terminated because the vectors are not the same -> done
+        if max_rerolls <= 0 and input_stv.get_diff(target_stv).is_zero:
+            inst_text = "; ".join([str(inst) for inst in robot.get_available_instructions()])
+            Logger.instance().warn(f"Couldn't re-roll input and target to be different! {inst_text}", from_pycui=False)
+        return input_stv, target_stv
+
+
 class EnemyFactory(ABC):
     def __init__(self, start_fight_callback: Callable[[Robot, Enemy, Direction], None],
                  next_id_callback: Optional[Callable[[], int]] = None):
@@ -205,8 +252,29 @@ class EnemyTargetFactory(EnemyFactory):
         else:
             reward = self.__target_difficulty.produce_reward(rm)
 
+        target_stv = self.__target_difficulty.create_statevector(robot, rm)
         if self.__input_difficulty is None: input_stv = None
-        else: input_stv = self.__input_difficulty.create_statevector(robot, rm)
+        else:
+            max_rerolls = 10
+            input_stv = self.__input_difficulty.create_statevector(robot, rm)
+
+            while input_stv.get_diff(target_stv).is_zero and max_rerolls > 0:
+                input_stv = self.__input_difficulty.create_statevector(robot, rm)
+                max_rerolls -= 1
+
+            # if max_rerolls > 0 we know that the loop above terminated because the vectors are not the same -> done
+            if max_rerolls <= 0 and input_stv.get_diff(target_stv).is_zero:
+                # try re-rolling the target
+                max_rerolls = 10
+                target_stv = self.__target_difficulty.create_statevector(robot, rm)
+                while input_stv.get_diff(target_stv).is_zero and max_rerolls > 0:
+                    target_stv = self.__target_difficulty.create_statevector(robot, rm)
+                    max_rerolls -= 1
+
+                if max_rerolls <= 0 and input_stv.get_diff(target_stv).is_zero:
+                    inst_text = "; ".join([str(inst) for inst in robot.get_available_instructions()])
+                    Logger.instance().warn(f"Couldn't re-roll input and target to be different! {inst_text}",
+                                           from_pycui=False)
 
         return Enemy(self._next_id(), eid, target_stv, reward, input_=input_stv)
 
@@ -222,6 +290,18 @@ class ExplicitEnemyFactory(EnemyTargetFactory):
         stv = rm.get_element(self.__stv_pool, msg="ExplicitEnemyFactory_stv")
         reward = rm.get_element(self.__reward_pool, msg="ExplicitEnemyFactory_reward")
         return Enemy(self._next_id(), eid, stv, reward)
+
+
+class EnemyPuzzleFactory(EnemyFactory):
+    def __init__(self, start_fight_callback: Callable[[Robot, Enemy, Direction], None],
+                 next_id_callback: Optional[Callable[[], int]], difficulty: PuzzleDifficulty):
+        super().__init__(start_fight_callback, next_id_callback)
+        self.__difficulty = difficulty
+
+    def produce(self, robot: Robot, rm: MyRandom, eid: int) -> Enemy:
+        input_stv, target_stv = self.__difficulty.produce(robot, rm)
+        reward = Score(100)
+        return Enemy(self._next_id(), eid, target_stv, reward, input_=input_stv)
 
 
 class RiddleFactory:
