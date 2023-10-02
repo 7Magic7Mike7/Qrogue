@@ -1,9 +1,11 @@
-# Generated from D:/Documents/pycharm_workspace/Qrogue/qrogue/game/world/dungeon_generator/other_parsers\QrogueAreas.g4 by ANTLR 4.10.1
-# encoding: utf-8
-from __future__ import print_function
+# Generated from D:/Workspaces/pycharm-workspace/Qrogue/qrogue/game/world/dungeon_generator/other_parsers\QrogueAreas.g4 by ANTLR 4.12.0
 from antlr4 import *
 from io import StringIO
 import sys
+if sys.version_info[1] > 5:
+    from typing import TextIO
+else:
+    from typing.io import TextIO
 
 
 def serializedATN():
@@ -266,53 +268,50 @@ class QrogueAreasLexer(Lexer):
 
     channelNames = [ u"DEFAULT_TOKEN_CHANNEL", u"HIDDEN" ]
 
-    modeNames = [ u"DEFAULT_MODE" ]
+    modeNames = [ "DEFAULT_MODE" ]
 
-    literalNames = [ u"<INVALID>",
-            u"':'", u"'('", u"')'", u"'TODO: implement in importing grammar #override'", 
-            u"'one way'", u"'['", u"']'", u"'[Layout]'", u"'[Hallways]'", 
-            u"'visible'", u"'foggy'", u"'World'", u"'Level'", u"'Spawn'", 
-            u"'Wild'", u"'Shop'", u"'Riddle'", u"'Boss'", u"'Gate'", u"'Treasure'", 
-            u"'Challenge'", u"'Pause'", u"'Story'", u"'open'", u"'closed'", 
-            u"'locked'", u"'event'", u"'permanent'", u"'entangled'", u"'tutorial'", 
-            u"'trigger'", u"'Qrogue<'", u"'>Qrogue'", u"'~'", u"'|'", u"','", 
-            u"'#'", u"'..'", u"'__'" ]
+    literalNames = [ "<INVALID>",
+            "':'", "'('", "')'", "'TODO: implement in importing grammar #override'", 
+            "'one way'", "'['", "']'", "'[Layout]'", "'[Hallways]'", "'visible'", 
+            "'foggy'", "'World'", "'Level'", "'Spawn'", "'Wild'", "'Shop'", 
+            "'Riddle'", "'Boss'", "'Gate'", "'Treasure'", "'Challenge'", 
+            "'Pause'", "'Story'", "'open'", "'closed'", "'locked'", "'event'", 
+            "'permanent'", "'entangled'", "'tutorial'", "'trigger'", "'Qrogue<'", 
+            "'>Qrogue'", "'~'", "'|'", "','", "'#'", "'..'", "'__'" ]
 
-    symbolicNames = [ u"<INVALID>",
-            u"LAYOUT", u"ROOMS", u"HALLWAYS", u"VISIBLE_LITERAL", u"FOGGY_LITERAL", 
-            u"WORLD_LITERAL", u"LEVEL_LITERAL", u"SPAWN_LITERAL", u"WILD_LITERAL", 
-            u"SHOP_LITERAL", u"RIDDLE_LITERAL", u"BOSS_LITERAL", u"GATE_ROOM_LITERAL", 
-            u"TREASURE_LITERAL", u"CHALLENGE_LITERAL", u"PAUSE_LITERAL", 
-            u"STORY_LITERAL", u"OPEN_LITERAL", u"CLOSED_LITERAL", u"LOCKED_LITERAL", 
-            u"EVENT_LITERAL", u"PERMANENT_LITERAL", u"ENTANGLED_LITERAL", 
-            u"DIRECTION", u"TUTORIAL_LITERAL", u"TRIGGER_LITERAL", u"HEADER", 
-            u"ENDER", u"HORIZONTAL_SEPARATOR", u"VERTICAL_SEPARATOR", u"LIST_SEPARATOR", 
-            u"WALL", u"EMPTY_HALLWAY", u"EMPTY_ROOM", u"DIGIT", u"INTEGER", 
-            u"FLOAT", u"IMAG_NUMBER", u"SIGN", u"CHARACTER_LOW", u"CHARACTER_UP", 
-            u"CHARACTER", u"TEXT", u"ROOM_ID", u"HALLWAY_ID", u"REFERENCE", 
-            u"WS", u"UNIVERSAL_SEPARATOR", u"COMMENT", u"LINE_COMMENT" ]
+    symbolicNames = [ "<INVALID>",
+            "LAYOUT", "ROOMS", "HALLWAYS", "VISIBLE_LITERAL", "FOGGY_LITERAL", 
+            "WORLD_LITERAL", "LEVEL_LITERAL", "SPAWN_LITERAL", "WILD_LITERAL", 
+            "SHOP_LITERAL", "RIDDLE_LITERAL", "BOSS_LITERAL", "GATE_ROOM_LITERAL", 
+            "TREASURE_LITERAL", "CHALLENGE_LITERAL", "PAUSE_LITERAL", "STORY_LITERAL", 
+            "OPEN_LITERAL", "CLOSED_LITERAL", "LOCKED_LITERAL", "EVENT_LITERAL", 
+            "PERMANENT_LITERAL", "ENTANGLED_LITERAL", "DIRECTION", "TUTORIAL_LITERAL", 
+            "TRIGGER_LITERAL", "HEADER", "ENDER", "HORIZONTAL_SEPARATOR", 
+            "VERTICAL_SEPARATOR", "LIST_SEPARATOR", "WALL", "EMPTY_HALLWAY", 
+            "EMPTY_ROOM", "DIGIT", "INTEGER", "FLOAT", "IMAG_NUMBER", "SIGN", 
+            "CHARACTER_LOW", "CHARACTER_UP", "CHARACTER", "TEXT", "ROOM_ID", 
+            "HALLWAY_ID", "REFERENCE", "WS", "UNIVERSAL_SEPARATOR", "COMMENT", 
+            "LINE_COMMENT" ]
 
-    ruleNames = [ u"T__0", u"T__1", u"T__2", u"T__3", u"T__4", u"T__5", 
-                  u"T__6", u"LAYOUT", u"ROOMS", u"HALLWAYS", u"VISIBLE_LITERAL", 
-                  u"FOGGY_LITERAL", u"WORLD_LITERAL", u"LEVEL_LITERAL", 
-                  u"SPAWN_LITERAL", u"WILD_LITERAL", u"SHOP_LITERAL", u"RIDDLE_LITERAL", 
-                  u"BOSS_LITERAL", u"GATE_ROOM_LITERAL", u"TREASURE_LITERAL", 
-                  u"CHALLENGE_LITERAL", u"PAUSE_LITERAL", u"STORY_LITERAL", 
-                  u"OPEN_LITERAL", u"CLOSED_LITERAL", u"LOCKED_LITERAL", 
-                  u"EVENT_LITERAL", u"PERMANENT_LITERAL", u"ENTANGLED_LITERAL", 
-                  u"DIRECTION", u"TUTORIAL_LITERAL", u"TRIGGER_LITERAL", 
-                  u"HEADER", u"ENDER", u"HORIZONTAL_SEPARATOR", u"VERTICAL_SEPARATOR", 
-                  u"LIST_SEPARATOR", u"WALL", u"EMPTY_HALLWAY", u"EMPTY_ROOM", 
-                  u"DIGIT", u"INTEGER", u"FLOAT", u"IMAG_NUMBER", u"SIGN", 
-                  u"CHARACTER_LOW", u"CHARACTER_UP", u"CHARACTER", u"TEXT", 
-                  u"ROOM_ID", u"HALLWAY_ID", u"REFERENCE", u"WS", u"UNIVERSAL_SEPARATOR", 
-                  u"COMMENT", u"LINE_COMMENT" ]
+    ruleNames = [ "T__0", "T__1", "T__2", "T__3", "T__4", "T__5", "T__6", 
+                  "LAYOUT", "ROOMS", "HALLWAYS", "VISIBLE_LITERAL", "FOGGY_LITERAL", 
+                  "WORLD_LITERAL", "LEVEL_LITERAL", "SPAWN_LITERAL", "WILD_LITERAL", 
+                  "SHOP_LITERAL", "RIDDLE_LITERAL", "BOSS_LITERAL", "GATE_ROOM_LITERAL", 
+                  "TREASURE_LITERAL", "CHALLENGE_LITERAL", "PAUSE_LITERAL", 
+                  "STORY_LITERAL", "OPEN_LITERAL", "CLOSED_LITERAL", "LOCKED_LITERAL", 
+                  "EVENT_LITERAL", "PERMANENT_LITERAL", "ENTANGLED_LITERAL", 
+                  "DIRECTION", "TUTORIAL_LITERAL", "TRIGGER_LITERAL", "HEADER", 
+                  "ENDER", "HORIZONTAL_SEPARATOR", "VERTICAL_SEPARATOR", 
+                  "LIST_SEPARATOR", "WALL", "EMPTY_HALLWAY", "EMPTY_ROOM", 
+                  "DIGIT", "INTEGER", "FLOAT", "IMAG_NUMBER", "SIGN", "CHARACTER_LOW", 
+                  "CHARACTER_UP", "CHARACTER", "TEXT", "ROOM_ID", "HALLWAY_ID", 
+                  "REFERENCE", "WS", "UNIVERSAL_SEPARATOR", "COMMENT", "LINE_COMMENT" ]
 
-    grammarFileName = u"QrogueAreas.g4"
+    grammarFileName = "QrogueAreas.g4"
 
-    def __init__(self, input=None, output=sys.stdout):
-        super(QrogueAreasLexer, self).__init__(input, output=output)
-        self.checkVersion("4.10.1")
+    def __init__(self, input=None, output:TextIO = sys.stdout):
+        super().__init__(input, output)
+        self.checkVersion("4.12.0")
         self._interp = LexerATNSimulator(self, self.atn, self.decisionsToDFA, PredictionContextCache())
         self._actions = None
         self._predicates = None
