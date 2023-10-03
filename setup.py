@@ -15,6 +15,7 @@ setup(
 		'qrogue.util.config',
 		'qrogue.game',
 		'qrogue.game.logic',
+		'qrogue.game.logic.base',
 		'qrogue.game.logic.collectibles',
 		'qrogue.game.logic.actors',
 		'qrogue.game.logic.actors.controllables',
@@ -35,7 +36,7 @@ setup(
 	],
 	package_data={"data": ["qrogue/data"]},
 	include_package_data=True,
-	version='0.7.0',
+	version='0.7.0.1',
 	license='MIT',  # Chose a license from here: https://help.github.com/articles/licensing-a-repository
 	description='QRogue is a modernized Quantum Computing take of the classical game Rogue.',
 	long_description=README,
@@ -49,7 +50,7 @@ setup(
 		'py-cui==0.1.4',
 		'numpy==1.22.3',
 		'qiskit==0.34.2',
-		'antlr4-python3-runtime==4.10',
+		'antlr4-python3-runtime==4.12',
 	],
 	classifiers=[
 		'Development Status :: 3 - Alpha',  # Chose either "3 - Alpha", "4 - Beta" or "5 - Production/Stable"
