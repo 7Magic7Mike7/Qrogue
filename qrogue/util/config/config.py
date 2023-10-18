@@ -174,4 +174,7 @@ class Config:   # todo make singleton and handle access to other configs?
 
     @staticmethod
     def using_new_qiskit() -> bool:
-        return qiskit.__qiskit_version__['qiskit'] == "0.44.2"
+        parts = qiskit.__qiskit_version__['qiskit'].split(".")
+        major = int(parts[0])
+        minor = int(parts[1])
+        return major >= 0 and minor >= 44   # >= 0.44.0
