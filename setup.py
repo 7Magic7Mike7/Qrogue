@@ -50,6 +50,7 @@ setup(
 		'py-cui==0.1.4',
 		'numpy==1.22.3',
 		'qiskit==0.44.2',
+		'qiskit-aer==0.12.2',
 		'antlr4-python3-runtime==4.12',
 	],
 	classifiers=[
