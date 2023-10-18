@@ -3,12 +3,11 @@ from abc import ABC, abstractmethod
 from typing import Iterator, Optional, Set, Dict, List
 
 import math
-import qiskit.circuit
-import qiskit.circuit.library.standard_gates as gates
-from qiskit import QuantumCircuit, transpile, QuantumRegister
-from qiskit.providers.aer import StatevectorSimulator
 
-from qrogue.game.logic.base import StateVector, CircuitMatrix
+import qiskit.circuit.library.standard_gates as gates
+from qiskit.circuit import Gate as QiskitGate
+
+from qrogue.game.logic.base import StateVector, CircuitMatrix, QuantumSimulator, QuantumCircuit
 from qrogue.game.logic.collectibles import Collectible, CollectibleType
 from qrogue.util import ShopConfig, Logger, AchievementManager
 from qrogue.util.achievements import Unlocks
@@ -95,16 +94,14 @@ class Instruction(Collectible, ABC):
 
     @staticmethod
     def compute_stv(instructions: List["Instruction"], num_of_qubits: int) -> "StateVector":
-        circuit = QuantumCircuit(num_of_qubits, num_of_qubits)
+        circuit = QuantumCircuit.from_bit_num(num_of_qubits, num_of_qubits)
         for instruction in instructions:
             instruction.append_to(circuit)
-        simulator = StatevectorSimulator()
-        compiled_circuit = transpile(circuit, simulator)
-        # We only do 1 shot since we don't need any measurement but the StateVector
-        job = simulator.run(compiled_circuit, shots=1)
-        return StateVector(job.result().get_statevector(), num_of_used_gates=len(instructions))
+        simulator = QuantumSimulator()
+        amplitudes = simulator.run(circuit, do_transpile=True)
+        return StateVector(amplitudes, num_of_used_gates=len(instructions))
 
-    def __init__(self, gate_type: GateType, instruction: qiskit.circuit.Gate, needed_qubits: int):
+    def __init__(self, gate_type: GateType, instruction: QiskitGate, needed_qubits: int):
         super().__init__(CollectibleType.Gate)
         self.__type = gate_type
         self.__instruction = instruction
@@ -260,7 +257,7 @@ class Instruction(Collectible, ABC):
 
 
 class SingleQubitGate(Instruction, ABC):
-    def __init__(self, gate_type: GateType, instruction: qiskit.circuit.Gate):
+    def __init__(self, gate_type: GateType, instruction: QiskitGate):
         super().__init__(gate_type, instruction, needed_qubits=1)
 
 
@@ -333,7 +330,7 @@ class SGate(SingleQubitGate):
 class RotationGate(SingleQubitGate, ABC):
     _DEFAULT_ANGLE = math.pi / 2
 
-    def __init__(self, gate_type: GateType, instruction: qiskit.circuit.Gate, angle: float):
+    def __init__(self, gate_type: GateType, instruction: QiskitGate, angle: float):
         super().__init__(gate_type, instruction)
         self.__angle = angle
 
@@ -400,7 +397,7 @@ class MultiQubitGate(Instruction, ABC):
 
 
 class DoubleQubitGate(MultiQubitGate, ABC):
-    def __init__(self, gate_type: GateType, instruction: qiskit.circuit.Gate):
+    def __init__(self, gate_type: GateType, instruction: QiskitGate):
         super(DoubleQubitGate, self).__init__(gate_type, instruction, needed_qubits=2)
 
 
@@ -437,7 +434,7 @@ class CXGate(DoubleQubitGate):
 class CombinedGates(Instruction):
     def __init__(self, instructions: List[Instruction], needed_qubits: int, label: Optional[str] = None):
         if label is None: label = "BlackBox"
-        circuit = QuantumCircuit(QuantumRegister(needed_qubits))
+        circuit = QuantumCircuit.from_register(needed_qubits)
         for inst in instructions: inst.append_to(circuit)
         instruction = circuit.to_gate(label=label)
 
