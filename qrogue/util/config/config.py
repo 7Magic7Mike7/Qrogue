@@ -1,6 +1,8 @@
 import os
 from datetime import datetime
 
+import qiskit   # imported to check its version
+
 from qrogue.util.config import CheatConfig, GameplayConfig, PathConfig, TestConfig
 
 
@@ -169,3 +171,7 @@ class Config:   # todo make singleton and handle access to other configs?
     @staticmethod
     def loading_refresh_time() -> float:
         return 0.2  # in seconds
+
+    @staticmethod
+    def using_new_qiskit() -> bool:
+        return qiskit.__qiskit_version__['qiskit'] == "0.44.2"

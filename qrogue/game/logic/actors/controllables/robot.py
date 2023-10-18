@@ -5,12 +5,9 @@ Author: Artner Michael
 from abc import ABC
 from typing import Tuple, List, Callable, Optional
 
-from qiskit import QuantumCircuit, transpile, Aer, execute
-from qiskit.providers.aer import StatevectorSimulator
-
 from qrogue.game.logic.actors.controllables import Controllable
 from qrogue.game.logic.actors.controllables.qubit import QubitSet, DummyQubitSet
-from qrogue.game.logic.base import StateVector, CircuitMatrix
+from qrogue.game.logic.base import StateVector, CircuitMatrix, QuantumSimulator, QuantumCircuit, UnitarySimulator
 from qrogue.game.logic.collectibles import Coin, Collectible, Consumable, Instruction, Key, MultiCollectible, \
     Qubit, Energy, Score
 from qrogue.util import CheatConfig, Config, Logger, GameplayConfig, QuantumSimulationConfig, Options
@@ -437,8 +434,8 @@ class Robot(Controllable, ABC):
         self.__backpack: Backpack = backpack
         self.__game_over: Callable[[], None] = game_over_callback
         # initialize qubit stuff (rows)
-        self.__simulator = StatevectorSimulator()  # ddsim.JKQProvider().get_backend('statevector_simulator')
-        self.__backend = Aer.get_backend('unitary_simulator')
+        self.__simulator = QuantumSimulator()
+        self.__unitary_simulator = UnitarySimulator()
         self.__stv: Optional[StateVector] = None
         self.__circuit_matrix: Optional[CircuitMatrix] = None
         self.__qubit_indices: List[int] = []
@@ -570,7 +567,7 @@ class Robot(Controllable, ABC):
             return
 
         num_of_used_gates: int = 0      # cannot use len(instructions) since this contains None values
-        circuit = QuantumCircuit(self.num_of_qubits, self.num_of_qubits)
+        circuit = QuantumCircuit.from_bit_num(self.num_of_qubits, self.num_of_qubits)
         for inst in self.__instructions:
             if inst is not None:
                 num_of_used_gates += 1
@@ -578,17 +575,12 @@ class Robot(Controllable, ABC):
         if self.__static_gate is not None:
             self.__static_gate.append_to(circuit)
 
-        job = execute(circuit, self.__backend)
-        result = job.result()
-        self.__circuit_matrix = CircuitMatrix(result.get_unitary(circuit,
-                                                                 decimals=QuantumSimulationConfig.DECIMALS).data,
-                                              num_of_used_gates)
+        amplitudes = self.__unitary_simulator.execute(circuit, decimals=QuantumSimulationConfig.DECIMALS)
+        self.__circuit_matrix = CircuitMatrix(amplitudes, num_of_used_gates)
 
         if input_stv is None:   # todo: input_stv might only be None if the circuit is empty (reset or initialized)
-            compiled_circuit = transpile(circuit, self.__simulator)
-            job = self.__simulator.run(compiled_circuit, shots=1)
-            result = job.result()
-            self.__stv = StateVector(result.get_statevector(circuit), num_of_used_gates=self.__instruction_count)
+            amplitudes = self.__simulator.run(circuit, do_transpile=True)
+            self.__stv = StateVector(amplitudes, num_of_used_gates=self.__instruction_count)
         else:
             self.__stv = self.__circuit_matrix.multiply(input_stv)
 
