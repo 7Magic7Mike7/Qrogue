@@ -122,7 +122,8 @@ class SingletonSetupTestCase(unittest.TestCase):
     @staticmethod
     def _print(msg: Optional[Any] = None, force: bool = False):
         if SingletonSetupTestCase.__printing or force:
-            print(msg)
+            if msg is None: print()     # print empty line instead of "None"
+            else: print(msg)
 
     def setUp(self) -> None:
         TestConfig.activate()
