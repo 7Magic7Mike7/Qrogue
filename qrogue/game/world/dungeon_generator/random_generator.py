@@ -322,7 +322,8 @@ class RandomLayoutGenerator:
                 Logger.instance().debug(f"SpecialRoom marked as dead end for seed = {self.seed}", from_pycui=False)
             return pos, True  # we found a dead end
 
-    def __astar(self, visited: set, pos: Coordinate, target: Coordinate, connect: bool = True) -> Tuple[Optional[Set[Coordinate]], bool]:
+    def __astar(self, visited: Set[Coordinate], pos: Coordinate, target: Coordinate, connect: bool = True) \
+            -> Tuple[Optional[Set[Coordinate]], bool]:
         """
 
         :param visited: Coordinates of all cells we already visited
