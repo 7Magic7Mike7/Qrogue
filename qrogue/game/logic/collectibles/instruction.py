@@ -170,7 +170,7 @@ class Instruction(Collectible, ABC):
                                    f"needed. Ignoring the over-specified ones.", from_pycui=False)
         if len(qargs) < self.__needed_qubits:
             Logger.instance().warn(f"Instruction.setup(): {len(qargs)} qubits provided but {self.__needed_qubits} "
-                                   f"needed. Things might not work correctl due to under-specified qubits.",
+                                   f"needed. Things might not work correctly due to under-specified qubits.",
                                    from_pycui=False)
         for qubit in qargs:
             self.use_qubit(qubit)
