@@ -103,7 +103,17 @@ class Coordinate:
         """
         return self.x + self.y * row_width
 
-    def get_neighbors(self, min_: Optional["Coordinate"] = None, max_: Optional["Coordinate"] = None) -> List["Coordinate"]:
+    def get_neighbors(self, min_: Optional["Coordinate"] = None, max_: Optional["Coordinate"] = None) \
+            -> List["Coordinate"]:
+        """
+        min_ and max_ are inclusive
+        Args:
+            min_:
+            max_:
+
+        Returns:
+
+        """
         neighbors = []
         for d in Direction.values():
             pos = self + d
