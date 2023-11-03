@@ -31,6 +31,13 @@ class WFCLearnMatrix(ABC):
         """
         pass
 
+    def __str__(self):
+        text = ""
+        for row in range(self.height):
+            for col in range(self.width):
+                text += f"{self.at(col, row)}, \t"
+        return text
+
 
 class LearnableMap(WFCLearnMatrix):
     def __init__(self, level_map: LevelMap):
@@ -83,6 +90,9 @@ class LearnableRoom(WFCLearnMatrix):
             else:
                 return False
 
+        def __str__(self):
+            return self.__code.representation
+
     def __init__(self, room: rooms.Room):
         self.__room = room
 
@@ -101,3 +111,14 @@ class LearnableRoom(WFCLearnMatrix):
     def at(self, x: int, y: int) -> TileData:
         tile = self.__room.at(x, y, force=True, inside_only=True)
         return LearnableRoom.TileData(tile.code, tile.data)
+
+    def __str__(self):
+        text = "#" * (self.width + 2) + "\n"
+        for row in range(self.height):
+            text += "#"
+            for col in range(self.width):
+                tile = self.__room.at(col, row, force=True, inside_only=True)
+                text += str(tile)
+            text += "#\n"
+        text += "#" * (self.width + 2) + "\n"
+        return text
