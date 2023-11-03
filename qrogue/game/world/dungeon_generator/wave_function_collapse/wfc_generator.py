@@ -2,12 +2,14 @@ import math
 from typing import List, Optional, Dict, Tuple, Iterable, Any
 
 from qrogue.game.world.dungeon_generator import QrogueLevelGenerator
+from qrogue.game.world.dungeon_generator.path_search import Search
 from qrogue.game.world.dungeon_generator.wave_function_collapse import WaveFunction, WFCLearner
 from qrogue.game.world.dungeon_generator.wave_function_collapse.learnables import LearnableMap, WFCLearnMatrix, \
     LearnableRoom
 from qrogue.game.world.map import rooms, LevelMap
 from qrogue.game.world.map.rooms import AreaType
 from qrogue.game.world.navigation import Coordinate, Direction
+from qrogue.game.world.tiles import TileCode
 from qrogue.util import RandomManager, MapConfig, MyRandom
 
 from qrogue.util.util_functions import my_str
@@ -243,3 +245,37 @@ class WFCRoomGenerator(WFCGenerator):
     @property
     def room_type(self) -> rooms.AreaType:
         return self.__room_type
+
+    def generate(self, seed: Optional[int] = None, width: Optional[int] = None, height: Optional[int] = None,
+                 static_entries: Optional[Dict[Coordinate, Any]] = None) -> List[List[Any]]:
+        # generate tile matrix
+        matrix: List[List[LearnableRoom.TileData]] = super(WFCRoomGenerator, self).generate(seed, width, height, static_entries)
+
+        # adapt matrix such that every Collectible can be picked up and every Enemy can be fought
+        entrances: List[Coordinate] = [
+            Coordinate(rooms.Room.INNER_MID_X, 0),  # North entrance
+            Coordinate(0, rooms.Room.INNER_MID_Y),  # West entrance
+            Coordinate(rooms.Room.INNER_WIDTH-1, rooms.Room.INNER_MID_Y),   # East entrance
+            Coordinate(rooms.Room.INNER_MID_X, rooms.Room.INNER_HEIGHT-1),  # South entrance
+        ]
+
+        interactable_tiles: List[Coordinate] = []
+        for row in range(len(matrix)):
+            for col in range(len(matrix[row])):
+                tile_data = matrix[row][col]
+                if tile_data.code in [TileCode.Enemy, TileCode.Collectible]:    # find all enemies and collectibles
+                    interactable_tiles.append(Coordinate(col, row))
+        # todo filter interactable_tiles such that only unobtainable tiles are left
+
+
+        # make every interactable tile accessible from an entrance
+        for pos in interactable_tiles:
+            weight_matrix = Search.get_weighted_obstacles_matrix(pos, get_tile_code=lambda c: matrix[c.y][c.x].code)
+            path = Search.simple_room_visit(pos, get_weight=lambda c: weight_matrix[c.y][c.x],
+                                            is_goal=lambda c: c in entrances)
+            # replace all obstacles and walls on the path with floors to make them accessible
+            for co in path:
+                if matrix[co.y][co.x].code in [TileCode.Obstacle, TileCode.Wall]:
+                    matrix[co.y][co.x] = LearnableRoom.TileData(TileCode.Floor, None)     # Floor tiles don't have data
+
+        return matrix

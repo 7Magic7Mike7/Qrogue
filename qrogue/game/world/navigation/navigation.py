@@ -114,6 +114,20 @@ class Coordinate:
             neighbors.append(pos)
         return neighbors
 
+    def is_between(self, min_: "Coordinate", max_: "Coordinate") -> bool:
+        """
+        Checks whether self can be placed inside a rectangle spanned from min_ to max_. Both values are inclusive so if
+        self is on the edge of the rectangle we still return True.
+
+        Args:
+            min_: top left corner of the rectangle (inclusive)
+            max_: bottom right corner of the rectangle (inclusive)
+
+        Returns: True if self is in a rectangle spanned between min_ and max_
+
+        """
+        return min_.x <= self.x <= max_.x and min_.y <= self.y <= max_.y
+
     def __add__(self, other) -> "Coordinate":
         if isinstance(other, Direction):
             return Coordinate(self.x + other.x, self.y + other.y)
