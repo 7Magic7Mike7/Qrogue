@@ -83,7 +83,7 @@ class WFCGenerator:
         """
 
         :param main: type of the main room
-        :param neighbor: type of a potential neighbor
+        :param neighbor: type of potential neighbor
         :return: normalized weight for the corresponding types
         """
         if main not in self.__type_weights or neighbor not in self.__type_weights[main]:
