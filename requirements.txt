@@ -1,5 +1,5 @@
 py-cui~=0.1.4
-qiskit~=0.44.2
+qiskit~=0.34.2
 qiskit-aer~=0.12.2
 numpy~=1.22.3
 antlr4-python3-runtime~=4.12
