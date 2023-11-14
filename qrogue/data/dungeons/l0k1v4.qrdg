@@ -136,7 +136,7 @@ jj (Story):
 # _ o o o _ #
 # o _ _ _ o #
 #############
-b [ *entanglement1 input=*base00 ] gate *s tutorial *bossIntro
+b [ *entanglement0 input=*base00 ] gate *s tutorial *bossIntro
 m *doneMsg trigger *done
 
 [Hallways]
@@ -167,7 +167,7 @@ custom
 *allGates [ *reach2X, *supH, *supHX ]	// all combinations without entanglement
 
 *entanglement0 [ {num_qubits=2: gH @q0, gCX @[q0, q1]} ]
-*entanglement1 [ {num_qubits=2: gH @q1, gCX @[q1, q0]} ]
+*entanglement1 [ {num_qubits=2: gX @q0, gH @q1, gCX @[q1, q0]} ]
 *entanglement [ *entanglement0, *entanglement1 ]
 
 default *withH
@@ -194,8 +194,7 @@ default Speaker "0"
 
 *bossMsg prio pos1 "There is only one thing left before you successfully finish the trainings program: the obligatory //05Boss Battle//." 
 
-*bossIntro prio "You already saw //02Entanglement// in same digits of a room. But there is also another version of //02Entanglement//. Instead of always collapsing to the same value, this version makes two //02Qubits// always collapse to the opposite value. Meaning if q0 collapses to 0, q1 will collapse to 1 and vice versa."
-"And now it is your turn to //03create// this //05anti-correlated// //02Entanglement//!"
+*bossIntro prio "You already saw //02Entanglement// in same digits of a room. Now it is your turn to //03create// //02Entanglement// in your //02Circuit//!"
 
 *doneMsg "Congratulations, you're done knowing the basics! You are now ready to use your newly gained //02Gate// in your //05first expedition// of the //02Quniverse//."
 
