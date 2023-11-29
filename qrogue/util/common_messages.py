@@ -132,6 +132,7 @@ class CommonQuestions(Enum):
                                                "and know what you're doing!")
     OpenUserDataFolder = (Config.system_name(), "Do you want to open the folder containing your user data with your "
                                                 "system's explorer?")
+    BackToMenu = (Config.system_name(), "Do you want to return to the main menu?")
 
     def __init__(self, title: str, text: str, answers: Optional[List[str]] = None):
         self.__title = title
