@@ -22,7 +22,8 @@ from qrogue.graphics.popups import Popup, MultilinePopup, ConfirmationPopup
 from qrogue.graphics.rendering import MultiColorRenderer
 from qrogue.graphics.widgets import Renderable, SpaceshipWidgetSet, BossFightWidgetSet, ExploreWidgetSet, \
     FightWidgetSet, MenuWidgetSet, MyWidgetSet, NavigationWidgetSet, PauseMenuWidgetSet, RiddleWidgetSet, \
-    ChallengeWidgetSet, ShopWidgetSet, WorkbenchWidgetSet, TrainingsWidgetSet, Widget, TransitionWidgetSet
+    ChallengeWidgetSet, ShopWidgetSet, WorkbenchWidgetSet, TrainingsWidgetSet, Widget, TransitionWidgetSet, \
+    ScreenCheckWidgetSet
 from qrogue.util import achievements, common_messages, CheatConfig, Config, GameplayConfig, UIConfig, HelpText, \
     Logger, PathConfig, MapConfig, Controls, Keys, RandomManager, PyCuiConfig, PyCuiColors, Options, \
     TestConfig, CommonQuestions
@@ -55,6 +56,7 @@ class QrogueCUI(PyCUI):
         Challenge = 11
 
         Transition = 12  # for atmospheric transitions and elements
+        ScreenCheck = 13    # a menu to check dimensions and color of the screen/terminal the game is played
 
     class _StateMachine:
         def __init__(self, renderer: "QrogueCUI"):
@@ -104,6 +106,8 @@ class QrogueCUI(PyCUI):
 
             elif self.__cur_state == QrogueCUI._State.Transition:
                 self.__renderer._switch_to_transition(data)
+            elif self.__cur_state == QrogueCUI._State.ScreenCheck:
+                self.__renderer._switch_to_screen_check(data)
 
     class _PopupHistory:
         def __init__(self, show_popup: Callable[[MultilinePopup], None]):
@@ -268,7 +272,10 @@ class QrogueCUI(PyCUI):
         # INIT WIDGET SETS
         self.__menu = MenuWidgetSet(self.__controls, self.__render, Logger.instance(), self,
                                     MapManager.instance().load_first_uncleared_map,
-                                    self.__start_playing, self.__start_expedition, self.stop, self.__choose_simulation)
+                                    self.__start_playing, self.__start_expedition, self.stop, self.__choose_simulation,
+                                    self.__show_screen_check)
+        self.__screen_check = ScreenCheckWidgetSet(self.__controls, Logger.instance(), self, self.__render,
+                                                   self._switch_to_menu)
         self.__transition = TransitionWidgetSet(self.__controls, Logger.instance(), self, self.__render,
                                                 self.set_refresh_timeout)
         self.__pause = PauseMenuWidgetSet(self.__controls, self.__render, Logger.instance(), self,
@@ -578,6 +585,12 @@ class QrogueCUI(PyCUI):
             seed = RandomManager.instance().get_seed(msg="QroguePyCUI.switch_to_menu()")
         self.__menu.set_data(seed)
         self.apply_widget_set(self.__menu)
+
+    def __show_screen_check(self):
+        self.__state_machine.change_state(QrogueCUI._State.ScreenCheck, None)
+
+    def _switch_to_screen_check(self, data=None) -> None:
+        self.apply_widget_set(self.__screen_check)
 
     def __start_playing(self):
         if AchievementManager.instance().check_unlocks(Unlocks.Spaceship):

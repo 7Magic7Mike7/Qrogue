@@ -161,13 +161,14 @@ class MenuWidgetSet(MyWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  quick_start_callback: Callable[[], None], start_playing_callback: Callable[[], None],
                  start_expedition_callback: Callable[[], None], stop_callback: Callable[[], None],
-                 choose_simulation_callback: Callable[[], None]):
+                 choose_simulation_callback: Callable[[], None], show_screen_check: Callable[[], None]):
         self.__seed = 0
         self.__quick_start = quick_start_callback
         self.__start_playing = start_playing_callback
         self.__start_expedition = start_expedition_callback
         self.__stop = stop_callback
         self.__choose_simulation = choose_simulation_callback
+        self.__show_screen_check = show_screen_check
         super().__init__(logger, root, render)
 
         width = UIConfig.WINDOW_WIDTH - UIConfig.ASCII_ART_WIDTH
@@ -224,6 +225,9 @@ class MenuWidgetSet(MyWidgetSet):
         #choices.append("START AN EXPEDITION\n")
         #callbacks.append(self.__start_expedition)
 
+        choices.append("SCREEN CHECK\n")
+        callbacks.append(self.__show_screen_check)
+
         # choices.append("OPTIONS\n")  # for more space between the rows we add "\n"
         # callbacks.append(self.__options)
         choices.append("EXIT\n")
@@ -261,6 +265,31 @@ class MenuWidgetSet(MyWidgetSet):
 
     def __options(self) -> None:
         Popup.generic_info("Gameplay Config", GameplayConfig.to_file_text())
+
+
+class ScreenCheckWidgetSet(MyWidgetSet):
+    def __init__(self, controls: Controls, logger, root: py_cui.PyCUI,
+                 base_render_callback: Callable[[List[Renderable]], None], switch_to_menu: Callable[[], None]):
+        super().__init__(logger, root, base_render_callback)
+
+        check_widget = self.add_block_label('Check', 0, 0, row_span=UIConfig.WINDOW_HEIGHT,
+                                            column_span=UIConfig.WINDOW_WIDTH, center=True)
+        self.__widget = SimpleWidget(check_widget, "Test")
+
+        def menu_popup(choice: int):
+            if choice == 0: switch_to_menu()
+        check_widget.add_key_command(controls.action, lambda: CommonQuestions.BackToMenu.ask(menu_popup))
+
+    def get_widget_list(self) -> List[Widget]:
+        return [
+            self.__widget,
+        ]
+
+    def get_main_widget(self) -> WidgetWrapper:
+        return self.__widget.widget
+
+    def reset(self) -> None:
+        pass
 
 
 class TransitionWidgetSet(MyWidgetSet):

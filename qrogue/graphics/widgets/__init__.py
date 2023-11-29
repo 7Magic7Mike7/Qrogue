@@ -5,7 +5,8 @@ from .widget_sets import MyWidgetSet
 from .widget_sets import ExploreWidgetSet, NavigationWidgetSet
 from .widget_sets import ReachTargetWidgetSet, TrainingsWidgetSet, FightWidgetSet, BossFightWidgetSet, \
     RiddleWidgetSet, ChallengeWidgetSet
-from .widget_sets import MenuWidgetSet, TransitionWidgetSet, PauseMenuWidgetSet, ShopWidgetSet, WorkbenchWidgetSet
+from .widget_sets import MenuWidgetSet, TransitionWidgetSet, PauseMenuWidgetSet, ShopWidgetSet, WorkbenchWidgetSet, \
+    ScreenCheckWidgetSet
 from .spaceship import SpaceshipWidgetSet
 
 # importing
