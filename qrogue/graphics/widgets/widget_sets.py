@@ -7,18 +7,20 @@ from typing import List, Callable, Optional, Tuple, Any
 import py_cui
 from py_cui.widget_set import WidgetSet
 
+from qrogue import util
 from qrogue.game.logic.base import StateVector
 from qrogue.game.logic.actors import Boss, Enemy, Riddle, Robot
+from qrogue.game.logic.actors.controllables import BaseBot
 from qrogue.game.logic.actors.puzzles import Target, Challenge
 from qrogue.game.logic.collectibles import ShopItem, Collectible, Instruction, GateType
-from qrogue.game.world.map import Map
+from qrogue.game.world.map import Map, CallbackPack
 from qrogue.game.world.navigation import Direction
 from qrogue.graphics.popups import Popup
 from qrogue.graphics.rendering import ColorRules
 from qrogue.graphics.widget_base import WidgetWrapper
 from qrogue.util import CommonPopups, Config, Controls, GameplayConfig, HelpText, Logger, PathConfig, \
     RandomManager, AchievementManager, Keys, UIConfig, HudConfig, ColorConfig, Options, PuzzleConfig, ScoreConfig, \
-    get_filtered_help_texts, CommonQuestions
+    get_filtered_help_texts, CommonQuestions, MapConfig
 from qrogue.util.achievements import Ach, Unlocks
 
 from qrogue.graphics.widgets import Renderable, Widget, MyBaseWidget
@@ -268,28 +270,114 @@ class MenuWidgetSet(MyWidgetSet):
 
 
 class ScreenCheckWidgetSet(MyWidgetSet):
+    __LEVEL = 0
+    __PUZZLE = 1
+    __POPUP = 2
+
     def __init__(self, controls: Controls, logger, root: py_cui.PyCUI,
                  base_render_callback: Callable[[List[Renderable]], None], switch_to_menu: Callable[[], None]):
         super().__init__(logger, root, base_render_callback)
 
-        check_widget = self.add_block_label('Check', 0, 0, row_span=UIConfig.WINDOW_HEIGHT,
-                                            column_span=UIConfig.WINDOW_WIDTH, center=True)
-        self.__widget = SimpleWidget(check_widget, "Test")
+        details_height = 2
+        details_y = UIConfig.WINDOW_HEIGHT-UIConfig.HUD_HEIGHT-details_height
+        select_width = 3
+        select_widget = self.add_block_label('Select', details_y, 0, row_span=details_height, column_span=select_width,
+                                             center=True)
+        self.__select_widget = SelectionWidget(select_widget, controls, stay_selected=True)
+        self.__select_widget.set_data((
+            ["Level", "Puzzle", "Popup", "Back"],
+            [self.__show_level, self.__show_puzzle, self.__show_popup, switch_to_menu]
+        ))
 
-        def menu_popup(choice: int):
-            if choice == 0: switch_to_menu()
-        check_widget.add_key_command(controls.action, lambda: CommonQuestions.BackToMenu.ask(menu_popup))
+        def use_select():
+            if self.__select_widget.use():
+                self.__content_widget.widget.reset_text_color_rules()
+
+                if self.__select_widget.index == self.__LEVEL:
+                    ColorRules.apply_map_rules(self.__content_widget.widget)
+
+                elif self.__select_widget.index == self.__PUZZLE:
+                    self.__content_widget.widget.activate_individual_coloring()
+                    ColorRules.apply_heading_rules(self.__content_widget.widget)
+                    # ColorRules.apply_qubit_config_rules(self.__content_widget.widget)
+
+                self.render()
+        self.__select_widget.widget.add_key_command(controls.action, use_select)
+
+        desc_widget = self.add_block_label('Desc', UIConfig.WINDOW_HEIGHT-details_height, 0, row_span=details_height,
+                                           column_span=UIConfig.WINDOW_WIDTH, center=True)
+        self.__desc_widget = SimpleWidget(desc_widget, "Desc")
+
+        # prepare text to showcase an example level
+        pseudo_level = \
+            (("#" * MapConfig.room_width() + " ") * MapConfig.map_width()) + "\n" + \
+            (("#" + MapConfig.room_width() * " ") * MapConfig.map_width()) + "\n" + \
+            (("#" * MapConfig.room_width() + " ") * MapConfig.map_width()) + "\n" + \
+            ""
+        self.__level_content = pseudo_level
+
+        # prepare text of puzzle screen to check whether three qubits fit on the screen
+        robot = BaseBot(CallbackPack.instance().game_over, num_of_qubits=3, gates=[])
+        enemy = Enemy(0, eid=0, target=StateVector.create_zero_state_vector(robot.num_of_qubits), reward=None)
+        self.__fight = FightWidgetSet(controls, base_render_callback, logger, root, lambda b: None, lambda: None)
+        self.__fight.set_data(robot, enemy, in_expedition=False, tutorial_data=None)
+        self.__fight.render()
+
+        #stv_in, w_mul, mat_circ, w_res, stv_out, w_eq, stv_target = tuple(self.__fight.get_widget_list()[1:8])
+        fight_widgets = self.__fight.get_widget_list()[1:8]
+        # calculate maximum number of lines used in all fight widgets
+        max_lines = max([len(w.widget.get_title().split("\n")) for w in fight_widgets])
+
+        # concatenate the lines of all widgets
+        lines = [""] * max_lines
+        for widget in fight_widgets:
+            text = widget.widget.get_title().split("\n")
+            # calculate the max width, so we can fill missing lines accordingly
+            width = max([len(line) for line in text])
+
+            i = 0
+            # place lines in the correct row and fill them with whitespace should one be too small
+            for line in text:
+                if len(line) < width:
+                    line = util.util_functions.center_string(line, width, character=" ")
+                lines[i] += line
+                i += 1
+            # add missing lines
+            while i < max_lines:
+                lines[i] += " " * width
+                i += 1
+
+        self.__puzzle_content = "\n".join(lines)
+
+        content_widget = self.add_block_label('Content', 0, 0, row_span=UIConfig.WINDOW_HEIGHT-details_height,
+                                             column_span=UIConfig.WINDOW_WIDTH, center=True)
+        self.__content_widget = SimpleWidget(content_widget, "Content")
+
+    def __show_level(self):
+        self.__desc_widget.set_data("Level")
+        self.__content_widget.set_data(self.__level_content)
+
+    def __show_puzzle(self):
+        self.__desc_widget.set_data("Puzzle")
+        self.__content_widget.set_data(self.__puzzle_content)
+
+    def __show_popup(self):
+        self.__desc_widget.set_data("Popup")
+        Popup.generic_info("Test", "alalala")
 
     def get_widget_list(self) -> List[Widget]:
         return [
-            self.__widget,
+            self.__content_widget,
+            self.__select_widget,
+            self.__desc_widget,
         ]
 
     def get_main_widget(self) -> WidgetWrapper:
-        return self.__widget.widget
+        return self.__select_widget.widget
 
     def reset(self) -> None:
-        pass
+        self.__select_widget.render_reset()
+        self.__content_widget.render_reset()
 
 
 class TransitionWidgetSet(MyWidgetSet):
