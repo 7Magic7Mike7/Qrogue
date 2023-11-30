@@ -173,6 +173,9 @@ class DummyWidget(WidgetWrapper):
                             region: List[int] = None, include_whitespace: bool = False, selected_color=None) -> None:
         pass
 
+    def reset_text_color_rules(self) -> None:
+        pass
+
     def activate_individual_coloring(self):
         pass
 

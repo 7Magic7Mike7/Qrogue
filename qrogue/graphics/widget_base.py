@@ -62,6 +62,10 @@ class WidgetWrapper(ABC):
         pass
 
     @abstractmethod
+    def reset_text_color_rules(self) -> None:
+        pass
+
+    @abstractmethod
     def activate_individual_coloring(self):
         pass
 

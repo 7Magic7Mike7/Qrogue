@@ -66,6 +66,9 @@ class MyBaseWidget(BlockLabel, WidgetWrapper):
         super(MyBaseWidget, self).add_text_color_rule(regex, color, rule_type, match_type, region, include_whitespace,
                                                       selected_color)
 
+    def reset_text_color_rules(self) -> None:
+        self._text_color_rules.clear()
+
     def activate_individual_coloring(self):
         regex = ColorConfig.REGEX_TEXT_HIGHLIGHT
         self._text_color_rules.append(
@@ -250,6 +253,10 @@ class MyMultiWidget(WidgetWrapper):
 
         for w in self.__widgets:
             w.add_text_color_rule(regex, color, rule_type, match_type, region, include_whitespace, selected_color)
+
+    def reset_text_color_rules(self) -> None:
+        for w in self.__widgets:
+            w.reset_text_color_rules()
 
     def activate_individual_coloring(self):
         for w in self.__widgets:
