@@ -289,17 +289,18 @@ class ScreenCheckWidgetSet(MyWidgetSet):
             [self.__show_level, self.__show_puzzle, self.__show_popup, switch_to_menu]
         ))
 
+        self.__setup_widgets()
+
         def use_select():
             if self.__select_widget.use():
-                self.__content_widget.widget.reset_text_color_rules()
+                self.__content_mat.widget.reset_text_color_rules()
 
                 if self.__select_widget.index == self.__LEVEL:
-                    ColorRules.apply_map_rules(self.__content_widget.widget)
+                    ColorRules.apply_map_rules(self.__content_mat.widget)
 
                 elif self.__select_widget.index == self.__PUZZLE:
-                    self.__content_widget.widget.activate_individual_coloring()
-                    ColorRules.apply_heading_rules(self.__content_widget.widget)
-                    # ColorRules.apply_qubit_config_rules(self.__content_widget.widget)
+                    ColorRules.apply_heading_rules(self.__content_mat.widget)
+                    ColorRules.apply_qubit_config_rules(self.__content_mat.widget)
 
                 self.render()
         self.__select_widget.widget.add_key_command(controls.action, use_select)
@@ -309,57 +310,119 @@ class ScreenCheckWidgetSet(MyWidgetSet):
         self.__desc_widget = SimpleWidget(desc_widget, "Desc")
 
         # prepare text to showcase an example level
-        pseudo_level = \
-            (("#" * MapConfig.room_width() + " ") * MapConfig.map_width()) + "\n" + \
-            (("#" + MapConfig.room_width() * " ") * MapConfig.map_width()) + "\n" + \
-            (("#" * MapConfig.room_width() + " ") * MapConfig.map_width()) + "\n" + \
-            ""
-        self.__level_content = pseudo_level
+        pseudo_level: List[List[str]] = [
+            ["#" * MapConfig.room_width()] * MapConfig.map_width(),
+            ["#" + " " * (MapConfig.room_width() - 2) + "#"] * MapConfig.map_width(),
+            ["#" + " " * (MapConfig.room_width() - 2) + "#"] * MapConfig.map_width(),
+            ["#" + " " * (MapConfig.room_width() - 2) + "#"] * MapConfig.map_width(),
+            ["#" + " " * (MapConfig.room_width() - 2) + "#"] * MapConfig.map_width(),
+            ["#" + " " * (MapConfig.room_width() - 2) + "#"] * MapConfig.map_width(),
+            ["#" * MapConfig.room_width()] * MapConfig.map_width(),
+        ]
+        # room1: more or less random ensemble of all possible tiles
+        # room2: tiles in contrast to obstacles and enemies
+        # room3: relative empty, but realistic room
+        # room4: ?
+        # room5: all tile colors next to Qubot for reference
+        # room6: relative full, but realistic room
+        # room7: rows of all tile colors
+        pseudo_level[1] = ["#9o87c#",  "# sB  #",  "#c   9#",  "#     #",  "# GQ. #",  "#66 33#",  "#12345#"]
+        pseudo_level[2] = ["#oo6cc#",  "# .o? #",  "#  3  #",  "#     #",  "#  c  #",  "# ooo #",  "#QQQQQ#"]
+        pseudo_level[3] = ["#12345#",  "# o0o #",  "#2    #",  "#     #",  "#   1 #",  "#Qooo #",  "#ckgkc#"]
+        pseudo_level[4] = ["#0B?#!#",  "#1coQ #",  "# .  1#",  "#     #",  "#  BQ #",  "#2ooo7#",  "#ooooo#"]
+        pseudo_level[5] = ["#s.Q G#",  "#k1 7k#",  "#ooooo#",  "#     #",  "#   o #",  "#2 . 7#",  "#.....#"]
+        self.__level_content = "\n".join([" ".join(row) for row in pseudo_level])
 
-        # prepare text of puzzle screen to check whether three qubits fit on the screen
+    def __setup_widgets(self):
         robot = BaseBot(CallbackPack.instance().game_over, num_of_qubits=3, gates=[])
         enemy = Enemy(0, eid=0, target=StateVector.create_zero_state_vector(robot.num_of_qubits), reward=None)
-        self.__fight = FightWidgetSet(controls, base_render_callback, logger, root, lambda b: None, lambda: None)
-        self.__fight.set_data(robot, enemy, in_expedition=False, tutorial_data=None)
-        self.__fight.render()
 
-        #stv_in, w_mul, mat_circ, w_res, stv_out, w_eq, stv_target = tuple(self.__fight.get_widget_list()[1:8])
-        fight_widgets = self.__fight.get_widget_list()[1:8]
-        # calculate maximum number of lines used in all fight widgets
-        max_lines = max([len(w.widget.get_title().split("\n")) for w in fight_widgets])
+        # below widget setup is mostly copied from ReachTargetWidgetSet since we want to mimic its layout
+        posy = 0
+        posx = 0
+        row_span = UIConfig.stv_height(3)
+        matrix_width = UIConfig.WINDOW_WIDTH - (UIConfig.INPUT_STV_WIDTH + UIConfig.OUTPUT_STV_WIDTH +
+                                                UIConfig.TARGET_STV_WIDTH + 1 * 3)  # + width of the three signs
 
-        # concatenate the lines of all widgets
-        lines = [""] * max_lines
-        for widget in fight_widgets:
-            text = widget.widget.get_title().split("\n")
-            # calculate the max width, so we can fill missing lines accordingly
-            width = max([len(line) for line in text])
+        # HUD
+        hud = MyWidgetSet.create_hud_row(self)
+        hud.set_data((robot, "ScreenCheck", "Situational HUD"))
+        hud.render()
+        self.__hud_text = hud.widget.get_title()
+        posy += UIConfig.HUD_HEIGHT
 
-            i = 0
-            # place lines in the correct row and fill them with whitespace should one be too small
-            for line in text:
-                if len(line) < width:
-                    line = util.util_functions.center_string(line, width, character=" ")
-                lines[i] += line
-                i += 1
-            # add missing lines
-            while i < max_lines:
-                lines[i] += " " * width
-                i += 1
+        # CIRCUIT MATRIX
+        widget = self.add_block_label('Circuit Matrix', posy, posx, row_span, column_span=matrix_width, center=True)
+        mat_circ = CircuitMatrixWidget(widget)
+        mat_circ.set_data(robot.circuit_matrix)
+        mat_circ.render()
+        self.__text_mat = mat_circ.widget.get_title()
+        posx += matrix_width
 
-        self.__puzzle_content = "\n".join(lines)
+        # MULTIPLICATION
+        widget = self.add_block_label('Mul sign', posy, posx, row_span, column_span=1, center=True)
+        self.__w_mul = SimpleWidget(widget, "*")
+        self.__w_mul.render()
+        posx += 1
 
-        content_widget = self.add_block_label('Content', 0, 0, row_span=UIConfig.WINDOW_HEIGHT-details_height,
-                                             column_span=UIConfig.WINDOW_WIDTH, center=True)
-        self.__content_widget = SimpleWidget(content_widget, "Content")
+        # INPUT STV
+        widget = self.add_block_label('Input StV', posy, posx, row_span, UIConfig.INPUT_STV_WIDTH, center=True)
+        stv_in = InputStateVectorWidget(widget, "In")
+        stv_in.set_data(enemy.input_stv)
+        stv_in.render()
+        self.__text_in = stv_in.widget.get_title()
+        posx += UIConfig.INPUT_STV_WIDTH
+
+        # EQUALITY
+        widget = self.add_block_label('Eq sign', posy, posx, row_span, column_span=1, center=True)
+        self.__w_res = SimpleWidget(widget, "=")
+        self.__w_res.render()
+        posx += 1
+
+        # OUTPUT STV
+        widget = self.add_block_label('Output StV', posy, posx, row_span, UIConfig.OUTPUT_STV_WIDTH, center=True)
+        stv_out = OutputStateVectorWidget(widget, "Out")
+        stv_out.set_data((robot.state_vector, enemy.state_vector))
+        stv_out.render()
+        self.__text_out = stv_out.widget.get_title()
+        posx += UIConfig.OUTPUT_STV_WIDTH
+
+        # EQUALITY CHECK
+        widget = self.add_block_label('Eq sign', posy, posx, row_span, column_span=1, center=True)
+        self.__w_eq = SimpleWidget(widget, "=/=")
+        self.__w_eq.set_data("=/=")
+        self.__w_eq.render()
+        posx += 1
+
+        # TARGET STV
+        widget = self.add_block_label('Target StV', posy, posx, row_span, UIConfig.TARGET_STV_WIDTH, center=True)
+        stv_target = TargetStateVectorWidget(widget, "Target")
+        stv_target.set_data(enemy.state_vector)
+        stv_target.render()
+        self.__text_target = stv_target.widget.get_title()
+        posx += UIConfig.TARGET_STV_WIDTH
+        posy += row_span
+
+        # ACTUAL WIDGETS
+        self.__content_hud = hud #SimpleWidget(hud.widget, self.__hud_text) # I don't think we need to change hud text
+        self.__content_mat = SimpleWidget(mat_circ.widget, "C1")
+        self.__content_in = SimpleWidget(stv_in.widget, "C2")
+        self.__content_out = SimpleWidget(stv_out.widget, "C3")
+        self.__content_target = SimpleWidget(stv_target.widget, "C4")
 
     def __show_level(self):
         self.__desc_widget.set_data("Level")
-        self.__content_widget.set_data(self.__level_content)
+        self.__content_mat.set_data(self.__level_content)
+        self.__content_in.set_data("")
+        self.__content_out.set_data("")
+        self.__content_target.set_data("")
 
     def __show_puzzle(self):
         self.__desc_widget.set_data("Puzzle")
-        self.__content_widget.set_data(self.__puzzle_content)
+        self.__content_mat.set_data(self.__text_mat)
+        self.__content_in.set_data(self.__text_in)
+        self.__content_out.set_data(self.__text_out)
+        self.__content_target.set_data(self.__text_target)
 
     def __show_popup(self):
         self.__desc_widget.set_data("Popup")
@@ -367,7 +430,10 @@ class ScreenCheckWidgetSet(MyWidgetSet):
 
     def get_widget_list(self) -> List[Widget]:
         return [
-            self.__content_widget,
+            self.__content_hud,
+            self.__content_mat, self.__w_mul, self.__content_in, self.__w_res, self.__content_out, self.__w_eq,
+            self.__content_target,
+
             self.__select_widget,
             self.__desc_widget,
         ]
@@ -377,7 +443,10 @@ class ScreenCheckWidgetSet(MyWidgetSet):
 
     def reset(self) -> None:
         self.__select_widget.render_reset()
-        self.__content_widget.render_reset()
+
+        for widget in [self.__content_mat, self.__w_mul, self.__content_in, self.__w_res, self.__content_out,
+                       self.__w_eq, self.__content_target]:
+            widget.render_reset()
 
 
 class TransitionWidgetSet(MyWidgetSet):
