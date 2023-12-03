@@ -705,6 +705,16 @@ class OutputStateVectorWidget(StateVectorWidget):
         widget.activate_individual_coloring()
 
     def set_data(self, state_vectors: Tuple[StateVector, StateVector], target_reached: bool = False) -> None:
+        """
+
+        Args:
+            state_vectors: Tuple of the output statevector to display and its diff to a target statevector to color the
+                            output correspondingly
+            target_reached: _no longer in use_
+
+        Returns: None
+
+        """
         output_stv, diff_stv = state_vectors
         self._stv_str_rep = self._headline
         for i in range(output_stv.size):

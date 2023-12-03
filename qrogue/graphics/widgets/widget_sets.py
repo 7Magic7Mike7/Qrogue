@@ -388,7 +388,7 @@ class ScreenCheckWidgetSet(MyWidgetSet):
         # OUTPUT STV
         widget = self.add_block_label('Output StV', posy, posx, row_span, UIConfig.OUTPUT_STV_WIDTH, center=True)
         stv_out = OutputStateVectorWidget(widget, "Out")
-        stv_out.set_data((robot.state_vector, enemy.state_vector))
+        stv_out.set_data((robot.state_vector, enemy.state_vector.get_diff(robot.state_vector)))
         stv_out.render()
         self.__text_out = stv_out.widget.get_title()
         posx += UIConfig.OUTPUT_STV_WIDTH
