@@ -12,7 +12,7 @@ from qrogue.game.logic.base import StateVector
 from qrogue.game.logic.actors import Boss, Enemy, Riddle, Robot
 from qrogue.game.logic.actors.controllables import BaseBot
 from qrogue.game.logic.actors.puzzles import Target, Challenge
-from qrogue.game.logic.collectibles import ShopItem, Collectible, Instruction, GateType
+from qrogue.game.logic.collectibles import ShopItem, Collectible, instruction as gates
 from qrogue.game.world.map import Map, CallbackPack
 from qrogue.game.world.navigation import Direction
 from qrogue.graphics.popups import Popup
@@ -334,8 +334,14 @@ class ScreenCheckWidgetSet(MyWidgetSet):
         self.__level_content = "\n".join([" ".join(row) for row in pseudo_level])
 
     def __setup_widgets(self):
+        # prepare puzzle
         robot = BaseBot(CallbackPack.instance().game_over, num_of_qubits=3, gates=[])
-        enemy = Enemy(0, eid=0, target=StateVector.create_zero_state_vector(robot.num_of_qubits), reward=None)
+        input_stv = gates.Instruction.compute_stv([gates.RZGate(1).setup([2])], 3)
+        target_stv = gates.Instruction.compute_stv([gates.XGate().setup([0]), gates.RZGate(1.6).setup([0])], 3)
+        enemy = Enemy(0, eid=0, target=target_stv, reward=None, input_=input_stv)
+
+        robot.use_instruction(gates.RZGate(2.5).setup([0]), 0)
+        robot.update_statevector(enemy.input_stv, use_energy=False, check_for_game_over=False)
 
         # below widget setup is mostly copied from ReachTargetWidgetSet since we want to mimic its layout
         posy = 0
