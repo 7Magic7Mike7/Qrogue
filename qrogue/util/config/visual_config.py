@@ -223,6 +223,7 @@ class PopupConfig:
 
 
 class UIConfig:
+    # measures are in PyCUI rows and columns, not characters!
     WINDOW_WIDTH = 17
     WINDOW_HEIGHT = 10
 
