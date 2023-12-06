@@ -20,7 +20,7 @@ from qrogue.graphics.rendering import ColorRules
 from qrogue.graphics.widget_base import WidgetWrapper
 from qrogue.util import CommonPopups, Config, Controls, GameplayConfig, HelpText, Logger, PathConfig, \
     RandomManager, AchievementManager, Keys, UIConfig, HudConfig, ColorConfig, Options, PuzzleConfig, ScoreConfig, \
-    get_filtered_help_texts, CommonQuestions, MapConfig
+    get_filtered_help_texts, CommonQuestions, MapConfig, PyCuiConfig
 from qrogue.util.achievements import Ach, Unlocks
 
 from qrogue.graphics.widgets import Renderable, Widget, MyBaseWidget
@@ -277,6 +277,7 @@ class ScreenCheckWidgetSet(MyWidgetSet):
     def __init__(self, controls: Controls, logger, root: py_cui.PyCUI,
                  base_render_callback: Callable[[List[Renderable]], None], switch_to_menu: Callable[[], None]):
         super().__init__(logger, root, base_render_callback)
+        self.__mode = -1
 
         details_height = 2
         details_y = UIConfig.WINDOW_HEIGHT-UIConfig.HUD_HEIGHT-details_height
@@ -302,6 +303,7 @@ class ScreenCheckWidgetSet(MyWidgetSet):
                     ColorRules.apply_heading_rules(self.__content_mat.widget)
                     ColorRules.apply_qubit_config_rules(self.__content_mat.widget)
 
+                self.__mode = self.__select_widget.index
                 self.render()
         self.__select_widget.widget.add_key_command(controls.action, use_select)
 
@@ -332,6 +334,23 @@ class ScreenCheckWidgetSet(MyWidgetSet):
         pseudo_level[4] = ["#0B?#!#",  "#1coQ #",  "# .  1#",  "#     #",  "#  BQ #",  "#2ooo7#",  "#ooooo#"]
         pseudo_level[5] = ["#s.Q G#",  "#k1 7k#",  "#ooooo#",  "#     #",  "#   o #",  "#2 . 7#",  "#.....#"]
         self.__level_content = "\n".join([" ".join(row) for row in pseudo_level])
+
+        def width_check():
+            if self.__mode != ScreenCheckWidgetSet.__PUZZLE: return
+
+            content_width = max([len(row) for row in self.__content_mat.widget.get_title().split("\n")])
+            providable_width = int(PyCuiConfig.get_width() * 0.42)
+            if providable_width <= 0:
+                Popup.generic_info("Dimension Unknown", "Failed to measure width of the window. Please check yourself "
+                                                        "if the matrix is displayed as a whole or if some parts are "
+                                                        "missing.")
+            elif content_width > providable_width:
+                Popup.generic_info("Dimension Error", f"{content_width} characters needed to display the matrix but "
+                                                      f"only {providable_width} available")
+            else:
+                Popup.generic_info("Dimension Fine", f"{providable_width} characters available and only {content_width}"
+                                                     f" needed to display the matrix")
+        self.__select_widget.widget.add_key_command(controls.get_keys(Keys.Help), width_check)
 
     def __setup_widgets(self):
         # prepare puzzle

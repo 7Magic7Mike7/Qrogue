@@ -221,6 +221,7 @@ class QrogueCUI(PyCUI):
     def __init__(self, seed: int, width: int = UIConfig.WINDOW_WIDTH, height: int = UIConfig.WINDOW_HEIGHT):
         self.__init_complete = False
         super().__init__(width, height)
+        PyCuiConfig.set_width_callback(lambda: self._width)
         self.set_title(f"Qrogue {Config.version()}")
         self.__controls = Controls(self._handle_key_presses)
         self.__seed = seed
