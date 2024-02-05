@@ -274,6 +274,67 @@ class ScreenCheckWidgetSet(MyWidgetSet):
     __PUZZLE = 1
     __POPUP = 2
 
+    # content of the different modes
+    # Note that Puzzle-mode cannot be statically created like the other modes because it's created by various widgets
+    # just like the real UI for puzzle solving (@ReachTargetWidgetSet).
+
+    @staticmethod
+    def level_content() -> str:
+        # prepare text to showcase an example level
+        pseudo_level: List[List[str]] = [
+            ["#" * MapConfig.room_width()] * MapConfig.map_width(),
+            ["#" + " " * (MapConfig.room_width() - 2) + "#"] * MapConfig.map_width(),
+            ["#" + " " * (MapConfig.room_width() - 2) + "#"] * MapConfig.map_width(),
+            ["#" + " " * (MapConfig.room_width() - 2) + "#"] * MapConfig.map_width(),
+            ["#" + " " * (MapConfig.room_width() - 2) + "#"] * MapConfig.map_width(),
+            ["#" + " " * (MapConfig.room_width() - 2) + "#"] * MapConfig.map_width(),
+            ["#" * MapConfig.room_width()] * MapConfig.map_width(),
+        ]
+        # room1: more or less random ensemble of all possible tiles
+        # room2: tiles in contrast to obstacles and enemies
+        # room3: relative empty, but realistic room
+        # room4: ?
+        # room5: all tile colors next to Qubot for reference
+        # room6: relative full, but realistic room
+        # room7: rows of all (frequently used) tile colors
+        pseudo_level[1] = ["#9o87c#", "# sB  #", "#c   9#", "#     #", "# GQ. #", "#66 33#", "#12345#"]
+        pseudo_level[2] = ["#oo6cc#", "# .o? #", "#  3  #", "#     #", "#  c  #", "# ooo #", "#QQQQQ#"]
+        pseudo_level[3] = ["#12345#", "# o0o #", "#2    #", "#     #", "#   1 #", "#Qooo #", "#ckgkc#"]
+        pseudo_level[4] = ["#0B?#!#", "#1coQ #", "# .  1#", "#     #", "#  BQ #", "#2ooo7#", "#ooooo#"]
+        pseudo_level[5] = ["#s.Q G#", "#k1 7k#", "#ooooo#", "#     #", "#   o #", "#2 . 7#", "#.....#"]
+
+        return "\n".join([" ".join(row) for row in pseudo_level])
+
+    @staticmethod
+    def popup_content() -> str:
+        return f"Let's have a look at the different colors in popups like this to make sure they are " \
+               f"distinguishable:\n\n" \
+               f"- {ColorConfig.highlight_tile('tile')}: this refers to tiles in the game world\n" \
+               f"             \"the green {ColorConfig.highlight_tile('G')} represents the goal\"\n" \
+               f"- {ColorConfig.highlight_action('action')}: this is used to highlight certain actions you " \
+               f"can perform\n" \
+               f"             \"{ColorConfig.highlight_action('move')} to the next room\"\n" \
+               f"- {ColorConfig.highlight_object('object')}: this shows important objects and concepts " \
+               f"within the game\n" \
+               f"             \"you found an {ColorConfig.highlight_object('XGate')}\"\n" \
+               f"- {ColorConfig.highlight_word('word')}: this highlights various noteworthy words " \
+               f"without a specific category\n" \
+               f"             \"you need a {ColorConfig.highlight_word('new')} item to proceed\"\n" \
+               f"- {ColorConfig.highlight_key('key')}: this informs you about the controls of the game\n" \
+               f"             \"use {ColorConfig.highlight_key('Space')} to close a popup\""
+
+    @staticmethod
+    def level_description() -> str:
+        return "Level"
+
+    @staticmethod
+    def puzzle_description() -> str:
+        return "Puzzle"
+
+    @staticmethod
+    def popup_description() -> str:
+        return "Popup"
+
     def __init__(self, controls: Controls, logger, root: py_cui.PyCUI,
                  base_render_callback: Callable[[List[Renderable]], None], switch_to_menu: Callable[[], None]):
         super().__init__(logger, root, base_render_callback)
@@ -310,30 +371,6 @@ class ScreenCheckWidgetSet(MyWidgetSet):
         desc_widget = self.add_block_label('Desc', UIConfig.WINDOW_HEIGHT-details_height, 0, row_span=details_height,
                                            column_span=UIConfig.WINDOW_WIDTH, center=True)
         self.__desc_widget = SimpleWidget(desc_widget, "Desc")
-
-        # prepare text to showcase an example level
-        pseudo_level: List[List[str]] = [
-            ["#" * MapConfig.room_width()] * MapConfig.map_width(),
-            ["#" + " " * (MapConfig.room_width() - 2) + "#"] * MapConfig.map_width(),
-            ["#" + " " * (MapConfig.room_width() - 2) + "#"] * MapConfig.map_width(),
-            ["#" + " " * (MapConfig.room_width() - 2) + "#"] * MapConfig.map_width(),
-            ["#" + " " * (MapConfig.room_width() - 2) + "#"] * MapConfig.map_width(),
-            ["#" + " " * (MapConfig.room_width() - 2) + "#"] * MapConfig.map_width(),
-            ["#" * MapConfig.room_width()] * MapConfig.map_width(),
-        ]
-        # room1: more or less random ensemble of all possible tiles
-        # room2: tiles in contrast to obstacles and enemies
-        # room3: relative empty, but realistic room
-        # room4: ?
-        # room5: all tile colors next to Qubot for reference
-        # room6: relative full, but realistic room
-        # room7: rows of all (frequently used) tile colors
-        pseudo_level[1] = ["#9o87c#",  "# sB  #",  "#c   9#",  "#     #",  "# GQ. #",  "#66 33#",  "#12345#"]
-        pseudo_level[2] = ["#oo6cc#",  "# .o? #",  "#  3  #",  "#     #",  "#  c  #",  "# ooo #",  "#QQQQQ#"]
-        pseudo_level[3] = ["#12345#",  "# o0o #",  "#2    #",  "#     #",  "#   1 #",  "#Qooo #",  "#ckgkc#"]
-        pseudo_level[4] = ["#0B?#!#",  "#1coQ #",  "# .  1#",  "#     #",  "#  BQ #",  "#2ooo7#",  "#ooooo#"]
-        pseudo_level[5] = ["#s.Q G#",  "#k1 7k#",  "#ooooo#",  "#     #",  "#   o #",  "#2 . 7#",  "#.....#"]
-        self.__level_content = "\n".join([" ".join(row) for row in pseudo_level])
 
         def width_check():
             if self.__mode != ScreenCheckWidgetSet.__PUZZLE: return
@@ -436,38 +473,22 @@ class ScreenCheckWidgetSet(MyWidgetSet):
         self.__content_target = SimpleWidget(stv_target.widget, "C4")
 
     def __show_level(self):
-        self.__desc_widget.set_data("Level")
-        self.__content_mat.set_data(self.__level_content)
+        self.__desc_widget.set_data(self.level_description())
+        self.__content_mat.set_data(self.level_content())
         self.__content_in.set_data("")
         self.__content_out.set_data("")
         self.__content_target.set_data("")
 
     def __show_puzzle(self):
-        self.__desc_widget.set_data("Puzzle")
+        self.__desc_widget.set_data(self.puzzle_description())
         self.__content_mat.set_data(self.__text_mat)
         self.__content_in.set_data(self.__text_in)
         self.__content_out.set_data(self.__text_out)
         self.__content_target.set_data(self.__text_target)
 
     def __show_popup(self):
-        self.__desc_widget.set_data("Popup")
-        Popup.generic_info("This headline usually indicates the Speaker",
-                           f"Let's have a look at the different colors in popups like this to make sure they are "
-                           f"distinguishable:\n"
-                           "\n"
-                           f"- {ColorConfig.highlight_tile('tile')}: this refers to tiles in the game world\n"
-                           f"             \"the green {ColorConfig.highlight_tile('G')} represents the goal\"\n"
-                           f"- {ColorConfig.highlight_action('action')}: this is used to highlight certain actions you "
-                           f"can perform\n"
-                           f"             \"{ColorConfig.highlight_action('move')} to the next room\"\n"
-                           f"- {ColorConfig.highlight_object('object')}: this shows important objects and concepts "
-                           f"within the game\n"
-                           f"             \"you found an {ColorConfig.highlight_object('XGate')}\"\n"
-                           f"- {ColorConfig.highlight_word('word')}: this highlights various noteworthy words "
-                           f"without a specific category\n"
-                           f"             \"you need a {ColorConfig.highlight_word('new')} item to proceed\"\n"
-                           f"- {ColorConfig.highlight_key('key')}: this informs you about the controls of the game\n"
-                           f"             \"use {ColorConfig.highlight_key('Space')} to close a popup\"")
+        self.__desc_widget.set_data(self.popup_description())
+        Popup.generic_info("This headline usually indicates the Speaker", self.popup_content())
 
     def get_widget_list(self) -> List[Widget]:
         return [
