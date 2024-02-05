@@ -487,6 +487,12 @@ class ScreenCheckWidgetSet(MyWidgetSet):
         self.__content_target.set_data(self.__text_target)
 
     def __show_popup(self):
+        # clear all other texts
+        self.__content_mat.set_data("")
+        self.__content_in.set_data("")
+        self.__content_out.set_data("")
+        self.__content_target.set_data("")
+
         self.__desc_widget.set_data(self.popup_description())
         Popup.generic_info("This headline usually indicates the Speaker", self.popup_content())
 
