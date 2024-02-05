@@ -327,7 +327,7 @@ class ScreenCheckWidgetSet(MyWidgetSet):
         # room4: ?
         # room5: all tile colors next to Qubot for reference
         # room6: relative full, but realistic room
-        # room7: rows of all tile colors
+        # room7: rows of all (frequently used) tile colors
         pseudo_level[1] = ["#9o87c#",  "# sB  #",  "#c   9#",  "#     #",  "# GQ. #",  "#66 33#",  "#12345#"]
         pseudo_level[2] = ["#oo6cc#",  "# .o? #",  "#  3  #",  "#     #",  "#  c  #",  "# ooo #",  "#QQQQQ#"]
         pseudo_level[3] = ["#12345#",  "# o0o #",  "#2    #",  "#     #",  "#   1 #",  "#Qooo #",  "#ckgkc#"]
