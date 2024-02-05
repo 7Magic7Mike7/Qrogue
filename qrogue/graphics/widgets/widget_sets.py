@@ -451,7 +451,23 @@ class ScreenCheckWidgetSet(MyWidgetSet):
 
     def __show_popup(self):
         self.__desc_widget.set_data("Popup")
-        Popup.generic_info("Test", "alalala")
+        Popup.generic_info("This headline usually indicates the Speaker",
+                           f"Let's have a look at the different colors in popups like this to make sure they are "
+                           f"distinguishable:\n"
+                           "\n"
+                           f"- {ColorConfig.highlight_tile('tile')}: this refers to tiles in the game world\n"
+                           f"             \"the green {ColorConfig.highlight_tile('G')} represents the goal\"\n"
+                           f"- {ColorConfig.highlight_action('action')}: this is used to highlight certain actions you "
+                           f"can perform\n"
+                           f"             \"{ColorConfig.highlight_action('move')} to the next room\"\n"
+                           f"- {ColorConfig.highlight_object('object')}: this shows important objects and concepts "
+                           f"within the game\n"
+                           f"             \"you found an {ColorConfig.highlight_object('XGate')}\"\n"
+                           f"- {ColorConfig.highlight_word('word')}: this highlights various noteworthy words "
+                           f"without a specific category\n"
+                           f"             \"you need a {ColorConfig.highlight_word('new')} item to proceed\"\n"
+                           f"- {ColorConfig.highlight_key('key')}: this informs you about the controls of the game\n"
+                           f"             \"use {ColorConfig.highlight_key('Space')} to close a popup\"")
 
     def get_widget_list(self) -> List[Widget]:
         return [
