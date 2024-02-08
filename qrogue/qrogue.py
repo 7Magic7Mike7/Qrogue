@@ -65,6 +65,8 @@ def __parse_argument(argument: List[str], has_value: bool = False) -> Tuple[bool
 
 
 def start_qrogue() -> int:
+    Logger.print_to_console("Loading...")     # notify player that the game is loading
+
     __CONSOLE_ARGUMENT = ["--from-console", "-fc"]
     __DEBUG_ARGUMENT = ["--debug", "-d"]
     __SEED_ARGUMENT = ["--seed", "-s"]                      # seed argument

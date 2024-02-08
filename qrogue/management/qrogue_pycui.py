@@ -362,6 +362,8 @@ class QrogueCUI(PyCUI):
             ConfirmationPopup.ask("WELCOME TO QROGUE!", HelpText.Welcome.text, knowledge_question,
                                   ["Quantum Newbie", "Quantum Experienced"])
 
+        Logger.print_to_console("Ready!")  # notify player that the game is fully loaded
+
     def _refresh_height_width(self) -> None:
         try:
             super(QrogueCUI, self)._refresh_height_width()

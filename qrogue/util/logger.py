@@ -12,6 +12,12 @@ class Logger(PyCUILogger):
     __instance = None
 
     @staticmethod
+    def print_to_console(message: str) -> None:
+        time_str = datetime.now().strftime("%H-%M-%S")
+        text = f"{{Qrogue}}{time_str}: {message}"
+        print(text)
+
+    @staticmethod
     def instance() -> "Logger":
         if Logger.__instance is None:
             raise Exception(ErrorConfig.singleton_no_init("Logger"))
