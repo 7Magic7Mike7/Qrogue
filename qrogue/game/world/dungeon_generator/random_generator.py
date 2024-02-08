@@ -6,12 +6,12 @@ from qrogue.game.logic.collectibles import GateFactory, Key, instruction, Score,
     CollectibleFactory, Instruction
 from qrogue.game.target_factory import PuzzleDifficulty, BossFactory, EnemyFactory, RiddleFactory, EnemyPuzzleFactory
 from qrogue.game.world import tiles
-from qrogue.game.world.dungeon_generator.wave_function_collapse.wfc_generator import WFCRoomGenerator
+from qrogue.game.world.dungeon_generator.wave_function_collapse import WFCRoomGenerator, WFCEmptyRoomGenerator
 from qrogue.game.world.map import CallbackPack, Hallway, WildRoom, SpawnRoom, ShopRoom, RiddleRoom, BossRoom, \
     TreasureRoom, ExpeditionMap, Room
 from qrogue.game.world.map.rooms import Placeholder, AreaType, DefinedWildRoom, EmptyRoom
 from qrogue.game.world.navigation import Coordinate, Direction
-from qrogue.util import Logger, RandomManager, MapConfig
+from qrogue.util import Logger, RandomManager, MapConfig, Config
 
 from qrogue.game.world.dungeon_generator.generator import DungeonGenerator
 
@@ -596,7 +596,10 @@ class ExpeditionGenerator(DungeonGenerator):
         self.__remaining_keys = 0
         self.__room_has_key = False
 
-        self.__wild_room_generator = WFCRoomGenerator(seed, WFCRoomGenerator.get_level_list()[2:], AreaType.WildRoom)
+        if Config.skip_learning():
+            self.__wild_room_generator = WFCEmptyRoomGenerator()
+        else:
+            self.__wild_room_generator = WFCRoomGenerator(seed, WFCRoomGenerator.get_level_list()[2:], AreaType.WildRoom)
 
     def _next_target_id(self) -> int:
         val = self.__next_target_id

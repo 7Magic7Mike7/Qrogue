@@ -249,7 +249,10 @@ class QrogueCUI(PyCUI):
                      self.__open_challenge, self.__visit_shop, self.__game_over)
         SaveData()
         MapManager(seed, self.__show_world, self.__start_level, self.__show_input_popup)
-        MapManager.instance().fill_expedition_queue(lambda: None, no_thread=True)
+
+        if not Config.skip_learning():
+            MapManager.instance().fill_expedition_queue(lambda: None, no_thread=True)
+
         Popup.update_check_achievement_function(SaveData.instance().achievement_manager.check_achievement)
         common_messages.set_show_callback(Popup.generic_info)
         common_messages.set_ask_callback(ConfirmationPopup.ask)

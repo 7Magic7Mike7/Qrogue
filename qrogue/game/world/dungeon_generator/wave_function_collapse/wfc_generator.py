@@ -8,6 +8,7 @@ from qrogue.game.world.dungeon_generator.wave_function_collapse.learnables impor
 from qrogue.game.world.map import rooms, LevelMap
 from qrogue.game.world.map.rooms import AreaType
 from qrogue.game.world.navigation import Coordinate, Direction
+from qrogue.game.world.tiles import TileCode
 from qrogue.util import RandomManager, MapConfig, MyRandom
 
 from qrogue.util.util_functions import my_str
@@ -243,3 +244,21 @@ class WFCRoomGenerator(WFCGenerator):
     @property
     def room_type(self) -> rooms.AreaType:
         return self.__room_type
+    
+    def generate(self, seed: Optional[int] = None, width: Optional[int] = None, height: Optional[int] = None,
+                 static_entries: Optional[Dict[Coordinate, Any]] = None) -> List[List[LearnableRoom.TileData]]:
+        return super().generate(seed, width, height, static_entries)
+
+
+class WFCEmptyRoomGenerator(WFCGenerator):
+    def __init__(self, seed: int = 0):
+        super().__init__(seed)
+
+    def generate(self, seed: Optional[int] = None, width: Optional[int] = None, height: Optional[int] = None,
+                 static_entries: Optional[Dict[Coordinate, Any]] = None) -> List[List[LearnableRoom.TileData]]:
+        if width is None: width = MapConfig.room_width()
+        if height is None: height = MapConfig.room_height()
+        # return an empty room (only Floor tiles)
+        return [[LearnableRoom.TileData(TileCode.Floor, None) for _ in range(width)] for _ in range(height)]
+    
+    
