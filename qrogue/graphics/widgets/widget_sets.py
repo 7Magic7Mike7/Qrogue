@@ -397,8 +397,8 @@ class ScreenCheckWidgetSet(MyWidgetSet):
         super().__init__(logger, root, base_render_callback)
         self.__mode = -1
 
-        details_height = 2
-        details_y = UIConfig.WINDOW_HEIGHT-UIConfig.HUD_HEIGHT-details_height
+        details_height = 4
+        details_y = UIConfig.WINDOW_HEIGHT-details_height
         select_width = 3
         select_widget = self.add_block_label('Select', details_y, 0, row_span=details_height, column_span=select_width,
                                              center=True)
@@ -425,8 +425,9 @@ class ScreenCheckWidgetSet(MyWidgetSet):
                 self.render()
         self.__select_widget.widget.add_key_command(controls.action, use_select)
 
-        desc_widget = self.add_block_label('Desc', UIConfig.WINDOW_HEIGHT-details_height, 0, row_span=details_height,
-                                           column_span=UIConfig.WINDOW_WIDTH, center=True)
+        desc_widget = self.add_block_label('Desc', details_y, select_width, row_span=details_height,
+                                           column_span=UIConfig.WINDOW_WIDTH-select_width-1, center=False)
+        desc_widget.activate_individual_coloring()
         self.__desc_widget = SimpleWidget(desc_widget, "Desc")
 
         def width_check():
