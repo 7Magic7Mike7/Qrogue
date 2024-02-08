@@ -1,8 +1,20 @@
+from typing import Callable
+
 import py_cui
 from py_cui.errors import PyCUIOutOfBoundsError
 
 
 class PyCuiConfig:
+    __get_width: Callable[[], int] = lambda: 0  # 0 is used as default since it isn't a valid width otherwise
+
+    @staticmethod
+    def set_width_callback(get_width: Callable[[], int]):
+        PyCuiConfig.__get_width = get_width
+
+    @staticmethod
+    def get_width() -> int:
+        return PyCuiConfig.__get_width()
+
     KEY_ESCAPE = py_cui.keys.KEY_ESCAPE
     KEY_CTRL_Q = py_cui.keys.KEY_CTRL_Q
 

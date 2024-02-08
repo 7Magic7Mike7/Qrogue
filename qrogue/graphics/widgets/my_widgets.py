@@ -66,6 +66,9 @@ class MyBaseWidget(BlockLabel, WidgetWrapper):
         super(MyBaseWidget, self).add_text_color_rule(regex, color, rule_type, match_type, region, include_whitespace,
                                                       selected_color)
 
+    def reset_text_color_rules(self) -> None:
+        self._text_color_rules.clear()
+
     def activate_individual_coloring(self):
         regex = ColorConfig.REGEX_TEXT_HIGHLIGHT
         self._text_color_rules.append(
@@ -250,6 +253,10 @@ class MyMultiWidget(WidgetWrapper):
 
         for w in self.__widgets:
             w.add_text_color_rule(regex, color, rule_type, match_type, region, include_whitespace, selected_color)
+
+    def reset_text_color_rules(self) -> None:
+        for w in self.__widgets:
+            w.reset_text_color_rules()
 
     def activate_individual_coloring(self):
         for w in self.__widgets:
@@ -698,6 +705,16 @@ class OutputStateVectorWidget(StateVectorWidget):
         widget.activate_individual_coloring()
 
     def set_data(self, state_vectors: Tuple[StateVector, StateVector], target_reached: bool = False) -> None:
+        """
+
+        Args:
+            state_vectors: Tuple of the output statevector to display and its diff to a target statevector to color the
+                            output correspondingly
+            target_reached: _no longer in use_
+
+        Returns: None
+
+        """
         output_stv, diff_stv = state_vectors
         self._stv_str_rep = self._headline
         for i in range(output_stv.size):

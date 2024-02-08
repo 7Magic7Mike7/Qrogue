@@ -7,18 +7,20 @@ from typing import List, Callable, Optional, Tuple, Any
 import py_cui
 from py_cui.widget_set import WidgetSet
 
+from qrogue import util
 from qrogue.game.logic.base import StateVector
 from qrogue.game.logic.actors import Boss, Enemy, Riddle, Robot
+from qrogue.game.logic.actors.controllables import BaseBot
 from qrogue.game.logic.actors.puzzles import Target, Challenge
-from qrogue.game.logic.collectibles import ShopItem, Collectible, Instruction, GateType
-from qrogue.game.world.map import Map
+from qrogue.game.logic.collectibles import ShopItem, Collectible, instruction as gates
+from qrogue.game.world.map import Map, CallbackPack
 from qrogue.game.world.navigation import Direction
 from qrogue.graphics.popups import Popup
 from qrogue.graphics.rendering import ColorRules
 from qrogue.graphics.widget_base import WidgetWrapper
 from qrogue.util import CommonPopups, Config, Controls, GameplayConfig, HelpText, Logger, PathConfig, \
     RandomManager, AchievementManager, Keys, UIConfig, HudConfig, ColorConfig, Options, PuzzleConfig, ScoreConfig, \
-    get_filtered_help_texts, CommonQuestions
+    get_filtered_help_texts, CommonQuestions, MapConfig, PyCuiConfig, ColorCode
 from qrogue.util.achievements import Ach, Unlocks
 
 from qrogue.graphics.widgets import Renderable, Widget, MyBaseWidget
@@ -161,13 +163,14 @@ class MenuWidgetSet(MyWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  quick_start_callback: Callable[[], None], start_playing_callback: Callable[[], None],
                  start_expedition_callback: Callable[[], None], stop_callback: Callable[[], None],
-                 choose_simulation_callback: Callable[[], None]):
+                 choose_simulation_callback: Callable[[], None], show_screen_check: Callable[[], None]):
         self.__seed = 0
         self.__quick_start = quick_start_callback
         self.__start_playing = start_playing_callback
         self.__start_expedition = start_expedition_callback
         self.__stop = stop_callback
         self.__choose_simulation = choose_simulation_callback
+        self.__show_screen_check = show_screen_check
         super().__init__(logger, root, render)
 
         width = UIConfig.WINDOW_WIDTH - UIConfig.ASCII_ART_WIDTH
@@ -224,6 +227,9 @@ class MenuWidgetSet(MyWidgetSet):
         #choices.append("START AN EXPEDITION\n")
         #callbacks.append(self.__start_expedition)
 
+        choices.append("SCREEN CHECK\n")
+        callbacks.append(self.__show_screen_check)
+
         # choices.append("OPTIONS\n")  # for more space between the rows we add "\n"
         # callbacks.append(self.__options)
         choices.append("EXIT\n")
@@ -261,6 +267,312 @@ class MenuWidgetSet(MyWidgetSet):
 
     def __options(self) -> None:
         Popup.generic_info("Gameplay Config", GameplayConfig.to_file_text())
+
+
+class ScreenCheckWidgetSet(MyWidgetSet):
+    __LEVEL = 0
+    __PUZZLE = 1
+    __POPUP = 2
+
+    # content of the different modes
+    # Note that Puzzle-mode cannot be statically created like the other modes because it's created by various widgets
+    # just like the real UI for puzzle solving (@ReachTargetWidgetSet).
+
+    @staticmethod
+    def level_content() -> str:
+        # prepare text to showcase an example level
+        pseudo_level: List[List[str]] = [
+            ["#" * MapConfig.room_width()] * MapConfig.map_width(),
+            ["#" + " " * (MapConfig.room_width() - 2) + "#"] * MapConfig.map_width(),
+            ["#" + " " * (MapConfig.room_width() - 2) + "#"] * MapConfig.map_width(),
+            ["#" + " " * (MapConfig.room_width() - 2) + "#"] * MapConfig.map_width(),
+            ["#" + " " * (MapConfig.room_width() - 2) + "#"] * MapConfig.map_width(),
+            ["#" + " " * (MapConfig.room_width() - 2) + "#"] * MapConfig.map_width(),
+            ["#" * MapConfig.room_width()] * MapConfig.map_width(),
+        ]
+        # room1: more or less random ensemble of all possible tiles
+        # room2: tiles in contrast to obstacles and enemies
+        # room3: relative empty, but realistic room
+        # room4: ?
+        # room5: all tile colors next to Qubot for reference
+        # room6: relative full, but realistic room
+        # room7: rows of all (frequently used) tile colors
+        pseudo_level[1] = ["#9o87c#", "# sB  #", "#c   9#", "#     #", "# GQ. #", "#66 33#", "#12345#"]
+        pseudo_level[2] = ["#oo6cc#", "# .o? #", "#  3  #", "#     #", "#  c  #", "# ooo #", "#QQQQQ#"]
+        pseudo_level[3] = ["#12345#", "# o0o #", "#2    #", "#     #", "#   1 #", "#Qooo #", "#ckgkc#"]
+        pseudo_level[4] = ["#0B?#!#", "#1coQ #", "# .  1#", "#     #", "#  BQ #", "#2ooo7#", "#ooooo#"]
+        pseudo_level[5] = ["#s.Q G#", "#k1 7k#", "#ooooo#", "#     #", "#   o #", "#2 . 7#", "#.....#"]
+
+        return "\n".join([" ".join(row) for row in pseudo_level])
+
+    @staticmethod
+    def popup_content() -> str:
+        return f"Let's have a look at the different colors in popups like this to make sure they are " \
+               f"distinguishable:\n\n" \
+               f"- {ColorConfig.highlight_tile('tile')}: this refers to tiles in the game world\n" \
+               f"             \"the green {ColorConfig.highlight_tile('G')} represents the goal\"\n" \
+               f"- {ColorConfig.highlight_action('action')}: this is used to highlight certain actions you " \
+               f"can perform\n" \
+               f"             \"{ColorConfig.highlight_action('move')} to the next room\"\n" \
+               f"- {ColorConfig.highlight_object('object')}: this shows important objects and concepts " \
+               f"within the game\n" \
+               f"             \"you found an {ColorConfig.highlight_object('XGate')}\"\n" \
+               f"- {ColorConfig.highlight_word('word')}: this highlights various noteworthy words " \
+               f"without a specific category\n" \
+               f"             \"you need a {ColorConfig.highlight_word('new')} item to proceed\"\n" \
+               f"- {ColorConfig.highlight_key('key')}: this informs you about the controls of the game\n" \
+               f"             \"use {ColorConfig.highlight_key('Space')} to close a popup\""
+
+    @staticmethod
+    def level_description() -> str:
+        return f"You should see seven rooms next to each other. While the specific colors don't matter, it is " \
+               f"important to be able to distinguish\n" \
+               f"different elements of the game world (although they also differ in their character representation)." \
+               f"\n\n" \
+               f"- {ColorConfig.highlight_object('Pickups', True)} are designed to be " \
+               f"{ColorConfig.highlight_word('blue', True)} lower-case characters like " \
+               f"{ColorConfig.highlight_tile('s', True)}, {ColorConfig.highlight_tile('k', True)}, " \
+               f"{ColorConfig.highlight_tile('c', True)} or {ColorConfig.highlight_tile('g', True)}.\n" \
+               f"- Tiles containing {ColorConfig.highlight_object('Puzzles', True)} are meant to be " \
+               f"{ColorConfig.highlight_word('red', True)} and are {ColorConfig.highlight_tile('digits', True)}, " \
+               f"{ColorConfig.highlight_tile('!', True)}, {ColorConfig.highlight_tile('?', True)} and inverted " \
+               f"{ColorConfig.highlight_tile('B', True)} for bosses.\n" \
+               f"- The {ColorConfig.highlight_object('Goal', True)} " \
+               f"{ColorConfig.highlight_tile('G', True)} of a level and the " \
+               f"{ColorConfig.highlight_object('Player Character', True)} {ColorConfig.highlight_tile('Q', False)} " \
+               f"are usually {ColorConfig.highlight_word('green', True)}.\n" \
+               f"- Level-shaping tiles like {ColorConfig.highlight_tile('#')} and {ColorConfig.highlight_tile('o')} " \
+               f"are {ColorConfig.highlight_word('white', True)} inverted\n" \
+               f"- Lastly, simple {ColorConfig.highlight_word('white', True)} dots " \
+               f"\"{ColorConfig.highlight_tile('.', True)}\" are messages that open Popups\n" \
+               f"\n" \
+               f"The last two elements are neutral to the player and, hence, not specifically highlighted (in fact, " \
+               f"they share their color with\n" \
+               f"normal text and UI elements), while the other three are important for gameplay and should therefore " \
+               f"be highlighted."
+
+    @staticmethod
+    def puzzle_description() -> str:
+        return f"Here you can see an example of an advanced 3-qubit puzzle. Specifically, there is one matrix " \
+               f"followed by three vertical vectors.\n" \
+               f"Overall they should contain five different colors:\n" \
+               f"- {ColorConfig.colorize(ColorCode.PUZZLE_HEADLINES, 'headlines')} of matrix and vectors " \
+               f"(~Circuit Matrix~, ~In~, ~Out~, ~Target~)\n" \
+               f"- {ColorConfig.colorize(ColorCode.PUZZLE_KET, '|000>')} to " \
+               f"{ColorConfig.colorize(ColorCode.PUZZLE_KET, '|111>')} (called ket-notation) labeling columns and " \
+               f"rows\n" \
+               f"- first two entries of ~Out~ indicating " \
+               f"{ColorConfig.colorize(ColorCode.WRONG_AMPLITUDE, 'incorrect values')}, so they should use a " \
+               f"negative connoted color (e.g., red)\n" \
+               f"- last six entries of ~Out~ indicating " \
+               f"{ColorConfig.colorize(ColorCode.CORRECT_AMPLITUDE, 'correct values')}, so they should use a " \
+               f"positive connoted color (e.g., green)\n" \
+               f"- all other matrix and vector entries are in default color (i.e., the same as non-highlighted UI " \
+               f"elements)\n" \
+               f"\n" \
+               f"Please make sure that you see all eight rows of the matrix and vectors and in the best case also " \
+               f"all eight columns of the matrix.\n" \
+               f"The latter is a more common problem, so aside from resizing or maximizing the window, as well as " \
+               f"adapting used font or font size\n" \
+               f"(check your terminal's settings for that), QRogue provides an explicit workaround you can activate " \
+               f"in the options menu (WIP!).\n\n" \
+               f"For fine-tuning, you can press {ColorConfig.highlight_key('H', True)} to open a Popup that tells " \
+               f"you how much space is available to the matrix with your current settings\n" \
+               f"and how much it actually needs."
+
+    @staticmethod
+    def popup_description() -> str:
+        return f"In the middle of the screen an inverted (i.e., background is the normal text color and text has the " \
+               f"color of normal background)\n" \
+               f"rectangle should have popped up. It has a differently colored headline followed by text that " \
+               f"describes the usage of different\n" \
+               f"colors used inside such Popups. Furthermore, the bottom left should state \"scroll down\", while " \
+               f"the bottom right indicates the\n" \
+               f"number of rows you can scroll down until the end of the Popup's text is reached. These two bottom " \
+               f"elements should also be\n" \
+               f"highlighted (i.e., different from the colors used inside the Popup)."
+
+    def __init__(self, controls: Controls, logger, root: py_cui.PyCUI,
+                 base_render_callback: Callable[[List[Renderable]], None], switch_to_menu: Callable[[], None]):
+        super().__init__(logger, root, base_render_callback)
+        self.__mode = -1
+
+        details_height = 4
+        details_y = UIConfig.WINDOW_HEIGHT-details_height
+        select_width = 3
+        select_widget = self.add_block_label('Select', details_y, 0, row_span=details_height, column_span=select_width,
+                                             center=True)
+        self.__select_widget = SelectionWidget(select_widget, controls, stay_selected=True)
+        self.__select_widget.set_data((
+            ["Level", "Puzzle", "Popup", "Back"],
+            [self.__show_level, self.__show_puzzle, self.__show_popup, switch_to_menu]
+        ))
+
+        self.__setup_widgets()
+
+        def use_select():
+            if self.__select_widget.use():
+                self.__content_mat.widget.reset_text_color_rules()
+
+                if self.__select_widget.index == self.__LEVEL:
+                    ColorRules.apply_map_rules(self.__content_mat.widget)
+
+                elif self.__select_widget.index == self.__PUZZLE:
+                    ColorRules.apply_heading_rules(self.__content_mat.widget)
+                    ColorRules.apply_qubit_config_rules(self.__content_mat.widget)
+
+                self.__mode = self.__select_widget.index
+                self.render()
+        self.__select_widget.widget.add_key_command(controls.action, use_select)
+
+        desc_widget = self.add_block_label('Desc', details_y, select_width, row_span=details_height,
+                                           column_span=UIConfig.WINDOW_WIDTH-select_width-1, center=False)
+        desc_widget.activate_individual_coloring()
+        self.__desc_widget = SimpleWidget(desc_widget, "Desc")
+
+        def width_check():
+            if self.__mode != ScreenCheckWidgetSet.__PUZZLE: return
+
+            content_width = max([len(row) for row in self.__content_mat.widget.get_title().split("\n")])
+            providable_width = int(PyCuiConfig.get_width() * 0.42)
+            if providable_width <= 0:
+                Popup.generic_info("Dimension Unknown", "Failed to measure width of the window. Please check yourself "
+                                                        "if the matrix is displayed as a whole or if some parts are "
+                                                        "missing.")
+            elif content_width > providable_width:
+                Popup.generic_info("Dimension Error", f"{content_width} characters needed to display the matrix but "
+                                                      f"only {providable_width} available")
+            else:
+                Popup.generic_info("Dimension Fine", f"{providable_width} characters available and only {content_width}"
+                                                     f" needed to display the matrix")
+        self.__select_widget.widget.add_key_command(controls.get_keys(Keys.Help), width_check)
+
+    def __setup_widgets(self):
+        # prepare puzzle
+        robot = BaseBot(CallbackPack.instance().game_over, num_of_qubits=3, gates=[])
+        input_stv = gates.Instruction.compute_stv([gates.RZGate(1).setup([2])], 3)
+        target_stv = gates.Instruction.compute_stv([gates.XGate().setup([0]), gates.RZGate(1.6).setup([0])], 3)
+        enemy = Enemy(0, eid=0, target=target_stv, reward=None, input_=input_stv)
+
+        robot.use_instruction(gates.RZGate(2.5).setup([0]), 0)
+        robot.update_statevector(enemy.input_stv, use_energy=False, check_for_game_over=False)
+
+        # below widget setup is mostly copied from ReachTargetWidgetSet since we want to mimic its layout
+        posy = 0
+        posx = 0
+        row_span = UIConfig.stv_height(3)
+        matrix_width = UIConfig.WINDOW_WIDTH - (UIConfig.INPUT_STV_WIDTH + UIConfig.OUTPUT_STV_WIDTH +
+                                                UIConfig.TARGET_STV_WIDTH + 1 * 3)  # + width of the three signs
+
+        # HUD
+        hud = MyWidgetSet.create_hud_row(self)
+        hud.set_data((robot, "ScreenCheck", "Situational HUD"))
+        hud.render()
+        self.__hud_text = hud.widget.get_title()
+        posy += UIConfig.HUD_HEIGHT
+
+        # CIRCUIT MATRIX
+        widget = self.add_block_label('Circuit Matrix', posy, posx, row_span, column_span=matrix_width, center=True)
+        mat_circ = CircuitMatrixWidget(widget)
+        mat_circ.set_data(robot.circuit_matrix)
+        mat_circ.render()
+        self.__text_mat = mat_circ.widget.get_title()
+        posx += matrix_width
+
+        # MULTIPLICATION
+        widget = self.add_block_label('Mul sign', posy, posx, row_span, column_span=1, center=True)
+        self.__w_mul = SimpleWidget(widget, "*")
+        self.__w_mul.render()
+        posx += 1
+
+        # INPUT STV
+        widget = self.add_block_label('Input StV', posy, posx, row_span, UIConfig.INPUT_STV_WIDTH, center=True)
+        stv_in = InputStateVectorWidget(widget, "In")
+        stv_in.set_data(enemy.input_stv)
+        stv_in.render()
+        self.__text_in = stv_in.widget.get_title()
+        posx += UIConfig.INPUT_STV_WIDTH
+
+        # EQUALITY
+        widget = self.add_block_label('Eq sign', posy, posx, row_span, column_span=1, center=True)
+        self.__w_res = SimpleWidget(widget, "=")
+        self.__w_res.render()
+        posx += 1
+
+        # OUTPUT STV
+        widget = self.add_block_label('Output StV', posy, posx, row_span, UIConfig.OUTPUT_STV_WIDTH, center=True)
+        stv_out = OutputStateVectorWidget(widget, "Out")
+        stv_out.set_data((robot.state_vector, enemy.state_vector.get_diff(robot.state_vector)))
+        stv_out.render()
+        self.__text_out = stv_out.widget.get_title()
+        posx += UIConfig.OUTPUT_STV_WIDTH
+
+        # EQUALITY CHECK
+        widget = self.add_block_label('Eq sign', posy, posx, row_span, column_span=1, center=True)
+        self.__w_eq = SimpleWidget(widget, "=/=")
+        self.__w_eq.set_data("=/=")
+        self.__w_eq.render()
+        posx += 1
+
+        # TARGET STV
+        widget = self.add_block_label('Target StV', posy, posx, row_span, UIConfig.TARGET_STV_WIDTH, center=True)
+        stv_target = TargetStateVectorWidget(widget, "Target")
+        stv_target.set_data(enemy.state_vector)
+        stv_target.render()
+        self.__text_target = stv_target.widget.get_title()
+        posx += UIConfig.TARGET_STV_WIDTH
+        posy += row_span
+
+        # ACTUAL WIDGETS
+        self.__content_hud = hud #SimpleWidget(hud.widget, self.__hud_text) # I don't think we need to change hud text
+        self.__content_mat = SimpleWidget(mat_circ.widget, "C1")
+        self.__content_in = SimpleWidget(stv_in.widget, "C2")
+        self.__content_out = SimpleWidget(stv_out.widget, "C3")
+        self.__content_target = SimpleWidget(stv_target.widget, "C4")
+
+    def __show_level(self):
+        self.__desc_widget.set_data(self.level_description())
+        self.__content_mat.set_data(self.level_content())
+        self.__content_in.set_data("")
+        self.__content_out.set_data("")
+        self.__content_target.set_data("")
+
+    def __show_puzzle(self):
+        self.__desc_widget.set_data(self.puzzle_description())
+        self.__content_mat.set_data(self.__text_mat)
+        self.__content_in.set_data(self.__text_in)
+        self.__content_out.set_data(self.__text_out)
+        self.__content_target.set_data(self.__text_target)
+
+    def __show_popup(self):
+        # clear all other texts
+        self.__content_mat.set_data("")
+        self.__content_in.set_data("")
+        self.__content_out.set_data("")
+        self.__content_target.set_data("")
+
+        self.__desc_widget.set_data(self.popup_description())
+        Popup.generic_info("This headline usually indicates the Speaker", self.popup_content())
+
+    def get_widget_list(self) -> List[Widget]:
+        return [
+            self.__content_hud,
+            self.__content_mat, self.__w_mul, self.__content_in, self.__w_res, self.__content_out, self.__w_eq,
+            self.__content_target,
+
+            self.__select_widget,
+            self.__desc_widget,
+        ]
+
+    def get_main_widget(self) -> WidgetWrapper:
+        return self.__select_widget.widget
+
+    def reset(self) -> None:
+        self.__select_widget.render_reset()
+
+        for widget in [self.__content_mat, self.__w_mul, self.__content_in, self.__w_res, self.__content_out,
+                       self.__w_eq, self.__content_target]:
+            widget.render_reset()
 
 
 class TransitionWidgetSet(MyWidgetSet):
