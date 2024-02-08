@@ -558,6 +558,9 @@ class QrogueCUI(PyCUI):
                                      situational_callback=(self.__popup_history.back, self.__popup_history.forth))
         self.__popup_history.add(self._popup, is_permanent=reopen)
 
+        # immediately close the popup if we want to ignore messages (they are still added to the history if important)
+        if CheatConfig.ignore_messages(): self.close_popup()
+
     def __show_confirmation_popup(self, title: str, text: str, color: int, callback: Callable[[int], None],
                                   answers: Optional[List[str]]):
         self.__focused_widget = self.get_selected_widget()

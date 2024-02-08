@@ -127,6 +127,7 @@ class CheatConfig:
     __INF_RESOURCES = "Rich"
     __MAP_REVEAL = "Illuminati"
     __OBSTACLE_IGNORE = "Obstacle-Iqnor"
+    __MESSAGE_IGNORE = "Lequsi"     # can only see messages via history (including options and help menus)
     __NONE = "n0n3"
     __CHEATS = {
         __GOD_MODE: False,
@@ -134,6 +135,7 @@ class CheatConfig:
         __INF_RESOURCES: False,
         __MAP_REVEAL: False,
         __OBSTACLE_IGNORE: False,
+        __MESSAGE_IGNORE: False,
     }
 
     __allow_cheats = False
@@ -177,6 +179,10 @@ class CheatConfig:
     @staticmethod
     def ignore_obstacles() -> bool:
         return CheatConfig.__CHEATS[CheatConfig.__OBSTACLE_IGNORE]
+
+    @staticmethod
+    def ignore_messages() -> bool:
+        return CheatConfig.__CHEATS[CheatConfig.__MESSAGE_IGNORE]
 
     @staticmethod
     def cheat_input():
