@@ -20,7 +20,7 @@ from qrogue.graphics.rendering import ColorRules
 from qrogue.graphics.widget_base import WidgetWrapper
 from qrogue.util import CommonPopups, Config, Controls, GameplayConfig, HelpText, Logger, PathConfig, \
     RandomManager, AchievementManager, Keys, UIConfig, HudConfig, ColorConfig, Options, PuzzleConfig, ScoreConfig, \
-    get_filtered_help_texts, CommonQuestions, MapConfig, PyCuiConfig
+    get_filtered_help_texts, CommonQuestions, MapConfig, PyCuiConfig, ColorCode
 from qrogue.util.achievements import Ach, Unlocks
 
 from qrogue.graphics.widgets import Renderable, Widget, MyBaseWidget
@@ -325,15 +325,72 @@ class ScreenCheckWidgetSet(MyWidgetSet):
 
     @staticmethod
     def level_description() -> str:
-        return "Level"
+        return f"You should see seven rooms next to each other. While the specific colors don't matter, it is " \
+               f"important to be able to distinguish\n" \
+               f"different elements of the game world (although they also differ in their character representation)." \
+               f"\n\n" \
+               f"- {ColorConfig.highlight_object('Pickups', True)} are designed to be " \
+               f"{ColorConfig.highlight_word('blue', True)} lower-case characters like " \
+               f"{ColorConfig.highlight_tile('s', True)}, {ColorConfig.highlight_tile('k', True)}, " \
+               f"{ColorConfig.highlight_tile('c', True)} or {ColorConfig.highlight_tile('g', True)}.\n" \
+               f"- Tiles containing {ColorConfig.highlight_object('Puzzles', True)} are meant to be " \
+               f"{ColorConfig.highlight_word('red', True)} and are {ColorConfig.highlight_tile('digits', True)}, " \
+               f"{ColorConfig.highlight_tile('!', True)}, {ColorConfig.highlight_tile('?', True)} and inverted " \
+               f"{ColorConfig.highlight_tile('B', True)} for bosses.\n" \
+               f"- The {ColorConfig.highlight_object('Goal', True)} " \
+               f"{ColorConfig.highlight_tile('G', True)} of a level and the " \
+               f"{ColorConfig.highlight_object('Player Character', True)} {ColorConfig.highlight_tile('Q', False)} " \
+               f"are usually {ColorConfig.highlight_word('green', True)}.\n" \
+               f"- Level-shaping tiles like {ColorConfig.highlight_tile('#')} and {ColorConfig.highlight_tile('o')} " \
+               f"are {ColorConfig.highlight_word('white', True)} inverted\n" \
+               f"- Lastly, simple {ColorConfig.highlight_word('white', True)} dots " \
+               f"\"{ColorConfig.highlight_tile('.', True)}\" are messages that open Popups\n" \
+               f"\n" \
+               f"The last two elements are neutral to the player and, hence, not specifically highlighted (in fact, " \
+               f"they share their color with\n" \
+               f"normal text and UI elements), while the other three are important for gameplay and should therefore " \
+               f"be highlighted."
 
     @staticmethod
     def puzzle_description() -> str:
-        return "Puzzle"
+        return f"Here you can see an example of an advanced 3-qubit puzzle. Specifically, there is one matrix " \
+               f"followed by three vertical vectors.\n" \
+               f"Overall they should contain five different colors:\n" \
+               f"- {ColorConfig.colorize(ColorCode.PUZZLE_HEADLINES, 'headlines')} of matrix and vectors " \
+               f"(~Circuit Matrix~, ~In~, ~Out~, ~Target~)\n" \
+               f"- {ColorConfig.colorize(ColorCode.PUZZLE_KET, '|000>')} to " \
+               f"{ColorConfig.colorize(ColorCode.PUZZLE_KET, '|111>')} (called ket-notation) labeling columns and " \
+               f"rows\n" \
+               f"- first two entries of ~Out~ indicating " \
+               f"{ColorConfig.colorize(ColorCode.WRONG_AMPLITUDE, 'incorrect values')}, so they should use a " \
+               f"negative connoted color (e.g., red)\n" \
+               f"- last six entries of ~Out~ indicating " \
+               f"{ColorConfig.colorize(ColorCode.CORRECT_AMPLITUDE, 'correct values')}, so they should use a " \
+               f"positive connoted color (e.g., green)\n" \
+               f"- all other matrix and vector entries are in default color (i.e., the same as non-highlighted UI " \
+               f"elements)\n" \
+               f"\n" \
+               f"Please make sure that you see all eight rows of the matrix and vectors and in the best case also " \
+               f"all eight columns of the matrix.\n" \
+               f"The latter is a more common problem, so aside from resizing or maximizing the window, as well as " \
+               f"adapting used font or font size\n" \
+               f"(check your terminal's settings for that), QRogue provides an explicit workaround you can activate " \
+               f"in the options menu (WIP!).\n\n" \
+               f"For fine-tuning, you can press {ColorConfig.highlight_key('H', True)} to open a Popup that tells " \
+               f"you how much space is available to the matrix with your current settings\n" \
+               f"and how much it actually needs."
 
     @staticmethod
     def popup_description() -> str:
-        return "Popup"
+        return f"In the middle of the screen an inverted (i.e., background is the normal text color and text has the " \
+               f"color of normal background)\n" \
+               f"rectangle should have popped up. It has a differently colored headline followed by text that " \
+               f"describes the usage of different\n" \
+               f"colors used inside such Popups. Furthermore, the bottom left should state \"scroll down\", while " \
+               f"the bottom right indicates the\n" \
+               f"number of rows you can scroll down until the end of the Popup's text is reached. These two bottom " \
+               f"elements should also be\n" \
+               f"highlighted (i.e., different from the colors used inside the Popup)."
 
     def __init__(self, controls: Controls, logger, root: py_cui.PyCUI,
                  base_render_callback: Callable[[List[Renderable]], None], switch_to_menu: Callable[[], None]):
