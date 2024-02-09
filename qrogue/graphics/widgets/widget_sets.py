@@ -1310,7 +1310,12 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             gates = self._robot.get_available_instructions()
             if 0 <= self._details.index < len(gates):
                 gate = gates[self._details.index]
-                Popup.generic_info(gate.gate_type.short_name, gate.description())
+                if gate.gate_type.has_other_names:
+                    other_names = "\nAlso known as: " + gate.gate_type.get_other_names(" Gate, ") + " Gate"
+                else:
+                    other_names = ""
+                Popup.generic_info(gate.gate_type.full_name, f"Short name: {gate.gate_type.short_name} Gate\n" +
+                                   gate.description() + other_names)
             else:
                 reopen_popup_callback()
         self._details.widget.add_key_command(controls.get_keys(Keys.Help), gate_guide)
