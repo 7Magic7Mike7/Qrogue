@@ -434,17 +434,20 @@ class ScreenCheckWidgetSet(MyWidgetSet):
             if self.__mode != ScreenCheckWidgetSet.__PUZZLE: return
 
             content_width = max([len(row) for row in self.__content_mat.widget.get_title().split("\n")])
-            providable_width = int(PyCuiConfig.get_width() * 0.42)
+            providable_width = int(PyCuiConfig.get_width() * 0.42)  # the matrix needs approximately 42% of the width
             if providable_width <= 0:
                 Popup.generic_info("Dimension Unknown", "Failed to measure width of the window. Please check yourself "
                                                         "if the matrix is displayed as a whole or if some parts are "
                                                         "missing.")
             elif content_width > providable_width:
-                Popup.generic_info("Dimension Error", f"{content_width} characters needed to display the matrix but "
-                                                      f"only {providable_width} available")
+                Popup.generic_info("Dimension Error",
+                                   f"Only {providable_width} characters available but {content_width} needed to "
+                                   f"correctly display the matrix of a 3-qubit circuit!\n"
+                                   f"You can either increase the size of your window or use *COMMING SOON* to view "
+                                   f"the whole matrix.")
             else:
                 Popup.generic_info("Dimension Fine", f"{providable_width} characters available and only {content_width}"
-                                                     f" needed to display the matrix")
+                                                     f" needed to display the matrix of a 3-qubit circuit")
         self.__select_widget.widget.add_key_command(controls.get_keys(Keys.Help), width_check)
 
     def __setup_widgets(self):
