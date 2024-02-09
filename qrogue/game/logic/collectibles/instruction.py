@@ -35,8 +35,8 @@ class GateType(enum.Enum):
             [[1/math.sqrt(2), 1/math.sqrt(2)], [1/math.sqrt(2), -1/math.sqrt(2)]]
 
     SGate = "S", {"Phase", "P"}, \
-            "The S Gate can change the phase of a qubit by multiplying its |1> with i. It is equivalent to a " \
-            "rotation along the z-axis by 90°.", \
+            "The S Gate can change the phase of a qubit by multiplying its |1> with i (note that this does not alter " \
+            "the probability of measuring |0> or |1>!). It is equivalent to a rotation along the z-axis by 90°.", \
             [[1, 0], [0, complex(0, 1)]]
     RYGate = "RY", {"Rotational Y", "Rot Y"}, \
              "The RY Gate conducts a rotation along the y-axis by a certain angle. In our case the angle is 90°.", \
