@@ -367,14 +367,17 @@ class QrogueCUI(PyCUI):
     def _refresh_height_width(self) -> None:
         try:
             super(QrogueCUI, self)._refresh_height_width()
+            rows, cols = self._grid.get_dimensions_absolute()
+            min_rows, min_cols = PyCuiConfig.get_min_dimensions()
+
+            if rows < min_rows or cols < min_cols:
+                raise PyCuiConfig.OutOfBoundsError()
+
         except PyCuiConfig.OutOfBoundsError:
             print("[Qrogue] ERROR!")
             rows, cols = self._grid.get_dimensions_absolute()
-            x, y = self._grid.get_dimensions()
-            x, y = (x * 3 + 1, y * 3 + 1)
-            print(f"Current dimensions are ({cols}, {rows}) but at least ({x}, {y}) is needed. "
-                  f"We recommend to make it more wide than high though, e.g. ({x * 3}, {y}) would be a suitable size. "
-                  f"Alternatively you can also reduce the font size.")
+            print(f"Current dimensions are ({rows}, {cols}) but at least ({PyCuiConfig.get_min_dimensions()}) is "
+                  f"needed. You can fix this by increasing the window size (e.g., maximize it) or adapting the font.")
             print("If you are running it in Windows Powershell you can also try to press ALT+ENTER to change to "
                   "fullscreen mode.")
             raise PyCuiConfig.OutOfBoundsError
