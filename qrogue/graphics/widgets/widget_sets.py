@@ -1307,9 +1307,9 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self._details.widget.add_key_command(controls.action, use_details)
 
         def gate_guide():
-            gates = self._robot.get_available_instructions()
-            if 0 <= self._details.index < len(gates):
-                gate = gates[self._details.index]
+            gates_ = self._robot.get_available_instructions()
+            if 0 <= self._details.index < len(gates_):
+                gate = gates_[self._details.index]
                 if gate.gate_type.has_other_names:
                     other_names = "\nAlso known as: " + gate.gate_type.get_other_names(" Gate, ") + " Gate"
                 else:
