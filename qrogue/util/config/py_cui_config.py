@@ -5,7 +5,8 @@ from py_cui.errors import PyCUIOutOfBoundsError
 
 
 class PyCuiConfig:
-    __get_width: Callable[[], int] = lambda: 0  # 0 is used as default since it isn't a valid width otherwise
+    # 0 is used as default since it isn't a valid width or height otherwise
+    __get_dimensions: Callable[[], Tuple[int, int]] = lambda: (0, 0)
 
     @staticmethod
     def get_min_dimensions() -> Tuple[int, int]:
@@ -25,12 +26,12 @@ class PyCuiConfig:
         return 31, 133
 
     @staticmethod
-    def set_width_callback(get_width: Callable[[], int]):
-        PyCuiConfig.__get_width = get_width
+    def set_get_dimensions_callback(get_dimensions: Callable[[], Tuple[int, int]]):
+        PyCuiConfig.__get_dimensions = get_dimensions
 
     @staticmethod
-    def get_width() -> int:
-        return PyCuiConfig.__get_width()
+    def get_dimensions() -> Tuple[int, int]:
+        return PyCuiConfig.__get_dimensions()
 
     KEY_ESCAPE = py_cui.keys.KEY_ESCAPE
     KEY_CTRL_Q = py_cui.keys.KEY_CTRL_Q

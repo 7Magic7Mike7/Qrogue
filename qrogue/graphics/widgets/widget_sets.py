@@ -422,6 +422,7 @@ class ScreenCheckWidgetSet(MyWidgetSet):
                     ColorRules.apply_qubit_config_rules(self.__content_mat.widget)
 
                 self.__mode = self.__select_widget.index
+                self.__hud.update_situational(f"Window dimensions: {PyCuiConfig.get_dimensions()}")
                 self.render()
         self.__select_widget.widget.add_key_command(controls.action, use_select)
 
@@ -434,7 +435,8 @@ class ScreenCheckWidgetSet(MyWidgetSet):
             if self.__mode != ScreenCheckWidgetSet.__PUZZLE: return
 
             content_width = max([len(row) for row in self.__content_mat.widget.get_title().split("\n")])
-            providable_width = int(PyCuiConfig.get_width() * 0.42)  # the matrix needs approximately 42% of the width
+            # the matrix needs approximately 42% of the width, which is the second element of dimensions
+            providable_width = int(PyCuiConfig.get_dimensions()[1] * 0.42)
             if providable_width <= 0:
                 Popup.generic_info("Dimension Unknown", "Failed to measure width of the window. Please check yourself "
                                                         "if the matrix is displayed as a whole or if some parts are "
@@ -468,10 +470,9 @@ class ScreenCheckWidgetSet(MyWidgetSet):
                                                 UIConfig.TARGET_STV_WIDTH + 1 * 3)  # + width of the three signs
 
         # HUD
-        hud = MyWidgetSet.create_hud_row(self)
-        hud.set_data((robot, "ScreenCheck", "Situational HUD"))
-        hud.render()
-        self.__hud_text = hud.widget.get_title()
+        self.__hud = MyWidgetSet.create_hud_row(self)
+        self.__hud.set_data((robot, "ScreenCheck", "Situational HUD"))
+        self.__hud.render()
         posy += UIConfig.HUD_HEIGHT
 
         # CIRCUIT MATRIX
@@ -527,7 +528,7 @@ class ScreenCheckWidgetSet(MyWidgetSet):
         posy += row_span
 
         # ACTUAL WIDGETS
-        self.__content_hud = hud #SimpleWidget(hud.widget, self.__hud_text) # I don't think we need to change hud text
+        self.__content_hud = self.__hud
         self.__content_mat = SimpleWidget(mat_circ.widget, "C1")
         self.__content_in = SimpleWidget(stv_in.widget, "C2")
         self.__content_out = SimpleWidget(stv_out.widget, "C3")
