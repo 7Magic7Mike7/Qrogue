@@ -422,9 +422,9 @@ class SwapGate(DoubleQubitGate):
 
     def _internal_abbreviation(self, index: int) -> str:
         if index == 0:
-            return " S0"
+            return "SW0"
         elif index == 1:
-            return " S1"
+            return "SW1"
 
     def copy(self) -> "Instruction":
         return SwapGate()
