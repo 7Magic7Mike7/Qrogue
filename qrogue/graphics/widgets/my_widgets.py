@@ -459,7 +459,8 @@ class CircuitWidget(Widget):
             index = self.__target.to_value().index(1)
             target_values = to_binary_string(index, self.__target.num_of_qubits, msb=False)
             is_correct = out_values[qubit] == target_values[qubit]
-            equality = ColorConfig.colorize(ColorCode.CORRECT_AMPLITUDE if is_correct else ColorCode.WRONG_AMPLITUDE,
+            equality = ColorConfig.colorize(ColorCode.PUZZLE_CORRECT_AMPLITUDE if is_correct
+                                            else ColorCode.PUZZLE_WRONG_AMPLITUDE,
                                             '=' + ('=' if is_correct else '/') + '=')
             return f"= {out_values[qubit]}| {equality} <{target_values[qubit]}|"
         else:

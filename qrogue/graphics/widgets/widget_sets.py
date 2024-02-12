@@ -362,10 +362,10 @@ class ScreenCheckWidgetSet(MyWidgetSet):
                f"{ColorConfig.colorize(ColorCode.PUZZLE_KET, '|111>')} (called ket-notation) labeling columns and " \
                f"rows\n" \
                f"- first two entries of ~Out~ indicating " \
-               f"{ColorConfig.colorize(ColorCode.WRONG_AMPLITUDE, 'incorrect values')}, so they should use a " \
+               f"{ColorConfig.colorize(ColorCode.PUZZLE_WRONG_AMPLITUDE, 'incorrect values')}, so they should use a " \
                f"negative connoted color (e.g., red)\n" \
                f"- last six entries of ~Out~ indicating " \
-               f"{ColorConfig.colorize(ColorCode.CORRECT_AMPLITUDE, 'correct values')}, so they should use a " \
+               f"{ColorConfig.colorize(ColorCode.PUZZLE_CORRECT_AMPLITUDE, 'correct values')}, so they should use a " \
                f"positive connoted color (e.g., green)\n" \
                f"- all other matrix and vector entries are in default color (i.e., the same as non-highlighted UI " \
                f"elements)\n" \

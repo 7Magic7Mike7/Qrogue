@@ -36,9 +36,9 @@ def _wrap_in_ket_notation(number: complex, qubit: int, num_of_qubits: int,
     value = f"{center_string(complex2string(number, decimals), space_per_value)}"
     if coloring:
         if correct_amplitude:
-            value = ColorConfig.colorize(ColorCode.CORRECT_AMPLITUDE, value)
+            value = ColorConfig.colorize(ColorCode.PUZZLE_CORRECT_AMPLITUDE, value)
         else:
-            value = ColorConfig.colorize(ColorCode.WRONG_AMPLITUDE, value)
+            value = ColorConfig.colorize(ColorCode.PUZZLE_WRONG_AMPLITUDE, value)
     if show_percentage:
         # line_width is space + 1 because of the additional "%"
         space = QuantumSimulationConfig.MAX_PERCENTAGE_SPACE

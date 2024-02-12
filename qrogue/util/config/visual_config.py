@@ -22,8 +22,8 @@ class ColorCode(enum.Enum):
 
     SPACESHIP_FLOOR = "70"
 
-    WRONG_AMPLITUDE = "90"
-    CORRECT_AMPLITUDE = "91"
+    PUZZLE_WRONG_AMPLITUDE = "90"
+    PUZZLE_CORRECT_AMPLITUDE = "91"
     PUZZLE_HEADLINES = "92"
     PUZZLE_KET = "93"
 
@@ -40,8 +40,6 @@ class ColorConfig:
     QUBIT_INFO_COLOR = PyCuiColors.CYAN_ON_BLACK
     QUBIT_CONFIG_COLOR = PyCuiColors.YELLOW_ON_BLACK
     STV_HEADING_COLOR = PyCuiColors.CYAN_ON_BLACK
-    CORRECT_AMPLITUDE_COLOR = PyCuiColors.GREEN_ON_BLACK
-    WRONG_AMPLITUDE_COLOR = PyCuiColors.RED_ON_BLACK
     CIRCUIT_COLOR = PyCuiColors.MAGENTA_ON_BLACK
     CIRCUIT_LABEL_COLOR = PyCuiColors.CYAN_ON_BLACK
     SPACESHIP_FLOOR_COLOR = PyCuiColors.BLACK_ON_WHITE
@@ -66,8 +64,8 @@ class ColorConfig:
 
         str(ColorCode.POPUP_META_INFO):     PyCuiColors.WHITE_ON_MAGENTA,
 
-        str(ColorCode.WRONG_AMPLITUDE):     PyCuiColors.RED_ON_BLACK,
-        str(ColorCode.CORRECT_AMPLITUDE):   PyCuiColors.GREEN_ON_BLACK,
+        str(ColorCode.PUZZLE_WRONG_AMPLITUDE):     PyCuiColors.RED_ON_BLACK,
+        str(ColorCode.PUZZLE_CORRECT_AMPLITUDE):   PyCuiColors.GREEN_ON_BLACK,
         str(ColorCode.PUZZLE_HEADLINES):    STV_HEADING_COLOR,
         str(ColorCode.PUZZLE_KET):          QUBIT_CONFIG_COLOR,
     }
