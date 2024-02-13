@@ -221,7 +221,7 @@ class QrogueCUI(PyCUI):
     def __init__(self, seed: int, width: int = UIConfig.WINDOW_WIDTH, height: int = UIConfig.WINDOW_HEIGHT):
         self.__init_complete = False
         super().__init__(width, height)
-        PyCuiConfig.set_get_dimensions_callback(self._grid.get_dimensions_absolute)
+        PyCuiConfig.set_get_dimensions_callback(self._get_absolute_grid_dimensions)
         self.set_title(f"Qrogue {Config.version()}")
         self.__controls = Controls(self._handle_key_presses)
         self.__seed = seed
@@ -363,6 +363,10 @@ class QrogueCUI(PyCUI):
                                   ["Quantum Newbie", "Quantum Experienced"])
 
         Logger.print_to_console("Ready!")  # notify player that the game is fully loaded
+
+    def _get_absolute_grid_dimensions(self):
+        # wrapper because somehow the result is not updated if we pass grid.get_dimensions_absolute() as callback
+        return self._grid.get_dimensions_absolute()
 
     def _refresh_height_width(self) -> None:
         try:

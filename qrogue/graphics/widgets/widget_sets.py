@@ -422,7 +422,14 @@ class ScreenCheckWidgetSet(MyWidgetSet):
                     ColorRules.apply_qubit_config_rules(self.__content_mat.widget)
 
                 self.__mode = self.__select_widget.index
-                self.__hud.update_situational(f"Window dimensions: {PyCuiConfig.get_dimensions()}")
+                cur_dimensions = PyCuiConfig.get_dimensions()
+                min_dimensions = PyCuiConfig.get_min_dimensions()
+                if cur_dimensions < min_dimensions:
+                    self.__hud.update_situational(f"Your window is TOO SMALL:    {cur_dimensions}\n"
+                                                  f"Minimum required dimensions: {min_dimensions}")
+                else:
+                    self.__hud.update_situational(f"Your window's dimensions:    {cur_dimensions}\n"
+                                                  f"Minimum required dimensions: {min_dimensions}")
                 self.render()
         self.__select_widget.widget.add_key_command(controls.action, use_select)
 
