@@ -28,7 +28,7 @@ class StoryNarration:
         if Ach.is_most_recent_unlock(Unlocks.Spaceship, progress) and not \
                 SaveData.instance().achievement_manager.check_achievement(EnteredNavigationPanel):
             Popup.scientist_says(StoryText.get(StoryTextType.Intro), pos=Popup.Pos.TopLeft,
-                                 dimensions=(Popup.DimY.small, Popup.DimX.small))
+                                 dimensions=(Popup.DimHeight.small, Popup.DimWidth.small))
 
         # if progress is _StoryProgress.RobotShowcase:
         #    pass

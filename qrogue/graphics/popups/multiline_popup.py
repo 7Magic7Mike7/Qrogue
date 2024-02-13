@@ -85,11 +85,13 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
                  confirmation_callback: Callable[[int], None] = None, answers: Optional[List] = None,
                  pos: Optional[int] = None, dimensions: Optional[Tuple[int, int]] = None,
                  situational_callback: Optional[Tuple[Optional[Callable[[], None]], Optional[Callable[[], None]]]] =
-                 None):
+                 None, padding_x: Optional[int] = None):
         # custom_size needs to be initialized immediately because get_absolute_stop_pos() in init() accesses it
         # we would somehow get stuck in an endless loop if we would manually calculate dimensions, starts and stops
         #  before init() hence we use this workaround
         self.__custom_size = False
+
+        if padding_x is None: padding_x = PopupConfig.PADDING_X
 
         super().__init__(root, title, text, color, renderer, logger)
         self.__controls = controls
@@ -101,7 +103,12 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
 
         self.__custom_pos = pos
         self.__custom_size = True
-        self._height, self._width = MultilinePopup.__BASE_DIMENSIONS if dimensions is None else dimensions
+        if dimensions is None:
+            self._height, self._width = MultilinePopup.__BASE_DIMENSIONS
+        else:
+            # custom dimensions state the size of the content of the popup, so we add additional paddings
+            self._height = dimensions[0] + 2    # top and bottom row are extra
+            self._width = dimensions[1] + MultilinePopup.__STATIC_PY_CUI_PADDING + 2 * padding_x
         self._start_x, self._start_y = self.get_absolute_start_pos()
         self._stop_x, self._stop_y = self._start_x + self._width, self._start_y + self._height
 
@@ -116,7 +123,7 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
 
         self._top_view = 0
         self.__lines = MultilinePopup.__split_text(text, self._width - MultilinePopup.__STATIC_PY_CUI_PADDING,
-                                                   PopupConfig.PADDING_X, logger)
+                                                   padding_x, logger)
 
         self.__question_state = 0
         self._pageAlignment = " " * (self._width - MultilinePopup.__STATIC_PY_CUI_PADDING)

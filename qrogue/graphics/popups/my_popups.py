@@ -42,20 +42,22 @@ class Popup:
         def large(self) -> int:
             return self.__large
 
-    DimX = Dimension(50, 80, 114, 150)
-    DimY = Dimension(5, 7, 10, 15)
+    # dimensions are without padding, so purely the size of the content part of a Popup
+    DimWidth = Dimension(40, 70, 104, 140)
+    DimHeight = Dimension(3, 5, 8, 13)
 
     __DEFAULT_POS = PopupConfig.default_position()
-    __show_popup: Optional[Callable[[str, str, int, int, Optional[Tuple[int, int]], Optional[bool]], None]] = None
+    __show_popup: Optional[Callable[[str, str, int, int, Optional[Tuple[int, int]], Optional[bool], Optional[int]],
+                                    None]] = None
     __check_achievement: Optional[Callable[[str], bool]] = None
     __popup_queue: List["Popup"] = []
     __cur_popup: Optional["Popup"] = None
 
     @staticmethod
     def update_popup_functions(show_popup_callback: Callable[[str, str, int, int, Optional[Tuple[int, int]],
-                                                              Optional[bool]], None]) -> None:
+                                                              Optional[bool], Optional[int]], None]) -> None:
         """
-        callable(title, text, color, position, dimensions, reopen)
+        callable(title, text, color, position, dimensions, reopen, padding x)
         """
         Popup.__show_popup = show_popup_callback
 
@@ -138,13 +140,25 @@ class Popup:
                 reopen = message.priority
                 Popup.message(title, text, reopen, pos=message.position, on_close_callback=on_close_callback)
 
+    @staticmethod
+    def show_matrix(title: str, text: str):
+        # remove the additional whitespace at the end of a line (needed for CircuitMatrixWidget to center correctly,
+        # but not here since a popup is left-aligned [although we are technically centered since we fit the width])
+        lines = [line.rstrip(' ') for line in text.splitlines(keepends=False)]
+        height = len(lines)
+        width = max([len(line) for line in lines])
+        Popup(title, "\n".join(lines), Popup.Pos.Matrix, PopupConfig.default_color(), reopen=False, show=True,
+              overwrite=False, on_close_callback=None, dimensions=(height, width), padding_x=0)
+
     def __init__(self, title: str, text: str, position: int, color: int = PopupConfig.default_color(),
                  show: bool = True, overwrite: bool = False, reopen: bool = True,
-                 on_close_callback: Callable[[], None] = None, dimensions: Optional[Tuple[int, int]] = None):
+                 on_close_callback: Callable[[], None] = None, dimensions: Optional[Tuple[int, int]] = None,
+                 padding_x: Optional[int] = None):
         self.__title = title
         self.__text = text
         self.__position = position
         self.__dimensions = dimensions
+        self.__padding_x = padding_x
         self.__color = color
         self.__reopen = reopen    # whether this popup should be reopen-able or not
         self.__on_close_callback = on_close_callback
@@ -172,7 +186,8 @@ class Popup:
             self.__on_close_callback()
 
     def _base_show(self):
-        Popup.__show_popup(self.__title, self.__text, self.__position, self.__color, self.__dimensions, self.__reopen)
+        Popup.__show_popup(self.__title, self.__text, self.__position, self.__color, self.__dimensions, self.__reopen,
+                           self.__padding_x)
 
     def _enqueue(self):
         Popup.__popup_queue.append(self)

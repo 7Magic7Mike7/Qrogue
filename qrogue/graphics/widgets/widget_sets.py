@@ -1360,7 +1360,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         def show_matrix_popup():
             text_mat = self.__circuit_matrix.widget.get_title()
             headline = text_mat[:text_mat.index("\n")]
-            Popup.generic_info(headline, text_mat[len(headline)+1:], pos=Popup.Pos.Matrix)
+            Popup.show_matrix(headline, text_mat[len(headline)+1:])
         self.add_key_command(controls.get_keys(Keys.MatrixPopup), show_matrix_popup, add_to_widgets=True)
 
         # clear some widgets if the player hasn't unlocked the equations yet

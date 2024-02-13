@@ -554,13 +554,15 @@ class QrogueCUI(PyCUI):
         super(QrogueCUI, self).show_error_popup(title, text)
 
     def __show_message_popup(self, title: str, text: str, position: int, color: int,
-                             dimensions: Optional[Tuple[int, int]] = None, reopen: Optional[bool] = None) -> None:
+                             dimensions: Optional[Tuple[int, int]] = None, reopen: Optional[bool] = None,
+                             padding_x: Optional[int] = None) -> None:
         if reopen is None:
             reopen = False
         self.__focused_widget = self.get_selected_widget()
         self._popup = MultilinePopup(self, title, text, color, self._renderer, self._logger, self.__controls,
                                      pos=position, dimensions=dimensions,
-                                     situational_callback=(self.__popup_history.back, self.__popup_history.forth))
+                                     situational_callback=(self.__popup_history.back, self.__popup_history.forth),
+                                     padding_x=padding_x)
         self.__popup_history.add(self._popup, is_permanent=reopen)
 
         # immediately close the popup if we want to ignore messages (they are still added to the history if important)

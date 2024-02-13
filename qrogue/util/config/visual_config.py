@@ -308,8 +308,6 @@ class PopupConfig:
         """
         return PopupConfig.__resolve_pos_val(pos, PopupConfig.__INDEX_Y)
 
-    # sizes don't work as easy as positions somehow
-
 
 class UIConfig:
     # measures are in PyCUI rows and columns, not characters!
