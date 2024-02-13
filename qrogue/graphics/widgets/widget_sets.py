@@ -1321,7 +1321,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                 Popup.generic_info(gate.gate_type.full_name, f"Short name: {gate.gate_type.short_name} Gate\n" +
                                    gate.description() + other_names)
             else:
-                reopen_popup_callback()
+                reopen_popup_callback()     # open popup history
         self._details.widget.add_key_command(controls.get_keys(Keys.Help), gate_guide)
 
         def use_circuit():
