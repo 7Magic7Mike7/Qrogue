@@ -280,7 +280,7 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
             self.__confirmation_callback = None
 
         # reset position and size
-        self.__custom_pos = PopupConfig.default_pos()
+        self.__custom_pos = PopupConfig.default_position()
         self._height, self._width = MultilinePopup.__BASE_DIMENSIONS
         # recalculate start and stop to be correct after the reset above
         self._start_x, self._start_y = self.get_absolute_start_pos()

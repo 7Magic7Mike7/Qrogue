@@ -198,7 +198,7 @@ class CheatConfig:
                 text += "Active\n"
             else:
                 text += "Inactive\n"
-        CheatConfig.__popup("List of Cheats", text, PopupConfig.default_pos(), PopupConfig.default_color())
+        CheatConfig.__popup("List of Cheats", text, PopupConfig.default_position(), PopupConfig.default_color())
 
     @staticmethod
     def __use_cheat(code: str) -> bool:
@@ -214,11 +214,11 @@ class CheatConfig:
             open_folder(PathConfig.user_data_path())
 
         if ret:
-            CheatConfig.__popup("Cheats", f"Successfully used the Cheat \"{code}\"", PopupConfig.default_pos(),
+            CheatConfig.__popup("Cheats", f"Successfully used the Cheat \"{code}\"", PopupConfig.default_position(),
                                 PopupConfig.default_color())
             CheatConfig.__cheated = True
         else:
-            CheatConfig.__popup("Cheats", "This is not a valid Cheat!", PopupConfig.default_pos(),
+            CheatConfig.__popup("Cheats", "This is not a valid Cheat!", PopupConfig.default_position(),
                                 PopupConfig.default_color())
         return ret
 

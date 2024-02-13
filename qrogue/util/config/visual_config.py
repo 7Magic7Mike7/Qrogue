@@ -222,7 +222,7 @@ class ColorConfig:
 class PopupConfig:
     # note that the metric is:
     # 0=Center, >0 = distance to left or top border, <0 = distance to right or bottom border
-    __DEFAULT_POS = 0
+    __DEFAULT_POSITION = 0
     __CENTER_POS = 0    # special number to indicate the center
     __TOP_POS = 3       # three rows below top
     __RIGHT_POS = -5    # five columns left of right
@@ -252,9 +252,9 @@ class PopupConfig:
         return PyCuiColors.BLACK_ON_WHITE
 
     @staticmethod
-    def default_pos() -> int:
-        assert 0 <= PopupConfig.__DEFAULT_POS < len(PopupConfig.__POSITIONS)
-        return PopupConfig.__DEFAULT_POS
+    def default_position() -> int:
+        assert 0 <= PopupConfig.__DEFAULT_POSITION < len(PopupConfig.__POSITIONS), "Invalid DefaultPosition for Popups!"
+        return PopupConfig.__DEFAULT_POSITION
 
     @staticmethod
     def __resolve_pos_val(pos: int, val_index: int) -> Tuple[Optional[bool], int]:
@@ -278,7 +278,7 @@ class PopupConfig:
             if val < 0: return False, -val  # since we return a distance, the value needs to be positive
             return None, 0      # val must be "normal" 0 (or None corresponding to 0)
         else:
-            return PopupConfig.__resolve_pos_val(PopupConfig.default_pos(), val_index)
+            return PopupConfig.__resolve_pos_val(PopupConfig.default_position(), val_index)
 
     @staticmethod
     def resolve_position_x(pos: int) -> Tuple[Optional[bool], int]:

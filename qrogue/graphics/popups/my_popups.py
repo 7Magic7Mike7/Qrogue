@@ -45,7 +45,7 @@ class Popup:
     DimX = Dimension(50, 80, 114, 150)
     DimY = Dimension(5, 7, 10, 15)
 
-    __DEFAULT_POS = PopupConfig.default_pos()
+    __DEFAULT_POS = PopupConfig.default_position()
     __show_popup: Optional[Callable[[str, str, int, int, Optional[Tuple[int, int]], Optional[bool]], None]] = None
     __check_achievement: Optional[Callable[[str], bool]] = None
     __popup_queue: List["Popup"] = []
@@ -189,7 +189,7 @@ class Popup:
 
 
 class ConfirmationPopup(Popup):
-    __DEFAULT_POS = PopupConfig.default_pos()
+    __DEFAULT_POS = PopupConfig.default_position()
     __show_popup: Callable[[str, str, int, Callable[[int], None], Optional[List[str]]], None] = None
 
     @staticmethod
