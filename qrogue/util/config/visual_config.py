@@ -220,15 +220,25 @@ class ColorConfig:
 
 
 class PopupConfig:
+    # note that the metric is:
+    # 0=Center, >0 = distance to left or top border, <0 = distance to right or bottom border
     __DEFAULT_POS = 0
+    __CENTER_POS = 0    # special number to indicate the center
     __TOP_POS = 3       # three rows below top
     __RIGHT_POS = -5    # five columns left of right
     __BOT_POS = -3      # three rows above bot
     __LEFT_POS = 5      # five columns right of left
+    # just a very large number that we definitely won't use for regular positions to indicate +0 and -0:
+    __ZERO_POS = 1_000_000
     __POSITIONS = [     # None = center
-        (None, None), (None, __TOP_POS), (__RIGHT_POS, __TOP_POS), (__RIGHT_POS, None), (__RIGHT_POS, __BOT_POS),
-        (None, __BOT_POS), (__LEFT_POS, __BOT_POS), (__LEFT_POS, None), (__LEFT_POS, __TOP_POS)
+        (__CENTER_POS, __CENTER_POS), (__CENTER_POS, __TOP_POS), (__RIGHT_POS, __TOP_POS), (__RIGHT_POS, __CENTER_POS),
+        (__RIGHT_POS, __BOT_POS), (__CENTER_POS, __BOT_POS), (__LEFT_POS, __BOT_POS), (__LEFT_POS, __CENTER_POS),
+        (__LEFT_POS, __TOP_POS),
+        # special handcrafted positions
+        (+__ZERO_POS, 6),     # for matrix popup on top of normal matrix widget
     ]
+    __INDEX_X = 0   # position of X in position tuple
+    __INDEX_Y = 1   # position of Y in position tuple
 
     PADDING_X = 2
     PADDING_Y = 2
@@ -247,11 +257,56 @@ class PopupConfig:
         return PopupConfig.__DEFAULT_POS
 
     @staticmethod
-    def resolve_position(position: int) -> Optional[Tuple[Optional[int], Optional[int]]]:
-        if 0 <= position < len(PopupConfig.__POSITIONS):
-            return PopupConfig.__POSITIONS[position]
+    def __resolve_pos_val(pos: int, val_index: int) -> Tuple[Optional[bool], int]:
+        """
+
+        Args:
+            pos: position indicated via index in internal __POSITIONS list
+            val_index: index of the value in the position tuple
+
+        Returns: A tuple indicating the reference position (left or up=True, right or bottom=False, center=None) and
+        the distance of the indexed value to its reference position. E.g., a position near the bottom right corner could
+        return (False, 3), meaning its either 3 rows (if val_index corresponds to y-position) above the bottom of the
+        window or 3 columns (if val_index corresponds to x-position) to the left of the right end of the window.
+
+        """
+        if 0 <= pos < len(PopupConfig.__POSITIONS):
+            val = PopupConfig.__POSITIONS[pos][val_index]
+            if val == +PopupConfig.__ZERO_POS: return True, 0
+            if val == -PopupConfig.__ZERO_POS: return False, 0
+            if val > 0: return True, val
+            if val < 0: return False, -val  # since we return a distance, the value needs to be positive
+            return None, 0      # val must be "normal" 0 (or None corresponding to 0)
         else:
-            return PopupConfig.resolve_position(PopupConfig.default_pos())
+            return PopupConfig.__resolve_pos_val(PopupConfig.default_pos(), val_index)
+
+    @staticmethod
+    def resolve_position_x(pos: int) -> Tuple[Optional[bool], int]:
+        """
+
+        Args:
+            pos: position indicated via index in internal __POSITIONS list
+
+        Returns: A tuple indicating the reference position (left=True, right=False, center=None) and the x-distance to
+        the reference position. E.g., a position near the bottom right corner could return (False, 3), meaning its 3
+        columns to the left of the right end of the window.
+
+        """
+        return PopupConfig.__resolve_pos_val(pos, PopupConfig.__INDEX_X)
+
+    @staticmethod
+    def resolve_position_y(pos: int) -> Tuple[Optional[bool], int]:
+        """
+
+        Args:
+            pos: position indicated via index in internal __POSITIONS list
+
+        Returns: A tuple indicating the reference position (top=True, bottom=False, center=None) and the y-distance to
+        the reference position. E.g., a position near the bottom right corner could return (False, 3), meaning its 3
+        rows above the bottom of the window.
+
+        """
+        return PopupConfig.__resolve_pos_val(pos, PopupConfig.__INDEX_Y)
 
     # sizes don't work as easy as positions somehow
 

@@ -1356,6 +1356,13 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self.add_key_command(controls.get_keys(Keys.Situational1), travel_history(False), add_to_widgets=True)
         self.add_key_command(controls.get_keys(Keys.Situational2), travel_history(True), add_to_widgets=True)
 
+        # special key to open matrix in extra popup (e.g., if CircuitMatrixWidget is too narrow to display a 8x8 matrix)
+        def show_matrix_popup():
+            text_mat = self.__circuit_matrix.widget.get_title()
+            headline = text_mat[:text_mat.index("\n")]
+            Popup.generic_info(headline, text_mat[len(headline)+1:], pos=Popup.Pos.Matrix)
+        self.add_key_command(controls.get_keys(Keys.MatrixPopup), show_matrix_popup, add_to_widgets=True)
+
         # clear some widgets if the player hasn't unlocked the equations yet
         if not AchievementManager.instance().check_unlocks(Unlocks.ShowEquation):
             self.__input_stv.render_reset()

@@ -1,3 +1,4 @@
+from enum import IntEnum
 from typing import Callable, Optional, List, Tuple
 
 from qrogue.game.logic import Message
@@ -5,7 +6,7 @@ from qrogue.util import Config, PopupConfig
 
 
 class Popup:
-    class Pos:
+    class Pos(IntEnum):
         Center = 0
         Top = 1
         TopRight = 2
@@ -15,6 +16,8 @@ class Popup:
         BottomLeft = 6
         Left = 7
         TopLeft = 8
+
+        Matrix = 9
 
     class Dimension:
         def __init__(self, tiny: int, small: int, medium: int, large: int):

@@ -238,19 +238,24 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
             # start relative to the middle
             start_x = int((cui_width - self._width) / 2)
             start_y = int((cui_height - self._height) / 2)
+
             # adapt start_x and start_y for custom positions
             if self.__custom_pos is not None:
-                res_x, res_y = PopupConfig.resolve_position(self.__custom_pos)
-                if res_x is not None:
-                    if res_x > 0:
-                        start_x = res_x
-                    elif res_x < 0:
-                        start_x = cui_width + res_x - self._width
-                if res_y is not None:
-                    if res_y > 0:
-                        start_y = res_y
-                    elif res_y < 0:
-                        start_y = cui_height + res_y - self._height
+                # reference position (left, right or center) and value
+                ref_x, val_x = PopupConfig.resolve_position_x(self.__custom_pos)
+                if ref_x is True:
+                    start_x = val_x
+                elif ref_x is False:
+                    start_x = (cui_width - self._width) - val_x
+                # else ref_x is None, indicating center, so we don't have to adjust start_x
+
+                ref_y, val_y = PopupConfig.resolve_position_y(self.__custom_pos)
+                if ref_y is True:
+                    start_y = val_y
+                elif ref_y is False:
+                    start_y = (cui_height - self._height) - val_y
+                # else ref_y is None, indicating center, so we don't have to adjust start_y
+
             return start_x, start_y
         else:
             return super(MultilinePopup, self).get_absolute_start_pos()

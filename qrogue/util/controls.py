@@ -15,6 +15,7 @@ _PK_SITUATIONAL1 = py_cui.keys.KEY_CTRL_LEFT
 _PK_SITUATIONAL2 = py_cui.keys.KEY_CTRL_RIGHT
 _PK_PAUSE = py_cui.keys.KEY_TAB
 _PK_HELP = py_cui.keys.KEY_H_LOWER
+_PK_MATRIX_POPUP = py_cui.keys.KEY_M_LOWER
 
 # secondary keys (alternatives to primary keys)
 _SK_UP = [py_cui.keys.KEY_W_LOWER]
@@ -71,7 +72,7 @@ class Keys(IntEnum):
     PopupLeft = PopupClose + 4
     PopupReopen = PopupClose + 5
 
-    # 14 - 18
+    # 14 - 19
     Action = PopupReopen + 1
     Cancel = Action + 1
     Situational1 = Cancel + 1
@@ -80,8 +81,10 @@ class Keys(IntEnum):
 
     Pause = Help + 1
 
-    # 19 - 28
-    HotKey1 = Pause + 1
+    MatrixPopup = Pause + 1
+
+    # 20 - 29
+    HotKey1 = MatrixPopup + 1
     HotKey2 = HotKey1 + 1
     HotKey3 = HotKey1 + 2
     HotKey4 = HotKey1 + 3
@@ -92,12 +95,12 @@ class Keys(IntEnum):
     HotKey9 = HotKey1 + 8
     HotKey0 = HotKey1 + 9
 
-    # 29 - 31
+    # 30 - 32
     Render = HotKey0 + 1
     PrintScreen = Render + 1
     StopSimulator = PrintScreen + 1
 
-    # 32 - 33
+    # 33 - 34
     CheatInput = StopSimulator + 1
     CheatList = CheatInput + 1
 
@@ -179,15 +182,16 @@ class Controls:
         [_PK_RIGHT] + _SK_RIGHT,
         [_PK_LEFT] + _SK_LEFT,
         [_PK_HELP],     # reopen
-        # 14 - 18
+        # 14 - 19
         [_PK_CONFIRM] + _SK_CONFIRM,     # action
         [_PK_CANCEL] + _SK_CANCEL,  # cancel/back
         [_PK_SITUATIONAL1] + _SK_SITUATIONAL1,
         [_PK_SITUATIONAL2] + _SK_SITUATIONAL2,
         [_PK_HELP],     # actual help
         [_PK_PAUSE] + _SK_PAUSE,  # (Escape doesn't work here due to its special purpose for the engine)
+        [_PK_MATRIX_POPUP],     # special key to open a matrix in a popup (e.g., if window is too narrow to display 3-qubit matrices in their corresponding widget)
 
-        # special purpose hotkeys: 19 - 28
+        # special purpose hotkeys: 20 - 29
         _HOT_KEYS[0],  # Fight: Adapt (Add/Remove)
         _HOT_KEYS[1],  # Fight: Commit
         _HOT_KEYS[2],  # Fight: Reset
@@ -199,11 +203,11 @@ class Controls:
         _HOT_KEYS[8],
         _HOT_KEYS[9],
 
-        # debugging keys: 29 - 31
+        # debugging keys: 30 - 32
         _DK_RERENDER,  # render screen
         _DK_PRINT_SCREEN,   # print screen
         _DK_STOP_SIM,   # stop simulator
-        # cheat keys: 32 - 33
+        # cheat keys: 33 - 34
         _DK_CHEAT_INPUT,   # cheat input
         _DK_CHEAT_LIST,   # cheat list
     ]
