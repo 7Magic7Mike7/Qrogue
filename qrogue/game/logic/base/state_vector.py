@@ -11,7 +11,7 @@ from qrogue.util.util_functions import center_string, align_string, complex2stri
 
 def _wrap_in_ket_notation(number: complex, qubit: int, num_of_qubits: int,
                           decimals: Optional[int] = None, space_per_value: Optional[int] = None, coloring: bool = False,
-                          correct_amplitude: bool = False, show_percentage: bool = False):
+                          correct_amplitude: bool = False, show_percentage: bool = False, skip_ket: bool = False):
     """
 
     :param number:
@@ -22,6 +22,7 @@ def _wrap_in_ket_notation(number: complex, qubit: int, num_of_qubits: int,
     :param coloring:
     :param correct_amplitude:
     :param show_percentage:
+    :param skip_ket:
     :return:
     """
     is_complex = number.real != 0 and number.imag != 0
@@ -46,7 +47,7 @@ def _wrap_in_ket_notation(number: complex, qubit: int, num_of_qubits: int,
                                   left=False)
         value += f"  ({percentage})"
 
-    if GameplayConfig.get_option_value(Options.show_ket_notation, convert=True):
+    if GameplayConfig.get_option_value(Options.show_ket_notation, convert=True) and not skip_ket:
         return f"{generate_ket(qubit, num_of_qubits)}  {value}"
     else:
         return value
@@ -206,7 +207,8 @@ class StateVector:
             return StateVector(diff)
 
     def wrap_in_qubit_conf(self, index: int, space_per_value: Optional[int] = None, coloring: bool = False,
-                           correct_amplitude: bool = False, show_percentage: bool = False) -> str:
+                           correct_amplitude: bool = False, show_percentage: bool = False, skip_ket: bool = False) \
+            -> str:
         # don't use default decimals since we don't want it to be dependent on individual entries but rather decide
         # based on whether the vector itself is complex or not
         decimals = QuantumSimulationConfig.COMPLEX_DECIMALS if self.is_complex else QuantumSimulationConfig.DECIMALS
@@ -216,7 +218,7 @@ class StateVector:
             else: space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER
 
         return _wrap_in_ket_notation(self.at(index), index, self.num_of_qubits, decimals, space_per_value, coloring,
-                                     correct_amplitude, show_percentage)
+                                     correct_amplitude, show_percentage, skip_ket)
 
     def to_string(self, space_per_value: Optional[int] = None) -> str:
         text = ""

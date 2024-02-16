@@ -717,11 +717,24 @@ class OutputStateVectorWidget(StateVectorWidget):
 
         """
         output_stv, diff_stv = state_vectors
-        self._stv_str_rep = self._headline
-        for i in range(output_stv.size):
-            correct_amplitude = abs(diff_stv.at(i)) <= QuantumSimulationConfig.TOLERANCE
-            self._stv_str_rep += output_stv.wrap_in_qubit_conf(i, coloring=True, correct_amplitude=correct_amplitude)
-            self._stv_str_rep += "\n"
+
+        def wrap(skip_ket: bool):
+            return [
+                output_stv.wrap_in_qubit_conf(
+                    i, coloring=True,
+                    # check if diff is small enough
+                    correct_amplitude=abs(diff_stv.at(i)) <= QuantumSimulationConfig.TOLERANCE,
+                    skip_ket=skip_ket)
+                for i in range(output_stv.size)     # do it for every qubit combination
+            ]
+
+        lines = wrap(skip_ket=False)
+        # check if the content fits its widget
+        max_line_len = max([len(line) for line in lines])
+        width, _ = self.widget.get_abs_size()
+        if max_line_len > width: lines = wrap(skip_ket=True)    # shrink content by removing ket
+
+        self._stv_str_rep = self._headline + "\n".join(lines)
 
 
 class TargetStateVectorWidget(StateVectorWidget):
@@ -729,10 +742,21 @@ class TargetStateVectorWidget(StateVectorWidget):
         super().__init__(widget, headline)
 
     def set_data(self, state_vector: StateVector) -> None:
-        self._stv_str_rep = self._headline
-        for i in range(state_vector.size):
-            self._stv_str_rep += state_vector.wrap_in_qubit_conf(i, show_percentage=True)
-            self._stv_str_rep += "\n"
+        def wrap(skip_ket: bool):   # wrap values according to TargetStv specifics (show percentages)
+            return [
+                state_vector.wrap_in_qubit_conf(
+                    i, coloring=False, show_percentage=True,
+                    skip_ket=skip_ket)
+                for i in range(state_vector.size)  # do it for every qubit combination
+            ]
+
+        lines = wrap(skip_ket=False)
+        # check if the content fits its widget
+        max_line_len = max([len(line) for line in lines])
+        width, _ = self.widget.get_abs_size()
+        if max_line_len > width: lines = wrap(skip_ket=True)  # shrink content by removing ket
+
+        self._stv_str_rep = self._headline + "\n".join(lines)
 
 
 class CircuitMatrixWidget(Widget):
