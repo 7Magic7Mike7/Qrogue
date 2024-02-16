@@ -56,6 +56,8 @@ class GateType(enum.Enum):
                "This gate is a combination of multiple gates and acts like a blackbox.", \
                [[0, 0], [0, 0]]
 
+    Debug = "de", "Debug", set(), "Only use for debugging!", [[0, 0], [0, 0]]   # used to test spacing
+
     def __init__(self, short_name: str, full_name: str, other_names: Set[str], description: str,
                  matrix: List[List[complex]]):
         self.__short_name = short_name
@@ -464,6 +466,19 @@ class CombinedGates(Instruction):
         return CombinedGates(self.__inst_list, self.__instruction.num_qubits, self.__instruction.label)
 
 
+####### Gates for internal use only #######
+
+class DebugGate(SingleQubitGate):
+    def __init__(self):
+        super().__init__(GateType.Debug, gates.RZGate(phi=2.5))
+
+    def abbreviation(self, qubit: int = 0):
+        return "deb"
+
+    def copy(self) -> "Instruction":
+        return DebugGate()
+
+
 class InstructionManager:
     __GATES: Dict[GateType, Instruction] = {
         GateType.IGate: IGate(),
@@ -480,6 +495,8 @@ class InstructionManager:
 
         GateType.SwapGate: SwapGate(),
         GateType.CXGate: CXGate(),
+
+        GateType.Debug: DebugGate(),
     }
 
     @staticmethod
