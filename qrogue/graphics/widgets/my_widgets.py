@@ -681,6 +681,17 @@ class StateVectorWidget(Widget):
     def _headline(self) -> str:
         return f"~{self.__headline}~\n\n"
 
+    @property
+    def can_display_all_content(self) -> bool:
+        width, height = self.widget.get_abs_size()
+        content = self._stv_str_rep
+        if len(content) > 0:
+            lines = content.splitlines(keepends=False)
+            max_line_len = max([len(line) for line in lines])
+            return max_line_len <= width and len(lines) <= height
+        else:
+            return True
+
     def set_data(self, state_vector: StateVector) -> None:
         self._stv_str_rep = self._headline + state_vector.to_string()
 
@@ -765,6 +776,16 @@ class CircuitMatrixWidget(Widget):
         self.__matrix_str_rep = None
         ColorRules.apply_heading_rules(widget)
         ColorRules.apply_qubit_config_rules(widget)
+
+    @property
+    def can_display_all_content(self) -> bool:
+        width, height = self.widget.get_abs_size()
+        content = self.__matrix_str_rep
+        if len(content) > 0:
+            lines = content.splitlines(keepends=False)
+            max_line_len = max([len(line) for line in lines])
+            return max_line_len <= width and len(lines) <= height
+        return True
 
     def set_data(self, matrix: CircuitMatrix) -> None:
         self.__matrix_str_rep = f"~Circuit Matrix~\n"
