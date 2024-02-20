@@ -1404,11 +1404,10 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
             # for smaller qubit numbers we shrink the matrix and place everything closer to the middle
             if num_of_qubits < 3:
-                shrinkage = 1   # magic number that turned out to give a good visual result
                 # window width minus width of all StVs and signs, afterwards adapted by the small-qubit-shrinkage
                 matrix_width = UIConfig.WINDOW_WIDTH - (UIConfig.INPUT_STV_WIDTH + UIConfig.OUTPUT_STV_WIDTH +
-                                                        UIConfig.TARGET_STV_WIDTH + 1 * 3) - 2 * shrinkage
-                posx = shrinkage
+                                                        UIConfig.TARGET_STV_WIDTH + 1 * 3)
+                posx = 0
                 self.__circuit_matrix.widget.reposition(column=posx, column_span=matrix_width)
                 posx += matrix_width
                 self.__mul_widget.widget.reposition(column=posx)
@@ -1423,7 +1422,9 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                 posx += 1
                 self.__stv_target.widget.reposition(column=posx)
 
-                self.__circuit.widget.reposition(row=UIConfig.HUD_HEIGHT + row_span + 2 * shrinkage)
+                # "+2" is a magic number that gave good visual results
+                self.__circuit.widget.reposition(row=UIConfig.HUD_HEIGHT + row_span + 2)
+
             elif num_of_qubits == 4:
                 # todo problem with 4 qubits: out has not enough space, hence, its coloring doesn't work
                 self.__circuit.widget.reposition(row=UIConfig.HUD_HEIGHT + row_span)
