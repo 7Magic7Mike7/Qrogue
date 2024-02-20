@@ -765,7 +765,11 @@ class TargetStateVectorWidget(StateVectorWidget):
         # check if the content fits its widget
         max_line_len = max([len(line) for line in lines])
         width, _ = self.widget.get_abs_size()
-        if max_line_len > width: lines = wrap(skip_ket=True)  # shrink content by removing ket
+
+        # "-2" is magic number found by trial and error that gives feasible results (perfect visual results are hard
+        # since it also depends on font and other spacings); possible explanation: coloring of ket needs 2 chars on the
+        # right end, meaning if they would be the only cut-off PyCUI could be smart enough to still color it
+        if max_line_len > width-2: lines = wrap(skip_ket=True)  # shrink content by removing ket
 
         self._stv_str_rep = self._headline + "\n".join(lines)
 
