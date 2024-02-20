@@ -40,12 +40,15 @@ def _wrap_in_ket_notation(number: complex, qubit: int, num_of_qubits: int,
             value = ColorConfig.colorize(ColorCode.PUZZLE_CORRECT_AMPLITUDE, value)
         else:
             value = ColorConfig.colorize(ColorCode.PUZZLE_WRONG_AMPLITUDE, value)
+
     if show_percentage:
-        # line_width is space + 1 because of the additional "%"
         space = QuantumSimulationConfig.MAX_PERCENTAGE_SPACE
-        percentage = align_string(StateVector.complex_to_amplitude_percentage_string(number, space), space + 1,
-                                  left=False)
-        value += f"  ({percentage})"
+        percentage = StateVector.complex_to_amplitude_percentage_string(number, space)
+        space += 1  # +1 because of the additional "%" we have to align
+        if percentage == "0%":
+            value += f"  {align_string('', space, left=False)}"     # show whitespace instead of redundant 0% amplitudes
+        else:
+            value += f" ~{align_string(percentage, space, left=False)}"
 
     if GameplayConfig.get_option_value(Options.show_ket_notation, convert=True) and not skip_ket:
         return f"{generate_ket(qubit, num_of_qubits)}  {value}"
