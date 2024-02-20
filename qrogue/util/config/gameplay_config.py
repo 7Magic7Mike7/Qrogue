@@ -551,7 +551,7 @@ class QuantumSimulationConfig:
     TOLERANCE = 0.1
     MAX_SPACE_PER_NUMBER = 1 + 1 + 1 + DECIMALS  # sign + "0" + "." + DECIMALS
     MAX_SPACE_PER_COMPLEX_NUMBER = 1 + 1 + COMPLEX_DECIMALS + 1 + 1 + COMPLEX_DECIMALS + 1  # sign, . & j and decimals
-    MAX_PERCENTAGE_SPACE = 3
+    MAX_PERCENTAGE_SPACE = 3    # the maximum (100%) has three digits
 
 
 class ShopConfig:
