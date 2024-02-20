@@ -104,6 +104,32 @@ def to_binary_string(num: int, digits: Optional[int] = None, msb: bool = True) -
         return str_rep
 
 
+def compute_centering(text: str, line_width: int, uneven_left: bool = True, character: str = __DEFAULT_CHARACTER) \
+        -> Tuple[str, str]:
+    """
+    Computes a prefix and suffix for the given text in such a way that it is as centered as possible in a line with the
+    given width. This prefix and suffix will consist only of the given character (repeated for centering). If the number
+    of characters to add is uneven (i.e. number of prepended and appended characters cannot be the same) the flag
+    uneven_left decides whether to prepend (= left, default) or append (= right) should be bigger.
+
+    :param text: the text to center in the line
+    :param line_width: width of the line the text should be centered in
+    :param uneven_left: whether to prepend or append one character more in case of imbalance, defaults to True
+    :param character: the character to add, defaults to whitespace " "
+    :return: prefix, suffix, such that text is centered
+    """
+    if line_width <= len(text):
+        return "", ""
+    diff = line_width - len(text)
+    half1 = int(diff / 2)
+    half2 = diff - half1
+
+    if uneven_left:
+        return half2 * character, half1 * character
+    else:
+        return half1 * character, half2 * character
+
+
 def center_string(text: str, line_width: int, uneven_left: bool = True, character: str = __DEFAULT_CHARACTER) -> str:
     """
     Prepends and appends the given character to the text in such a way that the text is centered as good as possible
@@ -117,16 +143,8 @@ def center_string(text: str, line_width: int, uneven_left: bool = True, characte
     :param character: the character to add, defaults to whitespace " "
     :return: centered version of text
     """
-    if line_width <= len(text):
-        return text
-    diff = line_width - len(text)
-    half1 = int(diff / 2)
-    half2 = diff - half1
-
-    if uneven_left:
-        return half2 * character + text + half1 * character
-    else:
-        return half1 * character + text + half2 * character
+    prefix, suffix = compute_centering(text, line_width, uneven_left, character)
+    return prefix + text + suffix
 
 
 def align_string(text: str, line_width: int, left: bool = True, character: str = __DEFAULT_CHARACTER) -> str:
