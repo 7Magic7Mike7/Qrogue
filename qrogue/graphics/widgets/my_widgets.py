@@ -769,9 +769,15 @@ class TargetStateVectorWidget(StateVectorWidget):
         # "-2" is magic number found by trial and error that gives feasible results (perfect visual results are hard
         # since it also depends on font and other spacings); possible explanation: coloring of ket needs 2 chars on the
         # right end, meaning if they would be the only cut-off PyCUI could be smart enough to still color it
-        if max_line_len > width-2: lines = wrap(skip_ket=True)  # shrink content by removing ket
-
-        self._stv_str_rep = self._headline + "\n".join(lines)
+        if max_line_len > width-2:
+            lines = wrap(skip_ket=True)  # shrink content by removing ket
+            # add whitespace so headline is not in the center but more above the amplitudes for better visuals
+            split_index = self._headline.index("\n")
+            headline = self._headline[:split_index] + " " * QuantumSimulationConfig.MAX_PERCENTAGE_SPACE \
+                + self._headline[split_index:]
+            self._stv_str_rep = headline + "\n".join(lines)
+        else:
+            self._stv_str_rep = self._headline + "\n".join(lines)
 
 
 class CircuitMatrixWidget(Widget):
