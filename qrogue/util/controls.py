@@ -1,5 +1,5 @@
 from enum import IntEnum
-from typing import List, Tuple, Callable
+from typing import List, Tuple, Callable, Optional
 
 import py_cui.keys
 
@@ -264,3 +264,22 @@ class Controls:
     @property
     def action(self) -> List[int]:
         return self.__pycui_keys[Keys.Action.num]
+
+    def to_keyboard_string(self, keys: Keys, index: Optional[int] = None, separator: str = ", ",
+                           end_separator: Optional[str] = None) -> str:
+        # does not work nicely for non-printable keyboard keys (e.g., Spacebar = ' ', Backspace = '\x08')
+        # don't use keys.to_char() since it's only for internal use and doesn't correspond to the pressed keyboard key
+
+        if index is None:   # use all possible keyboard keys
+            chars = [chr(key) for key in self.get_keys(keys)]
+            if len(chars) == 0: return "INVALID"
+            if len(chars) == 1: return chars[0].upper()
+
+            if end_separator is None: end_separator = separator
+            # separate all chars and add the last one manually with its special end_separator
+            return separator.join(chars[:-1]) + end_separator + chars[-1]
+
+        else:
+            key = self.get_key(keys, index)
+            if key == Controls.INVALID_KEY: return "INVALID"
+            return chr(key).upper()
