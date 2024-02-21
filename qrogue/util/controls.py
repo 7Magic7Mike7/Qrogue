@@ -192,12 +192,12 @@ class Controls:
         [_PK_MATRIX_POPUP],     # special key to open a matrix in a popup (e.g., if window is too narrow to display 3-qubit matrices in their corresponding widget)
 
         # special purpose hotkeys: 20 - 29
-        _HOT_KEYS[0],  # Fight: Adapt (Add/Remove)
-        _HOT_KEYS[1],  # Fight: Commit
-        _HOT_KEYS[2],  # Fight: Reset
-        _HOT_KEYS[3],  # Fight: Items
-        _HOT_KEYS[4],  # Fight: Help
-        _HOT_KEYS[5],  # Fight: Flee
+        _HOT_KEYS[0],
+        _HOT_KEYS[1],
+        _HOT_KEYS[2],
+        _HOT_KEYS[3],
+        _HOT_KEYS[4],
+        _HOT_KEYS[5],
         _HOT_KEYS[6],
         _HOT_KEYS[7],
         _HOT_KEYS[8],
