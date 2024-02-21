@@ -262,23 +262,6 @@ class MapManager:
                     map_seed = self.__rm.get_seed()
                 expedition, success = self.__expedition_generator.generate((robot, map_seed))
 
-                # todo remove for non-user study versions!
-                def time_out_popup():
-                    # color 15 is black over white
-                    self.__show_input_popup("Your time is over. Please tell the researcher.", 15, open_explorer)
-
-                def open_explorer(text: str):
-                    if text.lower() == "open":
-                        open_folder(PathConfig.user_data_path())
-                    else:
-                        time_out_popup()
-
-                def timed_expedition():
-                    time.sleep(5*60)    # 5 minutes timer
-                    time_out_popup()
-
-                Thread(target=timed_expedition, args=(), daemon=True).start()
-
             if success:
                 robot.reset()
                 self.__cur_map = expedition
