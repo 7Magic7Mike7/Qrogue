@@ -121,6 +121,7 @@ class MapConfig:
 
 
 class CheatConfig:
+    # __ALL and __NONE do not toggle! They simply set or reset all "real" cheats. All other/"real" cheats are toggles.
     __ALL = "aLL"
     __GOD_MODE = "Qod-Mode"
     __SCARED_RABBIT = "Rabbit_Tunnel"
