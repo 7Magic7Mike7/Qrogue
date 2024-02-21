@@ -452,8 +452,9 @@ class ScreenCheckWidgetSet(MyWidgetSet):
                 Popup.generic_info("Dimension Error",
                                    f"Only {providable_width} characters available but {content_width} needed to "
                                    f"correctly display the matrix of a 3-qubit circuit!\n"
-                                   f"You can either increase the size of your window or use *COMMING SOON* to view "
-                                   f"the whole matrix.")
+                                   f"You can either increase the size of your window, adapt font or use "
+                                   f"{controls.to_keyboard_string(Keys.MatrixPopup)} to view the whole matrix in a "
+                                   f"Popup.")
             else:
                 Popup.generic_info("Dimension Fine", f"{providable_width} characters available and only {content_width}"
                                                      f" needed to display the matrix of a 3-qubit circuit")
