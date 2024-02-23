@@ -307,6 +307,7 @@ class ScreenCheckWidgetSet(MyWidgetSet):
 
     @staticmethod
     def popup_content() -> str:
+        # todo: inversion doesn't seem to work yet in Popups, therefore 'tile' looks just like normal text
         return f"Let's have a look at the different colors in popups like this to make sure they are " \
                f"distinguishable:\n\n" \
                f"- {ColorConfig.highlight_tile('tile')}: this refers to tiles in the game world\n" \
@@ -461,6 +462,7 @@ class ScreenCheckWidgetSet(MyWidgetSet):
         self.__select_widget.widget.add_key_command(controls.get_keys(Keys.Help), width_check)
 
     def __setup_widgets(self):
+        # todo: show both 3-qubit and 2-qubit puzzles?
         # prepare puzzle
         robot = BaseBot(CallbackPack.instance().game_over, num_of_qubits=3, gates=[])
         input_stv = gates.Instruction.compute_stv([gates.RZGate(1).setup([2])], 3)

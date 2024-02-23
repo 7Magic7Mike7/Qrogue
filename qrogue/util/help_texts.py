@@ -170,7 +170,7 @@ class _HL:
     teleport_tile = CC.highlight_tile("t")
 
 
-class HelpText(Enum):
+class HelpText(Enum):       # todo: import Controls to replace static key-mentions with dynamic ones?
     Controls = f"Move                  -   {_HL.navigation_keys}\n" \
             f"Navigate menus        -   {_HL.navigation_keys}\n" \
             f"Confirm               -   {_HL.action_keys}\n" \
@@ -260,6 +260,7 @@ class HelpText(Enum):
         f"left. Therefore in both cases simply the gate/matrix {CC.highlight_word('closer')} to the input is " \
         f"considered first."
 
+    # todo: the split after "collapse to" seems to think that |00> refers to a color code, hence adding // without closing //?
     Amplitudes = \
         f"Let's consider the following {_HL.state_vector}:\n" \
         "|00>  0.707  \n" \
