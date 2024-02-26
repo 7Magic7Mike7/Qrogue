@@ -112,7 +112,7 @@ class FragmentStorage:
 
 
 class MultiColorRenderer(Renderer):
-    def __init__(self, root, stdscr, logger):
+    def __init__(self, root, stdscr, logger: Logger):
         super().__init__(root, stdscr, logger)
 
     def _get_render_text(self, ui_element, line, centered, bordered, selected, start_pos):
@@ -142,7 +142,8 @@ class MultiColorRenderer(Renderer):
 
         render_text_length = width - (2 * padx)
         # this line is the only difference to the original (super) function
-        render_text_length += ColorConfig.count_meta_characters(line, render_text_length, self._logger)
+        render_text_length += ColorConfig.count_meta_characters(line, render_text_length,
+                                                                lambda err: self._logger.error(err, from_pycui=False))
 
         if bordered:
             render_text_length = render_text_length - 4

@@ -4,7 +4,7 @@ from py_cui import ColorRule
 from py_cui.popups import Popup as PyCuiPopup
 from py_cui.ui import MenuImplementation
 
-from qrogue.util import ColorConfig as CC, Keys, Logger, PopupConfig, ColorConfig, ColorCode
+from qrogue.util import ColorConfig as CC, Keys, Logger, PopupConfig, ColorConfig, ColorCode, split_text
 
 
 class MultilinePopup(PyCuiPopup, MenuImplementation):
@@ -24,64 +24,7 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
                       [0, 1], False, Logger.instance()),
         ]
 
-    @staticmethod
-    def __split_text(text: str, width: int, padding: int, logger) -> List[str]:
-        """
-
-        :param text: text to split into multiple lines
-        :param width: the maximum width of one line
-        :param padding: how much spaces we should place at the start and end of each line
-        :return: list of text parts with a maximum of #width characters
-        """
-        width -= padding * 2    # remove the space needed for padding
-        split_text = []
-        for paragraph in text.splitlines():
-            index = 0
-            prepend = None
-            while index + width < len(paragraph):
-                cur_part = paragraph[index:]
-                # check if the previous line ended with a color rule and prepend it
-                if prepend:
-                    prev_len = len(cur_part)
-                    cur_part = prepend + cur_part.lstrip()
-                    # we have to adapt the index since we potentially remove whitespace in front and therefore have
-                    # the possibility of a longer line which leads to a higher increment of the index and furthermore
-                    # to the potential loss of some characters in the beginning of the new_line
-                    # prepend also needs to be part of this adaption because it will be counted in character_removals
-                    index -= (len(cur_part) - prev_len)
-                    prepend = None
-                character_removals = CC.count_meta_characters(cur_part, width, logger)
-
-                last_whitespace = cur_part.rfind(" ", 1, width + character_removals)
-                if last_whitespace == -1:
-                    cur_width = width + character_removals
-                else:
-                    cur_width = last_whitespace + 1
-
-                next_line = cur_part[:cur_width].strip()
-                if len(next_line) > 0:
-                    # check if next_line ends with an un-terminated color rule
-                    last_highlight = next_line.rfind(CC.TEXT_HIGHLIGHT)
-                    if 0 <= last_highlight < len(next_line) - CC.HIGHLIGHT_WIDTH:
-                        # if so, terminate it and remember to continue it in the next line
-                        code_start = last_highlight + CC.HIGHLIGHT_WIDTH
-                        # TODO a highlighted number can potentially lead to problems here! (at least theoretically,
-                        # todo but somehow I couldn't produce a breaking example so I might be wrong)
-                        # todo also if we place an at-least-2-digits number directly after a highlight
-                        if CC.is_number(next_line[code_start:code_start + CC.CODE_WIDTH]):
-                            next_line += CC.TEXT_HIGHLIGHT
-                            prepend = next_line[last_highlight:code_start + CC.CODE_WIDTH]
-                    split_text.append(next_line)
-                index += cur_width
-
-            # The last line is appended as it is (maybe with additional color rule prepend from the previous line)
-            if prepend:
-                split_text.append(prepend + paragraph[index:].strip())
-            else:
-                split_text.append(paragraph[index:].rstrip())
-        return [" " * padding + line + " " * padding for line in split_text]
-
-    def __init__(self, root, title, text, color, renderer, logger, controls,
+    def __init__(self, root, title, text, color, renderer, logger: Logger, controls,
                  confirmation_callback: Callable[[int], None] = None, answers: Optional[List] = None,
                  pos: Optional[int] = None, dimensions: Optional[Tuple[int, int]] = None,
                  situational_callback: Optional[Tuple[Optional[Callable[[], None]], Optional[Callable[[], None]]]] =
@@ -122,8 +65,8 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
             if sit2 is not None: self.__situational_callback2 = sit2
 
         self._top_view = 0
-        self.__lines = MultilinePopup.__split_text(text, self._width - MultilinePopup.__STATIC_PY_CUI_PADDING,
-                                                   padding_x, logger)
+        self.__lines = split_text(text, self._width - MultilinePopup.__STATIC_PY_CUI_PADDING, padding_x,
+                                  lambda err: logger.error(err, from_pycui=False))
 
         self.__question_state = 0
         self._pageAlignment = " " * (self._width - MultilinePopup.__STATIC_PY_CUI_PADDING)
