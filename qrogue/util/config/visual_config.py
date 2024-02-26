@@ -370,7 +370,7 @@ def split_text(text: str, width: int, padding: int, handle_error: Callable[[str]
     :return: list of text parts with a maximum of #width characters
     """
     width -= padding * 2    # remove the space needed for padding
-    split_text = []
+    splitted_text = []
     for paragraph in text.splitlines():
         index = 0
         prepend = None
@@ -407,12 +407,12 @@ def split_text(text: str, width: int, padding: int, handle_error: Callable[[str]
                     if ColorConfig.is_number(next_line[code_start:code_start + ColorConfig.CODE_WIDTH]):
                         next_line += ColorConfig.TEXT_HIGHLIGHT
                         prepend = next_line[last_highlight:code_start + ColorConfig.CODE_WIDTH]
-                split_text.append(next_line)
+                splitted_text.append(next_line)
             index += cur_width
 
         # The last line is appended as it is (maybe with additional color rule prepend from the previous line)
         if prepend:
-            split_text.append(prepend + paragraph[index:].strip())
+            splitted_text.append(prepend + paragraph[index:].strip())
         else:
-            split_text.append(paragraph[index:].rstrip())
-    return [" " * padding + line + " " * padding for line in split_text]
+            splitted_text.append(paragraph[index:].rstrip())
+    return [" " * padding + line + " " * padding for line in splitted_text]
