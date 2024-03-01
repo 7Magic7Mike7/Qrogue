@@ -15,6 +15,10 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
     __BASE_DIMENSIONS = 11, 100
 
     @staticmethod
+    def popup_width_to_content_width(popup_width: int, padding: int = 0) -> int:
+        return popup_width - MultilinePopup.__STATIC_PY_CUI_PADDING - 2 * padding
+
+    @staticmethod
     def __get_color_rules():
         regex = CC.REGEX_TEXT_HIGHLIGHT
         return [
@@ -29,6 +33,9 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
                  pos: Optional[int] = None, dimensions: Optional[Tuple[int, int]] = None,
                  situational_callback: Optional[Tuple[Optional[Callable[[], None]], Optional[Callable[[], None]]]] =
                  None, padding_x: Optional[int] = None):
+        """
+        :param dimensions: expected size of the popup's content. The popup itself will be a bit bigger.
+        """
         # custom_size needs to be initialized immediately because get_absolute_stop_pos() in init() accesses it
         # we would somehow get stuck in an endless loop if we would manually calculate dimensions, starts and stops
         #  before init() hence we use this workaround
@@ -51,6 +58,7 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
         else:
             # custom dimensions state the size of the content of the popup, so we add additional paddings
             self._height = dimensions[0] + 2    # top and bottom row are extra
+            # inverse of popup_width_to_content_width():
             self._width = dimensions[1] + MultilinePopup.__STATIC_PY_CUI_PADDING + 2 * padding_x
         self._start_x, self._start_y = self.get_absolute_start_pos()
         self._stop_x, self._stop_y = self._start_x + self._width, self._start_y + self._height

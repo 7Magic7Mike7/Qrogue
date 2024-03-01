@@ -67,6 +67,10 @@ def error_popup(title: str, text: str):
     print("----------------------------------------")
 
 
+def handle_error(error: str):
+    raise Exception(f"[ERROR] {error}")
+
+
 def get_dummy_controls(activate_printing: bool = False) -> Controls:
     def handle_key_presses(key: int):
         if activate_printing:
