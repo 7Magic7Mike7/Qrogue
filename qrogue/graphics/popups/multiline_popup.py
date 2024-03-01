@@ -4,7 +4,7 @@ from py_cui import ColorRule
 from py_cui.popups import Popup as PyCuiPopup
 from py_cui.ui import MenuImplementation
 
-from qrogue.util import ColorConfig as CC, Keys, Logger, PopupConfig, ColorConfig, ColorCode, split_text
+from qrogue.util import ColorConfig as CC, Keys, Logger, PopupConfig, ColorConfig, ColorCode, split_text, Config
 
 
 class MultilinePopup(PyCuiPopup, MenuImplementation):
@@ -70,6 +70,8 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
 
         self.__question_state = 0
         self._pageAlignment = " " * (self._width - MultilinePopup.__STATIC_PY_CUI_PADDING)
+
+        if Config.debugging(): self.set_title(self.get_title() + f" {self.get_absolute_dimensions()}")
 
     @property
     def _is_question(self) -> bool:
