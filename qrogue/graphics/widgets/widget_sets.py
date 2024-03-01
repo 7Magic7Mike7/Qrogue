@@ -20,7 +20,7 @@ from qrogue.graphics.rendering import ColorRules
 from qrogue.graphics.widget_base import WidgetWrapper
 from qrogue.util import CommonPopups, Config, Controls, GameplayConfig, HelpText, Logger, PathConfig, \
     RandomManager, AchievementManager, Keys, UIConfig, HudConfig, ColorConfig, Options, PuzzleConfig, ScoreConfig, \
-    get_filtered_help_texts, CommonQuestions, MapConfig, PyCuiConfig, ColorCode
+    get_filtered_help_texts, CommonQuestions, MapConfig, PyCuiConfig, ColorCode, split_text
 from qrogue.util.achievements import Ach, Unlocks
 
 from qrogue.graphics.widgets import Renderable, Widget, MyBaseWidget
@@ -327,9 +327,8 @@ class ScreenCheckWidgetSet(MyWidgetSet):
     @staticmethod
     def level_description() -> str:
         return f"You should see seven rooms next to each other. While the specific colors don't matter, it is " \
-               f"important to be able to distinguish\n" \
-               f"different elements of the game world (although they also differ in their character representation)." \
-               f"\n\n" \
+               f"important to be able to distinguish different elements of the game world (although they also differ " \
+               f"in their character representation).\n" \
                f"- {ColorConfig.highlight_object('Pickups', True)} are designed to be " \
                f"{ColorConfig.highlight_word('blue', True)} lower-case characters like " \
                f"{ColorConfig.highlight_tile('s', True)}, {ColorConfig.highlight_tile('k', True)}, " \
@@ -348,9 +347,8 @@ class ScreenCheckWidgetSet(MyWidgetSet):
                f"\"{ColorConfig.highlight_tile('.', True)}\" are messages that open Popups\n" \
                f"\n" \
                f"The last two elements are neutral to the player and, hence, not specifically highlighted (in fact, " \
-               f"they share their color with\n" \
-               f"normal text and UI elements), while the other three are important for gameplay and should therefore " \
-               f"be highlighted."
+               f"they share their color with normal text and UI elements), while the other three are important for " \
+               f"gameplay and should therefore be highlighted."
 
     @staticmethod
     def puzzle_description() -> str:
@@ -384,14 +382,11 @@ class ScreenCheckWidgetSet(MyWidgetSet):
     @staticmethod
     def popup_description() -> str:
         return f"In the middle of the screen an inverted (i.e., background is the normal text color and text has the " \
-               f"color of normal background)\n" \
-               f"rectangle should have popped up. It has a differently colored headline followed by text that " \
-               f"describes the usage of different\n" \
-               f"colors used inside such Popups. Furthermore, the bottom left should state \"scroll down\", while " \
-               f"the bottom right indicates the\n" \
-               f"number of rows you can scroll down until the end of the Popup's text is reached. These two bottom " \
-               f"elements should also be\n" \
-               f"highlighted (i.e., different from the colors used inside the Popup)."
+               f"color of normal background) rectangle should have popped up. It has a differently colored headline " \
+               f"followed by text that describes the usage of different colors used inside such Popups. Furthermore, " \
+               f"the bottom left should state \"scroll down\", while the bottom right indicates the number of rows " \
+               f"you can scroll down until the end of the Popup's text is reached. These two bottom elements should " \
+               f"also be highlighted (i.e., different from the colors used inside the Popup)."
 
     def __init__(self, controls: Controls, logger, root: py_cui.PyCUI,
                  base_render_callback: Callable[[List[Renderable]], None], switch_to_menu: Callable[[], None]):
@@ -544,15 +539,23 @@ class ScreenCheckWidgetSet(MyWidgetSet):
         self.__content_out = SimpleWidget(stv_out.widget, "C3")
         self.__content_target = SimpleWidget(stv_target.widget, "C4")
 
+    def __fit_description(self, description: str, padding: int = 0) -> str:
+        width, _ = self.__desc_widget.widget.get_abs_size()
+        # use width-2 because it seems as if PyCUI forces a one-character border on both sides
+        # an experiment showed that a width of 104 can only display 102 characters
+        content = split_text(description, width-2, padding,
+                             handle_error=lambda err: Logger.instance().error(err, from_pycui=False))
+        return "\n".join(content)
+
     def __show_level(self):
-        self.__desc_widget.set_data(self.level_description())
+        self.__desc_widget.set_data(self.__fit_description(self.level_description()))
         self.__content_mat.set_data(self.level_content())
         self.__content_in.set_data("")
         self.__content_out.set_data("")
         self.__content_target.set_data("")
 
     def __show_puzzle(self):
-        self.__desc_widget.set_data(self.puzzle_description())
+        self.__desc_widget.set_data(self.__fit_description(self.puzzle_description()))
         self.__content_mat.set_data(self.__text_mat)
         self.__content_in.set_data(self.__text_in)
         self.__content_out.set_data(self.__text_out)
@@ -565,7 +568,7 @@ class ScreenCheckWidgetSet(MyWidgetSet):
         self.__content_out.set_data("")
         self.__content_target.set_data("")
 
-        self.__desc_widget.set_data(self.popup_description())
+        self.__desc_widget.set_data(self.__fit_description(self.popup_description()))
         Popup.generic_info("This headline usually indicates the Speaker", self.popup_content())
 
     def get_widget_list(self) -> List[Widget]:
