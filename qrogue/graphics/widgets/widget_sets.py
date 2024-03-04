@@ -325,6 +325,11 @@ class ScreenCheckWidgetSet(MyWidgetSet):
                f"             \"use {ColorConfig.highlight_key('Space')} to close a popup\""
 
     @staticmethod
+    def _initial_description() -> str:
+        return f"Select a topic on the left and confirm to see a corresponding " \
+               f"{ColorConfig.highlight_word('description', invert=True)} here."
+
+    @staticmethod
     def level_description() -> str:
         return f"You should see seven rooms next to each other. While the specific colors don't matter, it is " \
                f"important to be able to distinguish different elements of the game world (although they also differ " \
@@ -432,7 +437,7 @@ class ScreenCheckWidgetSet(MyWidgetSet):
         desc_widget = self.add_block_label('Desc', details_y, select_width, row_span=details_height,
                                            column_span=UIConfig.WINDOW_WIDTH-select_width-1, center=False)
         desc_widget.activate_individual_coloring()
-        self.__desc_widget = SimpleWidget(desc_widget, "Desc")
+        self.__desc_widget = SimpleWidget(desc_widget, self._initial_description())
 
         def width_check():
             if self.__mode != ScreenCheckWidgetSet.__PUZZLE: return
@@ -476,7 +481,7 @@ class ScreenCheckWidgetSet(MyWidgetSet):
 
         # HUD
         self.__hud = MyWidgetSet.create_hud_row(self)
-        self.__hud.set_data((robot, "ScreenCheck", "Situational HUD"))
+        self.__hud.set_data((robot, "HUD", "Situational HUD"))
         self.__hud.render()
         posy += UIConfig.HUD_HEIGHT
 
@@ -588,8 +593,9 @@ class ScreenCheckWidgetSet(MyWidgetSet):
         self.__select_widget.render_reset()
 
         for widget in [self.__content_mat, self.__w_mul, self.__content_in, self.__w_res, self.__content_out,
-                       self.__w_eq, self.__content_target]:
+                       self.__w_eq, self.__content_target, self.__desc_widget]:
             widget.render_reset()
+        self.__desc_widget.set_data(self._initial_description())
 
 
 class TransitionWidgetSet(MyWidgetSet):
