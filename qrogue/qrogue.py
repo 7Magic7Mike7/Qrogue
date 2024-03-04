@@ -270,6 +270,7 @@ def play_level(level_name: str, debugging: bool = False, data_folder: str = None
             seed = random.randint(0, Config.MAX_SEED)
         else:
             seed = int(seed)
+        if debugging: Config.activate_debugging()
         print(f"[Qrogue] Starting level {level_name} with seed = {seed}")
         try:
             QrogueCUI(seed).start(level_name)
