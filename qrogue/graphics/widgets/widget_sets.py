@@ -1612,7 +1612,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             self._in_reward_message = True
             if reward is None:
                 self._details.set_data(data=(
-                    [f"Congratulations, you solved the {ColorConfig.highlight_object('Puzzle')}!"],
+                    [f"Congratulations, you solved the {ColorConfig.highlight_object('Puzzle', invert=True)}!"],
                     [give_reward_and_continue]
                 ))
             else:
