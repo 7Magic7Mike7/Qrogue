@@ -311,11 +311,11 @@ class HelpText(Enum):       # todo: import Controls to replace static key-mentio
         "In the Pause Menu you can do several things:\n" \
         f"{_HL.continue_} - Leave the Pause Menu and continue where you stopped.\n" \
         f"{_HL.restart} - Restart the current level\n" \
-        f"{_HL.save} - Save your game. Remember that your progress is only saved level-wise." \
+        f"{_HL.save} - Save your game. Remember that your progress is only saved level-wise.\n" \
         f"{_HL.help_} - If you ever feel stuck and don't remember how certain stuff in the game works open " \
         f"the manual and we will try to help you.\n" \
         f"{_HL.options} - Configure some Options of the game, like font size or coloring.\n" \
-        f"{_HL.exit_} - Exit the current Level or Expedition .\n"
+        f"{_HL.exit_} - Exit the current Level or Expedition."
 
     Options = "7"
     Welcome = Game + \
