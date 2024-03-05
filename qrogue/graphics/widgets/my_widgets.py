@@ -892,7 +892,7 @@ class SelectionWidget(Widget):
         self.__index = 0
         self.__choices: List[str] = []
         self.__choice_objects: List = []
-        self.__callbacks: List[Union[Callable[[], bool]], Callable[[int], bool]] = []
+        self.__callbacks: List[Union[Callable[[], Optional[bool]]], Callable[[int], Optional[bool]]] = []
         self.widget.add_text_color_rule(f"->", ColorConfig.SELECTION_COLOR, 'contains', match_type='regex')
 
         # init keys
@@ -966,11 +966,16 @@ class SelectionWidget(Widget):
             else:
                 self.__choices[index] = text
 
-    def set_data(self, data: "Tuple[Union[List[str], Tuple[List[str], List[Any]]], List[Callable]]") -> None:
+    def set_data(self, data: Tuple[
+        Union[List[str], Tuple[List[str], List[Any]]],
+        Union[List[Callable[[], Optional[bool]]], Callable[[int], Optional[bool]]]
+    ]) -> None:
         assert len(data) >= 1, "set_data() called with empty data!"
 
         self.render_reset()
-        self.__choices, self.__callbacks = data
+        self.__choices, callbacks = data
+        if isinstance(callbacks, list): self.__callbacks = callbacks
+        else: self.__callbacks = [callbacks]
 
         if isinstance(self.__choices, tuple):
             self.__choices, self.__choice_objects = self.__choices
