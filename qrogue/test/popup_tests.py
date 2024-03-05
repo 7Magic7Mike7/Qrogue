@@ -40,7 +40,7 @@ class MyTestCase(unittest.TestCase):
         :param ignore_padding: ignores padding for comparison (padding still needs to be set for a correct split!)
         """
         for i, actual_text in enumerate(split_text(input_text, width, padding, test_util.handle_error)):
-            if ignore_padding: actual_text = actual_text[padding:-padding]
+            if ignore_padding and padding > 0: actual_text = actual_text[padding:-padding]
             self.assertEqual(expected_split[i], actual_text, f"Unexpected text at line #{i}!")
             self.assertEqual(actual_text, actual_text.rstrip(), "Actual text was not rstrip()-ed!")
 
