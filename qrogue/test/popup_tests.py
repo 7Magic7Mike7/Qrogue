@@ -86,17 +86,23 @@ class MyTestCase(unittest.TestCase):
             "can scroll down until the end of the Popup's text is reached. These two bottom elements should also be",
             "highlighted (i.e., different from the colors used inside the Popup)."
         ]
+        expected_puzzle = [
+            "Here you can see an example of an advanced 3-qubit puzzle. Specifically, there is one matrix followed",
+            "by three vertical vectors.",
+            "Overall they should contain five different colors:",
+            f"- //92headlines// of matrix and vectors (~Circuit Matrix~, ~In~, ~Out~, ~Target~)",
+            f"- //93|000>// to //93|111>// (called ket-notation) labeling columns and rows",
+            "- first two entries of ~Out~, indicating //90incorrect values//",
+            "- last six entries of ~Out~, indicating //91correct values//",
+            "- other matrix/vector entries are in default color (i.e., the same as non-highlighted UI elements)",
+            "",
+            "If you cannot see all eight rows or columns of the matrix, press //14M// to open a popup for suggested",
+            "solutions.",
+        ]
 
-        # I think the -2 comes from the reserved border on both sides
-        level = split_text(ScreenCheckWidgetSet.level_description(), width-2, 0, test_util.handle_error)
-        self.assertEqual(expected_level, level, f"Unexpected level-split for width={width}. "
-                                                f"Please review the result.")
-
-        popup = split_text(ScreenCheckWidgetSet.popup_description(), width-2, 0, test_util.handle_error)
-        self.assertEqual(expected_popup, popup, f"Unexpected popup-split for width={width}. "
-                                                f"Please review the result.")
-
-        # todo: puzzle description (way too long :()    [maybe export second half to a Popup?]
+        self._split_compare(expected_level, ScreenCheckWidgetSet.level_description(), width, 1, ignore_padding=True)
+        self._split_compare(expected_popup, ScreenCheckWidgetSet.popup_description(), width, 1, ignore_padding=True)
+        self._split_compare(expected_puzzle, ScreenCheckWidgetSet.puzzle_description(), width, 1, ignore_padding=True)
 
     def test_small_message_split(self):
         # test split on a small in-game message (l0k0v0, *keyFound)
@@ -112,8 +118,7 @@ class MyTestCase(unittest.TestCase):
                 "//05top//",
             "//05left//.",
         ]
-
-        #self._split_compare(expected_split, input_text, width, padding, ignore_padding=True)
+        self._split_compare(expected_split, input_text, width, padding, ignore_padding=True)
 
 
     def test_large_message_split(self):
@@ -164,7 +169,7 @@ class MyTestCase(unittest.TestCase):
                      f"   {highlight(' bcdefgh')} {highlight('jkl')}"
         expected_split = [highlight("abcdefghij"), f"ab{highlight('cd')} {highlight('fghij')}",
                           f"{highlight(' bcdefgh')}", highlight("jkl")]
-        #self._split_compare(expected_split, input_text, width)
+        self._split_compare(expected_split, input_text, width)
 
         input_text = f"ab def {highlight('hijde')} ghi {highlight('a cd')} {highlight('fg ijcd')} fgh j " \
                      f"abc {highlight('ef hijde')} {highlight('ghij')}"
@@ -176,7 +181,6 @@ class MyTestCase(unittest.TestCase):
             f"abc {highlight('ef')}",
             f"{highlight('hijde')} {highlight('ghij')}"
         ]
-        #print(split_text(input_text, width, padding=0, handle_error=test_util.handle_error))
         self._split_compare(expected_split, input_text, width)
 
 

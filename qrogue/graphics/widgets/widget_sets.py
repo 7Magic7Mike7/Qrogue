@@ -20,7 +20,7 @@ from qrogue.graphics.rendering import ColorRules
 from qrogue.graphics.widget_base import WidgetWrapper
 from qrogue.util import CommonPopups, Config, Controls, GameplayConfig, HelpText, Logger, PathConfig, \
     RandomManager, AchievementManager, Keys, UIConfig, HudConfig, ColorConfig, Options, PuzzleConfig, ScoreConfig, \
-    get_filtered_help_texts, CommonQuestions, MapConfig, PyCuiConfig, ColorCode, split_text
+    get_filtered_help_texts, CommonQuestions, MapConfig, PyCuiConfig, ColorCode, split_text, PopupConfig
 from qrogue.util.achievements import Ach, Unlocks
 
 from qrogue.graphics.widgets import Renderable, Widget, MyBaseWidget
@@ -309,7 +309,7 @@ class ScreenCheckWidgetSet(MyWidgetSet):
     def popup_content() -> str:
         # todo: inversion doesn't seem to work yet in Popups, therefore 'tile' looks just like normal text
         return f"Let's have a look at the different colors in popups like this to make sure they are " \
-               f"distinguishable:\n\n" \
+               f"distinguishable:\n" \
                f"- {ColorConfig.highlight_tile('tile')}: this refers to tiles in the game world\n" \
                f"             \"the green {ColorConfig.highlight_tile('G')} represents the goal\"\n" \
                f"- {ColorConfig.highlight_action('action')}: this is used to highlight certain actions you " \
@@ -356,7 +356,9 @@ class ScreenCheckWidgetSet(MyWidgetSet):
                f"gameplay and should therefore be highlighted."
 
     @staticmethod
-    def puzzle_description() -> str:
+    def puzzle_description(controls: Optional[Controls] = None) -> str:
+        if controls is None: matrix_key = "M"
+        else: matrix_key = controls.to_keyboard_string(Keys.MatrixPopup)
         return f"Here you can see an example of an advanced 3-qubit puzzle. Specifically, there is one matrix " \
                f"followed by three vertical vectors.\n" \
                f"Overall they should contain five different colors:\n" \
@@ -365,24 +367,15 @@ class ScreenCheckWidgetSet(MyWidgetSet):
                f"- {ColorConfig.colorize(ColorCode.PUZZLE_KET, '|000>')} to " \
                f"{ColorConfig.colorize(ColorCode.PUZZLE_KET, '|111>')} (called ket-notation) labeling columns and " \
                f"rows\n" \
-               f"- first two entries of ~Out~ indicating " \
-               f"{ColorConfig.colorize(ColorCode.PUZZLE_WRONG_AMPLITUDE, 'incorrect values')}, so they should use a " \
-               f"negative connoted color (e.g., red)\n" \
-               f"- last six entries of ~Out~ indicating " \
-               f"{ColorConfig.colorize(ColorCode.PUZZLE_CORRECT_AMPLITUDE, 'correct values')}, so they should use a " \
-               f"positive connoted color (e.g., green)\n" \
-               f"- all other matrix and vector entries are in default color (i.e., the same as non-highlighted UI " \
+               f"- first two entries of ~Out~, indicating " \
+               f"{ColorConfig.colorize(ColorCode.PUZZLE_WRONG_AMPLITUDE, 'incorrect values')}\n" \
+               f"- last six entries of ~Out~, indicating " \
+               f"{ColorConfig.colorize(ColorCode.PUZZLE_CORRECT_AMPLITUDE, 'correct values')}\n" \
+               f"- other matrix/vector entries are in default color (i.e., the same as non-highlighted UI " \
                f"elements)\n" \
                f"\n" \
-               f"Please make sure that you see all eight rows of the matrix and vectors and in the best case also " \
-               f"all eight columns of the matrix.\n" \
-               f"The latter is a more common problem, so aside from resizing or maximizing the window, as well as " \
-               f"adapting used font or font size\n" \
-               f"(check your terminal's settings for that), QRogue provides an explicit workaround you can activate " \
-               f"in the options menu (WIP!).\n\n" \
-               f"For fine-tuning, you can press {ColorConfig.highlight_key('H', True)} to open a Popup that tells " \
-               f"you how much space is available to the matrix with your current settings\n" \
-               f"and how much it actually needs."
+               f"If you cannot see all eight rows or columns of the matrix, press " \
+               f"{ColorConfig.highlight_key(matrix_key, invert=True)} to open a popup for suggested solutions."
 
     @staticmethod
     def popup_description() -> str:
@@ -453,13 +446,39 @@ class ScreenCheckWidgetSet(MyWidgetSet):
                 Popup.generic_info("Dimension Error",
                                    f"Only {providable_width} characters available but {content_width} needed to "
                                    f"correctly display the matrix of a 3-qubit circuit!\n"
-                                   f"You can either increase the size of your window, adapt font or use "
+                                   f"You can either increase the size of your window, adapt font or press "
                                    f"{controls.to_keyboard_string(Keys.MatrixPopup)} to view the whole matrix in a "
                                    f"Popup.")
             else:
                 Popup.generic_info("Dimension Fine", f"{providable_width} characters available and only {content_width}"
                                                      f" needed to display the matrix of a 3-qubit circuit")
+
+        def matrix_popup():
+            if self.__mode != ScreenCheckWidgetSet.__PUZZLE: return
+            popup_text =  \
+                f"If you cannot see the matrix as a whole, you can try {ColorConfig.highlight_word('resizing')} or " \
+                f"{ColorConfig.highlight_word('maximizing')} the window, as well as " \
+                f"{ColorConfig.highlight_word('adapting')} the used {ColorConfig.highlight_word('font')} or font " \
+                f"size (check your terminal's settings for that).\n" \
+                f"In case this does not work or gives otherwise undesirable results, QRogue provides an " \
+                f"{ColorConfig.highlight_word('explicit workaround')} by {ColorConfig.highlight_action('pressing')} " \
+                f"{ColorConfig.highlight_key(controls.to_keyboard_string(Keys.MatrixPopup))} while solving a Puzzle " \
+                f"to open a {ColorConfig.highlight_word('Popup')} that shows the whole matrix. An example of the " \
+                f"3-qubit matrix shown behind this Popup is provided below (just scroll down).\n" \
+                f"Furthermore, for fine-tuning, you can {ColorConfig.highlight_action('press')} " \
+                f"{ColorConfig.highlight_key(controls.to_keyboard_string(Keys.Help))} after closing this " \
+                f"Popup to open another one that tells you how much space is available to the matrix (based on your " \
+                f"current settings) versus how much it actually needs.\n\n"
+            # retrieve the matrix's text and append it to popup_text
+            lines = [line.rstrip(' ') for line in self.__content_mat.widget.get_title().splitlines(keepends=False)]
+            height, width = len(lines), max([len(line) for line in lines])
+            popup_text += "\n".join(lines)
+
+            Popup("Matrix Popup", popup_text, Popup.Pos.Matrix, PopupConfig.default_color(), reopen=False,
+                  show=True, overwrite=False, on_close_callback=None, dimensions=(height, width), padding_x=0)
+
         self.__select_widget.widget.add_key_command(controls.get_keys(Keys.Help), width_check)
+        self.__select_widget.widget.add_key_command(controls.get_keys(Keys.MatrixPopup), matrix_popup)
 
     def __setup_widgets(self):
         # todo: show both 3-qubit and 2-qubit puzzles?
@@ -574,7 +593,7 @@ class ScreenCheckWidgetSet(MyWidgetSet):
         self.__content_target.set_data("")
 
         self.__desc_widget.set_data(self.__fit_description(self.popup_description()))
-        Popup.generic_info("This headline usually indicates the Speaker", self.popup_content())
+        Popup.generic_info("This headline usually indicates the Speaker", self.popup_content(), pos=Popup.Pos.Top)
 
     def get_widget_list(self) -> List[Widget]:
         return [
