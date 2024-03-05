@@ -153,7 +153,7 @@ class ColorConfig:
         if invert:
             return ColorConfig.colorize(ColorCode.INV_TILE_HIGHLIGHT, tile)
         else:
-            return ColorConfig.colorize(ColorCode.INV_TILE_HIGHLIGHT, tile)
+            return ColorConfig.colorize(ColorCode.TILE_HIGHLIGHT, tile)
 
     @staticmethod
     def highlight_object(obj: str, invert: bool = False) -> str:

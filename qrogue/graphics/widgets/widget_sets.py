@@ -307,7 +307,6 @@ class ScreenCheckWidgetSet(MyWidgetSet):
 
     @staticmethod
     def popup_content() -> str:
-        # todo: inversion doesn't seem to work yet in Popups, therefore 'tile' looks just like normal text
         return f"Let's have a look at the different colors in popups like this to make sure they are " \
                f"distinguishable:\n" \
                f"- {ColorConfig.highlight_tile('tile')}: this refers to tiles in the game world\n" \
