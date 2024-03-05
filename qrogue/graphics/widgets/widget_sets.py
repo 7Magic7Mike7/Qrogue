@@ -398,24 +398,14 @@ class ScreenCheckWidgetSet(MyWidgetSet):
                                              center=True)
         self.__select_widget = SelectionWidget(select_widget, controls, stay_selected=True)
         self.__select_widget.set_data((
-            ["Level", "Puzzle", "Popup", "Back"],
-            [self.__show_level, self.__show_puzzle, self.__show_popup, switch_to_menu]
+            ["Level", "Popup", "Puzzle", "Back"],
+            [self.__show_level, self.__show_popup, self.__show_puzzle, switch_to_menu]
         ))
 
         self.__setup_widgets()
 
         def use_select():
             if self.__select_widget.use():
-                self.__content_mat.widget.reset_text_color_rules()
-
-                if self.__select_widget.index == self.__LEVEL:
-                    ColorRules.apply_map_rules(self.__content_mat.widget)
-
-                elif self.__select_widget.index == self.__PUZZLE:
-                    ColorRules.apply_heading_rules(self.__content_mat.widget)
-                    ColorRules.apply_qubit_config_rules(self.__content_mat.widget)
-
-                self.__mode = self.__select_widget.index
                 cur_dimensions = PyCuiConfig.get_dimensions()
                 min_dimensions = PyCuiConfig.get_min_dimensions()
                 if cur_dimensions < min_dimensions:
@@ -572,6 +562,10 @@ class ScreenCheckWidgetSet(MyWidgetSet):
         return "\n".join(content)
 
     def __show_level(self):
+        self.__mode = ScreenCheckWidgetSet.__LEVEL
+        self.__content_mat.widget.reset_text_color_rules()
+        ColorRules.apply_map_rules(self.__content_mat.widget)
+
         self.__desc_widget.set_data(self.__fit_description(self.level_description()))
         self.__content_mat.set_data(self.level_content())
         self.__content_in.set_data("")
@@ -579,6 +573,11 @@ class ScreenCheckWidgetSet(MyWidgetSet):
         self.__content_target.set_data("")
 
     def __show_puzzle(self):
+        self.__mode = ScreenCheckWidgetSet.__PUZZLE
+        self.__content_mat.widget.reset_text_color_rules()
+        ColorRules.apply_heading_rules(self.__content_mat.widget)
+        ColorRules.apply_qubit_config_rules(self.__content_mat.widget)
+
         self.__desc_widget.set_data(self.__fit_description(self.puzzle_description()))
         self.__content_mat.set_data(self.__text_mat)
         self.__content_in.set_data(self.__text_in)
@@ -586,6 +585,9 @@ class ScreenCheckWidgetSet(MyWidgetSet):
         self.__content_target.set_data(self.__text_target)
 
     def __show_popup(self):
+        self.__mode = ScreenCheckWidgetSet.__POPUP
+        self.__content_mat.widget.reset_text_color_rules()
+
         # clear all other texts
         self.__content_mat.set_data("")
         self.__content_in.set_data("")
