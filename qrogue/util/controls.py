@@ -80,10 +80,9 @@ class Keys(IntEnum):
     Help = Situational2 + 1
 
     Pause = Help + 1
-
     MatrixPopup = Pause + 1
 
-    # 20 - 29
+    # 21 - 30
     HotKey1 = MatrixPopup + 1
     HotKey2 = HotKey1 + 1
     HotKey3 = HotKey1 + 2
@@ -95,12 +94,12 @@ class Keys(IntEnum):
     HotKey9 = HotKey1 + 8
     HotKey0 = HotKey1 + 9
 
-    # 30 - 32
+    # 31 - 33
     Render = HotKey0 + 1
     PrintScreen = Render + 1
     StopSimulator = PrintScreen + 1
 
-    # 33 - 34
+    # 34 - 35
     CheatInput = StopSimulator + 1
     CheatList = CheatInput + 1
 
