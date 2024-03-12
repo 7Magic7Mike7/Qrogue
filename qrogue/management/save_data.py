@@ -1,12 +1,13 @@
 import os.path
-from typing import Tuple, Optional, List
+from typing import Tuple, Optional, List, Union, Iterator
+
 
 from qrogue.game.logic.actors import Player, Robot
 from qrogue.game.logic.actors.controllables import BaseBot, LukeBot
 from qrogue.game.world.map import CallbackPack
 from qrogue.util import Logger, PathConfig, FileTypes, AchievementManager, RandomManager, CommonPopups, Config, \
     TestConfig, ErrorConfig, achievements
-from qrogue.util.achievements import Achievement, Unlocks, AchievementType
+from qrogue.util.achievements import Achievement, Unlocks, AchievementType, AchievementManager
 
 
 class SaveData:
@@ -68,7 +69,7 @@ class SaveData:
             SaveData.__instance = self
 
     @property
-    def achievement_manager(self) -> AchievementManager:
+    def _achievement_manager(self) -> AchievementManager:
         return AchievementManager.instance()
 
     @property
@@ -95,50 +96,55 @@ class SaveData:
         return None
 
     def achievement_iterator(self) -> Iterator[Achievement]:
-        return self.achievement_manager.achievement_iterator()
+        return self._achievement_manager.achievement_iterator()
 
     def restart_level_timer(self):
-        return self.achievement_manager.restart_level_timer()
+        return self._achievement_manager.restart_level_timer()
 
     def check_unlocks(self, unlocks: Union[str, Unlocks]) -> bool:
         if isinstance(unlocks, str): unlocks = Unlocks.from_name(unlocks)
-        return self.achievement_manager.check_unlocks(unlocks)
+        return self._achievement_manager.check_unlocks(unlocks)
 
     def check_achievement(self, name: str) -> bool:
-        return self.achievement_manager.check_achievement(name)
+        return self._achievement_manager.check_achievement(name)
+
+    def check(self, name: str) -> bool:
+        if self.finished_level(name): return True
+        if self.check_unlocks(name): return True
+        if self.check_achievement(name): return True
+        return False
 
     def reset_level_events(self):
-        self.achievement_manager.reset_level_events()
+        self._achievement_manager.reset_level_events()
 
     def add_to_achievement(self, name: str, score: float = 1):
-        return self.achievement_manager.add_to_achievement(name, score)
+        return self._achievement_manager.add_to_achievement(name, score)
 
     def trigger_global_event(self, name: str, score: float = 1):
-        return self.achievement_manager.trigger_global_event(name, score)
+        return self._achievement_manager.trigger_global_event(name, score)
 
     def trigger_event(self, name: str, score: float = 1):
-        return self.achievement_manager.trigger_event(name, score)
+        return self._achievement_manager.trigger_event(name, score)
 
     def finished_level(self, internal_name: str, display_name: str = None) -> bool:
-        return self.achievement_manager.finished_level(internal_name, display_name)
+        return self._achievement_manager.finished_level(internal_name, display_name)
+
+    def to_achievements_string(self) -> str:
+        return self._achievement_manager.to_string()
 
     def to_string(self) -> str:
         data = ""
         data += f"{SaveData.__ROBOT_SECTION}\n"
         data += f"{SaveData.__COLLECTIBLE_SECTION}\n"
         data += f"{SaveData.__ACHIEVEMENT_SECTION}\n"
-        data += f"{self.achievement_manager.to_string()}\n"
+        data += f"{self.to_achievements_string()}\n"
         return data
 
     def save(self, is_auto_save: bool = False) -> Tuple[bool, CommonPopups]:
         if Config.forbid_saving():
             return False, CommonPopups.NoSavingWithCheats
         try:
-            data = ""
-            data += f"{SaveData.__ROBOT_SECTION}\n"
-            data += f"{SaveData.__COLLECTIBLE_SECTION}\n"
-            data += f"{SaveData.__ACHIEVEMENT_SECTION}\n"
-            data += f"{self.achievement_manager.to_string()}\n"
+            data = self.to_string()
             if is_auto_save:
                 PathConfig.write_auto_save(data)
             else:

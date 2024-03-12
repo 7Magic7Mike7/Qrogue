@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Optional, Callable
 
 # from qrogue.game.actors.robot import Robot
 from qrogue.game.logic.collectibles import Collectible, CollectibleType
@@ -56,7 +57,7 @@ class EnergyRefill(Consumable):
     def name(self) -> str:
         return "Energy Refill"
 
-    def description(self) -> str:
+    def description(self, check_unlocks: Optional[Callable[[str], bool]] = None) -> str:
         return "Refills some energy of a robot on usage."
 
     def to_string(self) -> str:

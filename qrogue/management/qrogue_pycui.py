@@ -27,7 +27,7 @@ from qrogue.graphics.widgets import Renderable, SpaceshipWidgetSet, BossFightWid
 from qrogue.util import achievements, common_messages, CheatConfig, Config, GameplayConfig, UIConfig, HelpText, \
     Logger, PathConfig, MapConfig, Controls, Keys, RandomManager, PyCuiConfig, PyCuiColors, Options, \
     TestConfig, CommonQuestions
-from qrogue.util.achievements import Ach, Unlocks, AchievementManager
+from qrogue.util.achievements import Unlocks
 from qrogue.util.config import FileTypes, PopupConfig
 from qrogue.util.game_simulator import GameSimulator
 from qrogue.util.key_logger import KeyLogger, OverWorldKeyLogger
@@ -284,12 +284,13 @@ class QrogueCUI(PyCUI):
                                                 self.set_refresh_timeout)
         self.__pause = PauseMenuWidgetSet(self.__controls, self.__render, Logger.instance(), self,
                                           self.__general_continue, SaveData.instance().save, self._switch_to_menu,
-                                          MapManager.instance().reload)
+                                          MapManager.instance().reload, SaveData.instance().to_achievements_string)
         self.__pause.set_data(None, "Qrogue", None)
 
         self.__spaceship = SpaceshipWidgetSet(self.__controls, Logger.instance(), self, self.__render)
         self.__training = TrainingsWidgetSet(self.__controls, self.__render, Logger.instance(), self,
-                                             self.__continue_spaceship, self.__popup_history.show)
+                                             self.__continue_spaceship, self.__popup_history.show,
+                                             SaveData.instance().check_unlocks)
         self.__workbench = WorkbenchWidgetSet(self.__controls, Logger.instance(), self,
                                               SaveData.instance().available_robots(), self.__render,
                                               self.__continue_spaceship)
@@ -297,13 +298,16 @@ class QrogueCUI(PyCUI):
 
         self.__explore = ExploreWidgetSet(self.__controls, self.__render, Logger.instance(), self)
         self.__fight = FightWidgetSet(self.__controls, self.__render, Logger.instance(), self, self.__continue_explore,
-                                      self.__popup_history.show)
+                                      self.__popup_history.show, SaveData.instance().check_unlocks)
         self.__boss_fight = BossFightWidgetSet(self.__controls, self.__render, Logger.instance(), self,
-                                               self.__continue_explore, self.__popup_history.show)
+                                               self.__continue_explore, self.__popup_history.show,
+                                               SaveData.instance().check_unlocks)
         self.__riddle = RiddleWidgetSet(self.__controls, self.__render, Logger.instance(), self,
-                                        self.__continue_explore, self.__popup_history.show)
+                                        self.__continue_explore, self.__popup_history.show,
+                                        SaveData.instance().check_unlocks)
         self.__challenge = ChallengeWidgetSet(self.__controls, self.__render, Logger.instance(), self,
-                                              self.__continue_explore, self.__popup_history.show)
+                                              self.__continue_explore, self.__popup_history.show,
+                                              SaveData.instance().check_unlocks)
         self.__shop = ShopWidgetSet(self.__controls, self.__render, Logger.instance(), self, self.__continue_explore)
 
         widget_sets: List[MyWidgetSet] = [self.__spaceship, self.__training, self.__navigation, self.__explore,

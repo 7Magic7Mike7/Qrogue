@@ -5,7 +5,7 @@ from qrogue.game.logic.actors import Robot, Controllable, Player
 from qrogue.game.world.navigation import Direction, Coordinate
 from qrogue.game.world.tiles import Tile, TileCode, WalkTriggerTile
 from qrogue.game.world.tiles.tiles import NpcTile
-from qrogue.util import Config, achievements, AchievementManager, MapConfig
+from qrogue.util import Config, MapConfig
 from qrogue.util.achievements import Unlocks
 
 SCIENTIST_TILE_REPRESENTATION = Config.scientist_name()[0]
@@ -148,7 +148,7 @@ class SpaceshipMap:
     HEIGHT = ascii_spaceship.count("\n")
     SPAWN_POS = Coordinate(x=25, y=16)
 
-    def __init__(self, player: Player, scientist: NpcTile, achievement_manager: AchievementManager,
+    def __init__(self, player: Player, scientist: NpcTile, achievement_manager: "AchievementManager",
                  stop_playing: Callable[[Direction, Controllable], None],
                  open_world_view: Callable[[Direction, Controllable], None],
                  use_workbench: Callable[[Direction, Controllable], None],
@@ -156,7 +156,7 @@ class SpaceshipMap:
                  start_training: Callable[[Direction], None]):
         self.__player = player
         self.__scientist = scientist
-        self.__achievement_manager = achievement_manager
+        #self.__achievement_manager = achievement_manager
         self.__stop_playing_callback = stop_playing
         self.__open_world_view = open_world_view
         self.__use_workbench_callback = use_workbench
@@ -198,23 +198,24 @@ class SpaceshipMap:
             tile = SpaceshipTriggerTile(character, self.__stop_playing)
         elif character == SpaceshipTriggerTile.MAP_START_REPRESENTATION:
             def callback_(direction: Direction, robot: Robot):
-                # todo check if using secrets like this is what I want
-                self.__achievement_manager.uncovered_secret(achievements.EnteredNavigationPanel)
-                #self.__open_world_view(direction, robot)
-                self.__load_map(MapConfig.expedition_map_prefix(), None)    # for now we immediately start an expedition
+            #    # todo check if using secrets like this is what I want
+            #    self.__achievement_manager.uncovered_secret(achievements.EnteredNavigationPanel)
+            #    #self.__open_world_view(direction, robot)
+            #    self.__load_map(MapConfig.expedition_map_prefix(), None)    # for now we immediately start an expedition
+                pass
             tile = SpaceshipTriggerTile(character, callback_)
         elif character == SpaceshipTriggerTile.MAP_WORKBENCH_REPRESENTATION:
-            if AchievementManager.instance().check_unlocks(Unlocks.Workbench):
-                tile = SpaceshipTriggerTile(character, self.__use_workbench)
-            else:
-                tile = SpaceshipFreeWalkTile()
+            #if self.__achievement_manager.check_unlocks(Unlocks.Workbench):
+            #    tile = SpaceshipTriggerTile(character, self.__use_workbench)
+            #else:
+            tile = SpaceshipFreeWalkTile()
         # elif character == SpaceshipTriggerTile.MAP_GATE_LIBRARY_REPRESENTATION:
         #    tile = SpaceshipTriggerTile(character, self.open_gate_library)
         elif character == SpaceshipTriggerTile.QUICKSTART_LEVEL:
-            if AchievementManager.instance().check_unlocks(Unlocks.QuickStart):
-                tile = SpaceshipTriggerTile(character, self.__load_newest_map)
-            else:
-                tile = SpaceshipFreeWalkTile()
+            #if self.__achievement_manager.check_unlocks(Unlocks.QuickStart):
+            #    tile = SpaceshipTriggerTile(character, self.__load_newest_map)
+            #else:
+            tile = SpaceshipFreeWalkTile()
         elif character == SpaceshipTriggerTile.TRAININGS_ROOM:
             def start_training(direction: Direction, controllable: Controllable):
                 self.__start_training(direction)
@@ -252,12 +253,14 @@ class SpaceshipMap:
             return False
 
     def __stop_playing(self, direction: Direction, controllable: Controllable):
-        if self.__achievement_manager.check_achievement(achievements.FinishedTutorial):
-            self.__stop_playing_callback(direction, controllable)
+        #if self.__achievement_manager.check_achievement(achievements.FinishedTutorial):
+        #    self.__stop_playing_callback(direction, controllable)
+        pass
 
     def __use_workbench(self, direction: Direction, controllable: Controllable):
-        if AchievementManager.instance().check_unlocks(Unlocks.Workbench):
-            self.__use_workbench_callback(direction, controllable)
+        #if self.__achievement_manager.check_unlocks(Unlocks.Workbench):
+        #    self.__use_workbench_callback(direction, controllable)
+        pass
 
     def __trigger_event(self, event_id: str):
         # todo check if we really don't need this in the Spaceship

@@ -225,5 +225,5 @@ class DummyRobot(BaseBot):
     def get_img(self):
         return "D"
 
-    def description(self) -> str:
+    def description(self, check_unlocks: Optional[Callable[[str], bool]] = None) -> str:
         return "Minimal Robot for testing non-Robot dependent code (e.g. tiles)."

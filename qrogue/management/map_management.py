@@ -10,7 +10,7 @@ from qrogue.util import CommonQuestions, Logger, MapConfig, achievements, Random
     ErrorConfig, PathConfig
 
 from qrogue.management.save_data import SaveData
-from qrogue.util.achievements import Unlocks, AchievementManager
+from qrogue.util.achievements import Unlocks
 from qrogue.util.config.gameplay_config import ExpeditionConfig, GameplayConfig
 from qrogue.util.util_functions import open_folder
 

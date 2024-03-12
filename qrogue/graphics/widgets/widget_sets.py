@@ -2,7 +2,7 @@ import threading
 from threading import Timer
 import time
 from abc import abstractmethod, ABC
-from typing import List, Callable, Optional, Tuple, Any
+from typing import List, Callable, Optional, Tuple, Any, Union
 
 import py_cui
 from py_cui.widget_set import WidgetSet
@@ -19,9 +19,9 @@ from qrogue.graphics.popups import Popup
 from qrogue.graphics.rendering import ColorRules
 from qrogue.graphics.widget_base import WidgetWrapper
 from qrogue.util import CommonPopups, Config, Controls, GameplayConfig, HelpText, Logger, PathConfig, \
-    RandomManager, AchievementManager, Keys, UIConfig, HudConfig, ColorConfig, Options, PuzzleConfig, ScoreConfig, \
+    RandomManager, Keys, UIConfig, HudConfig, ColorConfig, Options, PuzzleConfig, ScoreConfig, \
     get_filtered_help_texts, CommonQuestions, MapConfig, PyCuiConfig, ColorCode, split_text, PopupConfig
-from qrogue.util.achievements import Ach, Unlocks
+from qrogue.util.achievements import Unlocks
 
 from qrogue.graphics.widgets import Renderable, Widget, MyBaseWidget
 from qrogue.graphics.widgets.my_widgets import SelectionWidget, CircuitWidget, MapWidget, SimpleWidget, HudWidget, \
@@ -934,12 +934,14 @@ class TransitionWidgetSet(MyWidgetSet):
 class PauseMenuWidgetSet(MyWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  continue_callback: Callable[[], None], save_callback: Callable[[], Tuple[bool, CommonPopups]],
-                 exit_run_callback: Callable[[], None], restart_callback: Callable[[], None]):
+                 exit_run_callback: Callable[[], None], restart_callback: Callable[[], None],
+                 achievements_to_string_callback: Callable[[], str]):
         super().__init__(logger, root, render)
         self.__continue_callback = continue_callback
         self.__save_callback = save_callback
         self.__exit_run = exit_run_callback
         self.__restart_callback = restart_callback
+        self.__achievements_to_string = achievements_to_string_callback
 
         self.__hud = MyWidgetSet.create_hud_row(self)
 
@@ -1017,8 +1019,7 @@ class PauseMenuWidgetSet(MyWidgetSet):
         return True
 
     def __achievements(self) -> bool:
-        text = AchievementManager.instance().to_display_string()
-        Popup.generic_info("Current Achievement status", text)
+        Popup.generic_info("Current Achievement status", self.__achievements_to_string())
         return False
 
     def __options(self) -> bool:
@@ -1086,7 +1087,7 @@ class PauseMenuWidgetSet(MyWidgetSet):
     def get_main_widget(self) -> WidgetWrapper:
         return self.__choices.widget
 
-    def set_data(self, robot: Optional[Robot], map_name: str, achievement_manager: Optional[AchievementManager]):
+    def set_data(self, robot: Optional[Robot], map_name: str, achievement_manager: Optional["AchievementManager"]): # todo: remove achievement_manager parameter?
         # todo maybe needs some overhaul?
         self.__hud.set_data((robot, map_name, None))
 
@@ -1263,6 +1264,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  continue_exploration_callback: Callable[[bool], None], reopen_popup_callback: Callable[[], None],
+                 check_unlocks_callback: Callable[[Union[str, Unlocks]], bool],
                  flee_choice: str = "Flee", dynamic_input: bool = True, dynamic_target: bool = True):
         super().__init__(logger, root, render)
         self.__flee_choice = flee_choice
@@ -1270,6 +1272,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self.__dynamic_target = dynamic_target
         self._continue_exploration_callback = lambda: continue_exploration_callback(False)
         self._continue_and_undo_callback = lambda: continue_exploration_callback(True)
+        self._check_unlocks = check_unlocks_callback
         self._robot: Optional[Robot] = None
         self._target: Optional[Target] = None
         self.__num_of_qubits = -1   # needs to be an illegal value because we definitely want to reposition all
@@ -1358,7 +1361,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                 else:
                     other_names = ""
                 Popup.generic_info(gate.gate_type.full_name, f"Short name: {gate.gate_type.short_name} Gate\n" +
-                                   gate.description() + other_names)
+                                   gate.description(self._check_unlocks) + other_names)
             else:
                 reopen_popup_callback()     # open popup history
         self._details.widget.add_key_command(controls.get_keys(Keys.Help), gate_guide)
@@ -1403,7 +1406,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self.add_key_command(controls.get_keys(Keys.MatrixPopup), show_matrix_popup, add_to_widgets=True)
 
         # clear some widgets if the player hasn't unlocked the equations yet
-        if not AchievementManager.instance().check_unlocks(Unlocks.ShowEquation):
+        if not self._check_unlocks(Unlocks.ShowEquation):
             self.__input_stv.render_reset()
             self.__mul_widget.render_reset()
             self.__circuit_matrix.render_reset()
@@ -1496,7 +1499,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             vectors = None
         self.__circuit.set_data((robot, vectors))
 
-        if AchievementManager.instance().check_unlocks(Unlocks.ShowEquation):
+        if self._check_unlocks(Unlocks.ShowEquation):
             self.__input_stv.set_data(target.input_stv)
             self.__mul_widget.set_data(self._sign_offset + "x")
             self.__result_widget.set_data(self._sign_offset + "=")
@@ -1540,7 +1543,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self.__history_widget.save_state(rerender=True, force=False)
 
     def __update_calculation(self, target_reached: bool):
-        if AchievementManager.instance().check_unlocks(Unlocks.ShowEquation):
+        if self._check_unlocks(Unlocks.ShowEquation):
             diff_stv = self._target.state_vector.get_diff(self._robot.state_vector)
 
             self.__circuit_matrix.set_data(self._robot.circuit_matrix)
@@ -1566,10 +1569,10 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         choices = SelectionWidget.wrap_in_hotkey_str(choices)
 
         # add commands
-        if AchievementManager.instance().check_unlocks(Unlocks.GateRemove):
+        if self._check_unlocks(Unlocks.GateRemove):
             choices.append("Remove")
             callbacks.append(self.__remove)
-        if AchievementManager.instance().check_unlocks(Unlocks.PuzzleFlee):
+        if self._check_unlocks(Unlocks.PuzzleFlee):
             choices.append(self.__flee_choice)
             callbacks.append(self.__flee)      # just return True to change back to previous screen
 
@@ -1681,8 +1684,10 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
 class TrainingsWidgetSet(ReachTargetWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
-                 back_to_spaceship_callback: Callable[[], None], reopen_popup_callback: Callable[[], None]):
-        super().__init__(controls, render, logger, root, back_to_spaceship_callback, reopen_popup_callback, "Done")
+                 back_to_spaceship_callback: Callable[[], None], reopen_popup_callback: Callable[[], None],
+                 check_unlocks_callback: Callable[[str], bool]):
+        super().__init__(controls, render, logger, root, back_to_spaceship_callback, reopen_popup_callback,
+                         check_unlocks_callback, "Done")
 
     def _on_commit_fail(self) -> bool:
         return True
@@ -1697,9 +1702,10 @@ class TrainingsWidgetSet(ReachTargetWidgetSet):
 
 class FightWidgetSet(ReachTargetWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
-                 continue_exploration_callback: Callable[[bool], None], reopen_popup_callback: Callable[[], None]):
+                 continue_exploration_callback: Callable[[bool], None], reopen_popup_callback: Callable[[], None],
+                 check_unlocks_callback: Callable[[str], bool]):
         super(FightWidgetSet, self).__init__(controls, render, logger, root, continue_exploration_callback,
-                                             reopen_popup_callback)
+                                             reopen_popup_callback, check_unlocks_callback)
         self.__flee_check = None
 
     def set_data(self, robot: Robot, target: Enemy, in_expedition: bool, tutorial_data):
@@ -1736,9 +1742,10 @@ class FightWidgetSet(ReachTargetWidgetSet):
 
 class BossFightWidgetSet(ReachTargetWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
-                 continue_exploration_callback: Callable[[bool], None], reopen_popup_callback: Callable[[], None]):
+                 continue_exploration_callback: Callable[[bool], None], reopen_popup_callback: Callable[[], None],
+                 check_unlocks_callback: Callable[[str], bool]):
         super().__init__(controls, render, logger, root, continue_exploration_callback, reopen_popup_callback,
-                         dynamic_input=True, dynamic_target=True)
+                         check_unlocks_callback, dynamic_input=True, dynamic_target=True)
         self.__prev_circuit_space = 0
 
     def _details_flee(self) -> bool:
@@ -1870,9 +1877,10 @@ class RiddleWidgetSet(ReachTargetWidgetSet):
     __TRY_PHRASING = "edits"
 
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
-                 continue_exploration_callback: Callable[[bool], None], reopen_popup_callback: Callable[[], None]):
+                 continue_exploration_callback: Callable[[bool], None], reopen_popup_callback: Callable[[], None],
+                 check_unlocks_callback: Callable[[str], bool]):
         super().__init__(controls, render, logger, root, continue_exploration_callback, reopen_popup_callback,
-                         "Give Up")
+                         check_unlocks_callback, "Give Up")
 
     def set_data(self, robot: Robot, target: Riddle, in_expedition: bool, tutorial_data) -> None:
         super(RiddleWidgetSet, self).set_data(robot, target, in_expedition, tutorial_data)
@@ -1898,8 +1906,10 @@ class RiddleWidgetSet(ReachTargetWidgetSet):
 
 class ChallengeWidgetSet(ReachTargetWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
-                 continue_exploration_callback: Callable[[bool], None], reopen_popup_callback: Callable[[], None]):
-        super().__init__(controls, render, logger, root, continue_exploration_callback, reopen_popup_callback)
+                 continue_exploration_callback: Callable[[bool], None], reopen_popup_callback: Callable[[], None],
+                 check_unlocks_callback: Callable[[str], bool]):
+        super().__init__(controls, render, logger, root, continue_exploration_callback, reopen_popup_callback,
+                         check_unlocks_callback)
 
     def set_data(self, robot: Robot, target: Challenge, in_expedition: bool, tutorial_data) -> None:
         super(ChallengeWidgetSet, self).set_data(robot, target, in_expedition, tutorial_data)

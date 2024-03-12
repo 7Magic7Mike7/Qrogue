@@ -1,6 +1,6 @@
 import enum
 from abc import ABC, abstractmethod
-from typing import Iterator, Optional, Set, Dict, List
+from typing import Iterator, Optional, Set, Dict, List, Callable
 
 import math
 
@@ -9,7 +9,7 @@ from qiskit.circuit import Gate as QiskitGate
 
 from qrogue.game.logic.base import StateVector, CircuitMatrix, QuantumSimulator, QuantumCircuit
 from qrogue.game.logic.collectibles import Collectible, CollectibleType
-from qrogue.util import ShopConfig, Logger, AchievementManager
+from qrogue.util import ShopConfig, Logger
 from qrogue.util.achievements import Unlocks
 from qrogue.util.util_functions import rad2deg
 
@@ -216,8 +216,8 @@ class Instruction(Collectible, ABC):
     def name(self) -> str:
         return f"{self.__type.short_name} Gate"
 
-    def description(self) -> str:
-        if AchievementManager.instance().check_unlocks(Unlocks.ShowEquation):
+    def description(self, check_unlocks: Optional[Callable[[str], bool]] = None) -> str:
+        if check_unlocks is not None and check_unlocks(Unlocks.ShowEquation.ach_name):
             return self.__type.description + "\n\nMatrix:\n" + self._matrix_string()
         else:
             return self.__type.description
@@ -227,7 +227,8 @@ class Instruction(Collectible, ABC):
         pass
 
     def _matrix_string(self) -> str:
-        return self.gate_type.matrix.to_string()
+        # use the real underlying matrix because some Instructions might have parameters
+        return CircuitMatrix.matrix_to_string(self.__instruction.to_matrix(), self.num_of_qubits)
 
     @abstractmethod
     def copy(self) -> "Instruction":
@@ -355,8 +356,8 @@ class RotationGate(SingleQubitGate, ABC):
     def angle(self) -> float:
         return self.__angle
 
-    def description(self) -> str:
-        desc = super().description()   # remove the stated default angle at the end
+    def description(self, check_unlocks: Optional[Callable[[str], bool]] = None) -> str:
+        desc = super().description(check_unlocks)   # remove the stated default angle at the end
         # find indices of "°" and the whitespace before that, so we can replace the angle value.
         degree_index = desc.find("°")
         if degree_index <= 0:
