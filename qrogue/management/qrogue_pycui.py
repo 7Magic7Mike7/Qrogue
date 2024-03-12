@@ -253,7 +253,7 @@ class QrogueCUI(PyCUI):
         if not Config.skip_learning():
             MapManager.instance().fill_expedition_queue(lambda: None, no_thread=True)
 
-        Popup.update_check_achievement_function(SaveData.instance().achievement_manager.check_achievement)
+        Popup.update_check_achievement_function(SaveData.instance().check_achievement)
         common_messages.set_show_callback(Popup.generic_info)
         common_messages.set_ask_callback(ConfirmationPopup.ask)
         WalkTriggerTile.set_show_explanation_callback(Popup.from_message)
@@ -285,7 +285,7 @@ class QrogueCUI(PyCUI):
         self.__pause = PauseMenuWidgetSet(self.__controls, self.__render, Logger.instance(), self,
                                           self.__general_continue, SaveData.instance().save, self._switch_to_menu,
                                           MapManager.instance().reload)
-        self.__pause.set_data(None, "Qrogue", SaveData.instance().achievement_manager)
+        self.__pause.set_data(None, "Qrogue", None)
 
         self.__spaceship = SpaceshipWidgetSet(self.__controls, Logger.instance(), self, self.__render)
         self.__training = TrainingsWidgetSet(self.__controls, self.__render, Logger.instance(), self,
@@ -680,7 +680,7 @@ class QrogueCUI(PyCUI):
     def __start_level(self, seed: int, level: Map) -> None:
         Logger.instance().info(f"Starting level {level.internal_name} with seed={seed}.", from_pycui=False)
         # reset in-level stuff
-        SaveData.instance().achievement_manager.reset_level_events()
+        SaveData.instance().reset_level_events()
         self.__popup_history.reset()
 
         robot = level.controllable_tile.controllable
@@ -690,7 +690,7 @@ class QrogueCUI(PyCUI):
             robot.reset_score()     # reset the score at the start of each level
             AchievementManager.instance().restart_level_timer()
 
-            self.__pause.set_data(robot, level.name, SaveData.instance().achievement_manager)
+            self.__pause.set_data(robot, level.name, None)
             self.__state_machine.change_state(QrogueCUI._State.Explore, level)
         else:
             Logger.instance().throw(ValueError(f"Tried to start a level with a non-Robot: {robot}"))
@@ -724,7 +724,7 @@ class QrogueCUI(PyCUI):
 
     def __pause_game(self) -> None:
         self.__state_machine.change_state(QrogueCUI._State.Pause, None)
-        if not SaveData.instance().achievement_manager.check_achievement(achievements.EnteredPauseMenu):
+        if not SaveData.instance().check_achievement(achievements.EnteredPauseMenu):
             Popup.generic_info("Pause", HelpText.Pause.text)
             AchievementManager.instance().trigger_global_event(achievements.EnteredPauseMenu, 1)
 

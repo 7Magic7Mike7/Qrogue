@@ -50,7 +50,7 @@ __MAP_ORDER: Dict[int, Dict[str, str]] = {
 def get_next(cur_map: str) -> Optional[str]:
     if cur_map == MapConfig.first_uncleared():
         next_map = __MAP_ORDER[GameplayConfig.get_knowledge_mode()][cur_map]
-        while SaveData.instance().achievement_manager.check_achievement(next_map):
+        while SaveData.instance().check_achievement(next_map):
             if next_map in __MAP_ORDER[GameplayConfig.get_knowledge_mode()]:
                 next_map = __MAP_ORDER[GameplayConfig.get_knowledge_mode()][next_map]
             else:
@@ -92,7 +92,7 @@ class MapManager:
             self.__start_level = start_level
             self.__world_memory: Dict[str, WorldMap] = {}
             self.__expedition_generator = ExpeditionGenerator(seed,
-                                                              SaveData.instance().achievement_manager.check_achievement,
+                                                              SaveData.instance().check_achievement,
                                                               self.__trigger_event, self.load_map)
             self.__expedition_queue: List[ExpeditionMap] = []
 
@@ -227,7 +227,7 @@ class MapManager:
                 map_seed = self.__rm.get_seed(msg="MapMngr_seedForLevel")
 
             # todo maybe levels should be able to have arbitrary names except "w..." or "e..." or "back" or "next"?
-            check_achievement = SaveData.instance().achievement_manager.check_achievement
+            check_achievement = SaveData.instance().check_achievement
             generator = QrogueLevelGenerator(map_seed, check_achievement, self.__trigger_event, self.load_map,
                                              Popup.npc_says)
             try:
@@ -311,12 +311,12 @@ class MapManager:
     def __trigger_event(self, event_id: str):
         if event_id.lower() == MapConfig.done_event_id():
             event_id = MapConfig.specific_done_event_id(self.__cur_map.internal_name)
-            SaveData.instance().achievement_manager.trigger_event(event_id)
+            SaveData.instance().trigger_event(event_id)
 
             if self.__cur_map.get_type() is MapType.World:
                 SaveData.instance().achievement_manager.finished_world(self.__cur_map.internal_name)
             elif self.__cur_map.get_type() is MapType.Level:
-                if SaveData.instance().achievement_manager.finished_level(self.__cur_map.internal_name,
+                if SaveData.instance().finished_level(self.__cur_map.internal_name,
                                                                           self.__cur_map.name):
                     SaveData.instance().save(is_auto_save=True)     # auto save   # todo update system after user study?
                     # if the level was not finished before, we may increase the score of the world's achievement
@@ -325,14 +325,14 @@ class MapManager:
                         SaveData.instance().achievement_manager.add_to_achievement(world.internal_name, 1.0)
 
             elif self.__cur_map.get_type() is MapType.Expedition:
-                SaveData.instance().achievement_manager.add_to_achievement(achievements.CompletedExpedition, 1)
+                SaveData.instance().add_to_achievement(achievements.CompletedExpedition, 1)
 
             if AchievementManager.instance().check_unlocks(Unlocks.ProceedChoice):
                 CommonQuestions.ProceedToNextMap.ask(self.__proceed)
             else:
                 self.__proceed()
         else:
-            SaveData.instance().achievement_manager.trigger_event(event_id)
+            SaveData.instance().trigger_event(event_id)
 
     def load_map(self, map_name: str, spawn_room: Optional[Coordinate], map_seed: Optional[int] = None):
         if map_name.lower() == MapConfig.next_map_string():
