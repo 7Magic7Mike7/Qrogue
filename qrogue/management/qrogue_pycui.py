@@ -611,14 +611,14 @@ class QrogueCUI(PyCUI):
         self.apply_widget_set(self.__screen_check)
 
     def __start_playing(self):
-        if AchievementManager.instance().check_unlocks(Unlocks.Spaceship):
+        if SaveData.instance().check_unlocks(Unlocks.Spaceship):
             self.__state_machine.change_state(QrogueCUI._State.Spaceship, SaveData.instance())
         else:
             # load the newest level (exam phase) by
             MapManager.instance().load_first_uncleared_map()
 
     def __start_expedition(self):
-        if AchievementManager.instance().check_unlocks(Unlocks.Spaceship):
+        if SaveData.instance().check_unlocks(Unlocks.Spaceship):
             MapManager.instance().load_expedition()
         else:
             def _callback(selection: int):
@@ -688,7 +688,7 @@ class QrogueCUI(PyCUI):
             self.__key_logger.reinit(level.seed, level.internal_name)  # the seed used to build the Map
             OverWorldKeyLogger.instance().level_start(level.internal_name)
             robot.reset_score()     # reset the score at the start of each level
-            AchievementManager.instance().restart_level_timer()
+            SaveData.instance().restart_level_timer()
 
             self.__pause.set_data(robot, level.name, None)
             self.__state_machine.change_state(QrogueCUI._State.Explore, level)
@@ -700,7 +700,7 @@ class QrogueCUI(PyCUI):
             if confirmed == 0:
                 MapManager.instance().reload()
             elif confirmed == 1:
-                if AchievementManager.instance().check_unlocks(Unlocks.Spaceship):
+                if SaveData.instance().check_unlocks(Unlocks.Spaceship):
                     self.__state_machine.change_state(QrogueCUI._State.Spaceship, None)
                 else:
                     self.__state_machine.change_state(QrogueCUI._State.Menu, None)
@@ -726,7 +726,7 @@ class QrogueCUI(PyCUI):
         self.__state_machine.change_state(QrogueCUI._State.Pause, None)
         if not SaveData.instance().check_achievement(achievements.EnteredPauseMenu):
             Popup.generic_info("Pause", HelpText.Pause.text)
-            AchievementManager.instance().trigger_global_event(achievements.EnteredPauseMenu, 1)
+            SaveData.instance().trigger_global_event(achievements.EnteredPauseMenu, 1)
 
     def _switch_to_explore(self, data: Optional[Union[Map, Tuple[Optional[Map], Optional[bool]]]]) -> None:
         if data is not None:

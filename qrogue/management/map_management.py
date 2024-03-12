@@ -291,7 +291,7 @@ class MapManager:
             self.__in_level = False
             self.__show_world(self.__get_world(self.__cur_map.internal_name))
         elif self.__cur_map is self.__hub_world or \
-                not AchievementManager.instance().check_unlocks(Unlocks.FreeNavigation):
+                not SaveData.instance().check_unlocks(Unlocks.FreeNavigation):
             # we return to the default world if we are currently in the hub-world or haven't unlocked it yet
             self.__show_world(None)
         else:
