@@ -501,7 +501,9 @@ class InstructionManager:
     }
 
     @staticmethod
-    def from_name(name: str) -> Optional[Instruction]:
+    def from_name(name: str, ignore_gate_suffix: bool = True) -> Optional[Instruction]:
+        if ignore_gate_suffix and name.lower().endswith("gate"):
+            name = name[:-len("gate")]
         for val in GateType:
             if val.is_in_names(name):
                 return InstructionManager.__GATES[val].copy()

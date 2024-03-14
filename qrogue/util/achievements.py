@@ -1,5 +1,6 @@
+import datetime
 import enum
-from typing import List, Dict
+from typing import List, Dict, Iterator, Optional
 
 from qrogue.util import MapConfig, ErrorConfig, Logger, GameplayConfig
 from qrogue.util.util_functions import cur_datetime, time_diff
@@ -50,6 +51,14 @@ class Unlocks(enum.Enum):
     @staticmethod
     def in_map_reference() -> str:
         return "unlocks"
+
+    @staticmethod
+    def from_name(name: str) -> Optional["Unlocks"]:
+        name = name.lower()     # normalize name
+        for unlock in Unlocks:
+            if unlock.name.lower() == name:
+                return unlock
+        return None
 
 
 class Ach:
@@ -142,12 +151,15 @@ class Achievement:
     def from_unlock(unlock: Unlocks) -> "Achievement":
         return Achievement(unlock.ach_name, AchievementType.Unlock, 1, 1)
 
-    # todo add unlock-date?
-    def __init__(self, name: str, atype: AchievementType, score: float, done_score: float):
+    def __init__(self, name: str, atype: AchievementType, score: float, done_score: float,
+                 date_time: Optional[datetime.datetime] = None):
         self.__name = name
         self.__type = atype
         self.__score = score
         self.__done_score = done_score
+        # date_time is either the datetime of the last scoring of the achievement or the datetime of completing the
+        # achievement (score >= done_score)
+        self.__date_time = datetime.datetime.now() if date_time is None else date_time
 
     @property
     def name(self) -> str:
@@ -165,6 +177,10 @@ class Achievement:
     def done_score(self) -> float:
         return self.__done_score
 
+    @property
+    def date_time(self) -> datetime.datetime:
+        return self.__date_time
+
     def is_done(self) -> bool:
         return self.score >= self.done_score
 
@@ -175,6 +191,9 @@ class Achievement:
         :return: True if we changed the score, False otherwise
         """
         if score > 0 and not self.is_done():
+            # update our scoring timestamp - if this call completed the achievement, date_time will never be udpated
+            # again, making date_time the datetime of completion
+            self.__date_time = datetime.datetime.now()
             self.__score = min(self.score + score, self.done_score)
             return True
         return False
@@ -242,6 +261,9 @@ class AchievementManager:
             self.__storage[Ach.story()] = Achievement(Ach.story(), AchievementType.Implicit, story_counter,
                                                       Ach.STORY_DONE_PROGRESS)
             AchievementManager.__instance = self
+
+    def achievement_iterator(self) -> Iterator[Achievement]:
+        return iter(self.__storage.values())
 
     @property
     def story_progress(self) -> int:

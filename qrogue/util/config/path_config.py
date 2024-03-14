@@ -184,7 +184,7 @@ class PathConfig:
 
     @staticmethod
     def new_save_file(text: str):
-        now_str = PathConfig.__now_str()
+        #now_str = PathConfig.__now_str()
         num_of_files, num = PathConfig.__get_save_files_stats()
 
         # increment to get the highest number for the new save file (if no save file exists yet, -1 will be incremented
@@ -193,7 +193,7 @@ class PathConfig:
         if num_of_files >= PathConfig.__NUMBER_OF_SAVE_FILES:
             oldest_num = num - PathConfig.__NUMBER_OF_SAVE_FILES
             PathConfig.delete(PathConfig.__save_file_str(oldest_num))
-        PathConfig.write(PathConfig.__save_file_str(num), now_str + "\n" + text, may_exist=False)
+        PathConfig.write(PathConfig.__save_file_str(num),text, may_exist=False)
 
     @staticmethod
     def write_auto_save(text: str):

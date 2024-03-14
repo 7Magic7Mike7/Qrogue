@@ -50,7 +50,7 @@ __MAP_ORDER: Dict[int, Dict[str, str]] = {
 def get_next(cur_map: str) -> Optional[str]:
     if cur_map == MapConfig.first_uncleared():
         next_map = __MAP_ORDER[GameplayConfig.get_knowledge_mode()][cur_map]
-        while SaveData.instance().check_achievement(next_map):
+        while SaveData.instance().check_level(next_map):
             if next_map in __MAP_ORDER[GameplayConfig.get_knowledge_mode()]:
                 next_map = __MAP_ORDER[GameplayConfig.get_knowledge_mode()][next_map]
             else:
