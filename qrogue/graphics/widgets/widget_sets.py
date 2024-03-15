@@ -966,8 +966,9 @@ class PauseMenuWidgetSet(MyWidgetSet):
 
         description = self.add_block_label('Description', UIConfig.WINDOW_HEIGHT-UIConfig.PAUSE_DESCRIPTION_HEIGHT,
                                            UIConfig.PAUSE_CHOICES_WIDTH, row_span=UIConfig.PAUSE_DESCRIPTION_HEIGHT,
-                                           column_span=UIConfig.WINDOW_WIDTH-UIConfig.PAUSE_CHOICES_WIDTH, center=True)
+                                           column_span=UIConfig.WINDOW_WIDTH-UIConfig.PAUSE_CHOICES_WIDTH, center=False)
         self.__description = SimpleWidget(description)
+        description.activate_individual_coloring()
 
         # add action key commands
         def use_choices():
@@ -1090,11 +1091,12 @@ class PauseMenuWidgetSet(MyWidgetSet):
     def set_data(self, robot: Optional[Robot], map_name: str, achievement_manager: Optional["AchievementManager"]): # todo: remove achievement_manager parameter?
         # todo maybe needs some overhaul?
         self.__hud.set_data((robot, map_name, None))
+        self.__description.set_data(HelpText.Pause.text)
 
     def reset(self) -> None:
         self.__choices.render_reset()
         self.__details.render_reset()
-        self.__description.render_reset()
+        self.__description.render_reset(reset_text=False)
 
 
 class WorkbenchWidgetSet(MyWidgetSet):

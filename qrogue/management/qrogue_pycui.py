@@ -32,7 +32,7 @@ from qrogue.util.config import FileTypes, PopupConfig
 from qrogue.util.game_simulator import GameSimulator
 from qrogue.util.key_logger import KeyLogger, OverWorldKeyLogger
 
-from qrogue.management import MapManager, Pausing, SaveData, StoryNarration, TransitionText
+from qrogue.management import MapManager, Pausing, SaveData
 
 
 class QrogueCUI(PyCUI):
@@ -728,9 +728,6 @@ class QrogueCUI(PyCUI):
 
     def __pause_game(self) -> None:
         self.__state_machine.change_state(QrogueCUI._State.Pause, None)
-        if not SaveData.instance().check_achievement(achievements.EnteredPauseMenu):
-            Popup.generic_info("Pause", HelpText.Pause.text)
-            SaveData.instance().trigger_global_event(achievements.EnteredPauseMenu, 1)
 
     def _switch_to_explore(self, data: Optional[Union[Map, Tuple[Optional[Map], Optional[bool]]]]) -> None:
         if data is not None:

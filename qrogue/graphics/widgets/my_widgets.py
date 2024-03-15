@@ -308,14 +308,14 @@ class SimpleWidget(Widget):
         super().__init__(widget)
         self.__text = initial_text
 
-    def set_data(self, data) -> None:
+    def set_data(self, data: str) -> None:
         self.__text = str(data)
 
     def render(self) -> None:
         self.widget.set_title(self.__text)
 
-    def render_reset(self) -> None:
-        self.__text = ""
+    def render_reset(self, reset_text: bool = True) -> None:
+        if reset_text: self.__text = ""
         self.widget.set_title("")
 
     def __str__(self):

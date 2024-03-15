@@ -15,162 +15,24 @@ from qrogue.management.save_grammar.SaveDataParser import SaveDataParser
 from qrogue.management.save_grammar.SaveDataVisitor import SaveDataVisitor
 from qrogue.util import Logger, PathConfig, FileTypes, RandomManager, CommonPopups, Config, \
     TestConfig, ErrorConfig, achievements, MapConfig
-from qrogue.util.achievements import Achievement, Unlocks, AchievementType, AchievementManager, Ach
+from qrogue.util.achievements import Achievement, Unlocks, Ach
 from qrogue.util.util_functions import cur_datetime, time_diff
 
 
 class SaveData:
-    __ROBOT_SECTION = "[Robots]"
-    __COLLECTIBLE_SECTION = "[Collectibles]"
-    __ACHIEVEMENT_SECTION = "[Achievements]"
-    __instance = None
-
-    __FRESH_START_ACHIEVEMENTS: List[Achievement] = [
-        Achievement(achievements.CompletedExpedition, AchievementType.Expedition, 0, 100),
-        # worlds
-        Achievement("w0", AchievementType.World, 0, 7),
-        # auto unlocks (i.e., was previously unlocked in a certain way but now unlocked from the very beginning)
-        Achievement.from_unlock(Unlocks.GateRemove),
-    ]
-
     @staticmethod
-    def instance() -> "SaveData":
+    def instance() -> "NewSaveData":
         return NewSaveData.instance()
-        if SaveData.__instance is None:
-            Logger.instance().throw(Exception(ErrorConfig.singleton_no_init("SaveData")))
-        return SaveData.__instance
 
     @staticmethod
     def reset():
-        if TestConfig.is_active():
-            NewSaveData.__instance = None
-            SaveData.__instance = None
-        else:
-            raise TestConfig.StateException(ErrorConfig.singleton_reset("SaveData"))
+        NewSaveData.reset()
 
     def __init__(self):
         NewSaveData(None, is_global_save=True)
-        return
-        if SaveData.__instance is not None:
-            Logger.instance().throw(Exception(ErrorConfig.singleton("SaveData")))
-        else:
-            self.__player = Player()
-            path = PathConfig.find_latest_save_file()
-            # a fresh save has no digit before the file ending
-            self.__is_fresh_save = not path[-len(FileTypes.Save.value)-1].isdigit()
-            content = ""
-            try:
-                content = PathConfig.read(path, in_user_path=True).splitlines()
-            except FileNotFoundError:
-                Logger.instance().throw(NotImplementedError("This line should not be reachable! Please send us the log "
-                                                            "files so we can fix the issue as soon as possible. "
-                                                            "Thank you!"))
-            index = content.index(SaveData.__ACHIEVEMENT_SECTION)
-
-            # add the fresh start achievements or else load everything from the file
-            achievement_list = SaveData.__FRESH_START_ACHIEVEMENTS.copy() if self.__is_fresh_save else []
-            for i in range(index + 1, len(content)):
-                achievement = Achievement.from_string(content[i])
-                if achievement:
-                    achievement_list.append(achievement)
-            AchievementManager(achievement_list)
-
-            self.__available_robots = [
-                BaseBot(CallbackPack.instance().game_over),
-                LukeBot(CallbackPack.instance().game_over),
-            ]
-            SaveData.__instance = self
-
-    @property
-    def _achievement_manager(self) -> AchievementManager:
-        return AchievementManager.instance()
-
-    @property
-    def player(self) -> Player:
-        return self.__player
-
-    @property
-    def story_progress(self) -> int:
-        return self.achievement_manager.story_progress
-
-    @property
-    def is_fresh_save(self) -> bool:
-        return self.__is_fresh_save
-
-    #def get_expedition_seed(self) -> int:
-    #    return RandomManager.instance().get_seed(msg="SaveData.get_expedition_seed()")  # 7    # todo implement
-
-    def available_robots(self) -> List[Robot]:
-        return self.__available_robots.copy()
-
-    def get_robot(self, index: int) -> Optional[Robot]:
-        if 0 <= index < len(self.__available_robots):
-            return self.__available_robots[index]
-        return None
-
-    def achievement_iterator(self) -> Iterator[Achievement]:
-        return self._achievement_manager.achievement_iterator()
-
-    def restart_level_timer(self):
-        return self._achievement_manager.restart_level_timer()
-
-    def check_level(self, name: str) -> bool:
-        return self.finished_level(name)
-
-    def check_unlocks(self, unlocks: Union[str, Unlocks]) -> bool:
-        if isinstance(unlocks, str): unlocks = Unlocks.from_name(unlocks)
-        return self._achievement_manager.check_unlocks(unlocks)
-
-    def check_achievement(self, name: str) -> bool:
-        return self._achievement_manager.check_achievement(name)
-
-    def check(self, name: str) -> bool:
-        if self.finished_level(name): return True
-        if self.check_unlocks(name): return True
-        if self.check_achievement(name): return True
-        return False
-
-    def reset_level_events(self):
-        self._achievement_manager.reset_level_events()
-
-    def add_to_achievement(self, name: str, score: float = 1):
-        return self._achievement_manager.add_to_achievement(name, score)
-
-    def trigger_global_event(self, name: str, score: float = 1):
-        return self._achievement_manager.trigger_global_event(name, score)
-
-    def trigger_event(self, name: str, score: float = 1):
-        return self._achievement_manager.trigger_event(name, score)
-
-    def finished_level(self, internal_name: str, display_name: str = None) -> bool:
-        return self._achievement_manager.finished_level(internal_name, display_name)
-
-    def to_achievements_string(self) -> str:
-        return self._achievement_manager.to_string()
-
-    def to_string(self) -> str:
-        data = ""
-        data += f"{SaveData.__ROBOT_SECTION}\n"
-        data += f"{SaveData.__COLLECTIBLE_SECTION}\n"
-        data += f"{SaveData.__ACHIEVEMENT_SECTION}\n"
-        data += f"{self.to_achievements_string()}\n"
-        return data
-
-    def save(self, is_auto_save: bool = False) -> Tuple[bool, CommonPopups]:
-        if Config.forbid_saving():
-            return False, CommonPopups.NoSavingWithCheats
-        try:
-            data = self.to_string()
-            if is_auto_save:
-                PathConfig.write_auto_save(data)
-            else:
-                PathConfig.new_save_file(data)
-            return True, CommonPopups.SavingSuccessful
-        except:
-            return False, CommonPopups.SavingFailed
 
 
-class NewSaveData(SaveData):
+class NewSaveData:
     __instance = None
 
     class LevelData:
@@ -206,41 +68,16 @@ class NewSaveData(SaveData):
         return NewSaveData.__instance
 
     @staticmethod
-    def from_old_save_data() -> "NewSaveData":
-        date_time = datetime.now()
-        levels: List[NewSaveData.LevelData] = []
-        unlocks: List[Tuple[str, datetime]] = []
-        achievement_list: List[Achievement] = []
-
-        for ach in SaveData.instance().achievement_iterator():
-            if ach.type is AchievementType.Level:
-                if not ach.is_done(): continue
-                levels.append(NewSaveData.LevelData(ach.name, date_time, -1, -1))
-
-            elif ach.type is AchievementType.Unlock:
-                if not ach.is_done(): continue
-                unlocks.append((ach.name, date_time))
-            else:
-                achievement_list.append(ach)
-
-        save_data = NewSaveData("", is_global_save=False)
-        for level_data in levels: save_data.complete_level(level_data.name, level_data.date_time, level_data.duration,
-                                                           level_data.score)
-        for unlock in unlocks: save_data.unlock(unlock[0], date_time)
-        for ach in achievement_list: save_data.add_achievement(ach)
-
-        return save_data
-
-    @staticmethod
     def _init_fresh_save(save_data: "NewSaveData"):
         # some achievements need to be present right from the start
-        save_data.add_achievement(Achievement(achievements.CompletedExpedition, AchievementType.Expedition, 0, 100))    # todo: change system?
+        save_data.add_achievement(Achievement(achievements.CompletedExpedition, 0, 100))    # todo: change system?
 
         # some unlocks are present by default for backwards compatibility   # todo: fix this because it's confusing on the Achievement-screen
         save_data.unlock(Unlocks.GateRemove)
 
     def __init__(self, save_data: Optional[str], is_global_save: bool = True):
-        self.__temp_level_storage: Dict[str, Achievement] = {}  # todo: rethink system and update accordingly
+        self.__level_timer = cur_datetime()
+        self.__temp_level_storage: Dict[str, Tuple[int, int]] = {}  # event name -> score, done_score
         #achievement_list = []   # todo: init differently?
         if is_global_save and NewSaveData.__instance is not None:
             Logger.instance().throw(Exception(ErrorConfig.singleton("NewSaveData")))
@@ -413,11 +250,10 @@ class NewSaveData(SaveData):
 
     @staticmethod
     def reset():
-        NewSaveData.__instance = None
-
-    @property
-    def _achievement_manager(self) -> AchievementManager:
-        raise Exception("Illegal usage!")
+        if TestConfig.is_active():
+            NewSaveData.__instance = None
+        else:
+            raise TestConfig.StateException(ErrorConfig.singleton_reset("NewSaveData"))     # todo: rename with NewSaveData
 
     def achievement_iterator(self) -> Iterator[Achievement]:
         # todo: test
@@ -439,7 +275,8 @@ class NewSaveData(SaveData):
 
     def trigger_global_event(self, name: str, score: float = 1):
         # todo: I think this is only used for EnteredPauseMenu -> handle EnteredPauseMenu differently
-        self.add_achievement(Achievement(name, AchievementType.Event, 1, 1))
+        #self.add_achievement(Achievement(name, AchievementType.NewInternalFlag, 1, 1))
+        raise Exception("Should no longer be used!")
 
     def trigger_event(self, name: str, score: float = 1):
         """
@@ -449,6 +286,7 @@ class NewSaveData(SaveData):
         :param score: by how much the event should progress (only relevant if it can be triggered multiple times from
                         different sources
         """
+        score = int(score)
         # todo: test and rethink whether we actually need this
         if name.startswith(MapConfig.global_event_prefix()):
             name = name[len(MapConfig.global_event_prefix()):]  # remove prefix
@@ -465,9 +303,10 @@ class NewSaveData(SaveData):
 
         else:
             if name in self.__temp_level_storage:
-                self.__temp_level_storage[name].add_score(score)
+                event_score, event_done_score = self.__temp_level_storage[name]
+                self.__temp_level_storage[name] = event_score + score, event_done_score
             else:
-                self.__temp_level_storage[name] = Achievement(name, AchievementType.Event, score, score)
+                self.__temp_level_storage[name] = score, score
 
     def finished_level(self, internal_name: str, display_name: str = None) -> bool:
         # todo: test
@@ -586,7 +425,7 @@ class _SaveDataGenerator(SaveDataVisitor):
         actual_score = self.visitScore(ctx.score())
         required_score = self.visitValue(ctx.value())
 
-        return Achievement(name, AchievementType.Misc, actual_score, required_score, date_time)  # todo: overhaul AchievementTypes?
+        return Achievement(name, actual_score, required_score, date_time)
 
     def visitAchievements(self, ctx: SaveDataParser.AchievementsContext) -> List[Achievement]:
         return [self.visitAchievement(achievement) for achievement in ctx.achievement()]
