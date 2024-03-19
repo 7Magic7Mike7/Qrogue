@@ -2,6 +2,7 @@ import time
 from threading import Thread
 from typing import Callable, Optional, Dict, List
 
+from qrogue.game.logic.actors import Robot
 from qrogue.game.world.dungeon_generator import ExpeditionGenerator, QrogueLevelGenerator, QrogueWorldGenerator
 from qrogue.game.world.map import Map, WorldMap, MapType, ExpeditionMap
 from qrogue.game.world.navigation import Coordinate
@@ -310,14 +311,18 @@ class MapManager:
 
     def __trigger_event(self, event_id: str):
         if event_id.lower() == MapConfig.done_event_id():
-            event_id = MapConfig.specific_done_event_id(self.__cur_map.internal_name)
-            SaveData.instance().trigger_event(event_id)
+            #event_id = MapConfig.specific_done_event_id(self.__cur_map.internal_name)
+            #SaveData.instance().trigger_event(event_id)
+            robot = self.__cur_map.controllable_tile.controllable
+            if isinstance(robot, Robot):
+                SaveData.instance().complete_level(self.__cur_map.internal_name, score=robot.score)
+            else:
+                raise Exception("No Robot???")      # todo: get rid of this
 
             if self.__cur_map.get_type() is MapType.World:
                 SaveData.instance().achievement_manager.finished_world(self.__cur_map.internal_name)
             elif self.__cur_map.get_type() is MapType.Level:
-                if SaveData.instance().finished_level(self.__cur_map.internal_name,
-                                                                          self.__cur_map.name):
+                if SaveData.instance().finished_level(self.__cur_map.internal_name, self.__cur_map.name):   # todo: check not needed since we don't have Worlds anymore
                     SaveData.instance().save(is_auto_save=True)     # auto save   # todo update system after user study?
                     # if the level was not finished before, we may increase the score of the world's achievement
                     world = self.__get_world(self.__cur_map.internal_name)
