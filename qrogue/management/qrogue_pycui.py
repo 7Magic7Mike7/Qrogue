@@ -32,7 +32,7 @@ from qrogue.util.config import FileTypes, PopupConfig
 from qrogue.util.game_simulator import GameSimulator
 from qrogue.util.key_logger import KeyLogger, OverWorldKeyLogger
 
-from qrogue.management import MapManager, Pausing, SaveData
+from qrogue.management import MapManager, Pausing, SaveData, LevelInfo
 
 
 class QrogueCUI(PyCUI):
@@ -206,7 +206,8 @@ class QrogueCUI(PyCUI):
         MapManager.reset()
 
         try:
-            simulator = GameSimulator(simulation_path, in_keylog_folder=True)
+            simulator = GameSimulator(simulation_path, in_keylog_folder=True, get_unlocks=lambda name:
+                        LevelInfo.get_level_completion_unlocks(name, SaveData.instance().check_level, True))
             qrogue_cui = QrogueCUI(simulator.seed)
             qrogue_cui._set_simulator(simulator, stop_when_finished=True)
 

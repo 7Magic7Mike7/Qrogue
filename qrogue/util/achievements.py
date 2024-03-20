@@ -61,26 +61,6 @@ class Unlocks(enum.Enum):
         return None
 
 
-class Ach:
-    __LEVEL_COMPLETION_UNLOCKS: Dict[str, List[Unlocks]] = {
-        # newbie tutorials
-        "l0k0v0": [Unlocks.MainMenuContinue, Unlocks.ShowEnergy, ],
-        "l0k0v1": [Unlocks.ShowEquation],
-
-        # experienced tutorials
-        "l0k1v0": [Unlocks.MainMenuContinue, Unlocks.ShowEnergy, ],
-        "l0k1v1": [Unlocks.ShowEquation],
-
-        # other levels
-    }
-
-    @staticmethod
-    def get_level_completion_unlocks(level_name: str) -> List[Unlocks]:
-        if level_name in Ach.__LEVEL_COMPLETION_UNLOCKS:
-            return Ach.__LEVEL_COMPLETION_UNLOCKS[level_name]
-        return []
-
-
 class Achievement:
     __DATA_SEPARATOR = ">q<"
 

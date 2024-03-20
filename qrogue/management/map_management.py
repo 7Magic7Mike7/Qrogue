@@ -7,6 +7,7 @@ from qrogue.game.world.dungeon_generator import ExpeditionGenerator, QrogueLevel
 from qrogue.game.world.map import Map, WorldMap, MapType, ExpeditionMap
 from qrogue.game.world.navigation import Coordinate
 from qrogue.graphics.popups import Popup
+from qrogue.management import LevelInfo
 from qrogue.util import CommonQuestions, Logger, MapConfig, achievements, RandomManager, Config, TestConfig, \
     ErrorConfig, PathConfig
 
@@ -14,52 +15,6 @@ from qrogue.management.save_data import SaveData
 from qrogue.util.achievements import Unlocks
 from qrogue.util.config.gameplay_config import ExpeditionConfig, GameplayConfig
 from qrogue.util.util_functions import open_folder
-
-__MAP_ORDER: Dict[int, Dict[str, str]] = {
-    # map names:
-    #   - the first character determines if it's a level ("l") or world ("w")
-    #   - the second character determines to which world the map belongs to
-    #   - the third character determines if the level differs based on knowledge mode, followed by the corresponding
-    #     digit of the knowledge mode
-    #   - last digit for levels is used to order the levels (only for structure, not used in game logic)
-    #   - alternatively maps can also start with "expedition" to mark them as generated
-    0: {
-        #MapConfig.spaceship(): MapConfig.intro_level(),
-        MapConfig.first_uncleared(): "l0k0v0",
-        "l0k0v0": "l0k0v1",
-        "l0k0v1": "l0k0v2",
-        "l0k0v2": "l0k0v3",
-        "l0k0v3": "l0k0v4",
-        "l0k0v4": f"{MapConfig.expedition_map_prefix()}25",
-        "l0training": "w0",
-        "l0exam": MapConfig.spaceship(),
-        "w0": MapConfig.spaceship(),
-
-        MapConfig.hub_world(): "l0v0",
-    },
-    1: {
-        MapConfig.first_uncleared(): "l0k1v0",
-        "l0k1v0": "l0k1v1",
-        "l0k1v1": "l0k1v2",
-        "l0k1v2": "l0k1v3",
-        "l0k1v3": "l0k1v4",
-        "l0k1v4": f"{MapConfig.expedition_map_prefix()}25",
-    },
-}
-
-
-def get_next(cur_map: str) -> Optional[str]:
-    if cur_map == MapConfig.first_uncleared():
-        next_map = __MAP_ORDER[GameplayConfig.get_knowledge_mode()][cur_map]
-        while SaveData.instance().check_level(next_map):
-            if next_map in __MAP_ORDER[GameplayConfig.get_knowledge_mode()]:
-                next_map = __MAP_ORDER[GameplayConfig.get_knowledge_mode()][next_map]
-            else:
-                break
-        return next_map
-    elif cur_map in __MAP_ORDER[GameplayConfig.get_knowledge_mode()]:
-        return __MAP_ORDER[GameplayConfig.get_knowledge_mode()][cur_map]
-    return None
 
 
 class MapManager:
@@ -197,7 +152,7 @@ class MapManager:
 
     def __load_map(self, map_name: str, room: Optional[Coordinate], map_seed: Optional[int] = None):
         if map_name == MapConfig.first_uncleared():
-            next_map = get_next(MapConfig.spaceship())
+            next_map = LevelInfo.get_next(MapConfig.spaceship(), SaveData.instance().check_level)   # todo: get rid of .spaceship()
             if next_map is None:
                 self.__load_map(MapConfig.hub_world(), room, map_seed)
             else:
@@ -277,7 +232,7 @@ class MapManager:
             Logger.instance().error(f"Invalid map to load: {map_name}", from_pycui=False)
 
     def __load_next(self):
-        next_map = get_next(self.__cur_map.internal_name)
+        next_map = LevelInfo.get_next(self.__cur_map.internal_name, SaveData.instance().check_level)
         if next_map:
             self.__load_map(next_map, None, None)
         else:
@@ -351,7 +306,7 @@ class MapManager:
         if Config.test_level(ignore_debugging=False):
             self.__load_map(MapConfig.test_level(), None)
         else:
-            map_name = get_next(MapConfig.first_uncleared())
+            map_name = LevelInfo.get_next(MapConfig.first_uncleared(), SaveData.instance().check_level)
             self.__load_map(map_name, None)
 
     def load_expedition(self, seed: Optional[int] = None) -> None:

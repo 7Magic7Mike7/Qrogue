@@ -10,6 +10,7 @@ from qrogue.game.logic.collectibles import Instruction
 from qrogue.game.logic.collectibles.instruction import InstructionManager
 from qrogue.game.world.dungeon_generator import parser_util
 from qrogue.game.world.map import CallbackPack
+from qrogue.management import LevelInfo
 from qrogue.management.save_grammar.SaveDataLexer import SaveDataLexer
 from qrogue.management.save_grammar.SaveDataParser import SaveDataParser
 from qrogue.management.save_grammar.SaveDataVisitor import SaveDataVisitor
@@ -161,7 +162,7 @@ class NewSaveData:
         level_data = NewSaveData.LevelData(name, date_time, duration, score)
         self.__levels[level_data.name] = level_data
 
-        for unlock in Ach.get_level_completion_unlocks(level_data.name):
+        for unlock in LevelInfo.get_level_completion_unlocks(level_data.name, self.check_level):
             self.unlock(unlock, date_time)
 
     def unlock(self, unlock: Union[str, Unlocks], date_time: Optional[datetime] = None):

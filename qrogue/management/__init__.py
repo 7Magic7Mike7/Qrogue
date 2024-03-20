@@ -1,5 +1,6 @@
 # exporting
 from .pause import Pausing
+from .level_info import LevelInfo
 from .save_data import SaveData
 from .map_management import MapManager
 from .qrogue_pycui import QrogueCUI
