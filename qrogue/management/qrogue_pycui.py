@@ -13,20 +13,20 @@ from qrogue.game.logic.actors.controllables import BaseBot
 from qrogue.game.logic.actors.puzzles import Challenge
 from qrogue.game.logic.base import StateVector
 from qrogue.game.logic.collectibles import Score
-from qrogue.game.world.map import CallbackPack, SpaceshipMap, WorldMap, Map
+from qrogue.game.world.map import CallbackPack, WorldMap, Map
 from qrogue.game.world.navigation import Direction
 from qrogue.game.world.tiles import WalkTriggerTile, Message, Collectible
 from qrogue.game.world.tiles.tiles import NpcTile
 from qrogue.graphics import WidgetWrapper
 from qrogue.graphics.popups import Popup, MultilinePopup, ConfirmationPopup
 from qrogue.graphics.rendering import MultiColorRenderer
-from qrogue.graphics.widgets import Renderable, SpaceshipWidgetSet, BossFightWidgetSet, ExploreWidgetSet, \
+from qrogue.graphics.widgets import Renderable, BossFightWidgetSet, ExploreWidgetSet, \
     FightWidgetSet, MenuWidgetSet, MyWidgetSet, NavigationWidgetSet, PauseMenuWidgetSet, RiddleWidgetSet, \
     ChallengeWidgetSet, ShopWidgetSet, WorkbenchWidgetSet, TrainingsWidgetSet, Widget, TransitionWidgetSet, \
     ScreenCheckWidgetSet
 from qrogue.util import achievements, common_messages, CheatConfig, Config, GameplayConfig, UIConfig, HelpText, \
     Logger, PathConfig, MapConfig, Controls, Keys, RandomManager, PyCuiConfig, PyCuiColors, Options, \
-    TestConfig, CommonQuestions
+    TestConfig, CommonQuestions, ErrorConfig
 from qrogue.util.achievements import Unlocks
 from qrogue.util.config import FileTypes, PopupConfig
 from qrogue.util.game_simulator import GameSimulator
@@ -96,7 +96,7 @@ class QrogueCUI(PyCUI):
                 self.__renderer._switch_to_pause()
 
             elif self.__cur_state == QrogueCUI._State.Spaceship:
-                self.__renderer._switch_to_spaceship(data)
+                ErrorConfig.raise_deletion_exception()
             elif self.__cur_state == QrogueCUI._State.Training:
                 self.__renderer._switch_to_training(data)
             elif self.__cur_state == QrogueCUI._State.Workbench:
@@ -291,13 +291,12 @@ class QrogueCUI(PyCUI):
                                           self.__map_manager.reload, self.__save_data.to_achievements_string)
         self.__pause.set_data(None, "Qrogue", None)
 
-        self.__spaceship = SpaceshipWidgetSet(self.__controls, Logger.instance(), self, self.__render)
         self.__training = TrainingsWidgetSet(self.__controls, self.__render, Logger.instance(), self,
-                                             self.__continue_spaceship, self.__popup_history.show,
-                                             self.__save_data.check_unlocks)
+                                             lambda b: None, self.__popup_history.show,
+                                             self.__save_data.check_unlocks)   # todo: update signature
         self.__workbench = WorkbenchWidgetSet(self.__controls, Logger.instance(), self,
                                               self.__save_data.available_robots(), self.__render,
-                                              self.__continue_spaceship)
+                                              lambda b: None)   # todo: update signature
         self.__navigation = NavigationWidgetSet(self.__controls, self.__render, Logger.instance(), self)
 
         self.__explore = ExploreWidgetSet(self.__controls, self.__render, Logger.instance(), self)
@@ -314,7 +313,7 @@ class QrogueCUI(PyCUI):
                                               self.__save_data.check_unlocks)
         self.__shop = ShopWidgetSet(self.__controls, self.__render, Logger.instance(), self, self.__continue_explore)
 
-        widget_sets: List[MyWidgetSet] = [self.__spaceship, self.__training, self.__navigation, self.__explore,
+        widget_sets: List[MyWidgetSet] = [self.__training, self.__navigation, self.__explore,
                                           self.__fight, self.__boss_fight, self.__shop, self.__riddle, self.__challenge,
                                           self.__workbench]
         # INIT KEYS
@@ -339,25 +338,6 @@ class QrogueCUI(PyCUI):
         self.__cur_widget_set: MyWidgetSet = self.__transition      # avoid None value
         self.__state_machine = QrogueCUI._StateMachine(self)
         self.__state_machine.change_state(QrogueCUI._State.Menu, seed)
-
-        # INIT SPACESHIP
-        def stop_playing(direction: Direction, controllable: Controllable):
-            if SaveData.instance().achievement_manager.progressed_in_story(achievements.FinishedTutorial):
-                self._switch_to_menu(None)
-
-        def open_world_view(direction: Direction, controllable: Controllable):
-            if AchievementManager.instance().check_unlocks(Unlocks.Navigation):
-                if AchievementManager.instance().check_unlocks(Unlocks.FreeNavigation):
-                    MapManager.instance().load_map(MapConfig.hub_world(), None)
-                else:
-                    MapManager.instance().load_map(MapConfig.first_world(), None)
-
-        scientist = NpcTile(Config.scientist_name(), Popup.npc_says, StoryNarration.scientist_text)
-        self.__spaceship_map = SpaceshipMap(SaveData.instance().player, scientist,
-                                            SaveData.instance().achievement_manager, stop_playing,
-                                            open_world_view, self.__use_workbench, MapManager.instance().load_map,
-                                            MapManager.instance().load_first_uncleared_map, self.__start_training)
-        self.__spaceship.set_data(self.__spaceship_map)
 
         # MISC
         if Config.debugging():
@@ -397,10 +377,6 @@ class QrogueCUI(PyCUI):
     @property
     def is_simulating(self) -> bool:
         return self.__simulator is not None
-
-    @property
-    def controls(self) -> Controls:
-        return self.__controls
 
     @property
     def seed(self) -> int:
@@ -464,7 +440,7 @@ class QrogueCUI(PyCUI):
     def _set_simulator(self, simulator: GameSimulator, stop_when_finished: bool = False):
         self.__simulator = simulator
         self.__stop_with_simulation_end = stop_when_finished
-        simulator.set_controls(self.controls)
+        simulator.set_controls(self.__controls)
 
         if simulator.simulates_over_world:
             self.__menu.set_data(simulator.seed)
@@ -556,7 +532,7 @@ class QrogueCUI(PyCUI):
         super().apply_widget_set(new_widget_set)
         self.__cur_widget_set = new_widget_set
         self.move_focus(self.__cur_widget_set.get_main_widget(), auto_press_buttons=False)
-        self.__cur_widget_set.update_story_progress(SaveData.instance().story_progress)
+        self.__cur_widget_set.update_story_progress(0)  # todo: only used to update HudConfig - change HudConfig directly since we don't alter it anyway?
         self.__cur_widget_set.render()
 
     def show_message_popup(self, title: str, text: str, color: int = PyCuiColors.WHITE_ON_BLACK) -> None:
@@ -622,10 +598,10 @@ class QrogueCUI(PyCUI):
 
     def __start_playing(self):
         if self.__save_data.check_unlocks(Unlocks.Spaceship):
-            self.__state_machine.change_state(QrogueCUI._State.Spaceship, self.__save_data)
+            ErrorConfig.raise_deletion_exception()
         else:
             # load the newest level (exam phase) by
-            MapManager.instance().load_first_uncleared_map()
+            self.__map_manager.load_first_uncleared_map()
 
     def __start_expedition(self):
         if self.__save_data.check_unlocks(Unlocks.Spaceship):
@@ -635,16 +611,6 @@ class QrogueCUI(PyCUI):
                 if selection == 0:
                     self.__map_manager.load_expedition()
             CommonQuestions.SkipStoryTutorial.ask(_callback)
-
-    def _switch_to_spaceship(self, data=None):
-        self.apply_widget_set(self.__spaceship)
-        StoryNarration.returned_to_spaceship()
-
-    def __continue_spaceship(self, undo_last_move: bool = False) -> None:
-        """
-        :param undo_last_move: not used here but needed for other continue-callbacks
-        """
-        self.__state_machine.change_state(QrogueCUI._State.Spaceship, None)
 
     def __start_training(self, direction: Direction):
         robot = BaseBot(CallbackPack.instance().game_over, num_of_qubits=2,
@@ -666,26 +632,10 @@ class QrogueCUI(PyCUI):
         self.apply_widget_set(self.__workbench)
 
     def __show_world(self, world: WorldMap = None) -> None:
-        if world is None:
-            if AchievementManager.instance().check_unlocks(Unlocks.Spaceship):
-                if Ach.is_most_recent_unlock(Unlocks.Spaceship, SaveData.instance().story_progress) and \
-                   not SaveData.instance().achievement_manager.check_achievement(achievements.EnteredNavigationPanel):
-                    self._execute_transition(TransitionText.exam_spaceship(), QrogueCUI._State.Spaceship, None)
-                else:
-                    self.__state_machine.change_state(QrogueCUI._State.Spaceship, None)
-                    self.__pause.set_data(None, "Spaceship", SaveData.instance().achievement_manager)
-            else:
-                # return to the main screen if the Spaceship is not yet unlocked
-                self.__state_machine.change_state(QrogueCUI._State.Menu, None)
-        else:
-            self.__state_machine.change_state(QrogueCUI._State.Navigation, world)
-            self.__pause.set_data(None, world.name, SaveData.instance().achievement_manager)
+        ErrorConfig.raise_deletion_exception()
 
     def _switch_to_navigation(self, data) -> None:
-        if data is not None:
-            self.__navigation.set_data(data)
-        StoryNarration.entered_navigation()
-        self.apply_widget_set(self.__navigation)
+        ErrorConfig.raise_deletion_exception()
 
     def __start_level(self, seed: int, level: Map) -> None:
         Logger.instance().info(f"Starting level {level.internal_name} with seed={seed}.", from_pycui=False)

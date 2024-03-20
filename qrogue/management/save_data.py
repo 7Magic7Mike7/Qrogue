@@ -308,8 +308,7 @@ class NewSaveData:
             #self.add_achievement(Achievement(name, AchievementType.Unlock, score, score))
 
         elif name.startswith("l") and name.endswith("done"):
-            #name = name[:-len("done")]
-            self.complete_level(name, score=self.__robot.score)     # date_time and duration will be computed
+            ErrorConfig.raise_deletion_exception()
 
         else:
             if name in self.__temp_level_storage:

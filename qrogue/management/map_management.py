@@ -69,9 +69,6 @@ class MapManager:
     def show_individual_qubits(self) -> bool:
         return self.__cur_map.show_individual_qubits
 
-    def __show_spaceship(self):
-        self.__show_world(None)
-
     def fill_expedition_queue(self, callback: Optional[Callable[[], None]] = None, no_thread: bool = False):
         if len(self.__expedition_queue) >= MapManager.__QUEUE_SIZE:
             return
@@ -90,44 +87,8 @@ class MapManager:
         else:
             Thread(target=fill, args=(), daemon=True).start()
 
-    def __load_world(self, world_name: str) -> Optional[WorldMap]:
-        """
-        Loads the world either from memory or generates it from its file. In case of generation the world's achievement
-        score will also be corrected.
-
-        :param world_name: internal name of the world to load
-        :return: a WorldMap corresponding to the provided name or None if it could not be generated
-        """
-        if world_name in self.__world_memory:
-            return self.__world_memory[world_name]
-
-        generator = QrogueWorldGenerator(self.__base_seed, SaveData.instance().player,
-                                         SaveData.instance().achievement_manager.check_achievement,
-                                         SaveData.instance().achievement_manager.add_to_achievement,
-                                         self.load_map, Popup.npc_says)
-        world, success = generator.generate(world_name)
-        if success:
-            level_counter = 0
-            for level in world.mandatory_level_iterator():
-                if SaveData.instance().achievement_manager.check_achievement(level):
-                    level_counter += 1
-            SaveData.instance().achievement_manager.correct_world_progress(world.internal_name, level_counter,
-                                                                           world.num_of_mandatory_levels)
-            self.__world_memory[world_name] = world
-            return world
-        else:
-            return None
-
     def __get_world(self, level_name: str) -> WorldMap:
-        if level_name[0] == "l" and level_name[1].isdigit():
-            world_name = "w" + level_name[1]
-            world = self.__load_world(world_name)
-            if world is None:
-                Logger.instance().error(f"Error! Unable to build map \"{world_name}\". Returning to HubWorld",
-                                        from_pycui=False)
-            else:
-                return world
-        return self.__world_memory[MapConfig.hub_world()]
+        ErrorConfig.raise_deletion_exception()
 
     def __load_map(self, map_name: str, room: Optional[Coordinate], map_seed: Optional[int] = None):
         if map_name == MapConfig.first_uncleared():
@@ -138,7 +99,7 @@ class MapManager:
                 self.__load_map(next_map, room, map_seed)
 
         elif map_name == MapConfig.spaceship():
-            self.__show_spaceship()
+            ErrorConfig.raise_deletion_exception()
 
         elif map_name in self.__world_memory:
             self.__cur_map = self.__world_memory[map_name]
@@ -146,16 +107,7 @@ class MapManager:
             self.__show_world(self.__cur_map)
 
         elif map_name.lower().startswith(MapConfig.world_map_prefix()):
-            try:
-                world = self.__load_world(map_name)
-                if world is not None:
-                    self.__cur_map = world
-                    self.__in_level = False
-                    self.__show_world(self.__cur_map)
-                else:
-                    Logger.instance().error(f"Could not load world \"{map_name}\"!", from_pycui=False)
-            except FileNotFoundError:
-                Logger.instance().error(f"Failed to open the specified world-file: {map_name}", from_pycui=False)
+            ErrorConfig.raise_deletion_exception()
 
         elif map_name.lower().startswith(MapConfig.level_map_prefix()):
             if map_seed is None:
@@ -168,7 +120,6 @@ class MapManager:
             try:
                 level, success = generator.generate(map_name)
                 if success:
-                    self.__get_world(level.internal_name)
                     self.__cur_map = level
                     self.__in_level = True
                     self.__start_level(map_seed, self.__cur_map)
@@ -220,7 +171,7 @@ class MapManager:
 
     def __load_back(self):
         if self.__cur_map.get_type() == MapType.Expedition:
-            self.__show_spaceship()     # todo for now every expedition returns to the spaceship
+            raise Exception("No longer usable")
         elif self.__in_level:
             # if we are currently in a level we return to the current world
             self.__in_level = False
@@ -254,7 +205,7 @@ class MapManager:
                 raise Exception("No Robot???")      # todo: get rid of this
 
             if self.__cur_map.get_type() is MapType.World:
-                SaveData.instance().achievement_manager.finished_world(self.__cur_map.internal_name)
+                raise Exception("No longer in use!")
             elif self.__cur_map.get_type() is MapType.Level:
                 if self.__save_data.finished_level(self.__cur_map.internal_name, self.__cur_map.name):   # todo: check not needed since we don't have Worlds anymore
                     self.__save_data.save(is_auto_save=True)     # auto save   # todo update system after user study?
@@ -262,8 +213,8 @@ class MapManager:
             elif self.__cur_map.get_type() is MapType.Expedition:
                 self.__save_data.add_to_achievement(achievements.CompletedExpedition, 1)
 
-            if AchievementManager.instance().check_unlocks(Unlocks.ProceedChoice):
-                CommonQuestions.ProceedToNextMap.ask(self.__proceed)
+            if self.__save_data.check_unlocks(Unlocks.ProceedChoice):
+                CommonQuestions.ProceedToNextMap.ask(self.__proceed)    # todo: ask only if we are currently replaying the level (if no proceed, go back to hub)
             else:
                 self.__proceed()
         else:

@@ -12,17 +12,7 @@ class WorldMap(Map):
                  trigger_event_callback: Callable[[str], None], mandatory_levels: Set[str]):
         super().__init__(meta_data, file_name, seed, rooms, player, spawn_room, check_achievement_callback,
                          trigger_event_callback)
-        self.__mandatory_levels: Set[str] = mandatory_levels
-
-    @property
-    def num_of_mandatory_levels(self) -> int:
-        return len(self.__mandatory_levels)
+        raise Exception("No longer used!")
 
     def get_type(self) -> MapType:
         return MapType.World
-
-    def is_mandatory_level(self, internal_level_name: str) -> bool:
-        return internal_level_name in self.__mandatory_levels
-
-    def mandatory_level_iterator(self) -> Iterator[str]:
-        return iter(self.__mandatory_levels)
