@@ -48,6 +48,11 @@ class NewSaveData:
 
         @property
         def name(self) -> str:
+            """
+
+            Returns: internal name of the map
+
+            """
             return self.__name
 
         @property
@@ -61,6 +66,10 @@ class NewSaveData:
         @property
         def score(self) -> int:
             return self.__score
+
+        def __str__(self) -> str:
+            return f"{self.__name} ({_SaveDataGenerator.datetime2str(self.__date_time)}, {self.__duration}s, " \
+                   f"#{self.__score})"
 
     @staticmethod
     def instance() -> "NewSaveData":
