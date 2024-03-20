@@ -3,7 +3,7 @@ from typing import Optional, Any
 
 from qrogue.game.world.dungeon_generator import DungeonGenerator
 from qrogue.game.world.dungeon_generator.random_generator import RandomLayoutGenerator, ExpeditionGenerator
-from qrogue.management.save_data import SaveData
+from qrogue.management import NewSaveData
 from qrogue.test import test_util
 
 
@@ -72,6 +72,7 @@ def test_dungeon():
     end_seed = 100
     failing_seeds = []
 
+    robot = NewSaveData().get_robot(0)
     i = 0
     for seed in range(start_seed, end_seed):
         if i % 1000 == 0:
@@ -79,7 +80,7 @@ def test_dungeon():
         generator = ExpeditionGenerator(seed, lambda s: True, lambda s: None, lambda s: None)
 
         start_time = time.time()
-        map_, success = generator.generate(SaveData.instance().get_robot(0))
+        map_, success = generator.generate(robot)
         duration = time.time() - start_time
         duration_sum += duration
 
@@ -112,7 +113,7 @@ def test_dungeon():
 
 if __name__ == '__main__':
     if test_util.init_singletons(include_config=True):
-        SaveData()
+        #SaveData()
         test_layout()
         print()
         print("#####################################################################################################")

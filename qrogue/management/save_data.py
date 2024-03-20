@@ -21,16 +21,7 @@ from qrogue.util.util_functions import cur_datetime, time_diff
 
 
 class SaveData:
-    @staticmethod
-    def instance() -> "NewSaveData":
-        return NewSaveData.instance()
-
-    @staticmethod
-    def reset():
-        NewSaveData.reset()
-
-    def __init__(self):
-        NewSaveData(None, is_global_save=True)
+    pass
 
 
 class NewSaveData:
@@ -72,12 +63,6 @@ class NewSaveData:
                    f"#{self.__score})"
 
     @staticmethod
-    def instance() -> "NewSaveData":
-        if NewSaveData.__instance is None:
-            Logger.instance().throw(Exception(ErrorConfig.singleton_no_init("NewSaveData")))
-        return NewSaveData.__instance
-
-    @staticmethod
     def _init_fresh_save(save_data: "NewSaveData"):
         # some achievements need to be present right from the start
         save_data.add_achievement(Achievement(achievements.CompletedExpedition, 0, 100))    # todo: change system?
@@ -85,50 +70,50 @@ class NewSaveData:
         # some unlocks are present by default for backwards compatibility   # todo: fix this because it's confusing on the Achievement-screen
         save_data.unlock(Unlocks.GateRemove)
 
-    def __init__(self, save_data: Optional[str], is_global_save: bool = True):
+    def __init__(self, save_data: Optional[str] = None):
+        """
+
+        Args:
+            save_data: if None is provided, the data is loaded from the latest save file
+            is_global_save:
+        """
         self.__level_timer = cur_datetime()
         self.__temp_level_storage: Dict[str, Tuple[int, int]] = {}  # event name -> score, done_score
         #achievement_list = []   # todo: init differently?
-        if is_global_save and NewSaveData.__instance is not None:
-            Logger.instance().throw(Exception(ErrorConfig.singleton("NewSaveData")))
 
+        if save_data is None:
+            path = PathConfig.find_latest_save_file()
+            # a fresh save has no digit before the file ending
+            self.__is_fresh_save = not path[-len(FileTypes.Save.value) - 1].isdigit()
+            if not self.__is_fresh_save:
+                try:
+                    save_data = PathConfig.read(path, in_user_path=True)#.splitlines()
+                except FileNotFoundError:
+                    Logger.instance().throw(NotImplementedError("This line should not be reachable! Please send us the "
+                                                                "log files so we can fix the issue as soon as "
+                                                                "possible. Thank you!"))
         else:
-            if save_data is None:
-                path = PathConfig.find_latest_save_file()
-                # a fresh save has no digit before the file ending
-                self.__is_fresh_save = not path[-len(FileTypes.Save.value) - 1].isdigit()
-                if not self.__is_fresh_save:
-                    try:
-                        save_data = PathConfig.read(path, in_user_path=True)#.splitlines()
-                    except FileNotFoundError:
-                        Logger.instance().throw(NotImplementedError("This line should not be reachable! Please send us the "
-                                                                    "log files so we can fix the issue as soon as "
-                                                                    "possible. Thank you!"))
-            else:
-                self.__is_fresh_save = False
+            self.__is_fresh_save = False
 
-            self.__date_time = datetime.now()    # date and time of the latest save
-            self.__gates: List[Instruction] = []
-            self.__levels: Dict[str, NewSaveData.LevelData] = {}
-            self.__achievements: Dict[str, Achievement] = {}
-            self.__unlocks: Dict[str, datetime] = {}
+        self.__date_time = datetime.now()    # date and time of the latest save
+        self.__gates: List[Instruction] = []
+        self.__levels: Dict[str, NewSaveData.LevelData] = {}
+        self.__achievements: Dict[str, Achievement] = {}
+        self.__unlocks: Dict[str, datetime] = {}
 
-            if save_data is not None and len(save_data.strip()) > 0:
-                generator = _SaveDataGenerator()
-                self.__date_time, gates, levels, unlocks, achievement_list = generator.load(save_data)
-                self.__gates = gates.copy()
-                for level in levels: self.__levels[level.name] = level
-                for ach in achievement_list: self.__achievements[ach.name] = ach
-                for name, date_time2 in unlocks: self.__unlocks[name] = date_time2
+        if save_data is not None and len(save_data.strip()) > 0:
+            generator = _SaveDataGenerator()
+            self.__date_time, gates, levels, unlocks, achievement_list = generator.load(save_data)
+            self.__gates = gates.copy()
+            for level in levels: self.__levels[level.name] = level
+            for ach in achievement_list: self.__achievements[ach.name] = ach
+            for name, date_time2 in unlocks: self.__unlocks[name] = date_time2
 
         self.__player = Player()    # todo: most likely no longer needed
         self.__robot = BaseBot(CallbackPack.instance().game_over)
 
         if self.__is_fresh_save:
             NewSaveData._init_fresh_save(self)
-        if is_global_save:
-            #AchievementManager(achievement_list)    # todo: fix
-            NewSaveData.__instance = self
 
     @property
     def is_fresh_save(self) -> bool:
@@ -257,13 +242,6 @@ class NewSaveData:
             return False, CommonPopups.SavingFailed
 
     ################################## TRANSITION TO NEW SYSTEM ##################################
-
-    @staticmethod
-    def reset():
-        if TestConfig.is_active():
-            NewSaveData.__instance = None
-        else:
-            raise TestConfig.StateException(ErrorConfig.singleton_reset("NewSaveData"))     # todo: rename with NewSaveData
 
     def achievement_iterator(self) -> Iterator[Achievement]:
         # todo: test

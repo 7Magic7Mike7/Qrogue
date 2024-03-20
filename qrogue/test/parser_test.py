@@ -2,17 +2,17 @@ import os
 import sys
 
 from qrogue.game.world.dungeon_generator import QrogueWorldGenerator, QrogueLevelGenerator
-from qrogue.management.save_data import SaveData
+from qrogue.management import NewSaveData
 from qrogue.test import test_util
 
 BASE_PATH = os.path.join("D:\\", "Documents", "Studium", "Master", "3. Semester", "Qrogue", "QrogueData", "data")
 
 
 def generation_test(file_name: str, world: bool = False):
-    SaveData()
-    player = SaveData.instance().player
-    check_achievement = SaveData.instance().check_achievement
-    trigger_event = SaveData.instance().trigger_event
+    save_data = NewSaveData()
+    player = save_data.player
+    check_achievement = save_data.check_achievement
+    trigger_event = save_data.trigger_event
     if world:
         generator = QrogueWorldGenerator(7, player, check_achievement, trigger_event, test_util.load_map,
                                          test_util.message_popup)

@@ -133,11 +133,9 @@ class SingletonSetupTestCase(unittest.TestCase):
         # now create new singletons
         if not init_singletons(include_config=True):
             raise Exception("Could not initialize singletons")
-        SaveData()
 
     def tearDown(self) -> None:
         # first reset
-        SaveData.reset()
         reset_singletons()
 
     def test_singleton_setup(self):

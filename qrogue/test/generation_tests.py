@@ -7,7 +7,7 @@ from qrogue.game.world.map import Room
 from qrogue.game.world.map.rooms import Hallway
 from qrogue.game.world.navigation import Direction, Coordinate
 from qrogue.game.world import tiles
-from qrogue.management.save_data import SaveData
+from qrogue.management.save_data import NewSaveData
 from qrogue.util import CheatConfig
 
 
@@ -56,7 +56,7 @@ class LevelGenTestCase(test_util.SingletonSetupTestCase):
         CheatConfig.use_cheat("Illuminati")
         generator = ExpeditionGenerator(0, lambda s: True, lambda s: None, lambda s: None)
         seed = 297
-        map_, success = generator.generate((SaveData.instance().get_robot(0), seed))
+        map_, success = generator.generate((NewSaveData().get_robot(0), seed))
         self.assertTrue(success, "Failed to generate.")
         self._print(map_)
 
@@ -71,7 +71,7 @@ class LevelGenTestCase(test_util.SingletonSetupTestCase):
         for i, seed in enumerate(range(start_seed, end_seed)):
             if i % 1000 == 0:
                 self._print(f"Run {i + 1}): seed = {seed}")
-            map_, success = generator.generate((SaveData.instance().get_robot(0), seed))
+            map_, success = generator.generate((NewSaveData().get_robot(0), seed))
             if not success:
                 failing_seeds.append((generator, seed))
                 self._print(f"Failed for seed = {seed}")
