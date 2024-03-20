@@ -179,12 +179,15 @@ class PathConfig:
     @staticmethod
     def get_seed_from_key_log_file(file_path: str) -> Optional[int]:
         if "_seed" in file_path:
-            start = file_path.index("_seed")
+            start = file_path.index("_seed") + len("_seed")
         elif "_meta" in file_path:
-            start = file_path.index("_meta")
+            start = file_path.index("_meta") + len("_meta")
         else:
             raise Exception(f"Invalid key log file format for \"{file_path}\"!")
-        end = file_path.index(FileTypes.KeyLog.value)
+        if FileTypes.KeyLog.value in file_path:
+            end = file_path.index(FileTypes.KeyLog.value)
+        else:
+            end = len(file_path)
         seed = file_path[start:end]
         return int(seed)
 
