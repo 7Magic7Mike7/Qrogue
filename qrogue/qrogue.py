@@ -137,7 +137,7 @@ def start_game(from_console: bool = False, debugging: bool = False, test_level: 
             seed = int(seed)
         print(f"[Qrogue] Starting game with seed = {seed}")
         try:
-            QrogueCUI(seed).start()
+            save_data = QrogueCUI(seed).start()
         except PyCuiConfig.OutOfBoundsError:
             #print("[Qrogue] ERROR!")
             #print("Your terminal window is too small. "
@@ -148,7 +148,7 @@ def start_game(from_console: bool = False, debugging: bool = False, test_level: 
 
         # flush after the player stopped playing
         if GameplayConfig.auto_save():
-            success, message = SaveData.instance().save()
+            success, message = save_data.save()     # todo: save at a different location?
             if success:
                 print("[Qrogue] Successfully saved the game!")
             else:
@@ -182,7 +182,7 @@ def simulate_game(simulation_path: str, from_console: bool = False, debugging: b
 
         print(f"[Qrogue] Simulating the game recorded at \"{simulation_path}\"")
         try:
-            QrogueCUI.start_simulation(simulation_path)
+            save_data = QrogueCUI.start_simulation(simulation_path)
         except PyCuiConfig.OutOfBoundsError:
             # print("[Qrogue] ERROR!")
             # print("Your terminal window is too small. "
@@ -191,8 +191,8 @@ def simulate_game(simulation_path: str, from_console: bool = False, debugging: b
             sys.exit(1)
 
         # flush after the player stopped playing
-        if GameplayConfig.auto_save():
-            success, message = SaveData.instance().save()
+        if GameplayConfig.auto_save():      # todo: save at a different location?
+            success, message = save_data.save()
             if success:
                 print("[Qrogue] Successfully saved the game!")
             else:

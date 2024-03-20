@@ -186,12 +186,14 @@ class QrogueCUI(PyCUI):
             return len(self.__history)
 
     @staticmethod
-    def start_simulation(simulation_path: str):
+    def start_simulation(simulation_path: str) -> Optional[NewSaveData]:
         try:
-            simulator = GameSimulator(simulation_path, in_keylog_folder=True)
-            qrogue_cui = QrogueCUI(simulator.seed)
+            qrogue_cui = QrogueCUI(PathConfig.get_seed_from_key_log_file(simulation_path))
+            simulator = GameSimulator(simulation_path, in_keylog_folder=True,
+                                      get_unlocks=lambda name: LevelInfo.get_level_completion_unlocks(name, qrogue_cui.__save_data.check_level, True))
             qrogue_cui._set_simulator(simulator)
-            qrogue_cui.start()
+            return qrogue_cui.start()
+
         except FileNotFoundError:
             Logger.instance().show_error(f"File \"{simulation_path}\" could not be found!")
 
@@ -202,13 +204,11 @@ class QrogueCUI(PyCUI):
         RandomManager.reset()
         OverWorldKeyLogger.reset()
         CallbackPack.reset()
-        SaveData.reset()
-        MapManager.reset()
 
         try:
+            qrogue_cui = QrogueCUI(PathConfig.get_seed_from_key_log_file(simulation_path))
             simulator = GameSimulator(simulation_path, in_keylog_folder=True, get_unlocks=lambda name:
-                        LevelInfo.get_level_completion_unlocks(name, SaveData.instance().check_level, True))
-            qrogue_cui = QrogueCUI(simulator.seed)
+                        LevelInfo.get_level_completion_unlocks(name, qrogue_cui.__save_data.check_level, True))
             qrogue_cui._set_simulator(simulator, stop_when_finished=True)
 
             if TestConfig.is_automatic():
@@ -248,11 +248,14 @@ class QrogueCUI(PyCUI):
         Pausing(self.__pause_game)
         CallbackPack(self.__start_level, self.__start_fight, self.__start_boss_fight, self.__open_riddle,
                      self.__open_challenge, self.__visit_shop, self.__game_over)
-        SaveData()
-        MapManager(seed, self.__show_world, self.__start_level, self.__show_input_popup)
+        ########################################
+        SaveData()  # todo: use NewSaveData (cannot easily do that right now since initialization is different)
+        self.__save_data = SaveData.instance()
+        self.__map_manager = MapManager(self.__save_data, seed, self.__show_world, self.__start_level, self.__show_input_popup)
+        ########################################
 
         if not Config.skip_learning():
-            MapManager.instance().fill_expedition_queue(lambda: None, no_thread=True)
+            self.__map_manager.fill_expedition_queue(lambda: None, no_thread=True)
 
         Popup.update_check_achievement_function(SaveData.instance().check_achievement)
         common_messages.set_show_callback(Popup.generic_info)
@@ -284,31 +287,31 @@ class QrogueCUI(PyCUI):
         self.__transition = TransitionWidgetSet(self.__controls, Logger.instance(), self, self.__render,
                                                 self.set_refresh_timeout)
         self.__pause = PauseMenuWidgetSet(self.__controls, self.__render, Logger.instance(), self,
-                                          self.__general_continue, SaveData.instance().save, self._switch_to_menu,
-                                          MapManager.instance().reload, SaveData.instance().to_achievements_string)
+                                          self.__general_continue, self.__save_data.save, self._switch_to_menu,
+                                          self.__map_manager.reload, self.__save_data.to_achievements_string)
         self.__pause.set_data(None, "Qrogue", None)
 
         self.__spaceship = SpaceshipWidgetSet(self.__controls, Logger.instance(), self, self.__render)
         self.__training = TrainingsWidgetSet(self.__controls, self.__render, Logger.instance(), self,
                                              self.__continue_spaceship, self.__popup_history.show,
-                                             SaveData.instance().check_unlocks)
+                                             self.__save_data.check_unlocks)
         self.__workbench = WorkbenchWidgetSet(self.__controls, Logger.instance(), self,
-                                              SaveData.instance().available_robots(), self.__render,
+                                              self.__save_data.available_robots(), self.__render,
                                               self.__continue_spaceship)
         self.__navigation = NavigationWidgetSet(self.__controls, self.__render, Logger.instance(), self)
 
         self.__explore = ExploreWidgetSet(self.__controls, self.__render, Logger.instance(), self)
         self.__fight = FightWidgetSet(self.__controls, self.__render, Logger.instance(), self, self.__continue_explore,
-                                      self.__popup_history.show, SaveData.instance().check_unlocks)
+                                      self.__popup_history.show, self.__save_data.check_unlocks)
         self.__boss_fight = BossFightWidgetSet(self.__controls, self.__render, Logger.instance(), self,
                                                self.__continue_explore, self.__popup_history.show,
-                                               SaveData.instance().check_unlocks)
+                                               self.__save_data.check_unlocks)
         self.__riddle = RiddleWidgetSet(self.__controls, self.__render, Logger.instance(), self,
                                         self.__continue_explore, self.__popup_history.show,
-                                        SaveData.instance().check_unlocks)
+                                        self.__save_data.check_unlocks)
         self.__challenge = ChallengeWidgetSet(self.__controls, self.__render, Logger.instance(), self,
                                               self.__continue_explore, self.__popup_history.show,
-                                              SaveData.instance().check_unlocks)
+                                              self.__save_data.check_unlocks)
         self.__shop = ShopWidgetSet(self.__controls, self.__render, Logger.instance(), self, self.__continue_explore)
 
         widget_sets: List[MyWidgetSet] = [self.__spaceship, self.__training, self.__navigation, self.__explore,
@@ -360,7 +363,7 @@ class QrogueCUI(PyCUI):
         if Config.debugging():
             self.set_on_draw_update_func(Config.inc_frame_count)
 
-        if SaveData.instance().is_fresh_save:
+        if self.__save_data.is_fresh_save:
             def knowledge_question(index: int):
                 if index == 0: GameplayConfig.set_newbie_mode()
                 else: GameplayConfig.set_experienced_mode()
@@ -427,7 +430,7 @@ class QrogueCUI(PyCUI):
             # since _draw is only called once, we have to set the timeout manually for the screen
             self._stdscr.timeout(self._refresh_timeout)
 
-    def start(self, level_name: Optional[str] = None):
+    def start(self, level_name: Optional[str] = None) -> NewSaveData:
         self.__render([self.__cur_widget_set])
 
         # We don't want to handle accidental input on startup of the game (e.g., during play-testing this once closed
@@ -440,9 +443,10 @@ class QrogueCUI(PyCUI):
         Thread(target=call_me).start()
 
         if level_name is not None:
-            MapManager.instance().load_map(level_name, None, None)
+            self.__map_manager.load_map(level_name, None, None)
 
         super(QrogueCUI, self).start()
+        return self.__save_data
 
     def __choose_simulation(self):
         title = f"Enter the path to the {FileTypes.KeyLog.value}-file to simulate:"
@@ -450,7 +454,8 @@ class QrogueCUI(PyCUI):
 
     def __start_simulation(self, path: str):
         try:
-            simulator = GameSimulator(path, in_keylog_folder=True)
+            simulator = GameSimulator(path, in_keylog_folder=True,
+                                      get_unlocks=lambda name: LevelInfo.get_level_completion_unlocks(name, True))
             super(QrogueCUI, self)._handle_key_presses(self.__controls.get_key(Keys.SelectionUp))
             self._set_simulator(simulator)
         except FileNotFoundError:
@@ -464,7 +469,7 @@ class QrogueCUI(PyCUI):
         if simulator.simulates_over_world:
             self.__menu.set_data(simulator.seed)
         else:
-            MapManager.instance().load_map(simulator.map_name, None, simulator.seed)
+            self.__map_manager.load_map(simulator.map_name, None, simulator.seed)
 
         if simulator.version == Config.version():
             title, text = simulator.version_alright()
@@ -501,7 +506,7 @@ class QrogueCUI(PyCUI):
                     pass    # ignore ESC because this makes you leave the CUI
                 else:
                     if GameplayConfig.log_keys() and not self.is_simulating:
-                        if MapManager.instance().in_level:
+                        if self.__map_manager.in_level:
                             self.__key_logger.log(self.__controls, key_pressed)
                         OverWorldKeyLogger.instance().log(self.__controls, key_pressed)
                     super(QrogueCUI, self)._handle_key_presses(key_pressed)
@@ -616,19 +621,19 @@ class QrogueCUI(PyCUI):
         self.apply_widget_set(self.__screen_check)
 
     def __start_playing(self):
-        if SaveData.instance().check_unlocks(Unlocks.Spaceship):
-            self.__state_machine.change_state(QrogueCUI._State.Spaceship, SaveData.instance())
+        if self.__save_data.check_unlocks(Unlocks.Spaceship):
+            self.__state_machine.change_state(QrogueCUI._State.Spaceship, self.__save_data)
         else:
             # load the newest level (exam phase) by
             MapManager.instance().load_first_uncleared_map()
 
     def __start_expedition(self):
-        if SaveData.instance().check_unlocks(Unlocks.Spaceship):
-            MapManager.instance().load_expedition()
+        if self.__save_data.check_unlocks(Unlocks.Spaceship):
+            self.__map_manager.load_expedition()
         else:
             def _callback(selection: int):
                 if selection == 0:
-                    MapManager.instance().load_expedition()
+                    self.__map_manager.load_expedition()
             CommonQuestions.SkipStoryTutorial.ask(_callback)
 
     def _switch_to_spaceship(self, data=None):
@@ -654,7 +659,7 @@ class QrogueCUI(PyCUI):
         self.apply_widget_set(self.__training)
 
     def __use_workbench(self, direction: Direction, controllable: Controllable):
-        self.__state_machine.change_state(QrogueCUI._State.Workbench, SaveData.instance())
+        self.__state_machine.change_state(QrogueCUI._State.Workbench, self.__save_data)
 
     def _switch_to_workbench(self, _=None):
         # no data parameter needed
@@ -685,7 +690,7 @@ class QrogueCUI(PyCUI):
     def __start_level(self, seed: int, level: Map) -> None:
         Logger.instance().info(f"Starting level {level.internal_name} with seed={seed}.", from_pycui=False)
         # reset in-level stuff
-        SaveData.instance().reset_level_events()
+        self.__save_data.reset_level_events()
         self.__popup_history.reset()
 
         robot = level.controllable_tile.controllable
@@ -693,7 +698,7 @@ class QrogueCUI(PyCUI):
             self.__key_logger.reinit(level.seed, level.internal_name)  # the seed used to build the Map
             OverWorldKeyLogger.instance().level_start(level.internal_name)
             robot.reset_score()     # reset the score at the start of each level
-            SaveData.instance().restart_level_timer()
+            self.__save_data.restart_level_timer()
 
             self.__pause.set_data(robot, level.name, None)
             self.__state_machine.change_state(QrogueCUI._State.Explore, level)
@@ -703,13 +708,13 @@ class QrogueCUI(PyCUI):
     def __game_over(self) -> None:
         def callback(confirmed: int):
             if confirmed == 0:
-                MapManager.instance().reload()
+                self.__map_manager.reload()
             elif confirmed == 1:
-                if SaveData.instance().check_unlocks(Unlocks.Spaceship):
+                if self.__save_data.check_unlocks(Unlocks.Spaceship):
                     self.__state_machine.change_state(QrogueCUI._State.Spaceship, None)
                 else:
                     self.__state_machine.change_state(QrogueCUI._State.Menu, None)
-        if MapManager.instance().in_tutorial_world:
+        if self.__map_manager.in_tutorial_world:
             ConfirmationPopup.ask(Config.system_name(), f"Your Robot is out of energy.\n"
                                                         f"How do you want to continue?", callback,
                                                         ["Restart lesson", "Back to menu"])
@@ -749,16 +754,16 @@ class QrogueCUI(PyCUI):
         if data is not None:
             robot = data[0]
             enemy = data[1]
-            self.__fight.set_data(robot, enemy, MapManager.instance().in_expedition,
-                                  MapManager.instance().show_individual_qubits)
+            self.__fight.set_data(robot, enemy, self.__map_manager.in_expedition,
+                                  self.__map_manager.show_individual_qubits)
         self.apply_widget_set(self.__fight)
 
     def _switch_to_boss_fight(self, data) -> None:
         if data is not None:
             player = data[0]
             boss = data[1]
-            self.__boss_fight.set_data(player, boss, MapManager.instance().in_expedition,
-                                       MapManager.instance().show_individual_qubits)
+            self.__boss_fight.set_data(player, boss, self.__map_manager.in_expedition,
+                                       self.__map_manager.show_individual_qubits)
         self.apply_widget_set(self.__boss_fight)
 
     def __open_riddle(self, robot: Robot, riddle: Riddle):
@@ -768,8 +773,8 @@ class QrogueCUI(PyCUI):
         if data is not None:
             player = data[0]
             riddle = data[1]
-            self.__riddle.set_data(player, riddle, MapManager.instance().in_expedition,
-                                   MapManager.instance().show_individual_qubits)
+            self.__riddle.set_data(player, riddle, self.__map_manager.in_expedition,
+                                   self.__map_manager.show_individual_qubits)
         self.apply_widget_set(self.__riddle)
 
     def __open_challenge(self, robot: Robot, challenge: Challenge):
@@ -779,8 +784,8 @@ class QrogueCUI(PyCUI):
         if data is not None:
             robot = data[0]
             challenge = data[1]
-            self.__challenge.set_data(robot, challenge, MapManager.instance().in_expedition,
-                                      MapManager.instance().show_individual_qubits)
+            self.__challenge.set_data(robot, challenge, self.__map_manager.in_expedition,
+                                      self.__map_manager.show_individual_qubits)
         self.apply_widget_set(self.__challenge)
 
     def __visit_shop(self, robot: Robot, items: "list of ShopItems"):

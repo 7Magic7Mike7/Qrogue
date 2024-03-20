@@ -1,6 +1,7 @@
 from typing import Tuple, Optional
 
 from qrogue.util import Logger
+from qrogue.util.achievements import Unlocks
 from qrogue.util.config import PathConfig, GameplayConfig, Config, ColorConfig, FileTypes
 from qrogue.util.controls import Controls, Keys
 
@@ -9,7 +10,7 @@ class GameSimulator:
     __ENCODING = "utf-8"
     __BUFFER_SIZE = 1024
 
-    def __init__(self, path: str, in_keylog_folder: bool = True):
+    def __init__(self, path: str, in_keylog_folder: bool = True, get_unlocks: Optional[Callable[[str], List[Unlocks]]] = None):
         if not path.endswith(FileTypes.KeyLog.value):
             path += FileTypes.KeyLog.value
 

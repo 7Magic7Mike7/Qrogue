@@ -177,6 +177,19 @@ class PathConfig:
             return os.path.join(PathConfig.__KEY_LOG_FOLDER, f"{now_str}_meta{seed}{FileTypes.KeyLog.value}")
 
     @staticmethod
+    def get_seed_from_key_log_file(file_path: str) -> Optional[int]:
+        if "_seed" in file_path:
+            start = file_path.index("_seed")
+        elif "_meta" in file_path:
+            start = file_path.index("_meta")
+        else:
+            raise Exception(f"Invalid key log file format for \"{file_path}\"!")
+        end = file_path.index(FileTypes.KeyLog.value)
+        seed = file_path[start:end]
+        return int(seed)
+
+
+    @staticmethod
     def new_screen_print(text: str):
         now_str = PathConfig.__now_str()
         path = os.path.join(PathConfig.__SCREEN_PRINTS_FOLDER, f"{now_str}{FileTypes.ScreenPrint.value}")
