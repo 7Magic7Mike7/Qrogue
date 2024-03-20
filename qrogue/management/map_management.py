@@ -18,20 +18,13 @@ from qrogue.util.util_functions import open_folder
 
 
 class MapManager:
-    __instance = None
-    __QUEUE_SIZE = 0
-
-    @staticmethod
-    def instance() -> "MapManager":
-        if MapManager.__instance is None:
-            Logger.instance().throw(Exception(ErrorConfig.singleton_no_init("MapManager")))
-        return MapManager.__instance
-
     def __init__(self, save_data: NewSaveData, seed: int, show_world: Callable[[Optional[WorldMap]], None],
                  start_level: Callable[[int, Map], None],
-                 show_input_popup: Callable[[str, int, Callable[[str], None]], None]):
+                 show_input_popup: Callable[[str, int, Callable[[str], None]], None],
+                 queue_size: int = ExpeditionConfig.DEFAULT_QUEUE_SIZE):
         self.__save_data = save_data
         self.__show_input_popup = show_input_popup  # title: str, color: int, callback: Callable[[str], None]
+        self.__queue_size = queue_size
 
         self.__base_seed = seed
         self.__rm = RandomManager.create_new(seed)
@@ -70,12 +63,12 @@ class MapManager:
         return self.__cur_map.show_individual_qubits
 
     def fill_expedition_queue(self, callback: Optional[Callable[[], None]] = None, no_thread: bool = False):
-        if len(self.__expedition_queue) >= MapManager.__QUEUE_SIZE:
+        if len(self.__expedition_queue) >= self.__queue_size:
             return
 
         def fill():
             robot = self.__save_data.get_robot(0)
-            while len(self.__expedition_queue) < MapManager.__QUEUE_SIZE:
+            while len(self.__expedition_queue) < self.__queue_size:
                 expedition, success = self.__expedition_generator.generate((robot, self.__rm.get_seed()))
                 if success:
                     self.__expedition_queue.append(expedition)
@@ -137,7 +130,7 @@ class MapManager:
                 map_seed = None
 
             robot = self.__save_data.get_robot(0)
-            if map_seed is None and MapManager.__QUEUE_SIZE > 0:
+            if map_seed is None and self.__queue_size > 0:
                 while len(self.__expedition_queue) <= 0:
                     time.sleep(Config.loading_refresh_time())
                 success = True

@@ -566,4 +566,5 @@ class InstructionConfig:
 
 
 class ExpeditionConfig:
+    DEFAULT_QUEUE_SIZE = 0
     DEFAULT_DIFFICULTY = 2
