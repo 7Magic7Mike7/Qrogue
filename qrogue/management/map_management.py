@@ -4,7 +4,7 @@ from typing import Callable, Optional, Dict, List
 
 from qrogue.game.logic.actors import Robot
 from qrogue.game.world.dungeon_generator import ExpeditionGenerator, QrogueLevelGenerator, QrogueWorldGenerator
-from qrogue.game.world.map import Map, WorldMap, MapType, ExpeditionMap
+from qrogue.game.world.map import Map, WorldMap, MapType, ExpeditionMap, CallbackPack
 from qrogue.game.world.navigation import Coordinate
 from qrogue.graphics.popups import Popup
 from qrogue.management import LevelInfo
@@ -20,10 +20,12 @@ from qrogue.util.util_functions import open_folder
 class MapManager:
     def __init__(self, save_data: NewSaveData, seed: int, show_world: Callable[[Optional[WorldMap]], None],
                  start_level: Callable[[int, Map], None],
-                 show_input_popup: Callable[[str, int, Callable[[str], None]], None],
-                 queue_size: int = ExpeditionConfig.DEFAULT_QUEUE_SIZE):
+                 show_input_popup: Callable[[str, int, Callable[[str], None]], None], callback_pack: CallbackPack,
+                 robot: Robot, queue_size: int = ExpeditionConfig.DEFAULT_QUEUE_SIZE):
         self.__save_data = save_data
         self.__show_input_popup = show_input_popup  # title: str, color: int, callback: Callable[[str], None]
+        self.__cbp = callback_pack
+        self.__robot = robot
         self.__queue_size = queue_size
 
         self.__base_seed = seed
@@ -33,7 +35,7 @@ class MapManager:
         self.__world_memory: Dict[str, WorldMap] = {}
         self.__expedition_generator = ExpeditionGenerator(seed,
                                                           self.__save_data.check_achievement,
-                                                          self.__trigger_event, self.load_map)
+                                                          self.__trigger_event, self.load_map, callback_pack)
         self.__expedition_queue: List[ExpeditionMap] = []
         self.__cur_map: Map = None
         self.__in_level = False
@@ -67,7 +69,7 @@ class MapManager:
             return
 
         def fill():
-            robot = self.__save_data.get_robot(0)
+            robot = self.__robot
             while len(self.__expedition_queue) < self.__queue_size:
                 expedition, success = self.__expedition_generator.generate((robot, self.__rm.get_seed()))
                 if success:
@@ -109,7 +111,7 @@ class MapManager:
             # todo maybe levels should be able to have arbitrary names except "w..." or "e..." or "back" or "next"?
             check_achievement = self.__save_data.check_achievement
             generator = QrogueLevelGenerator(map_seed, check_achievement, self.__trigger_event, self.load_map,
-                                             Popup.npc_says)
+                                             Popup.npc_says, self.__cbp)
             try:
                 level, success = generator.generate(map_name)
                 if success:
@@ -129,7 +131,7 @@ class MapManager:
                 # difficulty = ExpeditionConfig.DEFAULT_DIFFICULTY
                 map_seed = None
 
-            robot = self.__save_data.get_robot(0)
+            robot = self.__robot
             if map_seed is None and self.__queue_size > 0:
                 while len(self.__expedition_queue) <= 0:
                     time.sleep(Config.loading_refresh_time())

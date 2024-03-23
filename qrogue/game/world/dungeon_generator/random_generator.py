@@ -583,12 +583,13 @@ class ExpeditionGenerator(DungeonGenerator):
         return enemy
 
     def __init__(self, seed: int, check_achievement: Callable[[str], bool], trigger_event: Callable[[str], None],
-                 load_map_callback: Callable[[str, Optional[Coordinate]], None], width: int = DungeonGenerator.WIDTH,
-                 height: int = DungeonGenerator.HEIGHT):
+                 load_map_callback: Callable[[str, Optional[Coordinate]], None], callback_pack: CallbackPack,
+                 width: int = DungeonGenerator.WIDTH, height: int = DungeonGenerator.HEIGHT):
         super(ExpeditionGenerator, self).__init__(seed, width, height)
         self.__check_achievement = check_achievement
         self.__trigger_event = trigger_event
         self.__load_map = load_map_callback
+        self.__cbp = callback_pack
         self.__rm = RandomManager.create_new(seed)
         self.__next_target_id = 0
         self.__next_tile_id = 0
@@ -649,10 +650,10 @@ class ExpeditionGenerator(DungeonGenerator):
         # only gate on a zero-state. Also picking multiple gates where one is CX has a higher probability of doing
         # nothing the more qubits we have.
         enemy_factories = [
-            EnemyPuzzleFactory(CallbackPack.instance().start_fight, self._next_target_id, PuzzleDifficulty(1, 3)),
-            EnemyPuzzleFactory(CallbackPack.instance().start_fight, self._next_target_id, PuzzleDifficulty(2, 2)),
-            EnemyPuzzleFactory(CallbackPack.instance().start_fight, self._next_target_id, PuzzleDifficulty(2, 3)),
-            EnemyPuzzleFactory(CallbackPack.instance().start_fight, self._next_target_id, PuzzleDifficulty(1, 2)),
+            EnemyPuzzleFactory(self.__cbp.start_fight, self._next_target_id, PuzzleDifficulty(1, 3)),
+            EnemyPuzzleFactory(self.__cbp.start_fight, self._next_target_id, PuzzleDifficulty(2, 2)),
+            EnemyPuzzleFactory(self.__cbp.start_fight, self._next_target_id, PuzzleDifficulty(2, 3)),
+            EnemyPuzzleFactory(self.__cbp.start_fight, self._next_target_id, PuzzleDifficulty(1, 2)),
         ]
         # factories are picked room-wise
         enemy_factory_priorities = [0.25, 0.35, 0.3, 0.1]
@@ -783,15 +784,15 @@ class ExpeditionGenerator(DungeonGenerator):
                             hw = room_hallways[direction]
                             if code == _Code.Shop:
                                 # since there was no shop introduction yet, we have to skip creating one.
-                                room = EmptyRoom(room_hallways)  # ShopRoom(hw, direction, shop_items, CallbackPack.instance().visit_shop)
+                                room = EmptyRoom(room_hallways)  # ShopRoom(hw, direction, shop_items, self.__cbp.visit_shop)
                             elif code == _Code.Riddle:
-                                room = RiddleRoom(hw, direction, riddle, CallbackPack.instance().open_riddle)
+                                room = RiddleRoom(hw, direction, riddle, self.__cbp.open_riddle)
                             elif code == _Code.Gate:
                                 room = TreasureRoom(tiles.Collectible(gate), hw, direction)
                             elif code == _Code.Boss:
                                 def end_level():
                                     self.__load_map(MapConfig.back_map_string(), None)
-                                boss = tiles.Boss(dungeon_boss, CallbackPack.instance().start_boss_fight, end_level)
+                                boss = tiles.Boss(dungeon_boss, self.__cbp.start_boss_fight, end_level)
                                 room = BossRoom(hw, direction, boss)
                         if room:
                             rooms[y][x] = room

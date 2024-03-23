@@ -136,13 +136,15 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
     def __init__(self, seed: int, check_achievement: Callable[[str], bool], trigger_event: Callable[[str], None],
                  load_map_callback: Callable[[str, Coordinate], None],
-                 show_message_callback: Callable[[str, str, Optional[bool], Optional[int]], None]):
+                 show_message_callback: Callable[[str, str, Optional[bool], Optional[int]], None],
+                 callback_pack: CallbackPack):
         super(QrogueLevelGenerator, self).__init__(seed, 0, 0)
         self.__seed = seed
         self.__check_achievement = check_achievement
         self.__trigger_event = trigger_event
         self.__load_map = load_map_callback
         self.__show_message = show_message_callback
+        self.__cbp = callback_pack
         self.__meta_data = MapMetaData(None, None, True, self.__show_description)
 
         self.__warnings = 0
@@ -178,10 +180,6 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         # holds references to already created hallways so that neighbors can use it instead of
         # creating their own redundant hallway
         self.__created_hallways: Dict[Coordinate, Dict[Direction, rooms.Hallway]] = {}
-
-    @property
-    def __cbp(self) -> CallbackPack:
-        return CallbackPack.instance()
 
     def __show_description(self):
         if self.__meta_data.description:
@@ -1189,8 +1187,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             if ctx.START_ENERGY():
                 start_energy = parser_util.parse_integer(ctx.integer(integer_index))
 
-        self.__robot = robot.BaseBot(CallbackPack.instance().game_over, num_of_qubits, gates, circuit_space,
-                                     backpack_space, max_energy, start_energy)
+        self.__robot = robot.BaseBot(self.__cbp.game_over, num_of_qubits, gates, circuit_space, backpack_space,
+                                     max_energy, start_energy)
 
     ##### Meta area #####
 

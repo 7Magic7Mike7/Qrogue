@@ -5,7 +5,7 @@ from qrogue.game.world.dungeon_generator import QrogueLevelGenerator
 from qrogue.game.world.dungeon_generator.wave_function_collapse import WaveFunction, WFCLearner
 from qrogue.game.world.dungeon_generator.wave_function_collapse.learnables import LearnableMap, WFCLearnMatrix, \
     LearnableRoom
-from qrogue.game.world.map import rooms, LevelMap
+from qrogue.game.world.map import rooms, LevelMap, CallbackPack
 from qrogue.game.world.map.rooms import AreaType
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.game.world.tiles import TileCode
@@ -173,7 +173,8 @@ class WFCGenerator:
 
 
 def load_level(seed: int, file_name: str, in_dungeon_folder: bool) -> Optional[LevelMap]:
-    generator = QrogueLevelGenerator(seed, lambda s: True, lambda s: None, lambda s, c: None, lambda s0, s1: None)
+    generator = QrogueLevelGenerator(seed, lambda s: True, lambda s: None, lambda s, c: None, lambda s0, s1: None,
+                                     CallbackPack.dummy())
     level, _ = generator.generate(file_name, in_dungeon_folder)
     return level
 

@@ -10,17 +10,15 @@ class CallbackPack:
     __instance = None
 
     @staticmethod
-    def instance() -> "CallbackPack":
-        if CallbackPack.__instance is None:
-            Logger.instance().throw(Exception(ErrorConfig.singleton_no_init("CallbackPack")))
-        return CallbackPack.__instance
+    def dummy() -> "CallbackPack":
+        return CallbackPack(start_level=lambda num, level: None, start_fight=lambda robot, enemy, direction: None,
+                            start_boss_fight=lambda robot, boss, direction: None,
+                            open_riddle=lambda robot, riddle: None, open_challenge=lambda robot, challenge: None,
+                            visit_shop=lambda robot, shop_items: None, game_over=lambda: None)
 
     @staticmethod
     def reset():
-        if TestConfig.is_active():
-            CallbackPack.__instance = None
-        else:
-            raise TestConfig.StateException(ErrorConfig.singleton_reset("CallbackPack"))
+        ErrorConfig.raise_deletion_exception()
 
     def __init__(self, start_level: "Callable[[int, LevelMap], None]",
                  start_fight: "Callable[[Robot, Enemy, Direction], None]",
@@ -29,18 +27,13 @@ class CallbackPack:
                  open_challenge: "Callable[[Robot, Challenge], None]",
                  visit_shop: "Callable[[Robot, List[ShopItem]], None]",
                  game_over: "Callable[[], None]"):
-        if CallbackPack.__instance is not None:
-            Logger.instance().throw(Exception(ErrorConfig.singleton("CallbackPack")))
-        else:
-            self.__start_level = start_level
-            self.__start_fight = start_fight
-            self.__start_boss_fight = start_boss_fight
-            self.__open_riddle = open_riddle
-            self.__open_challenge = open_challenge
-            self.__visit_shop = visit_shop
-            self.__game_over = game_over
-
-            CallbackPack.__instance = self
+        self.__start_level = start_level
+        self.__start_fight = start_fight
+        self.__start_boss_fight = start_boss_fight
+        self.__open_riddle = open_riddle
+        self.__open_challenge = open_challenge
+        self.__visit_shop = visit_shop
+        self.__game_over = game_over
 
     @property
     def start_level(self) -> "Callable[[int, LevelMap], None]":

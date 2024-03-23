@@ -109,8 +109,8 @@ class NewSaveData:
             for ach in achievement_list: self.__achievements[ach.name] = ach
             for name, date_time2 in unlocks: self.__unlocks[name] = date_time2
 
-        self.__player = Player()    # todo: most likely no longer needed
-        self.__robot = BaseBot(CallbackPack.instance().game_over)
+        #self.__player = Player()    # todo: most likely no longer needed
+        #self.__robot = BaseBot(CallbackPack.instance().game_over)
 
         if self.__is_fresh_save:
             NewSaveData._init_fresh_save(self)
@@ -127,9 +127,10 @@ class NewSaveData:
         return []       # todo: most likely no longer needed
 
     def get_robot(self, index: int) -> Optional[Robot]:
-        if index != 0:
-            raise Exception("Unexpected behaviour!")
-        return self.__robot
+        ErrorConfig.raise_deletion_exception()
+        #if index != 0:
+        #    raise Exception("Unexpected behaviour!")
+        #return self.__robot
 
     def check_level(self, name: str) -> bool:
         return name in self.__levels

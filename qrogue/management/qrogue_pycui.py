@@ -203,7 +203,6 @@ class QrogueCUI(PyCUI):
         Logger.reset()
         RandomManager.reset()
         OverWorldKeyLogger.reset()
-        CallbackPack.reset()
 
         try:
             qrogue_cui = QrogueCUI(PathConfig.get_seed_from_key_log_file(simulation_path))
@@ -245,8 +244,8 @@ class QrogueCUI(PyCUI):
         ConfirmationPopup.update_popup_function(self.__show_confirmation_popup)
 
         Pausing(self.__pause_game)
-        CallbackPack(self.__start_level, self.__start_fight, self.__start_boss_fight, self.__open_riddle,
-                     self.__open_challenge, self.__visit_shop, self.__game_over)
+        self.__cbp = CallbackPack(self.__start_level, self.__start_fight, self.__start_boss_fight, self.__open_riddle,
+                                  self.__open_challenge, self.__visit_shop, self.__game_over)
         ########################################
         self.__save_data = NewSaveData()
         self.__map_manager = MapManager(self.__save_data, seed, self.__show_world, self.__start_level, self.__show_input_popup)

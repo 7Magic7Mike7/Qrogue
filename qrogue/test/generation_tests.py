@@ -3,11 +3,10 @@ import unittest
 import test_util
 from qrogue.game.world.dungeon_generator import DungeonGenerator
 from qrogue.game.world.dungeon_generator.random_generator import RandomLayoutGenerator, ExpeditionGenerator
-from qrogue.game.world.map import Room
+from qrogue.game.world.map import Room, CallbackPack
 from qrogue.game.world.map.rooms import Hallway
 from qrogue.game.world.navigation import Direction, Coordinate
 from qrogue.game.world import tiles
-from qrogue.management.save_data import NewSaveData
 from qrogue.util import CheatConfig
 
 
@@ -54,9 +53,9 @@ class LayoutGenTestCase(test_util.SingletonSetupTestCase):
 class LevelGenTestCase(test_util.SingletonSetupTestCase):
     def test_single_seed(self):
         CheatConfig.use_cheat("Illuminati")
-        generator = ExpeditionGenerator(0, lambda s: True, lambda s: None, lambda s: None)
+        generator = ExpeditionGenerator(0, lambda s: True, lambda s: None, lambda s: None, CallbackPack.dummy())
         seed = 297
-        map_, success = generator.generate((NewSaveData().get_robot(0), seed))
+        map_, success = generator.generate((test_util.DummyRobot(), seed))
         self.assertTrue(success, "Failed to generate.")
         self._print(map_)
 
@@ -67,11 +66,11 @@ class LevelGenTestCase(test_util.SingletonSetupTestCase):
         end_seed = 5
         failing_seeds = []
 
-        generator = ExpeditionGenerator(0, lambda s: True, lambda s: None, lambda s: None)
+        generator = ExpeditionGenerator(0, lambda s: True, lambda s: None, lambda s: None, CallbackPack.dummy())
         for i, seed in enumerate(range(start_seed, end_seed)):
             if i % 1000 == 0:
                 self._print(f"Run {i + 1}): seed = {seed}")
-            map_, success = generator.generate((NewSaveData().get_robot(0), seed))
+            map_, success = generator.generate((test_util.DummyRobot(), seed))
             if not success:
                 failing_seeds.append((generator, seed))
                 self._print(f"Failed for seed = {seed}")

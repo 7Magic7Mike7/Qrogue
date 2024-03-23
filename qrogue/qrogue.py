@@ -196,11 +196,6 @@ def validate_map(path: str, is_level: bool = True, in_base_path: bool = True) ->
 
         Logger.instance().set_popup(log_print, lambda title, text: log_print(f"Error - {title}", text))
 
-        CallbackPack(start_level=lambda num, level: None, start_fight=lambda robot, enemy, direction: None,
-                     start_boss_fight=lambda robot, boss, direction: None, open_riddle=lambda robot, riddle: None,
-                     open_challenge=lambda robot, challenge: None, visit_shop=lambda robot, shop_items: None,
-                     game_over=lambda: None)
-
     except Exception as ex:
         print(f"Error: {ex}")
         print("Most likely you used validate_map() while also running the game which is forbidden. Make sure to "
@@ -211,7 +206,8 @@ def validate_map(path: str, is_level: bool = True, in_base_path: bool = True) ->
         generator = QrogueLevelGenerator(seed, check_achievement=lambda achievement: False,
                                          trigger_event=lambda event: None,
                                          load_map_callback=lambda name, spawn_pos: None,
-                                         show_message_callback=lambda title, text, reopen, position: None)
+                                         show_message_callback=lambda title, text, reopen, position: None,
+                                         callback_pack=CallbackPack.dummy())
     else:
         player = Player()
         generator = QrogueWorldGenerator(seed, player, check_achievement_callback=lambda achievement: False,

@@ -1,9 +1,10 @@
 import time
 from typing import Optional, Any
 
+from qrogue.game.logic.actors.controllables import BaseBot
 from qrogue.game.world.dungeon_generator import DungeonGenerator
 from qrogue.game.world.dungeon_generator.random_generator import RandomLayoutGenerator, ExpeditionGenerator
-from qrogue.management import NewSaveData
+from qrogue.game.world.map import CallbackPack
 from qrogue.test import test_util
 
 
@@ -72,12 +73,12 @@ def test_dungeon():
     end_seed = 100
     failing_seeds = []
 
-    robot = NewSaveData().get_robot(0)
+    robot = BaseBot(lambda: None)
     i = 0
     for seed in range(start_seed, end_seed):
         if i % 1000 == 0:
             __print(f"Run {i + 1}): seed = {seed}")
-        generator = ExpeditionGenerator(seed, lambda s: True, lambda s: None, lambda s: None)
+        generator = ExpeditionGenerator(seed, lambda s: True, lambda s: None, lambda s: None, CallbackPack.dummy())
 
         start_time = time.time()
         map_, success = generator.generate(robot)

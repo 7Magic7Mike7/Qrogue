@@ -472,7 +472,8 @@ class ScreenCheckWidgetSet(MyWidgetSet):
     def __setup_widgets(self):
         # todo: show both 3-qubit and 2-qubit puzzles?
         # prepare puzzle
-        robot = BaseBot(CallbackPack.instance().game_over, num_of_qubits=3, gates=[])
+        # robot doesn't need a real game_over callback for screen checks, hence we can use an empty lambda
+        robot = BaseBot(game_over_callback=lambda: None, num_of_qubits=3, gates=[])
         input_stv = gates.Instruction.compute_stv([gates.RZGate(1).setup([2])], 3)
         target_stv = gates.Instruction.compute_stv([gates.XGate().setup([0]), gates.RZGate(1.6).setup([0])], 3)
         enemy = Enemy(0, eid=0, target=target_stv, reward=None, input_=input_stv)
@@ -1149,7 +1150,7 @@ class WorkbenchWidgetSet(MyWidgetSet):
 
     def __details(self, index: int) -> bool:
         if self.__save_data:    # todo fix
-            robot = self.__save_data.get_robot(index)
+            robot = None#self.__save_data.get_robot(index)
             if robot:
                 self.__robot_info.set_data(robot.description())
                 self.__available_upgrades.set_data(data=(
