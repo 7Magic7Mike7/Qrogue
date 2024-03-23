@@ -15,7 +15,7 @@ class TestQrogueCUI(QrogueCUI):
         ]
 
     def __init__(self, seed: int):
-        super().__init__(seed)
+        super().__init__()
 
     def start(self):
         text_scrolls = [

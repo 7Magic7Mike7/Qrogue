@@ -12,10 +12,14 @@ class MyRandom:
     __Next_Id: int = 0
 
     def __init__(self, seed: int):
-        seed = seed % Config.MAX_SEED
+        self.__seed = seed % Config.MAX_SEED
         self.__random: Random = Random(seed)
         self.__id: int = MyRandom.__Next_Id
         MyRandom.__Next_Id += 1
+
+    @property
+    def seed(self) -> int:
+        return self.__seed
 
     def get(self, min_: float = 0.0, max_: float = 1.0, msg: str = ""):
         MyRandom.COUNTER += 1

@@ -188,7 +188,7 @@ class QrogueCUI(PyCUI):
     @staticmethod
     def start_simulation(simulation_path: str) -> Optional[NewSaveData]:
         try:
-            qrogue_cui = QrogueCUI(PathConfig.get_seed_from_key_log_file(simulation_path))
+            qrogue_cui = QrogueCUI()
             simulator = GameSimulator(simulation_path, in_keylog_folder=True,
                                       get_unlocks=lambda name: LevelInfo.get_level_completion_unlocks(name, qrogue_cui.__save_data.check_level, True))
             qrogue_cui._set_simulator(simulator)
@@ -219,16 +219,15 @@ class QrogueCUI(PyCUI):
         except FileNotFoundError:
             return False
 
-    def __init__(self, seed: int, width: int = UIConfig.WINDOW_WIDTH, height: int = UIConfig.WINDOW_HEIGHT):
+    def __init__(self, width: int = UIConfig.WINDOW_WIDTH, height: int = UIConfig.WINDOW_HEIGHT,
+                 save_data: Optional[NewSaveData] = None):
         self.__init_complete = False
         super().__init__(width, height)
         PyCuiConfig.set_get_dimensions_callback(self._get_absolute_grid_dimensions)
         self.set_title(f"Qrogue {Config.version()}")
         self.__controls = Controls(self._handle_key_presses)
-        self.__seed = seed
-        Logger(seed)
-        RandomManager(seed)
-        OverWorldKeyLogger().reinit(seed, "meta")
+        self.__seed = RandomManager.instance().seed
+        OverWorldKeyLogger()    # todo: init this with other singletons?
 
         def move_focus(_widget: WidgetWrapper, _widget_set: WidgetSet):
             # this check is necessary for manual widget-set switches due to the call-order (the callback happens before
@@ -336,7 +335,7 @@ class QrogueCUI(PyCUI):
         # INIT STATE MACHINE
         self.__cur_widget_set: MyWidgetSet = self.__transition      # avoid None value
         self.__state_machine = QrogueCUI._StateMachine(self)
-        self.__state_machine.change_state(QrogueCUI._State.Menu, seed)
+        self.__state_machine.change_state(QrogueCUI._State.Menu, self.__seed)
 
         # MISC
         if Config.debugging():

@@ -164,9 +164,18 @@ class PathConfig:
         return os.path.join(PathConfig.__User_Data_Path, file_name)
 
     @staticmethod
-    def new_log_file(seed: int) -> str:
-        now_str = PathConfig.__now_str()
-        return os.path.join(PathConfig.__LOG_FOLDER, f"{now_str}_seed{seed}{FileTypes.Log.value}")
+    def new_log_file() -> str:
+        path = os.path.join(PathConfig.__LOG_FOLDER, f"{PathConfig.__now_str()}")
+
+        # this if should in general be True 99% of the time, and 100% of the time on regular usage
+        if not os.path.exists(path + f"{FileTypes.Log.value}"):
+            return path + f"{FileTypes.Log.value}"
+
+        # for the very small chance that another log file has the same datetime (up to seconds), we add a simple
+        # counter suffix
+        counter = 0
+        while os.path.exists(path + f"_{counter}{FileTypes.Log.value}"): counter += 1
+        return path + f"_{counter}{FileTypes.Log.value}"
 
     @staticmethod
     def new_key_log_file(seed: int, is_level: bool = True) -> str:

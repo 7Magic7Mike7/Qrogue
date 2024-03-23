@@ -13,43 +13,10 @@ from qrogue.util.key_logger import OverWorldKeyLogger
 
 
 def __init_singletons(seed: int):
-    Config.load()
-    Config.activate_debugging()
-
-    def log_print(title: str, text: str, position: Optional[int] = None):
-        #print(f"\"{title}\": {text}")
-        pass
-
-    def log_print_error(title: str, text: str):
-        log_print(f"Error - {title}", text)
-
-    Logger(seed)
-    Logger.instance().set_popup(log_print, log_print_error)
-
+    Logger()
     RandomManager(seed)
 
-    def start_level(num, level):
-        pass
-
-    def start_fight(robot, enemy, direction):
-        pass
-
-    def start_boss_fight(robot, boss, direction):
-        pass
-
-    def open_riddle(robot, riddle):
-        pass
-
-    def open_challenge(robot, challenge):
-        pass
-
-    def visit_shop(robot, shop_item_list):
-        pass
-
-    def game_over():
-        pass
-
-    CallbackPack(start_level, start_fight, start_boss_fight, open_riddle, open_challenge, visit_shop, game_over)
+    Logger.instance().info(Config.get_log_head(seed), from_pycui=False)
 
 
 def __parse_argument(argument: List[str], has_value: bool = False) -> Tuple[bool, Optional[str]]:
@@ -137,7 +104,8 @@ def start_game(from_console: bool = False, debugging: bool = False, test_level: 
             seed = int(seed)
         print(f"[Qrogue] Starting game with seed = {seed}")
         try:
-            save_data = QrogueCUI(seed).start()
+            __init_singletons(seed)
+            save_data = QrogueCUI().start()
         except PyCuiConfig.OutOfBoundsError:
             #print("[Qrogue] ERROR!")
             #print("Your terminal window is too small. "
@@ -182,6 +150,7 @@ def simulate_game(simulation_path: str, from_console: bool = False, debugging: b
 
         print(f"[Qrogue] Simulating the game recorded at \"{simulation_path}\"")
         try:
+            __init_singletons(seed=PathConfig.get_seed_from_key_log_file(simulation_path))
             save_data = QrogueCUI.start_simulation(simulation_path)
         except PyCuiConfig.OutOfBoundsError:
             # print("[Qrogue] ERROR!")
@@ -217,30 +186,38 @@ def simulate_game(simulation_path: str, from_console: bool = False, debugging: b
 def validate_map(path: str, is_level: bool = True, in_base_path: bool = True) -> bool:
     seed = 7
     try:
+        Config.load()
+        Config.activate_debugging()
         __init_singletons(seed)
+
+        def log_print(title: str, text: str, position: Optional[int] = None):
+            # print(f"\"{title}\": {text}")
+            pass
+
+        Logger.instance().set_popup(log_print, lambda title, text: log_print(f"Error - {title}", text))
+
+        CallbackPack(start_level=lambda num, level: None, start_fight=lambda robot, enemy, direction: None,
+                     start_boss_fight=lambda robot, boss, direction: None, open_riddle=lambda robot, riddle: None,
+                     open_challenge=lambda robot, challenge: None, visit_shop=lambda robot, shop_items: None,
+                     game_over=lambda: None)
+
     except Exception as ex:
         print(f"Error: {ex}")
         print("Most likely you used validate_map() while also running the game which is forbidden. Make sure to "
               "validate maps separately!")
         return False
 
-    def check_achievement(achievement: str) -> bool:
-        return False
-
-    def trigger_event(event: str):
-        pass
-
-    def load_map(map_name: str, spawn_pos: Coordinate):
-        pass
-
-    def show_message(title: str, text: str, reopen: Optional[bool], position: Optional[int]):
-        pass
-
     if is_level:
-        generator = QrogueLevelGenerator(seed, check_achievement, trigger_event, load_map, show_message)
+        generator = QrogueLevelGenerator(seed, check_achievement=lambda achievement: False,
+                                         trigger_event=lambda event: None,
+                                         load_map_callback=lambda name, spawn_pos: None,
+                                         show_message_callback=lambda title, text, reopen, position: None)
     else:
         player = Player()
-        generator = QrogueWorldGenerator(seed, player, check_achievement, trigger_event, load_map, show_message)
+        generator = QrogueWorldGenerator(seed, player, check_achievement_callback=lambda achievement: False,
+                                         trigger_event_callback=lambda event: None,
+                                         load_map_callback=lambda name, spawn_pos: None,
+                                         show_message_callback=lambda title, text, reopen, position: None)
 
     try:
         error_occurred = False
@@ -273,7 +250,8 @@ def play_level(level_name: str, debugging: bool = False, data_folder: str = None
         if debugging: Config.activate_debugging()
         print(f"[Qrogue] Starting level {level_name} with seed = {seed}")
         try:
-            QrogueCUI(seed).start(level_name)
+            __init_singletons(seed)
+            QrogueCUI().start(level_name)
         except PyCuiConfig.OutOfBoundsError:
             print("---------------------------------------------------------")
             input("[Qrogue] Press ENTER to close the application")

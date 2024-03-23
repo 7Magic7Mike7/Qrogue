@@ -30,13 +30,13 @@ class Logger(PyCUILogger):
         else:
             raise TestConfig.StateException(ErrorConfig.singleton_reset("Logger"))
 
-    def __init__(self, seed: int, commit: Optional[Callable[[str], None]] = None):
+    def __init__(self, commit: Optional[Callable[[str], None]] = None):
         super().__init__("Qrogue-Logger")
         if Logger.__instance is not None:
             Logger.__instance.throw(Exception(ErrorConfig.singleton("Logger")))
         else:
             if commit is None:
-                save_file = PathConfig.new_log_file(seed)
+                save_file = PathConfig.new_log_file()
 
                 def commit_(text: str):
                     PathConfig.write(save_file, text, may_exist=True, append=True)
