@@ -1,4 +1,5 @@
 import os.path
+from typing import Optional, Callable
 
 from qrogue.util import Logger, TestConfig, ErrorConfig
 from qrogue.util.config import PathConfig, Config
@@ -7,40 +8,48 @@ from qrogue.util.controls import Controls, Keys
 
 class KeyLogger:
     __BUFFER_SIZE = 1024
-    __MIN_CONTENT_FOR_FLUSH = 180 + 20  # ~header and level name size + minimum number of keystrokes to log
+    __MIN_KEYSTROKES_FOR_FLUSH = 20  # minimum number of keystrokes to log      # todo: make value an Option?
 
     @staticmethod
     def get_error_marker() -> str:
         return Keys.ErrorMarker.to_char() + Keys.ErrorMarker.to_char() + Keys.ErrorMarker.to_char()
 
-    def __init__(self):
-        self.__save_file = None
-        self.__buffer = None
+    def __init__(self, write: Optional[Callable[[str, str], None]] = None):
+        self.__save_file: Optional[str] = None
+        self.__buffer: Optional[str] = None
+        self.__keystrokes = 0   # count how many keys are logged to not persist empty or almost empty runs
+
+        if write is None: self.__write = lambda path, text: PathConfig.write(path, text, may_exist=True, append=True)
+        else: self.__write = write
 
     def _is_for_levels(self) -> bool:
         return True
 
     @property
     def is_initialized(self) -> bool:
-        return self.__save_file and self.__buffer
+        return self.__save_file is not None and self.__buffer is not None
 
     def _append(self, character: str):
         self.__buffer += character
 
-    def reinit(self, seed: int, level_name: str):
+    def reinit(self, seed: int, level_name: str, save_state: str, save_path: Optional[str] = None):
         if self.is_initialized:
             # flush the old data if needed
             self.flush_if_useful()
         # start a new logging session
-        self.__save_file = PathConfig.new_key_log_file(seed, self._is_for_levels())
+        if save_path is None: self.__save_file = PathConfig.new_key_log_file(seed, self._is_for_levels())
+        else: self.__save_file = save_path
         self.__buffer = ""
         self._append(level_name)
         self._append("\n")
         self._append(Config.get_log_head(seed))
+        self._append(save_state)
+        self.__keystrokes = 0
 
     def log(self, controls: Controls, key_pressed: int):
         key = controls.encode(key_pressed)
         self._append(key.to_char())
+        self.__keystrokes += 1
         self._flush(force=False)
 
     def log_error(self, message):
@@ -53,14 +62,14 @@ class KeyLogger:
         minimum length so we don't produce useless files (e.g. immediately quiting a run doesn't provide useful
         information).
         """
-        if os.path.exists(self.__save_file) or len(self.__buffer) >= KeyLogger.__MIN_CONTENT_FOR_FLUSH:
+        if os.path.exists(self.__save_file) or KeyLogger.__MIN_KEYSTROKES_FOR_FLUSH <= self.__keystrokes:
             self._flush(force=True)
 
     def _flush(self, force: bool):
         if Config.skip_persisting():
             return
         if force or len(self.__buffer) >= KeyLogger.__BUFFER_SIZE:
-            PathConfig.write(self.__save_file, self.__buffer, may_exist=True, append=True)
+            self.__write(self.__save_file, self.__buffer)
             self.__buffer = ""
 
 

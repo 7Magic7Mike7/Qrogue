@@ -201,6 +201,9 @@ class NewSaveData:
                            for ach in self.__achievements.values()])
         return text
 
+    def to_keylog_string(self) -> str:
+        return self.to_string()
+
     def to_string(self) -> str:
         text = f"{_SaveDataGenerator.header()}\n"
         text += f"{_SaveDataGenerator.datetime2str(self.__date_time)}\n"

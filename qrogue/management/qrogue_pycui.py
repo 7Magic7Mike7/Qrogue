@@ -32,6 +32,8 @@ from qrogue.util.config import FileTypes, PopupConfig
 from qrogue.util.game_simulator import GameSimulator
 from qrogue.util.key_logger import KeyLogger, OverWorldKeyLogger
 
+from qrogue.management.save_data import NewSaveData
+
 from qrogue.management import MapManager, Pausing, SaveData, LevelInfo
 
 
@@ -188,10 +190,10 @@ class QrogueCUI(PyCUI):
     @staticmethod
     def start_simulation(simulation_path: str) -> Optional[NewSaveData]:
         try:
-            qrogue_cui = QrogueCUI()
-            simulator = GameSimulator(simulation_path, in_keylog_folder=True,
-                                      get_unlocks=lambda name: LevelInfo.get_level_completion_unlocks(name, qrogue_cui.__save_data.check_level, True))
-            qrogue_cui._set_simulator(simulator)
+            simulator = GameSimulator(simulation_path, in_keylog_folder=True)
+            RandomManager.force_seed(simulator.seed)
+            qrogue_cui = QrogueCUI(simulator.seed, save_data=NewSaveData(simulator.save_state))
+            qrogue_cui._set_simulator(simulator, stop_when_finished=False)
             return qrogue_cui.start()
 
         except FileNotFoundError:
@@ -205,18 +207,20 @@ class QrogueCUI(PyCUI):
         OverWorldKeyLogger.reset()
 
         try:
-            qrogue_cui = QrogueCUI(PathConfig.get_seed_from_key_log_file(simulation_path))
-            simulator = GameSimulator(simulation_path, in_keylog_folder=True, get_unlocks=lambda name:
-                        LevelInfo.get_level_completion_unlocks(name, qrogue_cui.__save_data.check_level, True))
+            simulator = GameSimulator(simulation_path, in_keylog_folder=True)
+            RandomManager.force_seed(simulator.seed)
+            qrogue_cui = QrogueCUI(simulator.seed, save_data=NewSaveData(simulator.save_state))
             qrogue_cui._set_simulator(simulator, stop_when_finished=True)
 
             if TestConfig.is_automatic():
                 qrogue_cui.set_refresh_timeout(TestConfig.automation_step_time())
 
-            qrogue_cui.start()
-            return True
+            return qrogue_cui.start()
+
         except FileNotFoundError:
-            return False
+            Logger.instance().error(f"Simulation file \"{simulation_path}\" not found!", show=not automate,
+                                    from_pycui=False)
+            return None
 
     def __init__(self, width: int = UIConfig.WINDOW_WIDTH, height: int = UIConfig.WINDOW_HEIGHT,
                  save_data: Optional[NewSaveData] = None):
@@ -247,8 +251,9 @@ class QrogueCUI(PyCUI):
         self.__cbp = CallbackPack(self.__start_level, self.__start_fight, self.__start_boss_fight, self.__open_riddle,
                                   self.__open_challenge, self.__visit_shop, self.__game_over)
         ########################################
-        self.__save_data = NewSaveData()
-        self.__map_manager = MapManager(self.__save_data, seed, self.__show_world, self.__start_level, self.__show_input_popup)
+        self.__stored_save: Optional[NewSaveData] = None    # temporarily stores the "real" save data when simulating
+        self.__save_data = NewSaveData() if save_data is None else save_data
+        self.__map_manager = MapManager(self.__save_data, self.__seed, self.__show_world, self.__start_level, self.__show_input_popup, self.__cbp, BaseBot(self.__game_over))
         ########################################
 
         if not Config.skip_learning():
@@ -340,13 +345,6 @@ class QrogueCUI(PyCUI):
         if Config.debugging():
             self.set_on_draw_update_func(Config.inc_frame_count)
 
-        if self.__save_data.is_fresh_save:
-            def knowledge_question(index: int):
-                if index == 0: GameplayConfig.set_newbie_mode()
-                else: GameplayConfig.set_experienced_mode()
-            ConfirmationPopup.ask("WELCOME TO QROGUE!", HelpText.Welcome.text, knowledge_question,
-                                  ["Quantum Newbie", "Quantum Experienced"])
-
         Logger.print_to_console("Ready!")  # notify player that the game is fully loaded
 
     def _get_absolute_grid_dimensions(self):
@@ -404,6 +402,15 @@ class QrogueCUI(PyCUI):
             self._stdscr.timeout(self._refresh_timeout)
 
     def start(self, level_name: Optional[str] = None) -> NewSaveData:
+        OverWorldKeyLogger.instance().reinit(self.__seed, "meta", self.__save_data.to_keylog_string())
+
+        if self.__save_data.is_fresh_save:
+            def knowledge_question(index: int):
+                if index == 0: GameplayConfig.set_newbie_mode()
+                else: GameplayConfig.set_experienced_mode()
+            ConfirmationPopup.ask("WELCOME TO QROGUE!", HelpText.Welcome.text, knowledge_question,
+                                  ["Quantum Newbie", "Quantum Experienced"])
+
         self.__render([self.__cur_widget_set])
 
         # We don't want to handle accidental input on startup of the game (e.g., during play-testing this once closed
@@ -427,15 +434,17 @@ class QrogueCUI(PyCUI):
 
     def __start_simulation(self, path: str):
         try:
-            simulator = GameSimulator(path, in_keylog_folder=True,
-                                      get_unlocks=lambda name: LevelInfo.get_level_completion_unlocks(name, True))
+            simulator = GameSimulator(path, in_keylog_folder=True)
             super(QrogueCUI, self)._handle_key_presses(self.__controls.get_key(Keys.SelectionUp))
             self._set_simulator(simulator)
         except FileNotFoundError:
             Logger.instance().show_error(f"File \"{path}\" could not be found!")
 
     def _set_simulator(self, simulator: GameSimulator, stop_when_finished: bool = False):
+        self.__stored_save = self.__save_data
+        self.__save_data = NewSaveData(simulator.save_state)
         self.__simulator = simulator
+        RandomManager.force_seed(simulator.seed)
         self.__stop_with_simulation_end = stop_when_finished
         simulator.set_controls(self.__controls)
 
@@ -449,6 +458,21 @@ class QrogueCUI(PyCUI):
         else:
             title, text = simulator.version_warning()
         Popup.generic_info(title, text)
+
+    def _end_simulation(self, can_stop: bool = True):
+        """
+
+        Args:
+            can_stop: whether the game is allowed to automatically stop itself or not
+
+        Returns:
+
+        """
+        assert self.__stored_save is not None
+        self.__save_data = self.__stored_save
+        self.__simulator = None
+        if can_stop and self.__stop_with_simulation_end:
+            self.stop()
 
     def _ready_for_input(self, key_pressed: int, gameplay: bool = True) -> bool:
         if self.__last_key != key_pressed:
@@ -485,15 +509,13 @@ class QrogueCUI(PyCUI):
                     super(QrogueCUI, self)._handle_key_presses(key_pressed)
         elif key_pressed in self.__controls.get_keys(Keys.StopSimulator):
             Popup.message("Simulator", "stopped Simulator", reopen=False, overwrite=True)
-            self.__simulator = None
+            self._end_simulation(can_stop=False)    # since the player stopped the simulation
         else:
             if self._ready_for_input(key_pressed, gameplay=False):
                 key = self.__simulator.next()
                 if key is None:
                     Popup.message("Simulator", "finished", reopen=False, overwrite=True)
-                    self.__simulator = None
-                    if self.__stop_with_simulation_end:
-                        self.stop()
+                    self._end_simulation()
                 else:
                     super(QrogueCUI, self)._handle_key_presses(key)
 
@@ -642,7 +664,8 @@ class QrogueCUI(PyCUI):
 
         robot = level.controllable_tile.controllable
         if isinstance(robot, Robot):
-            self.__key_logger.reinit(level.seed, level.internal_name)  # the seed used to build the Map
+            # store the level's seed and save state at the time of playing to the key logger
+            self.__key_logger.reinit(level.seed, level.internal_name, self.__save_data.to_keylog_string())
             OverWorldKeyLogger.instance().level_start(level.internal_name)
             robot.reset_score()     # reset the score at the start of each level
             self.__save_data.restart_level_timer()
