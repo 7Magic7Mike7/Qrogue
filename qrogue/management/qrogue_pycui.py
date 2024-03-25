@@ -230,7 +230,6 @@ class QrogueCUI(PyCUI):
         self.set_title(f"Qrogue {Config.version()}")
         self.__controls = Controls(self._handle_key_presses)
         self.__seed = RandomManager.instance().seed
-        OverWorldKeyLogger()    # todo: init this with other singletons?
 
         def move_focus(_widget: WidgetWrapper, _widget_set: WidgetSet):
             # this check is necessary for manual widget-set switches due to the call-order (the callback happens before
@@ -266,6 +265,7 @@ class QrogueCUI(PyCUI):
         Message.set_show_callback(Popup.from_message_trigger)
         Collectible.set_pickup_message_callback(Popup.generic_info)
 
+        self.__ow_key_logger = OverWorldKeyLogger()
         self.__key_logger = KeyLogger()
         self.__simulator: Optional[GameSimulator] = None
         self.__stop_with_simulation_end = False
@@ -402,7 +402,7 @@ class QrogueCUI(PyCUI):
             self._stdscr.timeout(self._refresh_timeout)
 
     def start(self, level_name: Optional[str] = None) -> NewSaveData:
-        OverWorldKeyLogger.instance().reinit(self.__seed, "meta", self.__save_data.to_keylog_string())
+        self.__ow_key_logger.reinit(self.__seed, "meta", self.__save_data.to_keylog_string())
 
         if self.__save_data.is_fresh_save:
             def knowledge_question(index: int):
@@ -427,6 +427,10 @@ class QrogueCUI(PyCUI):
 
         super(QrogueCUI, self).start()
         return self.__save_data
+
+    def stop(self) -> None:
+        self.__ow_key_logger.flush_if_useful()
+        super().stop()
 
     def __choose_simulation(self):
         title = f"Enter the path to the {FileTypes.KeyLog.value}-file to simulate:"
@@ -505,7 +509,7 @@ class QrogueCUI(PyCUI):
                     if GameplayConfig.log_keys() and not self.is_simulating:
                         if self.__map_manager.in_level:
                             self.__key_logger.log(self.__controls, key_pressed)
-                        OverWorldKeyLogger.instance().log(self.__controls, key_pressed)
+                        self.__ow_key_logger.log(self.__controls, key_pressed)
                     super(QrogueCUI, self)._handle_key_presses(key_pressed)
         elif key_pressed in self.__controls.get_keys(Keys.StopSimulator):
             Popup.message("Simulator", "stopped Simulator", reopen=False, overwrite=True)
@@ -666,7 +670,7 @@ class QrogueCUI(PyCUI):
         if isinstance(robot, Robot):
             # store the level's seed and save state at the time of playing to the key logger
             self.__key_logger.reinit(level.seed, level.internal_name, self.__save_data.to_keylog_string())
-            OverWorldKeyLogger.instance().level_start(level.internal_name)
+            self.__ow_key_logger.level_start(level.internal_name)
             robot.reset_score()     # reset the score at the start of each level
             self.__save_data.restart_level_timer()
 

@@ -9,7 +9,6 @@ from qrogue.game.world.map import CallbackPack
 from qrogue.game.world.navigation import Coordinate
 from qrogue.management import SaveData, QrogueCUI
 from qrogue.util import PyCuiConfig, Config, Logger, RandomManager, PathConfig, GameplayConfig
-from qrogue.util.key_logger import OverWorldKeyLogger
 
 
 def __init_singletons(seed: int):
@@ -122,7 +121,6 @@ def start_game(from_console: bool = False, debugging: bool = False, test_level: 
             else:
                 Logger.instance().error(f"Failed to save the game: {message.text}", show=False, from_pycui=False)
         Logger.instance().flush()
-        OverWorldKeyLogger.instance().flush_if_useful()
         print("[Qrogue] Successfully flushed all logs and shut down the game without any problems. See you next time!")
     else:
         print(f"[Qrogue] Error #{return_code}:")
@@ -167,7 +165,6 @@ def simulate_game(simulation_path: str, from_console: bool = False, debugging: b
             else:
                 Logger.instance().error(f"Failed to save the game: {message.text}", show=False, from_pycui=False)
         Logger.instance().flush()
-        OverWorldKeyLogger.instance().flush_if_useful()
         print("[Qrogue] Successfully flushed all logs and shut down the game without any problems. See you next time!")
     else:
         print(f"[Qrogue] Error #{return_code}:")

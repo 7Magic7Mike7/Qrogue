@@ -74,27 +74,8 @@ class KeyLogger:
 
 
 class OverWorldKeyLogger(KeyLogger):
-    __instance = None
-
-    @staticmethod
-    def instance() -> "OverWorldKeyLogger":
-        if OverWorldKeyLogger.__instance is None:
-            Logger.instance().throw(Exception(ErrorConfig.singleton_no_init("OverWorldKeyLogger")))
-        return OverWorldKeyLogger.__instance
-
-    @staticmethod
-    def reset():
-        if TestConfig.is_active():
-            OverWorldKeyLogger.__instance = None
-        else:
-            raise TestConfig.StateException(ErrorConfig.singleton_reset("OverWorldKeyLogger"))
-
     def __init__(self):
-        if OverWorldKeyLogger.__instance is not None:
-            Logger.instance().throw(Exception(ErrorConfig.singleton("OverWorldKeyLogger")))
-        else:
-            super().__init__()
-            OverWorldKeyLogger.__instance = self
+        super().__init__()
 
     def _is_for_levels(self) -> bool:
         return False
