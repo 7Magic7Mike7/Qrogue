@@ -30,6 +30,10 @@ class Logger(PyCUILogger):
         else:
             raise TestConfig.StateException(ErrorConfig.singleton_reset("Logger"))
 
+    @staticmethod
+    def _set_instance(logger: "Logger"):
+        Logger.__instance = logger
+
     def __init__(self, commit: Optional[Callable[[str], None]] = None):
         super().__init__("Qrogue-Logger")
         if Logger.__instance is not None:
@@ -64,7 +68,13 @@ class Logger(PyCUILogger):
         self.__message_popup = message_popup_function
         self.__error_popup = error_popup_function
 
-    def __write(self, text) -> None:
+    def _write(self, text: str, from_pycui: Optional[bool]) -> None:
+        """
+        Args:
+            text: the text to write to buffer
+            from_pycui: True if text comes from PyCUI, False if it comes from QRogue, None if we do not know (e.g.,
+                        some Exceptions)
+        """
         self.__buffer.append(text)
         if self.__buffer_size >= Logger.__BUFFER_SIZE:
             self.flush()
@@ -72,10 +82,10 @@ class Logger(PyCUILogger):
     def info(self, message, from_pycui: bool = True, **kwargs) -> None:
         time_str = datetime.now().strftime("%H-%M-%S")
         if from_pycui:
-            self.__write(f"{{PyCUI}}{time_str}: {message}")
+            self._write(f"{{PyCUI}}{time_str}: {message}", True)
         else:
             text = f"{{Qrogue}}{time_str}: {message}"
-            self.__write(text)
+            self._write(text, False)
             if Config.debugging(): print(text)
 
     def debug(self, msg: str, from_pycui: bool = True, *args, **kwargs) -> None:
@@ -110,7 +120,7 @@ class Logger(PyCUILogger):
             error = Exception(error)
         self.__error_counter += 1
         print(error)
-        self.__write(f"[ERROR] {error}")
+        self._write(f"[ERROR] {error}", None)
         self.flush()
         raise error
 

@@ -99,8 +99,9 @@ def init_singletons(seed: int = 7, include_config: bool = False, custom_data_pat
             print("Error! Could not load base paths.")
             return False
 
-    Logger(print)     # print errors instead of writing them to a file
-    Logger.instance().info(Config.get_log_head(seed), from_pycui=False)
+    # initialize a special TestLogger instead of the normal Logger
+    TestLogger()    # works since we access Logger only via .instance()
+    #Logger.instance().info(Config.get_log_head(seed), from_pycui=False)
     Logger.instance().set_popup(message_popup, error_popup)
     RandomManager(seed)  # initialize RandomManager
     #CallbackPack(start_gp, start_fight, start_boss_fight, open_riddle, open_challenge, visit_shop, game_over)
@@ -115,6 +116,23 @@ def reset_singletons():
     CallbackPack.reset()
     Logger.instance().flush()   # flush before we reset to not lose data
     Logger.reset()
+
+
+class TestLogger(Logger):
+    __PRINT_PYCUI: bool = False
+
+    @staticmethod
+    def print_pycui(activate: bool = True):
+        TestLogger.__print_pycui = activate
+
+    def __init__(self):
+        super().__init__(print)
+        Logger._set_instance(self)
+
+    def _write(self, text: str, from_pycui: Optional[bool]) -> None:
+        # skip writing if text comes from PyCUI and we do not want to log PyCUI-messages
+        if from_pycui is True and not TestLogger.__PRINT_PYCUI: return
+        super()._write(text, from_pycui)
 
 
 class SingletonSetupTestCase(unittest.TestCase):
