@@ -252,7 +252,7 @@ class QrogueCUI(PyCUI):
         if not Config.skip_learning():
             self.__map_manager.fill_expedition_queue(lambda: None, no_thread=True)
 
-        Popup.update_check_achievement_function(SaveData.instance().check_achievement)
+        Popup.update_check_achievement_function(self.__save_data.check_level_event)
         common_messages.set_show_callback(Popup.generic_info)
         common_messages.set_ask_callback(ConfirmationPopup.ask)
         WalkTriggerTile.set_show_explanation_callback(Popup.from_message)

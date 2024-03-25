@@ -247,9 +247,11 @@ class NewSaveData:
 
     ################################## TRANSITION TO NEW SYSTEM ##################################
 
-    def achievement_iterator(self) -> Iterator[Achievement]:
-        # todo: test
-        return iter(self.__achievements.values())
+    def check_level_event(self, event: str) -> bool:
+        if event in self.__temp_level_storage:
+            score, done_score = self.__temp_level_storage[event]
+            return score >= done_score
+        return False
 
     def restart_level_timer(self):
         self.__level_timer = cur_datetime()
