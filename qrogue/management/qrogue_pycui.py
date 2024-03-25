@@ -188,31 +188,25 @@ class QrogueCUI(PyCUI):
             return len(self.__history)
 
     @staticmethod
-    def start_simulation(simulation_path: str) -> Optional[NewSaveData]:
+    def start_simulation(simulation_path: str, automate: bool = False, stop_when_finished: bool = False) -> Optional[NewSaveData]:
+        """
+
+        Args:
+            simulation_path: path in user data's keylog folder to .qrkl file we want to simulate
+            automate: whether the simulation should run automatically or manually one step at a time
+            stop_when_finished: whether we want to stop the CUI when the simulation is finished or not
+
+        Returns:
+            the save data of the simulation or None if the simulation path was invalid (e.g., non-existent or no .qrkl
+            file)
+        """
         try:
             simulator = GameSimulator(simulation_path, in_keylog_folder=True)
             RandomManager.force_seed(simulator.seed)
             qrogue_cui = QrogueCUI(simulator.seed, save_data=NewSaveData(simulator.save_state))
-            qrogue_cui._set_simulator(simulator, stop_when_finished=False)
-            return qrogue_cui.start()
+            qrogue_cui._set_simulator(simulator, stop_when_finished)
 
-        except FileNotFoundError:
-            Logger.instance().show_error(f"File \"{simulation_path}\" could not be found!")
-
-    @staticmethod
-    def start_simulation_test(simulation_path: str) -> bool:
-        # first we have to reset all singletons
-        Logger.reset()
-        RandomManager.reset()
-        OverWorldKeyLogger.reset()
-
-        try:
-            simulator = GameSimulator(simulation_path, in_keylog_folder=True)
-            RandomManager.force_seed(simulator.seed)
-            qrogue_cui = QrogueCUI(simulator.seed, save_data=NewSaveData(simulator.save_state))
-            qrogue_cui._set_simulator(simulator, stop_when_finished=True)
-
-            if TestConfig.is_automatic():
+            if automate:
                 qrogue_cui.set_refresh_timeout(TestConfig.automation_step_time())
 
             return qrogue_cui.start()
