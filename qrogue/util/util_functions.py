@@ -73,7 +73,7 @@ def complex2string(val: complex, decimals: int) -> str:
             text = f"{real}{imag}j"
     # skip "-" in front if the text starts with "-0" and the value is actually 0 (so no more comma)
     if text.startswith("-0") and (len(text) == 2 or len(text) > 2 and text[2] != "."):
-        text = text[1:]  # I think this can never happen since we throw away 0 real- or imag-parts
+        text = text[1:]  # I think this can never happen since we throw away 0 real- or imag-parts  # IT CAN HAPPEN!
     return text
 
 
