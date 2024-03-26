@@ -1,8 +1,9 @@
 import enum
 import os
 import pathlib
-from datetime import datetime
 from typing import Tuple, Optional
+
+from qrogue.util.util_functions import cur_datetime
 
 
 class FileTypes(enum.Enum):
@@ -39,7 +40,7 @@ class PathConfig:
 
     @staticmethod
     def __now_str() -> str:
-        return datetime.now().strftime("%d%m%Y_%H%M%S")
+        return cur_datetime().strftime("%d%m%Y_%H%M%S")
 
     @staticmethod
     def __save_file_str(num: int) -> str:

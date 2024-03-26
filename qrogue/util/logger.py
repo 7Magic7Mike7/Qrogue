@@ -5,6 +5,7 @@ from py_cui.debug import PyCUILogger
 
 from qrogue.util import PyCuiColors, TestConfig, ErrorConfig
 from qrogue.util.config import PathConfig, Config
+from qrogue.util.util_functions import cur_datetime
 
 
 class Logger(PyCUILogger):
@@ -13,7 +14,7 @@ class Logger(PyCUILogger):
 
     @staticmethod
     def print_to_console(message: str) -> None:
-        time_str = datetime.now().strftime("%H-%M-%S")
+        time_str = cur_datetime().strftime("%H-%M-%S")
         text = f"{{Qrogue}}{time_str}: {message}"
         print(text)
 
@@ -80,7 +81,7 @@ class Logger(PyCUILogger):
             self.flush()
 
     def info(self, message, from_pycui: bool = True, **kwargs) -> None:
-        time_str = datetime.now().strftime("%H-%M-%S")
+        time_str = cur_datetime().strftime("%H-%M-%S")
         if from_pycui:
             self._write(f"{{PyCUI}}{time_str}: {message}", True)
         else:

@@ -1,9 +1,9 @@
 import os
-from datetime import datetime
 
 import qiskit   # imported to check its version
 
 from qrogue.util.config import CheatConfig, GameplayConfig, PathConfig, TestConfig
+from qrogue.util.util_functions import cur_datetime
 
 
 class Config:   # todo make singleton and handle access to other configs?
@@ -72,7 +72,7 @@ class Config:   # todo make singleton and handle access to other configs?
 
     @staticmethod
     def get_log_head(seed: int) -> str:
-        now_str = datetime.now().strftime("%d%m%Y_%H%M%S")
+        now_str = cur_datetime().strftime("%d%m%Y_%H%M%S")
         head = f"{Config.__HEADER}{Config.version()}\n"
         head += f"{Config.__SEED_HEAD}{seed}\n"
         head += f"{Config.__TIME_HEAD}{now_str}\n\n"

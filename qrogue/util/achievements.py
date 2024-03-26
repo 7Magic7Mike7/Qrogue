@@ -2,6 +2,8 @@ import datetime
 import enum
 from typing import List, Dict, Iterator, Optional
 
+from qrogue.util.util_functions import cur_datetime
+
 CompletedExpedition = "CompletedExpedition"
 
 
@@ -78,7 +80,7 @@ class Achievement:
         self.__done_score = done_score
         # date_time is either the datetime of the last scoring of the achievement or the datetime of completing the
         # achievement (score >= done_score)
-        self.__date_time = datetime.datetime.now() if date_time is None else date_time
+        self.__date_time = cur_datetime() if date_time is None else date_time
 
     @property
     def name(self) -> str:
@@ -112,7 +114,7 @@ class Achievement:
         if score > 0 and not self.is_done():
             # update our scoring timestamp - if this call completed the achievement, date_time will never be udpated
             # again, making date_time the datetime of completion
-            self.__date_time = datetime.datetime.now()
+            self.__date_time = cur_datetime()
             self.__score = min(self.score + score, self.done_score)
             return True
         return False

@@ -95,7 +95,7 @@ class NewSaveData:
         else:
             self.__is_fresh_save = False
 
-        self.__date_time = datetime.now()    # date and time of the latest save
+        self.__date_time = cur_datetime()    # date and time of the latest save
         self.__gates: List[Instruction] = []
         self.__levels: Dict[str, NewSaveData.LevelData] = {}
         self.__achievements: Dict[str, Achievement] = {}
@@ -151,7 +151,7 @@ class NewSaveData:
     def complete_level(self, name: str, date_time: Optional[datetime] = None, duration: int = -1, score: int = -1):
         # NOTE: name might still have the "done" suffix! Use level_data.name if you need the normalized name.
         # compute date_time and duration based on current time if not provided
-        if date_time is None: date_time = datetime.now()
+        if date_time is None: date_time = cur_datetime()
         if duration < 0: duration, _ = time_diff(cur_datetime(), self.__level_timer)
 
         level_data = NewSaveData.LevelData(name, date_time, duration, score)
@@ -161,7 +161,7 @@ class NewSaveData:
             self.unlock(unlock, date_time)
 
     def unlock(self, unlock: Union[str, Unlocks], date_time: Optional[datetime] = None):
-        if date_time is None: date_time = datetime.now()
+        if date_time is None: date_time = cur_datetime()
         if isinstance(unlock, Unlocks): unlock = unlock.ach_name
         if unlock in self.__unlocks:
             return
@@ -235,7 +235,7 @@ class NewSaveData:
         if Config.forbid_saving():
             return False, CommonPopups.NoSavingWithCheats
         try:
-            self.__date_time = datetime.now()   # update datetime of the latest save (=now)
+            self.__date_time = cur_datetime()   # update datetime of the latest save (=now)
             data = self.to_string()
             if is_auto_save:
                 PathConfig.write_auto_save(data)

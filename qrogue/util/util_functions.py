@@ -7,7 +7,7 @@ from typing import Optional, Any, Tuple
 __DEFAULT_CHARACTER = " "
 
 
-def cur_datetime() -> datetime:
+def cur_datetime() -> datetime.datetime:
     return datetime.datetime.now()
 
 
