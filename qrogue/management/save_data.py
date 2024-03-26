@@ -15,8 +15,8 @@ from qrogue.management.save_grammar.SaveDataLexer import SaveDataLexer
 from qrogue.management.save_grammar.SaveDataParser import SaveDataParser
 from qrogue.management.save_grammar.SaveDataVisitor import SaveDataVisitor
 from qrogue.util import Logger, PathConfig, FileTypes, RandomManager, CommonPopups, Config, \
-    TestConfig, ErrorConfig, achievements, MapConfig
-from qrogue.util.achievements import Achievement, Unlocks, Ach
+    ErrorConfig, achievements, MapConfig
+from qrogue.util.achievements import Achievement, Unlocks
 from qrogue.util.util_functions import cur_datetime, time_diff
 
 

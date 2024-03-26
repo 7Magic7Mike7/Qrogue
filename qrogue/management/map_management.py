@@ -8,7 +8,7 @@ from qrogue.game.world.map import Map, WorldMap, MapType, ExpeditionMap, Callbac
 from qrogue.game.world.navigation import Coordinate
 from qrogue.graphics.popups import Popup
 from qrogue.management import LevelInfo
-from qrogue.util import CommonQuestions, Logger, MapConfig, achievements, RandomManager, Config, TestConfig, \
+from qrogue.util import CommonQuestions, Logger, MapConfig, achievements, RandomManager, Config, \
     ErrorConfig, PathConfig
 
 from qrogue.management.save_data import NewSaveData

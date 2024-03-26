@@ -3,7 +3,7 @@ from typing import Callable, List
 from qrogue.game.logic.actors import Boss, Enemy, Robot
 from qrogue.game.world.map import LevelMap
 from qrogue.game.world.navigation import Direction
-from qrogue.util import Logger, TestConfig, ErrorConfig
+from qrogue.util import Logger, ErrorConfig
 
 
 class CallbackPack:
