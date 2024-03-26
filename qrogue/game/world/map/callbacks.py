@@ -7,8 +7,6 @@ from qrogue.util import Logger, ErrorConfig
 
 
 class CallbackPack:
-    __instance = None
-
     @staticmethod
     def dummy() -> "CallbackPack":
         return CallbackPack(start_level=lambda num, level: None, start_fight=lambda robot, enemy, direction: None,
