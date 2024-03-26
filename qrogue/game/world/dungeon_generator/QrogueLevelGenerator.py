@@ -514,7 +514,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         gates: List[Instruction] = []
         for gate_spec in ctx.GATE_SPECIFIER():
             name = gate_spec.getText()[1:]
-            gate = InstructionManager.from_name(name).copy()
+            gate = InstructionManager.from_name(name)   # from_name already returns a copy
             if gate is None:
                 parser_util.error(f"Invalid gate name: {name}")
                 continue
@@ -524,7 +524,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
     def visitCircuit_gate_multi(self, ctx: QrogueDungeonParser.Circuit_gate_multiContext) -> Optional[Instruction]:
         name = ctx.GATE_SPECIFIER().getText()[1:]
-        gate = InstructionManager.from_name(name).copy()
+        gate = InstructionManager.from_name(name)   # from_name already returns a copy
         if gate is None:
             parser_util.error(f"Invalid gate name: {name}")
             return None
