@@ -163,7 +163,8 @@ class MenuWidgetSet(MyWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  quick_start_callback: Callable[[], None], start_playing_callback: Callable[[], None],
                  start_expedition_callback: Callable[[], None], stop_callback: Callable[[], None],
-                 choose_simulation_callback: Callable[[], None], show_screen_check: Callable[[], None]):
+                 choose_simulation_callback: Callable[[], None], show_screen_check: Callable[[], None],
+                 show_level_select: Callable[[], None], check_unlocks: Callable[[Union[str, Unlocks]], bool]):
         self.__seed = 0
         self.__quick_start = quick_start_callback
         self.__start_playing = start_playing_callback
@@ -171,6 +172,8 @@ class MenuWidgetSet(MyWidgetSet):
         self.__stop = stop_callback
         self.__choose_simulation = choose_simulation_callback
         self.__show_screen_check = show_screen_check
+        self.__show_level_select = show_level_select
+        self.__check_unlocks = check_unlocks
         super().__init__(logger, root, render)
 
         width = UIConfig.WINDOW_WIDTH - UIConfig.ASCII_ART_WIDTH
@@ -206,19 +209,12 @@ class MenuWidgetSet(MyWidgetSet):
     def __update_selection(self):
         choices = []
         callbacks = []
-        if AchievementManager.instance().check_unlocks(Unlocks.MainMenuPlay):
-            choices.append("CONTINUE\n")
-            callbacks.append(self.__quick_start)
-            choices.append("PLAY\n")
-            callbacks.append(self.__start_playing)
-
-            if Config.debugging():  # add simulator option
-                choices.append("SIMULATOR\n")
-                callbacks.append(self.__choose_simulation)
-
-        elif AchievementManager.instance().check_unlocks(Unlocks.MainMenuContinue):
+        if self.__check_unlocks(Unlocks.MainMenuContinue):
             choices.append("CONTINUE JOURNEY\n")
             callbacks.append(self.__quick_start)
+
+            choices.append("SELECT LEVEL\n")
+            callbacks.append(self.__show_level_select)
 
         else:
             choices.append("START YOUR JOURNEY\n")
@@ -267,6 +263,108 @@ class MenuWidgetSet(MyWidgetSet):
 
     def __options(self) -> None:
         Popup.generic_info("Gameplay Config", GameplayConfig.to_file_text())
+
+
+class LevelSelectWidgetSet(MyWidgetSet):
+    def __init__(self, controls: Controls, logger: Logger, root: py_cui.PyCUI,
+                 base_render_callback: Callable[[List[Renderable]], None], switch_to_menu: Callable[[], None],
+                 start_level: Callable[[str, Optional[int]], None]):
+        super().__init__(logger, root, base_render_callback)
+        # select seed
+        # select level (or choose Expedition)
+        # select starting gates
+        # start
+        # back to menu
+        self.__start_level = start_level
+
+        self.__seed = -1
+        self.__level: Optional[str] = None
+        self.__gates: List[gates.Instruction] = []  # todo: or rather InstructionType?
+
+        row = 4
+        select = self.add_block_label('Select', row, 0, row_span=4, column_span=4, center=False)
+        self.__choices = SelectionWidget(select, controls, stay_selected=True)
+
+        details = self.add_block_label('Details', row, 5, row_span=4, column_span=4, center=False)
+        self.__details = SelectionWidget(details, controls, is_second=True)
+
+        texts = ["Seed", "Level", "Gates", "Start Playing", "Back to Menu"]
+        objects = ["Seed", "Level", "Gates", "Start", "Back"]
+        callbacks = [self.__set_seed, self.__select_level, self.__choose_gates, self.__play_level, switch_to_menu]
+        self.__choices.set_data(((texts, objects), callbacks))
+
+        def use_choices():
+            if self.__choices.use():
+                Widget.move_focus(self.__details, self)
+                self.__details.render()
+        self.__choices.widget.add_key_command(controls.action, use_choices)
+
+        def use_details():
+            if self.__details.use():
+                if self.__choices.selected_object == "Level":
+                    pass
+                elif self.__choices.selected_object == "Gates":
+                    pass
+                Widget.move_focus(self.__choices, self)
+                self.__details.render()
+                self.__choices.render()
+        self.__details.widget.add_key_command(controls.action, use_details)
+
+    def __set_seed(self) -> bool:
+        pass
+
+    def __select_level(self) -> bool:
+        def set_level(index: int) -> bool:
+            if self.__details.selected_object is None: return True  # -Cancel- was selected
+
+            self.__level = self.__details.selected_object
+            return True
+
+        levels = ["L0", "L1", "-Cancel-"]
+        internal_names = ["aaa", "bbb", None]
+        self.__details.set_data(((levels, internal_names), set_level))
+        return True
+
+    def __choose_gates(self) -> bool:
+        def add_gate(index: int) -> bool:
+            gate = self.__details.selected_object
+            return False
+
+        gate_objects = [gates.HGate(), gates.XGate(), ]
+        names = [go.name() for go in gate_objects]
+        self.__details.set_data(((names, gate_objects), add_gate))
+        return True
+
+    def __play_level(self) -> bool:
+        if self.__level is None: Logger.instance().show_error("No Level selected!")
+        if self.__seed < 0: self.__seed = None
+
+        self.__start_level(self.__level, self.__seed)
+        return True
+
+    def _update_choices(self):
+        # todo: use summary widget instead?
+        if self.__seed < 0: self.__choices.update_text("Set Seed", 0)
+        else: self.__choices.update_text(f"Set Seed (currently: {self.__seed})", 0)
+
+        if self.__level is None: self.__choices.update_text("Select Level", 1)
+        else: self.__choices.update_text(f"Select Level (currently: {self.__level})", 1)
+
+        if len(self.__gates) <= 0: self.__choices.update_text("Choose Gates", 2)
+        else: self.__choices.update_text(f"Choose Gates (currently: {self.__gates})", 2)
+
+    def get_widget_list(self) -> List[Widget]:
+        return [
+            self.__choices,
+            self.__details,
+        ]
+
+    def get_main_widget(self) -> WidgetWrapper:
+        return self.__choices.widget
+
+    def reset(self) -> None:
+        self.__choices.render_reset()
+        self.__details.render_reset()
 
 
 class ScreenCheckWidgetSet(MyWidgetSet):

@@ -23,8 +23,8 @@ from qrogue.graphics.rendering import MultiColorRenderer
 from qrogue.graphics.widgets import Renderable, BossFightWidgetSet, ExploreWidgetSet, \
     FightWidgetSet, MenuWidgetSet, MyWidgetSet, NavigationWidgetSet, PauseMenuWidgetSet, RiddleWidgetSet, \
     ChallengeWidgetSet, ShopWidgetSet, WorkbenchWidgetSet, TrainingsWidgetSet, Widget, TransitionWidgetSet, \
-    ScreenCheckWidgetSet
-from qrogue.util import achievements, common_messages, CheatConfig, Config, GameplayConfig, UIConfig, HelpText, \
+    ScreenCheckWidgetSet, LevelSelectWidgetSet
+from qrogue.util import common_messages, CheatConfig, Config, GameplayConfig, UIConfig, HelpText, \
     Logger, PathConfig, MapConfig, Controls, Keys, RandomManager, PyCuiConfig, PyCuiColors, Options, \
     TestConfig, CommonQuestions, ErrorConfig
 from qrogue.util.achievements import Unlocks
@@ -59,6 +59,7 @@ class QrogueCUI(PyCUI):
 
         Transition = 12  # for atmospheric transitions and elements
         ScreenCheck = 13    # a menu to check dimensions and color of the screen/terminal the game is played
+        LevelSelect = 14
 
     class _StateMachine:
         def __init__(self, renderer: "QrogueCUI"):
@@ -110,6 +111,9 @@ class QrogueCUI(PyCUI):
                 self.__renderer._switch_to_transition(data)
             elif self.__cur_state == QrogueCUI._State.ScreenCheck:
                 self.__renderer._switch_to_screen_check(data)
+
+            elif self.__cur_state == QrogueCUI._State.LevelSelect:
+                self.__renderer._switch_to_level_select(data)
 
     class _PopupHistory:
         def __init__(self, show_popup: Callable[[MultilinePopup], None]):
@@ -275,9 +279,12 @@ class QrogueCUI(PyCUI):
 
         # INIT WIDGET SETS
         self.__menu = MenuWidgetSet(self.__controls, self.__render, Logger.instance(), self,
-                                    MapManager.instance().load_first_uncleared_map,
-                                    self.__start_playing, self.__start_expedition, self.stop, self.__choose_simulation,
-                                    self.__show_screen_check)
+                                    self.__map_manager.load_first_uncleared_map, self.__start_playing,
+                                    self.__start_expedition, self.stop, self.__choose_simulation,
+                                    self.__show_screen_check, self.__show_level_select,
+                                    self.__save_data.check_unlocks)
+        self.__level_select = LevelSelectWidgetSet(self.__controls, Logger.instance(), self, self.__render,
+                                                   self._switch_to_menu, self.__start_level)
         self.__screen_check = ScreenCheckWidgetSet(self.__controls, Logger.instance(), self, self.__render,
                                                    self._switch_to_menu)
         self.__transition = TransitionWidgetSet(self.__controls, Logger.instance(), self, self.__render,
@@ -606,6 +613,12 @@ class QrogueCUI(PyCUI):
             seed = RandomManager.instance().get_seed(msg="QroguePyCUI.switch_to_menu()")
         self.__menu.set_data(seed)
         self.apply_widget_set(self.__menu)
+
+    def __show_level_select(self):
+        self.__state_machine.change_state(QrogueCUI._State.LevelSelect, None)
+
+    def _switch_to_level_select(self, data=None) -> None:
+        self.apply_widget_set(self.__level_select)
 
     def __show_screen_check(self):
         self.__state_machine.change_state(QrogueCUI._State.ScreenCheck, None)
