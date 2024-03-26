@@ -29,8 +29,8 @@ class KeyLogger:
     def is_initialized(self) -> bool:
         return self.__save_file is not None and self.__buffer is not None
 
-    def _append(self, character: str):
-        self.__buffer += character
+    def _append(self, text: str):
+        self.__buffer += text
 
     def reinit(self, seed: int, level_name: str, save_state: str, save_path: Optional[str] = None):
         if self.is_initialized:
