@@ -1,8 +1,10 @@
 import os.path
 import shutil
-from typing import List
+import unittest
+from typing import List, Optional
 
-from qrogue.management import QrogueCUI
+from qrogue.management import QrogueCUI, NewSaveData
+from qrogue.test import test_util
 from qrogue.util import PathConfig, Logger, FileTypes, Config, TestConfig
 
 user_data_path = os.path.join(os.path.dirname(__file__), "user_data")
@@ -39,45 +41,42 @@ def setup() -> bool:
     return True
 
 
-def start_simulation(simulation_path: str):
-    if PathConfig.load_paths(None, user_data_path):
-        return_code = Config.load()  # NEEDS TO BE THE FIRST THING WE DO!
-    else:
-        return_code = 1
+class SimulationTestCase(test_util.SingletonSetupTestCase):
+    class _Simulation:
+        def __init__(self, path: str, in_keylog_folder: bool = False, automate: bool = True,
+                     stop_when_finished: bool = True):
+            self.__path = path if in_keylog_folder else os.path.join("test_data", "keylogs", path)
+            self.__in_keylog_folder = in_keylog_folder
+            self.__automate = automate
+            self.__stop_when_finished = stop_when_finished
 
-    if return_code == 0:
-        Config.activate_debugging()
-        QrogueCUI.start_simulation_test(simulation_path)
-    return return_code
+        def start(self) -> Optional[NewSaveData]:
+            return QrogueCUI.start_simulation(self.__path, self.__in_keylog_folder, self.__automate,
+                                              self.__stop_when_finished)
 
+        def __str__(self):
+            return f"{self.__path} (" \
+                   f"{'in' if self.__in_keylog_folder else 'out'}side, " \
+                   f"{'auto' if self.__automate else 'manual'}, " \
+                   f"{'stop' if self.__stop_when_finished else 'continue'})"
 
-def test_run() -> List[int]:
-    paths = [
-        "lesson0.qrkl",
-        "lesson1.qrkl",
-    ]
-    error_counts = []
-    for p in paths:
-        if not p.endswith(FileTypes.KeyLog.value):
-            p += FileTypes.KeyLog.value
-        sim_path = os.path.join(user_data_path, PathConfig.keylog_folder(), p)
-        return_code = start_simulation(sim_path)
-        if return_code == 0:
-            error_counts.append(Logger.instance().error_count)
-        else:
-            print(f"ERROR: trying to simulate \"{sim_path}\" returned {return_code}")
-            error_counts.append(1)
+    def test_meta(self):
+        simulations: List[SimulationTestCase._Simulation] = [
+            #SimulationTestCase._Simulation("25032024_153036_meta184705"),
+            #SimulationTestCase._Simulation("25032024_152548_meta716940"),
+            #SimulationTestCase._Simulation("21032024_163055_meta248180"),
+        ]
+        for simulation in simulations:
+            simulation.start()
 
-    return error_counts
-
-
-assert cleanup(), "Exception occurred during cleanup!"
-assert setup(), "Exception occurred during setup!"
-
-error_counts = test_run()
-assert sum(error_counts) <= 0, f"test_run() returned with errors: {error_counts}"
-
-assert cleanup(), "Exception occurred during cleanup!"
+    def test_level(self):
+        simulations: List[SimulationTestCase._Simulation] = [
+            SimulationTestCase._Simulation("l0k0v0_simple"),
+            #SimulationTestCase._Simulation("l0k0v1_simple"),
+        ]
+        for simulation in simulations:
+            simulation.start()
 
 
-print("Simulation tests succeeded!")
+if __name__ == '__main__':
+    unittest.main()

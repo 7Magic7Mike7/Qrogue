@@ -192,11 +192,14 @@ class QrogueCUI(PyCUI):
             return len(self.__history)
 
     @staticmethod
-    def start_simulation(simulation_path: str, automate: bool = False, stop_when_finished: bool = False) -> Optional[NewSaveData]:
+    def start_simulation(simulation_path: str, in_keylog_folder: bool = True, automate: bool = False,
+                         stop_when_finished: bool = False) -> Optional[NewSaveData]:
         """
 
         Args:
-            simulation_path: path in user data's keylog folder to .qrkl file we want to simulate
+            simulation_path: path to the .qrkl file we want to simulate
+            in_keylog_folder: whether the given simulation path is inside the user data keylog folder or an absolute
+                path
             automate: whether the simulation should run automatically or manually one step at a time
             stop_when_finished: whether we want to stop the CUI when the simulation is finished or not
 
@@ -205,7 +208,7 @@ class QrogueCUI(PyCUI):
             file)
         """
         try:
-            simulator = GameSimulator(simulation_path, in_keylog_folder=True)
+            simulator = GameSimulator(simulation_path, in_keylog_folder)
             RandomManager.force_seed(simulator.seed)
             qrogue_cui = QrogueCUI(simulator.seed, save_data=NewSaveData(simulator.save_state))
             qrogue_cui._set_simulator(simulator, stop_when_finished)
@@ -215,8 +218,8 @@ class QrogueCUI(PyCUI):
 
             return qrogue_cui.start()
 
-        except FileNotFoundError:
-            Logger.instance().error(f"Simulation file \"{simulation_path}\" not found!", show=not automate,
+        except FileNotFoundError as fnf:
+            Logger.instance().error(f"Simulation file \"{simulation_path}\" not found: {fnf}", show=not automate,
                                     from_pycui=False)
             return None
 
@@ -476,6 +479,7 @@ class QrogueCUI(PyCUI):
         assert self.__stored_save is not None
         self.__save_data = self.__stored_save
         self.__simulator = None
+        self.set_refresh_timeout(-1)    # stop automation   # todo: check if this might interfere with transitions?
         if can_stop and self.__stop_with_simulation_end:
             self.stop()
 
