@@ -7,6 +7,16 @@ from qrogue.util.controls import Controls, Keys
 
 
 class GameSimulator:
+    # naming convention:
+    #   - raw key = PyCUI-internal representation of the physically pressed key
+    #   - logical key = QRogue-internal representation of the logically pressed key (e.g., MoveUp, SelectionUp)
+    #       ~ multiple logical keys can correspond to the same raw key, both situationally (overlapping controls) and
+    #         permanently (same controls)
+    #   - key code = "translator" between raw and logical keys
+    #       ~ Corresponds to the integer value of a logical key, but as it is computed from raw keys it might not be
+    #         the same as its original logical counterpart. However, when given the same Controls-object, it will always
+    #         be equivalent to its original logical key.
+
     __ENCODING = "utf-8"
     __BUFFER_SIZE = 1024
 
@@ -98,7 +108,7 @@ class GameSimulator:
     def __next_key(self) -> int:
         """
 
-        :return: the next key or -1 if we should retry (self.__cur_chunk is None if we reached the end)
+        :return: the next (raw) key or -1 if we should retry (self.__cur_chunk is None if we reached the end)
         """
         self.__cur_index += 1
         if 0 <= self.__cur_index < len(self.__cur_chunk):
@@ -123,7 +133,7 @@ class GameSimulator:
     def next(self) -> Optional[int]:
         """
 
-        :return: the key to press or None if the simulation finished
+        :return: the (raw) key to press or None if the simulation finished
         """
         if self.__notification_popup:
             # close the notification popup if it is still open before using any real simulation keys

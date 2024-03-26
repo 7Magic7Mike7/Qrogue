@@ -54,12 +54,12 @@ class KeyLogger:
 
     def log_error(self, message):
         self._append(f"{KeyLogger.get_error_marker()}{message}{KeyLogger.get_error_marker()}")
-        self._flush(force=True)  # errors are immediately flushed so we do not lose their information
+        self._flush(force=True)  # errors are immediately flushed, so we do not lose their information
 
     def flush_if_useful(self):
         """
         Flushes only if the .qrkl-file was already created (meaning we already flushed before) or if the buffer has a
-        minimum length so we don't produce useless files (e.g. immediately quiting a run doesn't provide useful
+        minimum length, so we don't produce useless files (e.g. immediately quiting a run doesn't provide useful
         information).
         """
         if os.path.exists(self.__save_file) or KeyLogger.__MIN_KEYSTROKES_FOR_FLUSH <= self.__keystrokes:
