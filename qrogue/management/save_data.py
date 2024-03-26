@@ -63,6 +63,17 @@ class NewSaveData:
                    f"#{self.__score})"
 
     @staticmethod
+    def empty_save_state() -> str:
+        save_state =  f"{_SaveDataGenerator.header()}\n"
+        save_state += f"{_SaveDataGenerator.datetime2str(cur_datetime())}\n"
+        save_state += f"{_SaveDataGenerator.gates_header()}\n"
+        save_state += f"{_SaveDataGenerator.levels_header()}\n"
+        save_state += f"{_SaveDataGenerator.unlocks_header()}\n"
+        save_state += f"{_SaveDataGenerator.achievements_header()}\n"
+        save_state += f"{_SaveDataGenerator.ender()}\n"
+        return save_state
+
+    @staticmethod
     def _init_fresh_save(save_data: "NewSaveData"):
         # some achievements need to be present right from the start
         save_data.add_achievement(Achievement(achievements.CompletedExpedition, 0, 100))    # todo: change system?
