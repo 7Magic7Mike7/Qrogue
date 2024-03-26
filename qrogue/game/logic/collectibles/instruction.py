@@ -501,6 +501,13 @@ class InstructionManager:
     }
 
     @staticmethod
+    def validate() -> bool:
+        for val in GateType:
+            if val is GateType.Combined: continue   # todo: properly implement for Combined? Or do we have to skip them?
+            assert val in InstructionManager.__GATES, f"{val} not defined in InstructionManager.__GATES!"
+        return True
+
+    @staticmethod
     def from_name(name: str, ignore_gate_suffix: bool = True) -> Optional[Instruction]:
         if ignore_gate_suffix and name.lower().endswith("gate"):
             name = name[:-len("gate")]
