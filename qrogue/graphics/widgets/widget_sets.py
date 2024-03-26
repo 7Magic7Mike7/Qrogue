@@ -243,7 +243,6 @@ class MenuWidgetSet(MyWidgetSet):
 
     def set_data(self, new_seed: int):
         self.__seed = new_seed
-        RandomManager.force_seed(new_seed)
         self.__seed_widget.set_data(f"Seed: {self.__seed}")
         # self.__seed_widget.render()
 
