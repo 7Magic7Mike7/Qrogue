@@ -113,8 +113,6 @@ def init_singletons(seed: int = 7, include_config: bool = False, custom_data_pat
 
 def reset_singletons():
     RandomManager.reset()
-    CallbackPack.reset()
-    Logger.instance().flush()   # flush before we reset to not lose data
     Logger.reset()
 
 
