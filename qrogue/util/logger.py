@@ -27,6 +27,8 @@ class Logger(PyCUILogger):
     @staticmethod
     def reset():
         if TestConfig.is_active():
+            if Logger.__instance is None: return
+            Logger.__instance.flush()   # flush before we reset to not lose data
             Logger.__instance = None
         else:
             raise TestConfig.StateException(ErrorConfig.singleton_reset("Logger"))
