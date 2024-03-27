@@ -1104,19 +1104,15 @@ class PauseMenuWidgetSet(MyWidgetSet):
 
     def __help(self) -> bool:
         texts = [enum_str(val, skip_type_prefix=True) for val in get_filtered_help_texts()] + [MyWidgetSet.BACK_STRING]
-        callbacks = []
 
         def func(val: HelpText) -> Callable[[], bool]:
             def cb():
                 Popup.generic_info(enum_str(val, skip_type_prefix=True), val.text)
                 return False
             return cb
-        for val in get_filtered_help_texts():
-            callbacks.append(func(val))
+        callbacks = [func(val) for val in get_filtered_help_texts()]
+        callbacks.append(lambda: True)      # simple callback for "back"
 
-        def back() -> bool:
-            return True
-        callbacks.append(back)
         self.__details.set_data(data=(texts, callbacks))
         return True
 
