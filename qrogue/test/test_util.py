@@ -103,7 +103,6 @@ def init_singletons(seed: int = 7, include_config: bool = False, custom_data_pat
     TestLogger()    # works since we access Logger only via .instance()
     #Logger.instance().info(Config.get_log_head(seed), from_pycui=False)
     Logger.instance().set_popup(message_popup, error_popup)
-    RandomManager(seed)  # initialize RandomManager
     #CallbackPack(start_gp, start_fight, start_boss_fight, open_riddle, open_challenge, visit_shop, game_over)
 
     CheatConfig.init(lambda s0, s1, i0, i1: None, lambda s, i, c: None, True, True)
@@ -112,7 +111,6 @@ def init_singletons(seed: int = 7, include_config: bool = False, custom_data_pat
 
 
 def reset_singletons():
-    RandomManager.reset()
     Logger.reset()
 
 

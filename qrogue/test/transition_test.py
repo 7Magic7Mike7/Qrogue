@@ -15,7 +15,7 @@ class TestQrogueCUI(QrogueCUI):
         ]
 
     def __init__(self, seed: int):
-        super().__init__()
+        super().__init__(seed)
 
     def start(self):
         text_scrolls = [
@@ -24,7 +24,7 @@ class TestQrogueCUI(QrogueCUI):
             TransitionWidgetSet.TextScroll.hasty("\nWe hope you'll like it - bye!", text_delay=1, clear_previous=True)
         ]
         text_scrolls = TestQrogueCUI.exam_spaceship()
-        self._execute_transition(text_scrolls, QrogueCUI._State.Menu, self.seed, additional_callback=self.stop)
+        self._execute_transition(text_scrolls, QrogueCUI._State.Menu, None, additional_callback=self.stop)
         super(TestQrogueCUI, self).start()
 
 

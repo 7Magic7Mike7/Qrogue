@@ -558,10 +558,8 @@ class ExpeditionGenerator(DungeonGenerator):
     __BLOCKING_WEIGHT = 2
     __INVALID_WEIGHT = 1_000_000
 
-    @staticmethod
-    def __create_enemy(enemy_id: int, room_pos: Coordinate, enemy_factory: EnemyFactory,
-                       enemy_groups_by_room: Dict[Coordinate, Dict[int, List[tiles.Enemy]]],
-                       next_tile_id: Callable[[], int]) -> tiles.Enemy:
+    def __create_enemy(self, enemy_id: int, room_pos: Coordinate, enemy_factory: EnemyFactory,
+                       enemy_groups_by_room: Dict[Coordinate, Dict[int, List[tiles.Enemy]]]) -> tiles.Enemy:
         enemy: Optional[tiles.Enemy] = None
 
         def get_entangled_tiles(id_: int) -> List[tiles.Enemy]:
@@ -578,7 +576,8 @@ class ExpeditionGenerator(DungeonGenerator):
                 enemy_groups_by_room[room_pos][enemy_id] = []
             enemy_groups_by_room[room_pos][enemy_id].append(new_enemy)
 
-        enemy = tiles.Enemy(enemy_factory, get_entangled_tiles, update_entangled_room_groups, enemy_id, next_tile_id)
+        enemy = tiles.Enemy(enemy_factory, get_entangled_tiles, update_entangled_room_groups,
+                            self.__rm.get_seed("creating an Enemy for Expedition"), enemy_id, self._next_tile_id)
         update_entangled_room_groups(enemy)
         return enemy
 
@@ -627,8 +626,8 @@ class ExpeditionGenerator(DungeonGenerator):
 
         rm = RandomManager.create_new(seed)  # needed for WildRooms
         gate_factory = GateFactory.quantum()
-        riddle_factory = RiddleFactory.default(robot)
-        boss_factory = BossFactory.default(robot)
+        riddle_factory = RiddleFactory.default(robot, rm.get_seed("Init default RiddleFactory"))
+        boss_factory = BossFactory.default(robot, rm.get_seed("Init default BossFactory"))
         typed_collectible_factory: Dict[Optional[CollectibleType], CollectibleFactory] = {
             None: CollectibleFactory([Score(100)]),    # default factory
             CollectibleType.Gate: CollectibleFactory([Score(200)]),
@@ -720,8 +719,7 @@ class ExpeditionGenerator(DungeonGenerator):
 
                             def tile_from_tile_data(tile_code: tiles.TileCode, tile_data: Any) -> tiles.Tile:
                                 if tile_code == tiles.TileCode.Enemy:
-                                    return self.__create_enemy(tile_data, pos, enemy_factory, enemy_groups_by_room,
-                                                               self._next_tile_id)
+                                    return self.__create_enemy(tile_data, pos, enemy_factory, enemy_groups_by_room)
                                 elif tile_code == tiles.TileCode.CollectibleScore:
                                     return tiles.Collectible(Score(tile_data))
                                 elif tile_code == tiles.TileCode.Collectible:

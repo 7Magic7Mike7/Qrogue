@@ -209,7 +209,6 @@ class QrogueCUI(PyCUI):
         """
         try:
             simulator = GameSimulator(simulation_path, in_keylog_folder)
-            RandomManager.force_seed(simulator.seed)
             qrogue_cui = QrogueCUI(simulator.seed, save_data=NewSaveData(simulator.save_state))
             qrogue_cui._set_simulator(simulator, stop_when_finished)
 
@@ -223,14 +222,14 @@ class QrogueCUI(PyCUI):
                                     from_pycui=False)
             return None
 
-    def __init__(self, width: int = UIConfig.WINDOW_WIDTH, height: int = UIConfig.WINDOW_HEIGHT,
+    def __init__(self, seed: int, width: int = UIConfig.WINDOW_WIDTH, height: int = UIConfig.WINDOW_HEIGHT,
                  save_data: Optional[NewSaveData] = None):
         self.__init_complete = False
         super().__init__(width, height)
         PyCuiConfig.set_get_dimensions_callback(self._get_absolute_grid_dimensions)
         self.set_title(f"Qrogue {Config.version()}")
         self.__controls = Controls(self._handle_key_presses)
-        self.__seed = RandomManager.instance().seed
+        self.__rm = RandomManager.create_new(seed)
 
         def move_focus(_widget: WidgetWrapper, _widget_set: WidgetSet):
             # this check is necessary for manual widget-set switches due to the call-order (the callback happens before
@@ -252,7 +251,7 @@ class QrogueCUI(PyCUI):
         ########################################
         self.__stored_save: Optional[NewSaveData] = None    # temporarily stores the "real" save data when simulating
         self.__save_data = NewSaveData() if save_data is None else save_data
-        self.__map_manager = MapManager(self.__save_data, self.__seed, self.__show_world, self.__start_level, self.__show_input_popup, self.__cbp, BaseBot(self.__game_over))
+        self.__map_manager = MapManager(self.__save_data, self.__rm.seed, self.__show_world, self.__start_level, self.__show_input_popup, self.__cbp, BaseBot(self.__game_over))
         ########################################
 
         if not Config.skip_learning():
@@ -342,7 +341,7 @@ class QrogueCUI(PyCUI):
         # INIT STATE MACHINE
         self.__cur_widget_set: MyWidgetSet = self.__transition      # avoid None value
         self.__state_machine = QrogueCUI._StateMachine(self)
-        self.__state_machine.change_state(QrogueCUI._State.Menu, self.__seed)
+        self.__state_machine.change_state(QrogueCUI._State.Menu, self.__rm.seed)
 
         # MISC
         if Config.debugging():
@@ -376,10 +375,6 @@ class QrogueCUI(PyCUI):
     def is_simulating(self) -> bool:
         return self.__simulator is not None
 
-    @property
-    def seed(self) -> int:
-        return self.__seed
-
     def set_refresh_timeout(self, timeout: int):
         """
 
@@ -405,7 +400,7 @@ class QrogueCUI(PyCUI):
             self._stdscr.timeout(self._refresh_timeout)
 
     def start(self, level_name: Optional[str] = None) -> NewSaveData:
-        self.__ow_key_logger.reinit(self.__seed, "meta", self.__save_data.to_keylog_string())
+        self.__ow_key_logger.reinit(self.__rm.seed, "meta", self.__save_data.to_keylog_string())
 
         if self.__save_data.is_fresh_save:
             def knowledge_question(index: int):
@@ -451,7 +446,7 @@ class QrogueCUI(PyCUI):
         self.__stored_save = self.__save_data
         self.__save_data = NewSaveData(simulator.save_state)
         self.__simulator = simulator
-        RandomManager.force_seed(simulator.seed)
+        self.__rm = RandomManager.create_new(simulator.seed)
         self.__stop_with_simulation_end = stop_when_finished
         simulator.set_controls(self.__controls)
 
@@ -607,10 +602,10 @@ class QrogueCUI(PyCUI):
     def _switch_to_menu(self, data=None) -> None:
         if self.__key_logger and self.__key_logger.is_initialized:
             self.__key_logger.flush_if_useful()
-        if data:
-            seed = data
+        if data and data != self.__rm.seed:
+            seed = data  # todo: I'm not sure if it is allowed to set a different seed than self.__rm.seed here
         else:
-            seed = RandomManager.instance().get_seed(msg="QroguePyCUI.switch_to_menu()")
+            seed = self.__rm.seed
         self.__menu.set_data(seed)
         self.apply_widget_set(self.__menu)
 

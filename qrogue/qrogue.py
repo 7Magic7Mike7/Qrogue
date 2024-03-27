@@ -13,8 +13,6 @@ from qrogue.util import PyCuiConfig, Config, Logger, RandomManager, PathConfig, 
 
 def __init_singletons(seed: int):
     Logger()
-    RandomManager(seed)
-
     Logger.instance().info(Config.get_log_head(seed), from_pycui=False)
 
 
@@ -104,7 +102,7 @@ def start_game(from_console: bool = False, debugging: bool = False, test_level: 
         print(f"[Qrogue] Starting game with seed = {seed}")
         try:
             __init_singletons(seed)
-            save_data = QrogueCUI().start()
+            save_data = QrogueCUI(seed).start()
         except PyCuiConfig.OutOfBoundsError:
             #print("[Qrogue] ERROR!")
             #print("Your terminal window is too small. "
@@ -244,7 +242,7 @@ def play_level(level_name: str, debugging: bool = False, data_folder: str = None
         print(f"[Qrogue] Starting level {level_name} with seed = {seed}")
         try:
             __init_singletons(seed)
-            QrogueCUI().start(level_name)
+            QrogueCUI(seed).start(level_name)
         except PyCuiConfig.OutOfBoundsError:
             print("---------------------------------------------------------")
             input("[Qrogue] Press ENTER to close the application")

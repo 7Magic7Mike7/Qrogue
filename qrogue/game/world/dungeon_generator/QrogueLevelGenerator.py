@@ -245,8 +245,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         tile_code = QrogueLevelGenerator.__tile_str_to_code(tile_str)
         if tile_code is tiles.TileCode.Enemy:
             enemy_id = int(tile_str)
-            enemy = tiles.Enemy(self.__default_enemy_factory, get_entangled_enemies, update_entangled_groups, enemy_id,
-                                self._next_tile_id)
+            enemy = tiles.Enemy(self.__default_enemy_factory, get_entangled_enemies, update_entangled_groups,
+                                self.__rm.get_seed("creating default Enemy"), enemy_id, self._next_tile_id)
             if enemy_id not in enemy_dic:
                 enemy_dic[enemy_id] = []
             enemy_dic[enemy_id].append(enemy)
@@ -261,7 +261,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         elif tile_code is tiles.TileCode.Riddler:
             stv = self.__default_target_difficulty.create_statevector(self.__robot, self.__rm)
             reward = self.__default_collectible_factory.produce(self.__rm)
-            riddle = Riddle(self._next_target_id(), stv, reward, self.__DEFAULT_NUM_OF_RIDDLE_ATTEMPTS)
+            riddle = Riddle(self._next_target_id(), stv, reward, self.__rm.get_seed("creating a default Riddle"),
+                            self.__DEFAULT_NUM_OF_RIDDLE_ATTEMPTS)
             return tiles.Riddler(self.__cbp.open_riddle, riddle)
 
         elif tile_code is tiles.TileCode.ShopKeeper:
@@ -742,7 +743,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
     def visitRiddle_descriptor(self, ctx: QrogueDungeonParser.Riddle_descriptorContext) -> tiles.Riddler:
         attempts = self.visit(ctx.integer())
         stv, reward, input_stv = self.visit(ctx.puzzle_parameter())
-        riddle = Riddle(self._next_target_id(), stv, reward, attempts, input_stv)
+        riddle = Riddle(self._next_target_id(), stv, reward, self.__rm.get_seed("creating a defined Riddle"), attempts,
+                        input_stv)
         return tiles.Riddler(self.__cbp.open_riddle, riddle)
 
     def visitChallenge_descriptor(self, ctx: QrogueDungeonParser.Challenge_descriptorContext) -> tiles.Challenger:
@@ -924,8 +926,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             enemy_factory.set_custom_reward_factory(reward_factory)
         # else we use the default one either of the loaded difficulty or it already is default_collectible_factory
 
-        enemy = tiles.Enemy(enemy_factory, get_entangled_tiles, update_entangled_room_groups, enemy_id,
-                            self._next_tile_id)
+        enemy = tiles.Enemy(enemy_factory, get_entangled_tiles, update_entangled_room_groups,
+                            self.__rm.get_seed("creating defined Enemy"), enemy_id, self._next_tile_id)
         #   update_entangled_room_groups(enemy) # by commenting this the original (copied from) tile is not in the list
         return enemy
 

@@ -84,40 +84,9 @@ class MyRandom:
                                            "fixed as soon as possible!"))
 
 
-class RandomManager(MyRandom):
-    __instance = None
-
+class RandomManager:
     @staticmethod
-    def create_new(seed: Optional[int] = None) -> MyRandom:
+    def create_new(seed: int) -> MyRandom:
         if seed is None:
-            seed = RandomManager.instance().get_seed(msg=f"RM.create_new{MyRandom.COUNTER}")
+            ErrorConfig.raise_deletion_exception()
         return MyRandom(seed)
-
-    @staticmethod
-    def instance() -> MyRandom:
-        if RandomManager.__instance is None:
-            Logger.instance().throw(Exception(ErrorConfig.singleton_no_init("RandomManager")))
-        return RandomManager.__instance
-
-    @staticmethod
-    def force_seed(new_seed: int) -> None:
-        if RandomManager.__instance is None:
-            RandomManager(new_seed)
-        else:
-            RandomManager.__instance = RandomManager.create_new(new_seed)
-            # PathConfig.write("random_debug.txt", f"RandomManager.init({new_seed})\n", append=True)
-
-    @staticmethod
-    def reset():
-        if TestConfig.is_active():
-            RandomManager.__instance = None
-        else:
-            raise TestConfig.StateException(ErrorConfig.singleton_reset("RandomManager"))
-
-    def __init__(self, seed: int):
-        if RandomManager.__instance is not None:
-            Logger.instance().throw(Exception(ErrorConfig.singleton("RandomManager")))
-        else:
-            super().__init__(seed)
-            RandomManager.__instance = self
-            # PathConfig.write("random_debug.txt", f"RandomManager.init({seed})\n", append=True)

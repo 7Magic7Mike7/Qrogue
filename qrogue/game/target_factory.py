@@ -332,20 +332,20 @@ class RiddleFactory:
         stv = self.__difficulty.create_statevector(self.__robot, rm)
         reward = self.__difficulty.produce_reward(rm)
         attempts = self.__difficulty.get_attempts(rm)
-        return Riddle(self._next_id(), stv, reward, attempts)
+        return Riddle(self._next_id(), stv, reward, rm.get_seed("producing a Riddle"), attempts)
 
 
 class BossFactory:
     @staticmethod
-    def default(robot: Robot) -> "BossFactory":
+    def default(robot: Robot, seed: int) -> "BossFactory":
         pool = [CXGate(), SwapGate(), Energy(100)]
-        return BossFactory(robot, pool)
+        return BossFactory(robot, pool, seed)
 
-    def __init__(self, robot: Robot, reward_pool: List[Collectible],
+    def __init__(self, robot: Robot, reward_pool: List[Collectible], seed: int,
                  next_id_callback: Optional[Callable[[], int]] = None):
         self.__robot = robot
         self.__reward_pool = reward_pool
-        self.__rm = RandomManager.create_new()
+        self.__rm = RandomManager.create_new(seed)
         self.__next_id = 0
 
         if next_id_callback is None:

@@ -18,7 +18,7 @@ class Enemy(WalkTriggerTile):
         FLED = 4
 
     def __init__(self, factory: EnemyFactory, get_entangled_tiles: Callable[[int], List[EnemyActor]],
-                 update_entangled_groups: Callable[[EnemyActor], None], e_id: int = 0,
+                 update_entangled_groups: Callable[[EnemyActor], None], seed: int, e_id: int = 0,
                  tile_id_callback: Callable[[], int] = None):
         super().__init__(TileCode.Enemy)
         self.__factory = factory
@@ -32,7 +32,7 @@ class Enemy(WalkTriggerTile):
             self.__next_tile_id = tile_id_callback
         self.__tile_id = self.__next_tile_id()
 
-        self.__rm = RandomManager.create_new()
+        self.__rm = RandomManager.create_new(seed)
         self.__enemy: Optional[EnemyActor] = None
 
     @property
@@ -117,8 +117,9 @@ class Enemy(WalkTriggerTile):
         self.__factory.start(robot, self.__enemy, direction)
 
     def _copy(self) -> "Tile":
-        enemy = Enemy(self.__factory, self.__get_entangled_tiles, self.__update_entangled_groups, self.__id,
-                      tile_id_callback=self.__next_tile_id)
+        # todo: check if this should be an *exact* copy including same seeds or not
+        enemy = Enemy(self.__factory, self.__get_entangled_tiles, self.__update_entangled_groups, self.__rm.seed,
+                      self.__id, tile_id_callback=self.__next_tile_id)
         self.__update_entangled_groups(enemy)
         return enemy
 
