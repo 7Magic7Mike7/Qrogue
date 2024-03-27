@@ -685,10 +685,7 @@ class QrogueCUI(PyCUI):
             if confirmed == 0:
                 self.__map_manager.reload()
             elif confirmed == 1:
-                if self.__save_data.check_unlocks(Unlocks.Spaceship):
-                    self.__state_machine.change_state(QrogueCUI._State.Spaceship, None)
-                else:
-                    self.__state_machine.change_state(QrogueCUI._State.Menu, None)
+                self.__state_machine.change_state(QrogueCUI._State.Menu, None)
         if self.__map_manager.in_tutorial_world:
             ConfirmationPopup.ask(Config.system_name(), f"Your Robot is out of energy.\n"
                                                         f"How do you want to continue?", callback,
