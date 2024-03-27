@@ -9,7 +9,7 @@ from qrogue.util.util_functions import cur_datetime
 
 
 class Logger(PyCUILogger):
-    __BUFFER_SIZE = 2048
+    __BUFFER_SIZE = 4096
     __instance = None
 
     @staticmethod
@@ -54,13 +54,16 @@ class Logger(PyCUILogger):
             self.__text = ""
             self.__message_popup: Optional[Callable[[str, str, int], None]] = None
             self.__error_popup: Optional[Callable[[str, str], None]] = None
-            self.__buffer: List[str] = [Config.get_log_head(seed)]
+            self.__buffer: List[str] = []   # stores logged lines
             self.__error_counter = 0
             Logger.__instance = self
 
     @property
     def __buffer_size(self) -> int:
-        return len(self.__buffer)
+        """
+        Returns: number of characters stored in buffer
+        """
+        return sum([len(line) for line in self.__buffer])
 
     @property
     def error_count(self) -> int:
@@ -145,4 +148,4 @@ class Logger(PyCUILogger):
             for log in self.__buffer:
                 text += log + "\n"
             self.__commit(text)
-            self.__buffer = []
+            self.__buffer.clear()
