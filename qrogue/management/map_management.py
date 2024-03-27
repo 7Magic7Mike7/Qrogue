@@ -27,7 +27,6 @@ class MapManager:
         self.__robot = robot
         self.__queue_size = queue_size
 
-        self.__base_seed = seed
         self.__rm = RandomManager.create_new(seed)
         self.__show_world = show_world
         self.__start_level = start_level
