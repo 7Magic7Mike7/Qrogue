@@ -163,17 +163,16 @@ class MenuWidgetSet(MyWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  quick_start_callback: Callable[[], None], start_playing_callback: Callable[[], None],
                  start_expedition_callback: Callable[[], None], stop_callback: Callable[[], None],
-                 choose_simulation_callback: Callable[[], None], show_screen_check: Callable[[], None],
-                 show_level_select: Callable[[], None], check_unlocks: Callable[[Union[str, Unlocks]], bool]):
+                 show_screen_check_callback: Callable[[], None], show_level_select_callback: Callable[[], None],
+                 check_unlocks_callback: Callable[[Union[str, Unlocks]], bool]):
         self.__seed = 0
         self.__quick_start_callback = quick_start_callback
         self.__start_playing_callback = start_playing_callback
         self.__start_expedition_callback = start_expedition_callback
         self.__stop_callback = stop_callback
-        self.__choose_simulation_callback = choose_simulation_callback   # todo: remove?
-        self.__show_screen_check = show_screen_check
-        self.__show_level_select = show_level_select
-        self.__check_unlocks = check_unlocks
+        self.__show_screen_check_callback = show_screen_check_callback
+        self.__show_level_select_callback = show_level_select_callback
+        self.__check_unlocks = check_unlocks_callback
         super().__init__(logger, root, render)
 
         width = UIConfig.WINDOW_WIDTH - UIConfig.ASCII_ART_WIDTH
@@ -217,7 +216,7 @@ class MenuWidgetSet(MyWidgetSet):
             callbacks.append(self.__quick_start_callback)
 
             choices.append("SELECT LEVEL\n")
-            callbacks.append(self.__show_level_select)
+            callbacks.append(self.__show_level_select_callback)
 
         else:
             choices.append("START YOUR JOURNEY\n")
@@ -227,7 +226,7 @@ class MenuWidgetSet(MyWidgetSet):
         #callbacks.append(self.__start_expedition)
 
         choices.append("SCREEN CHECK\n")
-        callbacks.append(self.__show_screen_check)
+        callbacks.append(self.__show_screen_check_callback)
 
         # choices.append("OPTIONS\n")  # for more space between the rows we add "\n"
         # callbacks.append(self.__options)

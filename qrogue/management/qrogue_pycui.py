@@ -281,9 +281,8 @@ class QrogueCUI(PyCUI):
         # INIT WIDGET SETS
         self.__menu = MenuWidgetSet(self.__controls, self.__render, Logger.instance(), self,
                                     self.__map_manager.load_first_uncleared_map, self.__start_playing,
-                                    self.__start_expedition, self.stop, self.__choose_simulation,
-                                    self.__show_screen_check, self.__show_level_select,
-                                    self.__save_data.check_unlocks)
+                                    self.__start_expedition, self.stop, self.__show_screen_check,
+                                    self.__show_level_select, self.__save_data.check_unlocks)
         self.__level_select = LevelSelectWidgetSet(self.__controls, Logger.instance(), self, self.__render,
                                                    self._switch_to_menu, self.__start_level)
         self.__screen_check = ScreenCheckWidgetSet(self.__controls, Logger.instance(), self, self.__render,
@@ -430,10 +429,6 @@ class QrogueCUI(PyCUI):
     def stop(self) -> None:
         self.__ow_key_logger.flush_if_useful()
         super().stop()
-
-    def __choose_simulation(self):
-        title = f"Enter the path to the {FileTypes.KeyLog.value}-file to simulate:"
-        self.__show_input_popup(title, PyCuiColors.WHITE_ON_CYAN, self.__start_simulation)
 
     def __start_simulation(self, path: str):
         try:
