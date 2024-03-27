@@ -35,6 +35,7 @@ class Logger(PyCUILogger):
 
     @staticmethod
     def _set_instance(logger: "Logger"):
+        # needed to insert a special TestLogger during testing
         Logger.__instance = logger
 
     def __init__(self, commit: Optional[Callable[[str], None]] = None):
