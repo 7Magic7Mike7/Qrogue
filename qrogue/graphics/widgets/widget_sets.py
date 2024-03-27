@@ -907,7 +907,7 @@ class TransitionWidgetSet(MyWidgetSet):
         self._unlock(self.__display_lock)
 
         if Config.debugging():
-            self.__frame_count.set_data(Config.frame_count())
+            self.__frame_count.set_data(str(Config.frame_count()))
             self.__frame_count.render()
 
     def __update_confirm_text(self, confirm: bool, transition_end: bool = False):
