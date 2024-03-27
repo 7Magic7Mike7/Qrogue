@@ -189,7 +189,7 @@ def validate_map(path: str, is_level: bool = True, in_base_path: bool = True) ->
             # print(f"\"{title}\": {text}")
             pass
 
-        Logger.instance().set_popup(log_print, lambda title, text: log_print(f"Error - {title}", text))
+        Logger.instance().set_popup(lambda title, text: log_print(f"Error - {title}", text))
 
     except Exception as ex:
         print(f"Error: {ex}")

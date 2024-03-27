@@ -240,7 +240,7 @@ class QrogueCUI(PyCUI):
         Widget.set_move_focus_callback(move_focus)
 
         # INIT MANAGEMENT
-        Logger.instance().set_popup(self.show_message_popup, self.show_error_popup)
+        Logger.instance().set_popup(self.show_error_popup)
         CheatConfig.init(self.__show_message_popup, self.__show_input_popup, deactivate_cheats=not Config.debugging(),
                          allow_cheats=Config.debugging())
         Popup.update_popup_functions(self.__show_message_popup)
@@ -439,8 +439,8 @@ class QrogueCUI(PyCUI):
             simulator = GameSimulator(path, in_keylog_folder=True)
             super(QrogueCUI, self)._handle_key_presses(self.__controls.get_key(Keys.SelectionUp))
             self._set_simulator(simulator)
-        except FileNotFoundError:
-            Logger.instance().show_error(f"File \"{path}\" could not be found!")
+        except FileNotFoundError as fnf:
+            Popup.error(f"File \"{path}\" could not be found: {fnf}")
 
     def _set_simulator(self, simulator: GameSimulator, stop_when_finished: bool = False):
         self.__stored_save = self.__save_data

@@ -53,7 +53,6 @@ class Logger(PyCUILogger):
                 self.__commit = commit
 
             self.__text = ""
-            self.__message_popup: Optional[Callable[[str, str, int], None]] = None
             self.__error_popup: Optional[Callable[[str, str], None]] = None
             self.__buffer: List[str] = []   # stores logged lines
             self.__error_counter = 0
@@ -70,9 +69,7 @@ class Logger(PyCUILogger):
     def error_count(self) -> int:
         return self.__error_counter
 
-    def set_popup(self, message_popup_function: Callable[[str, str, int], None],
-                  error_popup_function: Callable[[str, str], None]) -> None:
-        self.__message_popup = message_popup_function
+    def set_popup(self, error_popup_function: Callable[[str, str], None]) -> None:
         self.__error_popup = error_popup_function
 
     def _write(self, text: str, from_pycui: Optional[bool]) -> None:
@@ -104,10 +101,6 @@ class Logger(PyCUILogger):
         highlighting = "\n----------------------------------\n"
         self.info(f"{highlighting}WARNING |{msg}{highlighting}", from_pycui=from_pycui)
 
-    def show_error(self, message) -> None:
-        self.__error_counter += 1
-        self.__error_popup("ERROR", str(message))
-
     def assertion(self, statement: bool, message, show_popup: bool = False):
         if Config.debugging():
             assert statement, str(message)
@@ -130,15 +123,6 @@ class Logger(PyCUILogger):
         self._write(f"[ERROR] {error}", None)
         self.flush()
         raise error
-
-    def println(self, message: str = "", clear: bool = False) -> None:
-        message = f"{message}\n"
-        if Config.debugging(): print(message)
-        if clear:
-            self.__text = message
-        else:
-            self.__text += message
-        self.__message_popup("Logger", self.__text, PyCuiColors.WHITE_ON_CYAN)
 
     def clear(self) -> None:
         self.__text = ""

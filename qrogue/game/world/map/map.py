@@ -224,7 +224,7 @@ class Map(BaseMap, ABC):
 
         self.__cur_area = self.room_at(spawn_room.x, spawn_room.y)
         if self.__cur_area is None:
-            Logger.instance().error(f"Illegal spawn room @{spawn_room} for map {meta_data.name}")
+            Logger.instance().error(f"Illegal spawn room @{spawn_room} for map {meta_data.name}", from_pycui=False)
         else:
             self.__cur_area.enter(Direction.Center)
             self.__cur_area.make_visible()

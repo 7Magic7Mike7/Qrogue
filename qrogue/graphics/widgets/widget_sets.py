@@ -333,7 +333,7 @@ class LevelSelectWidgetSet(MyWidgetSet):
         return True
 
     def __play_level(self) -> bool:
-        if self.__level is None: Logger.instance().show_error("No Level selected!")
+        if self.__level is None: Popup.error("No Level selected!")
         if self.__seed < 0: self.__seed = None
 
         self.__start_level(self.__level, self.__seed)
