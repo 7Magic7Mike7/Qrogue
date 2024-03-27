@@ -601,9 +601,6 @@ class QrogueCUI(PyCUI):
         self.move_focus(self.__focused_widget)
         Popup.on_close()
 
-    def __dummy(self) -> None:
-        pass
-
     def __general_continue(self):
         self.__state_machine.change_state(self.__state_machine.prev_state, None)
 
@@ -644,12 +641,6 @@ class QrogueCUI(PyCUI):
                 if selection == 0:
                     self.__map_manager.load_expedition()
             CommonQuestions.SkipStoryTutorial.ask(_callback)
-
-    def __start_training(self, direction: Direction):
-        robot = BaseBot(CallbackPack.instance().game_over, num_of_qubits=2,
-                        gates=[collectibles.XGate(), collectibles.XGate(), collectibles.HGate(), collectibles.CXGate()])
-        enemy = Enemy(0, eid=0, target=StateVector([0] * (2**robot.num_of_qubits), num_of_used_gates=0), reward=Score())
-        self.__state_machine.change_state(QrogueCUI._State.Training, (robot, enemy))
 
     def _switch_to_training(self, data=None):
         if data:

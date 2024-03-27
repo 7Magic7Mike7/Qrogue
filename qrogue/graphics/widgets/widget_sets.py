@@ -235,11 +235,6 @@ class MenuWidgetSet(MyWidgetSet):
         callbacks.append(self.__stop)
         self.__selection.set_data(data=(choices, callbacks))
 
-    def new_seed(self) -> None:
-        self.__seed = RandomManager.instance().get_seed(msg="MenuWS.new_seed()")
-        self.__seed_widget.set_data(f"Seed: {self.__seed}")
-        self.__seed_widget.render()
-
     def update_story_progress(self, progress: int):
         super(MenuWidgetSet, self).update_story_progress(progress)
         self.__update_selection()
