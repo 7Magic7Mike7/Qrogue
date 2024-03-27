@@ -132,8 +132,8 @@ class Boss(WalkTriggerTile):
                  end_level_callback: Callable[[], None]):
         super().__init__(TileCode.Boss)
         self.__boss = boss
-        self.__on_walk_callback = on_walk_callback
-        self.__end_level_callback = end_level_callback
+        self.__on_walk = on_walk_callback
+        self.__end_level_callback = end_level_callback      # todo: is this still used?
         self.__is_active = True
 
     @property
@@ -147,7 +147,7 @@ class Boss(WalkTriggerTile):
     def _on_walk(self, direction: Direction, controllable: Controllable) -> bool:
         if isinstance(controllable, Robot):
             if self._is_active:
-                self.__on_walk_callback(controllable, self.__boss, direction)
+                self.__on_walk(controllable, self.__boss, direction)
             #else:
             #    self.__end_level_callback()
             return True
@@ -163,4 +163,4 @@ class Boss(WalkTriggerTile):
 
     def _copy(self) -> "Tile":
         # Bosses should not be duplicated in a level anyway, so it doesn't matter if we reference the same BossActor
-        return Boss(self.__boss, self.__on_walk_callback, self.__end_level_callback)
+        return Boss(self.__boss, self.__on_walk, self.__end_level_callback)

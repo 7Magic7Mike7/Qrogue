@@ -49,7 +49,7 @@ class Popup:
     __DEFAULT_POS = PopupConfig.default_position()
     __show_popup: Optional[Callable[[str, str, int, int, Optional[Tuple[int, int]], Optional[bool], Optional[int]],
                                     None]] = None
-    __check_achievement: Optional[Callable[[str], bool]] = None
+    __check_achievement_callback: Optional[Callable[[str], bool]] = None
     __popup_queue: List["Popup"] = []
     __cur_popup: Optional["Popup"] = None
 
@@ -63,7 +63,7 @@ class Popup:
 
     @staticmethod
     def update_check_achievement_function(check_achievement_callback: Callable[[str], bool]) -> None:
-        Popup.__check_achievement = check_achievement_callback
+        Popup.__check_achievement_callback = check_achievement_callback
 
     @staticmethod
     def on_close() -> bool:
@@ -140,8 +140,8 @@ class Popup:
 
     @staticmethod
     def from_message(message: Message, overwrite: bool = False):
-        if Popup.__check_achievement:
-            ret = message.get(Popup.__check_achievement)    # resolve possible alternative messages
+        if Popup.__check_achievement_callback:
+            ret = message.get(Popup.__check_achievement_callback)    # resolve possible alternative messages
             if ret is not None:
                 title, text = ret
                 reopen = message.priority
@@ -149,8 +149,8 @@ class Popup:
 
     @staticmethod
     def from_message_trigger(message: Message, on_close_callback: Callable[[], None]):
-        if Popup.__check_achievement:
-            ret = message.get(Popup.__check_achievement)    # resolve possible alternative messages
+        if Popup.__check_achievement_callback:
+            ret = message.get(Popup.__check_achievement_callback)    # resolve possible alternative messages
             if ret is not None:
                 title, text = ret
                 if Config.debugging():
@@ -237,11 +237,11 @@ class ConfirmationPopup(Popup):
     def __init__(self, title: str, text: str, callback: Callable[[int], None], answers: Optional[List[str]] = None,
                  position: int = __DEFAULT_POS, color: int = PopupConfig.default_color(), show: bool = True,
                  overwrite: bool = False):
-        def on_close_callback():
+        def on_close():
             callback(self.__confirmed)
         self.__answers = answers
         super().__init__(title, text, position, color, show, overwrite, reopen=False,
-                         on_close_callback=on_close_callback)
+                         on_close_callback=on_close)
         self.__confirmed: Optional[int] = None
 
     def __set_confirmation(self, confirmed: int):

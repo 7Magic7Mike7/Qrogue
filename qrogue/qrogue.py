@@ -198,8 +198,8 @@ def validate_map(path: str, is_level: bool = True, in_base_path: bool = True) ->
         return False
 
     if is_level:
-        generator = QrogueLevelGenerator(seed, check_achievement=lambda achievement: False,
-                                         trigger_event=lambda event: None,
+        generator = QrogueLevelGenerator(seed, check_achievement_callback=lambda achievement: False,
+                                         trigger_event_callback=lambda event: None,
                                          load_map_callback=lambda name, spawn_pos: None,
                                          show_message_callback=lambda title, text, reopen, position: None,
                                          callback_pack=CallbackPack.dummy())

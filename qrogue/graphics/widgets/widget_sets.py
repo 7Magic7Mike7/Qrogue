@@ -166,11 +166,11 @@ class MenuWidgetSet(MyWidgetSet):
                  choose_simulation_callback: Callable[[], None], show_screen_check: Callable[[], None],
                  show_level_select: Callable[[], None], check_unlocks: Callable[[Union[str, Unlocks]], bool]):
         self.__seed = 0
-        self.__quick_start = quick_start_callback
-        self.__start_playing = start_playing_callback
-        self.__start_expedition = start_expedition_callback
-        self.__stop = stop_callback
-        self.__choose_simulation = choose_simulation_callback
+        self.__quick_start_callback = quick_start_callback
+        self.__start_playing_callback = start_playing_callback
+        self.__start_expedition_callback = start_expedition_callback
+        self.__stop_callback = stop_callback
+        self.__choose_simulation_callback = choose_simulation_callback   # todo: remove?
         self.__show_screen_check = show_screen_check
         self.__show_level_select = show_level_select
         self.__check_unlocks = check_unlocks
@@ -214,14 +214,14 @@ class MenuWidgetSet(MyWidgetSet):
         callbacks = []
         if self.__check_unlocks(Unlocks.MainMenuContinue):
             choices.append("CONTINUE JOURNEY\n")
-            callbacks.append(self.__quick_start)
+            callbacks.append(self.__quick_start_callback)
 
             choices.append("SELECT LEVEL\n")
             callbacks.append(self.__show_level_select)
 
         else:
             choices.append("START YOUR JOURNEY\n")
-            callbacks.append(self.__start_playing)
+            callbacks.append(self.__start_playing_callback)
 
         #choices.append("START AN EXPEDITION\n")
         #callbacks.append(self.__start_expedition)
@@ -232,7 +232,7 @@ class MenuWidgetSet(MyWidgetSet):
         # choices.append("OPTIONS\n")  # for more space between the rows we add "\n"
         # callbacks.append(self.__options)
         choices.append("EXIT\n")
-        callbacks.append(self.__stop)
+        callbacks.append(self.__stop_callback)
         self.__selection.set_data(data=(choices, callbacks))
 
     def update_story_progress(self, progress: int):
@@ -1357,14 +1357,14 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
     __DETAILS_COLUMNS = 4
 
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
-                 continue_exploration_callback: Callable[[bool], None], reopen_popup_callback: Callable[[], None],
+                 continue_exploration_callback: Callable[[bool], None], reopen_popup: Callable[[], None],
                  check_unlocks_callback: Callable[[Union[str, Unlocks]], bool],
                  flee_choice: str = "Flee", dynamic_input: bool = True, dynamic_target: bool = True):
         super().__init__(logger, root, render)
         self.__flee_choice = flee_choice
         self.__dynamic_input = dynamic_input
         self.__dynamic_target = dynamic_target
-        self._continue_exploration_callback = lambda: continue_exploration_callback(False)
+        self._continue_exploration = lambda: continue_exploration_callback(False)
         self._continue_and_undo_callback = lambda: continue_exploration_callback(True)
         self._check_unlocks = check_unlocks_callback
         self._robot: Optional[Robot] = None
@@ -1457,7 +1457,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                 Popup.generic_info(gate.gate_type.full_name, f"Short name: {gate.gate_type.short_name} Gate\n" +
                                    gate.description(self._check_unlocks) + other_names)
             else:
-                reopen_popup_callback()     # open popup history
+                reopen_popup()     # open popup history
         self._details.widget.add_key_command(controls.get_keys(Keys.Help), gate_guide)
 
         def use_circuit():
@@ -1729,7 +1729,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             def give_reward_and_continue() -> bool:
                 if reward is not None: self._robot.give_collectible(reward)
                 self._in_reward_message = False    # undo the blocking since the success notification is over
-                self._continue_exploration_callback()
+                self._continue_exploration()
                 return False    # stay in details
 
             self._in_reward_message = True
@@ -1789,7 +1789,7 @@ class TrainingsWidgetSet(ReachTargetWidgetSet):
     def _details_flee(self) -> bool:
         self._details.set_data(data=(
             ["You return to the Spaceship!"],
-            [self._continue_exploration_callback]
+            [self._continue_exploration]
         ))
         return True
 
@@ -1985,7 +1985,7 @@ class RiddleWidgetSet(ReachTargetWidgetSet):
             self._details.set_data(data=(
                 [f"You couldn't solve the riddle within the given number of {RiddleWidgetSet.__TRY_PHRASING}. "
                  f"It vanished together with its reward."],
-                [self._continue_exploration_callback]
+                [self._continue_exploration]
             ))
         self._hud.update_situational(f"Remaining {RiddleWidgetSet.__TRY_PHRASING}: {self._target.attempts}")
         return True

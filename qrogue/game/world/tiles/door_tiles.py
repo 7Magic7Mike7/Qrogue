@@ -41,7 +41,7 @@ class Door(WalkTriggerTile):
         self.__one_way_state = one_way_state
         self.__entanglement_state = entanglement_state
         self.__event_check = event_check
-        self.__check_entanglement_lock_callback = None
+        self.__check_entanglement_lock: Optional[Callable[[], None]] = None
 
     @property
     def data(self) -> Tuple[Optional[DoorOpenState], Optional[DoorOneWayState], Optional[DoorEntanglementState]]:
@@ -50,8 +50,8 @@ class Door(WalkTriggerTile):
             return DoorOpenState.Open, DoorOneWayState.NoOneWay, DoorEntanglementState.NotEntangled
         return self.__open_state, self.__one_way_state, self.__entanglement_state
 
-    def set_entanglement(self, check_entanglement_lock: Callable[[], None]):
-        self.__check_entanglement_lock_callback = check_entanglement_lock
+    def set_entanglement(self, check_entanglement_lock_callback: Callable[[], None]):
+        self.__check_entanglement_lock = check_entanglement_lock_callback
         self.__entanglement_state = DoorEntanglementState.Undecided
 
     def get_img(self):
@@ -147,11 +147,11 @@ class Door(WalkTriggerTile):
     @property
     def is_entanglement_locked(self) -> bool:
         if self.__entanglement_state is DoorEntanglementState.NotEntangled or \
-                self.__check_entanglement_lock_callback is None:
+                self.__check_entanglement_lock is None:
             return False
 
         if self.__entanglement_state is DoorEntanglementState.Undecided:
-            if self.__check_entanglement_lock_callback():
+            if self.__check_entanglement_lock():
                 self.__entanglement_state = DoorEntanglementState.Locked
             else:
                 self.__entanglement_state = DoorEntanglementState.Unlocked
@@ -179,7 +179,7 @@ class Door(WalkTriggerTile):
 
     def _copy(self) -> "Tile":
         door = Door(self.__direction, self.__open_state, self.__one_way_state, self.__event_check)
-        door.set_entanglement(self.__check_entanglement_lock_callback)
+        door.set_entanglement(self.__check_entanglement_lock)
         return door
 
     def copy_and_adapt(self, new_direction: Direction, reset_one_way: bool = False) -> "Door":
@@ -200,7 +200,7 @@ class Door(WalkTriggerTile):
         door = Door(new_direction, self.__open_state, one_way_state, self.__event_check)
         door.set_explanation(self._explanation)
         door.set_event(self._event_id)
-        door.set_entanglement(self.__check_entanglement_lock_callback)
+        door.set_entanglement(self.__check_entanglement_lock)
         return door
 
 

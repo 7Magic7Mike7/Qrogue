@@ -134,14 +134,14 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             # todo print warning?
             return None
 
-    def __init__(self, seed: int, check_achievement: Callable[[str], bool], trigger_event: Callable[[str], None],
-                 load_map_callback: Callable[[str, Coordinate], None],
+    def __init__(self, seed: int, check_achievement_callback: Callable[[str], bool],
+                 trigger_event_callback: Callable[[str], None], load_map_callback: Callable[[str, Coordinate], None],
                  show_message_callback: Callable[[str, str, Optional[bool], Optional[int]], None],
                  callback_pack: CallbackPack):
         super(QrogueLevelGenerator, self).__init__(seed, 0, 0)
         self.__seed = seed
-        self.__check_achievement = check_achievement
-        self.__trigger_event = trigger_event
+        self.__check_achievement = check_achievement_callback
+        self.__trigger_event = trigger_event_callback
         self.__load_map = load_map_callback
         self.__show_message = show_message_callback
         self.__cbp = callback_pack

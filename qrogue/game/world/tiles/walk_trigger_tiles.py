@@ -17,8 +17,8 @@ class WalkTriggerTile(Tile):
     __show_explanation: Callable[[LogicalMessage, bool], None] = None
 
     @staticmethod
-    def set_show_explanation_callback(show_explanation: Callable[[LogicalMessage, bool], None]):
-        WalkTriggerTile.__show_explanation = show_explanation
+    def set_show_explanation_callback(show_explanation_callback: Callable[[LogicalMessage, bool], None]):
+        WalkTriggerTile.__show_explanation = show_explanation_callback
 
     @staticmethod
     def _show_explanation(msg: LogicalMessage, overwrite: bool = False):
@@ -152,8 +152,8 @@ class Message(WalkTriggerTile):
     __show: Callable[[LogicalMessage, Callable[[], None]], None] = None
 
     @staticmethod
-    def set_show_callback(show: Callable[[LogicalMessage, Callable[[], None]], None]):
-        Message.__show = show
+    def set_show_callback(show_callback: Callable[[LogicalMessage, Callable[[], None]], None]):
+        Message.__show = show_callback
 
     @staticmethod
     def create(text: str, title: str = "Message", popup_times: int = 1) -> "Message":   # todo remove? seems to no longer be in use

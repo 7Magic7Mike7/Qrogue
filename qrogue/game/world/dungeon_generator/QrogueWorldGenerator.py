@@ -36,7 +36,7 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
         self.__seed = seed
         self.__player = player
         self.__check_achievement = check_achievement_callback
-        self.__trigger_event = trigger_event_callback
+        self.__trigger_event_callback = trigger_event_callback
         self.__load_map = load_map_callback
         self.__show_message = show_message_callback
 
@@ -100,7 +100,7 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
                 row += [None] * (max_len - len(row))
 
         world = WorldMap(meta_data, file_name, self.__seed, room_matrix, self.__player, self.__spawn_pos,
-                         self.__check_achievement, self.__trigger_event, self.__mandatory_levels)
+                         self.__check_achievement, self.__trigger_event_callback, self.__mandatory_levels)
         return world, True
 
     def __load_next(self):
