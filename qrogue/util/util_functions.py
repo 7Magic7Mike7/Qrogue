@@ -208,10 +208,13 @@ def open_folder(path: str):
     import platform
     import subprocess
 
-    # todo test for non-Windows
-    if platform.system() == "Windows":
-        os.startfile(path)
-    elif platform.system() == "Darwin":
-        subprocess.Popen(["open", path])
-    else:
-        subprocess.Popen(["xdg-open", path])
+    try:
+        # worked on Windows, Ubuntu and macOS
+        if platform.system() == "Windows":
+            os.startfile(path)
+        elif platform.system() == "Darwin":
+            subprocess.Popen(["open", path])
+        else:
+            subprocess.Popen(["xdg-open", path])
+    except Exception as ex:
+        raise ex

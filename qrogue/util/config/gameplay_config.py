@@ -212,7 +212,11 @@ class CheatConfig:
             CheatConfig.__CHEATS[code] = not CheatConfig.__CHEATS[code]
             ret = True
         elif code.lower().strip() == "userdata":
-            open_folder(PathConfig.user_data_path())
+            try:
+                open_folder(PathConfig.user_data_path())
+            except Exception as ex:
+                CheatConfig.__popup("Error", f"Failed to open folder at {PathConfig.user_data_path()}: {ex}",
+                                    PopupConfig.default_position(), PopupConfig.default_color())
 
         if ret:
             CheatConfig.__popup("Cheats", f"Successfully used the Cheat \"{code}\"", PopupConfig.default_position(),

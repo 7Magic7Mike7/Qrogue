@@ -2,7 +2,7 @@ from enum import IntEnum
 from typing import Callable, Optional, List, Tuple
 
 from qrogue.game.logic import Message
-from qrogue.util import Config, PopupConfig
+from qrogue.util import Config, PopupConfig, Logger
 
 
 class Popup:
@@ -94,6 +94,24 @@ class Popup:
         if pos is None:
             pos = Popup.__DEFAULT_POS
         Popup.message(title, text, reopen=reopen, pos=pos)
+
+    @staticmethod
+    def error(text: str, reopen: Optional[bool] = None, pos: Optional[int] = None, overwrite: bool = True,
+              log_error: bool = True):
+        """
+        Args:
+            text: a text describing the error
+            reopen: whether the popup should be reopen-able (defaults to False)
+            pos: position of the popup
+            overwrite: whether this popup should overwrite the currently displayed one if there is any (defaults to True)
+            log_error: whether we should forward the error to our Logger (defaults to True)
+        """
+        if reopen is None:
+            reopen = False
+        if pos is None:
+            pos = Popup.__DEFAULT_POS
+        if log_error: Logger.instance().error(text, show=False, from_pycui=False)
+        Popup.message("Error", text, reopen, pos, overwrite=overwrite)
 
     @staticmethod
     def examiner_says(text: str, reopen: Optional[bool] = None, pos: Optional[int] = None):

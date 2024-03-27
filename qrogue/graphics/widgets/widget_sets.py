@@ -203,7 +203,10 @@ class MenuWidgetSet(MyWidgetSet):
     def __qrogue_console(self):
         def open_user_data(answer: int):
             if answer == 0:
-                open_folder(PathConfig.user_data_path())
+                try:
+                    open_folder(PathConfig.user_data_path())
+                except Exception as ex:
+                    Popup.error(f"Failed to open folder at {PathConfig.user_data_path()}: {ex}")
         CommonQuestions.OpenUserDataFolder.ask(open_user_data)
 
     def __update_selection(self):
