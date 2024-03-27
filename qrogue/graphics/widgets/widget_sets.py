@@ -1870,9 +1870,10 @@ class BossFightWidgetSet(ReachTargetWidgetSet):
 
 class ShopWidgetSet(MyWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
-                 continue_exploration_callback: Callable[[], None]):
+                 continue_exploration_callback: Callable[[], None], check_unlocks_callback: Callable[[str], bool]):
         super().__init__(logger, root, render)
         self.__continue_exploration = continue_exploration_callback
+        self.__check_unlocks = check_unlocks_callback
         self.__robot = None
         self.__items = None
 
@@ -1939,7 +1940,7 @@ class ShopWidgetSet(MyWidgetSet):
 
         shop_item = self.__items[index]
         self.__cur_item = shop_item
-        self.__details.set_data(shop_item.collectible.description())
+        self.__details.set_data(shop_item.collectible.description(self.__check_unlocks))
         if self.__robot.backpack.can_afford(shop_item.price):
             self.__buy.set_data(data=(
                 ["Buy!", "No thanks"],

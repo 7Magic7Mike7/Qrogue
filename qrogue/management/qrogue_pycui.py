@@ -262,7 +262,7 @@ class QrogueCUI(PyCUI):
         common_messages.set_ask_callback(ConfirmationPopup.ask)
         WalkTriggerTile.set_show_explanation_callback(Popup.from_message)
         Message.set_show_callback(Popup.from_message_trigger)
-        Collectible.set_pickup_message_callback(Popup.generic_info)
+        Collectible.set_pickup_message_callback(Popup.generic_info, self.__save_data.check_unlocks)
 
         self.__ow_key_logger = OverWorldKeyLogger()
         self.__key_logger = KeyLogger()
@@ -315,7 +315,8 @@ class QrogueCUI(PyCUI):
         self.__challenge = ChallengeWidgetSet(self.__controls, self.__render, Logger.instance(), self,
                                               self.__continue_explore, self.__popup_history.show,
                                               self.__save_data.check_unlocks)
-        self.__shop = ShopWidgetSet(self.__controls, self.__render, Logger.instance(), self, self.__continue_explore)
+        self.__shop = ShopWidgetSet(self.__controls, self.__render, Logger.instance(), self, self.__continue_explore,
+                                    self.__save_data.check_unlocks)
 
         widget_sets: List[MyWidgetSet] = [self.__training, self.__navigation, self.__explore,
                                           self.__fight, self.__boss_fight, self.__shop, self.__riddle, self.__challenge,

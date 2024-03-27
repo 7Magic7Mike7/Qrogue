@@ -281,10 +281,11 @@ class Collectible(WalkTriggerTile):
     __pickup_message: Callable[["Collectible"], None] = None
 
     @staticmethod
-    def set_pickup_message_callback(pickup_message_callback: Callable[[str, str], None]):
+    def set_pickup_message_callback(pickup_message_callback: Callable[[str, str], None],
+                                    check_unlocks_callback: Callable[[str], bool]):
         def pickup_message(collectible: LogicalCollectible):
             name = collectible.name()
-            desc = collectible.description()
+            desc = collectible.description(check_unlocks_callback)
             pickup_message_callback("Collectible", f"You picked up: {ColorConfig.highlight_object(name)}\n{desc}")
         Collectible.__pickup_message = pickup_message
 
