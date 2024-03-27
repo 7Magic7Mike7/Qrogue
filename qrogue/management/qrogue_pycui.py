@@ -34,7 +34,7 @@ from qrogue.util.key_logger import KeyLogger, OverWorldKeyLogger
 
 from qrogue.management.save_data import NewSaveData
 
-from qrogue.management import MapManager, Pausing, SaveData, LevelInfo
+from qrogue.management import MapManager, SaveData, LevelInfo
 
 
 class QrogueCUI(PyCUI):
@@ -247,7 +247,6 @@ class QrogueCUI(PyCUI):
         Popup.update_popup_functions(self.__show_message_popup)
         ConfirmationPopup.update_popup_function(self.__show_confirmation_popup)
 
-        Pausing(self.__pause_game)
         self.__cbp = CallbackPack(self.__start_level, self.__start_fight, self.__start_boss_fight, self.__open_riddle,
                                   self.__open_challenge, self.__visit_shop, self.__game_over)
         ########################################
@@ -325,7 +324,7 @@ class QrogueCUI(PyCUI):
         # INIT KEYS
         # add the general keys to everything except Transition, Menu and Pause
         for widget_set in widget_sets:
-            widget_set.add_key_command(self.__controls.get_keys(Keys.Pause), Pausing.pause, add_to_widgets=True)
+            widget_set.add_key_command(self.__controls.get_keys(Keys.Pause), self.__pause_game, add_to_widgets=True)
             widget_set.add_key_command(self.__controls.get_keys(Keys.PopupReopen), self.__popup_history.show,
                                        add_to_widgets=True, overwrite=False)
 
