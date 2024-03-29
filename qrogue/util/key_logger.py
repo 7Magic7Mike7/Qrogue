@@ -53,8 +53,7 @@ class KeyLogger:
         self._flush(force=False)
 
     def log_error(self, message):
-        self._append(f"{KeyLogger.get_error_marker()}{message}{KeyLogger.get_error_marker()}")
-        self._flush(force=True)  # errors are immediately flushed, so we do not lose their information
+        ErrorConfig.raise_deletion_exception()
 
     def flush_if_useful(self):
         """
