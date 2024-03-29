@@ -222,7 +222,10 @@ class QrogueCUI(PyCUI):
             if automation_step_time is not None:
                 qrogue_cui.set_refresh_timeout(automation_step_time)
 
-            return qrogue_cui.start(simulator.map_name)
+            if simulator.simulates_over_world:
+                return qrogue_cui.start()
+            else:
+                return qrogue_cui.start(simulator.map_name)
 
         except FileNotFoundError as fnf:
             Logger.instance().error(f"Simulation file \"{simulation_path}\" not found: {fnf}",
