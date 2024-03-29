@@ -74,9 +74,6 @@ class KeyLogger:
 
 
 class OverWorldKeyLogger(KeyLogger):
-    def __init__(self):
-        super().__init__()
-
     def _is_for_levels(self) -> bool:
         return False
 
