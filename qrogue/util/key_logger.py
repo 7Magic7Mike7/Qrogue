@@ -85,3 +85,32 @@ class OverWorldKeyLogger(KeyLogger):
         #    f"{OverWorldKeyLogger.get_level_start_marker()}{level_name}{OverWorldKeyLogger.get_level_start_marker()}"
         #)
         pass
+
+
+class DummyKeyLogger(OverWorldKeyLogger):
+    """
+    Acts like a KeyLogger but doesn't actually log/store anything. Can be used to hijack a KeyLogger (e.g., for
+    Simulation).
+    """
+
+    def __init__(self):
+        super().__init__(lambda path, text: None)
+
+    @property
+    def is_initialized(self) -> bool:
+        return True
+
+    def _append(self, text: str):
+        pass
+
+    def reinit(self, seed: int, level_name: str, save_state: str, save_path: Optional[str] = None):
+        pass
+
+    def log(self, controls: Controls, key_pressed: int):
+        pass
+
+    def flush_if_useful(self):
+        pass
+
+    def _flush(self, force: bool):
+        pass

@@ -831,6 +831,7 @@ class TransitionWidgetSet(MyWidgetSet):
         self.__display_text = ""
         self.__timer: Optional[Timer] = None
         self.__wait_for_confirmation = False
+        self.__auto_scroll = False
 
         widget = self.add_block_label("Text", UIConfig.TRANSITION_SCREEN_ROW, UIConfig.TRANSITION_SCREEN_COL,
                                       row_span=UIConfig.TRANSITION_SCREEN_HEIGHT,
@@ -849,8 +850,6 @@ class TransitionWidgetSet(MyWidgetSet):
         if Config.debugging():
             widget = self.add_block_label("Frame count", 0, UIConfig.WINDOW_WIDTH-1)
             self.__frame_count = SimpleWidget(widget)
-
-        # todo autoscroll?
 
     @property
     def at_transition_end(self) -> bool:
@@ -905,21 +904,24 @@ class TransitionWidgetSet(MyWidgetSet):
             self.__frame_count.render()
 
     def __update_confirm_text(self, confirm: bool, transition_end: bool = False):
-        if confirm:
-            self._stop_timer()
-            if transition_end:
-                self.__confirm.set_data("Press [Confirm] to continue playing.")
+        if self.__auto_scroll:
+            self.__confirm.set_data("Continuing automatically as soon as text is rendered completely")
+        else:
+            if confirm:
+                self._stop_timer()
+                if transition_end:
+                    self.__confirm.set_data("Press [Confirm] to continue playing.")
+                else:
+                    self.__confirm.set_data("Press [Confirm] to start next text section.")
             else:
-                self.__confirm.set_data("Press [Confirm] to start next text section.")
-        else:
-            self.__confirm.set_data("Press [Cancel] to skip to next text.")
-        self.__wait_for_confirmation = confirm
-        self.__confirm.render()
+                self.__confirm.set_data("Press [Cancel] to skip to next text.")
+            self.__wait_for_confirmation = confirm
+            self.__confirm.render()
 
-        if confirm:
-            self.__reset_refresh_timeout()
-        else:
-            self.__set_refresh_timeout()
+            if confirm:
+                self.__reset_refresh_timeout()
+            else:
+                self.__set_refresh_timeout()
 
     def __next_section(self):
         if self.__wait_for_confirmation:
@@ -998,11 +1000,13 @@ class TransitionWidgetSet(MyWidgetSet):
             self._unlock(self.__timer_lock)
             self.__update_screen(next_char)
 
-    def set_data(self, text_scrolls: List[TextScroll], continue_callback: Callable[[], None]):
+    def set_data(self, text_scrolls: List[TextScroll], continue_callback: Callable[[], None],
+                 auto_scroll: bool = False):
         assert len(text_scrolls) > 0, "Empty list of texts provided!"
 
         self.__text_scrolls = text_scrolls
         self.__continue = continue_callback
+        self.__auto_scroll = auto_scroll
 
         # no locks required since there are no additional threads at this point
         self.__display_text = ""

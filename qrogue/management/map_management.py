@@ -19,6 +19,7 @@ from qrogue.util.config.gameplay_config import ExpeditionConfig, GameplayConfig
 class MapManager:
     def __init__(self, save_data: NewSaveData, seed: int, show_world: Callable[[Optional[WorldMap]], None],
                  start_level: Callable[[int, Map], None],
+                 start_level_transition_callback: Callable[[str, str, Callable[[], None]], None],
                  show_input_popup: Callable[[str, int, Callable[[str], None]], None], callback_pack: CallbackPack,
                  robot: Robot, queue_size: int = ExpeditionConfig.DEFAULT_QUEUE_SIZE):
         self.__save_data = save_data
@@ -30,6 +31,7 @@ class MapManager:
         self.__rm = RandomManager.create_new(seed)
         self.__show_world = show_world
         self.__start_level = start_level
+        self.__start_level_transition = start_level_transition_callback
         self.__world_memory: Dict[str, WorldMap] = {}
         self.__expedition_generator = ExpeditionGenerator(seed,
                                                           self.__save_data.check_achievement,
@@ -157,7 +159,7 @@ class MapManager:
     def __load_next(self):
         next_map = LevelInfo.get_next(self.__cur_map.internal_name, self.__save_data.check_level)
         if next_map:
-            self.__load_map(next_map, None, None)
+            self.__start_level_transition(self.__cur_map.name, next_map, lambda: self.__load_map(next_map, None, None))
         else:
             world = self.__get_world(self.__cur_map.internal_name)
             self.__show_world(world)

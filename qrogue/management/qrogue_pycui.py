@@ -30,7 +30,7 @@ from qrogue.util import common_messages, CheatConfig, Config, GameplayConfig, UI
 from qrogue.util.achievements import Unlocks
 from qrogue.util.config import FileTypes, PopupConfig
 from qrogue.util.game_simulator import GameSimulator
-from qrogue.util.key_logger import KeyLogger, OverWorldKeyLogger
+from qrogue.util.key_logger import KeyLogger, OverWorldKeyLogger, DummyKeyLogger
 
 from qrogue.management.save_data import NewSaveData
 
@@ -193,6 +193,7 @@ class QrogueCUI(PyCUI):
 
     @staticmethod
     def start_simulation(simulation_path: str, in_keylog_folder: bool = True, automate: bool = False,
+                         auto_scroll_transitions: bool = False,
                          stop_when_finished: bool = False) -> Optional[NewSaveData]:
         """
 
@@ -201,6 +202,7 @@ class QrogueCUI(PyCUI):
             in_keylog_folder: whether the given simulation path is inside the user data keylog folder or an absolute
                 path
             automate: whether the simulation should run automatically or manually one step at a time
+            auto_scroll_transitions: whether level transitions should also continue automatically or not
             stop_when_finished: whether we want to stop the CUI when the simulation is finished or not
 
         Returns:
@@ -210,12 +212,12 @@ class QrogueCUI(PyCUI):
         try:
             simulator = GameSimulator(simulation_path, in_keylog_folder)
             qrogue_cui = QrogueCUI(simulator.seed, save_data=NewSaveData(simulator.save_state))
-            qrogue_cui._set_simulator(simulator, stop_when_finished)
+            qrogue_cui._set_simulator(simulator, auto_scroll_transitions, stop_when_finished)
 
             if automate:
                 qrogue_cui.set_refresh_timeout(TestConfig.automation_step_time())
 
-            return qrogue_cui.start()
+            return qrogue_cui.start(simulator.map_name)
 
         except FileNotFoundError as fnf:
             Logger.instance().error(f"Simulation file \"{simulation_path}\" not found: {fnf}", show=not automate,
@@ -251,7 +253,16 @@ class QrogueCUI(PyCUI):
         ########################################
         self.__stored_save: Optional[NewSaveData] = None    # temporarily stores the "real" save data when simulating
         self.__save_data = NewSaveData() if save_data is None else save_data
-        self.__map_manager = MapManager(self.__save_data, self.__rm.seed, self.__show_world, self.__start_level, self.__show_input_popup, self.__cbp, BaseBot(self.__game_over))
+
+        def start_level_transition(prev_map_name: str, next_map_name: str, callback: Callable[[], None]):
+            texts = [
+                TransitionWidgetSet.TextScroll.fast(f"{prev_map_name} --- {next_map_name}\n"),
+                TransitionWidgetSet.TextScroll.medium("Loading"),
+            ]
+            auto_scroll = self.__auto_scroll_simulation_transitions
+            self.__state_machine.change_state(QrogueCUI._State.Transition, data=(texts, callback, auto_scroll))
+        self.__map_manager = MapManager(self.__save_data, self.__rm.seed, self.__show_world, self.__start_level, start_level_transition,
+                                        self.__show_input_popup, self.__cbp, BaseBot(self.__game_over))
         ########################################
 
         if not Config.skip_learning():
@@ -268,6 +279,7 @@ class QrogueCUI(PyCUI):
         self.__key_logger = KeyLogger()
         self.__simulator: Optional[GameSimulator] = None
         self.__stop_with_simulation_end = False
+        self.__auto_scroll_simulation_transitions = False
         self.__last_input = time.time()
         self.__last_key: Optional[int] = None
         self.__focused_widget: Optional[Widget] = self.get_selected_widget()
@@ -430,32 +442,27 @@ class QrogueCUI(PyCUI):
         self.__ow_key_logger.flush_if_useful()
         super().stop()
 
-    def __start_simulation(self, path: str):
-        try:
-            simulator = GameSimulator(path, in_keylog_folder=True)
-            super(QrogueCUI, self)._handle_key_presses(self.__controls.get_key(Keys.SelectionUp))
-            self._set_simulator(simulator)
-        except FileNotFoundError as fnf:
-            Popup.error(f"File \"{path}\" could not be found: {fnf}")
-
-    def _set_simulator(self, simulator: GameSimulator, stop_when_finished: bool = False):
+    def _set_simulator(self, simulator: GameSimulator, auto_scroll_transitions: bool = False,
+                       stop_when_finished: bool = False):
         self.__stored_save = self.__save_data
         self.__save_data = NewSaveData(simulator.save_state)
         self.__simulator = simulator
         self.__rm = RandomManager.create_new(simulator.seed)
+        self.__ow_key_logger = DummyKeyLogger()
+        self.__key_logger = DummyKeyLogger()
+        self.__auto_scroll_simulation_transitions = auto_scroll_transitions
         self.__stop_with_simulation_end = stop_when_finished
         simulator.set_controls(self.__controls)
 
         if simulator.simulates_over_world:
             self.__menu.set_data(simulator.seed)
-        else:
-            self.__map_manager.load_map(simulator.map_name, None, simulator.seed)
 
         if simulator.version == Config.version():
             title, text = simulator.version_alright()
         else:
             title, text = simulator.version_warning()
-        Popup.generic_info(title, text)
+
+        Popup.message(title, text, reopen=False, overwrite=True)
 
     def _end_simulation(self, can_stop: bool = True):
         """
@@ -657,6 +664,7 @@ class QrogueCUI(PyCUI):
         # reset in-level stuff
         self.__save_data.reset_level_events()
         self.__popup_history.reset()
+        Popup.reset_queue()
 
         robot = level.controllable_tile.controllable
         if isinstance(robot, Robot):
@@ -770,8 +778,12 @@ class QrogueCUI(PyCUI):
         self.__state_machine.change_state(QrogueCUI._State.Transition, (text_scrolls, callback))
 
     def _switch_to_transition(self, data) -> None:
-        texts, continue_ = data
-        self.__transition.set_data(texts, continue_)
+        if len(data) == 2:
+            texts, continue_ = data
+            self.__transition.set_data(texts, continue_)
+        else:
+            texts, continue_, auto_scroll = data
+            self.__transition.set_data(texts, continue_, auto_scroll)
         self.apply_widget_set(self.__transition)
 
     def __render(self, renderables: Optional[List[Renderable]]):

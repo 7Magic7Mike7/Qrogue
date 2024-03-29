@@ -44,15 +44,16 @@ def setup() -> bool:
 class SimulationTestCase(test_util.SingletonSetupTestCase):
     class _Simulation:
         def __init__(self, path: str, in_keylog_folder: bool = False, automate: bool = True,
-                     stop_when_finished: bool = True):
+                     auto_scroll_transitions: bool = True, stop_when_finished: bool = True):
             self.__path = path if in_keylog_folder else os.path.join("test_data", "keylogs", path)
             self.__in_keylog_folder = in_keylog_folder
             self.__automate = automate
+            self.__auto_scroll_transitions = auto_scroll_transitions
             self.__stop_when_finished = stop_when_finished
 
         def start(self) -> Optional[NewSaveData]:
             return QrogueCUI.start_simulation(self.__path, self.__in_keylog_folder, self.__automate,
-                                              self.__stop_when_finished)
+                                              self.__auto_scroll_transitions, self.__stop_when_finished)
 
         def __str__(self):
             return f"{self.__path} (" \

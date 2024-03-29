@@ -66,6 +66,10 @@ class Popup:
         Popup.__check_achievement_callback = check_achievement_callback
 
     @staticmethod
+    def reset_queue():
+        Popup.__popup_queue.clear()
+
+    @staticmethod
     def on_close() -> bool:
         if Popup.__cur_popup is not None:
             Popup.__cur_popup.on_close_callback()
