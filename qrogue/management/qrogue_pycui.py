@@ -177,6 +177,8 @@ class QrogueCUI(PyCUI):
             self.__remove_on_close = not is_permanent
 
         def resolve(self, force_remove: bool = False):
+            if len(self.__history) <= 0:
+                return  # can happen if first Popup of a history is not permanent, hence there is nothing to resolve
             if self.__remove_on_close or force_remove:
                 self.__history.pop()
                 self.__index = min(self.__index, self.present_index)    # adapt index if it pointed to the removed popup
@@ -185,7 +187,7 @@ class QrogueCUI(PyCUI):
                 self.__history[self.present_index].freeze()
 
         def reset(self):
-            self.__history = []
+            self.__history.clear()
             self.__index = -1
 
         def __len__(self) -> int:
