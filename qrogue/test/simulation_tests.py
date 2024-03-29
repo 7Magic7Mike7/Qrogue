@@ -55,8 +55,13 @@ class SimulationTestCase(test_util.SingletonSetupTestCase):
             return QrogueCUI.start_simulation(self.__path, self.__in_keylog_folder, self.__automate,
                                               self.__auto_scroll_transitions, self.__stop_when_finished)
 
+        def to_string(self) -> str:
+            simulator = GameSimulator(self.__path, self.__in_keylog_folder)
+            simulator.set_controls(test_util.get_dummy_controls())
+            return simulator.to_string(skip_header=True)
+
         def __str__(self):
-            return f"{self.__path} (" \
+            return f"Simulation @{self.__path} (" \
                    f"{'in' if self.__in_keylog_folder else 'out'}side, " \
                    f"{'auto' if self.__automate else 'manual'}, " \
                    f"{'stop' if self.__stop_when_finished else 'continue'})"
