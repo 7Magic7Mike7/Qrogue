@@ -26,7 +26,7 @@ from qrogue.graphics.widgets import Renderable, BossFightWidgetSet, ExploreWidge
     ScreenCheckWidgetSet, LevelSelectWidgetSet
 from qrogue.util import common_messages, CheatConfig, Config, GameplayConfig, UIConfig, HelpText, \
     Logger, PathConfig, MapConfig, Controls, Keys, RandomManager, PyCuiConfig, PyCuiColors, Options, \
-    TestConfig, CommonQuestions, ErrorConfig
+    CommonQuestions, ErrorConfig
 from qrogue.util.achievements import Unlocks
 from qrogue.util.config import FileTypes, PopupConfig
 from qrogue.util.game_simulator import GameSimulator
@@ -194,8 +194,8 @@ class QrogueCUI(PyCUI):
             return len(self.__history)
 
     @staticmethod
-    def start_simulation(simulation_path: str, in_keylog_folder: bool = True, automate: bool = False,
-                         auto_scroll_transitions: bool = False,
+    def start_simulation(simulation_path: str, in_keylog_folder: bool = True,
+                         automation_step_time: Optional[int] = None, auto_scroll_transitions: bool = False,
                          stop_when_finished: bool = False) -> Optional[NewSaveData]:
         """
 
@@ -203,7 +203,8 @@ class QrogueCUI(PyCUI):
             simulation_path: path to the .qrkl file we want to simulate
             in_keylog_folder: whether the given simulation path is inside the user data keylog folder or an absolute
                 path
-            automate: whether the simulation should run automatically or manually one step at a time
+            automation_step_time: None if simulation should be manual, else the number of milliseconds to wait before
+                performing the next step
             auto_scroll_transitions: whether level transitions should also continue automatically or not
             stop_when_finished: whether we want to stop the CUI when the simulation is finished or not
 
@@ -211,18 +212,21 @@ class QrogueCUI(PyCUI):
             the save data of the simulation or None if the simulation path was invalid (e.g., non-existent or no .qrkl
             file)
         """
+        Logger.instance().assertion(automation_step_time is None or automation_step_time > 0,
+                                    f"Invalid automation_step_time: {automation_step_time}!")
         try:
             simulator = GameSimulator(simulation_path, in_keylog_folder)
             qrogue_cui = QrogueCUI(simulator.seed, save_data=NewSaveData(simulator.save_state))
             qrogue_cui._set_simulator(simulator, auto_scroll_transitions, stop_when_finished)
 
-            if automate:
-                qrogue_cui.set_refresh_timeout(TestConfig.automation_step_time())
+            if automation_step_time is not None:
+                qrogue_cui.set_refresh_timeout(automation_step_time)
 
             return qrogue_cui.start(simulator.map_name)
 
         except FileNotFoundError as fnf:
-            Logger.instance().error(f"Simulation file \"{simulation_path}\" not found: {fnf}", show=not automate,
+            Logger.instance().error(f"Simulation file \"{simulation_path}\" not found: {fnf}",
+                                    show=automation_step_time is None,  # show Popup if the simulation is manual
                                     from_pycui=False)
             return None
 
