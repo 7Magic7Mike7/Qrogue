@@ -9,16 +9,11 @@ class TileRenderer:
 
     @staticmethod
     def instance() -> "TileRenderer":
-        if TileRenderer.__instance is None:
-            TileRenderer()
-        return TileRenderer.__instance
+        ErrorConfig.raise_deletion_exception()
 
     def __init__(self):
         """ Virtually private constructor. """
-        if TileRenderer.__instance is not None:
-            Logger.instance().throw(Exception(ErrorConfig.singleton("TileRenderer")))
-        else:
-            TileRenderer.__instance = self
+        ErrorConfig.raise_deletion_exception()
 
     @staticmethod
     def render(tile: Tile):

@@ -161,12 +161,11 @@ class MapManager:
         if next_map:
             self.__start_level_transition(self.__cur_map.name, next_map, lambda: self.__load_map(next_map, None, None))
         else:
-            world = self.__get_world(self.__cur_map.internal_name)
-            self.__show_world(world)
+            ErrorConfig.raise_deletion_exception()
 
     def __load_back(self):
         if self.__cur_map.get_type() == MapType.Expedition:
-            raise Exception("No longer usable")
+            ErrorConfig.raise_deletion_exception()
         elif self.__in_level:
             # if we are currently in a level we return to the current world
             self.__in_level = False
@@ -197,10 +196,10 @@ class MapManager:
             if isinstance(robot, Robot):
                 self.__save_data.complete_level(self.__cur_map.internal_name, score=robot.score)
             else:
-                raise Exception("No Robot???")      # todo: get rid of this
+                ErrorConfig.raise_deletion_exception()
 
             if self.__cur_map.get_type() is MapType.World:
-                raise Exception("No longer in use!")
+                ErrorConfig.raise_deletion_exception()
             elif self.__cur_map.get_type() is MapType.Level:
                 if self.__save_data.finished_level(self.__cur_map.internal_name, self.__cur_map.name):   # todo: check not needed since we don't have Worlds anymore
                     self.__save_data.save(is_auto_save=True)     # auto save   # todo update system after user study?
