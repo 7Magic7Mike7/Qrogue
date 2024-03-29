@@ -53,7 +53,9 @@ class SimulationTestCase(test_util.SingletonSetupTestCase):
             self.__stop_when_finished = stop_when_finished
 
         def start(self) -> Optional[NewSaveData]:
-            return QrogueCUI.start_simulation(self.__path, self.__in_keylog_folder, self.__automate,
+            if self.__automate: automation_time_step = TestConfig.automation_step_time()
+            else: automation_time_step = None
+            return QrogueCUI.start_simulation(self.__path, self.__in_keylog_folder, automation_time_step,
                                               self.__auto_scroll_transitions, self.__stop_when_finished)
 
         def to_string(self) -> str:
