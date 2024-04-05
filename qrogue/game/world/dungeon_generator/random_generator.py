@@ -626,8 +626,8 @@ class ExpeditionGenerator(DungeonGenerator):
 
         rm = RandomManager.create_new(seed)  # needed for WildRooms
         gate_factory = GateFactory.quantum()
-        riddle_factory = RiddleFactory.default(robot, rm.get_seed("Init default RiddleFactory"))
-        boss_factory = BossFactory.default(robot, rm.get_seed("Init default BossFactory"))
+        riddle_factory = RiddleFactory.default(robot)
+        boss_factory = BossFactory.default(robot)
         typed_collectible_factory: Dict[Optional[CollectibleType], CollectibleFactory] = {
             None: CollectibleFactory([Score(100)]),    # default factory
             CollectibleType.Gate: CollectibleFactory([Score(200)]),
@@ -643,7 +643,7 @@ class ExpeditionGenerator(DungeonGenerator):
 
         gate: Instruction = gate_factory.produce(rm)
         riddle = riddle_factory.produce(rm)
-        dungeon_boss = boss_factory.produce(include_gates=[], input_gates=[gate])
+        dungeon_boss = boss_factory.produce(rm, include_gates=[], input_gates=[gate])
 
         # Difficulties can be misleading since picking one gate can result in CX Gate which does nothing if it's the
         # only gate on a zero-state. Also picking multiple gates where one is CX has a higher probability of doing
