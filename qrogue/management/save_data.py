@@ -63,6 +63,17 @@ class NewSaveData:
                    f"#{self.__score})"
 
     @staticmethod
+    def load(path: str, in_user_path: bool = True) -> "NewSaveData":
+        if not path.endswith(FileTypes.Save.value):
+            path += FileTypes.Save.value
+        try:
+            save_data = PathConfig.read(path, in_user_path)
+            return NewSaveData(save_data)
+
+        except FileNotFoundError as ex:
+            Logger.instance().error(f"Could not load save file at \"{path}\": {ex}", from_pycui=False)
+
+    @staticmethod
     def empty_save_state() -> str:
         save_state =  f"{_SaveDataGenerator.header()}\n"
         save_state += f"{_SaveDataGenerator.datetime2str(cur_datetime())}\n"
@@ -86,7 +97,6 @@ class NewSaveData:
 
         Args:
             save_data: if None is provided, the data is loaded from the latest save file
-            is_global_save:
         """
         self.__level_timer = cur_datetime()
         self.__temp_level_storage: Dict[str, Tuple[int, int]] = {}  # event name -> score, done_score
@@ -255,6 +265,36 @@ class NewSaveData:
             return True, CommonPopups.SavingSuccessful
         except:
             return False, CommonPopups.SavingFailed
+
+    def compare(self, other: "NewSaveData") -> Tuple[List[Instruction], List[str], List[Unlocks], List[Achievement]]:
+        """
+        Args:
+            other: the NewSaveData to compare with
+        Returns:
+            List of Instructions, level names, Unlocks and Achievement other has and self does not
+        """
+        gate_diff = []
+        for gate in other.__gates:
+            if gate in self.__gates: continue
+            gate_diff.append(gate)
+        gate_diff = [gate for gate in other.__gates if gate not in self.__gates]
+
+        level_diff = []
+        for level in other.__levels:
+            if self.check_level(level): continue
+            level_diff.append(level)
+
+        unlocks_diff = []
+        for unlock in other.__unlocks:
+            if self.check_unlocks(unlock): continue
+            unlocks_diff.append(Unlocks.from_name(unlock))
+
+        achievement_diff = []
+        for ach_name in other.__achievements:
+            if self.check_achievement(ach_name): continue
+            achievement_diff.append(other.__achievements[ach_name])
+
+        return gate_diff, level_diff, unlocks_diff, achievement_diff
 
     ################################## TRANSITION TO NEW SYSTEM ##################################
 

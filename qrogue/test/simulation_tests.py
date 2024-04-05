@@ -44,13 +44,18 @@ def setup() -> bool:
 
 class SimulationTestCase(test_util.SingletonSetupTestCase):
     class _Simulation:
-        def __init__(self, path: str, in_keylog_folder: bool = False, automate: bool = True,
+        def __init__(self, file_name: str, in_keylog_folder: bool = False, automate: bool = True,
                      auto_scroll_transitions: bool = True, stop_when_finished: bool = True):
-            self.__path = path if in_keylog_folder else os.path.join("test_data", "keylogs", path)
+            self.__name = file_name
+            self.__path = file_name if in_keylog_folder else os.path.join("test_data", "keylogs", file_name)
             self.__in_keylog_folder = in_keylog_folder
             self.__automate = automate
             self.__auto_scroll_transitions = auto_scroll_transitions
             self.__stop_when_finished = stop_when_finished
+
+        @property
+        def name(self) -> str:
+            return self.__name
 
         def start(self) -> Optional[NewSaveData]:
             if self.__automate: automation_time_step = TestConfig.automation_step_time()
@@ -64,14 +69,30 @@ class SimulationTestCase(test_util.SingletonSetupTestCase):
             return simulator.to_string(skip_header=True)
 
         def __str__(self):
-            return f"Simulation @{self.__path} (" \
+            return f"Simulation \"{self.name}\" @{self.__path} (" \
                    f"{'in' if self.__in_keylog_folder else 'out'}side, " \
                    f"{'auto' if self.__automate else 'manual'}, " \
                    f"{'stop' if self.__stop_when_finished else 'continue'})"
 
+    @staticmethod
+    def load_save_data(file_name: str) -> NewSaveData:
+        path = os.path.join("test_data", "saves", file_name)
+        return NewSaveData.load(path, in_user_path=False)
+
+    def compare_save_data(self, a: NewSaveData, b: NewSaveData):
+        gate_diff, level_diff, unlocks_diff, ach_diff = a.compare(b)
+        self.assertEqual(0, len(gate_diff), f"There is a difference in stored Gates: "
+                                            f"{[str(gate) for gate in gate_diff]}")
+        self.assertEqual(0, len(level_diff), f"There is a difference in completed Levels: "
+                                             f"{[level for level in level_diff]}")
+        self.assertEqual(0, len(unlocks_diff), f"There is a difference in discovered Unlocks: "
+                                               f"{[str(unlock) for unlock in unlocks_diff]}")
+        self.assertEqual(0, len(ach_diff), f"There is a difference in Achievements: "
+                                           f"{[str(ach) for ach in ach_diff]}")
+
     def test_meta(self):
         simulations: List[SimulationTestCase._Simulation] = [
-            #SimulationTestCase._Simulation("25032024_153036_meta184705"),
+            #SimulationTestCase._Simulation("fresh_l1-2"),
             #SimulationTestCase._Simulation("25032024_152548_meta716940"),
             #SimulationTestCase._Simulation("21032024_163055_meta248180"),
         ]
@@ -80,11 +101,17 @@ class SimulationTestCase(test_util.SingletonSetupTestCase):
 
     def test_level(self):
         simulations: List[SimulationTestCase._Simulation] = [
-            SimulationTestCase._Simulation("l0k0v0_simple"),
-            #SimulationTestCase._Simulation("l0k0v1_simple"),
+            SimulationTestCase._Simulation("simple_l0k0v0"),
+            SimulationTestCase._Simulation("simple_l0k0v1"),
+            SimulationTestCase._Simulation("simple_l0k0v2"),
+            SimulationTestCase._Simulation("simple_l0k0v3"),
+            SimulationTestCase._Simulation("simple_l0k0v4"),
         ]
-        for simulation in simulations:
-            simulation.start()
+        for i, simulation in enumerate(simulations):
+            save_data = simulation.start()
+            post_save_data = self.load_save_data(f"post_l0k0v{i}")
+            self.compare_save_data(save_data, post_save_data)
+            self.compare_save_data(post_save_data, save_data)
 
 
 if __name__ == '__main__':
