@@ -9,7 +9,7 @@ from qrogue.util.util_functions import open_folder
 class MapConfig:
     @staticmethod
     def num_of_lessons() -> int:
-        return 6  # Lesson 0 to 5
+        return 5  # Lesson 0 to 4
 
     @staticmethod
     def map_width() -> int:
@@ -114,9 +114,10 @@ class MapConfig:
     @staticmethod
     def level_list() -> List[str]:
         levels = []
-        for i in range(MapConfig.num_of_lessons()):
-            levels.append(f"l0k0v{i}")
-        levels += ["l0training", "l0exam"]
+        for knowledge_level in range(2):
+            for i in range(MapConfig.num_of_lessons()):
+                levels.append(f"l0k{knowledge_level}v{i}")
+        #levels += ["l0training", "l0exam"]
         return levels
 
 
