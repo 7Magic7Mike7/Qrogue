@@ -26,7 +26,7 @@ from qrogue.graphics.widgets import Renderable, BossFightWidgetSet, ExploreWidge
     ScreenCheckWidgetSet, LevelSelectWidgetSet
 from qrogue.util import common_messages, CheatConfig, Config, GameplayConfig, UIConfig, HelpText, \
     Logger, PathConfig, MapConfig, Controls, Keys, RandomManager, PyCuiConfig, PyCuiColors, Options, \
-    CommonQuestions, ErrorConfig
+    CommonQuestions, ErrorConfig, CommonPopups
 from qrogue.util.achievements import Unlocks
 from qrogue.util.config import FileTypes, PopupConfig
 from qrogue.util.game_simulator import GameSimulator
@@ -311,7 +311,7 @@ class QrogueCUI(PyCUI):
         self.__transition = TransitionWidgetSet(self.__controls, Logger.instance(), self, self.__render,
                                                 self.set_refresh_timeout)
         self.__pause = PauseMenuWidgetSet(self.__controls, self.__render, Logger.instance(), self,
-                                          self.__general_continue, self.__save_data.save, self._switch_to_menu,
+                                          self.__general_continue, self._conditional_saving, self._switch_to_menu,
                                           self.__map_manager.reload, self.__save_data.to_achievements_string)
         self.__pause.set_data(None, "Qrogue", None)
 
@@ -450,6 +450,12 @@ class QrogueCUI(PyCUI):
     def stop(self) -> None:
         self.__ow_key_logger.flush_if_useful()
         super().stop()
+
+    def _conditional_saving(self) -> Tuple[bool, CommonPopups]:
+        if self.is_simulating:
+            return False, CommonPopups.NoSavingDuringSimulation
+
+        return self.__save_data.save()
 
     def _set_simulator(self, simulator: GameSimulator, auto_scroll_transitions: bool = False,
                        stop_when_finished: bool = False):
