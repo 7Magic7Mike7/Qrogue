@@ -121,6 +121,7 @@ class NewSaveData:
         self.__levels: Dict[str, NewSaveData.LevelData] = {}
         self.__achievements: Dict[str, Achievement] = {}
         self.__unlocks: Dict[str, datetime] = {}
+        self.__has_unsaved_changes = False
 
         if save_data is not None and len(save_data.strip()) > 0:
             generator = _SaveDataGenerator()
@@ -177,6 +178,7 @@ class NewSaveData:
 
         level_data = NewSaveData.LevelData(name, date_time, duration, score)
         self.__levels[level_data.name] = level_data
+        self.__has_unsaved_changes = True
 
         for unlock in LevelInfo.get_level_completion_unlocks(level_data.name, self.check_level):
             self.unlock(unlock, date_time)
@@ -187,18 +189,21 @@ class NewSaveData:
         if unlock in self.__unlocks:
             return
         self.__unlocks[unlock] = date_time
+        self.__has_unsaved_changes = True
 
     def add_achievement(self, achievement: Achievement):
         if achievement.name in self.__achievements:
             raise Exception("Use score_achievement() for existing achievements!")
 
         self.__achievements[achievement.name] = achievement
+        self.__has_unsaved_changes = True
 
     def score_achievement(self, name: str, score: int = 1):
         if name not in self.__achievements:
             raise Exception("Use add_achievement() for new achievements!")
 
         self.__achievements[name].add_score(score)
+        self.__has_unsaved_changes = True
 
     def to_achievements_string(self) -> str:
         # todo: improve readability
@@ -255,6 +260,9 @@ class NewSaveData:
     def save(self, is_auto_save: bool = False) -> Tuple[bool, CommonPopups]:
         if Config.forbid_saving():
             return False, CommonPopups.NoSavingWithCheats
+        if not self.__has_unsaved_changes:
+            return False, CommonPopups.NothingToSave
+
         try:
             self.__date_time = cur_datetime()   # update datetime of the latest save (=now)
             data = self.to_string()
@@ -262,7 +270,9 @@ class NewSaveData:
                 PathConfig.write_auto_save(data)
             else:
                 PathConfig.new_save_file(data)
+                self.__has_unsaved_changes = False  # only change flag if it was a manual (i.e., no auto) save
             return True, CommonPopups.SavingSuccessful
+
         except:
             return False, CommonPopups.SavingFailed
 

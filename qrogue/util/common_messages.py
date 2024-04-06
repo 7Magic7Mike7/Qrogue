@@ -94,6 +94,7 @@ class CommonPopups(Enum):
                               "again.")
     SavingSuccessful = ("Saved", "You successfully saved the game!")
     NoSavingWithCheats = ("Cheating", "You used a cheat and therefore are not allowed to save the game!")
+    NothingToSave = ("Nothing to save", "Your latest data has already been successfully saved.")
     OptionsSaved = ("Saved", "You successfully saved your changes to the options!")
     OptionsNotSaved = ("Error!", "Could not save your changes...")
     LockedDoor = (Config.system_name(), _locked_door())
