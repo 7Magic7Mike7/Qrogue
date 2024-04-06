@@ -177,11 +177,19 @@ class NewSaveData:
         if duration < 0: duration, _ = time_diff(cur_datetime(), self.__level_timer)
 
         level_data = NewSaveData.LevelData(name, date_time, duration, score)
-        self.__levels[level_data.name] = level_data
-        self.__has_unsaved_changes = True
+        if level_data.name in self.__levels and score >= self.__levels[level_data.name].score:
+            # save the better score for the replayed level
+            self.__levels[level_data.name] = level_data
+            self.__has_unsaved_changes = True
 
-        for unlock in LevelInfo.get_level_completion_unlocks(level_data.name, self.check_level):
-            self.unlock(unlock, date_time)
+        elif level_data.name not in self.__levels:
+            # save the level because it has never been completed before
+            self.__levels[level_data.name] = level_data
+            self.__has_unsaved_changes = True
+
+            # add potential unlocks corresponding to the level
+            for unlock in LevelInfo.get_level_completion_unlocks(level_data.name, self.check_level):
+                self.unlock(unlock, date_time)
 
     def unlock(self, unlock: Union[str, Unlocks], date_time: Optional[datetime] = None):
         if date_time is None: date_time = cur_datetime()
