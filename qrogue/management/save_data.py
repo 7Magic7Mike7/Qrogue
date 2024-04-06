@@ -15,7 +15,7 @@ from qrogue.management.save_grammar.SaveDataLexer import SaveDataLexer
 from qrogue.management.save_grammar.SaveDataParser import SaveDataParser
 from qrogue.management.save_grammar.SaveDataVisitor import SaveDataVisitor
 from qrogue.util import Logger, PathConfig, FileTypes, RandomManager, CommonPopups, Config, \
-    ErrorConfig, achievements, MapConfig
+    ErrorConfig, achievements, MapConfig, ScoreConfig
 from qrogue.util.achievements import Achievement, Unlocks
 from qrogue.util.util_functions import cur_datetime, time_diff
 
@@ -36,6 +36,7 @@ class NewSaveData:
             self.__date_time = date_time
             self.__duration = duration
             self.__score = score
+            self.__time_bonus = ScoreConfig.compute_time_bonus(score, duration)
 
         @property
         def name(self) -> str:
@@ -58,9 +59,17 @@ class NewSaveData:
         def score(self) -> int:
             return self.__score
 
+        @property
+        def time_bonus(self) -> int:
+            return self.__time_bonus
+
+        @property
+        def total_score(self) -> int:
+            return self.__score + self.__time_bonus
+
         def __str__(self) -> str:
             return f"{self.__name} ({_SaveDataGenerator.datetime2str(self.__date_time)}, {self.__duration}s, " \
-                   f"#{self.__score})"
+                   f"#{self.total_score})"
 
     @staticmethod
     def load(path: str, in_user_path: bool = True) -> "NewSaveData":
@@ -177,7 +186,7 @@ class NewSaveData:
         if duration < 0: duration, _ = time_diff(cur_datetime(), self.__level_timer)
 
         level_data = NewSaveData.LevelData(name, date_time, duration, score)
-        if level_data.name in self.__levels and score >= self.__levels[level_data.name].score:
+        if level_data.name in self.__levels and level_data.total_score >= self.__levels[level_data.name].total_score:
             # save the better score for the replayed level
             self.__levels[level_data.name] = level_data
             self.__has_unsaved_changes = True

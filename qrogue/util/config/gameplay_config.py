@@ -550,6 +550,10 @@ class ScoreConfig:
         ratio = ScoreConfig._get_ratio(checks, used_gates, expected_gates)
         return ScoreConfig._BASE_SCORE + int(ScoreConfig.__PUZZLE_BONUS * ratio)
 
+    @staticmethod
+    def compute_time_bonus(score: int, duration: int) -> int:
+        return int(score * (1.5 - 0.015 * duration ** 0.74))
+
 
 class QuantumSimulationConfig:
     DECIMALS = 3
