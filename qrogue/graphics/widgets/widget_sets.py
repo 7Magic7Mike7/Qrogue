@@ -273,7 +273,7 @@ class LevelSelectWidgetSet(MyWidgetSet):
         # back to menu
         self.__start_level = start_level
 
-        self.__seed = -1
+        self.__seed: Optional[str] = None
         self.__level: Optional[str] = None
         self.__gates: List[gates.Instruction] = []  # todo: or rather InstructionType?
 
@@ -333,14 +333,13 @@ class LevelSelectWidgetSet(MyWidgetSet):
 
     def __play_level(self) -> bool:
         if self.__level is None: Popup.error("No Level selected!")
-        if self.__seed < 0: self.__seed = None
 
         self.__start_level(self.__level, self.__seed)
         return True
 
     def _update_choices(self):
         # todo: use summary widget instead?
-        if self.__seed < 0: self.__choices.update_text("Set Seed", 0)
+        if self.__seed is None: self.__choices.update_text("Set Seed", 0)
         else: self.__choices.update_text(f"Set Seed (currently: {self.__seed})", 0)
 
         if self.__level is None: self.__choices.update_text("Select Level", 1)
