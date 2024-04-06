@@ -259,10 +259,15 @@ class NewSaveData:
         return text + f"{_SaveDataGenerator.ender()}\n"
 
     def save(self, is_auto_save: bool = False) -> Tuple[bool, CommonPopups]:
+        """
+        Returns:
+            False if an error occurred during saving, True if saving behaved as expected (i.e., latest save state is
+            persisted)
+        """
         if Config.forbid_saving():
             return False, CommonPopups.NoSavingWithCheats
         if not self.__has_unsaved_changes:
-            return False, CommonPopups.NothingToSave
+            return True, CommonPopups.NothingToSave
 
         try:
             self.__date_time = cur_datetime()   # update datetime of the latest save (=now)
