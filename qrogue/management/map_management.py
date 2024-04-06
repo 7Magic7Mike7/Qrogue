@@ -201,7 +201,7 @@ class MapManager:
             if self.__cur_map.get_type() is MapType.World:
                 ErrorConfig.raise_deletion_exception()
             elif self.__cur_map.get_type() is MapType.Level:
-                if self.__save_data.finished_level(self.__cur_map.internal_name, self.__cur_map.name):   # todo: check not needed since we don't have Worlds anymore
+                if self.__save_data.check_level(self.__cur_map.internal_name):   # todo: check not needed since we don't have Worlds anymore
                     self.__save_data.save(is_auto_save=True)     # auto save   # todo update system after user study?
 
             elif self.__cur_map.get_type() is MapType.Expedition:

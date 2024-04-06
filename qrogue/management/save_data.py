@@ -118,7 +118,7 @@ class NewSaveData:
 
         self.__date_time = cur_datetime()    # date and time of the latest save
         self.__gates: List[Instruction] = []
-        self.__levels: Dict[str, NewSaveData.LevelData] = {}
+        self.__levels: Dict[str, NewSaveData.LevelData] = {}    # key is a level's internal name
         self.__achievements: Dict[str, Achievement] = {}
         self.__unlocks: Dict[str, datetime] = {}
         self.__has_unsaved_changes = False
@@ -154,10 +154,10 @@ class NewSaveData:
         #    raise Exception("Unexpected behaviour!")
         #return self.__robot
 
-    def check_level(self, name: str) -> bool:
-        return name in self.__levels
+    def check_level(self, internal_name: str) -> bool:
+        return internal_name in self.__levels
 
-    def check_unlock(self, unlock: Union[str, Unlocks]) -> bool:
+    def check_unlocks(self, unlock: Union[str, Unlocks]) -> bool:
         if isinstance(unlock, Unlocks): unlock = unlock.ach_name
         return unlock in self.__unlocks
 
@@ -166,7 +166,7 @@ class NewSaveData:
 
     def check(self, name: str) -> bool:
         if self.check_level(name): return True
-        if self.check_unlock(name): return True
+        if self.check_unlocks(name): return True
         if self.check_achievement(name): return True
         return False
 
@@ -196,13 +196,6 @@ class NewSaveData:
             raise Exception("Use score_achievement() for existing achievements!")
 
         self.__achievements[achievement.name] = achievement
-        self.__has_unsaved_changes = True
-
-    def score_achievement(self, name: str, score: int = 1):
-        if name not in self.__achievements:
-            raise Exception("Use add_achievement() for new achievements!")
-
-        self.__achievements[name].add_score(score)
         self.__has_unsaved_changes = True
 
     def to_achievements_string(self) -> str:
@@ -309,6 +302,9 @@ class NewSaveData:
     ################################## TRANSITION TO NEW SYSTEM ##################################
 
     def check_level_event(self, event: str) -> bool:
+        """
+        Used for popups to correctly display event-based messages.
+        """
         if event in self.__temp_level_storage:
             score, done_score = self.__temp_level_storage[event]
             return score >= done_score
@@ -317,16 +313,16 @@ class NewSaveData:
     def restart_level_timer(self):
         self.__level_timer = cur_datetime()
 
-    def check_unlocks(self, unlocks: Union[str, Unlocks]) -> bool:
-        return self.check_unlock(unlocks)       # todo: fix naming
-
     def reset_level_events(self):
         # todo: test
         self.__temp_level_storage.clear()
 
     def add_to_achievement(self, name: str, score: float = 1):
-        # todo: test
-        self.score_achievement(name, int(score))
+        if name not in self.__achievements:
+            raise Exception("Use add_achievement() for new achievements!")
+
+        self.__achievements[name].add_score(score)
+        self.__has_unsaved_changes = True
 
     def trigger_global_event(self, name: str, score: float = 1):
         # todo: I think this is only used for EnteredPauseMenu -> handle EnteredPauseMenu differently
@@ -361,10 +357,6 @@ class NewSaveData:
                 self.__temp_level_storage[name] = event_score + score, event_done_score
             else:
                 self.__temp_level_storage[name] = score, score
-
-    def finished_level(self, internal_name: str, display_name: str = None) -> bool:
-        # todo: test
-        return self.check_level(internal_name)
 
 
 class _SaveDataGenerator(SaveDataVisitor):

@@ -70,7 +70,7 @@ class SaveDataOverhaulTests(test_util.SingletonSetupTestCase):
     def test_unlocks(self):
         save_data = NewSaveData()
         save_data.unlock(Unlocks.ShowEquation)
-        self.assertTrue(save_data.check_unlock(Unlocks.ShowEquation))
+        self.assertTrue(save_data.check_unlocks(Unlocks.ShowEquation))
 
 
 if __name__ == '__main__':
