@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Callable, Optional, List
+from typing import Callable, Optional, List, Tuple
 
 from qrogue.util import Config, ColorConfig as CC, Logger
 
@@ -135,6 +135,19 @@ class CommonQuestions(Enum):
     OpenUserDataFolder = (Config.system_name(), "Do you want to open the folder containing your user data with your "
                                                 "system's explorer?")
     BackToMenu = (Config.system_name(), "Do you want to return to the main menu?")
+
+    @staticmethod
+    def proceed_summary(level_name: str, score: int, duration: int, total_score: int, callback: Callable[[int], None],
+                        prev_values: Optional[Tuple[int, int]] = None):
+        text = f"{level_name}\n" \
+                f"Score:       {score}\n" \
+                f"Duration:    {duration}s\n" \
+                f"Total Score: {total_score}"
+        if prev_values is not None:
+            text += f"\n\n" \
+                    f"Highscore:   {prev_values[0]}\n" \
+                    f"Duration:    {prev_values[1]}"
+        _CallbackHandler.ask(Config.system_name(), text, callback, ["Proceed", "Stay", "Back to Main Menu"])    # todo: does stay work?
 
     def __init__(self, title: str, text: str, answers: Optional[List[str]] = None):
         self.__title = title

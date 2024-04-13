@@ -179,7 +179,8 @@ class NewSaveData:
         if self.check_achievement(name): return True
         return False
 
-    def complete_level(self, name: str, date_time: Optional[datetime] = None, duration: int = -1, score: int = -1):
+    def complete_level(self, name: str, date_time: Optional[datetime] = None, duration: int = -1, score: int = -1) \
+            -> LevelData:
         # NOTE: name might still have the "done" suffix! Use level_data.name if you need the normalized name.
         # compute date_time and duration based on current time if not provided
         if date_time is None: date_time = cur_datetime()
@@ -200,6 +201,8 @@ class NewSaveData:
             for unlock in LevelInfo.get_level_completion_unlocks(level_data.name, self.check_level):
                 self.unlock(unlock, date_time)
 
+        return level_data
+
     def unlock(self, unlock: Union[str, Unlocks], date_time: Optional[datetime] = None):
         if date_time is None: date_time = cur_datetime()
         if isinstance(unlock, Unlocks): unlock = unlock.ach_name
@@ -214,6 +217,11 @@ class NewSaveData:
 
         self.__achievements[achievement.name] = achievement
         self.__has_unsaved_changes = True
+
+    def get_level_data(self, level_name: str) -> Optional[LevelData]:
+        if level_name in self.__levels:
+            return self.__levels[level_name]
+        return None
 
     def to_achievements_string(self) -> str:
         # todo: improve readability

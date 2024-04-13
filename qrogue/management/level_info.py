@@ -1,6 +1,6 @@
 from typing import Dict, List, Optional, Callable
 
-from qrogue.util import MapConfig, GameplayConfig
+from qrogue.util import MapConfig, GameplayConfig, PathConfig, MapGrammarConfig
 from qrogue.util.achievements import Unlocks
 
 
@@ -48,6 +48,23 @@ class LevelInfo:
 
         # other levels
     }
+
+    # for converting internal names to display names and vice versa
+    __NAME_CONVERTER: Dict[str, str] = {}   # is filled dynamically within LevelInfo.init()
+
+    @staticmethod
+    def init():
+        # initialize __NAME_CONVERTER
+        for mode in LevelInfo.__MAP_ORDER.keys():
+            for level in LevelInfo.__MAP_ORDER[mode]:
+                if level == MapConfig.first_uncleared(): continue
+
+                data = PathConfig.read_level(level, in_dungeon_folder=True)
+                start = data.index(MapGrammarConfig.name_prefix()) + len(MapGrammarConfig.name_prefix())
+                end = data.index(MapGrammarConfig.description_prefix()) - 1  # subtract the new line before description
+                display_name = data[start+1:end-1]      # also remove the enclosing quotes
+
+                LevelInfo.__NAME_CONVERTER[level] = display_name
 
     @staticmethod
     def get_next(cur_map: str, is_level_completed: Callable[[str], bool]) -> Optional[str]:
@@ -99,3 +116,36 @@ class LevelInfo:
             if level_name in LevelInfo.__LEVEL_COMPLETION_UNLOCKS:
                 return LevelInfo.__LEVEL_COMPLETION_UNLOCKS[level_name]
             return []
+
+    @staticmethod
+    def convert_to_display_name(internal_name: str, allow_display_name: bool = True) -> Optional[str]:
+        """
+        Returns: the display name corresponding to the provided level name or None if no level name was provided
+        Args:
+            internal_name: the internal name of the level we want to retrieve the display name of
+            allow_display_name: whether we allow internal_name to already be a display name and return it in case it is
+        """
+        if internal_name in LevelInfo.__NAME_CONVERTER:
+            return LevelInfo.__NAME_CONVERTER[internal_name]
+
+        if allow_display_name:
+            # this call cannot allow an internal name to avoid an endless recursion
+            return LevelInfo.convert_to_internal_name(internal_name, allow_internal_name=False)
+        return None
+
+    @staticmethod
+    def convert_to_internal_name(display_name: str, allow_internal_name: bool = True) -> Optional[str]:
+        """
+        Returns: the internal name corresponding to the provided level name or None if no level name was provided
+        Args:
+            display_name: the display name of the level we want to retrieve the internal name of
+            allow_internal_name: whether we allow display_name to already be an internal name and return it in that case
+        """
+        for internal, display in LevelInfo.__NAME_CONVERTER:
+            if display == display_name:
+                return internal
+
+        if allow_internal_name:
+            # this call cannot allow a display name to avoid an endless recursion
+            return LevelInfo.convert_to_display_name(display_name, allow_display_name=False)
+        return None

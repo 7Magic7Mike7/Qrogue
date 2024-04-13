@@ -159,7 +159,8 @@ class MapManager:
     def __load_next(self):
         next_map = LevelInfo.get_next(self.__cur_map.internal_name, self.__save_data.check_level)
         if next_map:
-            self.__start_level_transition(self.__cur_map.name, next_map, lambda: self.__load_map(next_map, None, None))
+            next_display = LevelInfo.convert_to_display_name(next_map)
+            self.__start_level_transition(self.__cur_map.name, next_display, lambda: self.__load_map(next_map, None, None))
         else:
             ErrorConfig.raise_deletion_exception()
 
@@ -194,23 +195,29 @@ class MapManager:
             #self.__save_data.trigger_event(event_id)
             robot = self.__cur_map.controllable_tile.controllable
             if isinstance(robot, Robot):
-                self.__save_data.complete_level(self.__cur_map.internal_name, score=robot.score)
+                prev_level_data = self.__save_data.get_level_data(self.__cur_map.internal_name)
+                new_level_data = self.__save_data.complete_level(self.__cur_map.internal_name, score=robot.score)
+
+                if self.__cur_map.get_type() is MapType.Expedition:
+                    self.__save_data.add_to_achievement(achievements.CompletedExpedition, 1)    # todo: add score instead of 1?
+                elif self.__cur_map.get_type() is MapType.Level:
+                    pass
+                else:
+                    ErrorConfig.raise_deletion_exception()
+                self.__save_data.save(is_auto_save=True)
+
+                CommonQuestions.proceed_summary(self.__cur_map.name, new_level_data.score, new_level_data.duration,
+                                                new_level_data.total_score, self.__proceed,
+                                                None if prev_level_data is None
+                                                else (prev_level_data.total_score, prev_level_data.duration))
+
             else:
                 ErrorConfig.raise_deletion_exception()
 
-            if self.__cur_map.get_type() is MapType.World:
-                ErrorConfig.raise_deletion_exception()
-            elif self.__cur_map.get_type() is MapType.Level:
-                if self.__save_data.check_level(self.__cur_map.internal_name):   # todo: check not needed since we don't have Worlds anymore
-                    self.__save_data.save(is_auto_save=True)     # auto save   # todo update system after user study?
-
-            elif self.__cur_map.get_type() is MapType.Expedition:
-                self.__save_data.add_to_achievement(achievements.CompletedExpedition, 1)
-
-            if self.__save_data.check_unlocks(Unlocks.ProceedChoice):
-                CommonQuestions.ProceedToNextMap.ask(self.__proceed)    # todo: ask only if we are currently replaying the level (if no proceed, go back to hub)
-            else:
-                self.__proceed()
+            #if self.__save_data.check_unlocks(Unlocks.ProceedChoice):
+            #    CommonQuestions.ProceedToNextMap.ask(self.__proceed)    # todo: ask only if we are currently replaying the level (if no proceed, go back to hub)
+            #else:
+            #    self.__proceed()
         else:
             self.__save_data.trigger_event(event_id)
 

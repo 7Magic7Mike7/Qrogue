@@ -265,13 +265,14 @@ class QrogueCUI(PyCUI):
 
         def start_level_transition(prev_map_name: str, next_map_name: str, callback: Callable[[], None]):
             texts = [
-                TransitionWidgetSet.TextScroll.fast(f"{prev_map_name} --- {next_map_name}\n"),
-                TransitionWidgetSet.TextScroll.medium("Loading"),
+                TransitionWidgetSet.TextScroll.fast(f"Loading {next_map_name}"),
+                TransitionWidgetSet.TextScroll.medium(f"..."),
             ]
             auto_scroll = self.__auto_scroll_simulation_transitions
             self.__state_machine.change_state(QrogueCUI._State.Transition, data=(texts, callback, auto_scroll))
-        self.__map_manager = MapManager(self.__save_data, self.__rm.seed, self.__show_world, self.__start_level, start_level_transition,
-                                        self.__show_input_popup, self.__cbp, BaseBot(self.__game_over))
+        self.__map_manager = MapManager(self.__save_data, self.__rm.seed, self.__show_world, self.__start_level,
+                                        start_level_transition, self.__show_input_popup, self.__cbp,
+                                        BaseBot(self.__game_over))
         ########################################
 
         if not Config.skip_learning():
