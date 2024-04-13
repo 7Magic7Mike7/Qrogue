@@ -306,8 +306,10 @@ class QrogueCUI(PyCUI):
                                     self.__map_manager.load_first_uncleared_map, self.__start_playing,
                                     self.__start_expedition, self.stop, self.__show_screen_check,
                                     self.__show_level_select, self.__save_data.check_unlocks)
-        self.__level_select = LevelSelectWidgetSet(self.__controls, Logger.instance(), self, self.__render,
-                                                   self._switch_to_menu, self.__start_level)
+        self.__level_select = LevelSelectWidgetSet(
+            self.__controls, Logger.instance(), self, self.__render, self.__rm, self.__save_data.get_completed_levels,
+            self._switch_to_menu, lambda map_seed, map_name: self.__map_manager.load_map(map_name, None, map_seed)
+        )
         self.__screen_check = ScreenCheckWidgetSet(self.__controls, Logger.instance(), self, self.__render,
                                                    self._switch_to_menu)
         self.__transition = TransitionWidgetSet(self.__controls, Logger.instance(), self, self.__render,

@@ -20,7 +20,8 @@ from qrogue.graphics.rendering import ColorRules
 from qrogue.graphics.widget_base import WidgetWrapper
 from qrogue.util import CommonPopups, Config, Controls, GameplayConfig, HelpText, Logger, PathConfig, \
     RandomManager, Keys, UIConfig, HudConfig, ColorConfig, Options, PuzzleConfig, ScoreConfig, \
-    get_filtered_help_texts, CommonQuestions, MapConfig, PyCuiConfig, ColorCode, split_text, PopupConfig
+    get_filtered_help_texts, CommonQuestions, MapConfig, PyCuiConfig, ColorCode, split_text, PopupConfig, MyRandom, \
+    LevelInfo
 from qrogue.util.achievements import Unlocks
 
 from qrogue.graphics.widgets import Renderable, Widget, MyBaseWidget
@@ -263,28 +264,43 @@ class MenuWidgetSet(MyWidgetSet):
 
 class LevelSelectWidgetSet(MyWidgetSet):
     def __init__(self, controls: Controls, logger: Logger, root: py_cui.PyCUI,
-                 base_render_callback: Callable[[List[Renderable]], None], switch_to_menu: Callable[[], None],
-                 start_level: Callable[[str, Optional[int]], None]):
+                 base_render_callback: Callable[[List[Renderable]], None], rm: MyRandom,
+                 get_available_levels_callback: Callable[[], List[str]], switch_to_menu: Callable[[], None],
+                 start_level: Callable[[Optional[int], str], None]):
         super().__init__(logger, root, base_render_callback)
         # select seed
         # select level (or choose Expedition)
         # select starting gates
         # start
         # back to menu
+        self.__rm = rm
+        self.__get_available_levels = get_available_levels_callback
         self.__start_level = start_level
 
-        self.__seed: Optional[str] = None
+        self.__seed = self.__rm.get_seed('init level select seed')
         self.__level: Optional[str] = None
         self.__gates: List[gates.Instruction] = []  # todo: or rather InstructionType?
 
+        row = 1
+        col = 4
+        col_span = 2
+        summary_seed = self.add_block_label('Seed', row, col, column_span=col_span)
+        ColorRules.apply_level_selection_seed_rules(summary_seed)
+        self.__summary_seed = SimpleWidget(summary_seed, "Seed: ???")
+        col += col_span
+        summary_level = self.add_block_label('Level', row, col, column_span=5, center=False)
+        ColorRules.apply_level_selection_level_rules(summary_level)
+        self.__summary_level = SimpleWidget(summary_level, "Level: ???")
+        self.__summary_level.render()
+
         row = 4
-        select = self.add_block_label('Select', row, 0, row_span=4, column_span=4, center=False)
+        select = self.add_block_label('Select', row, 1, row_span=4, column_span=4, center=False)
         self.__choices = SelectionWidget(select, controls, stay_selected=True)
 
         details = self.add_block_label('Details', row, 5, row_span=4, column_span=4, center=False)
         self.__details = SelectionWidget(details, controls, is_second=True)
 
-        texts = ["Seed", "Level", "Gates", "Start Playing", "Back to Menu"]
+        texts = ["Set Seed", "Select Level", "Change Gates", "Start Playing", "Back to Menu"]
         objects = ["Seed", "Level", "Gates", "Start", "Back"]
         callbacks = [self.__set_seed, self.__select_level, self.__choose_gates, self.__play_level, switch_to_menu]
         self.__choices.set_data(((texts, objects), callbacks))
@@ -302,23 +318,31 @@ class LevelSelectWidgetSet(MyWidgetSet):
                 elif self.__choices.selected_object == "Gates":
                     pass
                 Widget.move_focus(self.__choices, self)
-                self.__details.render()
-                self.__choices.render()
+                self.render()
         self.__details.widget.add_key_command(controls.action, use_details)
+
+        self.__summary_seed.set_data(f"Seed: {self.__seed}")
+        self.__summary_seed.render()
 
     def __set_seed(self) -> bool:
         pass
 
     def __select_level(self) -> bool:
+        # retrieve all available levels as display names for selection and internal names for loading
+        internal_names = self.__get_available_levels()
+        display_names = [LevelInfo.convert_to_display_name(level, True) for level in internal_names]
+        # add cancel to stop selecting a level
+        display_names.append("-Cancel-")
+        internal_names.append(None)   # the selection-object to easily identify cancel
+
         def set_level(index: int) -> bool:
             if self.__details.selected_object is None: return True  # -Cancel- was selected
 
             self.__level = self.__details.selected_object
+            self.__summary_level.set_data(f"Level: {display_names[index]}")
             return True
 
-        levels = ["L0", "L1", "-Cancel-"]
-        internal_names = ["aaa", "bbb", None]
-        self.__details.set_data(((levels, internal_names), set_level))
+        self.__details.set_data(((display_names, internal_names), set_level))
         return True
 
     def __choose_gates(self) -> bool:
@@ -334,7 +358,7 @@ class LevelSelectWidgetSet(MyWidgetSet):
     def __play_level(self) -> bool:
         if self.__level is None: Popup.error("No Level selected!")
 
-        self.__start_level(self.__level, self.__seed)
+        self.__start_level(self.__seed, self.__level)
         return True
 
     def _update_choices(self):
@@ -350,6 +374,8 @@ class LevelSelectWidgetSet(MyWidgetSet):
 
     def get_widget_list(self) -> List[Widget]:
         return [
+            self.__summary_seed,
+            self.__summary_level,
             self.__choices,
             self.__details,
         ]

@@ -329,6 +329,9 @@ class NewSaveData:
 
         return gate_diff, level_diff, unlocks_diff, achievement_diff
 
+    def get_completed_levels(self) -> List[str]:
+        return list(self.__levels.keys())
+
     ################################## TRANSITION TO NEW SYSTEM ##################################
 
     def check_level_event(self, event: str) -> bool:
