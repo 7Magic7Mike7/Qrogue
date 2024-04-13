@@ -10,13 +10,13 @@ from qrogue.game.logic.collectibles import Instruction
 from qrogue.game.logic.collectibles.instruction import InstructionManager
 from qrogue.game.world.dungeon_generator import parser_util
 from qrogue.game.world.map import CallbackPack
-from qrogue.management import LevelInfo
 from qrogue.management.save_grammar.SaveDataLexer import SaveDataLexer
 from qrogue.management.save_grammar.SaveDataParser import SaveDataParser
 from qrogue.management.save_grammar.SaveDataVisitor import SaveDataVisitor
 from qrogue.util import Logger, PathConfig, FileTypes, RandomManager, CommonPopups, Config, \
     ErrorConfig, achievements, MapConfig, ScoreConfig
 from qrogue.util.achievements import Achievement, Unlocks
+from qrogue.util.level_info import LevelInfo
 from qrogue.util.util_functions import cur_datetime, time_diff
 
 

@@ -34,7 +34,7 @@ from qrogue.util.key_logger import KeyLogger, OverWorldKeyLogger, DummyKeyLogger
 
 from qrogue.management.save_data import NewSaveData
 
-from qrogue.management import MapManager, SaveData, LevelInfo
+from qrogue.management import MapManager, SaveData
 
 
 class QrogueCUI(PyCUI):
