@@ -271,7 +271,8 @@ class QrogueCUI(PyCUI):
             auto_scroll = self.__auto_scroll_simulation_transitions
             self.__state_machine.change_state(QrogueCUI._State.Transition, data=(texts, callback, auto_scroll))
         self.__map_manager = MapManager(self.__save_data, self.__rm.seed, self.__show_world, self.__start_level,
-                                        start_level_transition, self.__show_input_popup, self.__cbp,
+                                        start_level_transition, self.__show_input_popup,
+                                        lambda: self._switch_to_menu(None), self.__cbp,
                                         BaseBot(self.__game_over))
         ########################################
 
