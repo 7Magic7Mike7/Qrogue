@@ -12,6 +12,7 @@ from qrogue.util import CommonQuestions, Logger, MapConfig, achievements, Random
 
 from qrogue.management.save_data import NewSaveData
 from qrogue.util.achievements import Unlocks
+from qrogue.util.level_info import LevelInfo
 from qrogue.util.config.gameplay_config import ExpeditionConfig, GameplayConfig
 
 
