@@ -263,8 +263,12 @@ class MenuWidgetSet(MyWidgetSet):
 
 
 class LevelSelectWidgetSet(MyWidgetSet):
+    __SEED_HEADER = "Seed: "
+    __LEVEL_HEADER = "Level: "
+
     def __init__(self, controls: Controls, logger: Logger, root: py_cui.PyCUI,
                  base_render_callback: Callable[[List[Renderable]], None], rm: MyRandom,
+                 show_input_popup_callback: Callable[[str, int, Callable[[str], None]], None],
                  get_available_levels_callback: Callable[[], List[str]], switch_to_menu: Callable[[], None],
                  start_level: Callable[[Optional[int], str], None]):
         super().__init__(logger, root, base_render_callback)
@@ -274,6 +278,7 @@ class LevelSelectWidgetSet(MyWidgetSet):
         # start
         # back to menu
         self.__rm = rm
+        self.__show_input_popup = show_input_popup_callback
         self.__get_available_levels = get_available_levels_callback
         self.__start_level = start_level
 
@@ -284,13 +289,13 @@ class LevelSelectWidgetSet(MyWidgetSet):
         row = 1
         col = 4
         col_span = 2
-        summary_seed = self.add_block_label('Seed', row, col, column_span=col_span)
+        summary_seed = self.add_block_label('Seed', row, col, column_span=col_span, center=False)
         ColorRules.apply_level_selection_seed_rules(summary_seed)
-        self.__summary_seed = SimpleWidget(summary_seed, "Seed: ???")
+        self.__summary_seed = SimpleWidget(summary_seed, f"{LevelSelectWidgetSet.__SEED_HEADER}???")
         col += col_span
         summary_level = self.add_block_label('Level', row, col, column_span=5, center=False)
         ColorRules.apply_level_selection_level_rules(summary_level)
-        self.__summary_level = SimpleWidget(summary_level, "Level: ???")
+        self.__summary_level = SimpleWidget(summary_level, f"{LevelSelectWidgetSet.__LEVEL_HEADER}???")
         self.__summary_level.render()
 
         row = 4
@@ -325,7 +330,18 @@ class LevelSelectWidgetSet(MyWidgetSet):
         self.__summary_seed.render()
 
     def __set_seed(self) -> bool:
-        pass
+        def set_seed(text: str):
+            try:
+                seed = int(text)
+                self.__seed = seed
+                self.__summary_seed.set_data(f"{LevelSelectWidgetSet.__SEED_HEADER}{seed}")
+                self.render()
+
+            except ValueError:
+                Popup.error(f"\"{text}\" is not a valid seed. \nPlease input a positive integer!", log_error=False)
+
+        self.__show_input_popup("Input Seed", ColorConfig.SEED_INPUT_POPUP_COLOR, set_seed)
+        return False
 
     def __select_level(self) -> bool:
         # retrieve all available levels as display names for selection and internal names for loading
@@ -339,7 +355,7 @@ class LevelSelectWidgetSet(MyWidgetSet):
             if self.__details.selected_object is None: return True  # -Cancel- was selected
 
             self.__level = self.__details.selected_object
-            self.__summary_level.set_data(f"Level: {display_names[index]}")
+            self.__summary_level.set_data(f"{LevelSelectWidgetSet.__LEVEL_HEADER}{display_names[index]}")
             return True
 
         self.__details.set_data(((display_names, internal_names), set_level))
@@ -360,17 +376,6 @@ class LevelSelectWidgetSet(MyWidgetSet):
 
         self.__start_level(self.__seed, self.__level)
         return True
-
-    def _update_choices(self):
-        # todo: use summary widget instead?
-        if self.__seed is None: self.__choices.update_text("Set Seed", 0)
-        else: self.__choices.update_text(f"Set Seed (currently: {self.__seed})", 0)
-
-        if self.__level is None: self.__choices.update_text("Select Level", 1)
-        else: self.__choices.update_text(f"Select Level (currently: {self.__level})", 1)
-
-        if len(self.__gates) <= 0: self.__choices.update_text("Choose Gates", 2)
-        else: self.__choices.update_text(f"Choose Gates (currently: {self.__gates})", 2)
 
     def get_widget_list(self) -> List[Widget]:
         return [
