@@ -23,9 +23,6 @@ class LevelInfo:
             "l0k0v4": f"{MapConfig.expedition_map_prefix()}25",
             "l0training": "w0",
             "l0exam": MapConfig.spaceship(),
-            "w0": MapConfig.spaceship(),
-
-            MapConfig.hub_world(): "l0v0",
         },
         1: {
             MapConfig.first_uncleared(): "l0k1v0",
