@@ -347,6 +347,8 @@ class LevelSelectWidgetSet(MyWidgetSet):
         # retrieve all available levels as display names for selection and internal names for loading
         internal_names = self.__get_available_levels()
         display_names = [LevelInfo.convert_to_display_name(level, True) for level in internal_names]
+        # todo: show highscore of level?
+
         # add cancel to stop selecting a level
         display_names.append("-Cancel-")
         internal_names.append(None)   # the selection-object to easily identify cancel
@@ -362,14 +364,18 @@ class LevelSelectWidgetSet(MyWidgetSet):
         return True
 
     def __choose_gates(self) -> bool:
-        def add_gate(index: int) -> bool:
-            gate = self.__details.selected_object
-            return False
-
-        gate_objects = [gates.HGate(), gates.XGate(), ]
-        names = [go.name() for go in gate_objects]
-        self.__details.set_data(((names, gate_objects), add_gate))
-        return True
+        # how/where to best display the selected gates?
+        Popup.generic_info("Upcoming Feature", "Gate management not yet implemented!\n"
+                                               "For now you have to play levels with their default set of gates.")
+        return False
+        # def add_gate(index: int) -> bool:
+        #     gate = self.__details.selected_object
+        #     return False
+        #
+        # gate_objects = [gates.HGate(), gates.XGate(), ]
+        # names = [go.name() for go in gate_objects]
+        # self.__details.set_data(((names, gate_objects), add_gate))
+        # return True
 
     def __play_level(self) -> bool:
         if self.__level is None:
