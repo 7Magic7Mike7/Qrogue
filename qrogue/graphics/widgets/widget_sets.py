@@ -400,6 +400,12 @@ class LevelSelectWidgetSet(MyWidgetSet):
         self.__choices.render_reset()
         self.__details.render_reset()
 
+        self.__level = None
+        self.__summary_level.set_data(f"{LevelSelectWidgetSet.__LEVEL_HEADER}???")
+
+        self.__seed = self.__rm.get_seed("init LevelSelection seed for reset")
+        self.__summary_seed.set_data(f"{LevelSelectWidgetSet.__SEED_HEADER}{self.__seed}")
+
 
 class ScreenCheckWidgetSet(MyWidgetSet):
     __LEVEL = 0
