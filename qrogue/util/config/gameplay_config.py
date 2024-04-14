@@ -183,8 +183,11 @@ class CheatConfig:
         return CheatConfig.__CHEATS[CheatConfig.__OBSTACLE_IGNORE]
 
     @staticmethod
-    def ignore_messages() -> bool:
-        return CheatConfig.__CHEATS[CheatConfig.__MESSAGE_IGNORE]
+    def ignore_dialogue(importance: PopupConfig.Importance) -> bool:
+        if importance <= PopupConfig.Importance.Dialogue:
+            return CheatConfig.__CHEATS[CheatConfig.__MESSAGE_IGNORE]
+        else:
+            return False    # messages more important than dialogue are not ignored
 
     @staticmethod
     def cheat_input():

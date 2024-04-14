@@ -222,6 +222,19 @@ class ColorConfig:
 
 
 class PopupConfig:
+    class Importance(enum.IntEnum):
+        Undefined = 0
+        Dialogue = 1
+        Info = 2
+        Error = 3
+
+        @staticmethod
+        def from_int(value: int) -> "PopupConfig.Importance":
+            if value == PopupConfig.Importance.Dialogue: return PopupConfig.Importance.Dialogue
+            if value == PopupConfig.Importance.Info: return PopupConfig.Importance.Info
+            if value == PopupConfig.Importance.Error: return PopupConfig.Importance.Error
+            return PopupConfig.Importance.Undefined
+
     # note that the metric is:
     # 0=Center, >0 = distance to left or top border, <0 = distance to right or bottom border
     __DEFAULT_POSITION = 0

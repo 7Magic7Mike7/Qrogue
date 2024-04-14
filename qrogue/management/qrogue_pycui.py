@@ -252,7 +252,7 @@ class QrogueCUI(PyCUI):
 
         # INIT MANAGEMENT
         Logger.instance().set_popup(self.show_error_popup)
-        CheatConfig.init(self.__show_message_popup, self.__show_input_popup, deactivate_cheats=not Config.debugging(),
+        CheatConfig.init(self.__show_cheat_info_popup, self.__show_input_popup, deactivate_cheats=not Config.debugging(),
                          allow_cheats=Config.debugging())
         Popup.update_popup_functions(self.__show_message_popup)
         ConfirmationPopup.update_popup_function(self.__show_confirmation_popup)
@@ -590,9 +590,12 @@ class QrogueCUI(PyCUI):
 
     def __show_message_popup(self, title: str, text: str, position: int, color: int,
                              dimensions: Optional[Tuple[int, int]] = None, reopen: Optional[bool] = None,
-                             padding_x: Optional[int] = None) -> None:
+                             padding_x: Optional[int] = None, importance: Optional[PopupConfig.Importance] = None) \
+            -> None:
         if reopen is None:
             reopen = False
+        if importance is None:
+            importance = PopupConfig.Importance.Undefined
         self.__focused_widget = self.get_selected_widget()
         self._popup = MultilinePopup(self, title, text, color, self._renderer, self._logger, self.__controls,
                                      pos=position, dimensions=dimensions,
@@ -601,13 +604,16 @@ class QrogueCUI(PyCUI):
         self.__popup_history.add(self._popup, is_permanent=reopen)
 
         # immediately close the popup if we want to ignore messages (they are still added to the history if important)
-        if CheatConfig.ignore_messages(): self.close_popup()
+        if CheatConfig.ignore_dialogue(importance): self.close_popup()
 
     def __show_confirmation_popup(self, title: str, text: str, color: int, callback: Callable[[int], None],
                                   answers: Optional[List[str]]):
         self.__focused_widget = self.get_selected_widget()
         self._popup = MultilinePopup(self, title, text, color, self._renderer, self._logger, self.__controls, callback,
                                      answers)
+
+    def __show_cheat_info_popup(self, title: str, text: str, position: int, color: int):
+        self.__show_message_popup(title, text, position, color, importance=PopupConfig.Importance.Info)
 
     def __show_input_popup(self, title: str, color: int, callback: Callable[[str], None]) -> None:
         self.__focused_widget = self.get_selected_widget()
