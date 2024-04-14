@@ -106,23 +106,18 @@ def _not_enough_energy_to_flee() -> str:
 
 
 class CommonPopups(Enum):
-    LockedDoor = (Config.system_name(), _locked_door())
-    EventDoor = (Config.system_name(), "Access denied. Permission requirements not yet fulfilled.")
-    WrongDirectionDoor = (Config.system_name(), "Access denied. Door cannot be accessed from this side.")
-    EntangledDoor = (Config.system_name(), _entangled_door())
-    TutorialBlocked = ("Halt!", _tutorial_blocked())
-    NotEnoughMoney = (Config.system_name(), _not_enough_money())
-    NoCircuitSpace = (Config.system_name(), _no_space())
-    NoGatePlaced = (Config.system_name(), _no_gate_placed())
-    NotEnoughEnergyToFlee = (Config.system_name(), _not_enough_energy_to_flee())
+    LockedDoor = _locked_door()
+    EventDoor = "Access denied. Permission requirements not yet fulfilled."
+    WrongDirectionDoor = "Access denied. Door cannot be accessed from this side."
+    EntangledDoor = _entangled_door()
+    TutorialBlocked = _tutorial_blocked()
+    NotEnoughMoney = _not_enough_money()
+    NoCircuitSpace = _no_space()
+    NoGatePlaced = _no_gate_placed()
+    NotEnoughEnergyToFlee = _not_enough_energy_to_flee()
 
-    def __init__(self, title: str, text: str):
-        self.__title = title
+    def __init__(self, text: str):
         self.__text = text
-
-    @property
-    def title(self) -> str:
-        return self.__title
 
     @property
     def text(self) -> str:
