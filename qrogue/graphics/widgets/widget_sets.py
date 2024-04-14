@@ -21,7 +21,7 @@ from qrogue.graphics.widget_base import WidgetWrapper
 from qrogue.util import CommonPopups, Config, Controls, GameplayConfig, HelpText, Logger, PathConfig, \
     RandomManager, Keys, UIConfig, HudConfig, ColorConfig, Options, PuzzleConfig, ScoreConfig, \
     get_filtered_help_texts, CommonQuestions, MapConfig, PyCuiConfig, ColorCode, split_text, PopupConfig, MyRandom, \
-    LevelInfo
+    LevelInfo, CommonInfos
 from qrogue.util.achievements import Unlocks
 
 from qrogue.graphics.widgets import Renderable, Widget, MyBaseWidget
@@ -1064,7 +1064,7 @@ class TransitionWidgetSet(MyWidgetSet):
 
 class PauseMenuWidgetSet(MyWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
-                 continue_callback: Callable[[], None], save_callback: Callable[[], Tuple[bool, CommonPopups]],
+                 continue_callback: Callable[[], None], save_callback: Callable[[], Tuple[bool, CommonInfos]],
                  exit_run_callback: Callable[[], None], restart_callback: Callable[[], None],
                  achievements_to_string_callback: Callable[[], str]):
         super().__init__(logger, root, render)
@@ -1128,8 +1128,8 @@ class PauseMenuWidgetSet(MyWidgetSet):
         return False
 
     def __save(self) -> bool:
-        _, common_popup = self.__save_callback()
-        common_popup.show()
+        _, common_info = self.__save_callback()
+        common_info.show()
         return False
 
     def __help(self) -> bool:
@@ -1176,7 +1176,7 @@ class PauseMenuWidgetSet(MyWidgetSet):
                     Popup.message(CommonPopups.OptionsSaved.title, CommonPopups.OptionsSaved.text, reopen=False,
                                   on_close_callback=self.__focus_choices)
                 else:
-                    CommonPopups.OptionsNotSaved.show()
+                    CommonInfos.OptionsNotSaved.show()
                 return False
             else:
                 # reset changes

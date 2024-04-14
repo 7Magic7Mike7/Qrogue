@@ -26,7 +26,7 @@ from qrogue.graphics.widgets import Renderable, BossFightWidgetSet, ExploreWidge
     ScreenCheckWidgetSet, LevelSelectWidgetSet
 from qrogue.util import common_messages, CheatConfig, Config, GameplayConfig, UIConfig, HelpText, \
     Logger, PathConfig, MapConfig, Controls, Keys, RandomManager, PyCuiConfig, PyCuiColors, Options, \
-    CommonQuestions, ErrorConfig, CommonPopups
+    CommonQuestions, ErrorConfig, CommonInfos
 from qrogue.util.achievements import Unlocks
 from qrogue.util.config import FileTypes, PopupConfig
 from qrogue.util.game_simulator import GameSimulator
@@ -280,7 +280,8 @@ class QrogueCUI(PyCUI):
             self.__map_manager.fill_expedition_queue(lambda: None, no_thread=True)
 
         Popup.update_check_achievement_function(self.__save_data.check_level_event)
-        common_messages.set_show_callback(Popup.generic_info)
+        common_messages.set_show_callback(Popup.system_says)
+        common_messages.set_show_info_callback(Popup.generic_info)
         common_messages.set_ask_callback(ConfirmationPopup.ask)
         WalkTriggerTile.set_show_explanation_callback(Popup.from_message)
         Message.set_show_callback(Popup.from_message_trigger)
@@ -456,9 +457,9 @@ class QrogueCUI(PyCUI):
         self.__ow_key_logger.flush_if_useful()
         super().stop()
 
-    def _conditional_saving(self) -> Tuple[bool, CommonPopups]:
+    def _conditional_saving(self) -> Tuple[bool, CommonInfos]:
         if self.is_simulating:
-            return False, CommonPopups.NoSavingDuringSimulation
+            return False, CommonInfos.NoSavingDuringSimulation
 
         return self.__save_data.save()
 

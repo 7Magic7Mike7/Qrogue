@@ -5,19 +5,31 @@ from qrogue.util import Config, ColorConfig as CC, Logger
 
 
 class _CallbackHandler:
-    __show: Callable[[str, str], None] = None
+    __show: Callable[[str], None] = None
+    __show_info: Callable[[str, str], None] = None
     __ask: Callable[[str, str, Callable[[int], None], Optional[List[str]]], None] = None
 
     @staticmethod
-    def show(title: str, text: str):
+    def show(text: str):
         if _CallbackHandler.__show:
-            _CallbackHandler.__show(title, text)
+            _CallbackHandler.__show(text)
         else:
             Logger.instance().error("CommonMessages' show is None!", from_pycui=False)
 
     @staticmethod
-    def set_show_callback(show: Callable[[str, str], None]):
+    def set_show_callback(show: Callable[[str], None]):
         _CallbackHandler.__show = show
+
+    @staticmethod
+    def set_show_info_callback(show_info_callback: Callable[[str, str], None]):
+        _CallbackHandler.__show_info = show_info_callback
+
+    @staticmethod
+    def show_info(title: str, text: str):
+        if _CallbackHandler.__show_info:
+            _CallbackHandler.__show_info(title, text)
+        else:
+            Logger.instance().error("CommonMessages' show_info is None!", from_pycui=False)
 
     @staticmethod
     def ask(title: str, text: str, callback: Callable[[int], None], answers: Optional[List[str]]):
@@ -31,8 +43,12 @@ class _CallbackHandler:
         _CallbackHandler.__ask = ask
 
 
-def set_show_callback(show: Callable[[str, str], None]):
+def set_show_callback(show: Callable[[str], None]):
     _CallbackHandler.set_show_callback(show)
+
+
+def set_show_info_callback(show_info: Callable[[str, str], None]):
+    _CallbackHandler.set_show_info_callback(show_info)
 
 
 def set_ask_callback(ask: Callable[[str, str, Callable[[int], None], Optional[List[str]]], None]):
@@ -90,14 +106,6 @@ def _not_enough_energy_to_flee() -> str:
 
 
 class CommonPopups(Enum):
-    SavingFailed = ("Error!", "Failed to save the game. Please make sure the folder for save data still exists and try "
-                              "again.")
-    SavingSuccessful = ("Saved", "You successfully saved the game!")
-    NoSavingWithCheats = ("Cheating", "You used a cheat and therefore are not allowed to save the game!")
-    NoSavingDuringSimulation = ("Simulating", "Saving is not allowed during simulation.")
-    NothingToSave = ("Nothing to save", "Your latest data has already been successfully saved.")
-    OptionsSaved = ("Saved", "You successfully saved your changes to the options!")
-    OptionsNotSaved = ("Error!", "Could not save your changes...")
     LockedDoor = (Config.system_name(), _locked_door())
     EventDoor = (Config.system_name(), "Access denied. Permission requirements not yet fulfilled.")
     WrongDirectionDoor = (Config.system_name(), "Access denied. Door cannot be accessed from this side.")
@@ -121,7 +129,33 @@ class CommonPopups(Enum):
         return self.__text
 
     def show(self):
-        _CallbackHandler.show(self.__title, self.__text)
+        _CallbackHandler.show(self.__text)
+
+
+class CommonInfos(Enum):
+    SavingFailed = ("Error!", "Failed to save the game. Please make sure the folder for save data still exists and try "
+                              "again.")
+    SavingSuccessful = ("Saved", "You successfully saved the game!")
+    NoSavingWithCheats = ("Cheating", "You used a cheat and therefore are not allowed to save the game!")
+    NoSavingDuringSimulation = ("Simulating", "Saving is not allowed during simulation.")
+    NothingToSave = ("Nothing to save", "Your latest data has already been successfully saved.")
+    OptionsSaved = ("Saved", "You successfully saved your changes to the options!")
+    OptionsNotSaved = ("Error!", "Could not save your changes...")
+
+    def __init__(self, title: str, text: str):
+        self.__title = title
+        self.__text = text
+
+    @property
+    def title(self) -> str:
+        return self.__title
+
+    @property
+    def text(self) -> str:
+        return self.__text
+
+    def show(self):
+        _CallbackHandler.show_info(self.__title, self.__text)
 
 
 class CommonQuestions(Enum):

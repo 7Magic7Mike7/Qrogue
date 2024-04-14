@@ -122,6 +122,14 @@ class Popup:
         Popup.message("Error", text, reopen, pos, overwrite=overwrite, importance=PopupConfig.Importance.Error)
 
     @staticmethod
+    def system_says(text: str, reopen: Optional[bool] = None, pos: Optional[int] = None):
+        if reopen is None:
+            reopen = True
+        if pos is None:
+            pos = Popup.__DEFAULT_POS
+        Popup.message(Config.system_name(), text, reopen=reopen, pos=pos, importance=PopupConfig.Importance.Dialogue)
+
+    @staticmethod
     def examiner_says(text: str, reopen: Optional[bool] = None, pos: Optional[int] = None):
         if reopen is None:
             reopen = True

@@ -13,7 +13,7 @@ from qrogue.game.world.map import CallbackPack
 from qrogue.management.save_grammar.SaveDataLexer import SaveDataLexer
 from qrogue.management.save_grammar.SaveDataParser import SaveDataParser
 from qrogue.management.save_grammar.SaveDataVisitor import SaveDataVisitor
-from qrogue.util import Logger, PathConfig, FileTypes, RandomManager, CommonPopups, Config, \
+from qrogue.util import Logger, PathConfig, FileTypes, RandomManager, CommonInfos, Config, \
     ErrorConfig, achievements, MapConfig, ScoreConfig
 from qrogue.util.achievements import Achievement, Unlocks
 from qrogue.util.level_info import LevelInfo
@@ -275,16 +275,16 @@ class NewSaveData:
 
         return text + f"{_SaveDataGenerator.ender()}\n"
 
-    def save(self, is_auto_save: bool = False) -> Tuple[bool, CommonPopups]:
+    def save(self, is_auto_save: bool = False) -> Tuple[bool, CommonInfos]:
         """
         Returns:
             False if an error occurred during saving, True if saving behaved as expected (i.e., latest save state is
             persisted)
         """
         if Config.forbid_saving():
-            return False, CommonPopups.NoSavingWithCheats
+            return False, CommonInfos.NoSavingWithCheats
         if not self.__has_unsaved_changes:
-            return True, CommonPopups.NothingToSave
+            return True, CommonInfos.NothingToSave
 
         try:
             self.__date_time = cur_datetime()   # update datetime of the latest save (=now)
@@ -294,10 +294,10 @@ class NewSaveData:
             else:
                 PathConfig.new_save_file(data)
                 self.__has_unsaved_changes = False  # only change flag if it was a manual (i.e., no auto) save
-            return True, CommonPopups.SavingSuccessful
+            return True, CommonInfos.SavingSuccessful
 
         except:
-            return False, CommonPopups.SavingFailed
+            return False, CommonInfos.SavingFailed
 
     def compare(self, other: "NewSaveData") -> Tuple[List[Instruction], List[str], List[Unlocks], List[Achievement]]:
         """
