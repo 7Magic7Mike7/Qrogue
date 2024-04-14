@@ -138,8 +138,8 @@ class LevelInfo:
             display_name: the display name of the level we want to retrieve the internal name of
             allow_internal_name: whether we allow display_name to already be an internal name and return it in that case
         """
-        for internal, display in LevelInfo.__NAME_CONVERTER:
-            if display == display_name:
+        for internal in LevelInfo.__NAME_CONVERTER:
+            if LevelInfo.__NAME_CONVERTER[internal] == display_name:
                 return internal
 
         if allow_internal_name:
