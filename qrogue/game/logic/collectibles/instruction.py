@@ -344,7 +344,7 @@ class RotationGate(SingleQubitGate, ABC):
         # find indices of "°" and the whitespace before that, so we can replace the angle value.
         degree_index = desc.find("°")
         if degree_index <= 0:
-            Logger.instance().error(f"No \"°\" in the description of {self.type}!", from_pycui=False)
+            Logger.instance().error(f"No \"°\" in the description of {self.type}!", show=False, from_pycui=False)
             return desc
         space_index = desc[:degree_index].rfind(" ")
 

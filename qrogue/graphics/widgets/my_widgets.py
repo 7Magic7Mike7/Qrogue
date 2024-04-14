@@ -575,7 +575,7 @@ class CircuitWidget(Widget):
                     gate = self.__place_holder_data.gate
                     self.__place_holder_data = None
                     return True, gate
-                Logger.instance().error("Place_Gate() did not work correctly", from_pycui=False)
+                Logger.instance().error("Place_Gate() did not work correctly", show=False, from_pycui=False)
         return False, None
 
     def set_data(self, data: Tuple[Robot, Optional[Tuple[StateVector, StateVector]]]) -> None:

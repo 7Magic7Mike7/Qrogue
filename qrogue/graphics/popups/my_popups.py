@@ -105,7 +105,7 @@ class Popup:
 
     @staticmethod
     def error(text: str, reopen: Optional[bool] = None, pos: Optional[int] = None, overwrite: bool = True,
-              log_error: bool = True):
+              log_error: bool = True, add_report_note: bool = False):
         """
         Args:
             text: a text describing the error
@@ -113,12 +113,15 @@ class Popup:
             pos: position of the popup
             overwrite: whether this popup should overwrite the currently displayed one if there is any (defaults to True)
             log_error: whether we should forward the error to our Logger (defaults to True)
+            add_report_note: whether to add a text to inform the player how to report the error
         """
         if reopen is None:
             reopen = False
         if pos is None:
             pos = Popup.__DEFAULT_POS
         if log_error: Logger.instance().error(text, show=False, from_pycui=False)
+        if add_report_note:
+            text += f"\nPlease report this error together with your user data to {Config.report_address()}"
         Popup.message("Error", text, reopen, pos, overwrite=overwrite, importance=PopupConfig.Importance.Error)
 
     @staticmethod

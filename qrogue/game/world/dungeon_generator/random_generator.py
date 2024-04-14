@@ -11,6 +11,7 @@ from qrogue.game.world.map import CallbackPack, Hallway, WildRoom, SpawnRoom, Sh
     TreasureRoom, ExpeditionMap, Room
 from qrogue.game.world.map.rooms import Placeholder, AreaType, DefinedWildRoom, EmptyRoom
 from qrogue.game.world.navigation import Coordinate, Direction
+from qrogue.graphics.popups import Popup
 from qrogue.util import Logger, RandomManager, MapConfig, Config
 
 from qrogue.game.world.dungeon_generator.generator import DungeonGenerator
@@ -245,7 +246,7 @@ class RandomLayoutGenerator:
         if prio_sum == 0:
             Logger.instance().error(f"Illegal prio_sum for seed = {self.seed} in generator.py\nThis should not be "
                                     "possible to occur but aside from the randomness during layout generation this "
-                                    "doesn't break anything. Please consider reporting!", from_pycui=False)
+                                    "doesn't break anything.", show=False, from_pycui=False)
             prio_sum = -1.0
 
         picked_rooms: List[Tuple[Tuple[Direction, _Code, Coordinate], Coordinate]] = []
@@ -295,7 +296,9 @@ class RandomLayoutGenerator:
                         self.__place_wild(pos, tiles.Door(direction, tiles.DoorOpenState.KeyLocked))
                         return pos
             except NotImplementedError:
-                Logger.instance().error("Unimplemented case happened!", from_pycui=False)
+                Popup.error("Unimplemented case happend during layout generation!\nSince this could lead to a faulty "
+                            "level, we recommend exiting the level and starting it again. Should this error keep "
+                            "occuring:", add_report_note=True)
 
     def __astar_connect_neighbors(self, visited: set, pos: Coordinate) -> Tuple[Coordinate, bool]:
         """

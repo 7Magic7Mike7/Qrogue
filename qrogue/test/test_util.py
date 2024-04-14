@@ -60,9 +60,9 @@ def message_popup(title: str, text: str, position: Optional[int] = None):
     print("----------------------------------------")
 
 
-def error_popup(title: str, text: str):
+def error_popup(text: str):
     print("----------------------------------------")
-    print(f"ERROR - {title}")
+    print(f"ERROR")
     print(text)
     print("----------------------------------------")
 

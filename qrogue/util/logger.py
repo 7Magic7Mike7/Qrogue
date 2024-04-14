@@ -53,7 +53,7 @@ class Logger(PyCUILogger):
                 self.__commit = commit
 
             self.__text = ""
-            self.__error_popup: Optional[Callable[[str, str], None]] = None
+            self.__error_popup: Optional[Callable[[str], None]] = None
             self.__buffer: List[str] = []   # stores logged lines
             self.__error_counter = 0
             Logger.__instance = self
@@ -69,7 +69,7 @@ class Logger(PyCUILogger):
     def error_count(self) -> int:
         return self.__error_counter
 
-    def set_popup(self, error_popup_function: Callable[[str, str], None]) -> None:
+    def set_popup(self, error_popup_function: Callable[[str], None]) -> None:
         self.__error_popup = error_popup_function
 
     def _write(self, text: str, from_pycui: Optional[bool]) -> None:
@@ -106,12 +106,12 @@ class Logger(PyCUILogger):
             assert statement, str(message)
         else:
             if not statement:
-                self.error(message, show_popup, False)
+                self.error(message, show_popup, from_pycui=False)
 
     def error(self, message, show: bool = True, from_pycui: bool = True, **kwargs) -> None:
         self.__error_counter += 1
         if show:
-            self.__error_popup("ERROR", str(message))
+            self.__error_popup(str(message))
         highlighting = "\n----------------------------------\n"
         self.info(f"{highlighting}ERROR |{message}{highlighting}", from_pycui=from_pycui)
 

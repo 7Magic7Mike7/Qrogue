@@ -228,9 +228,10 @@ class QrogueCUI(PyCUI):
                 return qrogue_cui.start(simulator.map_name)
 
         except FileNotFoundError as fnf:
-            Logger.instance().error(f"Simulation file \"{simulation_path}\" not found: {fnf}",
-                                    show=automation_step_time is None,  # show Popup if the simulation is manual
-                                    from_pycui=False)
+            error_text = f"Simulation file \"{simulation_path}\" not found: {fnf}"
+            # only create a popup for the error during manual simulations
+            if automation_step_time is None: Popup.error(error_text)
+            else: Logger.instance().error(error_text, show=False, from_pycui=False)
             return None
 
     def __init__(self, seed: int, width: int = UIConfig.WINDOW_WIDTH, height: int = UIConfig.WINDOW_HEIGHT,
@@ -251,7 +252,7 @@ class QrogueCUI(PyCUI):
         Widget.set_move_focus_callback(move_focus)
 
         # INIT MANAGEMENT
-        Logger.instance().set_popup(self.show_error_popup)
+        Logger.instance().set_popup(lambda text: Popup.error(text, log_error=False, add_report_note=True))
         CheatConfig.init(self.__show_cheat_info_popup, self.__show_input_popup, deactivate_cheats=not Config.debugging(),
                          allow_cheats=Config.debugging())
         Popup.update_popup_functions(self.__show_message_popup)

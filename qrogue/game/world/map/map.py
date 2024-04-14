@@ -124,7 +124,7 @@ class BaseMap(ABC):
             if y_mod == Area.UNIT_HEIGHT:
                 # there are a few points on the map that are surrounded by Hallways and don't belong to any Room
                 Logger.instance().error(f"Error! You should not be able to move outside of Hallways: {x}|{y}",
-                                        from_pycui=False)
+                                        show=False, from_pycui=False)
                 return None, tiles.Invalid()
             x -= 1
             x_mod -= 1
@@ -138,7 +138,7 @@ class BaseMap(ABC):
         room_y = int(y / height)
         room = self.__rooms[room_y][room_x]
         if room is None:
-            Logger.instance().error(f"Error! Invalid position: {x}|{y}", from_pycui=False)
+            Logger.instance().error(f"Error! Invalid position: {x}|{y}", show=False, from_pycui=False)
             return None, tiles.Invalid()
 
         if in_hallway:
@@ -224,7 +224,8 @@ class Map(BaseMap, ABC):
 
         self.__cur_area = self.room_at(spawn_room.x, spawn_room.y)
         if self.__cur_area is None:
-            Logger.instance().error(f"Illegal spawn room @{spawn_room} for map {meta_data.name}", from_pycui=False)
+            Logger.instance().error(f"Illegal spawn room @{spawn_room} for map {meta_data.name}", show=False,
+                                    from_pycui=False)
         else:
             self.__cur_area.enter(Direction.Center)
             self.__cur_area.make_visible()
@@ -233,7 +234,7 @@ class Map(BaseMap, ABC):
                 self.__cur_area.set_is_done_callback(self._is_done)
             elif not isinstance(self.__cur_area, MetaRoom) and self.__cur_area.type is not AreaType.SpawnRoom:
                 Logger.instance().error(f"{meta_data.name} starts in area that is not a SpawnRoom! cur_area = "
-                                        f"{self.__cur_area}", from_pycui=False)
+                                        f"{self.__cur_area}", show=False, from_pycui=False)
 
     @property
     def controllable_tile(self) -> tiles.ControllableTile:

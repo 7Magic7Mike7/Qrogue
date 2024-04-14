@@ -71,6 +71,10 @@ class Config:   # todo make singleton and handle access to other configs?
         return Config.__VERSION
 
     @staticmethod
+    def report_address() -> str:
+        return "qrogue.game@gmail.com"
+
+    @staticmethod
     def get_log_head(seed: int) -> str:
         now_str = cur_datetime().strftime("%d%m%Y_%H%M%S")
         head = f"{Config.__HEADER}{Config.version()}\n"

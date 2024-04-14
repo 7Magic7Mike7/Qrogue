@@ -59,7 +59,7 @@ class Enemy(WalkTriggerTile):
                 # noting happens in case the robot doesn't have any gates
                 return False
         else:
-            Logger.instance().error(f"Error! Non-Robot walked over Enemy: {controllable}", from_pycui=False)
+            Logger.instance().error(f"Error! Non-Robot walked over Enemy: {controllable}", show=False, from_pycui=False)
 
     def _on_walk(self, direction: Direction, controllable: Controllable) -> bool:
         if isinstance(controllable, Robot):
@@ -152,7 +152,8 @@ class Boss(WalkTriggerTile):
             #    self.__end_level_callback()
             return True
         else:
-            Logger.instance().error(f"Non-Robot walked on Boss! controllable = {controllable}", from_pycui=False)
+            Logger.instance().error(f"Non-Robot walked on Boss! controllable = {controllable}", show=False,
+                                    from_pycui=False)
             return False
 
     def get_img(self):

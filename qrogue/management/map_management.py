@@ -121,9 +121,11 @@ class MapManager:
                     self.__in_level = True
                     self.__start_level(map_seed, self.__cur_map)
                 else:
-                    Logger.instance().error(f"Could not load level \"{map_name}\"!", from_pycui=False)
+                    Popup.error(f"Failed to generate level \"{map_name}\"!", add_report_note=True)
             except FileNotFoundError:
-                Logger.instance().error(f"Failed to open the specified level-file: {map_name}", from_pycui=False)
+                Popup.error(f"Level-file for \"{map_name}\" was not found! Please download the game files again.\n"
+                            f"If this error still occurs but you're sure that the corresponding file is present:",
+                            add_report_note=True)
 
         elif map_name.lower().startswith(MapConfig.expedition_map_prefix()):
             if len(map_name) > len(MapConfig.expedition_map_prefix()):
@@ -151,12 +153,15 @@ class MapManager:
                 self.__in_level = True
                 self.__start_level(map_seed, self.__cur_map)
             else:
-                Logger.instance().error(f"Could not create expedition with seed = {map_seed}", from_pycui=False)
+                Popup.error(f"Failed to create an expedition for seed = {map_seed}. Please try again with a different "
+                            f"seed or restart the game. Should the error keep occurring:", add_report_note=True)
 
         elif map_name == MapConfig.back_map_string():
             self.__load_back()
         else:
-            Logger.instance().error(f"Invalid map to load: {map_name}", from_pycui=False)
+            Popup.error(f"Failed to recognize \"{map_name}\" as map. Please download the game files again.\n"
+                        f"If this error still occurs but you're sure that the corresponding file is present:",
+                        add_report_note=True)
 
     def __load_next(self):
         next_map = LevelInfo.get_next(self.__cur_map.internal_name, self.__save_data.check_level)

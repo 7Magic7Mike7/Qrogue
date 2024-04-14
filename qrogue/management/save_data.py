@@ -10,6 +10,7 @@ from qrogue.game.logic.collectibles import Instruction
 from qrogue.game.logic.collectibles.instruction import InstructionManager
 from qrogue.game.world.dungeon_generator import parser_util
 from qrogue.game.world.map import CallbackPack
+from qrogue.graphics.popups import Popup
 from qrogue.management.save_grammar.SaveDataLexer import SaveDataLexer
 from qrogue.management.save_grammar.SaveDataParser import SaveDataParser
 from qrogue.management.save_grammar.SaveDataVisitor import SaveDataVisitor
@@ -80,7 +81,9 @@ class NewSaveData:
             return NewSaveData(save_data)
 
         except FileNotFoundError as ex:
-            Logger.instance().error(f"Could not load save file at \"{path}\": {ex}", from_pycui=False)
+            Popup.error(f"Could not load save file at \"{path}\": {ex}.\nPlease make sure that you did not move your "
+                        f"files manually. If this error occurs even though the stated path points to a "
+                        f"{FileTypes.Save.value}-file:", add_report_note=True)
 
     @staticmethod
     def empty_save_state() -> str:

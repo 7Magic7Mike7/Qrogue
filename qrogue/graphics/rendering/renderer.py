@@ -137,8 +137,8 @@ class MultiColorRenderer(Renderer):
 
         render_text_length = width - (2 * padx)
         # this line is the only difference to the original (super) function
-        render_text_length += ColorConfig.count_meta_characters(line, render_text_length,
-                                                                lambda err: self._logger.error(err, from_pycui=False))
+        render_text_length += ColorConfig.count_meta_characters(
+            line, render_text_length, lambda err: self._logger.error(err, show=False, from_pycui=False))
 
         if bordered:
             render_text_length = render_text_length - 4

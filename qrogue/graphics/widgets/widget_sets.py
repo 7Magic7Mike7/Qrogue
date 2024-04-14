@@ -696,7 +696,7 @@ class ScreenCheckWidgetSet(MyWidgetSet):
         # use width-2 because it seems as if PyCUI forces a one-character border on both sides
         # an experiment showed that a width of 104 can only display 102 characters
         content = split_text(description, width-2, padding,
-                             handle_error=lambda err: Logger.instance().error(err, from_pycui=False))
+                             handle_error=lambda err: Logger.instance().error(err, show=False, from_pycui=False))
         return "\n".join(content)
 
     def __show_level(self):
@@ -1762,8 +1762,9 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
     def __choices_commit(self):
         if self._target is None:
-            Logger.instance().error("Error! Target is not set!", from_pycui=False)
-            return False
+            Popup.error("No target was set! You automatically win.", add_report_note=True)
+            self._on_success()
+            return
         self._robot.update_statevector(input_stv=self._target.input_stv)
         success, reward = self._target.is_reached(self._robot.state_vector, self._robot.circuit_matrix)
         self.__update_calculation(success)

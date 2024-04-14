@@ -421,7 +421,8 @@ class Room(Area):
             return self.__hallways[direction]
         elif throw_error:
             dic = [(str(self.__hallways[k]) + "\n") for k in self.__hallways]
-            Logger.instance().error(f"Invalid hallway access for {self}:\n{direction} not in {dic}", from_pycui=False)
+            Logger.instance().error(f"Invalid hallway access for {self}:\n{direction} not in {dic}", show=False,
+                                    from_pycui=False)
         return None
 
     def make_visible(self):
@@ -692,7 +693,7 @@ class SpawnRoom(CopyAbleRoom):
             else:
                 CommonQuestions.GoingBack.ask(self.__conditional_going_back)
         else:
-            Logger.instance().error("is_done_callback not set yet!", from_pycui=False)
+            Logger.instance().error("is_done_callback not set yet!", show=False, from_pycui=False)
 
     def __conditional_going_back(self, confirmed: int):
         if confirmed == 0:
