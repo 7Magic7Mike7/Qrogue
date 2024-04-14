@@ -55,66 +55,22 @@ def set_ask_callback(ask: Callable[[str, str, Callable[[int], None], Optional[Li
     _CallbackHandler.set_ask_callback(ask)
 
 
-def _locked_door() -> str:
-    key = CC.highlight_object("Key")
-    door = CC.highlight_object("Door")
-    return f"Come back with a {key} to open the {door}."
-
-
-def _one_way_door() -> str:
-    one_way = CC.highlight_object("one way")
-    door = CC.highlight_object("Door")
-    return f"This is a {one_way} {door} that can only be opened from the other side!"
-
-
-def _entangled_door() -> str:
-    door = CC.highlight_object("Door")
-    entangled = CC.highlight_word("entangled")
-    return f"The {door} {entangled} with this one was opened. Therefore you can no longer pass this {door}."
-
-
-def _tutorial_blocked() -> str:
-    step = CC.highlight_word("current step")
-    tutorial = CC.highlight_word("Tutorial")
-    return f"You should not go there yet! Finish the {step} of the {tutorial} first."
-
-
-def _not_enough_money() -> str:
-    return "You cannot afford that right now. Come back when you have enough money."
-
-
-def _no_space() -> str:
-    circ = CC.highlight_object("Circuit")
-    space = CC.highlight_word("no more space")
-    gate = CC.highlight_object("Gate")
-    return f"Your {circ} has {space} left. Remove a {gate} to place another one."
-
-
-def _no_gate_placed() -> str:
-    no = CC.highlight_word("no")
-    gate = CC.highlight_object("Gate")
-    circuit = CC.highlight_object("Circuit")
-    return f"Currently there is {no} {gate} in your {circuit} that you could remove!"
-
-
-def _not_enough_energy_to_flee() -> str:
-    denied = CC.highlight_word("Denied")
-    not_possible = CC.highlight_word("not possible")
-    robots = CC.highlight_object("Robot's")
-    energy = CC.highlight_object("Energy")
-    return f"{denied}. Fleeing {not_possible} because it would cost all of the {robots} remaining {energy}."
-
-
 class CommonPopups(Enum):
-    LockedDoor = _locked_door()
+    LockedDoor = f"Come back with a {CC.highlight_object('Key')} to open the {CC.highlight_object('Door')}."
     EventDoor = "Access denied. Permission requirements not yet fulfilled."
     WrongDirectionDoor = "Access denied. Door cannot be accessed from this side."
-    EntangledDoor = _entangled_door()
-    TutorialBlocked = _tutorial_blocked()
-    NotEnoughMoney = _not_enough_money()
-    NoCircuitSpace = _no_space()
-    NoGatePlaced = _no_gate_placed()
-    NotEnoughEnergyToFlee = _not_enough_energy_to_flee()
+    EntangledDoor = f"The {CC.highlight_object('Door')} {CC.highlight_word('entangled')} with this one was opened. " \
+                    f"Therefore you can no longer pass this {CC.highlight_object('Door')}."
+    TutorialBlocked = f"You should not go there yet! Finish the {CC.highlight_word('current step')} of the " \
+                      f"{CC.highlight_word('Tutorial')} first."
+    NotEnoughMoney = "You cannot afford that right now. Come back when you have enough money."
+    NoCircuitSpace = f"Your {CC.highlight_object('Circuit')} has {CC.highlight_word('no more space')} left. Remove a " \
+                     f"{CC.highlight_object('Gate')} to place another one."
+    NoGatePlaced = f"Currently there is {CC.highlight_word('no')} {CC.highlight_object('Gate')} in your " \
+                   f"{CC.highlight_object('Circuit')} that you could remove!"
+    NotEnoughEnergyToFlee = f"{CC.highlight_word('Denied')}. Fleeing {CC.highlight_word('not possible')} because it " \
+                            f"would cost all of the {CC.highlight_object('Robot´s')} remaining " \
+                            f"{CC.highlight_object('Energy')}."
 
     def __init__(self, text: str):
         self.__text = text
