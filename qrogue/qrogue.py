@@ -155,6 +155,11 @@ def simulate_game(simulation_path: str, from_console: bool = False, debugging: b
             print("---------------------------------------------------------")
             sys.exit(1)
 
+        if save_data is None:
+            print("Simulation failed! Please read the logs to find the reason.")
+            Logger.instance().flush()
+            sys.exit(1)
+
         # flush after the player stopped playing
         if GameplayConfig.auto_save():      # todo: save at a different location?
             success, message = save_data.save()
