@@ -55,6 +55,10 @@ class Popup:
     __cur_popup: Optional["Popup"] = None
 
     @staticmethod
+    def is_initialized() -> bool:
+        return Popup.__show_popup is not None and Popup.__check_achievement_callback is not None
+
+    @staticmethod
     def update_popup_functions(show_popup_callback: Callable[[str, str, int, int, Optional[Tuple[int, int]],
                                                               Optional[bool], Optional[int]], None]) -> None:
         """

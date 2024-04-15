@@ -230,7 +230,7 @@ class QrogueCUI(PyCUI):
         except FileNotFoundError as fnf:
             error_text = f"Simulation file \"{simulation_path}\" not found: {fnf}"
             # only create a popup for the error during manual simulations
-            if automation_step_time is None: Popup.error(error_text)
+            if automation_step_time is None and Popup.is_initialized(): Popup.error(error_text)
             else: Logger.instance().error(error_text, show=False, from_pycui=False)
             return None
 
