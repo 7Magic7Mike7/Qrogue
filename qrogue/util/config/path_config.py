@@ -187,18 +187,12 @@ class PathConfig:
             return os.path.join(PathConfig.__KEY_LOG_FOLDER, f"{now_str}_meta{seed}{FileTypes.KeyLog.value}")
 
     @staticmethod
-    def get_seed_from_key_log_file(file_path: str) -> Optional[int]:
-        if "_seed" in file_path:
-            start = file_path.index("_seed") + len("_seed")
-        elif "_meta" in file_path:
-            start = file_path.index("_meta") + len("_meta")
-        else:
-            raise Exception(f"Invalid key log file format for \"{file_path}\"!")
-        if FileTypes.KeyLog.value in file_path:
-            end = file_path.index(FileTypes.KeyLog.value)
-        else:
-            end = len(file_path)
-        seed = file_path[start:end]
+    def get_seed_from_key_log_file(file_name: str) -> Optional[int]:
+        path = PathConfig.user_data_path(os.path.join(PathConfig.__KEY_LOG_FOLDER, file_name))
+        content = PathConfig.read(path, True)
+        start = content.index("Seed=") + len("Seed=")
+        end = content.index("\n", start)
+        seed = content[start:end]
         return int(seed)
 
     @staticmethod
