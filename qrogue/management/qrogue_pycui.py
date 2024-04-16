@@ -579,7 +579,6 @@ class QrogueCUI(PyCUI):
         super().apply_widget_set(new_widget_set)
         self.__cur_widget_set = new_widget_set
         self.move_focus(self.__cur_widget_set.get_main_widget(), auto_press_buttons=False)
-        self.__cur_widget_set.update_story_progress(0)  # todo: only used to update HudConfig - change HudConfig directly since we don't alter it anyway?
         self.__cur_widget_set.render()
 
     def show_message_popup(self, title: str, text: str, color: int = PyCuiColors.WHITE_ON_BLACK) -> None:
@@ -745,6 +744,7 @@ class QrogueCUI(PyCUI):
                 if undo_last_move:
                     self.__explore.undo_last_move()
         self.apply_widget_set(self.__explore)
+        self.__explore.try_to_start_map()
 
     def __continue_explore(self, undo_last_move: bool = False) -> None:
         self.__state_machine.change_state(QrogueCUI._State.Explore, (None, undo_last_move))

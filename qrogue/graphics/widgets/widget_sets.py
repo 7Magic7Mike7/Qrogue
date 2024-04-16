@@ -64,11 +64,6 @@ class MyWidgetSet(WidgetSet, Renderable, ABC):
     def __init__(self, logger, root: py_cui.PyCUI, base_render_callback: Callable[[List[Renderable]], None]):
         super().__init__(UIConfig.WINDOW_HEIGHT, UIConfig.WINDOW_WIDTH, logger, root)
         self.__base_render = base_render_callback
-        self.__progress = 0
-
-    @property
-    def _progress(self) -> int:
-        return self.__progress
 
     def add_block_label(self, title, row, column, row_span=1, column_span=1, padx=1, pady=0, center=True)\
             -> MyBaseWidget:
@@ -113,13 +108,6 @@ class MyWidgetSet(WidgetSet, Renderable, ABC):
         if add_to_widgets:
             for widget in self.get_widget_list():
                 widget.widget.add_key_command(keys, command, overwrite)
-
-    def update_story_progress(self, progress: int):
-        self.__progress = progress
-        # globally update HUD based on the progress
-        HudConfig.ShowMapName = True
-        HudConfig.ShowKeys = True
-        HudConfig.ShowEnergy = False    # Ach.check_unlocks(Unlocks.ShowEnergy, progress)
 
     def render(self) -> None:
         self.__base_render(self.get_widget_list())
@@ -235,11 +223,8 @@ class MenuWidgetSet(MyWidgetSet):
         callbacks.append(self.__stop_callback)
         self.__selection.set_data(data=(choices, callbacks))
 
-    def update_story_progress(self, progress: int):
-        super(MenuWidgetSet, self).update_story_progress(progress)
-        self.__update_selection()
-
     def set_data(self, new_seed: int):
+        self.__update_selection()
         self.__seed = new_seed
         self.__seed_widget.set_data(f"Seed: {self.__seed}")
         # self.__seed_widget.render()
@@ -1345,12 +1330,14 @@ class MapWidgetSet(MyWidgetSet, ABC):
     def _map_widget(self) -> MapWidget:
         return self.__map_widget
 
+    def try_to_start_map(self):
+        """
+        Starts the map (e.g., shows description) if it wasn't started already.
+        """
+        self.__map_widget.try_to_start_map()
+
     def get_main_widget(self) -> WidgetWrapper:
         return self.__map_widget.widget
-
-    def update_story_progress(self, progress: int):
-        super(MapWidgetSet, self).update_story_progress(progress)
-        self.__map_widget.try_to_start_map()
 
     def reset(self) -> None:
         self.__map_widget.render_reset()
@@ -1610,10 +1597,6 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
     def get_main_widget(self) -> WidgetWrapper:
         return self._details.widget
-
-    def update_story_progress(self, progress: int):
-        super(ReachTargetWidgetSet, self).update_story_progress(progress)
-        self.__init_details()
 
     def set_data(self, robot: Robot, target: Target, in_expedition: bool, tutorial_data: Any) -> None:
         """
