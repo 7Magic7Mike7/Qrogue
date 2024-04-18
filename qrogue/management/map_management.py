@@ -161,7 +161,6 @@ class MapManager:
         if self.__cur_map.get_type() == MapType.Expedition:
             ErrorConfig.raise_deletion_exception()
         elif self.__in_level:
-            # if we are currently in a level we return to the current world
             self.__in_level = False
             self.__exit_map()
         else:
