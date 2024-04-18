@@ -271,10 +271,10 @@ class QrogueCUI(PyCUI):
             ]
             auto_scroll = self.__auto_scroll_simulation_transitions
             self.__state_machine.change_state(QrogueCUI._State.Transition, data=(texts, callback, auto_scroll))
+        self.__robot = BaseBot(self.__game_over)
         self.__map_manager = MapManager(self.__save_data, self.__rm.seed, self.__show_world, self.__start_level,
                                         start_level_transition, self.__show_input_popup,
-                                        lambda: self._switch_to_menu(None), self.__cbp,
-                                        BaseBot(self.__game_over))
+                                        lambda: self._switch_to_menu(None), self.__cbp, self.__robot)
         ########################################
 
         if not Config.skip_learning():
@@ -325,8 +325,7 @@ class QrogueCUI(PyCUI):
         self.__training = TrainingsWidgetSet(self.__controls, self.__render, Logger.instance(), self,
                                              lambda b: None, self.__popup_history.show,
                                              self.__save_data.check_unlocks)   # todo: update signature
-        self.__workbench = WorkbenchWidgetSet(self.__controls, Logger.instance(), self,
-                                              self.__save_data.available_robots(), self.__render,
+        self.__workbench = WorkbenchWidgetSet(self.__controls, Logger.instance(), self, [self.__robot], self.__render,
                                               lambda b: None)   # todo: update signature
         self.__navigation = NavigationWidgetSet(self.__controls, self.__render, Logger.instance(), self)
 
