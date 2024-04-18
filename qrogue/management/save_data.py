@@ -328,32 +328,6 @@ class NewSaveData:
         self.__achievements[name].add_score(score)
         self.__has_unsaved_changes = True
 
-    def trigger_global_event(self, name: str, score: float = 1):
-        # todo: I think this is only used for EnteredPauseMenu -> handle EnteredPauseMenu differently
-        #self.add_achievement(Achievement(name, AchievementType.NewInternalFlag, 1, 1))
-        raise Exception("Should no longer be used!")
-
-    def trigger_event(self, name: str, score: float = 1):
-        """
-        Triggers an event (either global or local/level-wise) by creating or adding to the corresponding achievement.
-
-        :param name: name of the event (needs to be unique)
-        :param score: by how much the event should progress (only relevant if it can be triggered multiple times from
-                        different sources
-        """
-        score = int(score)
-        # todo: test and rethink whether we actually need this
-        if name.startswith(MapConfig.global_event_prefix()):
-            name = name[len(MapConfig.global_event_prefix()):]  # remove prefix
-            self.trigger_global_event(name)
-
-        elif name.startswith(MapConfig.unlock_prefix()):
-            name = name[len(MapConfig.unlock_prefix()):]    # remove prefix
-            self.unlock(name)
-
-        elif name.startswith("l") and name.endswith("done"):
-            ErrorConfig.raise_deletion_exception()
-
 
 class _SaveDataGenerator(SaveDataVisitor):
     @staticmethod

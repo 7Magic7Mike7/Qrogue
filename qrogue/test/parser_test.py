@@ -14,7 +14,7 @@ BASE_PATH = os.path.join("D:\\", "Documents", "Studium", "Master", "3. Semester"
 def generation_test(file_name: str, world: bool = False):
     save_data = NewSaveData()   # todo: use lambdas instead of real functions since the functions do not matter?
     check_achievement = save_data.check_achievement
-    trigger_event = save_data.trigger_event
+    trigger_event = lambda event_id: None
     if world:
         player = Player()
         generator = QrogueWorldGenerator(7, player, check_achievement, trigger_event, test_util.load_map,
