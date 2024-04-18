@@ -176,28 +176,23 @@ class MapManager:
         if event_id.lower() == MapConfig.done_event_id():
             #event_id = MapConfig.specific_done_event_id(self.__cur_map.internal_name)
             #self.__save_data.trigger_event(event_id)
-            robot = self.__cur_map.controllable_tile.controllable
-            if isinstance(robot, Robot):
-                prev_level_data = self.__save_data.get_level_data(self.__cur_map.internal_name)
-                duration, _ = time_diff(cur_datetime(), self.__level_timer)
-                new_level_data = self.__save_data.complete_level(self.__cur_map.internal_name, duration,
-                                                                 score=robot.score)
+            prev_level_data = self.__save_data.get_level_data(self.__cur_map.internal_name)
+            duration, _ = time_diff(cur_datetime(), self.__level_timer)
+            new_level_data = self.__save_data.complete_level(self.__cur_map.internal_name, duration,
+                                                             score=self.__cur_map.robot.score)
 
-                if self.__cur_map.get_type() is MapType.Expedition:
-                    self.__save_data.add_to_achievement(achievements.CompletedExpedition, 1)    # todo: add score instead of 1?
-                elif self.__cur_map.get_type() is MapType.Level:
-                    pass
-                else:
-                    ErrorConfig.raise_deletion_exception()
-                self.__save_data.save(is_auto_save=True)
-
-                CommonQuestions.proceed_summary(self.__cur_map.name, new_level_data.score, new_level_data.duration,
-                                                new_level_data.total_score, self.__proceed,
-                                                None if prev_level_data is None
-                                                else (prev_level_data.total_score, prev_level_data.duration))
-
+            if self.__cur_map.get_type() is MapType.Expedition:
+                self.__save_data.add_to_achievement(achievements.CompletedExpedition, 1)    # todo: add score instead of 1?
+            elif self.__cur_map.get_type() is MapType.Level:
+                pass
             else:
                 ErrorConfig.raise_deletion_exception()
+            self.__save_data.save(is_auto_save=True)
+
+            CommonQuestions.proceed_summary(self.__cur_map.name, new_level_data.score, new_level_data.duration,
+                                            new_level_data.total_score, self.__proceed,
+                                            None if prev_level_data is None
+                                            else (prev_level_data.total_score, prev_level_data.duration))
 
             #if self.__save_data.check_unlocks(Unlocks.ProceedChoice):
             #    CommonQuestions.ProceedToNextMap.ask(self.__proceed)    # todo: ask only if we are currently replaying the level (if no proceed, go back to hub)

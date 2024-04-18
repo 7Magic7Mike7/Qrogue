@@ -650,9 +650,9 @@ class MapWidget(Widget):
         if self.__map is not None:
             rows = self.__map.row_strings()
             # add robot
-            x = self.__map.controllable_pos.x
-            y = self.__map.controllable_pos.y
-            rows[y] = rows[y][0:x] + self.__map.controllable_tile.get_img() + rows[y][x + 1:]
+            x = self.__map.robot_pos.x
+            y = self.__map.robot_pos.y
+            rows[y] = rows[y][0:x] + self.__map.robot_img + rows[y][x + 1:]
 
             self.widget.set_title("\n".join(rows))
 

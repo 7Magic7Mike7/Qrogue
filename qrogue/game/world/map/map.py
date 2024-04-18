@@ -1,6 +1,6 @@
 import enum
 from abc import ABC, abstractmethod
-from typing import List, Callable, Optional, Tuple
+from typing import List, Callable, Optional, Tuple, Any
 
 import qrogue.game.world.tiles as tiles
 from qrogue.game.logic import Message
@@ -237,12 +237,18 @@ class Map(BaseMap, ABC):
                                         f"{self.__cur_area}", show=False, from_pycui=False)
 
     @property
-    def controllable_tile(self) -> tiles.ControllableTile:
-        return self.__controllable_tile
+    def robot(self) -> Robot:
+        if isinstance(self.__controllable_tile.controllable, Robot):
+            return self.__controllable_tile.controllable
+        raise TypeError(f"{self.__controllable_tile.controllable} is not a robot!")
 
     @property
-    def controllable_pos(self) -> Coordinate:
+    def robot_pos(self) -> Coordinate:
         return self.__controllable_pos
+
+    @property
+    def robot_img(self) -> Any:
+        return self.__controllable_tile.get_img()
 
     @property
     def show_individual_qubits(self) -> bool:
@@ -260,7 +266,7 @@ class Map(BaseMap, ABC):
         :param direction: in which direction the robot should move
         :return: True if the robot was able to move, False otherwise
         """
-        if self.controllable_tile.controllable.game_over_check():
+        if self.robot.game_over_check():
             # although moving does not cost energy, this can still be True if we didn't get back energy after a puzzle
             # todo fix somehow since it is awkward to immediately lose after solving a puzzle correctly
             return False
@@ -271,10 +277,8 @@ class Map(BaseMap, ABC):
             return False
 
         area, tile = self._get_area(new_pos.x, new_pos.y)
-        if tile.is_walkable(direction, self.controllable_tile.controllable):
-            robot = self.controllable_tile.controllable
-            if isinstance(robot, Robot):
-                robot.on_move()
+        if tile.is_walkable(direction, self.robot):
+            self.robot.on_move()
 
             if area != self.__cur_area:
                 self.__cur_area.leave(direction)
@@ -282,7 +286,7 @@ class Map(BaseMap, ABC):
                 self.__cur_area.enter(direction)
 
             if isinstance(tile, tiles.WalkTriggerTile):
-                tile.trigger(direction, self.controllable_tile.controllable, self.__trigger_event)
+                tile.trigger(direction, self.robot, self.__trigger_event)
 
             self.__controllable_pos = new_pos
             self.__move_direction = direction
@@ -313,7 +317,7 @@ class Map(BaseMap, ABC):
         target_pos = BaseMap._calculate_pos(pos_of_room, pos_in_room)
         direction = Direction.from_coordinates(self.__controllable_pos, target_pos)
         destination_tile = room.at(pos_in_room.x, pos_in_room.y, force=True)
-        if destination_tile.is_walkable(direction, self.controllable_tile.controllable):
+        if destination_tile.is_walkable(direction, self.robot):
             self.__controllable_pos = target_pos
             return True
         return False
