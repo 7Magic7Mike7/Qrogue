@@ -151,19 +151,6 @@ class NewSaveData:
     def is_fresh_save(self) -> bool:
         return self.__is_fresh_save
 
-    @property
-    def player(self) -> Player:
-        return self.__player
-
-    def available_robots(self) -> Iterator[Robot]:
-        return []       # todo: most likely no longer needed
-
-    def get_robot(self, index: int) -> Optional[Robot]:
-        ErrorConfig.raise_deletion_exception()
-        #if index != 0:
-        #    raise Exception("Unexpected behaviour!")
-        #return self.__robot
-
     def check_level(self, internal_name: str) -> bool:
         return internal_name in self.__levels
 
@@ -363,7 +350,6 @@ class NewSaveData:
         elif name.startswith(MapConfig.unlock_prefix()):
             name = name[len(MapConfig.unlock_prefix()):]    # remove prefix
             self.unlock(name)
-            #self.add_achievement(Achievement(name, AchievementType.Unlock, score, score))
 
         elif name.startswith("l") and name.endswith("done"):
             ErrorConfig.raise_deletion_exception()
