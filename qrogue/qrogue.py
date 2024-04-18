@@ -217,7 +217,7 @@ def validate_map(path: str, is_level: bool = True, in_base_path: bool = True) ->
 
     try:
         error_occurred = False
-        generator.generate(path, in_base_path)
+        generator.generate(seed=7, file_path=path, in_dungeon_folder=in_base_path)
     except FileNotFoundError as fnf:
         error_occurred = True
         print(f"Could not find specified file! Error: {fnf}")

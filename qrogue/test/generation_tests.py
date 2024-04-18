@@ -55,7 +55,7 @@ class LevelGenTestCase(test_util.SingletonSetupTestCase):
         CheatConfig.use_cheat("Illuminati")
         generator = ExpeditionGenerator(0, lambda s: True, lambda s: None, lambda s: None, CallbackPack.dummy())
         seed = 297
-        map_, success = generator.generate((test_util.DummyRobot(), seed))
+        map_, success = generator.generate(seed, test_util.DummyRobot())
         self.assertTrue(success, "Failed to generate.")
         self._print(map_)
 
@@ -70,7 +70,7 @@ class LevelGenTestCase(test_util.SingletonSetupTestCase):
         for i, seed in enumerate(range(start_seed, end_seed)):
             if i % 1000 == 0:
                 self._print(f"Run {i + 1}): seed = {seed}")
-            map_, success = generator.generate((test_util.DummyRobot(), seed))
+            map_, success = generator.generate(seed, test_util.DummyRobot())
             if not success:
                 failing_seeds.append((generator, seed))
                 self._print(f"Failed for seed = {seed}")

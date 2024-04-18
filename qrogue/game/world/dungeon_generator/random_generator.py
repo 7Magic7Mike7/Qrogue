@@ -561,7 +561,7 @@ class ExpeditionGenerator(DungeonGenerator):
     __BLOCKING_WEIGHT = 2
     __INVALID_WEIGHT = 1_000_000
 
-    def __create_enemy(self, enemy_id: int, room_pos: Coordinate, enemy_factory: EnemyFactory,
+    def __create_enemy(self, enemy_seed: int, enemy_id: int, room_pos: Coordinate, enemy_factory: EnemyFactory,
                        enemy_groups_by_room: Dict[Coordinate, Dict[int, List[tiles.Enemy]]]) -> tiles.Enemy:
         enemy: Optional[tiles.Enemy] = None
 
@@ -579,20 +579,19 @@ class ExpeditionGenerator(DungeonGenerator):
                 enemy_groups_by_room[room_pos][enemy_id] = []
             enemy_groups_by_room[room_pos][enemy_id].append(new_enemy)
 
-        enemy = tiles.Enemy(enemy_factory, get_entangled_tiles, update_entangled_room_groups,
-                            self.__rm.get_seed("creating an Enemy for Expedition"), enemy_id, self._next_tile_id)
+        enemy = tiles.Enemy(enemy_factory, get_entangled_tiles, update_entangled_room_groups, enemy_seed, enemy_id,
+                            self._next_tile_id)
         update_entangled_room_groups(enemy)
         return enemy
 
     def __init__(self, seed: int, check_achievement: Callable[[str], bool], trigger_event: Callable[[str], None],
                  load_map_callback: Callable[[str, Optional[Coordinate]], None], callback_pack: CallbackPack,
                  width: int = DungeonGenerator.WIDTH, height: int = DungeonGenerator.HEIGHT):
-        super(ExpeditionGenerator, self).__init__(seed, width, height)
+        super(ExpeditionGenerator, self).__init__(width, height)
         self.__check_achievement = check_achievement
         self.__trigger_event = trigger_event
         self.__load_map = load_map_callback
         self.__cbp = callback_pack
-        self.__rm = RandomManager.create_new(seed)
         self.__next_target_id = 0
         self.__next_tile_id = 0
 
@@ -614,10 +613,7 @@ class ExpeditionGenerator(DungeonGenerator):
         self.__next_tile_id += 1
         return val
 
-    def generate(self, data: Tuple[Robot, int]) -> Tuple[Optional[ExpeditionMap], bool]:
-        robot, seed = data
-        assert seed is not None, "Did not provide a seed!"
-
+    def generate(self, seed: int, robot: Robot) -> Tuple[Optional[ExpeditionMap], bool]:
         if len(robot.get_available_instructions()) <= 0:
             gates = [instruction.HGate(), instruction.SGate(), instruction.XGate(), instruction.CXGate()]
             for gate in gates:
@@ -679,7 +675,7 @@ class ExpeditionGenerator(DungeonGenerator):
                             else:
                                 Logger.instance().throw(NotImplementedError(
                                     f"Found a SpecialRoom ({code}) without connecting Hallways for seed = "
-                                    f"{self.seed}. Please do report this error as this should not be "
+                                    f"{seed}. Please do report this error as this should not be "
                                     "possible to occur! :("))
 
                         direction: Optional[Direction] = None
@@ -718,7 +714,9 @@ class ExpeditionGenerator(DungeonGenerator):
 
                             def tile_from_tile_data(tile_code: tiles.TileCode, tile_data: Any) -> tiles.Tile:
                                 if tile_code == tiles.TileCode.Enemy:
-                                    return self.__create_enemy(tile_data, pos, enemy_factory, enemy_groups_by_room)
+                                    enemy_seed = rm.get_seed("Create enemy for expedition")
+                                    return self.__create_enemy(enemy_seed, tile_data, pos, enemy_factory,
+                                                               enemy_groups_by_room)
                                 elif tile_code == tiles.TileCode.CollectibleScore:
                                     return tiles.Collectible(Score(tile_data))
                                 elif tile_code == tiles.TileCode.Collectible:

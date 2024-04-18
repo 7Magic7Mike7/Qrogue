@@ -175,7 +175,7 @@ class WFCGenerator:
 def load_level(seed: int, file_name: str, in_dungeon_folder: bool) -> Optional[LevelMap]:
     generator = QrogueLevelGenerator(seed, lambda s: True, lambda s: None, lambda s, c: None, lambda s0, s1: None,
                                      CallbackPack.dummy())
-    level, _ = generator.generate(file_name, in_dungeon_folder)
+    level, _ = generator.generate(seed, file_name, in_dungeon_folder)
     return level
 
 

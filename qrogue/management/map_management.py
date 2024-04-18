@@ -19,7 +19,7 @@ from qrogue.util.util_functions import cur_datetime, time_diff
 
 class MapManager:
     def __init__(self, save_data: NewSaveData, seed: int, show_world: Callable[[Optional[WorldMap]], None],
-                 start_level: Callable[[int, Map], None],
+                 start_level: Callable[[Map], None],
                  start_level_transition_callback: Callable[[str, str, Callable[[], None]], None],
                  show_input_popup: Callable[[str, int, Callable[[str], None]], None],
                  exit_map_callback: Callable[[], None], callback_pack: CallbackPack, robot: Robot,
@@ -63,7 +63,7 @@ class MapManager:
         def fill():
             robot = self.__robot
             while len(self.__expedition_queue) < self.__queue_size:
-                expedition, success = self.__expedition_generator.generate((robot, self.__rm.get_seed()))
+                expedition, success = self.__expedition_generator.generate(self.__rm.get_seed(), robot)
                 if success:
                     self.__expedition_queue.append(expedition)
 
@@ -103,11 +103,11 @@ class MapManager:
             generator = QrogueLevelGenerator(map_seed, check_achievement, self.__trigger_event, self.load_map,
                                              Popup.npc_says, self.__cbp)
             try:
-                level, success = generator.generate(map_name)
+                level, success = generator.generate(map_seed, map_name)
                 if success:
                     self.__cur_map = level
                     self.__in_level = True
-                    self.__start_level(map_seed, self.__cur_map)
+                    self.__start_level(self.__cur_map)
                 else:
                     Popup.error(f"Failed to generate level \"{map_name}\"!", add_report_note=True)
             except FileNotFoundError:
@@ -133,7 +133,7 @@ class MapManager:
             else:
                 if map_seed is None:
                     map_seed = self.__rm.get_seed()
-                expedition, success = self.__expedition_generator.generate((robot, map_seed))
+                expedition, success = self.__expedition_generator.generate(map_seed, robot)
 
             if success:
                 robot.reset()

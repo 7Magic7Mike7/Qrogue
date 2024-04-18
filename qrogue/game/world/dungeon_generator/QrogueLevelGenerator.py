@@ -138,8 +138,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
                  trigger_event_callback: Callable[[str], None], load_map_callback: Callable[[str, Coordinate], None],
                  show_message_callback: Callable[[str, str, Optional[bool], Optional[int]], None],
                  callback_pack: CallbackPack):
-        super(QrogueLevelGenerator, self).__init__(seed, 0, 0)
-        self.__seed = seed
+        super(QrogueLevelGenerator, self).__init__(0, 0)
         self.__check_achievement = check_achievement_callback
         self.__trigger_event = trigger_event_callback
         self.__load_map = load_map_callback
@@ -194,8 +193,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         parser_util.warning(text, f"{level_name}{loc_details}")
         self.__warnings += 1
 
-    def generate(self, file_name: str, in_dungeon_folder: bool = True) -> Tuple[Optional[LevelMap], bool]:
-        map_data = PathConfig.read_level(file_name, in_dungeon_folder)
+    def generate(self, seed: int, file_path: str, in_dungeon_folder: bool = True) -> Tuple[Optional[LevelMap], bool]:
+        map_data = PathConfig.read_level(file_path, in_dungeon_folder)
 
         input_stream = InputStream(map_data)
         lexer = QrogueDungeonLexer(input_stream)
@@ -221,7 +220,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         if self.__spawn_pos is None:
             raise SyntaxError("No SpawnRoom provided! Make sure to place 'SR' in the layout and if you defined a "
                               "custom SpawnRoom make sure to tag it as (Spawn).")
-        self.__level = LevelMap(meta_data, file_name, self.__seed, room_matrix, self.__robot, self.__spawn_pos,
+        self.__level = LevelMap(meta_data, file_path, seed, room_matrix, self.__robot, self.__spawn_pos,
                                 self.__check_achievement, self.__trigger_event)
         return self.__level, True
 

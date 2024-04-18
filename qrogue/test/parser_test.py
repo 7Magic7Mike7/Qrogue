@@ -22,7 +22,7 @@ def generation_test(file_name: str, world: bool = False):
     else:
         generator = QrogueLevelGenerator(7, check_achievement, trigger_event, test_util.load_map,
                                          test_util.message_popup, CallbackPack.dummy())
-    map, success = generator.generate(file_name, True)
+    map, success = generator.generate(7, file_name, True)
     if success:
         print(map)
     debugging = True
