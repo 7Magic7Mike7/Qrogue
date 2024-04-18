@@ -70,13 +70,19 @@ class MapManager:
         else:
             Thread(target=fill, args=(), daemon=True).start()
 
-    def __load_map(self, map_name: str, room: Optional[Coordinate], map_seed: Optional[int] = None):
+    def load_map(self, map_name: str, spawn_room: Optional[Coordinate], map_seed: Optional[int] = None):
         if map_name == MapConfig.first_uncleared():
             next_map = LevelInfo.get_next(MapConfig.spaceship(), self.__save_data.check_level)   # todo: get rid of .spaceship()
             if next_map is None:
-                self.__load_map(MapConfig.hub_world(), room, map_seed)
+                self.load_map(MapConfig.hub_world(), spawn_room, map_seed)
             else:
-                self.__load_map(next_map, room, map_seed)
+                self.load_map(next_map, spawn_room, map_seed)
+
+        elif map_name.lower() == MapConfig.next_map_string():
+            self.__load_next()
+
+        elif map_name.lower() == MapConfig.back_map_string():
+            self.__load_back()
 
         elif map_name == MapConfig.spaceship():
             ErrorConfig.raise_deletion_exception()
@@ -134,8 +140,6 @@ class MapManager:
                 Popup.error(f"Failed to create an expedition for seed = {map_seed}. Please try again with a different "
                             f"seed or restart the game. Should the error keep occurring:", add_report_note=True)
 
-        elif map_name == MapConfig.back_map_string():
-            self.__load_back()
         else:
             Popup.error(f"Failed to recognize \"{map_name}\" as map. Please download the game files again.\n"
                         f"If this error still occurs but you're sure that the corresponding file is present:",
@@ -145,7 +149,7 @@ class MapManager:
         next_map = LevelInfo.get_next(self.__cur_map.internal_name, self.__save_data.check_level)
         if next_map:
             next_display = LevelInfo.convert_to_display_name(next_map)
-            self.__start_level_transition(self.__cur_map.name, next_display, lambda: self.__load_map(next_map, None, None))
+            self.__start_level_transition(self.__cur_map.name, next_display, lambda: self.load_map(next_map, None, None))
         else:
             ErrorConfig.raise_deletion_exception()
 
@@ -199,23 +203,15 @@ class MapManager:
         else:
             self.__save_data.trigger_event(event_id)
 
-    def load_map(self, map_name: str, spawn_room: Optional[Coordinate], map_seed: Optional[int] = None):
-        if map_name.lower() == MapConfig.next_map_string():
-            self.__load_next()
-        elif map_name.lower() == MapConfig.back_map_string():
-            self.__load_back()
-        else:
-            self.__load_map(map_name, spawn_room, map_seed)
-
     def load_first_uncleared_map(self) -> None:
         if Config.test_level(ignore_debugging=False):
-            self.__load_map(MapConfig.test_level(), None)
+            self.load_map(MapConfig.test_level(), None)
         else:
             map_name = LevelInfo.get_next(MapConfig.first_uncleared(), self.__save_data.check_level)
-            self.__load_map(map_name, None)
+            self.load_map(map_name, None)
 
     def load_expedition(self, seed: Optional[int] = None) -> None:
-        self.__load_map(MapConfig.expedition_map_prefix(), None, seed)
+        self.load_map(MapConfig.expedition_map_prefix(), None, seed)
 
     def reload(self):
-        self.__load_map(self.__cur_map.internal_name, None, self.__cur_map.seed)
+        self.load_map(self.__cur_map.internal_name, None, self.__cur_map.seed)
