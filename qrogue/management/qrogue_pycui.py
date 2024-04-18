@@ -687,18 +687,17 @@ class QrogueCUI(PyCUI):
 
     def __start_level(self, seed: int, level: Map) -> None:
         Logger.instance().info(f"Starting level {level.internal_name} with seed={seed}.", from_pycui=False)
-        # reset in-level stuff
-        self.__map_manager.reset_level_events()
+        # reset in-level popup data
         self.__popup_history.reset()
         Popup.reset_queue()
 
         robot = level.controllable_tile.controllable
         if isinstance(robot, Robot):
+            self.__map_manager.on_level_start()
             # store the level's seed and save state at the time of playing to the key logger
             self.__key_logger.reinit(level.seed, level.internal_name, self.__save_data.to_keylog_string())
             self.__ow_key_logger.level_start(level.internal_name)
             robot.reset_score()     # reset the score at the start of each level
-            self.__save_data.restart_level_timer()
 
             self.__pause.set_data(robot, level.name, None)
             self.__state_machine.change_state(QrogueCUI._State.Explore, level)

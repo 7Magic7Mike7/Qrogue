@@ -110,7 +110,6 @@ class NewSaveData:
         Args:
             save_data: if None is provided, the data is loaded from the latest save file
         """
-        self.__level_timer = cur_datetime()
         #achievement_list = []   # todo: init differently?
 
         if save_data is None:
@@ -181,12 +180,11 @@ class NewSaveData:
         if self.check_achievement(name): return True
         return False
 
-    def complete_level(self, name: str, date_time: Optional[datetime] = None, duration: int = -1, score: int = -1) \
+    def complete_level(self, name: str, duration: int, date_time: Optional[datetime] = None, score: int = -1) \
             -> LevelData:
         # NOTE: name might still have the "done" suffix! Use level_data.name if you need the normalized name.
         # compute date_time and duration based on current time if not provided
         if date_time is None: date_time = cur_datetime()
-        if duration < 0: duration, _ = time_diff(cur_datetime(), self.__level_timer)
 
         level_data = NewSaveData.LevelData(name, date_time, duration, score)
         if level_data.name in self.__levels and level_data.total_score >= self.__levels[level_data.name].total_score:
@@ -335,18 +333,6 @@ class NewSaveData:
         return list(self.__levels.keys())
 
     ################################## TRANSITION TO NEW SYSTEM ##################################
-
-    def check_level_event(self, event: str) -> bool:
-        """
-        Used for popups to correctly display event-based messages.
-        """
-        if event in self.__temp_level_storage:
-            score, done_score = self.__temp_level_storage[event]
-            return score >= done_score
-        return False
-
-    def restart_level_timer(self):
-        self.__level_timer = cur_datetime()
 
     def add_to_achievement(self, name: str, score: float = 1):
         if name not in self.__achievements:

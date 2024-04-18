@@ -14,6 +14,7 @@ from qrogue.management.save_data import NewSaveData
 from qrogue.util.achievements import Unlocks
 from qrogue.util.level_info import LevelInfo
 from qrogue.util.config.gameplay_config import ExpeditionConfig, GameplayConfig
+from qrogue.util.util_functions import cur_datetime, time_diff
 
 
 class MapManager:
@@ -40,6 +41,7 @@ class MapManager:
         self.__cur_map: Map = None
         self.__in_level = False
 
+        self.__level_timer = cur_datetime()
         self.__temp_level_event_storage: Dict[str, Tuple[int, int]] = {}  # event name -> score, done_score
 
     @property
@@ -180,7 +182,9 @@ class MapManager:
             robot = self.__cur_map.controllable_tile.controllable
             if isinstance(robot, Robot):
                 prev_level_data = self.__save_data.get_level_data(self.__cur_map.internal_name)
-                new_level_data = self.__save_data.complete_level(self.__cur_map.internal_name, score=robot.score)
+                duration, _ = time_diff(cur_datetime(), self.__level_timer)
+                new_level_data = self.__save_data.complete_level(self.__cur_map.internal_name, duration,
+                                                                 score=robot.score)
 
                 if self.__cur_map.get_type() is MapType.Expedition:
                     self.__save_data.add_to_achievement(achievements.CompletedExpedition, 1)    # todo: add score instead of 1?
@@ -218,8 +222,9 @@ class MapManager:
             return score >= done_score
         return False
 
-    def reset_level_events(self):
+    def on_level_start(self):
         self.__temp_level_event_storage.clear()
+        self.__level_timer = cur_datetime()
 
     def load_first_uncleared_map(self) -> None:
         if Config.test_level(ignore_debugging=False):
