@@ -712,14 +712,8 @@ class QrogueCUI(PyCUI):
                 self.__map_manager.reload()
             elif confirmed == 1:
                 self.__state_machine.change_state(QrogueCUI._State.Menu, None)
-        if self.__map_manager.in_tutorial_world:
-            ConfirmationPopup.ask(Config.system_name(), f"Your Robot is out of energy.\n"
-                                                        f"How do you want to continue?", callback,
-                                                        ["Restart lesson", "Back to menu"])
-        else:
-            ConfirmationPopup.ask(Config.system_name(), f"Your Robot is out of energy. Emergency departure initiated.\n"
-                                                        "Do you want to retry the expedition?",
-                                                        callback, ["Yes", "No"])
+        ConfirmationPopup.ask(Config.system_name(), f"Your Robot is out of energy. Emergency departure initiated.\n"
+                                                    "Do you want to retry the expedition?", callback, ["Yes", "No"])
 
     def __start_fight(self, robot: Robot, enemy: Enemy, direction: Direction) -> None:
         self.__state_machine.change_state(QrogueCUI._State.Fight, (robot, enemy))

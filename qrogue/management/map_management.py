@@ -31,10 +31,8 @@ class MapManager:
         self.__queue_size = queue_size
 
         self.__rm = RandomManager.create_new(seed)
-        self.__show_world = show_world
         self.__start_level = start_level
         self.__start_level_transition = start_level_transition_callback
-        self.__world_memory: Dict[str, WorldMap] = {}
         self.__expedition_generator = ExpeditionGenerator(seed,
                                                           self.__save_data.check_achievement,
                                                           self.__trigger_event, self.load_map, callback_pack)
@@ -43,20 +41,8 @@ class MapManager:
         self.__in_level = False
 
     @property
-    def __hub_world(self) -> WorldMap:
-        return self.__get_world(MapConfig.hub_world())
-
-    @property
-    def in_hub_world(self) -> bool:
-        return self.__cur_map is self.__hub_world
-
-    @property
-    def in_tutorial_world(self) -> bool:
-        return self.__get_world(self.__cur_map.internal_name).internal_name == MapConfig.tutorial_world()
-
-    @property
     def in_level(self) -> bool:
-        return self.__cur_map.get_type() is MapType.Level
+        return self.__in_level
 
     @property
     def in_expedition(self) -> bool:
@@ -84,9 +70,6 @@ class MapManager:
         else:
             Thread(target=fill, args=(), daemon=True).start()
 
-    def __get_world(self, level_name: str) -> WorldMap:
-        ErrorConfig.raise_deletion_exception()
-
     def __load_map(self, map_name: str, room: Optional[Coordinate], map_seed: Optional[int] = None):
         if map_name == MapConfig.first_uncleared():
             next_map = LevelInfo.get_next(MapConfig.spaceship(), self.__save_data.check_level)   # todo: get rid of .spaceship()
@@ -97,11 +80,6 @@ class MapManager:
 
         elif map_name == MapConfig.spaceship():
             ErrorConfig.raise_deletion_exception()
-
-        elif map_name in self.__world_memory:
-            self.__cur_map = self.__world_memory[map_name]
-            self.__in_level = False
-            self.__show_world(self.__cur_map)
 
         elif map_name.lower().startswith(MapConfig.world_map_prefix()):
             ErrorConfig.raise_deletion_exception()
@@ -178,16 +156,8 @@ class MapManager:
             # if we are currently in a level we return to the current world
             self.__in_level = False
             self.__exit_map()
-
-        elif self.__cur_map is self.__hub_world or \
-                not self.__save_data.check_unlocks(Unlocks.FreeNavigation):
-            # we return to the default world if we are currently in the hub-world or haven't unlocked it yet
-            self.__show_world(None)
         else:
-            # if we are currently in a world we return to the hub-world
-            self.__cur_map = self.__hub_world
-            self.__in_level = False
-            self.__show_world(self.__cur_map)
+            ErrorConfig.raise_deletion_exception()
 
     def __proceed(self, confirmed: int = 0):
         if confirmed == 0:
