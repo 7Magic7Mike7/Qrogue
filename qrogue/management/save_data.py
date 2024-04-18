@@ -111,7 +111,6 @@ class NewSaveData:
             save_data: if None is provided, the data is loaded from the latest save file
         """
         self.__level_timer = cur_datetime()
-        self.__temp_level_storage: Dict[str, Tuple[int, int]] = {}  # event name -> score, done_score
         #achievement_list = []   # todo: init differently?
 
         if save_data is None:
@@ -349,10 +348,6 @@ class NewSaveData:
     def restart_level_timer(self):
         self.__level_timer = cur_datetime()
 
-    def reset_level_events(self):
-        # todo: test
-        self.__temp_level_storage.clear()
-
     def add_to_achievement(self, name: str, score: float = 1):
         if name not in self.__achievements:
             raise Exception("Use add_achievement() for new achievements!")
@@ -386,13 +381,6 @@ class NewSaveData:
 
         elif name.startswith("l") and name.endswith("done"):
             ErrorConfig.raise_deletion_exception()
-
-        else:
-            if name in self.__temp_level_storage:
-                event_score, event_done_score = self.__temp_level_storage[name]
-                self.__temp_level_storage[name] = event_score + score, event_done_score
-            else:
-                self.__temp_level_storage[name] = score, score
 
 
 class _SaveDataGenerator(SaveDataVisitor):

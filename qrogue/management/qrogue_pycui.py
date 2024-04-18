@@ -280,7 +280,7 @@ class QrogueCUI(PyCUI):
         if not Config.skip_learning():
             self.__map_manager.fill_expedition_queue(lambda: None, no_thread=True)
 
-        Popup.update_check_achievement_function(self.__save_data.check_level_event)
+        Popup.update_check_achievement_function(self.__map_manager.check_level_event)
         common_messages.set_show_callback(Popup.system_says)
         common_messages.set_show_info_callback(Popup.generic_info)
         common_messages.set_ask_callback(ConfirmationPopup.ask)
@@ -688,7 +688,7 @@ class QrogueCUI(PyCUI):
     def __start_level(self, seed: int, level: Map) -> None:
         Logger.instance().info(f"Starting level {level.internal_name} with seed={seed}.", from_pycui=False)
         # reset in-level stuff
-        self.__save_data.reset_level_events()
+        self.__map_manager.reset_level_events()
         self.__popup_history.reset()
         Popup.reset_queue()
 

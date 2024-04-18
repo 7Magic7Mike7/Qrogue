@@ -1,6 +1,6 @@
 import time
 from threading import Thread
-from typing import Callable, Optional, Dict, List
+from typing import Callable, Optional, Dict, List, Tuple
 
 from qrogue.game.logic.actors import Robot
 from qrogue.game.world.dungeon_generator import ExpeditionGenerator, QrogueLevelGenerator, QrogueWorldGenerator
@@ -39,6 +39,8 @@ class MapManager:
         self.__expedition_queue: List[ExpeditionMap] = []
         self.__cur_map: Map = None
         self.__in_level = False
+
+        self.__temp_level_event_storage: Dict[str, Tuple[int, int]] = {}  # event name -> score, done_score
 
     @property
     def in_level(self) -> bool:
@@ -201,7 +203,23 @@ class MapManager:
             #else:
             #    self.__proceed()
         else:
-            self.__save_data.trigger_event(event_id)
+            if event_id in self.__temp_level_event_storage:     # todo: is score needed? a simple flag might be better
+                event_score, event_done_score = self.__temp_level_event_storage[event_id]
+                self.__temp_level_event_storage[event_id] = event_score + 1, event_done_score
+            else:
+                self.__temp_level_event_storage[event_id] = 1, 1
+
+    def check_level_event(self, event: str) -> bool:
+        """
+        Used for popups to correctly display event-based messages.
+        """
+        if event in self.__temp_level_event_storage:
+            score, done_score = self.__temp_level_event_storage[event]
+            return score >= done_score
+        return False
+
+    def reset_level_events(self):
+        self.__temp_level_event_storage.clear()
 
     def load_first_uncleared_map(self) -> None:
         if Config.test_level(ignore_debugging=False):
