@@ -209,7 +209,8 @@ class MapManager:
         else:
             if event_id in self.__temp_level_event_storage:     # todo: is score needed? a simple flag might be better
                 event_score, event_done_score = self.__temp_level_event_storage[event_id]
-                self.__temp_level_event_storage[event_id] = event_score + 1, event_done_score
+                if event_score < event_done_score:
+                    self.__temp_level_event_storage[event_id] = event_score + 1, event_done_score
             else:
                 self.__temp_level_event_storage[event_id] = 1, 1
 
