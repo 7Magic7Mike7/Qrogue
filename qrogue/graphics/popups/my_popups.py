@@ -185,13 +185,13 @@ class Popup:
                               importance=PopupConfig.Importance.Dialogue)
 
     @staticmethod
-    def show_matrix(title: str, text: str):
+    def show_matrix(title: str, text: str, prefix: str = ""):
         # remove the additional whitespace at the end of a line (needed for CircuitMatrixWidget to center correctly,
         # but not here since a popup is left-aligned [although we are technically centered since we fit the width])
         lines = [line.rstrip(' ') for line in text.splitlines(keepends=False)]
         height = len(lines)
         width = max([len(line) for line in lines])
-        Popup(title, "\n".join(lines), Popup.Pos.Matrix, PopupConfig.default_color(), reopen=False, show=True,
+        Popup(title, prefix + "\n".join(lines), Popup.Pos.Matrix, PopupConfig.default_color(), reopen=False, show=True,
               overwrite=False, on_close_callback=None, dimensions=(height, width), padding_x=0,
               importance=PopupConfig.Importance.Info)
 

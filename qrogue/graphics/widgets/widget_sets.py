@@ -585,13 +585,7 @@ class ScreenCheckWidgetSet(MyWidgetSet):
                 f"{ColorConfig.highlight_key(controls.to_keyboard_string(Keys.Help))} after closing this " \
                 f"Popup to open another one that tells you how much space is available to the matrix (based on your " \
                 f"current settings) versus how much it actually needs.\n\n"
-            # retrieve the matrix's text and append it to popup_text
-            lines = [line.rstrip(' ') for line in self.__content_mat.widget.get_title().splitlines(keepends=False)]
-            height, width = len(lines), max([len(line) for line in lines])
-            popup_text += "\n".join(lines)
-
-            Popup("Matrix Popup", popup_text, Popup.Pos.Matrix, PopupConfig.default_color(), reopen=False,
-                  show=True, overwrite=False, on_close_callback=None, dimensions=(height, width), padding_x=0)
+            Popup.show_matrix("Matrix Popup", self.__content_mat.widget.get_title(), prefix=popup_text)
 
         self.__select_widget.widget.add_key_command(controls.get_keys(Keys.Help), width_check)
         self.__select_widget.widget.add_key_command(controls.get_keys(Keys.MatrixPopup), matrix_popup)
