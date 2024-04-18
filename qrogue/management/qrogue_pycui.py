@@ -258,7 +258,7 @@ class QrogueCUI(PyCUI):
         Popup.update_popup_functions(self.__show_message_popup)
         ConfirmationPopup.update_popup_function(self.__show_confirmation_popup)
 
-        self.__cbp = CallbackPack(self.__start_level, self.__start_fight, self.__start_boss_fight, self.__open_riddle,
+        self.__cbp = CallbackPack(self.__start_fight, self.__start_boss_fight, self.__open_riddle,
                                   self.__open_challenge, self.__visit_shop, self.__game_over)
         ########################################
         self.__stored_save: Optional[NewSaveData] = None    # temporarily stores the "real" save data when simulating
