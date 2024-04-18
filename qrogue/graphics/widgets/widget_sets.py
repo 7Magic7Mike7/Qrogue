@@ -470,12 +470,12 @@ class ScreenCheckWidgetSet(MyWidgetSet):
                f"{ColorConfig.highlight_tile('B', True)} for bosses.\n" \
                f"- The {ColorConfig.highlight_object('Goal', True)} " \
                f"{ColorConfig.highlight_tile('G', True)} of a level and the " \
-               f"{ColorConfig.highlight_object('Player Character', True)} {ColorConfig.highlight_tile('Q', False)} " \
+               f"{ColorConfig.highlight_object('Player Character', True)} {ColorConfig.highlight_tile('Q', True)} " \
                f"are usually {ColorConfig.highlight_word('green', True)}.\n" \
-               f"- Level-shaping tiles like {ColorConfig.highlight_tile('#')} and {ColorConfig.highlight_tile('o')} " \
+               f"- Level-shaping tiles like {ColorConfig.highlight_tile('#', True)} and {ColorConfig.highlight_tile('o', True)} " \
                f"are {ColorConfig.highlight_word('white', True)} inverted\n" \
                f"- Lastly, simple {ColorConfig.highlight_word('white', True)} dots " \
-               f"\"{ColorConfig.highlight_tile('.', True)}\" are messages that open Popups\n" \
+               f"{ColorConfig.highlight_tile('.', True)} are messages that open Popups\n" \
                f"\n" \
                f"The last two elements are neutral to the player and, hence, not specifically highlighted (in fact, " \
                f"they share their color with normal text and UI elements), while the other three are important for " \
