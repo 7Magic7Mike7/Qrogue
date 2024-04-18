@@ -1174,7 +1174,7 @@ class PauseMenuWidgetSet(MyWidgetSet):
                 if Config.save_gameplay_config():
                     # we cannot go back directly since we want to inform the user that saving was successful
                     # therefore we go back after closing the Popup
-                    Popup.message(CommonPopups.OptionsSaved.title, CommonPopups.OptionsSaved.text, reopen=False,
+                    Popup.message(CommonInfos.OptionsSaved.title, CommonInfos.OptionsSaved.text, reopen=False,
                                   on_close_callback=self.__focus_choices)
                 else:
                     CommonInfos.OptionsNotSaved.show()
