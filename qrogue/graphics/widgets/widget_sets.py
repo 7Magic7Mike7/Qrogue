@@ -660,7 +660,6 @@ class ScreenCheckWidgetSet(MyWidgetSet):
         # EQUALITY CHECK
         widget = self.add_block_label('Eq sign', posy, posx, row_span, column_span=1, center=True)
         self.__w_eq = SimpleWidget(widget, "=/=")
-        self.__w_eq.set_data("=/=")
         self.__w_eq.render()
         posx += 1
 
