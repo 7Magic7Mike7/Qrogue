@@ -209,6 +209,7 @@ class MapManager:
             if event_id in self.__temp_level_event_storage:     # todo: is score needed? a simple flag might be better
                 event_score, event_done_score = self.__temp_level_event_storage[event_id]
                 if event_score < event_done_score:
+                    Config.check_reachability("MapManager.__trigger_event() for existing event")
                     self.__temp_level_event_storage[event_id] = event_score + 1, event_done_score
             else:
                 self.__temp_level_event_storage[event_id] = 1, 1

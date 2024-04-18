@@ -77,6 +77,7 @@ class CommonPopups(Enum):
 
     @property
     def text(self) -> str:
+        Config.check_reachability("CommonPopups.text")
         return self.__text
 
     def show(self):

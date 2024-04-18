@@ -722,8 +722,10 @@ class WildRoom(BaseWildRoom):
 
     def __init__(self, factory: target_factory.EnemyFactory, chance: float = 0.6, north_hallway: Hallway = None,
                  east_hallway: Hallway = None, south_hallway: Hallway = None, west_hallway: Hallway = None):
+        from qrogue.util import Config
+        Config.check_reachability("WildRoom()")
         self.__dictionary = {1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [], 9: []}
-        rm = RandomManager.create_new()
+        rm = RandomManager.create_new(7)
 
         available_positions = []
         for y in range(Room.INNER_HEIGHT):

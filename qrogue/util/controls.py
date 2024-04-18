@@ -135,6 +135,9 @@ class Keys(IntEnum):
         if index < len(Keys):
             for i, elem in enumerate(Keys):
                 if i == index:
+                    if elem != Keys(index):
+                        from qrogue.util import Config
+                        Config.check_reachability("Controls.from_index()-inequality")
                     return elem
             # performance of above version might be better?
             # values = [elem for elem in Keys]

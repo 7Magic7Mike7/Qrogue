@@ -187,3 +187,9 @@ class Config:   # todo make singleton and handle access to other configs?
         major = int(parts[0])
         minor = int(parts[1])
         return major >= 0 and minor >= 44   # >= 0.44.0
+
+    @staticmethod
+    def check_reachability(source: str, raise_exception: bool = False):
+        print(f"\"{source}\" was reached.")
+        if raise_exception:
+            raise Exception(f"Faulty code at \"{source}\" was reached!")

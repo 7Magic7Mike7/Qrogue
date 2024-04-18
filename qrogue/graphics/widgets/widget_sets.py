@@ -188,6 +188,10 @@ class MenuWidgetSet(MyWidgetSet):
 
         self.__selection.widget.add_key_command(controls.get_keys(Keys.Pause), self.__qrogue_console)
 
+    @property
+    def seed(self) -> int:
+        return self.__seed      # used to test whether the simulation needs to set the MenuWidgetSet's seed
+
     def __qrogue_console(self):
         def open_user_data(answer: int):
             if answer == 0:

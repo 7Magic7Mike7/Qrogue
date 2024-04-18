@@ -476,7 +476,9 @@ class QrogueCUI(PyCUI):
         simulator.set_controls(self.__controls)
 
         if simulator.simulates_over_world:
-            self.__menu.set_data(simulator.seed)
+            if self.__menu.seed != simulator.seed:
+                self.__menu.set_data(simulator.seed)
+                Config.check_reachability("QrogueCUI._set_simulator() with different seed", raise_exception=True)
 
         if simulator.version == Config.version():
             title, text = simulator.version_alright()
@@ -691,6 +693,9 @@ class QrogueCUI(PyCUI):
         self.__popup_history.reset()
         Popup.reset_queue()
 
+        if level.controllable_tile.controllable is not self.__robot:
+            Config.check_reachability("QrogueCUI.__start_level()", raise_exception=True)
+
         self.__map_manager.on_level_start()
         # store the level's seed and save state at the time of playing to the key logger
         self.__key_logger.reinit(level.seed, level.internal_name, self.__save_data.to_keylog_string())
@@ -743,6 +748,8 @@ class QrogueCUI(PyCUI):
             enemy = data[1]
             self.__fight.set_data(robot, enemy, self.__map_manager.in_expedition,
                                   self.__map_manager.show_individual_qubits)
+        else:
+            Config.check_reachability("QrogueCUI._switch_to_fight() without data")
         self.apply_widget_set(self.__fight)
 
     def _switch_to_boss_fight(self, data) -> None:
