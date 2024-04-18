@@ -691,18 +691,14 @@ class QrogueCUI(PyCUI):
         self.__popup_history.reset()
         Popup.reset_queue()
 
-        robot = level.controllable_tile.controllable
-        if isinstance(robot, Robot):
-            self.__map_manager.on_level_start()
-            # store the level's seed and save state at the time of playing to the key logger
-            self.__key_logger.reinit(level.seed, level.internal_name, self.__save_data.to_keylog_string())
-            self.__ow_key_logger.level_start(level.internal_name)
-            robot.reset_score()     # reset the score at the start of each level
+        self.__map_manager.on_level_start()
+        # store the level's seed and save state at the time of playing to the key logger
+        self.__key_logger.reinit(level.seed, level.internal_name, self.__save_data.to_keylog_string())
+        self.__ow_key_logger.level_start(level.internal_name)
+        self.__robot.reset_score()     # reset the score at the start of each level
 
-            self.__pause.set_data(robot, level.name, None)
-            self.__state_machine.change_state(QrogueCUI._State.Explore, level)
-        else:
-            Logger.instance().throw(ValueError(f"Tried to start a level with a non-Robot: {robot}"))
+        self.__pause.set_data(self.__robot, level.name, None)
+        self.__state_machine.change_state(QrogueCUI._State.Explore, level)
 
     def __game_over(self) -> None:
         def callback(confirmed: int):
