@@ -18,14 +18,12 @@ from qrogue.util.util_functions import cur_datetime, time_diff
 
 
 class MapManager:
-    def __init__(self, save_data: NewSaveData, seed: int, show_world: Callable[[Optional[WorldMap]], None],
-                 start_level: Callable[[Map], None],
+    def __init__(self, save_data: NewSaveData, seed: int, start_level: Callable[[Map], None],
                  start_level_transition_callback: Callable[[str, str, Callable[[], None]], None],
-                 show_input_popup: Callable[[str, int, Callable[[str], None]], None],
                  exit_map_callback: Callable[[], None], callback_pack: CallbackPack, robot: Robot,
                  queue_size: int = ExpeditionConfig.DEFAULT_QUEUE_SIZE):
         self.__save_data = save_data
-        self.__show_input_popup = show_input_popup  # title: str, color: int, callback: Callable[[str], None]
+        # no longer used code!
         self.__exit_map = exit_map_callback
         self.__cbp = callback_pack
         self.__robot = robot

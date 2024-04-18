@@ -272,8 +272,7 @@ class QrogueCUI(PyCUI):
             auto_scroll = self.__auto_scroll_simulation_transitions
             self.__state_machine.change_state(QrogueCUI._State.Transition, data=(texts, callback, auto_scroll))
         self.__robot = BaseBot(self.__game_over)
-        self.__map_manager = MapManager(self.__save_data, self.__rm.seed, self.__show_world, self.__start_level,
-                                        start_level_transition, self.__show_input_popup,
+        self.__map_manager = MapManager(self.__save_data, self.__rm.seed, self.__start_level, start_level_transition,
                                         lambda: self._switch_to_menu(None), self.__cbp, self.__robot)
         ########################################
 
@@ -680,9 +679,6 @@ class QrogueCUI(PyCUI):
     def _switch_to_workbench(self, _=None):
         # no data parameter needed
         self.apply_widget_set(self.__workbench)
-
-    def __show_world(self, world: WorldMap = None) -> None:
-        ErrorConfig.raise_deletion_exception()
 
     def _switch_to_navigation(self, data) -> None:
         ErrorConfig.raise_deletion_exception()
