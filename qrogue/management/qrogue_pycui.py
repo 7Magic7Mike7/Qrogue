@@ -689,9 +689,6 @@ class QrogueCUI(PyCUI):
         self.__popup_history.reset()
         Popup.reset_queue()
 
-        if level.controllable_tile.controllable is not self.__robot:
-            Config.check_reachability("QrogueCUI.__start_level()", raise_exception=True)
-
         self.__map_manager.on_level_start()
         # store the level's seed and save state at the time of playing to the key logger
         self.__key_logger.reinit(level.seed, level.internal_name, self.__save_data.to_keylog_string())
