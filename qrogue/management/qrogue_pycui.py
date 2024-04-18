@@ -687,8 +687,8 @@ class QrogueCUI(PyCUI):
     def _switch_to_navigation(self, data) -> None:
         ErrorConfig.raise_deletion_exception()
 
-    def __start_level(self, seed: int, level: Map) -> None:
-        Logger.instance().info(f"Starting level {level.internal_name} with seed={seed}.", from_pycui=False)
+    def __start_level(self, level: Map) -> None:
+        Logger.instance().info(f"Starting level {level.internal_name} with seed={level.seed}.", from_pycui=False)
         # reset in-level popup data
         self.__popup_history.reset()
         Popup.reset_queue()

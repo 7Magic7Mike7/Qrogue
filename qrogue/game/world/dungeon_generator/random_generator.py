@@ -614,13 +614,9 @@ class ExpeditionGenerator(DungeonGenerator):
         self.__next_tile_id += 1
         return val
 
-    def generate(self, data: Union[Robot, Tuple[Robot, int]]) -> Tuple[Optional[ExpeditionMap], bool]:
-        if isinstance(data, Robot):
-            robot = data
-            seed = self.__rm.get_seed("seed for generating with ExpeditionGenerator")
-        else:
-            robot, seed = data
-            assert seed is not None, "Did not provide a seed!"
+    def generate(self, data: Tuple[Robot, int]) -> Tuple[Optional[ExpeditionMap], bool]:
+        robot, seed = data
+        assert seed is not None, "Did not provide a seed!"
 
         if len(robot.get_available_instructions()) <= 0:
             gates = [instruction.HGate(), instruction.SGate(), instruction.XGate(), instruction.CXGate()]
