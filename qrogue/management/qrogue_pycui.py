@@ -13,7 +13,7 @@ from qrogue.game.logic.actors.controllables import BaseBot
 from qrogue.game.logic.actors.puzzles import Challenge
 from qrogue.game.logic.base import StateVector
 from qrogue.game.logic.collectibles import Score
-from qrogue.game.world.map import CallbackPack, WorldMap, Map
+from qrogue.game.world.map import CallbackPack, Map
 from qrogue.game.world.navigation import Direction
 from qrogue.game.world.tiles import WalkTriggerTile, Message, Collectible
 from qrogue.game.world.tiles.tiles import NpcTile

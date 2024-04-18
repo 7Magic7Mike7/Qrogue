@@ -4,7 +4,7 @@ from typing import Callable, Optional, Dict, List, Tuple
 
 from qrogue.game.logic.actors import Robot
 from qrogue.game.world.dungeon_generator import ExpeditionGenerator, QrogueLevelGenerator, QrogueWorldGenerator
-from qrogue.game.world.map import Map, WorldMap, MapType, ExpeditionMap, CallbackPack
+from qrogue.game.world.map import Map, MapType, ExpeditionMap, CallbackPack
 from qrogue.game.world.navigation import Coordinate
 from qrogue.graphics.popups import Popup
 from qrogue.util import CommonQuestions, Logger, MapConfig, achievements, RandomManager, Config, \
