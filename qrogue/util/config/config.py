@@ -14,7 +14,7 @@ class Config:   # todo make singleton and handle access to other configs?
     __GAMEPLAY_HEAD = "[Gameplay]\n"
     __DEBUG = False
     __TEST_LEVEL = False
-    __SKIP_LEARNING = True
+    __SKIP_LEARNING = False
 
     __HEADER = "QRogue "
     __SEED_HEAD = "Seed="
