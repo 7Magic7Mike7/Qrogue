@@ -145,8 +145,9 @@ class RiddleDifficulty(TargetDifficulty):
 
 class PuzzleDifficulty:
     @staticmethod
-    def __create_stv(pool: List[Instruction], num_gates: int, num_qubits: int, rm: MyRandom) -> StateVector:
-        instructions = []
+    def __create_stv(pool: List[Instruction], num_gates: int, num_qubits: int, rm: MyRandom, inverse: bool = False) \
+            -> StateVector:
+        instructions: List[Instruction] = []
         for i in range(num_gates):
             # choose random gates on random qubits and cbits
             qubits = list(range(num_qubits))
@@ -154,7 +155,7 @@ class PuzzleDifficulty:
             while instruction.use_qubit(rm.get_element(qubits, remove=True, msg="PuzzleDiff_selectQubit")):
                 pass
             instructions.append(instruction)
-        return Instruction.compute_stv(instructions, num_qubits)
+        return Instruction.compute_stv(instructions, num_qubits, inverse)
 
     def __init__(self, num_input_gates: int, num_target_gates: int):
         self.__num_input_gates = num_input_gates
@@ -170,8 +171,9 @@ class PuzzleDifficulty:
         else:
             num_input_gates, num_target_gates = self.__num_input_gates, self.__num_target_gates
 
+        # input has to be inversed since the player can only apply the corresponding gates from the right of input_stv
         input_stv = PuzzleDifficulty.__create_stv(instruction_pool, min(num_input_gates, robot.circuit_space),
-                                                  robot.num_of_qubits, rm)
+                                                  robot.num_of_qubits, rm, inverse=True)
 
         # check if we have to re-roll (i.e., input and target are the same
         max_rerolls = 10

@@ -93,10 +93,10 @@ class Instruction(Collectible, ABC):
     __DEFAULT_PRICE = 15 * ShopConfig.base_unit()
 
     @staticmethod
-    def compute_stv(instructions: List["Instruction"], num_of_qubits: int) -> "StateVector":
+    def compute_stv(instructions: List["Instruction"], num_of_qubits: int, inverse: bool = False) -> StateVector:
         circuit = QuantumCircuit.from_bit_num(num_of_qubits, num_of_qubits)
         for instruction in instructions:
-            instruction.append_to(circuit)
+            instruction.append_to(circuit, inverse)
         simulator = QuantumSimulator()
         amplitudes = simulator.run(circuit, do_transpile=True)
         return StateVector(amplitudes, num_of_used_gates=len(instructions))
@@ -186,8 +186,9 @@ class Instruction(Collectible, ABC):
         if not skip_position:
             self.__position = None
 
-    def append_to(self, circuit: QuantumCircuit):
-        circuit.append(self.__instruction, self._qargs, self._cargs)
+    def append_to(self, circuit: QuantumCircuit, inverse: bool = False):
+        instruction = self.__instruction.inverse() if inverse else self.__instruction
+        circuit.append(instruction, self._qargs, self._cargs)
 
     def qargs_iter(self) -> Iterator[int]:
         return iter(self._qargs)
