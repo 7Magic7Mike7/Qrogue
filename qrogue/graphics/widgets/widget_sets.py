@@ -1394,8 +1394,8 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self._target: Optional[Target] = None
         self.__num_of_qubits = -1   # needs to be an illegal value because we definitely want to reposition all
         # dependent widgets for the first usage of this WidgetSet
-        self._details_content = None
-        self._in_reward_message = False     # _details currently displays the reward message
+        self._choices_content = None
+        self._in_reward_message = False     # _choices currently displays the reward message
         self.__in_expedition = False
         self.__puzzle_timer = cur_datetime()
 
@@ -1456,23 +1456,23 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                 self.__history_widget.jump_to_present(render=True)
 
         # the remaining widgets are the user interface
-        details = self.add_block_label('Details', posy, 0, row_span=UIConfig.WINDOW_HEIGHT - posy,
+        choices = self.add_block_label('Choices', posy, 0, row_span=UIConfig.WINDOW_HEIGHT - posy,
                                        column_span=UIConfig.WINDOW_WIDTH, center=True)
-        details.toggle_border()
-        details.activate_individual_coloring()  # TODO: current reward highlight version is not satisfying
-        self._details = SelectionWidget(details, controls, columns=self.__DETAILS_COLUMNS, is_second=False,
+        choices.toggle_border()
+        choices.activate_individual_coloring()  # TODO: current reward highlight version is not satisfying
+        self._choices = SelectionWidget(choices, controls, columns=self.__DETAILS_COLUMNS, is_second=False,
                                         on_key_press=jump_to_present)
 
-        def use_details():
-            if self._details.use():
+        def use_choices():
+            if self._choices.use():
                 # only other widget to focus (use() == True means we should move focus) is circuit
                 Widget.move_focus(self.__circuit, self)
-        self._details.widget.add_key_command(controls.action, use_details)
+        self._choices.widget.add_key_command(controls.action, use_choices)
 
         def gate_guide():
             gates_ = self._robot.get_available_instructions()
-            if 0 <= self._details.index < len(gates_):
-                gate = gates_[self._details.index]
+            if 0 <= self._choices.index < len(gates_):
+                gate = gates_[self._choices.index]
                 if gate.gate_type.has_other_names:
                     other_names = "\nAlso known as: " + gate.gate_type.get_other_names(" Gate, ") + " Gate"
                 else:
@@ -1481,24 +1481,24 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                                    gate.description(self._check_unlocks) + other_names)
             else:
                 reopen_popup()     # open popup history
-        self._details.widget.add_key_command(controls.get_keys(Keys.Help), gate_guide)
+        self._choices.widget.add_key_command(controls.get_keys(Keys.Help), gate_guide)
 
         def use_circuit():
             success, gate = self.__circuit.place_gate()
             if success:
-                if self._details.validate_index():
+                if self._choices.validate_index():
                     if gate is None:
-                        self.__init_details()
+                        self.__init_choices()
                     else:
-                        self._details.update_text(gate.selection_str(), self._details.index)
+                        self._choices.update_text(gate.selection_str(), self._choices.index)
                 self.__choices_commit()
-                Widget.move_focus(self._details, self)
+                Widget.move_focus(self._choices, self)
                 self.render()
         self.__circuit.widget.add_key_command(controls.action, use_circuit)
 
         def cancel_circuit():
             self.__circuit.abort_placement()
-            Widget.move_focus(self._details, self)
+            Widget.move_focus(self._choices, self)
             self.render()
         self.__circuit.widget.add_key_command(controls.get_keys(Keys.Cancel), cancel_circuit)
 
@@ -1507,9 +1507,9 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         def travel_history(forth: bool) -> Callable[[], None]:
             def func():
                 if GameplayConfig.get_option_value(Options.enable_puzzle_history, convert=True):
-                    # block functionality if we are displaying the reward message or are not focused on _details
+                    # block functionality if we are displaying the reward message or are not focused on _choices
                     # (e.g., are manipulating the circuit)
-                    if self._details.widget.is_selected() and not self._in_reward_message:
+                    if self._choices.widget.is_selected() and not self._in_reward_message:
                         self.__history_widget.travel(forth, render=True)
             return func
         self.add_key_command(controls.get_keys(Keys.Situational1), travel_history(False), add_to_widgets=True)
@@ -1580,12 +1580,12 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             elif num_of_qubits == 4:
                 # todo problem with 4 qubits: out has not enough space, hence, its coloring doesn't work
                 self.__circuit.widget.reposition(row=UIConfig.HUD_HEIGHT + row_span)
-                self._details.widget.reposition(row=UIConfig.WINDOW_HEIGHT - 1, row_span=1)
+                self._choices.widget.reposition(row=UIConfig.WINDOW_HEIGHT - 1, row_span=1)
             else:
                 self.__circuit.widget.reposition(row=UIConfig.HUD_HEIGHT + row_span + 1)    # + 1 for visuals
 
     def get_main_widget(self) -> WidgetWrapper:
-        return self._details.widget
+        return self._choices.widget
 
     def set_data(self, robot: Robot, target: Target, in_expedition: bool, tutorial_data: Any) -> None:
         """
@@ -1621,7 +1621,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self._robot.update_statevector(input_stv=target.input_stv, use_energy=False, check_for_game_over=False)
         self.__update_calculation(False)
 
-        self.__init_details()
+        self.__init_choices()
         self.__history_widget.clean_history()   # clean/reset history
 
         self.__puzzle_timer = cur_datetime()
@@ -1642,11 +1642,11 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             self.__eq_widget,
             self.__stv_target,
             self.__circuit,
-            self._details
+            self._choices
         ]
 
     def reset(self) -> None:
-        self._details.render_reset()
+        self._choices.render_reset()
 
     def save_puzzle_to_history(self, input_stv: StateVector, target_stv: StateVector):
         self.__input_stv.set_data(input_stv)
@@ -1672,7 +1672,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             else:
                 self.__eq_widget.set_data(self._sign_offset + "=/=")
 
-    def __init_details(self):
+    def __init_choices(self):
         choices, objects = [], []   # Tuple[List[str], List[object]]
         callbacks: List[Callable[[], bool]] = []
         for instruction in self._robot.backpack:
@@ -1689,10 +1689,10 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             choices.append(self.__flee_choice)
             callbacks.append(self.__flee)      # just return True to change back to previous screen
 
-        self._details.set_data(data=((choices, objects), callbacks))
+        self._choices.set_data(data=((choices, objects), callbacks))
 
     def __choose_instruction(self) -> bool:
-        cur_instruction = self._details.selected_object
+        cur_instruction = self._choices.selected_object
         if cur_instruction is not None:
             if cur_instruction.is_used():
                 # move the instruction
@@ -1715,7 +1715,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
     def __remove(self) -> bool:
         if self._robot.has_empty_circuit:
             CommonPopups.NoGatePlaced.show()
-            return False    # stay in details
+            return False    # stay in choices
         else:
             self.__circuit.start_gate_placement(None)
             self.render()
@@ -1723,14 +1723,14 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
     def __flee(self) -> bool:
         # last selection possibility in edit is for fleeing
-        self._details_flee()
-        self._details.render()
+        self._choices_flee()
+        self._choices.render()
 
         duration, _ = time_diff(self.__puzzle_timer, cur_datetime())
         Logger.instance().info(f"[target id={self._target.id}]\n"
                                f"Fled from puzzle after {duration}s "
                                f"and {self._target.checks} steps.", from_pycui=False)
-        return False    # stay in details
+        return False    # stay in choices
 
     def __choices_commit(self):
         if self._target is None:
@@ -1750,18 +1750,18 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                 if reward is not None: self._robot.give_collectible(reward)
                 self._in_reward_message = False    # undo the blocking since the success notification is over
                 self._continue_exploration()
-                return False    # stay in details
+                return False    # stay in choices
 
             self._in_reward_message = True
             if reward is None:
-                self._details.set_data(data=(
+                self._choices.set_data(data=(
                     [f"Congratulations, you solved the {ColorConfig.highlight_object('Puzzle', invert=True)}!"],
                     [give_reward_and_continue]
                 ))
             else:
                 Logger.instance().assertion(isinstance(reward, Collectible),
                                             f"Error! Reward is not a Collectible: {reward}")
-                self._details.set_data(data=(
+                self._choices.set_data(data=(
                     [f"Congratulations! Your reward: {ColorConfig.highlight_object(reward.to_string())}"],
                     [give_reward_and_continue]
                 ))
@@ -1770,9 +1770,9 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             self._on_commit_fail()
 
     def _fleeing_failed_callback(self) -> bool:
-        self.__init_details()
-        self._details.render()
-        return False  # stay in details
+        self.__init_choices()
+        self._choices.render()
+        return False  # stay in choices
 
     def _on_success(self):
         duration, _ = time_diff(self.__puzzle_timer, cur_datetime())
@@ -1792,7 +1792,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         pass
 
     @abstractmethod
-    def _details_flee(self) -> bool:
+    def _choices_flee(self) -> bool:
         pass
 
 
@@ -1806,8 +1806,8 @@ class TrainingsWidgetSet(ReachTargetWidgetSet):
     def _on_commit_fail(self) -> bool:
         return True
 
-    def _details_flee(self) -> bool:
-        self._details.set_data(data=(
+    def _choices_flee(self) -> bool:
+        self._choices.set_data(data=(
             ["You return to the Spaceship!"],
             [self._continue_exploration]
         ))
@@ -1831,7 +1831,7 @@ class FightWidgetSet(ReachTargetWidgetSet):
             self._robot.game_over_check()
         return True
 
-    def _details_flee(self) -> bool:
+    def _choices_flee(self) -> bool:
         extra_text = ""
         if GameplayConfig.get_option_value(Options.energy_mode):
             if self._robot.cur_energy > self._target.flee_energy:
@@ -1839,15 +1839,15 @@ class FightWidgetSet(ReachTargetWidgetSet):
                 extra_text = f"Your Qubot lost {damage_taken} energy."
             else:
                 CommonPopups.NotEnoughEnergyToFlee.show()
-                return False    # don't switch to details widget
+                return False    # don't switch to choices widget
 
         if self.__flee_check():
-            self._details.set_data(data=(
+            self._choices.set_data(data=(
                 [f"Fled successfully. {extra_text}"],
                 [self._continue_and_undo_callback]
             ))
         else:
-            self._details.set_data(data=(
+            self._choices.set_data(data=(
                 [f"Failed to flee. {extra_text}"],
                 [self._fleeing_failed_callback]
             ))
@@ -1862,8 +1862,8 @@ class BossFightWidgetSet(ReachTargetWidgetSet):
                          check_unlocks_callback, dynamic_input=True, dynamic_target=True)
         self.__prev_circuit_space = 0
 
-    def _details_flee(self) -> bool:
-        self._details.set_data(data=(
+    def _choices_flee(self) -> bool:
+        self._choices.set_data(data=(
             ["You fled to try again later."],
             [self._continue_and_undo_callback]
         ))
@@ -2003,7 +2003,7 @@ class RiddleWidgetSet(ReachTargetWidgetSet):
 
     def _on_commit_fail(self) -> bool:
         if not self._target.can_attempt:
-            self._details.set_data(data=(
+            self._choices.set_data(data=(
                 [f"You couldn't solve the riddle within the given number of {RiddleWidgetSet.__TRY_PHRASING}. "
                  f"It vanished together with its reward."],
                 [self._continue_exploration]
@@ -2011,8 +2011,8 @@ class RiddleWidgetSet(ReachTargetWidgetSet):
         self._hud.update_situational(f"Remaining {RiddleWidgetSet.__TRY_PHRASING}: {self._target.attempts}")
         return True
 
-    def _details_flee(self) -> bool:
-        self._details.set_data(data=(
+    def _choices_flee(self) -> bool:
+        self._choices.set_data(data=(
             [f"Abort - you can still try again later", "Continue"],
             [self._continue_and_undo_callback, self._fleeing_failed_callback]
         ))
@@ -2039,7 +2039,7 @@ class ChallengeWidgetSet(ReachTargetWidgetSet):
             self._robot.game_over_check()
         return True
 
-    def _details_flee(self) -> bool:
+    def _choices_flee(self) -> bool:
         if GameplayConfig.get_option_value(Options.energy_mode):
             if self._robot.cur_energy > self._target.flee_energy:
                 _, _ = self._robot.decrease_energy(amount=self._target.flee_energy)
@@ -2047,7 +2047,7 @@ class ChallengeWidgetSet(ReachTargetWidgetSet):
                 CommonPopups.NotEnoughEnergyToFlee.show()
                 return False  # don't switch to details widget
 
-        self._details.set_data(data=(
+        self._choices.set_data(data=(
             ["You successfully fled!"],
             [self._continue_and_undo_callback]
         ))
