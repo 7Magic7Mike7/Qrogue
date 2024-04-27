@@ -78,11 +78,10 @@ def get_dummy_controls(activate_printing: bool = False) -> Controls:
     return Controls(handle_key_presses)
 
 
-def init_singletons(seed: int = 7, include_config: bool = False, custom_data_path: Optional[str] = None,
+def init_singletons(include_config: bool = False, custom_data_path: Optional[str] = None,
                     custom_user_path: Optional[str] = None) -> bool:
     """
 
-    :param seed: to initialize RandomManager
     :param include_config: whether to also load config or not
     :param custom_data_path: optional, if given uses the path to load game data
     :param custom_user_path: optional, if given uses the path to load and store user data
