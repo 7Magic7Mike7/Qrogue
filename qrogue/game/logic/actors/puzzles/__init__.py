@@ -14,6 +14,13 @@ from ...collectibles import Instruction
 
 def is_puzzle_solvable(input_stv: StateVector, target_stv: StateVector, gate_list: List[Instruction]) \
         -> Tuple[bool, Optional[QuantumCircuit]]:
+    # todo: sometimes the order of the gates matters and claims that a solvable puzzle is not solvable
+    #  Example:
+    #  input_stv = StateVector([0, 0, 0, 0, complex(0, -1), 0, 0, 0])
+    #  target_stv = Instruction.compute_stv([gates.HGate().setup([1])], 3)
+    #  gate_list = [gates.XGate(), gates.CXGate(), gates.HGate(), gates.SGate()]     # this order returns True
+    #  gate_list_ = [gates.HGate(), gates.SGate(), gates.XGate(), gates.CXGate()]      # but this order returns False
+
     assert input_stv.num_of_qubits == target_stv.num_of_qubits, "Different number of qubits!"
 
     simulator = UnitarySimulator()
