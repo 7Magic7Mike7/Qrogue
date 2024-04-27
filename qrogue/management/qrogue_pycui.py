@@ -280,7 +280,7 @@ class QrogueCUI(PyCUI):
             self.__map_manager.fill_expedition_queue(lambda: None, no_thread=True)
 
         Popup.update_check_achievement_function(self.__map_manager.check_level_event)
-        common_messages.set_show_callback(Popup.system_says)
+        common_messages.set_show_callback(lambda text: Popup.generic_info(Config.system_name(), text))
         common_messages.set_show_info_callback(Popup.generic_info)
         common_messages.set_ask_callback(ConfirmationPopup.ask)
         WalkTriggerTile.set_show_explanation_callback(Popup.from_message)
