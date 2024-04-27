@@ -582,10 +582,12 @@ class QrogueCUI(PyCUI):
         self.__cur_widget_set.render()
 
     def show_message_popup(self, title: str, text: str, color: int = PyCuiColors.WHITE_ON_BLACK) -> None:
+        # todo: seems like setting the focused widgets here is no longer needed? but further testing required
         self.__focused_widget = self.get_selected_widget()
         super(QrogueCUI, self).show_message_popup(title, text, color)
 
     def show_error_popup(self, title: str, text: str) -> None:
+        # todo: seems like setting the focused widgets here is no longer needed? but further testing required
         self.__focused_widget = self.get_selected_widget()
         super(QrogueCUI, self).show_error_popup(title, text)
 
