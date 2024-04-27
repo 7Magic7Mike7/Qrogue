@@ -20,7 +20,7 @@ def generation_test(file_name: str, world: bool = False):
         generator = QrogueWorldGenerator(7, player, check_achievement, trigger_event, test_util.load_map,
                                          test_util.message_popup)
     else:
-        generator = QrogueLevelGenerator(7, check_achievement, trigger_event, test_util.load_map,
+        generator = QrogueLevelGenerator(check_achievement, trigger_event, test_util.load_map,
                                          test_util.message_popup, CallbackPack.dummy())
     map, success = generator.generate(7, file_name, True)
     if success:

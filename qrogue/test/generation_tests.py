@@ -53,7 +53,7 @@ class LayoutGenTestCase(test_util.SingletonSetupTestCase):
 class LevelGenTestCase(test_util.SingletonSetupTestCase):
     def test_single_seed(self):
         CheatConfig.use_cheat("Illuminati")
-        generator = ExpeditionGenerator(0, lambda s: True, lambda s: None, lambda s: None, CallbackPack.dummy())
+        generator = ExpeditionGenerator(lambda s: True, lambda s: None, lambda s: None, CallbackPack.dummy())
         seed = 297
         map_, success = generator.generate(seed, test_util.DummyRobot())
         self.assertTrue(success, "Failed to generate.")
@@ -66,7 +66,7 @@ class LevelGenTestCase(test_util.SingletonSetupTestCase):
         end_seed = 5
         failing_seeds = []
 
-        generator = ExpeditionGenerator(0, lambda s: True, lambda s: None, lambda s: None, CallbackPack.dummy())
+        generator = ExpeditionGenerator(lambda s: True, lambda s: None, lambda s: None, CallbackPack.dummy())
         for i, seed in enumerate(range(start_seed, end_seed)):
             if i % 1000 == 0:
                 self._print(f"Run {i + 1}): seed = {seed}")

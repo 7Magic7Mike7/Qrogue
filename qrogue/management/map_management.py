@@ -32,9 +32,8 @@ class MapManager:
         self.__rm = RandomManager.create_new(seed)
         self.__start_level = start_level
         self.__start_level_transition = start_level_transition_callback
-        self.__expedition_generator = ExpeditionGenerator(seed,
-                                                          self.__save_data.check_achievement,
-                                                          self.__trigger_event, self.load_map, callback_pack)
+        self.__expedition_generator = ExpeditionGenerator(self.__save_data.check_achievement, self.__trigger_event,
+                                                          self.load_map, callback_pack)
         self.__expedition_queue: List[ExpeditionMap] = []
         self.__cur_map: Map = None
         self.__in_level = False
@@ -98,7 +97,7 @@ class MapManager:
 
             # todo maybe levels should be able to have arbitrary names except "w..." or "e..." or "back" or "next"?
             check_achievement = self.__save_data.check_achievement
-            generator = QrogueLevelGenerator(map_seed, check_achievement, self.__trigger_event, self.load_map,
+            generator = QrogueLevelGenerator(check_achievement, self.__trigger_event, self.load_map,
                                              Popup.npc_says, self.__cbp)
             try:
                 level, success = generator.generate(map_seed, map_name)

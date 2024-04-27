@@ -14,7 +14,7 @@ from qrogue.game.target_factory import EnemyFactory, ExplicitTargetDifficulty, E
 from qrogue.game.world import tiles
 from qrogue.game.world.map import CallbackPack, LevelMap, rooms, MapMetaData
 from qrogue.game.world.navigation import Coordinate, Direction
-from qrogue.util import Config, MapConfig, PathConfig, Logger, CommonQuestions, RandomManager, load_help_text
+from qrogue.util import Config, MapConfig, PathConfig, Logger, CommonQuestions, RandomManager, MyRandom, load_help_text
 
 from qrogue.game.world.dungeon_generator import parser_util
 from qrogue.game.world.dungeon_generator.dungeon_parser.QrogueDungeonLexer import QrogueDungeonLexer
@@ -134,7 +134,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             # todo print warning?
             return None
 
-    def __init__(self, seed: int, check_achievement_callback: Callable[[str], bool],
+    def __init__(self, check_achievement_callback: Callable[[str], bool],
                  trigger_event_callback: Callable[[str], None], load_map_callback: Callable[[str, Coordinate], None],
                  show_message_callback: Callable[[str, str, Optional[bool], Optional[int]], None],
                  callback_pack: CallbackPack):
@@ -149,7 +149,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         self.__warnings = 0
         self.__level: Optional[LevelMap] = None
         self.__robot: Optional[Robot] = None
-        self.__rm = RandomManager.create_new(seed)
+        # todo: update visibility of QrogueLevelGenerator to no one can accidentally call a visit-method with uninitialized __rm
+        self.__rm: Optional[MyRandom] = None    # is only used to randomize rewards and puzzles, placements are static
 
         self.__default_speaker = QrogueLevelGenerator.__DEFAULT_SPEAKER
         self.__messages: Dict[str, Message] = {}
@@ -194,6 +195,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         self.__warnings += 1
 
     def generate(self, seed: int, file_path: str, in_dungeon_folder: bool = True) -> Tuple[Optional[LevelMap], bool]:
+        self.__rm = RandomManager.create_new(seed)
         map_data = PathConfig.read_level(file_path, in_dungeon_folder)
 
         input_stream = InputStream(map_data)

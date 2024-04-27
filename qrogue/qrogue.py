@@ -203,21 +203,21 @@ def validate_map(path: str, is_level: bool = True, in_base_path: bool = True) ->
         return False
 
     if is_level:
-        generator = QrogueLevelGenerator(seed, check_achievement_callback=lambda achievement: False,
+        generator = QrogueLevelGenerator(check_achievement_callback=lambda achievement: False,
                                          trigger_event_callback=lambda event: None,
                                          load_map_callback=lambda name, spawn_pos: None,
                                          show_message_callback=lambda title, text, reopen, position: None,
                                          callback_pack=CallbackPack.dummy())
     else:
         player = Player()
-        generator = QrogueWorldGenerator(seed, player, check_achievement_callback=lambda achievement: False,
+        generator = QrogueWorldGenerator(player, check_achievement_callback=lambda achievement: False,
                                          trigger_event_callback=lambda event: None,
                                          load_map_callback=lambda name, spawn_pos: None,
                                          show_message_callback=lambda title, text, reopen, position: None)
 
     try:
         error_occurred = False
-        generator.generate(seed=7, file_path=path, in_dungeon_folder=in_base_path)
+        generator.generate(seed, file_path=path, in_dungeon_folder=in_base_path)
     except FileNotFoundError as fnf:
         error_occurred = True
         print(f"Could not find specified file! Error: {fnf}")

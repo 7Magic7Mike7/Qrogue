@@ -78,10 +78,10 @@ def test_dungeon():
     for seed in range(start_seed, end_seed):
         if i % 1000 == 0:
             __print(f"Run {i + 1}): seed = {seed}")
-        generator = ExpeditionGenerator(seed, lambda s: True, lambda s: None, lambda s: None, CallbackPack.dummy())
+        generator = ExpeditionGenerator(lambda s: True, lambda s: None, lambda s: None, CallbackPack.dummy())
 
         start_time = time.time()
-        map_, success = generator.generate(7, robot)      # just use an arbitrary seed
+        map_, success = generator.generate(seed, robot)      # just use an arbitrary seed
         duration = time.time() - start_time
         duration_sum += duration
 

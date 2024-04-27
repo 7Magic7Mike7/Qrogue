@@ -584,7 +584,7 @@ class ExpeditionGenerator(DungeonGenerator):
         update_entangled_room_groups(enemy)
         return enemy
 
-    def __init__(self, seed: int, check_achievement: Callable[[str], bool], trigger_event: Callable[[str], None],
+    def __init__(self, check_achievement: Callable[[str], bool], trigger_event: Callable[[str], None],
                  load_map_callback: Callable[[str, Optional[Coordinate]], None], callback_pack: CallbackPack,
                  width: int = DungeonGenerator.WIDTH, height: int = DungeonGenerator.HEIGHT):
         super(ExpeditionGenerator, self).__init__(width, height)
@@ -601,7 +601,7 @@ class ExpeditionGenerator(DungeonGenerator):
         if Config.skip_learning():
             self.__wild_room_generator = WFCEmptyRoomGenerator()
         else:
-            self.__wild_room_generator = WFCRoomGenerator(seed, WFCRoomGenerator.get_level_list()[2:], AreaType.WildRoom)
+            self.__wild_room_generator = WFCRoomGenerator(WFCRoomGenerator.get_level_list()[2:], AreaType.WildRoom)
 
     def _next_target_id(self) -> int:
         val = self.__next_target_id
