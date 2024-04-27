@@ -1464,7 +1464,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                                        column_span=UIConfig.WINDOW_WIDTH, center=True)
         details.toggle_border()
         details.activate_individual_coloring()  # TODO: current reward highlight version is not satisfying
-        self._details = SelectionWidget(details, controls, columns=self.__DETAILS_COLUMNS, is_second=True,
+        self._details = SelectionWidget(details, controls, columns=self.__DETAILS_COLUMNS, is_second=False,
                                         on_key_press=jump_to_present)
 
         def use_details():
