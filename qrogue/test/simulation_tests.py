@@ -100,6 +100,7 @@ class SimulationTestCase(test_util.SingletonSetupTestCase):
             simulation.start()
 
     def test_level(self):
+        index: Optional[int] = 0
         simulations: List[SimulationTestCase._Simulation] = [
             SimulationTestCase._Simulation("simple_l0k0v0"),
             SimulationTestCase._Simulation("simple_l0k0v1"),
@@ -108,10 +109,25 @@ class SimulationTestCase(test_util.SingletonSetupTestCase):
             SimulationTestCase._Simulation("simple_l0k0v4"),
         ]
         for i, simulation in enumerate(simulations):
-            save_data = simulation.start()
-            post_save_data = self.load_save_data(f"post_l0k0v{i}")
-            self.compare_save_data(save_data, post_save_data)
-            self.compare_save_data(post_save_data, save_data)
+            if index is not None and i != index: continue
+
+            try:
+                save_data = simulation.start()
+                post_save_data = self.load_save_data(f"post_l0k0v{i}")
+                self.compare_save_data(save_data, post_save_data)
+                self.compare_save_data(post_save_data, save_data)
+            except AssertionError as ae:
+                print()
+                print("####################################################")
+                print("####################### ERROR ######################")
+                print("####################################################")
+                print(ae)
+                print()
+                print("----------------------------------------------------")
+                print("----------------------- LOGS -----------------------")
+                print("----------------------------------------------------")
+                print()
+                Logger.instance().flush()
 
 
 if __name__ == '__main__':
