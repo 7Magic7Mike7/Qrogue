@@ -294,10 +294,9 @@ class LevelSelectWidgetSet(MyWidgetSet):
         details = self.add_block_label('Details', row, 5, row_span=4, column_span=4, center=False)
         self.__details = SelectionWidget(details, controls, is_second=True)
 
-        texts = ["Set Seed", "Select Level", "Change Gates", "Start Playing", "Back to Menu"]
-        objects = ["Seed", "Level", "Gates", "Start", "Back"]
-        callbacks = [self.__set_seed, self.__select_level, self.__choose_gates, self.__play_level, switch_to_menu]
-        self.__choices.set_data(((texts, objects), callbacks))
+        texts = ["Select Level", "Change Gates", "Set Seed", "Start Playing", "Back to Menu"]
+        callbacks = [self.__select_level, self.__choose_gates, self.__set_seed, self.__play_level, switch_to_menu]
+        self.__choices.set_data((texts, callbacks))
 
         def use_choices():
             if self.__choices.use():
@@ -307,11 +306,8 @@ class LevelSelectWidgetSet(MyWidgetSet):
 
         def use_details():
             if self.__details.use():
-                if self.__choices.selected_object == "Level":
-                    pass
-                elif self.__choices.selected_object == "Gates":
-                    pass
                 Widget.move_focus(self.__choices, self)
+                self.__details.render_reset()
                 self.render()
         self.__details.widget.add_key_command(controls.action, use_details)
 
