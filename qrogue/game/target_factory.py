@@ -175,18 +175,18 @@ class PuzzleDifficulty:
         input_stv = PuzzleDifficulty.__create_stv(instruction_pool, min(num_input_gates, robot.circuit_space),
                                                   robot.num_of_qubits, rm, inverse=True)
 
-        # check if we have to re-roll (i.e., input and target are the same
-        max_rerolls = 10
+        # check if we have to re-roll (i.e., input and target are the same)
+        remaining_rerolls = 10
         target_stv = PuzzleDifficulty.__create_stv(instruction_pool.copy(), min(num_target_gates, robot.circuit_space),
                                                    robot.num_of_qubits, rm)
-        while input_stv.get_diff(target_stv).is_zero and max_rerolls > 0:
+        while input_stv.get_diff(target_stv).is_zero and remaining_rerolls > 0:
             target_stv = PuzzleDifficulty.__create_stv(instruction_pool.copy(),
                                                        min(num_target_gates, robot.circuit_space),
                                                        robot.num_of_qubits, rm)
-            max_rerolls -= 1
+            remaining_rerolls -= 1
 
-        # if max_rerolls > 0 we know that the loop above terminated because the vectors are not the same -> done
-        if max_rerolls <= 0 and input_stv.get_diff(target_stv).is_zero:
+        # if remaining_rerolls > 0 we know that the loop above terminated because the vectors are not the same -> done
+        if remaining_rerolls <= 0 and input_stv.get_diff(target_stv).is_zero:
             inst_text = "; ".join([str(inst) for inst in robot.get_available_instructions()])
             Logger.instance().warn(f"Couldn't re-roll input and target to be different! {inst_text}", from_pycui=False)
         return input_stv, target_stv
