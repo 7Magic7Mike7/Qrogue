@@ -137,7 +137,7 @@ class MapManager:
                 robot.reset()
                 self.__cur_map = expedition
                 self.__in_level = True
-                self.__start_level(map_seed, self.__cur_map)
+                self.__start_level(self.__cur_map)
             else:
                 Popup.error(f"Failed to create an expedition for seed = {map_seed}. Please try again with a different "
                             f"seed or restart the game. Should the error keep occurring:", add_report_note=True)
