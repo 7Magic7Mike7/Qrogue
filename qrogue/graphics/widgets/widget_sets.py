@@ -545,10 +545,12 @@ class ScreenCheckWidgetSet(MyWidgetSet):
         select_widget = self.add_block_label('Select', details_y, 0, row_span=details_height, column_span=select_width,
                                              center=True)
         self.__select_widget = SelectionWidget(select_widget, controls, stay_selected=True)
-        self.__select_widget.set_data((
-            ["Level", "Popup", "Puzzle", "Back"],
-            [self.__show_level, self.__show_popup, self.__show_puzzle, switch_to_menu]
-        ))
+        self.__select_widget.set_data([
+            ("Level", self.__show_level),
+            ("Popup", self.__show_popup),
+            ("Puzzle", self.__show_puzzle),
+            ("Back", switch_to_menu),
+        ])
 
         self.__setup_widgets()
 
@@ -1095,16 +1097,16 @@ class PauseMenuWidgetSet(MyWidgetSet):
         choices = self.add_block_label('Choices', UIConfig.HUD_HEIGHT, 0, row_span=UIConfig.NON_HUD_HEIGHT,
                                        column_span=UIConfig.PAUSE_CHOICES_WIDTH, center=True)
         self.__choices = SelectionWidget(choices, controls, stay_selected=True)
-        self.__choices.set_data(data=(
-            ["Continue", "Restart", "Save", "Manual",
-             #"Achievements",
-             "Options",
-             "Exit"],
-            [self.__continue, self.__restart, self.__save, self.__help,
-             #self.__achievements,
-             self.__options,
-             self.__exit]
-        ))
+
+        self.__choices.set_data([
+            ("Continue", self.__continue),
+            ("Restart", self.__restart),
+            ("Save", self.__save),
+            ("Manual", self.__help),
+            #("Achievements", self.__achievements),
+            ("Options", self.__options),
+            ("Exit", self.__exit),
+        ])
 
         details = self.add_block_label('Details', UIConfig.HUD_HEIGHT, UIConfig.PAUSE_CHOICES_WIDTH,
                                        row_span=UIConfig.WINDOW_HEIGHT-UIConfig.HUD_HEIGHT,
