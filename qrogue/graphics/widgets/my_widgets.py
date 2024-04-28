@@ -1004,9 +1004,10 @@ class SelectionWidget(Widget):
         if isinstance(self.__choices, tuple):
             self.__choices, self.__choice_objects = self.__choices
 
-        choice_length = max([len(choice) for choice in self.__choices])
-        for i in range(len(self.__choices)):
-            self.__choices[i] = self.__choices[i].ljust(choice_length)
+        if self.__columns > 1:
+            choice_length = max([len(choice) for choice in self.__choices])
+            for i in range(len(self.__choices)):
+                self.__choices[i] = self.__choices[i].ljust(choice_length)
 
     def render(self) -> None:
         rows = [""] * self.rows
