@@ -291,9 +291,13 @@ class LevelSelectWidgetSet(MyWidgetSet):
 
         select = self.add_block_label('Select', row, col, row_span=row_span, column_span=col_span, center=False)
         self.__choices = SelectionWidget(select, controls, stay_selected=True)
-        self.__choices.set_data(
-            (["Select Level", "Change Gates", "Set Seed", "Start Playing", "Back to Menu"],
-             [self.__select_level, self.__choose_gates, self.__set_seed, self.__play_level, switch_to_menu]))
+        self.__choices.set_data([
+            ("Select Level", self.__select_level),
+            ("Change Gates", self.__choose_gates),
+            ("Set Seed", self.__set_seed),
+            ("Start Playing", self.__play_level),
+            ("Back to Menu", switch_to_menu),
+        ])
 
         details = self.add_block_label('Details', row, col+col_span, row_span=row_span,
                                        column_span=UIConfig.WINDOW_WIDTH-(col+col_span), center=False)

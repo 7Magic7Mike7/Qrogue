@@ -966,16 +966,40 @@ class SelectionWidget(Widget):
             else:
                 self.__choices[index] = text
 
-    def set_data(self, data: Tuple[
-        Union[List[str], Tuple[List[str], List[Any]]],
-        Union[List[Callable[[], Optional[bool]]], Callable[[int], Optional[bool]]]
+    def set_data(self, data: Union[
+        Tuple[
+            Union[List[str], Tuple[List[str], List[Any]]],
+            Union[List[Callable[[], Optional[bool]]], Callable[[int], Optional[bool]]]
+        ],
+        List[Tuple[Union[str, Tuple[str, Any]], Callable[[], Optional[bool]]]]
     ]) -> None:
+        """
+        Arguments:
+            data: selection text and corresponding action callback either as
+
+                1) List of str (=texts), List of callback() or callback(index)  (=actions),
+
+                2) List of (str, Any) (=tuples of text and object connected to the text),
+                    List of callback() or callback(index)  (=actions)
+
+                3) List of (str, callback) (=tuples of text and corresponding action)
+
+                4) List of ((str, Any), callback) (=tuples of (text, object) and corresponding action
+        """
         assert len(data) >= 1, "set_data() called with empty data!"
 
         self.render_reset()
-        self.__choices, callbacks = data
-        if isinstance(callbacks, list): self.__callbacks = callbacks
-        else: self.__callbacks = [callbacks]
+
+        if isinstance(data, list):
+            self.__choices = []
+            self.__callbacks = []
+            for elem in data:
+                self.__choices.append(elem[0])
+                self.__callbacks.append(elem[1])
+        else:
+            self.__choices, callbacks = data
+            if isinstance(callbacks, list): self.__callbacks = callbacks
+            else: self.__callbacks = [callbacks]
 
         if isinstance(self.__choices, tuple):
             self.__choices, self.__choice_objects = self.__choices
