@@ -328,7 +328,6 @@ class LevelSelectWidgetSet(MyWidgetSet):
         self.__details.widget.add_key_command(controls.action, use_details)
 
         self.__summary_seed.set_data(f"Seed: {self.__seed}")
-        self.__summary_seed.render()
 
     def __set_seed(self) -> bool:
         def set_seed(text: str):
