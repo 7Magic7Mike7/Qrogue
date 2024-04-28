@@ -167,7 +167,7 @@ class MenuWidgetSet(MyWidgetSet):
         width = UIConfig.WINDOW_WIDTH - UIConfig.ASCII_ART_WIDTH
         selection = self.add_block_label("", UIConfig.MAIN_MENU_ROW, 0, row_span=UIConfig.MAIN_MENU_HEIGHT,
                                          column_span=width, center=True)
-        self.__selection = SelectionWidget(selection, controls, 1)
+        self.__selection = SelectionWidget(selection, controls)
         self.__update_selection()
 
         show_controls = self.add_block_label("Show Controls", UIConfig.WINDOW_HEIGHT-2, 0, row_span=2,
