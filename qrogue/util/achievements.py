@@ -23,6 +23,7 @@ class Unlocks(enum.Enum):
 
     # level unlocks
     ProceedChoice = (90, "ProceedChoice")   # unlocked after all Tutorial levels (right before Exam)    # todo: should be available as soon as Level Selection is available
+    LevelSelection = (91, "LevelSelection")
 
     # spaceship unlocks
     Spaceship = (100, "Spaceship")      # unlocked after Tutorial

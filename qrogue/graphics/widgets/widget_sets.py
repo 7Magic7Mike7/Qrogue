@@ -208,12 +208,13 @@ class MenuWidgetSet(MyWidgetSet):
             choices.append("CONTINUE JOURNEY\n")
             callbacks.append(self.__quick_start_callback)
 
-            choices.append("SELECT LEVEL\n")
-            callbacks.append(self.__show_level_select_callback)
-
         else:
             choices.append("START YOUR JOURNEY\n")
             callbacks.append(self.__start_playing_callback)
+
+        if self.__check_unlocks(Unlocks.LevelSelection):
+            choices.append("SELECT LEVEL\n")
+            callbacks.append(self.__show_level_select_callback)
 
         #choices.append("START AN EXPEDITION\n")
         #callbacks.append(self.__start_expedition)

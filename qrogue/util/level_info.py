@@ -40,10 +40,9 @@ class LevelInfo:
         # newbie tutorials
         "l0k0v0": [Unlocks.MainMenuContinue, Unlocks.ShowEnergy, ],
         "l0k0v1": [Unlocks.ShowEquation],
+        "l0k0v4": [Unlocks.LevelSelection],
 
-        # experienced tutorials
-        "l0k1v0": [Unlocks.MainMenuContinue, Unlocks.ShowEnergy, ],
-        "l0k1v1": [Unlocks.ShowEquation],
+        # experienced tutorials are copied from newbie tutorials entered in init()
 
         # other levels
     }
@@ -53,6 +52,15 @@ class LevelInfo:
 
     @staticmethod
     def init():
+        # initialize completion unlocks for experienced tutorials
+        values_to_add: Dict[str, List[Unlocks]] = {}
+        for name in LevelInfo.__LEVEL_COMPLETION_UNLOCKS:
+            if name[2:4] != "k0": continue
+            exp_name = name[:2] + "k1" + name[4:]
+            values_to_add[exp_name] = LevelInfo.__LEVEL_COMPLETION_UNLOCKS[name].copy()
+        for name in values_to_add:
+            LevelInfo.__LEVEL_COMPLETION_UNLOCKS[name] = values_to_add[name]
+
         # initialize __NAME_CONVERTER
         for mode in LevelInfo.__MAP_ORDER.keys():
             for level in LevelInfo.__MAP_ORDER[mode]:
