@@ -197,6 +197,8 @@ class MapManager:
             #    CommonQuestions.ProceedToNextMap.ask(self.__proceed)    # todo: ask only if we are currently replaying the level (if no proceed, go back to hub)
             #else:
             #    self.__proceed()
+        elif event_id.lower().startswith(MapConfig.unlock_prefix()):
+            self.__save_data.unlock(event_id[len(MapConfig.unlock_prefix()):])
         else:
             if event_id in self.__temp_level_event_storage:     # todo: is score needed? a simple flag might be better
                 event_score, event_done_score = self.__temp_level_event_storage[event_id]
