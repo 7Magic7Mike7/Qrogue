@@ -354,6 +354,12 @@ class UIConfig:
     SHOP_INVENTORY_WIDTH = 4
     SHOP_DETAILS_HEIGHT = 1
 
+    LEVEL_SELECT_MAIN_X = 1
+    LEVEL_SELECT_MAIN_Y = 4
+    LEVEL_SELECT_MAIN_HEIGHT = 5
+    LEVEL_SELECT_CHOICES_WIDTH = 3
+    LEVEL_SELECT_DETAILS_WIDTH = 7
+
     @staticmethod
     def stv_height(num_of_qubits: int) -> int:
         if num_of_qubits == 1:

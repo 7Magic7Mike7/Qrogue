@@ -281,13 +281,13 @@ class LevelSelectWidgetSet(MyWidgetSet):
         ColorRules.apply_level_selection_seed_rules(summary_seed)
         self.__summary_seed = SimpleWidget(summary_seed, f"{LevelSelectWidgetSet.__SEED_HEADER}???")
         col += col_span
-        summary_level = self.add_block_label('Level', row, col, column_span=5, center=False)
+        summary_level = self.add_block_label('Level', row, col, column_span=UIConfig.WINDOW_WIDTH-col, center=False)
         ColorRules.apply_level_selection_level_rules(summary_level)
         self.__summary_level = SimpleWidget(summary_level, f"{LevelSelectWidgetSet.__LEVEL_HEADER}???")
         self.__summary_level.render()
 
-        row, col = 4, 1
-        row_span, col_span = 4, 3
+        row, col = UIConfig.LEVEL_SELECT_MAIN_Y, UIConfig.LEVEL_SELECT_MAIN_X
+        row_span, col_span = UIConfig.LEVEL_SELECT_MAIN_HEIGHT, UIConfig.LEVEL_SELECT_CHOICES_WIDTH
 
         select = self.add_block_label('Select', row, col, row_span=row_span, column_span=col_span, center=False)
         self.__choices = SelectionWidget(select, controls, stay_selected=True)
@@ -298,21 +298,32 @@ class LevelSelectWidgetSet(MyWidgetSet):
             ("Start Playing", self.__play_level),
             ("Back to Menu", switch_to_menu),
         ])
+        col += col_span
 
-        details = self.add_block_label('Details', row, col+col_span, row_span=row_span,
-                                       column_span=UIConfig.WINDOW_WIDTH-(col+col_span), center=False)
+        col_span = UIConfig.LEVEL_SELECT_DETAILS_WIDTH
+        details = self.add_block_label('Details', row, col, row_span=row_span, column_span=col_span, center=False)
         self.__details = SelectionWidget(details, controls, is_second=True)
+        col += col_span
+
+        highscores = self.add_block_label('Highscores', row, col, row_span=row_span, column_span=1, center=False)
+        self.__highscores = SimpleWidget(highscores)
+        col += 1
+        durations = self.add_block_label('Durations', row, col, row_span=row_span, column_span=1, center=False)
+        self.__durations = SimpleWidget(durations)
+        col += 1
 
         def use_choices():
             if self.__choices.use():
                 Widget.move_focus(self.__details, self)
-                self.__details.render()
+                self.render()
         self.__choices.widget.add_key_command(controls.action, use_choices)
 
         def use_details():
             if self.__details.use():
                 Widget.move_focus(self.__choices, self)
                 self.__details.render_reset()
+                self.__highscores.render_reset()
+                self.__durations.render_reset()
                 self.render()
         self.__details.widget.add_key_command(controls.action, use_details)
 
@@ -337,10 +348,12 @@ class LevelSelectWidgetSet(MyWidgetSet):
         # retrieve data of all available levels for displaying and loading
         levels_data = self.__get_available_levels()
         internal_names, display_names = [], []
+        highscores, durations = [], []
         for level_data in levels_data:
             internal_names.append(level_data.name)
-            display_names.append(f"{LevelInfo.convert_to_display_name(level_data.name, True)}, "
-                                 f"Highscore = {level_data.total_score}, Duration = {level_data.duration}s")
+            display_names.append(LevelInfo.convert_to_display_name(level_data.name, True))
+            highscores.append(f"#{level_data.total_score}")
+            durations.append(f"{level_data.duration}s")
 
         # add cancel to stop selecting a level
         display_names.append("-Cancel-")
@@ -350,10 +363,13 @@ class LevelSelectWidgetSet(MyWidgetSet):
             if self.__details.selected_object is None: return True  # -Cancel- was selected
 
             self.__level = self.__details.selected_object
-            self.__summary_level.set_data(f"{LevelSelectWidgetSet.__LEVEL_HEADER}{display_names[index]}")
+            self.__summary_level.set_data(f"{LevelSelectWidgetSet.__LEVEL_HEADER}{display_names[index]} "
+                                          f"({highscores[index]}, {durations[index]})")
             return True
 
         self.__details.set_data(((display_names, internal_names), set_level))
+        self.__highscores.set_data("\n".join(highscores))
+        self.__durations.set_data("\n".join(durations))
         return True
 
     def __choose_gates(self) -> bool:
@@ -384,6 +400,8 @@ class LevelSelectWidgetSet(MyWidgetSet):
             self.__summary_level,
             self.__choices,
             self.__details,
+            self.__highscores,
+            self.__durations,
         ]
 
     def get_main_widget(self) -> WidgetWrapper:
