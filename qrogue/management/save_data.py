@@ -17,8 +17,8 @@ from qrogue.management.save_grammar.SaveDataVisitor import SaveDataVisitor
 from qrogue.util import Logger, PathConfig, FileTypes, RandomManager, CommonInfos, Config, \
     ErrorConfig, achievements, MapConfig, ScoreConfig
 from qrogue.util.achievements import Achievement, Unlocks
-from qrogue.util.level_info import LevelInfo
-from qrogue.util.util_functions import cur_datetime, time_diff
+from qrogue.util.level_info import LevelInfo, LevelData
+from qrogue.util.util_functions import cur_datetime, datetime2str
 
 
 class SaveData:
@@ -27,50 +27,6 @@ class SaveData:
 
 class NewSaveData:
     __instance = None
-
-    class LevelData:
-        def __init__(self, name: str, date_time: datetime, duration: int, score: int):
-            if name.endswith("done"):
-                self.__name = name[:-len("done")]
-            else:
-                self.__name = name
-            self.__date_time = date_time
-            self.__duration = duration
-            self.__score = score
-            self.__time_bonus = ScoreConfig.compute_time_bonus(score, duration)
-
-        @property
-        def name(self) -> str:
-            """
-
-            Returns: internal name of the map
-
-            """
-            return self.__name
-
-        @property
-        def date_time(self) -> datetime:
-            return self.__date_time
-
-        @property
-        def duration(self) -> int:
-            return self.__duration
-
-        @property
-        def score(self) -> int:
-            return self.__score
-
-        @property
-        def time_bonus(self) -> int:
-            return self.__time_bonus
-
-        @property
-        def total_score(self) -> int:
-            return self.__score + self.__time_bonus
-
-        def __str__(self) -> str:
-            return f"{self.__name} ({_SaveDataGenerator.datetime2str(self.__date_time)}, {self.__duration}s, " \
-                   f"#{self.total_score})"
 
     @staticmethod
     def load(path: str, in_user_path: bool = True) -> "NewSaveData":
@@ -88,7 +44,7 @@ class NewSaveData:
     @staticmethod
     def empty_save_state() -> str:
         save_state =  f"{_SaveDataGenerator.header()}\n"
-        save_state += f"{_SaveDataGenerator.datetime2str(cur_datetime())}\n"
+        save_state += f"{datetime2str(cur_datetime())}\n"
         save_state += f"{_SaveDataGenerator.gates_header()}\n"
         save_state += f"{_SaveDataGenerator.levels_header()}\n"
         save_state += f"{_SaveDataGenerator.unlocks_header()}\n"
@@ -128,7 +84,7 @@ class NewSaveData:
 
         self.__date_time = cur_datetime()    # date and time of the latest save
         self.__gates: List[Instruction] = []
-        self.__levels: Dict[str, NewSaveData.LevelData] = {}    # key is a level's internal name
+        self.__levels: Dict[str, LevelData] = {}    # key is a level's internal name
         self.__achievements: Dict[str, Achievement] = {}
         self.__unlocks: Dict[str, datetime] = {}
         self.__has_unsaved_changes = False
@@ -173,7 +129,7 @@ class NewSaveData:
         # compute date_time and duration based on current time if not provided
         if date_time is None: date_time = cur_datetime()
 
-        level_data = NewSaveData.LevelData(name, date_time, duration, score)
+        level_data = LevelData(name, date_time, duration, score)
         if level_data.name in self.__levels and level_data.total_score >= self.__levels[level_data.name].total_score:
             # save the better score for the replayed level
             self.__levels[level_data.name] = level_data
@@ -215,19 +171,19 @@ class NewSaveData:
         text = ""
         if len(self.__levels) > 0:
             text += f"-- Completed Levels --\n"
-            text += "\n".join([f"{level.name} @ {_SaveDataGenerator.datetime2str(level.date_time)} "
+            text += "\n".join([f"{level.name} @ {datetime2str(level.date_time)} "
                                f"{level.duration} {_SaveDataGenerator.duration_unit()} Score = {level.score}"
                                for level in self.__levels.values()])
             text += "\n\n"
 
         if len(self.__unlocks) > 0:
             text += f"-- Unlocks --\n"
-            text += "\n".join([f"{unlock} @ {_SaveDataGenerator.datetime2str(self.__unlocks[unlock])}"
+            text += "\n".join([f"{unlock} @ {datetime2str(self.__unlocks[unlock])}"
                                for unlock in self.__unlocks])
             text += "\n\n"
 
         text += f"-- Achievements --\n"
-        text += "\n".join([f"{ach.name} @ {_SaveDataGenerator.datetime2str(ach.date_time)} "
+        text += "\n".join([f"{ach.name} @ {datetime2str(ach.date_time)} "
                            f"Score = {ach.score} out of {ach.done_score}"
                            for ach in self.__achievements.values()])
         return text
@@ -237,25 +193,25 @@ class NewSaveData:
 
     def to_string(self) -> str:
         text = f"{_SaveDataGenerator.header()}\n"
-        text += f"{_SaveDataGenerator.datetime2str(self.__date_time)}\n"
+        text += f"{datetime2str(self.__date_time)}\n"
 
         text += f"{_SaveDataGenerator.gates_header()}\n"
         text += _SaveDataGenerator.gate_separator().join([gate.gate_type.short_name for gate in self.__gates])
         text += "\n"
 
         text += f"{_SaveDataGenerator.levels_header()}\n"
-        text += "\n".join([f"{level.name} @ {_SaveDataGenerator.datetime2str(level.date_time)} "
+        text += "\n".join([f"{level.name} @ {datetime2str(level.date_time)} "
                            f"{level.duration} {_SaveDataGenerator.duration_unit()} Score = {level.score}"
                            for level in self.__levels.values()])
         text += "\n"
 
         text += f"{_SaveDataGenerator.unlocks_header()}\n"
-        text += "\n".join([f"{unlock} @ {_SaveDataGenerator.datetime2str(self.__unlocks[unlock])}"
+        text += "\n".join([f"{unlock} @ {datetime2str(self.__unlocks[unlock])}"
                            for unlock in self.__unlocks])
         text += "\n"
 
         text += f"{_SaveDataGenerator.achievements_header()}\n"
-        text += "\n".join([f"{ach.name} @ {_SaveDataGenerator.datetime2str(ach.date_time)} "
+        text += "\n".join([f"{ach.name} @ {datetime2str(ach.date_time)} "
                            f"Score = {ach.score} out of {ach.done_score}"
                            for ach in self.__achievements.values()])
         text += "\n"
@@ -316,8 +272,8 @@ class NewSaveData:
 
         return gate_diff, level_diff, unlocks_diff, achievement_diff
 
-    def get_completed_levels(self) -> List[str]:
-        return list(self.__levels.keys())
+    def get_completed_levels(self) -> List[LevelData]:
+        return list(self.__levels.values())
 
     ################################## TRANSITION TO NEW SYSTEM ##################################
 
@@ -362,12 +318,8 @@ class _SaveDataGenerator(SaveDataVisitor):
     def gate_separator() -> str:
         return ";"      # the general separator can be used to separate gates for improved readability
 
-    @staticmethod
-    def datetime2str(date_time: datetime) -> str:
-        return date_time.strftime('%dd%mm%Yy %H:%M:%S')
-
     def load(self, file_data) -> Tuple[datetime, List[Instruction],
-            List[NewSaveData.LevelData], List[Tuple[str, datetime]], List[Achievement]]:
+            List[LevelData], List[Tuple[str, datetime]], List[Achievement]]:
         input_stream = InputStream(file_data)
         lexer = SaveDataLexer(input_stream)
         token_stream = CommonTokenStream(lexer)
@@ -415,14 +367,14 @@ class _SaveDataGenerator(SaveDataVisitor):
 
     #####################################
 
-    def visitLevel(self, ctx: SaveDataParser.LevelContext) -> NewSaveData.LevelData:
+    def visitLevel(self, ctx: SaveDataParser.LevelContext) -> LevelData:
         name = ctx.NAME_SPECIAL().getText()
         date_time = self.visitDate_time(ctx.date_time())
         duration = self.visitDuration(ctx.duration())
         score = self.visitScore(ctx.score())
-        return NewSaveData.LevelData(name, date_time, duration, score)
+        return LevelData(name, date_time, duration, score)
 
-    def visitLevels(self, ctx: SaveDataParser.LevelsContext) -> List[NewSaveData.LevelData]:
+    def visitLevels(self, ctx: SaveDataParser.LevelsContext) -> List[LevelData]:
         return [self.visitLevel(level) for level in ctx.level()]
 
     #####################################
@@ -448,8 +400,8 @@ class _SaveDataGenerator(SaveDataVisitor):
 
     #####################################
 
-    def visitStart(self, ctx: SaveDataParser.StartContext) -> Tuple[datetime, List[Instruction],
-            List[NewSaveData.LevelData], List[Tuple[str, datetime]], List[Achievement]]:
+    def visitStart(self, ctx: SaveDataParser.StartContext) -> Tuple[datetime, List[Instruction], List[LevelData],
+            List[Tuple[str, datetime]], List[Achievement]]:
         date_time = self.visitDate_time(ctx.date_time())
         gates = self.visitGates(ctx.gates())
         levels = self.visitLevels(ctx.levels())

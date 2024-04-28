@@ -21,7 +21,7 @@ from qrogue.graphics.widget_base import WidgetWrapper
 from qrogue.util import CommonPopups, Config, Controls, GameplayConfig, HelpText, Logger, PathConfig, \
     RandomManager, Keys, UIConfig, HudConfig, ColorConfig, Options, PuzzleConfig, ScoreConfig, \
     get_filtered_help_texts, CommonQuestions, MapConfig, PyCuiConfig, ColorCode, split_text, PopupConfig, MyRandom, \
-    LevelInfo, CommonInfos
+    LevelInfo, CommonInfos, LevelData
 from qrogue.util.achievements import Unlocks
 
 from qrogue.graphics.widgets import Renderable, Widget, MyBaseWidget
@@ -258,7 +258,7 @@ class LevelSelectWidgetSet(MyWidgetSet):
     def __init__(self, controls: Controls, logger: Logger, root: py_cui.PyCUI,
                  base_render_callback: Callable[[List[Renderable]], None], rm: MyRandom,
                  show_input_popup_callback: Callable[[str, int, Callable[[str], None]], None],
-                 get_available_levels_callback: Callable[[], List[str]], switch_to_menu: Callable[[], None],
+                 get_available_levels_callback: Callable[[], List[LevelData]], switch_to_menu: Callable[[], None],
                  start_level: Callable[[Optional[int], str], None]):
         super().__init__(logger, root, base_render_callback)
         # select seed
@@ -288,10 +288,14 @@ class LevelSelectWidgetSet(MyWidgetSet):
         self.__summary_level.render()
 
         row = 4
-        select = self.add_block_label('Select', row, 1, row_span=4, column_span=4, center=False)
+        col = 1
+        row_span = 4
+        col_span = 3
+        select = self.add_block_label('Select', row, col, row_span=row_span, column_span=col_span, center=False)
         self.__choices = SelectionWidget(select, controls, stay_selected=True)
 
-        details = self.add_block_label('Details', row, 5, row_span=4, column_span=4, center=False)
+        details = self.add_block_label('Details', row, col+col_span, row_span=row_span,
+                                       column_span=UIConfig.WINDOW_WIDTH-(col+col_span), center=False)
         self.__details = SelectionWidget(details, controls, is_second=True)
 
         texts = ["Select Level", "Change Gates", "Set Seed", "Start Playing", "Back to Menu"]
@@ -329,10 +333,13 @@ class LevelSelectWidgetSet(MyWidgetSet):
         return False
 
     def __select_level(self) -> bool:
-        # retrieve all available levels as display names for selection and internal names for loading
-        internal_names = self.__get_available_levels()
-        display_names = [LevelInfo.convert_to_display_name(level, True) for level in internal_names]
-        # todo: show highscore of level?
+        # retrieve data of all available levels for displaying and loading
+        levels_data = self.__get_available_levels()
+        internal_names, display_names = [], []
+        for level_data in levels_data:
+            internal_names.append(level_data.name)
+            display_names.append(f"{LevelInfo.convert_to_display_name(level_data.name, True)}, "
+                                 f"Highscore = {level_data.total_score}, Duration = {level_data.duration}s")
 
         # add cancel to stop selecting a level
         display_names.append("-Cancel-")

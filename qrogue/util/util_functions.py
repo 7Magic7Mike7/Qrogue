@@ -17,6 +17,10 @@ def time_diff(time1: datetime, time2: datetime) -> Tuple[int, str]:
     return diff.seconds, diff
 
 
+def datetime2str(date_time: datetime) -> str:
+    return date_time.strftime('%dd%mm%Yy %H:%M:%S')
+
+
 def is_power_of_2(n: int):
     """
     Checks if a given number is a power of 2.

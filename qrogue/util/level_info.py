@@ -1,7 +1,9 @@
+from datetime import datetime
 from typing import Dict, List, Optional, Callable
 
-from qrogue.util import MapConfig, GameplayConfig, PathConfig, MapGrammarConfig
+from qrogue.util import MapConfig, GameplayConfig, PathConfig, MapGrammarConfig, ScoreConfig
 from qrogue.util.achievements import Unlocks
+from qrogue.util.util_functions import datetime2str
 
 
 class LevelInfo:
@@ -146,3 +148,48 @@ class LevelInfo:
             # this call cannot allow a display name to avoid an endless recursion
             return LevelInfo.convert_to_display_name(display_name, allow_display_name=False)
         return None
+
+
+class LevelData:
+    def __init__(self, name: str, date_time: datetime, duration: int, score: int):
+        if name.endswith("done"):
+            self.__name = name[:-len("done")]
+        else:
+            self.__name = name
+        self.__date_time = date_time
+        self.__duration = duration
+        self.__score = score
+        self.__time_bonus = ScoreConfig.compute_time_bonus(score, duration)
+
+    @property
+    def name(self) -> str:
+        """
+
+        Returns: internal name of the map
+
+        """
+        return self.__name
+
+    @property
+    def date_time(self) -> datetime:
+        return self.__date_time
+
+    @property
+    def duration(self) -> int:
+        return self.__duration
+
+    @property
+    def score(self) -> int:
+        return self.__score
+
+    @property
+    def time_bonus(self) -> int:
+        return self.__time_bonus
+
+    @property
+    def total_score(self) -> int:
+        return self.__score + self.__time_bonus
+
+    def __str__(self) -> str:
+        return f"{self.__name} ({datetime2str(self.__date_time)}, {self.__duration}s, " \
+               f"#{self.total_score})"
