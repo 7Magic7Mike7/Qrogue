@@ -275,8 +275,7 @@ class LevelSelectWidgetSet(MyWidgetSet):
         self.__level: Optional[str] = None
         self.__gates: List[gates.Instruction] = []  # todo: or rather InstructionType?
 
-        row = 1
-        col = 4
+        row, col = 1, 4
         col_span = 2
         summary_seed = self.add_block_label('Seed', row, col, column_span=col_span, center=False)
         ColorRules.apply_level_selection_seed_rules(summary_seed)
@@ -287,20 +286,18 @@ class LevelSelectWidgetSet(MyWidgetSet):
         self.__summary_level = SimpleWidget(summary_level, f"{LevelSelectWidgetSet.__LEVEL_HEADER}???")
         self.__summary_level.render()
 
-        row = 4
-        col = 1
-        row_span = 4
-        col_span = 3
+        row, col = 4, 1
+        row_span, col_span = 4, 3
+
         select = self.add_block_label('Select', row, col, row_span=row_span, column_span=col_span, center=False)
         self.__choices = SelectionWidget(select, controls, stay_selected=True)
+        self.__choices.set_data(
+            (["Select Level", "Change Gates", "Set Seed", "Start Playing", "Back to Menu"],
+             [self.__select_level, self.__choose_gates, self.__set_seed, self.__play_level, switch_to_menu]))
 
         details = self.add_block_label('Details', row, col+col_span, row_span=row_span,
                                        column_span=UIConfig.WINDOW_WIDTH-(col+col_span), center=False)
         self.__details = SelectionWidget(details, controls, is_second=True)
-
-        texts = ["Select Level", "Change Gates", "Set Seed", "Start Playing", "Back to Menu"]
-        callbacks = [self.__select_level, self.__choose_gates, self.__set_seed, self.__play_level, switch_to_menu]
-        self.__choices.set_data((texts, callbacks))
 
         def use_choices():
             if self.__choices.use():
