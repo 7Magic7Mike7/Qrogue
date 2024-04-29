@@ -1,4 +1,5 @@
 import unittest
+from typing import List
 
 import test_util
 from qrogue.game.world.dungeon_generator import DungeonGenerator
@@ -13,9 +14,8 @@ from qrogue.util import CheatConfig
 class LayoutGenTestCase(test_util.SingletonSetupTestCase):
     def test_single_seed(self):
         seed = 297
-        map_gen = RandomLayoutGenerator(seed, DungeonGenerator.WIDTH, DungeonGenerator.HEIGHT)
-        self.assertTrue(map_gen.generate(debug=False), "Failed to generate!")
-        self.assertTrue(map_gen.validate(), f"Invalid layout: {map_gen}")
+        map_gen = RandomLayoutGenerator(DungeonGenerator.WIDTH, DungeonGenerator.HEIGHT)
+        self.assertTrue(map_gen.generate(seed, validate=True, debug=False), f"Failed to generate: {map_gen}")
         self._print(map_gen)
 
     def test_layout(self):
@@ -23,26 +23,23 @@ class LayoutGenTestCase(test_util.SingletonSetupTestCase):
         # ~3:20 min for 0 to 100_000, succeeded
         start_seed = 50000
         end_seed = 50005
-        failing_seeds = []
+        failing_seeds: List[int] = []
         wrong_specials_seeds = []
 
         i = 0
         for seed in range(start_seed, end_seed):
             if i % 5000 == 0:
                 self._print(f"Run {i + 1}): seed = {seed}")
-            map_gen = RandomLayoutGenerator(seed, DungeonGenerator.WIDTH, DungeonGenerator.HEIGHT)
-            if not map_gen.generate(debug=False):
-                failing_seeds.append(map_gen)
-            self.assertTrue(map_gen.validate(), f"Invalid layout: {map_gen}")
+            map_gen = RandomLayoutGenerator(DungeonGenerator.WIDTH, DungeonGenerator.HEIGHT)
+            if not map_gen.generate(seed, validate=True, debug=False):
+                failing_seeds.append(seed)
+                self._print(f"Invalid layout: {map_gen}")
             i += 1
 
         if len(failing_seeds) > 0:
             self._print("Failing Seeds:")
-            seeds = []
-            for mg in failing_seeds:
-                seeds.append(mg.seed)
-            self._print(seeds)
-            self.assert_(False, "Layout for some seeds failed!")
+            self._print(failing_seeds)
+            self.assertGreater(len(failing_seeds), 0, "Layout for some seeds failed!")
 
         if len(wrong_specials_seeds) > 0:
             self._print("Wrong SpecialRooms in Seeds: ")

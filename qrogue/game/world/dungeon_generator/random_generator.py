@@ -12,7 +12,7 @@ from qrogue.game.world.map import CallbackPack, Hallway, WildRoom, SpawnRoom, Sh
 from qrogue.game.world.map.rooms import Placeholder, AreaType, DefinedWildRoom, EmptyRoom
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.graphics.popups import Popup
-from qrogue.util import Logger, RandomManager, MapConfig, Config
+from qrogue.util import Logger, RandomManager, MapConfig, Config, MyRandom
 
 from qrogue.game.world.dungeon_generator.generator import DungeonGenerator
 
@@ -102,25 +102,44 @@ class RandomLayoutGenerator:
     __MIN_AREA = 10
     __MIN_NORMAL_ROOMS = 4
 
-    def __init__(self, seed: int, width: int, height: int):
-        self.__seed = seed
+    class _RLGException(Exception):
+        pass
+
+    def __init__(self, width: int, height: int):
         if width * height < RandomLayoutGenerator.__MIN_AREA:
-            Logger.instance().throw(ValueError(f"width={width}, height={height} create a too small grid "
-                                               f"(minimal grid area = {RandomLayoutGenerator.__MIN_AREA}). Please use bigger values!"))
-        self.__rm = RandomManager.create_new(seed)
+            Popup.error(f"width={width}, height={height} create a too small grid (minimal grid area = "
+                        f"{RandomLayoutGenerator.__MIN_AREA}). Please use larger values!")
         self.__width = width
         self.__height = height
+        self.__rama: Optional[MyRandom] = None
+
         # generate empty map
-        self.__map = [[_Code.Free] * self.__width for _ in range(self.__height)]
+        self.__map: List[List[_Code]] = []
+        self.__spawn_pos: Optional[Coordinate] = None
         self.__normal_rooms: Set[Coordinate] = set()
         self.__hallways: Dict[Coordinate, Dict[Coordinate, tiles.Door]] = {}
+
+        self.__prio_sum = 0
+        self.__prio_mean = 0.0
+
+        self.__init_empty_map()
+
+    def __init_empty_map(self):
+        # generate empty map
+        self.__map = [[_Code.Free] * self.__width for _ in range(self.__height)]
+        self.__spawn_pos = None
+
+        self.__normal_rooms.clear()
+        self.__hallways.clear()
+
         self.__prio_sum = self.__width * self.__height
         self.__prio_mean = 1.0
-        self.__spawn_pos: Optional[Coordinate] = None
 
     @property
-    def seed(self) -> int:
-        return self.__seed
+    def __rm(self) -> MyRandom:
+        if self.__rama is None:
+            raise RandomLayoutGenerator._RLGException("__rm is None!")
+        return self.__rama
 
     def __get(self, pos: Coordinate) -> _Code:
         return self.__map[pos.y][pos.x]
@@ -209,15 +228,15 @@ class RandomLayoutGenerator:
                 pos = Coordinate(x, y)
                 code = self.__get(pos)
                 # if there is already something at this position, we continue with the next
-                if code >= _Code.Blocked:
-                    continue
+                if code >= _Code.Blocked: continue
+
                 code = code * _Code.PriorityMul
                 cur_val += code / self.__prio_sum
                 if val < cur_val:
                     return pos
-        Logger.instance().throw(NotImplementedError(f"Failed to get a random coordinate (generator.py) for seed = "
-                                                    f"{self.seed}. Please do report this error as this should not be "
-                                                    "possible to occur! :("))
+
+        raise RandomLayoutGenerator._RLGException(f"Failed to get a random coordinate (generator.py). Please report "
+                                                  f"this error as this should not be possible to occur!")
 
     def __random_free_wildroom_neighbors(self, num: int = 1) -> List[Tuple[Tuple[Direction, _Code, Coordinate], Coordinate]]:
         rooms: Set[Coordinate] = self.__normal_rooms
@@ -244,9 +263,8 @@ class RandomLayoutGenerator:
                 room_prios[neighbor] = (prio, room)
 
         if prio_sum == 0:
-            Logger.instance().error(f"Illegal prio_sum for seed = {self.seed} in generator.py\nThis should not be "
-                                    "possible to occur but aside from the randomness during layout generation this "
-                                    "doesn't break anything.", show=False, from_pycui=False)
+            Popup.error(f"Illegal prio_sum in RandomLayoutGenerator!\nThis should not be possible to occur, but aside "
+                        f"from the randomness during layout generation this doesn't break anything.")
             prio_sum = -1.0
 
         picked_rooms: List[Tuple[Tuple[Direction, _Code, Coordinate], Coordinate]] = []
@@ -295,8 +313,8 @@ class RandomLayoutGenerator:
                     else:
                         self.__place_wild(pos, tiles.Door(direction, tiles.DoorOpenState.KeyLocked))
                         return pos
-            except NotImplementedError:
-                Popup.error("Unimplemented case happend during layout generation!\nSince this could lead to a faulty "
+            except RandomLayoutGenerator._RLGException:
+                Popup.error("Unimplemented case happened during layout generation!\nSince this could lead to a faulty "
                             "level, we recommend exiting the level and starting it again. Should this error keep "
                             "occuring:", add_report_note=True)
 
@@ -322,7 +340,7 @@ class RandomLayoutGenerator:
             return room[2], False
         else:
             if self.__get(pos) in _Code.special_rooms():
-                Logger.instance().debug(f"SpecialRoom marked as dead end for seed = {self.seed}", from_pycui=False)
+                Logger.instance().debug(f"SpecialRoom marked as dead end!", from_pycui=False)
             return pos, True  # we found a dead end
 
     def __astar(self, visited: Set[Coordinate], pos: Coordinate, target: Coordinate, connect: bool = True) \
@@ -400,85 +418,97 @@ class RandomLayoutGenerator:
             return self.__get(pos)
         return None
 
-    def generate(self, debug: bool = False) -> bool:
-        # place the spawn room
-        self.__spawn_pos = self.__random_coordinate()
-        self.__set(self.__spawn_pos, _Code.Spawn)
+    def generate(self, seed: int, validate: bool = False, debug: bool = False) -> bool:
+        Logger.instance().info(f"Generating random layout for seed = {seed}.", from_pycui=False)
 
-        # special case if SpawnRoom is in a corner
-        corner = self.__is_corner(self.__spawn_pos)
-        if corner:
-            if self.__get(self.__spawn_pos + corner[0]) < _Code.Blocked:
-                self.__place_wild(self.__spawn_pos, tiles.Door(corner[0]))
-            if self.__get(self.__spawn_pos + corner[1]) < _Code.Blocked:
-                self.__place_wild(self.__spawn_pos, tiles.Door(corner[1]))
+        self.__init_empty_map()
+        self.__rama = RandomManager.create_new(seed)
 
-        # place the special rooms
-        special_rooms = [
-            self.__place_special_room(_Code.Shop),
-            self.__place_special_room(_Code.Riddle),
-            self.__place_special_room(_Code.Boss),
-            self.__place_special_room(_Code.Gate),
-        ]
+        try:
+            # place the spawn room
+            self.__spawn_pos = self.__random_coordinate()
+            self.__set(self.__spawn_pos, _Code.Spawn)
 
-        # create a locked hallway to spawn_pos-neighboring WildRooms if they lead to SpecialRooms
-        #directions = self.__available_directions(self.__spawn_pos, allow_wildrooms=True)
-        #for direction in directions:
-        #    new_pos = self.__spawn_pos + direction
-        #    if self.__get(new_pos) == _Code.Wild:
-        #        #wild_directions = self.__available_directions(self.__spawn_pos, allow_wildrooms=True)
-        #        door = tiles.Door(direction, locked=True)
-        #        self.__add_hallway(self.__spawn_pos, new_pos, door)
+            # special case if SpawnRoom is in a corner
+            corner = self.__is_corner(self.__spawn_pos)
+            if corner:
+                if self.__get(self.__spawn_pos + corner[0]) < _Code.Blocked:
+                    self.__place_wild(self.__spawn_pos, tiles.Door(corner[0]))
+                if self.__get(self.__spawn_pos + corner[1]) < _Code.Blocked:
+                    self.__place_wild(self.__spawn_pos, tiles.Door(corner[1]))
 
-        self.__new_prio()
-        if len(self.__normal_rooms) < RandomLayoutGenerator.__MIN_NORMAL_ROOMS:
-            self.__prio_sum -= (len(self.__normal_rooms) + len(special_rooms))  # subtract now blocked Rooms
-            pos = self.__random_coordinate()
-            self.__set(pos, _Code.Wild)
+            # place the special rooms
+            special_rooms = [
+                self.__place_special_room(_Code.Shop),
+                self.__place_special_room(_Code.Riddle),
+                self.__place_special_room(_Code.Boss),
+                self.__place_special_room(_Code.Gate),
+            ]
 
-        if debug:
-            print(self)
+            # create a locked hallway to spawn_pos-neighboring WildRooms if they lead to SpecialRooms
+            #directions = self.__available_directions(self.__spawn_pos, allow_wildrooms=True)
+            #for direction in directions:
+            #    new_pos = self.__spawn_pos + direction
+            #    if self.__get(new_pos) == _Code.Wild:
+            #        #wild_directions = self.__available_directions(self.__spawn_pos, allow_wildrooms=True)
+            #        door = tiles.Door(direction, locked=True)
+            #        self.__add_hallway(self.__spawn_pos, new_pos, door)
 
-        # fill up the rest with a couple of WildRooms
-        for num in [3, 2, 1, 1]:
-            rooms = self.__random_free_wildroom_neighbors(num)
-            for room in rooms:
-                direction, code, new_pos = room[0]
-                pos = room[1]
-                self.__set(new_pos, _Code.Wild)
-                self.__add_hallway(pos, new_pos, tiles.Door(direction))
+            self.__new_prio()
+            if len(self.__normal_rooms) < RandomLayoutGenerator.__MIN_NORMAL_ROOMS:
+                self.__prio_sum -= (len(self.__normal_rooms) + len(special_rooms))  # subtract now blocked Rooms
+                pos = self.__random_coordinate()
+                self.__set(pos, _Code.Wild)
 
-        # add a connection if the SpawnRoom is not connected to a WildRoom
-        if self.__spawn_pos not in self.__hallways:
-            neighbors = self.__get_neighbors(self.__spawn_pos)
-            if len(neighbors) > 0:
-                direction, _, new_pos = self.__rm.get_element(neighbors, msg="RandomGen_neighbor")
-                self.__add_hallway(self.__spawn_pos, new_pos, tiles.Door(direction))
+            if debug:
+                print(self)
 
-        success = True
-        # as last step, add missing Hallways and WildRooms to connect every SpecialRoom with the SpawnRoom
-        rooms = list(special_rooms)
-        while rooms:
-            room = rooms.pop(0)
-            visited: Set[Coordinate] = set(special_rooms)
-            start_pos = list(self.__hallways[room].keys())[0]
-            visited.add(start_pos)
-            if not self.__call_astar(visited, start_pos, self.__spawn_pos):
-                success = False
-                break
-        if success:
-            return True
-        else:
-            # try to create a connection to solve the issue
-            for room in rooms:
+            # fill up the rest with a couple of WildRooms
+            for num in [3, 2, 1, 1]:
+                rooms = self.__random_free_wildroom_neighbors(num)
+                for room in rooms:
+                    direction, code, new_pos = room[0]
+                    pos = room[1]
+                    self.__set(new_pos, _Code.Wild)
+                    self.__add_hallway(pos, new_pos, tiles.Door(direction))
+
+            # add a connection if the SpawnRoom is not connected to a WildRoom
+            if self.__spawn_pos not in self.__hallways:
+                neighbors = self.__get_neighbors(self.__spawn_pos)
+                if len(neighbors) > 0:
+                    direction, _, new_pos = self.__rm.get_element(neighbors, msg="RandomGen_neighbor")
+                    self.__add_hallway(self.__spawn_pos, new_pos, tiles.Door(direction))
+
+            success = True
+            # as last step, add missing Hallways and WildRooms to connect every SpecialRoom with the SpawnRoom
+            rooms = list(special_rooms)
+            while len(rooms) > 0:
+                room = rooms.pop()
+                visited: Set[Coordinate] = set(special_rooms)
                 start_pos = list(self.__hallways[room].keys())[0]
-                visited = set(special_rooms)
-                dead_ends, success = self.__astar(visited, start_pos, self.__spawn_pos)
-                if not success:
-                    return False
-            return True
+                visited.add(start_pos)
+                if not self.__call_astar(visited, start_pos, self.__spawn_pos):
+                    success = False
+                    break
 
-    def validate(self) -> bool:
+            if not success:
+                # try to create a connection to solve the issue
+                for room in rooms:
+                    start_pos = list(self.__hallways[room].keys())[0]
+                    visited = set(special_rooms)
+                    dead_ends, success = self.__astar(visited, start_pos, self.__spawn_pos)
+                    if not success:
+                        return False
+
+            if validate: return self.__validate()
+            else: return True
+
+        except RandomLayoutGenerator._RLGException as ex:
+            Logger.instance().error(f"An exception occurred while generating a random layout for seed = {seed}:")
+            Logger.instance().throw(ex)
+            return False
+
+    def __validate(self) -> bool:
         # first check if all SpecialRooms have exactly 1 connection
         for y in range(self.__height):
             for x in range(self.__width):
@@ -656,8 +686,8 @@ class ExpeditionGenerator(DungeonGenerator):
         rooms: List[List[Optional[Room]]] = [[None for _ in range(self.width)] for _ in range(self.height)]
         spawn_room = None
         created_hallways = {}
-        layout = RandomLayoutGenerator(seed, self.width, self.height)
-        if layout.generate() and layout.validate():
+        layout = RandomLayoutGenerator(self.width, self.height)
+        if layout.generate(seed, validate=True):
             for y in range(self.height):
                 for x in range(self.width):
                     self.__room_has_key = False
@@ -673,10 +703,8 @@ class ExpeditionGenerator(DungeonGenerator):
                                 # it is completely fine if it happens that an isolated WildRoom was generated
                                 continue
                             else:
-                                Logger.instance().throw(NotImplementedError(
-                                    f"Found a SpecialRoom ({code}) without connecting Hallways for seed = "
-                                    f"{seed}. Please do report this error as this should not be "
-                                    "possible to occur! :("))
+                                Popup.error(f"Found a SpecialRoom ({code}) without connecting Hallways for seed = "
+                                            f"{seed}.", add_report_note=True)
 
                         direction: Optional[Direction] = None
                         for neighbor in hallways:
