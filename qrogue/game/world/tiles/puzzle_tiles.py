@@ -18,7 +18,7 @@ class Enemy(WalkTriggerTile):
         FLED = 4
 
     def __init__(self, factory: EnemyFactory, get_entangled_tiles: Callable[[int], List[EnemyActor]],
-                 update_entangled_groups: Callable[[EnemyActor], None], e_id: int = 0,
+                 update_entangled_groups: Callable[[EnemyActor], None], seed: int, e_id: int = 0,
                  tile_id_callback: Callable[[], int] = None):
         super().__init__(TileCode.Enemy)
         self.__factory = factory
@@ -32,7 +32,7 @@ class Enemy(WalkTriggerTile):
             self.__next_tile_id = tile_id_callback
         self.__tile_id = self.__next_tile_id()
 
-        self.__rm = RandomManager.create_new()
+        self.__rm = RandomManager.create_new(seed)
         self.__enemy: Optional[EnemyActor] = None
 
     @property
@@ -59,7 +59,7 @@ class Enemy(WalkTriggerTile):
                 # noting happens in case the robot doesn't have any gates
                 return False
         else:
-            Logger.instance().error(f"Error! Non-Robot walked over Enemy: {controllable}", from_pycui=False)
+            Logger.instance().error(f"Error! Non-Robot walked over Enemy: {controllable}", show=False, from_pycui=False)
 
     def _on_walk(self, direction: Direction, controllable: Controllable) -> bool:
         if isinstance(controllable, Robot):
@@ -117,8 +117,9 @@ class Enemy(WalkTriggerTile):
         self.__factory.start(robot, self.__enemy, direction)
 
     def _copy(self) -> "Tile":
-        enemy = Enemy(self.__factory, self.__get_entangled_tiles, self.__update_entangled_groups, self.__id,
-                      tile_id_callback=self.__next_tile_id)
+        # todo: check if this should be an *exact* copy including same seeds or not
+        enemy = Enemy(self.__factory, self.__get_entangled_tiles, self.__update_entangled_groups, self.__rm.seed,
+                      self.__id, tile_id_callback=self.__next_tile_id)
         self.__update_entangled_groups(enemy)
         return enemy
 
@@ -131,8 +132,8 @@ class Boss(WalkTriggerTile):
                  end_level_callback: Callable[[], None]):
         super().__init__(TileCode.Boss)
         self.__boss = boss
-        self.__on_walk_callback = on_walk_callback
-        self.__end_level_callback = end_level_callback
+        self.__on_walk = on_walk_callback
+        self.__end_level_callback = end_level_callback      # todo: is this still used?
         self.__is_active = True
 
     @property
@@ -146,12 +147,13 @@ class Boss(WalkTriggerTile):
     def _on_walk(self, direction: Direction, controllable: Controllable) -> bool:
         if isinstance(controllable, Robot):
             if self._is_active:
-                self.__on_walk_callback(controllable, self.__boss, direction)
+                self.__on_walk(controllable, self.__boss, direction)
             #else:
             #    self.__end_level_callback()
             return True
         else:
-            Logger.instance().error(f"Non-Robot walked on Boss! controllable = {controllable}", from_pycui=False)
+            Logger.instance().error(f"Non-Robot walked on Boss! controllable = {controllable}", show=False,
+                                    from_pycui=False)
             return False
 
     def get_img(self):
@@ -162,4 +164,4 @@ class Boss(WalkTriggerTile):
 
     def _copy(self) -> "Tile":
         # Bosses should not be duplicated in a level anyway, so it doesn't matter if we reference the same BossActor
-        return Boss(self.__boss, self.__on_walk_callback, self.__end_level_callback)
+        return Boss(self.__boss, self.__on_walk, self.__end_level_callback)

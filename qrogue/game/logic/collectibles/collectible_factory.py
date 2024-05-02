@@ -13,7 +13,6 @@ class CollectibleFactory:
         if pool is None or len(pool) < 1:
             Logger.instance().throw(Exception(f"invalid pool for CollectibleFactory: {pool}"))
         self.__pool = pool.copy()
-        self.__rm = RandomManager.create_new()
         self.__order_index = -1
 
     @property

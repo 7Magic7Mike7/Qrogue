@@ -9,7 +9,7 @@ from qrogue.util.util_functions import open_folder
 class MapConfig:
     @staticmethod
     def num_of_lessons() -> int:
-        return 6  # Lesson 0 to 5
+        return 5  # Lesson 0 to 4
 
     @staticmethod
     def map_width() -> int:
@@ -114,9 +114,10 @@ class MapConfig:
     @staticmethod
     def level_list() -> List[str]:
         levels = []
-        for i in range(MapConfig.num_of_lessons()):
-            levels.append(f"l0k0v{i}")
-        levels += ["l0training", "l0exam"]
+        for knowledge_level in range(2):
+            for i in range(MapConfig.num_of_lessons()):
+                levels.append(f"l0k{knowledge_level}v{i}")
+        #levels += ["l0training", "l0exam"]
         return levels
 
 
@@ -182,8 +183,11 @@ class CheatConfig:
         return CheatConfig.__CHEATS[CheatConfig.__OBSTACLE_IGNORE]
 
     @staticmethod
-    def ignore_messages() -> bool:
-        return CheatConfig.__CHEATS[CheatConfig.__MESSAGE_IGNORE]
+    def ignore_dialogue(importance: PopupConfig.Importance) -> bool:
+        if importance <= PopupConfig.Importance.Dialogue:
+            return CheatConfig.__CHEATS[CheatConfig.__MESSAGE_IGNORE]
+        else:
+            return False    # messages more important than dialogue are not ignored
 
     @staticmethod
     def cheat_input():
@@ -212,7 +216,11 @@ class CheatConfig:
             CheatConfig.__CHEATS[code] = not CheatConfig.__CHEATS[code]
             ret = True
         elif code.lower().strip() == "userdata":
-            open_folder(PathConfig.user_data_path())
+            try:
+                open_folder(PathConfig.user_data_path())
+            except Exception as ex:
+                CheatConfig.__popup("Error", f"Failed to open folder at {PathConfig.user_data_path()}: {ex}",
+                                    PopupConfig.default_position(), PopupConfig.default_color())
 
         if ret:
             CheatConfig.__popup("Cheats", f"Successfully used the Cheat \"{code}\"", PopupConfig.default_position(),
@@ -545,6 +553,10 @@ class ScoreConfig:
         ratio = ScoreConfig._get_ratio(checks, used_gates, expected_gates)
         return ScoreConfig._BASE_SCORE + int(ScoreConfig.__PUZZLE_BONUS * ratio)
 
+    @staticmethod
+    def compute_time_bonus(score: int, duration: int) -> int:
+        return int(score * (1.5 - 0.015 * duration ** 0.74))
+
 
 class QuantumSimulationConfig:
     DECIMALS = 3
@@ -566,4 +578,5 @@ class InstructionConfig:
 
 
 class ExpeditionConfig:
+    DEFAULT_QUEUE_SIZE = 0
     DEFAULT_DIFFICULTY = 2

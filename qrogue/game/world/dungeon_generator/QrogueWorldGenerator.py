@@ -6,7 +6,7 @@ from antlr4.tree.Tree import TerminalNodeImpl
 from qrogue.game.logic import Message
 from qrogue.game.logic.actors import Player
 from qrogue.game.world.dungeon_generator import parser_util
-from qrogue.game.world.map import Room, MetaRoom, SpawnRoom, WorldMap, MapMetaData
+from qrogue.game.world.map import Room, MetaRoom, SpawnRoom, MapMetaData, Map
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.game.world.tiles import Door, DoorOneWayState, DoorOpenState
 from qrogue.util import MapConfig, PathConfig, Logger, Config
@@ -36,7 +36,7 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
         self.__seed = seed
         self.__player = player
         self.__check_achievement = check_achievement_callback
-        self.__trigger_event = trigger_event_callback
+        self.__trigger_event_callback = trigger_event_callback
         self.__load_map = load_map_callback
         self.__show_message = show_message_callback
 
@@ -75,7 +75,7 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
             else:
                 self.__hallways[room2] = {room1: door}
 
-    def generate(self, file_name: str, in_dungeon_folder: bool = True) -> Tuple[Optional[WorldMap], bool]:
+    def generate(self, file_name: str, in_dungeon_folder: bool = True) -> Tuple[Optional[Map], bool]:
         map_data = PathConfig.read_world(file_name, in_dungeon_folder)
 
         input_stream = InputStream(map_data)
@@ -87,7 +87,7 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
         try:
             meta_data, room_matrix = self.visit(parser.start())
         except SyntaxError as se:
-            Logger.instance().error(str(se), from_pycui=False)
+            Logger.instance().error(str(se), show=False, from_pycui=False)
             return None, False
 
         # add empty rooms if rows don't have the same width
@@ -99,8 +99,7 @@ class QrogueWorldGenerator(QrogueWorldVisitor):
             if len(row) < max_len:
                 row += [None] * (max_len - len(row))
 
-        world = WorldMap(meta_data, file_name, self.__seed, room_matrix, self.__player, self.__spawn_pos,
-                         self.__check_achievement, self.__trigger_event, self.__mandatory_levels)
+        world = None
         return world, True
 
     def __load_next(self):

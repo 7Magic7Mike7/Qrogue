@@ -1,8 +1,9 @@
 import enum
 import os
 import pathlib
-from datetime import datetime
 from typing import Tuple, Optional
+
+from qrogue.util.util_functions import cur_datetime
 
 
 class FileTypes(enum.Enum):
@@ -39,7 +40,7 @@ class PathConfig:
 
     @staticmethod
     def __now_str() -> str:
-        return datetime.now().strftime("%d%m%Y_%H%M%S")
+        return cur_datetime().strftime("%d%m%Y_%H%M%S")
 
     @staticmethod
     def __save_file_str(num: int) -> str:
@@ -164,9 +165,18 @@ class PathConfig:
         return os.path.join(PathConfig.__User_Data_Path, file_name)
 
     @staticmethod
-    def new_log_file(seed: int) -> str:
-        now_str = PathConfig.__now_str()
-        return os.path.join(PathConfig.__LOG_FOLDER, f"{now_str}_seed{seed}{FileTypes.Log.value}")
+    def new_log_file() -> str:
+        path = os.path.join(PathConfig.__LOG_FOLDER, f"{PathConfig.__now_str()}")
+
+        # this if should in general be True 99% of the time, and 100% of the time on regular usage
+        if not os.path.exists(path + f"{FileTypes.Log.value}"):
+            return path + f"{FileTypes.Log.value}"
+
+        # for the very small chance that another log file has the same datetime (up to seconds), we add a simple
+        # counter suffix
+        counter = 0
+        while os.path.exists(path + f"_{counter}{FileTypes.Log.value}"): counter += 1
+        return path + f"_{counter}{FileTypes.Log.value}"
 
     @staticmethod
     def new_key_log_file(seed: int, is_level: bool = True) -> str:
@@ -177,6 +187,15 @@ class PathConfig:
             return os.path.join(PathConfig.__KEY_LOG_FOLDER, f"{now_str}_meta{seed}{FileTypes.KeyLog.value}")
 
     @staticmethod
+    def get_seed_from_key_log_file(file_name: str) -> Optional[int]:
+        path = PathConfig.user_data_path(os.path.join(PathConfig.__KEY_LOG_FOLDER, file_name))
+        content = PathConfig.read(path, True)
+        start = content.index("Seed=") + len("Seed=")
+        end = content.index("\n", start)
+        seed = content[start:end]
+        return int(seed)
+
+    @staticmethod
     def new_screen_print(text: str):
         now_str = PathConfig.__now_str()
         path = os.path.join(PathConfig.__SCREEN_PRINTS_FOLDER, f"{now_str}{FileTypes.ScreenPrint.value}")
@@ -184,7 +203,6 @@ class PathConfig:
 
     @staticmethod
     def new_save_file(text: str):
-        now_str = PathConfig.__now_str()
         num_of_files, num = PathConfig.__get_save_files_stats()
 
         # increment to get the highest number for the new save file (if no save file exists yet, -1 will be incremented
@@ -193,15 +211,14 @@ class PathConfig:
         if num_of_files >= PathConfig.__NUMBER_OF_SAVE_FILES:
             oldest_num = num - PathConfig.__NUMBER_OF_SAVE_FILES
             PathConfig.delete(PathConfig.__save_file_str(oldest_num))
-        PathConfig.write(PathConfig.__save_file_str(num), now_str + "\n" + text, may_exist=False)
+        PathConfig.write(PathConfig.__save_file_str(num),text, may_exist=False)
 
     @staticmethod
     def write_auto_save(text: str):
-        now_str = PathConfig.__now_str()
         # don't use the same ending because it would mess with __get_save_files_stats()
         file_path = os.path.join(PathConfig.__SAVE_DATA_FOLDER,
                                  f"{PathConfig.__SAVE_FILE_PREFIX}{FileTypes.Save.value}_auto")
-        PathConfig.write(file_path, now_str + "\n" + text, may_exist=True)
+        PathConfig.write(file_path, text, may_exist=True)
 
     @staticmethod
     def find_latest_save_file() -> str:

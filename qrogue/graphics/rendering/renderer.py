@@ -9,16 +9,11 @@ class TileRenderer:
 
     @staticmethod
     def instance() -> "TileRenderer":
-        if TileRenderer.__instance is None:
-            TileRenderer()
-        return TileRenderer.__instance
+        ErrorConfig.raise_deletion_exception()
 
     def __init__(self):
         """ Virtually private constructor. """
-        if TileRenderer.__instance is not None:
-            Logger.instance().throw(Exception(ErrorConfig.singleton("TileRenderer")))
-        else:
-            TileRenderer.__instance = self
+        ErrorConfig.raise_deletion_exception()
 
     @staticmethod
     def render(tile: Tile):
@@ -142,8 +137,8 @@ class MultiColorRenderer(Renderer):
 
         render_text_length = width - (2 * padx)
         # this line is the only difference to the original (super) function
-        render_text_length += ColorConfig.count_meta_characters(line, render_text_length,
-                                                                lambda err: self._logger.error(err, from_pycui=False))
+        render_text_length += ColorConfig.count_meta_characters(
+            line, render_text_length, lambda err: self._logger.error(err, show=False, from_pycui=False))
 
         if bordered:
             render_text_length = render_text_length - 4

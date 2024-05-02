@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Union
 
 import numpy as np
 
@@ -33,6 +33,39 @@ class CircuitMatrix:
             if val < 1 - QuantumSimulationConfig.TOLERANCE or 1 + QuantumSimulationConfig.TOLERANCE < val:
                 return False
         return True
+
+    @staticmethod
+    def matrix_to_string(matrix: Union[List[List[complex]], np.ndarray], num_of_qubits: int,
+                         space_per_value: Optional[int] = None) -> str:
+        if isinstance(matrix, np.ndarray):
+            assert len(matrix.shape) == 2 and matrix.shape[0] == matrix.shape[1], \
+                f"matrix needs to be 2D and quadratic, but is: {matrix.shape}"
+        if space_per_value is None:
+            # use the maximum space by default, so we definitely have enough space
+            space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_COMPLEX_NUMBER
+
+        spacing = " "
+        if GameplayConfig.get_option_value(Options.show_ket_notation, convert=True):
+            padding = len(generate_ket(0, num_of_qubits)) + len(spacing)  # also add the space after the ket
+            text = " " * padding  # we need to pad the rows' |qubits> prefix
+            for i in range(2**num_of_qubits):
+                # space_per_value + 1 due to the trailing space
+                text += center_string(generate_ket(i, num_of_qubits), space_per_value)
+                text += spacing
+            text += "\n"
+        else:
+            text = "\n"
+        for i, row in enumerate(matrix):
+            if GameplayConfig.get_option_value(Options.show_ket_notation, convert=True):
+                text += generate_ket(i, num_of_qubits)
+                text += spacing
+            for val in row:
+                decimals = QuantumSimulationConfig.COMPLEX_DECIMALS if val.real != 0 and val.imag != 0 \
+                    else QuantumSimulationConfig.DECIMALS
+                text += center_string(complex2string(val, decimals), space_per_value)
+                text += spacing
+            text += "\n"
+        return text
 
     def __init__(self, matrix: List[List[complex]], num_of_used_gates: int):
         self.__matrix = matrix
@@ -105,28 +138,7 @@ class CircuitMatrix:
             elif self.is_imag: space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER + 1
             else: space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER
 
-        spacing = " "
-        if GameplayConfig.get_option_value(Options.show_ket_notation, convert=True):
-            padding = len(generate_ket(0, self.num_of_qubits)) + len(spacing)  # also add the space after the ket
-            text = " " * padding   # we need to pad the rows' |qubits> prefix
-            for i in range(self.size):
-                # space_per_value + 1 due to the trailing space
-                text += center_string(generate_ket(i, self.num_of_qubits), space_per_value)
-                text += spacing
-            text += "\n"
-        else:
-            text = "\n"
-        for i, row in enumerate(self.__matrix):
-            if GameplayConfig.get_option_value(Options.show_ket_notation, convert=True):
-                text += generate_ket(i, self.num_of_qubits)
-                text += spacing
-            for val in row:
-                decimals = QuantumSimulationConfig.COMPLEX_DECIMALS if val.real != 0 and val.imag != 0 \
-                    else QuantumSimulationConfig.DECIMALS
-                text += center_string(complex2string(val, decimals), space_per_value)
-                text += spacing
-            text += "\n"
-        return text
+        return CircuitMatrix.matrix_to_string(self.__matrix, self.num_of_qubits, space_per_value)
 
     def __str__(self) -> str:
         text = "CircuitMatrix("

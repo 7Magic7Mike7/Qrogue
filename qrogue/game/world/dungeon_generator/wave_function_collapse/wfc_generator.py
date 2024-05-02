@@ -5,7 +5,7 @@ from qrogue.game.world.dungeon_generator import QrogueLevelGenerator
 from qrogue.game.world.dungeon_generator.wave_function_collapse import WaveFunction, WFCLearner
 from qrogue.game.world.dungeon_generator.wave_function_collapse.learnables import LearnableMap, WFCLearnMatrix, \
     LearnableRoom
-from qrogue.game.world.map import rooms, LevelMap
+from qrogue.game.world.map import rooms, LevelMap, CallbackPack
 from qrogue.game.world.map.rooms import AreaType
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.game.world.tiles import TileCode
@@ -26,13 +26,10 @@ class WFCGenerator:
                 min_val = val
         return min_pos
 
-    def __init__(self, seed: int, data: Optional[List[WFCLearnMatrix]] = None):
+    def __init__(self, data: Optional[List[WFCLearnMatrix]] = None):
         """
         Learns the wave function from the given templates and builds a level layout based on that.
-
-        :param seed:
         """
-        self.__rand = RandomManager.create_new(seed)
         self.__pos_weights: Dict[Coordinate, Dict[Any, int]] = {}
         self.__type_weights: Dict[Optional[Any], Dict[Optional[Any], int]] = {}
         self.__learner = WFCLearner(self.__pos_weights, self.__type_weights)
@@ -45,10 +42,6 @@ class WFCGenerator:
 
         if data is not None:
             self.add_knowledge(data)
-
-    @property
-    def _rand(self) -> MyRandom:
-        return self.__rand
 
     def add_knowledge(self, data: List[WFCLearnMatrix]):
         assert len(data) > 0, "Cannot learn from empty list!"
@@ -111,14 +104,11 @@ class WFCGenerator:
             return entropy
         return 0    # todo check which value to pick
 
-    def generate(self, seed: Optional[int] = None, width: Optional[int] = None, height: Optional[int] = None,
+    def generate(self, seed: int, width: Optional[int] = None, height: Optional[int] = None,
                  static_entries: Optional[Dict[Coordinate, Any]] = None) -> List[List[Any]]:
         assert len(self.__data) > 0, "Cannot generate without learning from data before!"
 
-        if seed is None:
-            rand = self.__rand
-        else:
-            rand = RandomManager.create_new(seed)
+        rand: MyRandom = RandomManager.create_new(seed)
 
         # if no dimensions are given we take the smallest one that fits all data
         if width is None:
@@ -172,14 +162,16 @@ class WFCGenerator:
         return self.to_string(self.__type_weights)
 
 
-def load_level(seed: int, file_name: str, in_dungeon_folder: bool) -> Optional[LevelMap]:
-    generator = QrogueLevelGenerator(seed, lambda s: True, lambda s: None, lambda s, c: None, lambda s0, s1: None)
-    level, _ = generator.generate(file_name, in_dungeon_folder)
+def load_level(file_name: str, in_dungeon_folder: bool) -> Optional[LevelMap]:
+    static_seed = 7     # seed does not matter since we are only interested in learning placements
+    generator = QrogueLevelGenerator(lambda s: True, lambda s: None, lambda s, c: None, lambda s0, s1: None,
+                                     CallbackPack.dummy())
+    level, _ = generator.generate(static_seed, file_name, in_dungeon_folder)
     return level
 
 
 class WFCLayoutGenerator(WFCGenerator):
-    def __init__(self, seed: int, templates: List[Tuple[str, bool]]):
+    def __init__(self, templates: List[Tuple[str, bool]]):
         """
         Learns the wave function from the given templates and builds a level layout based on that.
 
@@ -192,21 +184,22 @@ class WFCLayoutGenerator(WFCGenerator):
         for template in templates:
             # load levels
             filename, in_dungeon_folder = template
-            level = load_level(seed, filename, in_dungeon_folder)
+            level = load_level(filename, in_dungeon_folder)
             assert level is not None, f"Could not learn from file \"{filename}\""
 
             data.append(LearnableMap(level))
 
-        super(WFCLayoutGenerator, self).__init__(seed, data)
+        super(WFCLayoutGenerator, self).__init__(data)
 
-    def generate(self, seed: Optional[int] = None, width: Optional[int] = None, height: Optional[int] = None,
+    def generate(self, seed: int, width: Optional[int] = None, height: Optional[int] = None,
                  static_entries: Optional[Dict[Coordinate, Any]] = None) -> List[List[AreaType]]:
         # we need to first place a SpawnRoom as static entry
         if static_entries is None:
             static_entries = {}
+        rm = RandomManager.create_new(seed)
         # todo random based on type_weights
-        spawn_x = self._rand.get_int(0, MapConfig.map_width(), "spawn_x in WFCLayoutGenerator")
-        spawn_y = self._rand.get_int(0, MapConfig.map_height(), "spawn_y in WFCLayoutGenerator")
+        spawn_x = rm.get_int(0, MapConfig.map_width(), "spawn_x in WFCLayoutGenerator")
+        spawn_y = rm.get_int(0, MapConfig.map_height(), "spawn_y in WFCLayoutGenerator")
         static_entries[Coordinate(spawn_x, spawn_y)] = AreaType.SpawnRoom
 
         return super(WFCLayoutGenerator, self).generate(seed, width, height, static_entries)
@@ -222,14 +215,14 @@ class WFCRoomGenerator(WFCGenerator):
     def get_level_list() -> List[Tuple[str, bool]]:
         return [(level, True) for level in MapConfig.level_list()]
 
-    def __init__(self, seed: int, templates: List[Tuple[str, bool]], room_type: rooms.AreaType):
+    def __init__(self, templates: List[Tuple[str, bool]], room_type: rooms.AreaType):
         self.__room_type = room_type
 
         data: List[LearnableRoom] = []
         for template in templates:
             # load levels
             filename, in_dungeon_folder = template
-            level = load_level(seed, filename, in_dungeon_folder)
+            level = load_level(filename, in_dungeon_folder)
             assert level is not None, f"Could not learn from file \"{filename}\""
 
             # load rooms from the provided levels
@@ -239,21 +232,18 @@ class WFCRoomGenerator(WFCGenerator):
                     if room is not None and room.type == room_type:
                         data.append(LearnableRoom(room))
 
-        super(WFCRoomGenerator, self).__init__(seed, data)
+        super(WFCRoomGenerator, self).__init__(data)
 
     @property
     def room_type(self) -> rooms.AreaType:
         return self.__room_type
     
-    def generate(self, seed: Optional[int] = None, width: Optional[int] = None, height: Optional[int] = None,
+    def generate(self, seed: int, width: Optional[int] = None, height: Optional[int] = None,
                  static_entries: Optional[Dict[Coordinate, Any]] = None) -> List[List[LearnableRoom.TileData]]:
         return super().generate(seed, width, height, static_entries)
 
 
 class WFCEmptyRoomGenerator(WFCGenerator):
-    def __init__(self, seed: int = 0):
-        super().__init__(seed)
-
     def generate(self, seed: Optional[int] = None, width: Optional[int] = None, height: Optional[int] = None,
                  static_entries: Optional[Dict[Coordinate, Any]] = None) -> List[List[LearnableRoom.TileData]]:
         if width is None: width = MapConfig.room_width()

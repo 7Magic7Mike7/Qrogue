@@ -80,10 +80,9 @@ class Keys(IntEnum):
     Help = Situational2 + 1
 
     Pause = Help + 1
-
     MatrixPopup = Pause + 1
 
-    # 20 - 29
+    # 21 - 30
     HotKey1 = MatrixPopup + 1
     HotKey2 = HotKey1 + 1
     HotKey3 = HotKey1 + 2
@@ -95,12 +94,12 @@ class Keys(IntEnum):
     HotKey9 = HotKey1 + 8
     HotKey0 = HotKey1 + 9
 
-    # 30 - 32
+    # 31 - 33
     Render = HotKey0 + 1
     PrintScreen = Render + 1
     StopSimulator = PrintScreen + 1
 
-    # 33 - 34
+    # 34 - 35
     CheatInput = StopSimulator + 1
     CheatList = CheatInput + 1
 
@@ -136,6 +135,9 @@ class Keys(IntEnum):
         if index < len(Keys):
             for i, elem in enumerate(Keys):
                 if i == index:
+                    if elem != Keys(index):
+                        from qrogue.util import Config
+                        Config.check_reachability("Controls.from_index()-inequality")
                     return elem
             # performance of above version might be better?
             # values = [elem for elem in Keys]
@@ -218,7 +220,7 @@ class Controls:
 
     def encode(self, key_pressed: int) -> Keys:
         """
-        Converts a pressed key to an internal Key-representation that encodes the corresponding action
+        Converts a pressed (raw) key to an internal (logical) Key-representation that encodes the corresponding action.
         :param key_pressed: the key that was pressed
         :return: an element of Key corresponding to the action executed by pressing key_pressed
         """
@@ -257,13 +259,21 @@ class Controls:
         base = Keys.HotKey1.num - 1
         return self.__pycui_keys[base + number]
 
-    def handle(self, key: Keys):
+    def handle(self, key: Keys) -> int:
+        """
+        :returns: the PyCUI-internal representation of the handled key
+        """
         key_pressed = self.get_key(key)
         self.__handle_key_presses(key_pressed)
+        return key_pressed
 
     @property
     def action(self) -> List[int]:
         return self.__pycui_keys[Keys.Action.num]
+
+    def are_equivalent(self, key1: Keys, key2: Keys, raw_key: int) -> bool:
+        # check if the pressed raw key is part of both logical keys, making them equivalent for the given press
+        return raw_key in self.get_keys(key1) and raw_key in self.get_keys(key2)
 
     def to_keyboard_string(self, keys: Keys, index: Optional[int] = None, separator: str = ", ",
                            end_separator: Optional[str] = None) -> str:

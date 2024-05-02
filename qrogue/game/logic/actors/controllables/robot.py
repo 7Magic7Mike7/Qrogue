@@ -325,7 +325,7 @@ class Backpack:
                 return True
         if Config.debugging():
             Logger.instance().error("Reached a line in Backpack.remove() that I think should not be reachable "
-                                    "(although it has no game-consequences if I'm wrong).", from_pycui=False)
+                                    "(although it has no game-consequences if I'm wrong).", show=False, from_pycui=False)
         try:
             self.__storage.remove(instruction)
             return True
@@ -514,7 +514,8 @@ class Robot(Controllable, ABC):
 
     def increase_score(self, amount: int):
         if amount < 0:
-            Logger.instance().error(f"Tried to increase score by a negative amount: {amount}!", from_pycui=False)
+            Logger.instance().error(f"Tried to increase score by a negative amount: {amount}!", show=False,
+                                    from_pycui=False)
             return
         self.__score += amount
 
@@ -741,7 +742,7 @@ class Robot(Controllable, ABC):
             for c in collectible.iterator():
                 self.give_collectible(c)
         else:
-            Logger.instance().error(f"Received uncovered collectible: {collectible}", from_pycui=False)
+            Logger.instance().error(f"Received uncovered collectible: {collectible}", show=False, from_pycui=False)
 
     def on_move(self):
         """

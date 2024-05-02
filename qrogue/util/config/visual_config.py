@@ -44,6 +44,8 @@ class ColorConfig:
     CIRCUIT_LABEL_COLOR = PyCuiColors.CYAN_ON_BLACK
     SPACESHIP_FLOOR_COLOR = PyCuiColors.BLACK_ON_WHITE
     QUESTION_SELECTION_COLOR = PyCuiColors.WHITE_ON_BLACK
+    LEVEL_SELECTION_HEADER_COLOR = PyCuiColors.CYAN_ON_BLACK
+    SEED_INPUT_POPUP_COLOR = PyCuiColors.BLACK_ON_WHITE
 
     ERROR_COLOR = PyCuiColors.RED_ON_BLUE
     TEXT_HIGHLIGHT = "//"
@@ -220,6 +222,19 @@ class ColorConfig:
 
 
 class PopupConfig:
+    class Importance(enum.IntEnum):
+        Undefined = 0
+        Dialogue = 1
+        Info = 2
+        Error = 3
+
+        @staticmethod
+        def from_int(value: int) -> "PopupConfig.Importance":
+            if value == PopupConfig.Importance.Dialogue: return PopupConfig.Importance.Dialogue
+            if value == PopupConfig.Importance.Info: return PopupConfig.Importance.Info
+            if value == PopupConfig.Importance.Error: return PopupConfig.Importance.Error
+            return PopupConfig.Importance.Undefined
+
     # note that the metric is:
     # 0=Center, >0 = distance to left or top border, <0 = distance to right or bottom border
     __DEFAULT_POSITION = 0
@@ -339,6 +354,12 @@ class UIConfig:
     SHOP_INVENTORY_WIDTH = 4
     SHOP_DETAILS_HEIGHT = 1
 
+    LEVEL_SELECT_MAIN_X = 1
+    LEVEL_SELECT_MAIN_Y = 4
+    LEVEL_SELECT_MAIN_HEIGHT = 5
+    LEVEL_SELECT_CHOICES_WIDTH = 3
+    LEVEL_SELECT_DETAILS_WIDTH = 7
+
     @staticmethod
     def stv_height(num_of_qubits: int) -> int:
         if num_of_qubits == 1:
@@ -353,9 +374,9 @@ class UIConfig:
 
 class HudConfig:
     ShowScore = True
-    ShowMapName = False
+    ShowMapName = True
     ShowEnergy = False
-    ShowKeys = False
+    ShowKeys = True
     ShowCoins = False
     ShowFPS = False
 

@@ -1,7 +1,7 @@
 import math
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Iterator, List
+from typing import Iterator, List, Callable, Optional
 
 
 class CollectibleType(Enum):
@@ -40,7 +40,7 @@ class Collectible(ABC):
         pass
 
     @abstractmethod
-    def description(self) -> str:
+    def description(self, check_unlocks: Optional[Callable[[str], bool]] = None) -> str:
         pass
 
     @abstractmethod
@@ -62,7 +62,7 @@ class MultiCollectible(Collectible):
     def name(self) -> str:
         return "Collectible Pack"
 
-    def description(self) -> str:
+    def description(self, check_unlocks: Optional[Callable[[str], bool]] = None) -> str:
         desc = "Contains multiple Collectibles:"
         for collectible in self.__content:
             desc += "\n  - " + collectible.name()

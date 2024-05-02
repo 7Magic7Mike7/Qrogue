@@ -12,10 +12,14 @@ class MyRandom:
     __Next_Id: int = 0
 
     def __init__(self, seed: int):
-        seed = seed % Config.MAX_SEED
+        self.__seed = seed % Config.MAX_SEED
         self.__random: Random = Random(seed)
         self.__id: int = MyRandom.__Next_Id
         MyRandom.__Next_Id += 1
+
+    @property
+    def seed(self) -> int:
+        return self.__seed
 
     def get(self, min_: float = 0.0, max_: float = 1.0, msg: str = ""):
         MyRandom.COUNTER += 1
@@ -47,7 +51,7 @@ class MyRandom:
                 iterable.pop(index)
             except ValueError:
                 from qrogue.util.logger import Logger
-                Logger.instance().error(f"{iterable} doesn't contain {elem}", from_pycui=False)
+                Logger.instance().error(f"{iterable} doesn't contain {elem}", show=False, from_pycui=False)
         return elem
 
     def get_element_prioritized(self, iterable, priorities: List[float], msg: str = str(COUNTER)) -> Any:
@@ -59,7 +63,7 @@ class MyRandom:
             prio_sum = sum(priorities)
         except:
             Logger.instance().error("No valid priorities provided! Returning a random element to avoid crashing.",
-                                    from_pycui=False)
+                                    show=False, from_pycui=False)
             return self.get_element(iterable, remove=False, msg=msg)
         # elements without a given priority will be less than the minimum given priority by the number of prioritized
         # elements divided by the number of all elements, e.g. [1, 2, 1], 4 elements -> 3/4
@@ -80,40 +84,9 @@ class MyRandom:
                                            "fixed as soon as possible!"))
 
 
-class RandomManager(MyRandom):
-    __instance = None
-
+class RandomManager:
     @staticmethod
-    def create_new(seed: Optional[int] = None) -> MyRandom:
+    def create_new(seed: int) -> MyRandom:
         if seed is None:
-            seed = RandomManager.instance().get_seed(msg=f"RM.create_new{MyRandom.COUNTER}")
+            ErrorConfig.raise_deletion_exception()
         return MyRandom(seed)
-
-    @staticmethod
-    def instance() -> MyRandom:
-        if RandomManager.__instance is None:
-            Logger.instance().throw(Exception(ErrorConfig.singleton_no_init("RandomManager")))
-        return RandomManager.__instance
-
-    @staticmethod
-    def force_seed(new_seed: int) -> None:
-        if RandomManager.__instance is None:
-            RandomManager(new_seed)
-        else:
-            RandomManager.__instance = RandomManager.create_new(new_seed)
-            # PathConfig.write("random_debug.txt", f"RandomManager.init({new_seed})\n", append=True)
-
-    @staticmethod
-    def reset():
-        if TestConfig.is_active():
-            RandomManager.__instance = None
-        else:
-            raise TestConfig.StateException(ErrorConfig.singleton_reset("RandomManager"))
-
-    def __init__(self, seed: int):
-        if RandomManager.__instance is not None:
-            Logger.instance().throw(Exception(ErrorConfig.singleton("RandomManager")))
-        else:
-            super().__init__(seed)
-            RandomManager.__instance = self
-            # PathConfig.write("random_debug.txt", f"RandomManager.init({seed})\n", append=True)

@@ -421,7 +421,8 @@ class Room(Area):
             return self.__hallways[direction]
         elif throw_error:
             dic = [(str(self.__hallways[k]) + "\n") for k in self.__hallways]
-            Logger.instance().error(f"Invalid hallway access for {self}:\n{direction} not in {dic}", from_pycui=False)
+            Logger.instance().error(f"Invalid hallway access for {self}:\n{direction} not in {dic}", show=False,
+                                    from_pycui=False)
         return None
 
     def make_visible(self):
@@ -692,7 +693,7 @@ class SpawnRoom(CopyAbleRoom):
             else:
                 CommonQuestions.GoingBack.ask(self.__conditional_going_back)
         else:
-            Logger.instance().error("is_done_callback not set yet!", from_pycui=False)
+            Logger.instance().error("is_done_callback not set yet!", show=False, from_pycui=False)
 
     def __conditional_going_back(self, confirmed: int):
         if confirmed == 0:
@@ -721,8 +722,10 @@ class WildRoom(BaseWildRoom):
 
     def __init__(self, factory: target_factory.EnemyFactory, chance: float = 0.6, north_hallway: Hallway = None,
                  east_hallway: Hallway = None, south_hallway: Hallway = None, west_hallway: Hallway = None):
+        from qrogue.util import Config
+        Config.check_reachability("WildRoom()")
         self.__dictionary = {1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [], 9: []}
-        rm = RandomManager.create_new()
+        rm = RandomManager.create_new(7)
 
         available_positions = []
         for y in range(Room.INNER_HEIGHT):

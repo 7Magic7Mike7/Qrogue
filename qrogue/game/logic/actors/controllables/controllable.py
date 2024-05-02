@@ -106,3 +106,6 @@ class Controllable(ABC):
         :return: None
         """
         pass
+
+    def __str__(self) -> str:
+        return f"{self.name} [\"{self.description()}\"]"

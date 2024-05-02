@@ -1,6 +1,6 @@
 import enum
 from abc import ABC, abstractmethod
-from typing import Iterator, Optional, Set, Dict, List
+from typing import Iterator, Optional, Set, Dict, List, Callable
 
 import math
 
@@ -9,7 +9,7 @@ from qiskit.circuit import Gate as QiskitGate
 
 from qrogue.game.logic.base import StateVector, CircuitMatrix, QuantumSimulator, QuantumCircuit
 from qrogue.game.logic.collectibles import Collectible, CollectibleType
-from qrogue.util import ShopConfig, Logger, AchievementManager
+from qrogue.util import ShopConfig, Logger
 from qrogue.util.achievements import Unlocks
 from qrogue.util.util_functions import rad2deg
 
@@ -17,54 +17,41 @@ from qrogue.util.util_functions import rad2deg
 class GateType(enum.Enum):
     # unique by their short name
     IGate = "I", "Identity", set(), \
-            "An I Gate or Identity Gate doesn't alter the Qubit in any way. It can be used as a placeholder.", \
-            [[1, 0], [0, 1]]
+            "An I Gate or Identity Gate doesn't alter the Qubit in any way. It can be used as a placeholder."
     XGate = "X", "Pauli X", {"Pauli-X", "NOT"}, \
             "In the classical world an X Gate corresponds to an inverter or Not Gate.\n" \
             "It swaps the amplitudes of |0> and |1>.\n" \
-            "In the quantum world this corresponds to a rotation of 180° along the x-axis, hence the name X Gate.", \
-            [[0, 1], [1, 0]]
+            "In the quantum world this corresponds to a rotation of 180° along the x-axis, hence the name X Gate."
     YGate = "Y", "Pauli Y", {"Pauli-Y"}, \
-            "A Y Gate rotates the Qubit along the y-axis by 180°.", \
-            [[0, complex(0, -1)], [complex(0, 1), 0]]
+            "A Y Gate rotates the Qubit along the y-axis by 180°."
     ZGate = "Z", "Pauli Z", {"Pauli-Z"}, \
-            "A Z Gate rotates the Qubit along the z-axis by 180°.", \
-            [[1, 0], [0, -1]]
+            "A Z Gate rotates the Qubit along the z-axis by 180°."
     HGate = "H", "Hadamard", set(), \
-            "The Hadamard Gate is often used to bring Qubits into Superposition.", \
-            [[1/math.sqrt(2), 1/math.sqrt(2)], [1/math.sqrt(2), -1/math.sqrt(2)]]
+            "The Hadamard Gate is often used to bring Qubits into Superposition."
 
     SGate = "S", "Phase", {"P", "Phase Shift S"}, \
             "The S Gate can change the phase of a qubit by multiplying its |1> with i (note that this does not alter " \
-            "the probability of measuring |0> or |1>!). It is equivalent to a rotation along the z-axis by 90°.", \
-            [[1, 0], [0, complex(0, 1)]]
+            "the probability of measuring |0> or |1>!). It is equivalent to a rotation along the z-axis by 90°."
     RYGate = "RY", "Rotational Y", {"Rot Y"}, \
-             "The RY Gate conducts a rotation along the y-axis by a certain angle. In our case the angle is 90°.", \
-             [[math.cos(math.pi/2 / 2), -math.sin(math.pi/2 / 2)], [math.sin(math.pi/2 / 2), math.cos(math.pi/2 / 2)]]
+             "The RY Gate conducts a rotation along the y-axis by a certain angle. In our case the angle is 90°."
     RZGate = "RZ", "Rotational Z", {"Rot Z", "Phase Shift Z", "Phase Flip"}, \
-             "The RZ Gate conducts a rotation along the z-axis by a certain angle. In our case the angle is 90°.", \
-             [[math.e ** (complex(0, -1) * math.pi/2 / 2), 0], [0, math.e ** (complex(0, 1) * math.pi/2 / 2)]]
+             "The RZ Gate conducts a rotation along the z-axis by a certain angle. In our case the angle is 90°."
 
     SwapGate = "SW", "Swap", set(), \
-               "As the name suggests, Swap Gates swap the amplitude between two Qubits.", \
-               [[1, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]]
+               "As the name suggests, Swap Gates swap the amplitude between two Qubits."
     CXGate = "CX", "Controlled X", {"CNOT", "Controlled NOT"}, \
-             "Applies an X Gate onto its second Qubit (=target) if its first Qubit (=control) is 1.", \
-             [[1, 0, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0], [0, 1, 0, 0]]
+             "Applies an X Gate onto its second Qubit (=target) if its first Qubit (=control) is 1."
 
     Combined = "co", "Combined", set(), \
-               "This gate is a combination of multiple gates and acts like a blackbox.", \
-               [[0, 0], [0, 0]]
+               "This gate is a combination of multiple gates and acts like a blackbox."
 
-    Debug = "de", "Debug", set(), "Only use for debugging!", [[0, 0], [0, 0]]   # used to test spacing
+    Debug = "de", "Debug", set(), "Only use for debugging!"   # used to test spacing
 
-    def __init__(self, short_name: str, full_name: str, other_names: Set[str], description: str,
-                 matrix: List[List[complex]]):
+    def __init__(self, short_name: str, full_name: str, other_names: Set[str], description: str):
         self.__short_name = short_name
         self.__full_name = full_name
         self.__other_names = other_names
         self.__description = description
-        self.__matrix = CircuitMatrix(matrix, num_of_used_gates=0)
 
     @property
     def short_name(self) -> str:
@@ -81,10 +68,6 @@ class GateType(enum.Enum):
     @property
     def description(self) -> str:
         return self.__description
-
-    @property
-    def matrix(self) -> CircuitMatrix:
-        return self.__matrix
 
     def is_in_names(self, name: str) -> bool:
         names = {self.__short_name, self.__full_name}
@@ -110,10 +93,10 @@ class Instruction(Collectible, ABC):
     __DEFAULT_PRICE = 15 * ShopConfig.base_unit()
 
     @staticmethod
-    def compute_stv(instructions: List["Instruction"], num_of_qubits: int) -> "StateVector":
+    def compute_stv(instructions: List["Instruction"], num_of_qubits: int, inverse: bool = False) -> StateVector:
         circuit = QuantumCircuit.from_bit_num(num_of_qubits, num_of_qubits)
         for instruction in instructions:
-            instruction.append_to(circuit)
+            instruction.append_to(circuit, inverse)
         simulator = QuantumSimulator()
         amplitudes = simulator.run(circuit, do_transpile=True)
         return StateVector(amplitudes, num_of_used_gates=len(instructions))
@@ -203,8 +186,9 @@ class Instruction(Collectible, ABC):
         if not skip_position:
             self.__position = None
 
-    def append_to(self, circuit: QuantumCircuit):
-        circuit.append(self.__instruction, self._qargs, self._cargs)
+    def append_to(self, circuit: QuantumCircuit, inverse: bool = False):
+        instruction = self.__instruction.inverse() if inverse else self.__instruction
+        circuit.append(instruction, self._qargs, self._cargs)
 
     def qargs_iter(self) -> Iterator[int]:
         return iter(self._qargs)
@@ -216,8 +200,8 @@ class Instruction(Collectible, ABC):
     def name(self) -> str:
         return f"{self.__type.short_name} Gate"
 
-    def description(self) -> str:
-        if AchievementManager.instance().check_unlocks(Unlocks.ShowEquation):
+    def description(self, check_unlocks: Optional[Callable[[str], bool]] = None) -> str:
+        if check_unlocks is not None and check_unlocks(Unlocks.ShowEquation.ach_name):
             return self.__type.description + "\n\nMatrix:\n" + self._matrix_string()
         else:
             return self.__type.description
@@ -227,7 +211,8 @@ class Instruction(Collectible, ABC):
         pass
 
     def _matrix_string(self) -> str:
-        return self.gate_type.matrix.to_string()
+        # use the real underlying matrix because some Instructions might have parameters
+        return CircuitMatrix.matrix_to_string(self.__instruction.to_matrix(), self.num_of_qubits)
 
     @abstractmethod
     def copy(self) -> "Instruction":
@@ -355,12 +340,12 @@ class RotationGate(SingleQubitGate, ABC):
     def angle(self) -> float:
         return self.__angle
 
-    def description(self) -> str:
-        desc = super().description()   # remove the stated default angle at the end
+    def description(self, check_unlocks: Optional[Callable[[str], bool]] = None) -> str:
+        desc = super().description(check_unlocks)   # remove the stated default angle at the end
         # find indices of "°" and the whitespace before that, so we can replace the angle value.
         degree_index = desc.find("°")
         if degree_index <= 0:
-            Logger.instance().error(f"No \"°\" in the description of {self.type}!")
+            Logger.instance().error(f"No \"°\" in the description of {self.type}!", show=False, from_pycui=False)
             return desc
         space_index = desc[:degree_index].rfind(" ")
 
@@ -500,7 +485,16 @@ class InstructionManager:
     }
 
     @staticmethod
-    def from_name(name: str) -> Optional[Instruction]:
+    def validate() -> bool:
+        for val in GateType:
+            if val is GateType.Combined: continue   # todo: properly implement for Combined? Or do we have to skip them?
+            assert val in InstructionManager.__GATES, f"{val} not defined in InstructionManager.__GATES!"
+        return True
+
+    @staticmethod
+    def from_name(name: str, ignore_gate_suffix: bool = True) -> Optional[Instruction]:
+        if ignore_gate_suffix and name.lower().endswith("gate"):
+            name = name[:-len("gate")]
         for val in GateType:
             if val.is_in_names(name):
                 return InstructionManager.__GATES[val].copy()

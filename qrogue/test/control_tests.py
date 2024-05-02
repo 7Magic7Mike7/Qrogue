@@ -3,14 +3,11 @@ from typing import Optional
 
 import py_cui
 
+from qrogue.test import test_util
 from qrogue.util import Controls, Keys
 
 
 class ControlTests(unittest.TestCase):
-    @staticmethod
-    def handle_key_presses(key: int):
-        pass
-
     def __test_key(self, controls: Controls, logical_key: Keys, physical_key: int, visual_key: str,
                    category: Optional[str] = None):
         """
@@ -28,7 +25,7 @@ class ControlTests(unittest.TestCase):
         self.assertEqual(visual_key, controls.to_keyboard_string(logical_key, space_index))
 
     def test_keyboard_strings(self):
-        controls = Controls(ControlTests.handle_key_presses)
+        controls = test_util.get_dummy_controls()
 
         # test simple letter key
         matrix_popup_keys = controls.get_keys(Keys.MatrixPopup)

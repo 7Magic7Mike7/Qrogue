@@ -9,14 +9,9 @@ class DungeonGenerator(ABC):
     WIDTH = MapConfig.map_width()
     HEIGHT = MapConfig.map_height()
 
-    def __init__(self, seed: int, width: int = WIDTH, height: int = HEIGHT):
-        self.__seed = seed
+    def __init__(self, width: int = WIDTH, height: int = HEIGHT):
         self._width = width
         self._height = height
-
-    @property
-    def seed(self) -> int:
-        return self.__seed
 
     @property
     def width(self) -> int:
@@ -27,5 +22,5 @@ class DungeonGenerator(ABC):
         return self._height
 
     @abstractmethod
-    def generate(self, data) -> Tuple[Optional[Map], bool]:
+    def generate(self, seed: int, data) -> Tuple[Optional[Map], bool]:
         pass

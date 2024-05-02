@@ -7,7 +7,7 @@ from qrogue.game.logic.actors.puzzles import Enemy, Target, Riddle, Boss
 from qrogue.game.logic.collectibles import Collectible, CollectibleFactory, Instruction, CXGate, SwapGate, Energy, Score
 from qrogue.game.logic.collectibles.instruction import YGate, ZGate
 from qrogue.game.world.navigation import Direction
-from qrogue.util import Logger, MyRandom, RandomManager
+from qrogue.util import Logger, MyRandom
 
 
 class StvDifficulty:
@@ -145,8 +145,9 @@ class RiddleDifficulty(TargetDifficulty):
 
 class PuzzleDifficulty:
     @staticmethod
-    def __create_stv(pool: List[Instruction], num_gates: int, num_qubits: int, rm: MyRandom) -> StateVector:
-        instructions = []
+    def __create_stv(pool: List[Instruction], num_gates: int, num_qubits: int, rm: MyRandom, inverse: bool = False) \
+            -> StateVector:
+        instructions: List[Instruction] = []
         for i in range(num_gates):
             # choose random gates on random qubits and cbits
             qubits = list(range(num_qubits))
@@ -154,7 +155,7 @@ class PuzzleDifficulty:
             while instruction.use_qubit(rm.get_element(qubits, remove=True, msg="PuzzleDiff_selectQubit")):
                 pass
             instructions.append(instruction)
-        return Instruction.compute_stv(instructions, num_qubits)
+        return Instruction.compute_stv(instructions, num_qubits, inverse)
 
     def __init__(self, num_input_gates: int, num_target_gates: int):
         self.__num_input_gates = num_input_gates
@@ -170,21 +171,22 @@ class PuzzleDifficulty:
         else:
             num_input_gates, num_target_gates = self.__num_input_gates, self.__num_target_gates
 
+        # input has to be inversed since the player can only apply the corresponding gates from the right of input_stv
         input_stv = PuzzleDifficulty.__create_stv(instruction_pool, min(num_input_gates, robot.circuit_space),
-                                                  robot.num_of_qubits, rm)
+                                                  robot.num_of_qubits, rm, inverse=True)
 
-        # check if we have to re-roll (i.e., input and target are the same
-        max_rerolls = 10
+        # check if we have to re-roll (i.e., input and target are the same)
+        remaining_rerolls = 10
         target_stv = PuzzleDifficulty.__create_stv(instruction_pool.copy(), min(num_target_gates, robot.circuit_space),
                                                    robot.num_of_qubits, rm)
-        while input_stv.get_diff(target_stv).is_zero and max_rerolls > 0:
+        while input_stv.get_diff(target_stv).is_zero and remaining_rerolls > 0:
             target_stv = PuzzleDifficulty.__create_stv(instruction_pool.copy(),
                                                        min(num_target_gates, robot.circuit_space),
                                                        robot.num_of_qubits, rm)
-            max_rerolls -= 1
+            remaining_rerolls -= 1
 
-        # if max_rerolls > 0 we know that the loop above terminated because the vectors are not the same -> done
-        if max_rerolls <= 0 and input_stv.get_diff(target_stv).is_zero:
+        # if remaining_rerolls > 0 we know that the loop above terminated because the vectors are not the same -> done
+        if remaining_rerolls <= 0 and input_stv.get_diff(target_stv).is_zero:
             inst_text = "; ".join([str(inst) for inst in robot.get_available_instructions()])
             Logger.instance().warn(f"Couldn't re-roll input and target to be different! {inst_text}", from_pycui=False)
         return input_stv, target_stv
@@ -332,7 +334,7 @@ class RiddleFactory:
         stv = self.__difficulty.create_statevector(self.__robot, rm)
         reward = self.__difficulty.produce_reward(rm)
         attempts = self.__difficulty.get_attempts(rm)
-        return Riddle(self._next_id(), stv, reward, attempts)
+        return Riddle(self._next_id(), stv, reward, rm.get_seed("producing a Riddle"), attempts)
 
 
 class BossFactory:
@@ -345,7 +347,6 @@ class BossFactory:
                  next_id_callback: Optional[Callable[[], int]] = None):
         self.__robot = robot
         self.__reward_pool = reward_pool
-        self.__rm = RandomManager.create_new()
         self.__next_id = 0
 
         if next_id_callback is None:
@@ -359,8 +360,8 @@ class BossFactory:
         else:
             self._next_id = next_id_callback
 
-    def produce(self, include_gates: Optional[List[Instruction]], input_gates: Optional[List[Instruction]] = None) \
-            -> Boss:
+    def produce(self, rm: MyRandom, include_gates: Optional[List[Instruction]],
+                input_gates: Optional[List[Instruction]] = None) -> Boss:
         if include_gates is None: include_gates = []
         if input_gates is None: input_gates = []
 
@@ -374,29 +375,29 @@ class BossFactory:
             if len(gates_for_target) >= self.__robot.circuit_space: break
 
             gate = g.copy()
-            if self.__prepare_gate(gate, qubit_count, qubits): gates_for_input.append(gate)
+            if self.__prepare_gate(rm, gate, qubit_count, qubits): gates_for_input.append(gate)
 
         for g in include_gates:
             # stop before we're using more gates than the robot can place
             if len(gates_for_target) >= self.__robot.circuit_space: break
 
             gate = g.copy()
-            if self.__prepare_gate(gate, qubit_count, qubits): gates_for_target.append(gate)
+            if self.__prepare_gate(rm, gate, qubit_count, qubits): gates_for_target.append(gate)
 
         usable_gates = self.__robot.get_available_instructions()
         while len(usable_gates) > 0 and len(gates_for_target) < self.__robot.circuit_space:
-            gate = self.__rm.get_element(usable_gates, remove=True, msg="BossFactory_selectGate")
-            if self.__prepare_gate(gate, qubit_count, qubits):
+            gate = rm.get_element(usable_gates, remove=True, msg="BossFactory_selectGate")
+            if self.__prepare_gate(rm, gate, qubit_count, qubits):
                 gates_for_target.append(gate)
 
-        reward = self.__rm.get_element(self.__reward_pool, msg="BossFactory_reward")
+        reward = rm.get_element(self.__reward_pool, msg="BossFactory_reward")
         return Boss(self._next_id(), [(Instruction.compute_stv(gates_for_target, self.__robot.num_of_qubits),
                                       Instruction.compute_stv(gates_for_input, self.__robot.num_of_qubits))], reward)
 
-    def __prepare_gate(self, gate: Instruction, qubit_count: List[int], qubits: List[int]) -> bool:
+    def __prepare_gate(self, rm: MyRandom, gate: Instruction, qubit_count: List[int], qubits: List[int]) -> bool:
         gate_qubits = qubits.copy()
         while len(gate_qubits) > 0:
-            qubit = self.__rm.get_element(gate_qubits, remove=True, msg="BossFactory_selectQubit")
+            qubit = rm.get_element(gate_qubits, remove=True, msg="BossFactory_selectQubit")
             qubit_count[qubit] += 1
             if qubit_count[qubit] >= self.__robot.circuit_space:
                 qubits.remove(qubit)

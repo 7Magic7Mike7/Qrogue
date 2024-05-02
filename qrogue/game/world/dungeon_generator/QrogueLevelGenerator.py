@@ -14,7 +14,7 @@ from qrogue.game.target_factory import EnemyFactory, ExplicitTargetDifficulty, E
 from qrogue.game.world import tiles
 from qrogue.game.world.map import CallbackPack, LevelMap, rooms, MapMetaData
 from qrogue.game.world.navigation import Coordinate, Direction
-from qrogue.util import Config, MapConfig, PathConfig, Logger, CommonQuestions, RandomManager, load_help_text
+from qrogue.util import Config, MapConfig, PathConfig, Logger, CommonQuestions, RandomManager, MyRandom, load_help_text
 
 from qrogue.game.world.dungeon_generator import parser_util
 from qrogue.game.world.dungeon_generator.dungeon_parser.QrogueDungeonLexer import QrogueDungeonLexer
@@ -134,21 +134,23 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             # todo print warning?
             return None
 
-    def __init__(self, seed: int, check_achievement: Callable[[str], bool], trigger_event: Callable[[str], None],
-                 load_map_callback: Callable[[str, Coordinate], None],
-                 show_message_callback: Callable[[str, str, Optional[bool], Optional[int]], None]):
-        super(QrogueLevelGenerator, self).__init__(seed, 0, 0)
-        self.__seed = seed
-        self.__check_achievement = check_achievement
-        self.__trigger_event = trigger_event
+    def __init__(self, check_achievement_callback: Callable[[str], bool],
+                 trigger_event_callback: Callable[[str], None], load_map_callback: Callable[[str, Coordinate], None],
+                 show_message_callback: Callable[[str, str, Optional[bool], Optional[int]], None],
+                 callback_pack: CallbackPack):
+        super(QrogueLevelGenerator, self).__init__(0, 0)
+        self.__check_achievement = check_achievement_callback
+        self.__trigger_event = trigger_event_callback
         self.__load_map = load_map_callback
         self.__show_message = show_message_callback
+        self.__cbp = callback_pack
         self.__meta_data = MapMetaData(None, None, True, self.__show_description)
 
         self.__warnings = 0
         self.__level: Optional[LevelMap] = None
         self.__robot: Optional[Robot] = None
-        self.__rm = RandomManager.create_new(seed)
+        # todo: update visibility of QrogueLevelGenerator to no one can accidentally call a visit-method with uninitialized __rm
+        self.__rm: Optional[MyRandom] = None    # is only used to randomize rewards and puzzles, placements are static
 
         self.__default_speaker = QrogueLevelGenerator.__DEFAULT_SPEAKER
         self.__messages: Dict[str, Message] = {}
@@ -179,10 +181,6 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         # creating their own redundant hallway
         self.__created_hallways: Dict[Coordinate, Dict[Direction, rooms.Hallway]] = {}
 
-    @property
-    def __cbp(self) -> CallbackPack:
-        return CallbackPack.instance()
-
     def __show_description(self):
         if self.__meta_data.description:
             ret = self.__meta_data.description.get(self.__check_achievement)
@@ -190,14 +188,15 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
                 title, text = ret
                 self.__show_message(title, text, None, self.__meta_data.description.position)
 
-    def warning(self, text: str, loc_details: Optional[str] = None):
+    def _warning(self, text: str, loc_details: Optional[str] = None):
         loc_details = "" if loc_details is None else "~" + loc_details
         level_name = "[meta_data uninitialized]" if self.__meta_data is None else self.__meta_data.name
         parser_util.warning(text, f"{level_name}{loc_details}")
         self.__warnings += 1
 
-    def generate(self, file_name: str, in_dungeon_folder: bool = True) -> Tuple[Optional[LevelMap], bool]:
-        map_data = PathConfig.read_level(file_name, in_dungeon_folder)
+    def generate(self, seed: int, file_path: str, in_dungeon_folder: bool = True) -> Tuple[Optional[LevelMap], bool]:
+        self.__rm = RandomManager.create_new(seed)
+        map_data = PathConfig.read_level(file_path, in_dungeon_folder)
 
         input_stream = InputStream(map_data)
         lexer = QrogueDungeonLexer(input_stream)
@@ -208,7 +207,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         try:
             meta_data, room_matrix = self.visit(parser.start())
         except SyntaxError as se:
-            Logger.instance().error(str(se), from_pycui=False)
+            Logger.instance().error(str(se), show=False, from_pycui=False)
             return None, False
 
         # add empty rooms if rows don't have the same width
@@ -223,7 +222,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         if self.__spawn_pos is None:
             raise SyntaxError("No SpawnRoom provided! Make sure to place 'SR' in the layout and if you defined a "
                               "custom SpawnRoom make sure to tag it as (Spawn).")
-        self.__level = LevelMap(meta_data, file_name, self.__seed, room_matrix, self.__robot, self.__spawn_pos,
+        self.__level = LevelMap(meta_data, file_path, seed, room_matrix, self.__robot, self.__spawn_pos,
                                 self.__check_achievement, self.__trigger_event)
         return self.__level, True
 
@@ -247,8 +246,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         tile_code = QrogueLevelGenerator.__tile_str_to_code(tile_str)
         if tile_code is tiles.TileCode.Enemy:
             enemy_id = int(tile_str)
-            enemy = tiles.Enemy(self.__default_enemy_factory, get_entangled_enemies, update_entangled_groups, enemy_id,
-                                self._next_tile_id)
+            enemy = tiles.Enemy(self.__default_enemy_factory, get_entangled_enemies, update_entangled_groups,
+                                self.__rm.get_seed("creating default Enemy"), enemy_id, self._next_tile_id)
             if enemy_id not in enemy_dic:
                 enemy_dic[enemy_id] = []
             enemy_dic[enemy_id].append(enemy)
@@ -263,7 +262,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         elif tile_code is tiles.TileCode.Riddler:
             stv = self.__default_target_difficulty.create_statevector(self.__robot, self.__rm)
             reward = self.__default_collectible_factory.produce(self.__rm)
-            riddle = Riddle(self._next_target_id(), stv, reward, self.__DEFAULT_NUM_OF_RIDDLE_ATTEMPTS)
+            riddle = Riddle(self._next_target_id(), stv, reward, self.__rm.get_seed("creating a default Riddle"),
+                            self.__DEFAULT_NUM_OF_RIDDLE_ATTEMPTS)
             return tiles.Riddler(self.__cbp.open_riddle, riddle)
 
         elif tile_code is tiles.TileCode.ShopKeeper:
@@ -275,7 +275,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         elif tile_code is tiles.TileCode.Obstacle:
             return tiles.Obstacle()
         else:
-            self.warning(f"Unknown tile without default-value specified: {tile_str}. Using a Floor-Tile instead.")
+            self._warning(f"Unknown tile without default-value specified: {tile_str}. Using a Floor-Tile instead.")
             return tiles.Floor()
 
     def __get_draw_strategy(self, ctx: QrogueDungeonParser.Draw_strategyContext):
@@ -321,7 +321,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         elif QrogueLevelGenerator._StaticTemplates.is_pickup_energy(ref):
             pool = [pickup.Energy()]
         else:
-            self.warning(f"Imports not yet supported: {ref}. Choosing from default_reward_factory!")
+            self._warning(f"Imports not yet supported: {ref}. Choosing from default_reward_factory!")
             # todo implement imports
             return self.__default_collectible_factory
         return CollectibleFactory(pool)
@@ -333,7 +333,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             return self.__target_difficulties[ref]
         elif allow_default:
             # todo implement imports
-            self.warning(f"Imports not yet supported: {ref}. Choosing default_target_difficulty!")
+            self._warning(f"Imports not yet supported: {ref}. Choosing default_target_difficulty!")
             return self.__default_target_difficulty
         else:
             return None
@@ -345,7 +345,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
         gate = InstructionManager.from_name(ref)
         if gate is None:
-            self.warning(f"Unknown gate reference: {reference}. Returning I Gate instead.")
+            self._warning(f"Unknown gate reference: {reference}. Returning I Gate instead.")
             return instruction.IGate()
         return gate
 
@@ -362,7 +362,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             if help_text:
                 # todo check if we really want to prioritize help texts
                 return Message.create_with_title(norm_ref, Config.system_name(), help_text, True, None)
-        self.warning(f"Unknown text reference: {ref}. Returning \"Message not found!\"")
+        self._warning(f"Unknown text reference: {ref}. Returning \"Message not found!\"")
         return Message.error("Message not found!")
 
     def __load_hallway(self, hw_id: str) -> Optional[tiles.Door]:
@@ -383,7 +383,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             if room.type is rooms.AreaType.SpawnRoom:
                 spawn_pos = Coordinate(x, y)
                 if self.__spawn_pos is not None:
-                    self.warning(f"A second SpawnRoom was defined! Ignoring the first one @{self.__spawn_pos} and "
+                    self._warning(f"A second SpawnRoom was defined! Ignoring the first one @{self.__spawn_pos} and "
                                  f"using the new one @{spawn_pos} instead.")
                 self.__spawn_pos = spawn_pos
             return room.copy(hw_dic)
@@ -393,7 +393,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
                                    place_teleporter=self.__meta_data.has_teleporter)
             spawn_pos = Coordinate(x, y)
             if self.__spawn_pos is not None:
-                self.warning(f"A second SpawnRoom was defined! Ignoring the first one @{self.__spawn_pos} and "
+                self._warning(f"A second SpawnRoom was defined! Ignoring the first one @{self.__spawn_pos} and "
                              f"using the new one @{spawn_pos} instead.")
             self.__spawn_pos = spawn_pos
             return room
@@ -404,7 +404,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             self.__rooms[room_id] = room
             return room
         else:
-            self.warning(f"room_id \"{room_id}\" not specified and imports not yet supported! "
+            self._warning(f"room_id \"{room_id}\" not specified and imports not yet supported! "
                          "Placing an empty room instead.")
             room = rooms.Placeholder.empty_room(hw_dic)
             self.__rooms[room_id] = room
@@ -446,7 +446,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
                 try:
                     message.resolve_message_ref(alt_message)
                 except ValueError as ve:
-                    self.warning("Message-cycle found: " + str(ve), message.id)
+                    self._warning("Message-cycle found: " + str(ve), message.id)
 
     ##### Reward Pool area #####
 
@@ -473,7 +473,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         elif ctx.NONE_LITERAL():
             return None
         else:
-            self.warning("No legal collectible specified!")
+            self._warning("No legal collectible specified!")
         return None
 
     def visitCollectibles(self, ctx: QrogueDungeonParser.CollectiblesContext) -> List[Collectible]:
@@ -516,7 +516,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         gates: List[Instruction] = []
         for gate_spec in ctx.GATE_SPECIFIER():
             name = gate_spec.getText()[1:]
-            gate = InstructionManager.from_name(name).copy()
+            gate = InstructionManager.from_name(name)   # from_name already returns a copy
             if gate is None:
                 parser_util.error(f"Invalid gate name: {name}")
                 continue
@@ -526,7 +526,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
     def visitCircuit_gate_multi(self, ctx: QrogueDungeonParser.Circuit_gate_multiContext) -> Optional[Instruction]:
         name = ctx.GATE_SPECIFIER().getText()[1:]
-        gate = InstructionManager.from_name(name).copy()
+        gate = InstructionManager.from_name(name)   # from_name already returns a copy
         if gate is None:
             parser_util.error(f"Invalid gate name: {name}")
             return None
@@ -537,7 +537,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
                               f"{num_provided_qubits} are specified.")
             return None
         elif gate.num_of_qubits < num_provided_qubits:
-            self.warning(f"Too much qubits provided. {gate.num_of_qubits} are needed but {num_provided_qubits} "
+            self._warning(f"Too much qubits provided. {gate.num_of_qubits} are needed but {num_provided_qubits} "
                          f"are specified. The last {num_provided_qubits - gate.num_of_qubits} qubits are "
                          f"ignored.", name)
 
@@ -568,7 +568,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             for cn in ctx.complex_number():
                 amplitudes.append(self.visit(cn))
             if not StateVector.check_amplitudes(amplitudes):
-                self.warning(f"Invalid amplitudes for StateVector: {amplitudes}! Using 0-only basis state instead.")
+                self._warning(f"Invalid amplitudes for StateVector: {amplitudes}! Using 0-only basis state instead.")
                 amplitudes = [1] + [0] * (2 ** self.__robot.num_of_qubits - 1)
             return StateVector(amplitudes)
 
@@ -581,7 +581,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
                 return difficulty.copy_pool()
             else:
                 diff_id = ctx.REFERENCE().getText()
-                self.warning(f"Illegal diff_id: {diff_id}. Make sure to only reference previously defined pool ids!")
+                self._warning(f"Illegal diff_id: {diff_id}. Make sure to only reference previously defined pool ids!")
                 return []
 
     def visitStvs(self, ctx: QrogueDungeonParser.StvsContext) -> List[StateVector]:
@@ -654,11 +654,11 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
                 ref_index += 1
             else:
                 open_state = tiles.DoorOpenState.Closed
-                self.warning("Event lock specified without an event id! Ignoring the lock and placing a closed door "
+                self._warning("Event lock specified without an event id! Ignoring the lock and placing a closed door "
                              "instead.")
         else:
             open_state = tiles.DoorOpenState.Closed
-            self.warning("Invalid hallway attribute: it is neither locked nor opened nor closed!")
+            self._warning("Invalid hallway attribute: it is neither locked nor opened nor closed!")
         entangled_ids = []
         for hw_id in ctx.HALLWAY_ID():
             entangled_ids.append(hw_id.symbol.text)
@@ -744,7 +744,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
     def visitRiddle_descriptor(self, ctx: QrogueDungeonParser.Riddle_descriptorContext) -> tiles.Riddler:
         attempts = self.visit(ctx.integer())
         stv, reward, input_stv = self.visit(ctx.puzzle_parameter())
-        riddle = Riddle(self._next_target_id(), stv, reward, attempts, input_stv)
+        riddle = Riddle(self._next_target_id(), stv, reward, self.__rm.get_seed("creating a defined Riddle"), attempts,
+                        input_stv)
         return tiles.Riddler(self.__cbp.open_riddle, riddle)
 
     def visitChallenge_descriptor(self, ctx: QrogueDungeonParser.Challenge_descriptorContext) -> tiles.Challenger:
@@ -826,7 +827,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         else:
             collectible = self.visit(ctx.collectible())
             if collectible is None:
-                self.warning("Wrongly described collectible! Creating one of the default pool instead.")
+                self._warning("Wrongly described collectible! Creating one of the default pool instead.")
                 collectible = self.__default_collectible_factory.produce(self.__rm)
         return tiles.Collectible(collectible)
 
@@ -926,8 +927,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             enemy_factory.set_custom_reward_factory(reward_factory)
         # else we use the default one either of the loaded difficulty or it already is default_collectible_factory
 
-        enemy = tiles.Enemy(enemy_factory, get_entangled_tiles, update_entangled_room_groups, enemy_id,
-                            self._next_tile_id)
+        enemy = tiles.Enemy(enemy_factory, get_entangled_tiles, update_entangled_room_groups,
+                            self.__rm.get_seed("creating defined Enemy"), enemy_id, self._next_tile_id)
         #   update_entangled_room_groups(enemy) # by commenting this the original (copied from) tile is not in the list
         return enemy
 
@@ -951,7 +952,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         elif ctx.message_descriptor():
             tile = self.visit(ctx.message_descriptor())
         else:
-            self.warning("Invalid tile_descriptor! It is neither enemy, collectible, trigger or energy. "
+            self._warning("Invalid tile_descriptor! It is neither enemy, collectible, trigger or energy. "
                          "Returning tiles.Invalid() as consequence.")
             return tiles.Invalid()
 
@@ -1002,7 +1003,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         elif ctx.STORY_LITERAL():
             return rooms.AreaType.StoryRoom
         else:
-            self.warning(f"Invalid r_type: {ctx.getText()}")
+            self._warning(f"Invalid r_type: {ctx.getText()}")
             return rooms.AreaType.Invalid
 
     def visitR_visibility(self, ctx: QrogueDungeonParser.R_visibilityContext) -> Tuple[bool, bool]:
@@ -1116,7 +1117,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             else:
                 break
         if ctx.l_room_row(MapConfig.map_height()):
-            self.warning(f"Too much room rows specified. Only maps of size ({MapConfig.map_width()}, "
+            self._warning(f"Too much room rows specified. Only maps of size ({MapConfig.map_width()}, "
                          f"{MapConfig.map_height()}) supported. Ignoring over-specified rows.")
 
         return room_matrix
@@ -1126,7 +1127,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         for child in ctx_children:
             if parser_util.check_for_overspecified_columns(x, child.symbol.type,
                                                            QrogueDungeonParser.VERTICAL_SEPARATOR):
-                self.warning(
+                self._warning(
                     f"Too much room columns specified. Only maps of size ({MapConfig.map_width()}, "
                     f"{MapConfig.map_height()}) supported. Ignoring over-specified columns.")
                 break
@@ -1149,7 +1150,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         for child in ctx.children:
             if parser_util.check_for_overspecified_columns(x, child.symbol.type,
                                                            QrogueDungeonParser.VERTICAL_SEPARATOR):
-                self.warning(f"Too much room columns specified. Only maps of size ({MapConfig.map_width()}, "
+                self._warning(f"Too much room columns specified. Only maps of size ({MapConfig.map_width()}, "
                              f"{MapConfig.map_height()}) supported. Ignoring over-specified columns.")
                 break
 
@@ -1189,8 +1190,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             if ctx.START_ENERGY():
                 start_energy = parser_util.parse_integer(ctx.integer(integer_index))
 
-        self.__robot = robot.BaseBot(CallbackPack.instance().game_over, num_of_qubits, gates, circuit_space,
-                                     backpack_space, max_energy, start_energy)
+        self.__robot = robot.BaseBot(self.__cbp.game_over, num_of_qubits, gates, circuit_space, backpack_space,
+                                     max_energy, start_energy)
 
     ##### Meta area #####
 

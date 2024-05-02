@@ -1,9 +1,9 @@
 import os
-from datetime import datetime
 
 import qiskit   # imported to check its version
 
 from qrogue.util.config import CheatConfig, GameplayConfig, PathConfig, TestConfig
+from qrogue.util.util_functions import cur_datetime
 
 
 class Config:   # todo make singleton and handle access to other configs?
@@ -14,7 +14,7 @@ class Config:   # todo make singleton and handle access to other configs?
     __GAMEPLAY_HEAD = "[Gameplay]\n"
     __DEBUG = False
     __TEST_LEVEL = False
-    __SKIP_LEARNING = True
+    __SKIP_LEARNING = False
 
     __HEADER = "QRogue "
     __SEED_HEAD = "Seed="
@@ -71,8 +71,12 @@ class Config:   # todo make singleton and handle access to other configs?
         return Config.__VERSION
 
     @staticmethod
+    def report_address() -> str:
+        return "qrogue.game@gmail.com"
+
+    @staticmethod
     def get_log_head(seed: int) -> str:
-        now_str = datetime.now().strftime("%d%m%Y_%H%M%S")
+        now_str = cur_datetime().strftime("%d%m%Y_%H%M%S")
         head = f"{Config.__HEADER}{Config.version()}\n"
         head += f"{Config.__SEED_HEAD}{seed}\n"
         head += f"{Config.__TIME_HEAD}{now_str}\n\n"
@@ -183,3 +187,9 @@ class Config:   # todo make singleton and handle access to other configs?
         major = int(parts[0])
         minor = int(parts[1])
         return major >= 0 and minor >= 44   # >= 0.44.0
+
+    @staticmethod
+    def check_reachability(source: str, raise_exception: bool = False):
+        print(f"\"{source}\" was reached.")
+        if raise_exception:
+            raise Exception(f"Faulty code at \"{source}\" was reached!")

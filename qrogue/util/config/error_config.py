@@ -12,3 +12,13 @@ class ErrorConfig:
     @staticmethod
     def singleton_reset(singleton: str) -> str:
         return f"Can only reset the singleton \"{singleton}\" during testing!"
+
+    @staticmethod
+    def raise_deletion_exception():
+        """
+        Raises a common exception to indicate that this is old code that needs to be removed and worked around.
+
+        Returns: None
+
+        """
+        raise Exception("No longer usable!")

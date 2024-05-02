@@ -60,9 +60,9 @@ def message_popup(title: str, text: str, position: Optional[int] = None):
     print("----------------------------------------")
 
 
-def error_popup(title: str, text: str):
+def error_popup(text: str):
     print("----------------------------------------")
-    print(f"ERROR - {title}")
+    print(f"ERROR")
     print(text)
     print("----------------------------------------")
 
@@ -78,11 +78,10 @@ def get_dummy_controls(activate_printing: bool = False) -> Controls:
     return Controls(handle_key_presses)
 
 
-def init_singletons(seed: int = 7, include_config: bool = False, custom_data_path: Optional[str] = None,
+def init_singletons(include_config: bool = False, custom_data_path: Optional[str] = None,
                     custom_user_path: Optional[str] = None) -> bool:
     """
 
-    :param seed: to initialize RandomManager
     :param include_config: whether to also load config or not
     :param custom_data_path: optional, if given uses the path to load game data
     :param custom_user_path: optional, if given uses the path to load and store user data
@@ -99,10 +98,11 @@ def init_singletons(seed: int = 7, include_config: bool = False, custom_data_pat
             print("Error! Could not load base paths.")
             return False
 
-    Logger(seed, print)     # print errors instead of writing them to a file
-    Logger.instance().set_popup(message_popup, error_popup)
-    RandomManager(seed)  # initialize RandomManager
-    CallbackPack(start_gp, start_fight, start_boss_fight, open_riddle, open_challenge, visit_shop, game_over)
+    # initialize a special TestLogger instead of the normal Logger
+    TestLogger()    # works since we access Logger only via .instance()
+    #Logger.instance().info(Config.get_log_head(seed), from_pycui=False)
+    Logger.instance().set_popup(error_popup)
+    #CallbackPack(start_gp, start_fight, start_boss_fight, open_riddle, open_challenge, visit_shop, game_over)
 
     CheatConfig.init(lambda s0, s1, i0, i1: None, lambda s, i, c: None, True, True)
 
@@ -110,10 +110,24 @@ def init_singletons(seed: int = 7, include_config: bool = False, custom_data_pat
 
 
 def reset_singletons():
-    RandomManager.reset()
-    CallbackPack.reset()
-    Logger.instance().flush()   # flush before we reset to not lose data
     Logger.reset()
+
+
+class TestLogger(Logger):
+    __PRINT_PYCUI: bool = False
+
+    @staticmethod
+    def print_pycui(activate: bool = True):
+        TestLogger.__print_pycui = activate
+
+    def __init__(self):
+        super().__init__(print)
+        Logger._set_instance(self)
+
+    def _write(self, text: str, from_pycui: Optional[bool]) -> None:
+        # skip writing if text comes from PyCUI and we do not want to log PyCUI-messages
+        if from_pycui is True and not TestLogger.__PRINT_PYCUI: return
+        super()._write(text, from_pycui)
 
 
 class SingletonSetupTestCase(unittest.TestCase):
@@ -133,11 +147,9 @@ class SingletonSetupTestCase(unittest.TestCase):
         # now create new singletons
         if not init_singletons(include_config=True):
             raise Exception("Could not initialize singletons")
-        SaveData()
 
     def tearDown(self) -> None:
         # first reset
-        SaveData.reset()
         reset_singletons()
 
     def test_singleton_setup(self):
@@ -225,5 +237,5 @@ class DummyRobot(BaseBot):
     def get_img(self):
         return "D"
 
-    def description(self) -> str:
+    def description(self, check_unlocks: Optional[Callable[[str], bool]] = None) -> str:
         return "Minimal Robot for testing non-Robot dependent code (e.g. tiles)."

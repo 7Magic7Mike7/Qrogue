@@ -24,7 +24,6 @@ class Enemy(Target):
         """
         super().__init__(id_, target, reward, input_)
         self.__id: int = eid
-        self.__rm: MyRandom = RandomManager.create_new()    # todo shouldn't we provide a seed here???
 
     @property
     def flee_energy(self) -> int:

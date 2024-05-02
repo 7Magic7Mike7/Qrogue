@@ -27,11 +27,17 @@ class QuantumCircuit:
     def circuit(self) -> QiskitCircuit:
         return self.__circuit
 
-    def append(self, instruction: Gate, qargs: List[int], cargs: List[int]):
-        self.__circuit.append(instruction, qargs, cargs)
+    def append(self, gate: Gate, qargs: List[int], cargs: List[int]):
+        self.__circuit.append(gate, qargs, cargs)
 
     def to_gate(self, label: Optional[str] = None) -> Gate:
         return self.__circuit.to_gate(label=label)
+
+    def copy(self, name: Optional[str] = None) -> "QuantumCircuit":
+        return QuantumCircuit(self.__circuit.copy(name))
+
+    def __str__(self) -> str:
+        return str(self.__circuit)
 
 
 class QuantumSimulator:

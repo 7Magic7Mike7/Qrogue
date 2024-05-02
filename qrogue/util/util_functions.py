@@ -7,7 +7,7 @@ from typing import Optional, Any, Tuple
 __DEFAULT_CHARACTER = " "
 
 
-def cur_datetime() -> datetime:
+def cur_datetime() -> datetime.datetime:
     return datetime.datetime.now()
 
 
@@ -15,6 +15,10 @@ def time_diff(time1: datetime, time2: datetime) -> Tuple[int, str]:
     # '2023-09-20 20:55:54.036295'
     diff = abs(time1 - time2)
     return diff.seconds, diff
+
+
+def datetime2str(date_time: datetime) -> str:
+    return date_time.strftime('%dd%mm%Yy %H:%M:%S')
 
 
 def is_power_of_2(n: int):
@@ -73,7 +77,7 @@ def complex2string(val: complex, decimals: int) -> str:
             text = f"{real}{imag}j"
     # skip "-" in front if the text starts with "-0" and the value is actually 0 (so no more comma)
     if text.startswith("-0") and (len(text) == 2 or len(text) > 2 and text[2] != "."):
-        text = text[1:]  # I think this can never happen since we throw away 0 real- or imag-parts
+        text = text[1:]  # I think this can never happen since we throw away 0 real- or imag-parts  # IT CAN HAPPEN!
     return text
 
 
@@ -208,10 +212,13 @@ def open_folder(path: str):
     import platform
     import subprocess
 
-    # todo test for non-Windows
-    if platform.system() == "Windows":
-        os.startfile(path)
-    elif platform.system() == "Darwin":
-        subprocess.Popen(["open", path])
-    else:
-        subprocess.Popen(["xdg-open", path])
+    try:
+        # worked on Windows, Ubuntu and macOS
+        if platform.system() == "Windows":
+            os.startfile(path)
+        elif platform.system() == "Darwin":
+            subprocess.Popen(["open", path])
+        else:
+            subprocess.Popen(["xdg-open", path])
+    except Exception as ex:
+        raise ex

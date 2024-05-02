@@ -308,14 +308,14 @@ class SimpleWidget(Widget):
         super().__init__(widget)
         self.__text = initial_text
 
-    def set_data(self, data) -> None:
+    def set_data(self, data: str) -> None:
         self.__text = str(data)
 
     def render(self) -> None:
         self.widget.set_title(self.__text)
 
-    def render_reset(self) -> None:
-        self.__text = ""
+    def render_reset(self, reset_text: bool = True) -> None:
+        if reset_text: self.__text = ""
         self.widget.set_title("")
 
     def __str__(self):
@@ -575,7 +575,7 @@ class CircuitWidget(Widget):
                     gate = self.__place_holder_data.gate
                     self.__place_holder_data = None
                     return True, gate
-                Logger.instance().error("Place_Gate() did not work correctly", from_pycui=False)
+                Logger.instance().error("Place_Gate() did not work correctly", show=False, from_pycui=False)
         return False, None
 
     def set_data(self, data: Tuple[Robot, Optional[Tuple[StateVector, StateVector]]]) -> None:
@@ -650,9 +650,9 @@ class MapWidget(Widget):
         if self.__map is not None:
             rows = self.__map.row_strings()
             # add robot
-            x = self.__map.controllable_pos.x
-            y = self.__map.controllable_pos.y
-            rows[y] = rows[y][0:x] + self.__map.controllable_tile.get_img() + rows[y][x + 1:]
+            x = self.__map.robot_pos.x
+            y = self.__map.robot_pos.y
+            rows[y] = rows[y][0:x] + self.__map.robot_img + rows[y][x + 1:]
 
             self.widget.set_title("\n".join(rows))
 
@@ -966,23 +966,48 @@ class SelectionWidget(Widget):
             else:
                 self.__choices[index] = text
 
-    def set_data(self, data: Tuple[
-        Union[List[str], Tuple[List[str], List[Any]]],
-        Union[List[Callable[[], Optional[bool]]], Callable[[int], Optional[bool]]]
+    def set_data(self, data: Union[
+        Tuple[
+            Union[List[str], Tuple[List[str], List[Any]]],
+            Union[List[Callable[[], Optional[bool]]], Callable[[int], Optional[bool]]]
+        ],
+        List[Tuple[Union[str, Tuple[str, Any]], Callable[[], Optional[bool]]]]
     ]) -> None:
+        """
+        Arguments:
+            data: selection text and corresponding action callback either as
+
+                1) List of str (=texts), List of callback() or callback(index)  (=actions),
+
+                2) List of (str, Any) (=tuples of text and object connected to the text),
+                    List of callback() or callback(index)  (=actions)
+
+                3) List of (str, callback) (=tuples of text and corresponding action)
+
+                4) List of ((str, Any), callback) (=tuples of (text, object) and corresponding action
+        """
         assert len(data) >= 1, "set_data() called with empty data!"
 
         self.render_reset()
-        self.__choices, callbacks = data
-        if isinstance(callbacks, list): self.__callbacks = callbacks
-        else: self.__callbacks = [callbacks]
+
+        if isinstance(data, list):
+            self.__choices = []
+            self.__callbacks = []
+            for elem in data:
+                self.__choices.append(elem[0])
+                self.__callbacks.append(elem[1])
+        else:
+            self.__choices, callbacks = data
+            if isinstance(callbacks, list): self.__callbacks = callbacks
+            else: self.__callbacks = [callbacks]
 
         if isinstance(self.__choices, tuple):
             self.__choices, self.__choice_objects = self.__choices
 
-        choice_length = max([len(choice) for choice in self.__choices])
-        for i in range(len(self.__choices)):
-            self.__choices[i] = self.__choices[i].ljust(choice_length)
+        if self.__columns > 1:
+            choice_length = max([len(choice) for choice in self.__choices])
+            for i in range(len(self.__choices)):
+                self.__choices[i] = self.__choices[i].ljust(choice_length)
 
     def render(self) -> None:
         rows = [""] * self.rows

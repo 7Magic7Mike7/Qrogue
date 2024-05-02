@@ -72,7 +72,7 @@ class MyTestCase(unittest.TestCase):
                 "inverted //11B// for bosses.",
             "- The //12Goal// //11G// of a level and the //12Player Character// //11Q// are usually //15green//.",
             "- Level-shaping tiles like //11#// and //11o// are //15white// inverted",
-            "- Lastly, simple //15white// dots \"//11.//\" are messages that open Popups",
+            "- Lastly, simple //15white// dots //11.// are messages that open Popups",
             "",
             "The last two elements are neutral to the player and, hence, not specifically highlighted (in fact,",
             "they share their color with normal text and UI elements), while the other three are important for",

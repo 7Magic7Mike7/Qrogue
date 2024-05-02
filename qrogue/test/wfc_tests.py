@@ -12,9 +12,9 @@ from qrogue.util.util_functions import enum_str
 
 class WFCGeneratorTestCases(test_util.SingletonSetupTestCase):
     def test_layout_generator(self):
-        generator = WFCLayoutGenerator(7, [(level, True) for level in MapConfig.level_list()])
+        generator = WFCLayoutGenerator([(level, True) for level in MapConfig.level_list()])
         for i in range(7):
-            level = generator.generate()
+            level = generator.generate(7)
             text = ""
             for row in level:
                 for val in row:
@@ -24,10 +24,10 @@ class WFCGeneratorTestCases(test_util.SingletonSetupTestCase):
             self._print()
 
     def test_room_generator(self):
-        generator = WFCRoomGenerator(7, [(level, True) for level in MapConfig.level_list()],
+        generator = WFCRoomGenerator([(level, True) for level in MapConfig.level_list()],
                                      room_type=AreaType.WildRoom)
         for i in range(7):
-            room = generator.generate()
+            room = generator.generate(7)
 
             text = "#" * Area.UNIT_WIDTH + "\n"
             for row in room:

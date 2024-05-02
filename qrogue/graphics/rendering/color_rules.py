@@ -104,3 +104,11 @@ class ColorRules:
     @staticmethod
     def apply_qubit_config_rules(widget: WidgetWrapper):
         widget.add_text_color_rule("\|.*>", ColorConfig.QUBIT_CONFIG_COLOR, 'contains', match_type='regex')
+
+    @staticmethod
+    def apply_level_selection_seed_rules(widget: WidgetWrapper):
+        widget.add_text_color_rule("Seed:", ColorConfig.LEVEL_SELECTION_HEADER_COLOR, 'contains', match_type='regex')
+
+    @staticmethod
+    def apply_level_selection_level_rules(widget: WidgetWrapper):
+        widget.add_text_color_rule("Level:", ColorConfig.LEVEL_SELECTION_HEADER_COLOR, 'contains', match_type='regex')

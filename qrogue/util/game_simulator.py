@@ -1,11 +1,22 @@
 from typing import Tuple, Optional
 
 from qrogue.util import Logger
+from qrogue.util.achievements import Unlocks
 from qrogue.util.config import PathConfig, GameplayConfig, Config, ColorConfig, FileTypes
 from qrogue.util.controls import Controls, Keys
 
 
 class GameSimulator:
+    # naming convention:
+    #   - raw key = PyCUI-internal representation of the physically pressed key
+    #   - logical key = QRogue-internal representation of the logically pressed key (e.g., MoveUp, SelectionUp)
+    #       ~ multiple logical keys can correspond to the same raw key, both situationally (overlapping controls) and
+    #         permanently (same controls)
+    #   - key code = "translator" between raw and logical keys
+    #       ~ Corresponds to the integer value of a logical key, but as it is computed from raw keys it might not be
+    #         the same as its original logical counterpart. However, when given the same Controls-object, it will always
+    #         be equivalent to its original logical key.
+
     __ENCODING = "utf-8"
     __BUFFER_SIZE = 1024
 
@@ -47,8 +58,20 @@ class GameSimulator:
             config = str(self.__cur_chunk[start:end], GameSimulator.__ENCODING)
             GameplayConfig.from_log_text(config)
 
-            # continue at the second \n because for next key we start with going to the next position
-            self.__cur_index = end + 1
+            # todo: use constants instead of these strings
+            start = self.__cur_chunk.index(bytes("Qrogue<", GameSimulator.__ENCODING), end)
+            if start < 0:
+                self.__save_state = None
+            else:
+                end = self.__cur_chunk.index(bytes(">Qrogue", GameSimulator.__ENCODING), start) + len(">Qrogue")
+                self.__save_state = str(self.__cur_chunk[start:end], GameSimulator.__ENCODING)
+
+            # continue at the \n at the end of the save state because in next_key() we start with going to the next position
+            self.__cur_index = end
+        else:
+            self.__version = "???"
+            self.__seed = -1
+            self.__time = "???"
 
     @property
     def map_name(self) -> str:
@@ -70,6 +93,10 @@ class GameSimulator:
     def time(self) -> str:
         return self.__time
 
+    @property
+    def save_state(self) -> Optional[str]:
+        return self.__save_state
+
     def set_controls(self, controls: Controls):
         self.__controls = controls
 
@@ -81,7 +108,7 @@ class GameSimulator:
     def __next_key(self) -> int:
         """
 
-        :return: the next key or -1 if we should retry (self.__cur_chunk is None if we reached the end)
+        :return: the next (raw) key or -1 if we should retry (self.__cur_chunk is None if we reached the end)
         """
         self.__cur_index += 1
         if 0 <= self.__cur_index < len(self.__cur_chunk):
@@ -106,7 +133,7 @@ class GameSimulator:
     def next(self) -> Optional[int]:
         """
 
-        :return: the key to press or None if the simulation finished
+        :return: the (raw) key to press or None if the simulation finished
         """
         if self.__notification_popup:
             # close the notification popup if it is still open before using any real simulation keys
@@ -119,23 +146,33 @@ class GameSimulator:
         self.__finished = True
         return None
 
-    def print(self):
-        print(self.__version)
-        print(self.__seed)
-        print(self.__time)
-        print(GameplayConfig.to_file_text())
-        print()
-        print()
-        print("Keys:")
-        key_str = ""
+    def to_string(self, skip_header: bool = False, skip_raw_keys: bool = False, skip_logical_keys: bool = False) -> str:
+        str_repr = ""
+        if not skip_header:
+            str_repr += self.__version + "\n"
+            str_repr += str(self.__seed) + "\n"
+            str_repr += str(self.__time) + "\n"
+            str_repr += GameplayConfig.to_file_text() + "\n"
+
+        if skip_raw_keys and skip_logical_keys:
+            return str_repr
+
+        if not skip_header: str_repr += "\n\nKeys:"     # add keys header
+
+        key_strings = []
         while True:
             k = self.next()
-            if k is None:
-                break
-            key_str += f"{k} ({self.__controls.encode(k)}), "
-        print(key_str)
-        print("finished")
-        print()
+            if k is None: break
+
+            if skip_raw_keys:
+                key_strings.append(Keys(self.__controls.encode(k)).name)
+            elif skip_logical_keys:
+                key_strings.append(str(k))
+            else:
+                key_strings.append(f"{k} ({Keys(self.__controls.encode(k)).name})")
+
+        str_repr += "\n".join(key_strings) + "\n"
+        return str_repr
 
     def version_warning(self) -> Tuple[str, str]:
         __space = "Space"

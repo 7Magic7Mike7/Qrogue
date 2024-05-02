@@ -74,7 +74,7 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
 
         self._top_view = 0
         self.__lines = split_text(text, self._width - MultilinePopup.__STATIC_PY_CUI_PADDING, padding_x,
-                                  lambda err: logger.error(err, from_pycui=False))
+                                  lambda err: logger.error(err, show=False, from_pycui=False))
 
         self.__question_state = 0
         self._pageAlignment = " " * (self._width - MultilinePopup.__STATIC_PY_CUI_PADDING)
