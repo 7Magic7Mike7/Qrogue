@@ -99,6 +99,8 @@ Python 3.10 is not yet supported due to changes in import locations.
 - Debug Keys (not for use in normal play through!)
   - Print screen: CTRL+P
   - Force re-render: CTRL+R 
+
+# todo: example images for screen check to *see* how the colors should differ
   
 ## Feedback ##
 We'd be very happy if you share any feedback with us, regardless whether you liked the game or not.

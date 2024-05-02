@@ -48,4 +48,5 @@ class Player(Controllable):
         if isinstance(collectible, Key):
             self.__key_count += 1
         else:
-            Logger.instance().error(f"Tried to give player non-key collectible: {collectible}.", from_pycui=False)
+            Logger.instance().error(f"Tried to give player non-key collectible: {collectible}.", show=False,
+                                    from_pycui=False)

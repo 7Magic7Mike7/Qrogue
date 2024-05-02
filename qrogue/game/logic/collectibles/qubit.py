@@ -1,3 +1,4 @@
+from typing import Optional, Callable
 
 from qrogue.game.logic.collectibles import Collectible, CollectibleType
 
@@ -21,7 +22,7 @@ class Qubit(Collectible):
     def name(self) -> str:
         return "Qubit"
 
-    def description(self) -> str:
+    def description(self, check_unlocks: Optional[Callable[[str], bool]] = None) -> str:
         return "Qubits are the essence of any circuit you create."
 
     def default_price(self) -> int:

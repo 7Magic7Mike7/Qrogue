@@ -1,25 +1,28 @@
 import os
 import sys
 
+from qrogue.game.logic.actors import Player
 from qrogue.game.world.dungeon_generator import QrogueWorldGenerator, QrogueLevelGenerator
-from qrogue.management.save_data import SaveData
+from qrogue.game.world.map import CallbackPack
+from qrogue.management import NewSaveData
 from qrogue.test import test_util
 
 BASE_PATH = os.path.join("D:\\", "Documents", "Studium", "Master", "3. Semester", "Qrogue", "QrogueData", "data")
 
+# todo: rewrite tests
 
 def generation_test(file_name: str, world: bool = False):
-    SaveData()
-    player = SaveData.instance().player
-    check_achievement = SaveData.instance().achievement_manager.check_achievement
-    trigger_event = SaveData.instance().achievement_manager.trigger_event
+    save_data = NewSaveData()   # todo: use lambdas instead of real functions since the functions do not matter?
+    check_achievement = save_data.check_achievement
+    trigger_event = lambda event_id: None
     if world:
+        player = Player()
         generator = QrogueWorldGenerator(7, player, check_achievement, trigger_event, test_util.load_map,
                                          test_util.message_popup)
     else:
-        generator = QrogueLevelGenerator(7, check_achievement, trigger_event, test_util.load_map,
-                                         test_util.message_popup)
-    map, success = generator.generate(file_name, True)
+        generator = QrogueLevelGenerator(check_achievement, trigger_event, test_util.load_map,
+                                         test_util.message_popup, CallbackPack.dummy())
+    map, success = generator.generate(7, file_name, True)
     if success:
         print(map)
     debugging = True

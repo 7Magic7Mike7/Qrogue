@@ -11,7 +11,7 @@ from qrogue.util.util_functions import center_string, align_string, complex2stri
 
 def _wrap_in_ket_notation(number: complex, qubit: int, num_of_qubits: int,
                           decimals: Optional[int] = None, space_per_value: Optional[int] = None, coloring: bool = False,
-                          correct_amplitude: bool = False, show_percentage: bool = False):
+                          correct_amplitude: bool = False, show_percentage: bool = False, skip_ket: bool = False):
     """
 
     :param number:
@@ -22,6 +22,7 @@ def _wrap_in_ket_notation(number: complex, qubit: int, num_of_qubits: int,
     :param coloring:
     :param correct_amplitude:
     :param show_percentage:
+    :param skip_ket:
     :return:
     """
     is_complex = number.real != 0 and number.imag != 0
@@ -36,17 +37,20 @@ def _wrap_in_ket_notation(number: complex, qubit: int, num_of_qubits: int,
     value = f"{center_string(complex2string(number, decimals), space_per_value)}"
     if coloring:
         if correct_amplitude:
-            value = ColorConfig.colorize(ColorCode.CORRECT_AMPLITUDE, value)
+            value = ColorConfig.colorize(ColorCode.PUZZLE_CORRECT_AMPLITUDE, value)
         else:
-            value = ColorConfig.colorize(ColorCode.WRONG_AMPLITUDE, value)
-    if show_percentage:
-        # line_width is space + 1 because of the additional "%"
-        space = QuantumSimulationConfig.MAX_PERCENTAGE_SPACE
-        percentage = align_string(StateVector.complex_to_amplitude_percentage_string(number, space), space + 1,
-                                  left=False)
-        value += f"  ({percentage})"
+            value = ColorConfig.colorize(ColorCode.PUZZLE_WRONG_AMPLITUDE, value)
 
-    if GameplayConfig.get_option_value(Options.show_ket_notation, convert=True):
+    if show_percentage:
+        space = QuantumSimulationConfig.MAX_PERCENTAGE_SPACE
+        percentage = StateVector.complex_to_amplitude_percentage_string(number, space)
+        space += 1  # +1 because of the additional "%" we have to align
+        if percentage == "0%":
+            value += f"  {align_string('', space, left=False)}"     # show whitespace instead of redundant 0% amplitudes
+        else:
+            value += f" ~{align_string(percentage, space, left=False)}"
+
+    if GameplayConfig.get_option_value(Options.show_ket_notation, convert=True) and not skip_ket:
         return f"{generate_ket(qubit, num_of_qubits)}  {value}"
     else:
         return value
@@ -206,7 +210,8 @@ class StateVector:
             return StateVector(diff)
 
     def wrap_in_qubit_conf(self, index: int, space_per_value: Optional[int] = None, coloring: bool = False,
-                           correct_amplitude: bool = False, show_percentage: bool = False) -> str:
+                           correct_amplitude: bool = False, show_percentage: bool = False, skip_ket: bool = False) \
+            -> str:
         # don't use default decimals since we don't want it to be dependent on individual entries but rather decide
         # based on whether the vector itself is complex or not
         decimals = QuantumSimulationConfig.COMPLEX_DECIMALS if self.is_complex else QuantumSimulationConfig.DECIMALS
@@ -216,7 +221,7 @@ class StateVector:
             else: space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER
 
         return _wrap_in_ket_notation(self.at(index), index, self.num_of_qubits, decimals, space_per_value, coloring,
-                                     correct_amplitude, show_percentage)
+                                     correct_amplitude, show_percentage, skip_ket)
 
     def to_string(self, space_per_value: Optional[int] = None) -> str:
         text = ""

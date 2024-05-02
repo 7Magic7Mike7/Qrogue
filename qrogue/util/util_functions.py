@@ -7,7 +7,7 @@ from typing import Optional, Any, Tuple
 __DEFAULT_CHARACTER = " "
 
 
-def cur_datetime() -> datetime:
+def cur_datetime() -> datetime.datetime:
     return datetime.datetime.now()
 
 
@@ -15,6 +15,10 @@ def time_diff(time1: datetime, time2: datetime) -> Tuple[int, str]:
     # '2023-09-20 20:55:54.036295'
     diff = abs(time1 - time2)
     return diff.seconds, diff
+
+
+def datetime2str(date_time: datetime) -> str:
+    return date_time.strftime('%dd%mm%Yy %H:%M:%S')
 
 
 def is_power_of_2(n: int):
@@ -73,7 +77,7 @@ def complex2string(val: complex, decimals: int) -> str:
             text = f"{real}{imag}j"
     # skip "-" in front if the text starts with "-0" and the value is actually 0 (so no more comma)
     if text.startswith("-0") and (len(text) == 2 or len(text) > 2 and text[2] != "."):
-        text = text[1:]  # I think this can never happen since we throw away 0 real- or imag-parts
+        text = text[1:]  # I think this can never happen since we throw away 0 real- or imag-parts  # IT CAN HAPPEN!
     return text
 
 
@@ -104,6 +108,32 @@ def to_binary_string(num: int, digits: Optional[int] = None, msb: bool = True) -
         return str_rep
 
 
+def compute_centering(text: str, line_width: int, uneven_left: bool = True, character: str = __DEFAULT_CHARACTER) \
+        -> Tuple[str, str]:
+    """
+    Computes a prefix and suffix for the given text in such a way that it is as centered as possible in a line with the
+    given width. This prefix and suffix will consist only of the given character (repeated for centering). If the number
+    of characters to add is uneven (i.e. number of prepended and appended characters cannot be the same) the flag
+    uneven_left decides whether to prepend (= left, default) or append (= right) should be bigger.
+
+    :param text: the text to center in the line
+    :param line_width: width of the line the text should be centered in
+    :param uneven_left: whether to prepend or append one character more in case of imbalance, defaults to True
+    :param character: the character to add, defaults to whitespace " "
+    :return: prefix, suffix, such that text is centered
+    """
+    if line_width <= len(text):
+        return "", ""
+    diff = line_width - len(text)
+    half1 = int(diff / 2)
+    half2 = diff - half1
+
+    if uneven_left:
+        return half2 * character, half1 * character
+    else:
+        return half1 * character, half2 * character
+
+
 def center_string(text: str, line_width: int, uneven_left: bool = True, character: str = __DEFAULT_CHARACTER) -> str:
     """
     Prepends and appends the given character to the text in such a way that the text is centered as good as possible
@@ -117,16 +147,8 @@ def center_string(text: str, line_width: int, uneven_left: bool = True, characte
     :param character: the character to add, defaults to whitespace " "
     :return: centered version of text
     """
-    if line_width <= len(text):
-        return text
-    diff = line_width - len(text)
-    half1 = int(diff / 2)
-    half2 = diff - half1
-
-    if uneven_left:
-        return half2 * character + text + half1 * character
-    else:
-        return half1 * character + text + half2 * character
+    prefix, suffix = compute_centering(text, line_width, uneven_left, character)
+    return prefix + text + suffix
 
 
 def align_string(text: str, line_width: int, left: bool = True, character: str = __DEFAULT_CHARACTER) -> str:
@@ -190,10 +212,13 @@ def open_folder(path: str):
     import platform
     import subprocess
 
-    # todo test for non-Windows
-    if platform.system() == "Windows":
-        os.startfile(path)
-    elif platform.system() == "Darwin":
-        subprocess.Popen(["open", path])
-    else:
-        subprocess.Popen(["xdg-open", path])
+    try:
+        # worked on Windows, Ubuntu and macOS
+        if platform.system() == "Windows":
+            os.startfile(path)
+        elif platform.system() == "Darwin":
+            subprocess.Popen(["open", path])
+        else:
+            subprocess.Popen(["xdg-open", path])
+    except Exception as ex:
+        raise ex

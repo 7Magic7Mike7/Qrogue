@@ -1,4 +1,5 @@
 from abc import ABC
+from typing import Optional, Callable
 
 from qrogue.game.logic.collectibles import Collectible, CollectibleType
 from qrogue.util import ShopConfig, Logger
@@ -35,7 +36,7 @@ class Score(Pickup):
     def name(self) -> str:
         return "Score"
 
-    def description(self) -> str:
+    def description(self, check_unlocks: Optional[Callable[[str], bool]] = None) -> str:
         return "Score describes how well you performed in a level."
 
     def to_string(self) -> str:
@@ -49,7 +50,7 @@ class Coin(Pickup):
     def name(self) -> str:
         return "Coin"
 
-    def description(self) -> str:
+    def description(self, check_unlocks: Optional[Callable[[str], bool]] = None) -> str:
         return "Coins are used to buy Collectibles from the Shop"
 
     def to_string(self):
@@ -63,7 +64,7 @@ class Key(Pickup):
     def name(self) -> str:
         return "Key"
 
-    def description(self) -> str:
+    def description(self, check_unlocks: Optional[Callable[[str], bool]] = None) -> str:
         return "Keys are useful for opening locked doors."
 
     def to_string(self):
@@ -79,7 +80,7 @@ class Energy(Pickup):
     def name(self) -> str:
         return "Energy"
 
-    def description(self) -> str:
+    def description(self, check_unlocks: Optional[Callable[[str], bool]] = None) -> str:
         return "Gives back some energy to the Robot so it can stay longer on a mission."
 
     def to_string(self) -> str:

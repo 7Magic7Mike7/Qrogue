@@ -9,7 +9,7 @@ from qrogue.util.util_functions import open_folder
 class MapConfig:
     @staticmethod
     def num_of_lessons() -> int:
-        return 6  # Lesson 0 to 5
+        return 5  # Lesson 0 to 4
 
     @staticmethod
     def map_width() -> int:
@@ -114,19 +114,22 @@ class MapConfig:
     @staticmethod
     def level_list() -> List[str]:
         levels = []
-        for i in range(MapConfig.num_of_lessons()):
-            levels.append(f"l0k0v{i}")
-        levels += ["l0training", "l0exam"]
+        for knowledge_level in range(2):
+            for i in range(MapConfig.num_of_lessons()):
+                levels.append(f"l0k{knowledge_level}v{i}")
+        #levels += ["l0training", "l0exam"]
         return levels
 
 
 class CheatConfig:
+    # __ALL and __NONE do not toggle! They simply set or reset all "real" cheats. All other/"real" cheats are toggles.
     __ALL = "aLL"
     __GOD_MODE = "Qod-Mode"
     __SCARED_RABBIT = "Rabbit_Tunnel"
     __INF_RESOURCES = "Rich"
     __MAP_REVEAL = "Illuminati"
     __OBSTACLE_IGNORE = "Obstacle-Iqnor"
+    __MESSAGE_IGNORE = "Lequsi"     # can only see messages via history (including options and help menus)
     __NONE = "n0n3"
     __CHEATS = {
         __GOD_MODE: False,
@@ -134,6 +137,7 @@ class CheatConfig:
         __INF_RESOURCES: False,
         __MAP_REVEAL: False,
         __OBSTACLE_IGNORE: False,
+        __MESSAGE_IGNORE: False,
     }
 
     __allow_cheats = False
@@ -179,6 +183,13 @@ class CheatConfig:
         return CheatConfig.__CHEATS[CheatConfig.__OBSTACLE_IGNORE]
 
     @staticmethod
+    def ignore_dialogue(importance: PopupConfig.Importance) -> bool:
+        if importance <= PopupConfig.Importance.Dialogue:
+            return CheatConfig.__CHEATS[CheatConfig.__MESSAGE_IGNORE]
+        else:
+            return False    # messages more important than dialogue are not ignored
+
+    @staticmethod
     def cheat_input():
         if CheatConfig.__allow_cheats and CheatConfig.__input_popup is not None:
             CheatConfig.__input_popup("Input your Cheat:", PyCuiColors.BLACK_ON_RED, CheatConfig.__use_cheat)
@@ -192,7 +203,7 @@ class CheatConfig:
                 text += "Active\n"
             else:
                 text += "Inactive\n"
-        CheatConfig.__popup("List of Cheats", text, PopupConfig.default_pos(), PopupConfig.default_color())
+        CheatConfig.__popup("List of Cheats", text, PopupConfig.default_position(), PopupConfig.default_color())
 
     @staticmethod
     def __use_cheat(code: str) -> bool:
@@ -205,14 +216,18 @@ class CheatConfig:
             CheatConfig.__CHEATS[code] = not CheatConfig.__CHEATS[code]
             ret = True
         elif code.lower().strip() == "userdata":
-            open_folder(PathConfig.user_data_path())
+            try:
+                open_folder(PathConfig.user_data_path())
+            except Exception as ex:
+                CheatConfig.__popup("Error", f"Failed to open folder at {PathConfig.user_data_path()}: {ex}",
+                                    PopupConfig.default_position(), PopupConfig.default_color())
 
         if ret:
-            CheatConfig.__popup("Cheats", f"Successfully used the Cheat \"{code}\"", PopupConfig.default_pos(),
+            CheatConfig.__popup("Cheats", f"Successfully used the Cheat \"{code}\"", PopupConfig.default_position(),
                                 PopupConfig.default_color())
             CheatConfig.__cheated = True
         else:
-            CheatConfig.__popup("Cheats", "This is not a valid Cheat!", PopupConfig.default_pos(),
+            CheatConfig.__popup("Cheats", "This is not a valid Cheat!", PopupConfig.default_position(),
                                 PopupConfig.default_color())
         return ret
 
@@ -538,6 +553,10 @@ class ScoreConfig:
         ratio = ScoreConfig._get_ratio(checks, used_gates, expected_gates)
         return ScoreConfig._BASE_SCORE + int(ScoreConfig.__PUZZLE_BONUS * ratio)
 
+    @staticmethod
+    def compute_time_bonus(score: int, duration: int) -> int:
+        return int(score * (1.5 - 0.015 * duration ** 0.74))
+
 
 class QuantumSimulationConfig:
     DECIMALS = 3
@@ -545,7 +564,7 @@ class QuantumSimulationConfig:
     TOLERANCE = 0.1
     MAX_SPACE_PER_NUMBER = 1 + 1 + 1 + DECIMALS  # sign + "0" + "." + DECIMALS
     MAX_SPACE_PER_COMPLEX_NUMBER = 1 + 1 + COMPLEX_DECIMALS + 1 + 1 + COMPLEX_DECIMALS + 1  # sign, . & j and decimals
-    MAX_PERCENTAGE_SPACE = 3
+    MAX_PERCENTAGE_SPACE = 3    # the maximum (100%) has three digits
 
 
 class ShopConfig:
@@ -559,4 +578,5 @@ class InstructionConfig:
 
 
 class ExpeditionConfig:
+    DEFAULT_QUEUE_SIZE = 0
     DEFAULT_DIFFICULTY = 2

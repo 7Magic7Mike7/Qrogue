@@ -66,6 +66,9 @@ class MyBaseWidget(BlockLabel, WidgetWrapper):
         super(MyBaseWidget, self).add_text_color_rule(regex, color, rule_type, match_type, region, include_whitespace,
                                                       selected_color)
 
+    def reset_text_color_rules(self) -> None:
+        self._text_color_rules.clear()
+
     def activate_individual_coloring(self):
         regex = ColorConfig.REGEX_TEXT_HIGHLIGHT
         self._text_color_rules.append(
@@ -251,6 +254,10 @@ class MyMultiWidget(WidgetWrapper):
         for w in self.__widgets:
             w.add_text_color_rule(regex, color, rule_type, match_type, region, include_whitespace, selected_color)
 
+    def reset_text_color_rules(self) -> None:
+        for w in self.__widgets:
+            w.reset_text_color_rules()
+
     def activate_individual_coloring(self):
         for w in self.__widgets:
             w.activate_individual_coloring()
@@ -301,14 +308,14 @@ class SimpleWidget(Widget):
         super().__init__(widget)
         self.__text = initial_text
 
-    def set_data(self, data) -> None:
+    def set_data(self, data: str) -> None:
         self.__text = str(data)
 
     def render(self) -> None:
         self.widget.set_title(self.__text)
 
-    def render_reset(self) -> None:
-        self.__text = ""
+    def render_reset(self, reset_text: bool = True) -> None:
+        if reset_text: self.__text = ""
         self.widget.set_title("")
 
     def __str__(self):
@@ -452,7 +459,8 @@ class CircuitWidget(Widget):
             index = self.__target.to_value().index(1)
             target_values = to_binary_string(index, self.__target.num_of_qubits, msb=False)
             is_correct = out_values[qubit] == target_values[qubit]
-            equality = ColorConfig.colorize(ColorCode.CORRECT_AMPLITUDE if is_correct else ColorCode.WRONG_AMPLITUDE,
+            equality = ColorConfig.colorize(ColorCode.PUZZLE_CORRECT_AMPLITUDE if is_correct
+                                            else ColorCode.PUZZLE_WRONG_AMPLITUDE,
                                             '=' + ('=' if is_correct else '/') + '=')
             return f"= {out_values[qubit]}| {equality} <{target_values[qubit]}|"
         else:
@@ -567,7 +575,7 @@ class CircuitWidget(Widget):
                     gate = self.__place_holder_data.gate
                     self.__place_holder_data = None
                     return True, gate
-                Logger.instance().error("Place_Gate() did not work correctly", from_pycui=False)
+                Logger.instance().error("Place_Gate() did not work correctly", show=False, from_pycui=False)
         return False, None
 
     def set_data(self, data: Tuple[Robot, Optional[Tuple[StateVector, StateVector]]]) -> None:
@@ -642,9 +650,9 @@ class MapWidget(Widget):
         if self.__map is not None:
             rows = self.__map.row_strings()
             # add robot
-            x = self.__map.controllable_pos.x
-            y = self.__map.controllable_pos.y
-            rows[y] = rows[y][0:x] + self.__map.controllable_tile.get_img() + rows[y][x + 1:]
+            x = self.__map.robot_pos.x
+            y = self.__map.robot_pos.y
+            rows[y] = rows[y][0:x] + self.__map.robot_img + rows[y][x + 1:]
 
             self.widget.set_title("\n".join(rows))
 
@@ -673,6 +681,17 @@ class StateVectorWidget(Widget):
     def _headline(self) -> str:
         return f"~{self.__headline}~\n\n"
 
+    @property
+    def can_display_all_content(self) -> bool:
+        width, height = self.widget.get_abs_size()
+        content = self._stv_str_rep
+        if len(content) > 0:
+            lines = content.splitlines(keepends=False)
+            max_line_len = max([len(line) for line in lines])
+            return max_line_len <= width and len(lines) <= height
+        else:
+            return True
+
     def set_data(self, state_vector: StateVector) -> None:
         self._stv_str_rep = self._headline + state_vector.to_string()
 
@@ -698,12 +717,35 @@ class OutputStateVectorWidget(StateVectorWidget):
         widget.activate_individual_coloring()
 
     def set_data(self, state_vectors: Tuple[StateVector, StateVector], target_reached: bool = False) -> None:
+        """
+
+        Args:
+            state_vectors: Tuple of the output statevector to display and its diff to a target statevector to color the
+                            output correspondingly
+            target_reached: _no longer in use_
+
+        Returns: None
+
+        """
         output_stv, diff_stv = state_vectors
-        self._stv_str_rep = self._headline
-        for i in range(output_stv.size):
-            correct_amplitude = abs(diff_stv.at(i)) <= QuantumSimulationConfig.TOLERANCE
-            self._stv_str_rep += output_stv.wrap_in_qubit_conf(i, coloring=True, correct_amplitude=correct_amplitude)
-            self._stv_str_rep += "\n"
+
+        def wrap(skip_ket: bool):
+            return [
+                output_stv.wrap_in_qubit_conf(
+                    i, coloring=True,
+                    # check if diff is small enough
+                    correct_amplitude=abs(diff_stv.at(i)) <= QuantumSimulationConfig.TOLERANCE,
+                    skip_ket=skip_ket)
+                for i in range(output_stv.size)     # do it for every qubit combination
+            ]
+
+        lines = wrap(skip_ket=False)
+        # check if the content fits its widget
+        max_line_len = max([len(line) for line in lines])
+        width, _ = self.widget.get_abs_size()
+        if max_line_len > width: lines = wrap(skip_ket=True)    # shrink content by removing ket
+
+        self._stv_str_rep = self._headline + "\n".join(lines)
 
 
 class TargetStateVectorWidget(StateVectorWidget):
@@ -711,10 +753,31 @@ class TargetStateVectorWidget(StateVectorWidget):
         super().__init__(widget, headline)
 
     def set_data(self, state_vector: StateVector) -> None:
-        self._stv_str_rep = self._headline
-        for i in range(state_vector.size):
-            self._stv_str_rep += state_vector.wrap_in_qubit_conf(i, show_percentage=True)
-            self._stv_str_rep += "\n"
+        def wrap(skip_ket: bool):   # wrap values according to TargetStv specifics (show percentages)
+            return [
+                state_vector.wrap_in_qubit_conf(
+                    i, coloring=False, show_percentage=True,
+                    skip_ket=skip_ket)
+                for i in range(state_vector.size)  # do it for every qubit combination
+            ]
+
+        lines = wrap(skip_ket=False)
+        # check if the content fits its widget
+        max_line_len = max([len(line) for line in lines])
+        width, _ = self.widget.get_abs_size()
+
+        # "-2" is magic number found by trial and error that gives feasible results (perfect visual results are hard
+        # since it also depends on font and other spacings); possible explanation: coloring of ket needs 2 chars on the
+        # right end, meaning if they would be the only cut-off PyCUI could be smart enough to still color it
+        if max_line_len > width-2:
+            lines = wrap(skip_ket=True)  # shrink content by removing ket
+            # add whitespace so headline is not in the center but more above the amplitudes for better visuals
+            split_index = self._headline.index("\n")
+            headline = self._headline[:split_index] + " " * QuantumSimulationConfig.MAX_PERCENTAGE_SPACE \
+                + self._headline[split_index:]
+            self._stv_str_rep = headline + "\n".join(lines)
+        else:
+            self._stv_str_rep = self._headline + "\n".join(lines)
 
 
 class CircuitMatrixWidget(Widget):
@@ -723,6 +786,16 @@ class CircuitMatrixWidget(Widget):
         self.__matrix_str_rep = None
         ColorRules.apply_heading_rules(widget)
         ColorRules.apply_qubit_config_rules(widget)
+
+    @property
+    def can_display_all_content(self) -> bool:
+        width, height = self.widget.get_abs_size()
+        content = self.__matrix_str_rep
+        if len(content) > 0:
+            lines = content.splitlines(keepends=False)
+            max_line_len = max([len(line) for line in lines])
+            return max_line_len <= width and len(lines) <= height
+        return True
 
     def set_data(self, matrix: CircuitMatrix) -> None:
         self.__matrix_str_rep = f"~Circuit Matrix~\n"
@@ -819,7 +892,7 @@ class SelectionWidget(Widget):
         self.__index = 0
         self.__choices: List[str] = []
         self.__choice_objects: List = []
-        self.__callbacks: List[Union[Callable[[], bool]], Callable[[int], bool]] = []
+        self.__callbacks: List[Union[Callable[[], Optional[bool]]], Callable[[int], Optional[bool]]] = []
         self.widget.add_text_color_rule(f"->", ColorConfig.SELECTION_COLOR, 'contains', match_type='regex')
 
         # init keys
@@ -893,18 +966,48 @@ class SelectionWidget(Widget):
             else:
                 self.__choices[index] = text
 
-    def set_data(self, data: "Tuple[Union[List[str], Tuple[List[str], List[Any]]], List[Callable]]") -> None:
+    def set_data(self, data: Union[
+        Tuple[
+            Union[List[str], Tuple[List[str], List[Any]]],
+            Union[List[Callable[[], Optional[bool]]], Callable[[int], Optional[bool]]]
+        ],
+        List[Tuple[Union[str, Tuple[str, Any]], Callable[[], Optional[bool]]]]
+    ]) -> None:
+        """
+        Arguments:
+            data: selection text and corresponding action callback either as
+
+                1) List of str (=texts), List of callback() or callback(index)  (=actions),
+
+                2) List of (str, Any) (=tuples of text and object connected to the text),
+                    List of callback() or callback(index)  (=actions)
+
+                3) List of (str, callback) (=tuples of text and corresponding action)
+
+                4) List of ((str, Any), callback) (=tuples of (text, object) and corresponding action
+        """
         assert len(data) >= 1, "set_data() called with empty data!"
 
         self.render_reset()
-        self.__choices, self.__callbacks = data
+
+        if isinstance(data, list):
+            self.__choices = []
+            self.__callbacks = []
+            for elem in data:
+                self.__choices.append(elem[0])
+                self.__callbacks.append(elem[1])
+        else:
+            self.__choices, callbacks = data
+            if isinstance(callbacks, list): self.__callbacks = callbacks
+            else: self.__callbacks = [callbacks]
 
         if isinstance(self.__choices, tuple):
             self.__choices, self.__choice_objects = self.__choices
 
-        choice_length = max([len(choice) for choice in self.__choices])
-        for i in range(len(self.__choices)):
-            self.__choices[i] = self.__choices[i].ljust(choice_length)
+        if self.__columns > 1:
+            choice_length = max([len(choice) for choice in self.__choices])
+            for i in range(len(self.__choices)):
+                self.__choices[i] = self.__choices[i].ljust(choice_length)
 
     def render(self) -> None:
         rows = [""] * self.rows

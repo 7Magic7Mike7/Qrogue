@@ -58,7 +58,7 @@ class _HL:
     try_ = CC.highlight_action("try")
 
     # words
-    amplitude = CC.highlight_word("ammplitude")
+    amplitude = CC.highlight_word("amplitude")
     amplitude_1 = CC.highlight_word("amplitude of 1")
     arbitrary = CC.highlight_word("arbitrary")
     around = CC.highlight_word("around")
@@ -170,7 +170,7 @@ class _HL:
     teleport_tile = CC.highlight_tile("t")
 
 
-class HelpText(Enum):
+class HelpText(Enum):       # todo: import Controls to replace static key-mentions with dynamic ones?
     Controls = f"Move                  -   {_HL.navigation_keys}\n" \
             f"Navigate menus        -   {_HL.navigation_keys}\n" \
             f"Confirm               -   {_HL.action_keys}\n" \
@@ -260,6 +260,7 @@ class HelpText(Enum):
         f"left. Therefore in both cases simply the gate/matrix {CC.highlight_word('closer')} to the input is " \
         f"considered first."
 
+    # todo: the split after "collapse to" seems to think that |00> refers to a color code, hence adding // without closing //?
     Amplitudes = \
         f"Let's consider the following {_HL.state_vector}:\n" \
         "|00>  0.707  \n" \
@@ -309,12 +310,12 @@ class HelpText(Enum):
     Pause = \
         "In the Pause Menu you can do several things:\n" \
         f"{_HL.continue_} - Leave the Pause Menu and continue where you stopped.\n" \
-        f"{_HL.restart} - Restart the current level\n" \
-        f"{_HL.save} - Save your game. Remember that your progress is only saved level-wise." \
+        f"{_HL.restart} - Restart the current level.\n" \
+        f"{_HL.save} - Save your game. Remember that your progress is only saved level-wise.\n" \
         f"{_HL.help_} - If you ever feel stuck and don't remember how certain stuff in the game works open " \
         f"the manual and we will try to help you.\n" \
-        f"{_HL.options} - Configure some Options of the game, like font size or coloring.\n" \
-        f"{_HL.exit_} - Exit the current Level or Expedition .\n"
+        f"{_HL.options} - Configure some options of the game, like font size or coloring.\n" \
+        f"{_HL.exit_} - Exit the current level."
 
     Options = "7"
     Welcome = Game + \
@@ -334,7 +335,7 @@ def get_filtered_help_texts() -> List[HelpText]:
     return [
         HelpText.Game,
         HelpText.Controls,
-        HelpText.Pause,
+        #HelpText.Pause,
         HelpText.Fight, HelpText.Ket, HelpText.ParallelGates, HelpText.SerialGates, HelpText.Amplitudes,
         #HelpText.Riddle, #HelpText.Challenge,
     ]

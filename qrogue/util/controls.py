@@ -1,5 +1,5 @@
 from enum import IntEnum
-from typing import List, Tuple, Callable
+from typing import List, Tuple, Callable, Optional
 
 import py_cui.keys
 
@@ -15,6 +15,7 @@ _PK_SITUATIONAL1 = py_cui.keys.KEY_CTRL_LEFT
 _PK_SITUATIONAL2 = py_cui.keys.KEY_CTRL_RIGHT
 _PK_PAUSE = py_cui.keys.KEY_TAB
 _PK_HELP = py_cui.keys.KEY_H_LOWER
+_PK_MATRIX_POPUP = py_cui.keys.KEY_M_LOWER
 
 # secondary keys (alternatives to primary keys)
 _SK_UP = [py_cui.keys.KEY_W_LOWER]
@@ -71,7 +72,7 @@ class Keys(IntEnum):
     PopupLeft = PopupClose + 4
     PopupReopen = PopupClose + 5
 
-    # 14 - 18
+    # 14 - 19
     Action = PopupReopen + 1
     Cancel = Action + 1
     Situational1 = Cancel + 1
@@ -79,9 +80,10 @@ class Keys(IntEnum):
     Help = Situational2 + 1
 
     Pause = Help + 1
+    MatrixPopup = Pause + 1
 
-    # 19 - 28
-    HotKey1 = Pause + 1
+    # 21 - 30
+    HotKey1 = MatrixPopup + 1
     HotKey2 = HotKey1 + 1
     HotKey3 = HotKey1 + 2
     HotKey4 = HotKey1 + 3
@@ -92,12 +94,12 @@ class Keys(IntEnum):
     HotKey9 = HotKey1 + 8
     HotKey0 = HotKey1 + 9
 
-    # 29 - 31
+    # 31 - 33
     Render = HotKey0 + 1
     PrintScreen = Render + 1
     StopSimulator = PrintScreen + 1
 
-    # 32 - 33
+    # 34 - 35
     CheatInput = StopSimulator + 1
     CheatList = CheatInput + 1
 
@@ -133,6 +135,9 @@ class Keys(IntEnum):
         if index < len(Keys):
             for i, elem in enumerate(Keys):
                 if i == index:
+                    if elem != Keys(index):
+                        from qrogue.util import Config
+                        Config.check_reachability("Controls.from_index()-inequality")
                     return elem
             # performance of above version might be better?
             # values = [elem for elem in Keys]
@@ -179,31 +184,32 @@ class Controls:
         [_PK_RIGHT] + _SK_RIGHT,
         [_PK_LEFT] + _SK_LEFT,
         [_PK_HELP],     # reopen
-        # 14 - 18
+        # 14 - 19
         [_PK_CONFIRM] + _SK_CONFIRM,     # action
         [_PK_CANCEL] + _SK_CANCEL,  # cancel/back
         [_PK_SITUATIONAL1] + _SK_SITUATIONAL1,
         [_PK_SITUATIONAL2] + _SK_SITUATIONAL2,
         [_PK_HELP],     # actual help
         [_PK_PAUSE] + _SK_PAUSE,  # (Escape doesn't work here due to its special purpose for the engine)
+        [_PK_MATRIX_POPUP],     # special key to open a matrix in a popup (e.g., if window is too narrow to display 3-qubit matrices in their corresponding widget)
 
-        # special purpose hotkeys: 19 - 28
-        _HOT_KEYS[0],  # Fight: Adapt (Add/Remove)
-        _HOT_KEYS[1],  # Fight: Commit
-        _HOT_KEYS[2],  # Fight: Reset
-        _HOT_KEYS[3],  # Fight: Items
-        _HOT_KEYS[4],  # Fight: Help
-        _HOT_KEYS[5],  # Fight: Flee
+        # special purpose hotkeys: 20 - 29
+        _HOT_KEYS[0],
+        _HOT_KEYS[1],
+        _HOT_KEYS[2],
+        _HOT_KEYS[3],
+        _HOT_KEYS[4],
+        _HOT_KEYS[5],
         _HOT_KEYS[6],
         _HOT_KEYS[7],
         _HOT_KEYS[8],
         _HOT_KEYS[9],
 
-        # debugging keys: 29 - 31
+        # debugging keys: 30 - 32
         _DK_RERENDER,  # render screen
         _DK_PRINT_SCREEN,   # print screen
         _DK_STOP_SIM,   # stop simulator
-        # cheat keys: 32 - 33
+        # cheat keys: 33 - 34
         _DK_CHEAT_INPUT,   # cheat input
         _DK_CHEAT_LIST,   # cheat list
     ]
@@ -214,7 +220,7 @@ class Controls:
 
     def encode(self, key_pressed: int) -> Keys:
         """
-        Converts a pressed key to an internal Key-representation that encodes the corresponding action
+        Converts a pressed (raw) key to an internal (logical) Key-representation that encodes the corresponding action.
         :param key_pressed: the key that was pressed
         :return: an element of Key corresponding to the action executed by pressing key_pressed
         """
@@ -253,10 +259,37 @@ class Controls:
         base = Keys.HotKey1.num - 1
         return self.__pycui_keys[base + number]
 
-    def handle(self, key: Keys):
+    def handle(self, key: Keys) -> int:
+        """
+        :returns: the PyCUI-internal representation of the handled key
+        """
         key_pressed = self.get_key(key)
         self.__handle_key_presses(key_pressed)
+        return key_pressed
 
     @property
     def action(self) -> List[int]:
         return self.__pycui_keys[Keys.Action.num]
+
+    def are_equivalent(self, key1: Keys, key2: Keys, raw_key: int) -> bool:
+        # check if the pressed raw key is part of both logical keys, making them equivalent for the given press
+        return raw_key in self.get_keys(key1) and raw_key in self.get_keys(key2)
+
+    def to_keyboard_string(self, keys: Keys, index: Optional[int] = None, separator: str = ", ",
+                           end_separator: Optional[str] = None) -> str:
+        # does not work nicely for non-printable keyboard keys (e.g., Spacebar = ' ', Backspace = '\x08')
+        # don't use keys.to_char() since it's only for internal use and doesn't correspond to the pressed keyboard key
+
+        if index is None:   # use all possible keyboard keys
+            chars = [chr(key) for key in self.get_keys(keys)]
+            if len(chars) == 0: return "INVALID"
+            if len(chars) == 1: return chars[0].upper()
+
+            if end_separator is None: end_separator = separator
+            # separate all chars and add the last one manually with its special end_separator
+            return separator.join(chars[:-1]) + end_separator + chars[-1]
+
+        else:
+            key = self.get_key(keys, index)
+            if key == Controls.INVALID_KEY: return "INVALID"
+            return chr(key).upper()

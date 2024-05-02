@@ -1,0 +1,33 @@
+l0k0v1
+QRogue v0.7.0.5
+Seed=940519
+Time=05042024_131704
+
+[Config]
+Energy Mode=0
+Auto Save=1
+Auto Reset Circuit=1
+Log Keys=1
+Gameplay Key Pause=0
+Simulation Key Pause=3
+Show Ket-Notation=1
+Allow implicit Removal=0
+Allow multi move=1
+Auto skip text animation=0
+Enable puzzle history=1
+Auto reset history=1
+
+Qrogue<
+05d04m2024y 13:16:58
+[GATES]
+
+[LEVELS]
+l0k0v0 @ 05d04m2024y 13:16:58 44 seconds Score = 345
+[UNLOCKS]
+gateremove @ 05d04m2024y 13:16:09
+mainmenucontinue @ 05d04m2024y 13:16:58
+showenergy @ 05d04m2024y 13:16:58
+[ACHIEVEMENTS]
+CompletedExpedition @ 05d04m2024y 13:16:09 Score = 0 out of 100
+>Qrogue
+																																							eeeeeeeeeeeeeeeeeeeeeeeeee	

@@ -17,15 +17,15 @@ class WalkTriggerTile(Tile):
     __show_explanation: Callable[[LogicalMessage, bool], None] = None
 
     @staticmethod
-    def set_show_explanation_callback(show_explanation: Callable[[LogicalMessage, bool], None]):
-        WalkTriggerTile.__show_explanation = show_explanation
+    def set_show_explanation_callback(show_explanation_callback: Callable[[LogicalMessage, bool], None]):
+        WalkTriggerTile.__show_explanation = show_explanation_callback
 
     @staticmethod
     def _show_explanation(msg: LogicalMessage, overwrite: bool = False):
         if WalkTriggerTile.__show_explanation:
             WalkTriggerTile.__show_explanation(msg, overwrite)
         else:
-            Logger.instance().error("WalkTriggerTile's show_explanation is None!", from_pycui=False)
+            Logger.instance().error("WalkTriggerTile's show_explanation is None!", show=False, from_pycui=False)
 
     def __init__(self, code: TileCode):
         super().__init__(code)
@@ -152,8 +152,8 @@ class Message(WalkTriggerTile):
     __show: Callable[[LogicalMessage, Callable[[], None]], None] = None
 
     @staticmethod
-    def set_show_callback(show: Callable[[LogicalMessage, Callable[[], None]], None]):
-        Message.__show = show
+    def set_show_callback(show_callback: Callable[[LogicalMessage, Callable[[], None]], None]):
+        Message.__show = show_callback
 
     @staticmethod
     def create(text: str, title: str = "Message", popup_times: int = 1) -> "Message":   # todo remove? seems to no longer be in use
@@ -184,7 +184,7 @@ class Message(WalkTriggerTile):
             if Message.__show:
                 Message.__show(self.__message, self._explicit_trigger)
             else:
-                Logger.instance().error("Message's show is None!", from_pycui=False)
+                Logger.instance().error("Message's show is None!", show=False, from_pycui=False)
             return False
         return False
 
@@ -281,10 +281,11 @@ class Collectible(WalkTriggerTile):
     __pickup_message: Callable[["Collectible"], None] = None
 
     @staticmethod
-    def set_pickup_message_callback(pickup_message_callback: Callable[[str, str], None]):
+    def set_pickup_message_callback(pickup_message_callback: Callable[[str, str], None],
+                                    check_unlocks_callback: Callable[[str], bool]):
         def pickup_message(collectible: LogicalCollectible):
             name = collectible.name()
-            desc = collectible.description()
+            desc = collectible.description(check_unlocks_callback)
             pickup_message_callback("Collectible", f"You picked up: {ColorConfig.highlight_object(name)}\n{desc}")
         Collectible.__pickup_message = pickup_message
 
@@ -335,7 +336,8 @@ class Collectible(WalkTriggerTile):
                     if Collectible.__pickup_message:
                         Collectible.__pickup_message(self.__collectible)
                     else:
-                        Logger.instance().error("Collectible's pickup message callback is None!", from_pycui=False)
+                        Logger.instance().error("Collectible's pickup message callback is None!", show=False,
+                                                from_pycui=False)
             controllable.give_collectible(self.__collectible)
             self.__active = False
             return True

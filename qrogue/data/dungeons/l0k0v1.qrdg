@@ -119,7 +119,7 @@ default *none
 // speaker: 0 = Examiner, 1 = Scientist, 2 = System, 3 = Player
 default Speaker "0"
 
-*tutOneWay prio pos5 "Some //02Doors// - like the one at the //05bottom// end of the room - open only from //05one side//. Seems like you need to //05find a different way// to //03access// the room behind it."
+*tutOneWay prio pos1 "Some //02Doors// - like the one at the //05bottom// end of the room - open only from //05one side//. Seems like you need to //05find a different way// to //03access// the room behind it."
 
 *tutFlee prio pos1 "Sometimes you will find //02Puzzles// you //05cannot solve yet// (e.g., due to lacking a specific //02Gate//). In that case you can use your newly unlocked ability //03Flee//." "However, unsolved //02Puzzles// will still keep //05blocking// your way until you come back again and //03solve// them."
 
