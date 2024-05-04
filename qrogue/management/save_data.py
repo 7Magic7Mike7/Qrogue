@@ -55,7 +55,8 @@ class NewSaveData:
     @staticmethod
     def _init_fresh_save(save_data: "NewSaveData"):
         # some achievements need to be present right from the start
-        save_data.add_achievement(Achievement(achievements.CompletedExpedition, 0, 100))    # todo: change system?
+        expeditions = Achievement(achievements.CompletedExpedition, 0, 100)
+        save_data.__achievements[expeditions.name] = expeditions
 
         # some unlocks are present by default for backwards compatibility   # todo: fix this because it's confusing on the Achievement-screen
         save_data.unlock(Unlocks.GateRemove)
@@ -66,7 +67,6 @@ class NewSaveData:
         Args:
             save_data: if None is provided, the data is loaded from the latest save file
         """
-        #achievement_list = []   # todo: init differently?
 
         if save_data is None:
             path = PathConfig.find_latest_save_file()
@@ -96,9 +96,6 @@ class NewSaveData:
             for level in levels: self.__levels[level.name] = level
             for ach in achievement_list: self.__achievements[ach.name] = ach
             for name, date_time2 in unlocks: self.__unlocks[name] = date_time2
-
-        #self.__player = Player()    # todo: most likely no longer needed
-        #self.__robot = BaseBot(CallbackPack.instance().game_over)
 
         if self.__is_fresh_save:
             NewSaveData._init_fresh_save(self)
@@ -152,13 +149,6 @@ class NewSaveData:
         if unlock in self.__unlocks:
             return
         self.__unlocks[unlock] = date_time
-        self.__has_unsaved_changes = True
-
-    def add_achievement(self, achievement: Achievement):
-        if achievement.name in self.__achievements:
-            raise Exception("Use score_achievement() for existing achievements!")
-
-        self.__achievements[achievement.name] = achievement
         self.__has_unsaved_changes = True
 
     def get_level_data(self, level_name: str) -> Optional[LevelData]:
@@ -274,8 +264,6 @@ class NewSaveData:
 
     def get_completed_levels(self) -> List[LevelData]:
         return list(self.__levels.values())
-
-    ################################## TRANSITION TO NEW SYSTEM ##################################
 
     def add_to_achievement(self, name: str, score: float = 1):
         if name not in self.__achievements:
