@@ -390,12 +390,8 @@ def split_text(text: str, width: int, padding: int, handle_error: Callable[[str]
     :param handle_error: to handle potential errors
     :return: list of text parts with a maximum of #width characters, every text part is rstrip()-ed     # todo: test thoroughly
     """
-    STRIP_TEST1 = False
-    STRIP_TEST2 = False
-    STRIP_TEST3 = False
-
     width -= padding * 2    # remove the space needed for padding
-    splitted_text = []      # todo: rename since the current one is grammatically wrong
+    lines = []
     for paragraph in text.splitlines():
         paragraph = paragraph.rstrip()   # remove any redundant whitespace after the paragraph
         index = 0
@@ -412,17 +408,12 @@ def split_text(text: str, width: int, padding: int, handle_error: Callable[[str]
 
             # check if the previous line ended with a color rule and prepend it
             if prepend is not None:
-                if STRIP_TEST1:
-                    cur_part = prepend + cur_part
-                    index -= len(prepend)
-                else:
-                    prev_len = len(cur_part)
-                    cur_part = prepend + cur_part.lstrip()
-                    # we have to adapt the index since we potentially remove whitespace in front and therefore have
-                    # the possibility of a longer line which leads to a higher increment of the index and furthermore
-                    # to the potential loss of some characters in the beginning of the new_line
-                    # prepend also needs to be part of this adaption because it will be counted in character_removals
-                    index -= (len(cur_part) - prev_len)
+                cur_part = prepend + cur_part
+                # we have to adapt the index since we potentially remove whitespace in front and therefore have
+                # the possibility of a longer line which leads to a higher increment of the index and furthermore
+                # to the potential loss of some characters in the beginning of the new_line
+                # prepend also needs to be part of this adaption because it will be counted in character_removals
+                index -= len(prepend)
                 prepend = None
 
             # the currently usable width is the displayable width + the number of occurring non-printable characters
@@ -453,15 +444,10 @@ def split_text(text: str, width: int, padding: int, handle_error: Callable[[str]
                     if ColorConfig.is_number(next_line[code_start:code_start + ColorConfig.CODE_WIDTH]):
                         next_line += ColorConfig.TEXT_HIGHLIGHT
                         prepend = next_line[last_highlight:code_start + ColorConfig.CODE_WIDTH]
-                splitted_text.append(next_line)
+                lines.append(next_line)
             index += cur_width  # index will never increase to >= len(paragraph)
 
-        # the beginning of a paragraph might have intentional indentation, therefore we only strip the right side
-        if not STRIP_TEST2: last_line = last_line.rstrip()
-
-        if not STRIP_TEST3 and index > 0: last_line = last_line.lstrip()    # not the beginning of a paragraph -> also strip the left side
         # we don't have anything to prepend since we already added it before breaking the loop
+        lines.append(last_line)
 
-        splitted_text.append(last_line)
-
-    return [" " * padding + line + " " * padding for line in splitted_text]
+    return [" " * padding + line + " " * padding for line in lines]
