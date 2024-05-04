@@ -746,8 +746,6 @@ class QrogueCUI(PyCUI):
             enemy = data[1]
             self.__fight.set_data(robot, enemy, self.__map_manager.in_expedition,
                                   self.__map_manager.show_individual_qubits)
-        else:
-            Config.check_reachability("QrogueCUI._switch_to_fight() without data")
         self.apply_widget_set(self.__fight)
 
     def _switch_to_boss_fight(self, data) -> None:
