@@ -1032,6 +1032,9 @@ class SelectionWidget(Widget):
     def render_reset(self) -> None:
         self.widget.set_title("")
         self.__index = 0
+        # This content reset is needed because changes to other widgets can cause this to render, making the reset
+        # pointless if content is still set. Should this lead to any problems somewhere, a new flag-parameter can be
+        # added.
         if self.__is_second:
             self.__choices = []
             self.__choice_objects = []
