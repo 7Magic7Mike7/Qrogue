@@ -1,7 +1,6 @@
 from typing import Tuple, Optional
 
 from qrogue.util import Logger
-from qrogue.util.achievements import Unlocks
 from qrogue.util.config import PathConfig, GameplayConfig, Config, ColorConfig, FileTypes
 from qrogue.util.controls import Controls, Keys
 

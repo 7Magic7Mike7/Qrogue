@@ -1,14 +1,10 @@
 # exporting
-from .save_data import SaveData, NewSaveData
+from .save_data import NewSaveData
 from .map_management import MapManager
 from .qrogue_pycui import QrogueCUI
 
 # importing
-# +util
-# +util.game_simulator
-# +util.key_logger
 # +game.logic.actors
-# +game.logic.actors.controllables
 # +game.world.dungeon_generator
 # +game.world.map
 # +game.world.navigation
@@ -16,3 +12,7 @@ from .qrogue_pycui import QrogueCUI
 # +graphics.rendering
 # +graphics.popups
 # +graphics.widgets
+# +util
+# +util.achievements
+# +util.game_simulator
+# +util.key_logger

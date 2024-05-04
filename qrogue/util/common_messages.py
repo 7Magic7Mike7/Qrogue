@@ -1,7 +1,8 @@
 from enum import Enum
 from typing import Callable, Optional, List, Tuple
 
-from qrogue.util import Config, ColorConfig as CC, Logger
+from qrogue.util.config import Config, ColorConfig as CC
+from qrogue.util.logger import Logger
 
 
 class _CallbackHandler:

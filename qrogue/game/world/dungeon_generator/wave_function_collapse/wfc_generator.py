@@ -2,15 +2,13 @@ import math
 from typing import List, Optional, Dict, Tuple, Iterable, Any
 
 from qrogue.game.world.dungeon_generator import QrogueLevelGenerator
-from qrogue.game.world.dungeon_generator.wave_function_collapse import WaveFunction, WFCLearner
-from qrogue.game.world.dungeon_generator.wave_function_collapse.learnables import LearnableMap, WFCLearnMatrix, \
-    LearnableRoom
-from qrogue.game.world.map import rooms, LevelMap, CallbackPack
+from qrogue.game.world.dungeon_generator.wave_function_collapse import WaveFunction, WFCLearner, WFCLearnMatrix, \
+    LearnableMap, LearnableRoom
+from qrogue.game.world.map import LevelMap, CallbackPack
 from qrogue.game.world.map.rooms import AreaType
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.game.world.tiles import TileCode
 from qrogue.util import RandomManager, MapConfig, MyRandom
-
 from qrogue.util.util_functions import my_str
 
 
@@ -178,7 +176,7 @@ class WFCLayoutGenerator(WFCGenerator):
         :param seed:
         :param templates: list of tuples that define a filename and whether it can be found in the dungeon folder or not
         """
-        self.__connection_weights: Dict[Optional[rooms.AreaType], Dict[Optional[rooms.AreaType], int]] = {}
+        self.__connection_weights: Dict[Optional[AreaType], Dict[Optional[AreaType], int]] = {}
 
         data: List[LearnableMap] = []
         for template in templates:
@@ -215,7 +213,7 @@ class WFCRoomGenerator(WFCGenerator):
     def get_level_list() -> List[Tuple[str, bool]]:
         return [(level, True) for level in MapConfig.level_list()]
 
-    def __init__(self, templates: List[Tuple[str, bool]], room_type: rooms.AreaType):
+    def __init__(self, templates: List[Tuple[str, bool]], room_type: AreaType):
         self.__room_type = room_type
 
         data: List[LearnableRoom] = []
@@ -235,7 +233,7 @@ class WFCRoomGenerator(WFCGenerator):
         super(WFCRoomGenerator, self).__init__(data)
 
     @property
-    def room_type(self) -> rooms.AreaType:
+    def room_type(self) -> AreaType:
         return self.__room_type
     
     def generate(self, seed: int, width: Optional[int] = None, height: Optional[int] = None,

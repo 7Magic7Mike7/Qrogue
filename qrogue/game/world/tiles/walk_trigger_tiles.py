@@ -3,8 +3,7 @@ from abc import abstractmethod
 from typing import List, Callable, Any, Optional
 
 from qrogue.game.logic import Message as LogicalMessage
-from qrogue.game.logic.actors import Controllable, Riddle
-from qrogue.game.logic.actors.puzzles import Challenge
+from qrogue.game.logic.actors import Controllable, Riddle, Challenge
 from qrogue.game.logic.collectibles import Collectible as LogicalCollectible, Energy as LogicalEnergy, \
     Score as LogicalScore, CollectibleType
 from qrogue.game.world.navigation import Coordinate, Direction

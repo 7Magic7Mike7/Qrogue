@@ -1,5 +1,5 @@
 from enum import IntEnum
-from typing import Callable, Dict, Optional, Tuple, List, Any, Set, Union
+from typing import Callable, Dict, Optional, Tuple, List, Any, Set
 
 from qrogue.game.logic.actors import Robot
 from qrogue.game.logic.collectibles import GateFactory, Key, instruction, Score, CollectibleType, \
@@ -7,9 +7,9 @@ from qrogue.game.logic.collectibles import GateFactory, Key, instruction, Score,
 from qrogue.game.target_factory import PuzzleDifficulty, BossFactory, EnemyFactory, RiddleFactory, EnemyPuzzleFactory
 from qrogue.game.world import tiles
 from qrogue.game.world.dungeon_generator.wave_function_collapse import WFCRoomGenerator, WFCEmptyRoomGenerator
-from qrogue.game.world.map import CallbackPack, Hallway, WildRoom, SpawnRoom, ShopRoom, RiddleRoom, BossRoom, \
-    TreasureRoom, ExpeditionMap, Room
-from qrogue.game.world.map.rooms import Placeholder, AreaType, DefinedWildRoom, EmptyRoom
+from qrogue.game.world.map import CallbackPack, Hallway, Room, ExpeditionMap
+from qrogue.game.world.map.rooms import AreaType, DefinedWildRoom, EmptyRoom, SpawnRoom, RiddleRoom, BossRoom, \
+    TreasureRoom
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.graphics.popups import Popup
 from qrogue.util import Logger, RandomManager, MapConfig, Config, MyRandom

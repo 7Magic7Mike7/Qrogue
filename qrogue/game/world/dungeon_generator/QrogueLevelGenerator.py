@@ -4,15 +4,14 @@ from antlr4 import InputStream, CommonTokenStream
 from antlr4.tree.Tree import TerminalNodeImpl
 
 from qrogue.game.logic import Message
-from qrogue.game.logic.actors import Controllable, Riddle, Robot, robot, Boss as BossActor
+from qrogue.game.logic.actors import Controllable, Riddle, Robot, BaseBot, Boss as BossActor
 from qrogue.game.logic.actors.puzzles import Challenge, boss
 from qrogue.game.logic.base import StateVector
-from qrogue.game.logic.collectibles import Collectible, pickup, instruction, MultiCollectible, Qubit, ShopItem, \
-    CollectibleFactory, OrderedCollectibleFactory
-from qrogue.game.logic.collectibles.instruction import MultiQubitGate, SingleQubitGate, InstructionManager, Instruction
-from qrogue.game.target_factory import EnemyFactory, ExplicitTargetDifficulty, ExplicitStvDifficulty, EnemyTargetFactory
+from qrogue.game.logic.collectibles import Collectible, MultiCollectible, pickup, Qubit, ShopItem, instruction, \
+    Instruction, InstructionManager, CollectibleFactory, OrderedCollectibleFactory
+from qrogue.game.target_factory import ExplicitTargetDifficulty, ExplicitStvDifficulty, EnemyFactory, EnemyTargetFactory
 from qrogue.game.world import tiles
-from qrogue.game.world.map import CallbackPack, LevelMap, rooms, MapMetaData
+from qrogue.game.world.map import CallbackPack, MapMetaData, LevelMap, rooms
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.util import Config, MapConfig, PathConfig, Logger, CommonQuestions, RandomManager, MyRandom, load_help_text
 
@@ -338,7 +337,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         else:
             return None
 
-    def __load_gate(self, reference: QrogueDungeonParser.REFERENCE) -> instruction.Instruction:
+    def __load_gate(self, reference: QrogueDungeonParser.REFERENCE) -> Instruction:
         ref = parser_util.normalize_reference(reference.getText())
         # remove "gate" if it was added at the end
         if ref.endswith("gate"): ref = ref[:-len("gate")]
@@ -1190,8 +1189,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             if ctx.START_ENERGY():
                 start_energy = parser_util.parse_integer(ctx.integer(integer_index))
 
-        self.__robot = robot.BaseBot(self.__cbp.game_over, num_of_qubits, gates, circuit_space, backpack_space,
-                                     max_energy, start_energy)
+        self.__robot = BaseBot(self.__cbp.game_over, num_of_qubits, gates, circuit_space, backpack_space, max_energy,
+                               start_energy)
 
     ##### Meta area #####
 

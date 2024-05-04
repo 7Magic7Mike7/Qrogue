@@ -5,9 +5,11 @@ import qrogue.game.world.map
 import qrogue.game.world.dungeon_generator
 
 # importing
-# +util
+# +graphics.popups
 # +logic
 # +logic.actors
 # +logic.actors.controllables
 # +logic.actors.puzzles
+# +logic.base
 # +logic.collectibles
+# +util

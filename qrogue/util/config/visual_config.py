@@ -2,7 +2,7 @@ import enum
 import math
 from typing import Optional, Tuple, List, Callable
 
-from qrogue.util.config import PyCuiColors
+from qrogue.util.config.py_cui_config import PyCuiColors
 
 
 class ColorCode(enum.Enum):

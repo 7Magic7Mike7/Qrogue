@@ -5,7 +5,7 @@ from typing import List, Optional
 
 from qrogue.management import QrogueCUI, NewSaveData
 from qrogue.test import test_util
-from qrogue.util import PathConfig, Logger, FileTypes, Config, TestConfig
+from qrogue.util import Logger, FileTypes, PathConfig, TestConfig
 from qrogue.util.game_simulator import GameSimulator
 
 user_data_path = os.path.join(os.path.dirname(__file__), "user_data")

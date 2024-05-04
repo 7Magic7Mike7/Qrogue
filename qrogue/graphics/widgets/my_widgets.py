@@ -6,13 +6,13 @@ from py_cui import ColorRule
 from py_cui.widget_set import WidgetSet
 from py_cui.widgets import BlockLabel
 
-from qrogue.game.logic.base import StateVector, CircuitMatrix
 from qrogue.game.logic.actors import Robot
+from qrogue.game.logic.base import StateVector, CircuitMatrix
 from qrogue.game.logic.collectibles import Instruction
 from qrogue.game.world.map import Map
 from qrogue.game.world.navigation import Direction
-from qrogue.util import ColorConfig, Controls, Keys, Logger, Config, HudConfig, GameplayConfig, Options, ColorCode
-from qrogue.util.config import QuantumSimulationConfig, InstructionConfig
+from qrogue.util import Controls, Keys, Logger, Options, ColorCode, Config, ColorConfig, HudConfig, GameplayConfig, \
+    QuantumSimulationConfig, InstructionConfig
 from qrogue.util.util_functions import center_string, align_string, to_binary_string, int_to_fixed_len_str
 
 from qrogue.graphics import WidgetWrapper

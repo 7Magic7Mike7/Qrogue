@@ -4,8 +4,8 @@ from typing import List, Callable, Optional, Union, Tuple
 from qrogue.game.logic.base import StateVector
 from qrogue.game.logic.actors.controllables import Robot
 from qrogue.game.logic.actors.puzzles import Enemy, Target, Riddle, Boss
-from qrogue.game.logic.collectibles import Collectible, CollectibleFactory, Instruction, CXGate, SwapGate, Energy, Score
-from qrogue.game.logic.collectibles.instruction import YGate, ZGate
+from qrogue.game.logic.collectibles import Collectible, CollectibleFactory, Instruction, Energy, Score
+from qrogue.game.logic.collectibles.instruction import CXGate, SwapGate, YGate, ZGate
 from qrogue.game.world.navigation import Direction
 from qrogue.util import Logger, MyRandom
 

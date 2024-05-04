@@ -9,11 +9,12 @@ from .widget_sets import MenuWidgetSet, TransitionWidgetSet, PauseMenuWidgetSet,
     ScreenCheckWidgetSet, LevelSelectWidgetSet
 
 # importing
-# +util
 # +game.logic.actors
 # +game.logic.actors.puzzles
+# +game.logic.base
 # +game.logic.collectibles
 # +game.world.map
 # +game.world.navigation
 # +graphics.popups
 # +graphics.rendering
+# +util

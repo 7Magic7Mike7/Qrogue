@@ -2,9 +2,9 @@ import numpy as np
 import os
 import unittest
 
-from qrogue.game.logic.collectibles.instruction import InstructionManager
-from qrogue.util import util_functions, PathConfig
-from qrogue.util.util_functions import cur_datetime, time_diff
+from qrogue.game.logic.collectibles import InstructionManager
+from qrogue.util import PathConfig
+from qrogue.util.util_functions import cur_datetime, int_to_fixed_len_str, time_diff
 
 
 class ValidationTests(unittest.TestCase):
@@ -20,7 +20,7 @@ class ValidationTests(unittest.TestCase):
         print(text)
         print(text.format(value))
         print()
-        print(util_functions.int_to_fixed_len_str(value, length))
+        print(int_to_fixed_len_str(value, length))
 
     def test_general(self):
         start = cur_datetime()

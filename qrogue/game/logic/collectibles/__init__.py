@@ -1,13 +1,14 @@
 # exporting
 from .collectible import Collectible, CollectibleType, MultiCollectible, ShopItem
-from .instruction import Instruction, GateType, CXGate, HGate, SwapGate, XGate
-from .pickup import Pickup, Score, Coin, Key, Energy
+from .instruction import GateType, Instruction, InstructionManager
+from .pickup import Pickup, Score, Key, Coin, Energy
 from .qubit import Qubit
 from .consumable import Consumable, EnergyRefill
-from .collectible_factory import CollectibleFactory, GateFactory, OrderedCollectibleFactory, ShopFactory
+from .collectible_factory import CollectibleFactory, GateFactory, OrderedCollectibleFactory
 
 # importing
-# only collectible_factory imports util, nothing else imports anything
+# +base
+# +util
 
 # todo move consumable so it can import Robot?
 

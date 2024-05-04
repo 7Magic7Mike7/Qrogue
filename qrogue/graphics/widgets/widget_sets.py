@@ -7,23 +7,21 @@ from typing import List, Callable, Optional, Tuple, Any, Union
 import py_cui
 from py_cui.widget_set import WidgetSet
 
-from qrogue import util
+from qrogue.game.logic.actors import Boss, Enemy, Riddle, Challenge, Robot, BaseBot
+from qrogue.game.logic.actors.puzzles import Target
 from qrogue.game.logic.base import StateVector
-from qrogue.game.logic.actors import Boss, Enemy, Riddle, Robot
-from qrogue.game.logic.actors.controllables import BaseBot
-from qrogue.game.logic.actors.puzzles import Target, Challenge
 from qrogue.game.logic.collectibles import ShopItem, Collectible, instruction as gates
-from qrogue.game.world.map import Map, CallbackPack
+from qrogue.game.world.map import Map
 from qrogue.game.world.navigation import Direction
-from qrogue.graphics.popups import Popup
-from qrogue.graphics.rendering import ColorRules
 from qrogue.graphics.widget_base import WidgetWrapper
 from qrogue.util import CommonPopups, Config, Controls, GameplayConfig, HelpText, Logger, PathConfig, \
-    RandomManager, Keys, UIConfig, HudConfig, ColorConfig, Options, PuzzleConfig, ScoreConfig, \
-    get_filtered_help_texts, CommonQuestions, MapConfig, PyCuiConfig, ColorCode, split_text, PopupConfig, MyRandom, \
+    Keys, UIConfig, ColorConfig, Options, PuzzleConfig, ScoreConfig, \
+    get_filtered_help_texts, CommonQuestions, MapConfig, PyCuiConfig, ColorCode, split_text, MyRandom, \
     LevelInfo, CommonInfos, LevelData
 from qrogue.util.achievements import Unlocks
 
+from qrogue.graphics.popups import Popup
+from qrogue.graphics.rendering import ColorRules
 from qrogue.graphics.widgets import Renderable, Widget, MyBaseWidget
 from qrogue.graphics.widgets.my_widgets import SelectionWidget, CircuitWidget, MapWidget, SimpleWidget, HudWidget, \
     OutputStateVectorWidget, CircuitMatrixWidget, TargetStateVectorWidget, InputStateVectorWidget, MyMultiWidget, \

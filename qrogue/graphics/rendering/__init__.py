@@ -1,8 +1,9 @@
 # exporting
-from qrogue.graphics.rendering.color_rules import ColorRules
-from qrogue.graphics.rendering.renderer import MultiColorRenderer, TileRenderer
+from .color_rules import ColorRules
+from .renderer import MultiColorRenderer
 
 # importing
-# +util
 # +game.logic.actors.controllables
 # +game.world.tiles
+# +graphics
+# +util

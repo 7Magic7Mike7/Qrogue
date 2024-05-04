@@ -6,7 +6,8 @@ from antlr4.tree.Tree import TerminalNodeImpl
 from qrogue.game.logic import Message
 from qrogue.game.logic.actors import Player
 from qrogue.game.world.dungeon_generator import parser_util
-from qrogue.game.world.map import Room, MetaRoom, SpawnRoom, MapMetaData, Map
+from qrogue.game.world.map import Room, MapMetaData, Map
+from qrogue.game.world.map.rooms import MetaRoom, SpawnRoom
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.game.world.tiles import Door, DoorOneWayState, DoorOpenState
 from qrogue.util import MapConfig, PathConfig, Logger, Config

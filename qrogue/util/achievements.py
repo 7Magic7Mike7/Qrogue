@@ -1,10 +1,8 @@
 import datetime
 import enum
-from typing import List, Dict, Iterator, Optional
+from typing import Optional
 
 from qrogue.util.util_functions import cur_datetime
-
-CompletedExpedition = "CompletedExpedition"
 
 
 class Unlocks(enum.Enum):
@@ -59,6 +57,7 @@ class Unlocks(enum.Enum):
 
 class Achievement:
     __DATA_SEPARATOR = ">q<"
+    CompletedExpedition = "CompletedExpedition"
 
     @staticmethod
     def from_string(text: str) -> "Achievement":

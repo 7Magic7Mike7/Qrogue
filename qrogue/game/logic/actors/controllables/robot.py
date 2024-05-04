@@ -138,7 +138,7 @@ class _Attributes:
         return amount
 
 
-class Backpack:
+class _Backpack:
     """
     Stores Instructions, Consumables and other Collectibles for a Robot to use.
     """
@@ -154,7 +154,7 @@ class Backpack:
         :param content: list of initially stored Instructions
         """
         if capacity is None:
-            capacity = Backpack.__CAPACITY
+            capacity = _Backpack.__CAPACITY
 
         self.__capacity: int = capacity
         if content:
@@ -163,17 +163,17 @@ class Backpack:
         else:
             self.__capacity = capacity
             self.__storage: List[Instruction] = []
-        self.__pouch_size: int = Backpack.__POUCH_SIZE
+        self.__pouch_size: int = _Backpack.__POUCH_SIZE
         self.__pouch: List[Consumable] = []
         self.__coin_count: int = 0
         self.__key_count: int = 0
 
-    def __iter__(self) -> "BackpackIterator":
+    def __iter__(self) -> "_BackpackIterator":
         """
 
         :return: an Iterator over the stored Instructions
         """
-        return BackpackIterator(self)
+        return _BackpackIterator(self)
 
     @property
     def capacity(self) -> int:
@@ -387,14 +387,14 @@ class Backpack:
         return data  # [gate.copy() for gate in self.__storage]
 
 
-class BackpackIterator:
+class _BackpackIterator:
     """
     Allows us to easily iterate through all the Instructions in a backpack.
     """
 
-    def __init__(self, backpack: Backpack):
+    def __init__(self, backpack: _Backpack):
         self.__index: int = 0
-        self.__backpack: Backpack = backpack
+        self.__backpack: _Backpack = backpack
 
     def __next__(self) -> Instruction:
         if self.__index < self.__backpack.used_capacity:
@@ -420,7 +420,7 @@ class Robot(Controllable, ABC):
         list_.reverse()  # so that list_[i] corresponds to the measured value of qi
         return list_
 
-    def __init__(self, name: str, attributes: _Attributes, backpack: Backpack, game_over_callback: Callable[[], None]):
+    def __init__(self, name: str, attributes: _Attributes, backpack: _Backpack, game_over_callback: Callable[[], None]):
         """
 
         :param name: name of the Robot for identification and rendering
@@ -431,7 +431,7 @@ class Robot(Controllable, ABC):
         super().__init__(name)
         self.__score: int = 0
         self.__attributes: _Attributes = attributes
-        self.__backpack: Backpack = backpack
+        self.__backpack: _Backpack = backpack
         self.__game_over: Callable[[], None] = game_over_callback
         # initialize qubit stuff (rows)
         self.__simulator = QuantumSimulator()
@@ -458,7 +458,7 @@ class Robot(Controllable, ABC):
             self.update_statevector(None, use_energy=False, check_for_game_over=False)
 
     @property
-    def backpack(self) -> Backpack:
+    def backpack(self) -> _Backpack:
         return self.__backpack
 
     @property
@@ -800,7 +800,7 @@ class BaseBot(Robot):
                  circuit_space: Optional[int] = None, backpack_space: Optional[int] = None,
                  max_energy: Optional[int] = None, start_energy: Optional[int] = None):
         attributes = _Attributes(DummyQubitSet(num_of_qubits), circuit_space, max_energy, start_energy)
-        backpack = Backpack(backpack_space, gates)
+        backpack = _Backpack(backpack_space, gates)
         super(BaseBot, self).__init__("BaseBot", attributes, backpack, game_over_callback)
 
     def get_img(self):
@@ -813,7 +813,7 @@ class BaseBot(Robot):
 class LukeBot(Robot):
     def __init__(self, game_over_callback: Callable[[], None], size: int = 2):
         attributes = _Attributes(DummyQubitSet(size))
-        backpack = Backpack(capacity=5)
+        backpack = _Backpack(capacity=5)
 
         # randomness is not allowed during Robot creation because it messes up the seed
         # add random gates and a HealthPotion

@@ -1,10 +1,9 @@
-from datetime import datetime
 from typing import Callable, Optional, List, Union
 
 from py_cui.debug import PyCUILogger
 
-from qrogue.util import PyCuiColors, TestConfig, ErrorConfig
-from qrogue.util.config import PathConfig, Config
+from qrogue.util import ErrorConfig, TestConfig
+from qrogue.util.config import Config, PathConfig
 from qrogue.util.util_functions import cur_datetime
 
 

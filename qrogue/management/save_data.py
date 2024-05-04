@@ -1,28 +1,18 @@
-import os.path
-from typing import Tuple, Optional, List, Union, Iterator, Dict
+from typing import Tuple, Optional, List, Union, Dict
 
 from antlr4 import InputStream, CommonTokenStream
 from datetime import datetime
 
-from qrogue.game.logic.actors import Player, Robot
-from qrogue.game.logic.actors.controllables import BaseBot, LukeBot
-from qrogue.game.logic.collectibles import Instruction
-from qrogue.game.logic.collectibles.instruction import InstructionManager
-from qrogue.game.world.dungeon_generator import parser_util
-from qrogue.game.world.map import CallbackPack
-from qrogue.graphics.popups import Popup
 from qrogue.management.save_grammar.SaveDataLexer import SaveDataLexer
 from qrogue.management.save_grammar.SaveDataParser import SaveDataParser
 from qrogue.management.save_grammar.SaveDataVisitor import SaveDataVisitor
-from qrogue.util import Logger, PathConfig, FileTypes, RandomManager, CommonInfos, Config, \
-    ErrorConfig, achievements, MapConfig, ScoreConfig
+
+from qrogue.game.logic.collectibles import Instruction, InstructionManager
+from qrogue.game.world.dungeon_generator import parser_util
+from qrogue.graphics.popups import Popup
+from qrogue.util import Logger, CommonInfos, LevelInfo, LevelData, Config, PathConfig, FileTypes
 from qrogue.util.achievements import Achievement, Unlocks
-from qrogue.util.level_info import LevelInfo, LevelData
 from qrogue.util.util_functions import cur_datetime, datetime2str
-
-
-class SaveData:
-    pass
 
 
 class NewSaveData:
@@ -55,7 +45,7 @@ class NewSaveData:
     @staticmethod
     def _init_fresh_save(save_data: "NewSaveData"):
         # some achievements need to be present right from the start
-        expeditions = Achievement(achievements.CompletedExpedition, 0, 100)
+        expeditions = Achievement(Achievement.CompletedExpedition, 0, 100)
         save_data.__achievements[expeditions.name] = expeditions
 
         # some unlocks are present by default for backwards compatibility   # todo: fix this because it's confusing on the Achievement-screen

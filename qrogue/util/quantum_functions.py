@@ -1,6 +1,6 @@
-from typing import Optional, List
+from typing import List
 
-from qrogue.util.util_functions import to_binary_string, center_string, align_string, is_power_of_2
+from qrogue.util.util_functions import to_binary_string, is_power_of_2
 
 
 def generate_ket(qubit: int, num_of_qubits: int) -> str:

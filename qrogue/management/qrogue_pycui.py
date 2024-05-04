@@ -7,16 +7,10 @@ from py_cui import PyCUI
 from py_cui import popups
 from py_cui.widget_set import WidgetSet
 
-from qrogue.game.logic import collectibles
-from qrogue.game.logic.actors import Boss, Controllable, Enemy, Riddle, Robot
-from qrogue.game.logic.actors.controllables import BaseBot
-from qrogue.game.logic.actors.puzzles import Challenge
-from qrogue.game.logic.base import StateVector
-from qrogue.game.logic.collectibles import Score
+from qrogue.game.logic.actors import Boss, Controllable, Enemy, Riddle, Challenge, Robot, BaseBot
 from qrogue.game.world.map import CallbackPack, Map
 from qrogue.game.world.navigation import Direction
 from qrogue.game.world.tiles import WalkTriggerTile, Message, Collectible
-from qrogue.game.world.tiles.tiles import NpcTile
 from qrogue.graphics import WidgetWrapper
 from qrogue.graphics.popups import Popup, MultilinePopup, ConfirmationPopup
 from qrogue.graphics.rendering import MultiColorRenderer
@@ -24,17 +18,13 @@ from qrogue.graphics.widgets import Renderable, BossFightWidgetSet, ExploreWidge
     FightWidgetSet, MenuWidgetSet, MyWidgetSet, NavigationWidgetSet, PauseMenuWidgetSet, RiddleWidgetSet, \
     ChallengeWidgetSet, ShopWidgetSet, WorkbenchWidgetSet, TrainingsWidgetSet, Widget, TransitionWidgetSet, \
     ScreenCheckWidgetSet, LevelSelectWidgetSet
+from qrogue.management import NewSaveData, MapManager
 from qrogue.util import common_messages, CheatConfig, Config, GameplayConfig, UIConfig, HelpText, \
-    Logger, PathConfig, MapConfig, Controls, Keys, RandomManager, PyCuiConfig, PyCuiColors, Options, \
+    Logger, PathConfig, Controls, Keys, RandomManager, PyCuiConfig, PopupConfig, PyCuiColors, Options, \
     CommonQuestions, ErrorConfig, CommonInfos
 from qrogue.util.achievements import Unlocks
-from qrogue.util.config import FileTypes, PopupConfig
 from qrogue.util.game_simulator import GameSimulator
 from qrogue.util.key_logger import KeyLogger, OverWorldKeyLogger, DummyKeyLogger
-
-from qrogue.management.save_data import NewSaveData
-
-from qrogue.management import MapManager, SaveData
 
 
 class QrogueCUI(PyCUI):

@@ -1,7 +1,7 @@
 import numpy as np
+
 import qrogue.game.logic.collectibles.instruction as gates
 from qrogue.game.logic.actors.puzzles import is_puzzle_solvable
-
 from qrogue.game.logic.base import StateVector
 from qrogue.game.logic.collectibles import Instruction
 

@@ -4,8 +4,7 @@ from typing import List
 import test_util
 from qrogue.game.world.dungeon_generator import DungeonGenerator
 from qrogue.game.world.dungeon_generator.random_generator import RandomLayoutGenerator, ExpeditionGenerator
-from qrogue.game.world.map import Room, CallbackPack
-from qrogue.game.world.map.rooms import Hallway
+from qrogue.game.world.map import Room, Hallway, CallbackPack
 from qrogue.game.world.navigation import Direction, Coordinate
 from qrogue.game.world import tiles
 from qrogue.util import CheatConfig

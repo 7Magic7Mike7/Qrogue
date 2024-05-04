@@ -1,6 +1,5 @@
 # exporting
-from .controllables import Controllable, Player, Robot
-from .controllables import robot
+from .controllables import Controllable, Player, Robot, BaseBot
 from .puzzles import Enemy, Boss, Riddle, Challenge
 
 # importing

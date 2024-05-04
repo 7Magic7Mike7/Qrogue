@@ -3,17 +3,14 @@ from threading import Thread
 from typing import Callable, Optional, Dict, List, Tuple
 
 from qrogue.game.logic.actors import Robot
-from qrogue.game.world.dungeon_generator import ExpeditionGenerator, QrogueLevelGenerator, QrogueWorldGenerator
+from qrogue.game.world.dungeon_generator import ExpeditionGenerator, QrogueLevelGenerator
 from qrogue.game.world.map import Map, MapType, ExpeditionMap, CallbackPack
 from qrogue.game.world.navigation import Coordinate
 from qrogue.graphics.popups import Popup
-from qrogue.util import CommonQuestions, Logger, MapConfig, achievements, RandomManager, Config, \
-    ErrorConfig, PathConfig
-
 from qrogue.management.save_data import NewSaveData
-from qrogue.util.achievements import Unlocks
-from qrogue.util.level_info import LevelInfo
-from qrogue.util.config.gameplay_config import ExpeditionConfig, GameplayConfig
+from qrogue.util import CommonQuestions, RandomManager, LevelInfo, Config, MapConfig, ErrorConfig, \
+    ExpeditionConfig
+from qrogue.util.achievements import Achievement
 from qrogue.util.util_functions import cur_datetime, time_diff
 
 
@@ -181,7 +178,7 @@ class MapManager:
                                                              score=self.__cur_map.robot.score)
 
             if self.__cur_map.get_type() is MapType.Expedition:
-                self.__save_data.add_to_achievement(achievements.CompletedExpedition, 1)    # todo: add score instead of 1?
+                self.__save_data.add_to_achievement(Achievement.CompletedExpedition, 1)    # todo: add score instead of 1?
             elif self.__cur_map.get_type() is MapType.Level:
                 pass
             else:

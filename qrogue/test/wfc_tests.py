@@ -4,7 +4,7 @@ from typing import Dict
 from qrogue.game.world.dungeon_generator.wave_function_collapse import WaveFunction
 from qrogue.game.world.dungeon_generator.wave_function_collapse.wfc_generator import WFCRoomGenerator, \
     WFCLayoutGenerator
-from qrogue.game.world.map.rooms import AreaType, Area
+from qrogue.game.world.map import AreaType, Area
 from qrogue.test import test_util
 from qrogue.util import MapConfig, RandomManager, TestConfig
 from qrogue.util.util_functions import enum_str

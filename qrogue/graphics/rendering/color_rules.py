@@ -4,7 +4,7 @@ from qrogue.graphics import WidgetWrapper
 from qrogue.util import PyCuiColors, ColorConfig
 
 
-class TileColorer:      # todo: move to ColorConfig? (only value of dictionary since the keys are TileCodes)
+class _TileColorer:      # todo: move to ColorConfig? (only value of dictionary since the keys are TileCodes)
     __color_manager = {
         TileCode.Invalid: PyCuiColors.RED_ON_BLUE,
         TileCode.Void: PyCuiColors.CYAN_ON_BLACK,
@@ -36,8 +36,8 @@ class TileColorer:      # todo: move to ColorConfig? (only value of dictionary s
         :return: integer representing one of the possible foreground-background color comibnations, None for invalid
         input
         """
-        if tile_code in TileColorer.__color_manager:
-            return TileColorer.__color_manager[tile_code]
+        if tile_code in _TileColorer.__color_manager:
+            return _TileColorer.__color_manager[tile_code]
 
 
 class ColorRules:
@@ -45,46 +45,46 @@ class ColorRules:
     def apply_map_rules(widget: WidgetWrapper) -> None:
         # controllables
         for ct in ControllableType.values():
-            widget.add_text_color_rule(ct.name, TileColorer.get_color(TileCode.Controllable), 'contains',
+            widget.add_text_color_rule(ct.name, _TileColorer.get_color(TileCode.Controllable), 'contains',
                                        match_type='regex')
         # puzzles
-        widget.add_text_color_rule(TileCode.Boss.representation, TileColorer.get_color(TileCode.Boss), 'contains',
+        widget.add_text_color_rule(TileCode.Boss.representation, _TileColorer.get_color(TileCode.Boss), 'contains',
                                    match_type='regex')
-        widget.add_text_color_rule('\d', TileColorer.get_color(TileCode.Enemy), 'contains', match_type='regex')
-        widget.add_text_color_rule(f"\{TileCode.Riddler.representation}", TileColorer.get_color(TileCode.Enemy),
+        widget.add_text_color_rule('\d', _TileColorer.get_color(TileCode.Enemy), 'contains', match_type='regex')
+        widget.add_text_color_rule(f"\{TileCode.Riddler.representation}", _TileColorer.get_color(TileCode.Enemy),
                                    'contains', match_type='regex')
-        widget.add_text_color_rule(TileCode.Challenger.representation, TileColorer.get_color(TileCode.Enemy),
+        widget.add_text_color_rule(TileCode.Challenger.representation, _TileColorer.get_color(TileCode.Enemy),
                                    'contains', match_type='regex')
 
         # blocking
-        widget.add_text_color_rule(TileCode.Wall.representation, TileColorer.get_color(TileCode.Wall), 'contains',
+        widget.add_text_color_rule(TileCode.Wall.representation, _TileColorer.get_color(TileCode.Wall), 'contains',
                                    match_type='regex')
-        widget.add_text_color_rule(TileCode.Obstacle.representation, TileColorer.get_color(TileCode.Obstacle),
+        widget.add_text_color_rule(TileCode.Obstacle.representation, _TileColorer.get_color(TileCode.Obstacle),
                                    'contains', match_type='regex')
 
         # collectibles
         for ct in TileCode.collectible_subtypes():
-            widget.add_text_color_rule(ct.representation, TileColorer.get_color(TileCode.Collectible), 'contains',
+            widget.add_text_color_rule(ct.representation, _TileColorer.get_color(TileCode.Collectible), 'contains',
                                        match_type='regex')
 
         # goal
-        widget.add_text_color_rule(TileCode.Goal.representation, TileColorer.get_color(TileCode.Goal),
+        widget.add_text_color_rule(TileCode.Goal.representation, _TileColorer.get_color(TileCode.Goal),
                                    'contains', match_type='regex')
 
     @staticmethod
     def apply_spaceship_rules(widget: WidgetWrapper):
-        widget.add_text_color_rule('\.', TileColorer.get_color(TileCode.SpaceshipWalk), 'contains', match_type='regex')
-        widget.add_text_color_rule('M', TileColorer.get_color(TileCode.Controllable), 'contains', match_type='regex')
-        widget.add_text_color_rule('R', TileColorer.get_color(TileCode.Npc), 'contains', match_type='regex')
-        widget.add_text_color_rule('(B|W|N|G)', TileColorer.get_color(TileCode.SpaceshipWalk), 'contains',
+        widget.add_text_color_rule('\.', _TileColorer.get_color(TileCode.SpaceshipWalk), 'contains', match_type='regex')
+        widget.add_text_color_rule('M', _TileColorer.get_color(TileCode.Controllable), 'contains', match_type='regex')
+        widget.add_text_color_rule('R', _TileColorer.get_color(TileCode.Npc), 'contains', match_type='regex')
+        widget.add_text_color_rule('(B|W|N|G)', _TileColorer.get_color(TileCode.SpaceshipWalk), 'contains',
                                    match_type='regex')
 
     @staticmethod
     def apply_navigation_rules(widget: WidgetWrapper):
-        widget.add_text_color_rule('#', TileColorer.get_color(TileCode.Wall), 'contains', match_type='regex')
-        widget.add_text_color_rule('M', TileColorer.get_color(TileCode.Controllable), 'contains', match_type='regex')
-        widget.add_text_color_rule('t', TileColorer.get_color(TileCode.Teleport), 'contains', match_type='regex')
-        widget.add_text_color_rule('\.', TileColorer.get_color(TileCode.Message), 'contains', match_type='regex')
+        widget.add_text_color_rule('#', _TileColorer.get_color(TileCode.Wall), 'contains', match_type='regex')
+        widget.add_text_color_rule('M', _TileColorer.get_color(TileCode.Controllable), 'contains', match_type='regex')
+        widget.add_text_color_rule('t', _TileColorer.get_color(TileCode.Teleport), 'contains', match_type='regex')
+        widget.add_text_color_rule('\.', _TileColorer.get_color(TileCode.Message), 'contains', match_type='regex')
 
     @staticmethod
     def apply_circuit_rules(widget: WidgetWrapper):

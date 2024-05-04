@@ -10,6 +10,7 @@ import qrogue.graphics.widgets
 # +game.logic.actors
 # +game.logic.actors.controllables
 # +game.logic.actors.puzzles
+# +game.logic.base
 # +game.logic.collectibles
 # +game.world.map
 # +game.world.navigation

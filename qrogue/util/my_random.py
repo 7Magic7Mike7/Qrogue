@@ -1,7 +1,7 @@
 from random import Random
-from typing import List, Any, Optional
+from typing import List, Any
 
-from qrogue.util import TestConfig, ErrorConfig
+from qrogue.util import ErrorConfig
 from qrogue.util.config import Config
 from qrogue.util.logger import Logger
 
