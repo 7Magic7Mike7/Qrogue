@@ -8,9 +8,8 @@ from qrogue.management.save_grammar.SaveDataParser import SaveDataParser
 from qrogue.management.save_grammar.SaveDataVisitor import SaveDataVisitor
 
 from qrogue.game.logic.collectibles import Instruction, InstructionManager
-from qrogue.game.world.dungeon_generator import parser_util
 from qrogue.graphics.popups import Popup
-from qrogue.util import Logger, CommonInfos, LevelInfo, LevelData, Config, PathConfig, FileTypes
+from qrogue.util import Logger, CommonInfos, LevelInfo, LevelData, Config, PathConfig, FileTypes, ParserErrorListener
 from qrogue.util.achievements import Achievement, Unlocks
 from qrogue.util.util_functions import cur_datetime, datetime2str
 
@@ -302,7 +301,7 @@ class _SaveDataGenerator(SaveDataVisitor):
         lexer = SaveDataLexer(input_stream)
         token_stream = CommonTokenStream(lexer)
         parser = SaveDataParser(token_stream)
-        parser.addErrorListener(parser_util.MyErrorListener())
+        parser.addErrorListener(ParserErrorListener())
 
         return self.visitStart(parser.start())
 

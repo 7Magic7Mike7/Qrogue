@@ -13,7 +13,8 @@ from qrogue.game.target_factory import ExplicitTargetDifficulty, ExplicitStvDiff
 from qrogue.game.world import tiles
 from qrogue.game.world.map import CallbackPack, MapMetaData, LevelMap, rooms
 from qrogue.game.world.navigation import Coordinate, Direction
-from qrogue.util import Config, MapConfig, PathConfig, Logger, CommonQuestions, RandomManager, MyRandom, load_help_text
+from qrogue.util import Config, MapConfig, PathConfig, Logger, CommonQuestions, RandomManager, MyRandom, \
+    load_help_text, ParserErrorListener
 
 from qrogue.game.world.dungeon_generator import parser_util
 from qrogue.game.world.dungeon_generator.dungeon_parser.QrogueDungeonLexer import QrogueDungeonLexer
@@ -192,7 +193,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         lexer = QrogueDungeonLexer(input_stream)
         token_stream = CommonTokenStream(lexer)
         parser = QrogueDungeonParser(token_stream)
-        parser.addErrorListener(parser_util.MyErrorListener())
+        parser.addErrorListener(ParserErrorListener())
 
         try:
             meta_data, room_matrix = self.visit(parser.start())
