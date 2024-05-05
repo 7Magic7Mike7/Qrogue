@@ -5,7 +5,7 @@ from typing import Iterator, List, Callable, Optional
 
 
 class CollectibleType(Enum):
-    Consumable = 1      # currently unused
+    # Consumable = 1      # currently unused
     ActiveItem = 3      # currently unused
     PassiveItem = 4     # currently unused
 

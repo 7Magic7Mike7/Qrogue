@@ -8,7 +8,7 @@ from typing import Tuple, List, Callable, Optional
 from qrogue.game.logic.actors.controllables import Controllable
 from qrogue.game.logic.actors.controllables.qubit import QubitSet, DummyQubitSet
 from qrogue.game.logic.base import StateVector, CircuitMatrix, QuantumSimulator, QuantumCircuit, UnitarySimulator
-from qrogue.game.logic.collectibles import Collectible, Consumable, Instruction, Key, MultiCollectible, \
+from qrogue.game.logic.collectibles import Collectible, Instruction, Key, MultiCollectible, \
     Qubit, Energy, Score
 from qrogue.util import CheatConfig, Config, Logger, GameplayConfig, QuantumSimulationConfig, Options
 
@@ -144,7 +144,6 @@ class _Backpack:
     """
 
     __CAPACITY: int = 5      # how many Instructions the Backpack can hold at once
-    __POUCH_SIZE: int = 5    # how many Consumables the Backpack can hold at once
 
     def __init__(self, capacity: int = __CAPACITY, content: Optional[List[Instruction]] = None):
         """
@@ -163,8 +162,6 @@ class _Backpack:
         else:
             self.__capacity = capacity
             self.__storage: List[Instruction] = []
-        self.__pouch_size: int = _Backpack.__POUCH_SIZE
-        self.__pouch: List[Consumable] = []
         self.__key_count: int = 0
 
     def __iter__(self) -> "_BackpackIterator":
@@ -189,22 +186,6 @@ class _Backpack:
         :return: number of items currently stored
         """
         return len(self.__storage)
-
-    @property
-    def consumables_in_pouch(self) -> int:
-        """
-
-        :return: how many Consumables are currently stored
-        """
-        return len(self.__pouch)
-
-    @property
-    def num_of_available_items(self) -> int:
-        """
-
-        :return: number of items that are currently available to use (e.g. Consumables)
-        """
-        return self.consumables_in_pouch    # later we might add active item(s)?
 
     @property
     def key_count(self) -> int:
@@ -281,49 +262,6 @@ class _Backpack:
                                     "(although it has no game-consequences if I'm wrong).", show=False, from_pycui=False)
         try:
             self.__storage.remove(instruction)
-            return True
-        except ValueError:
-            return False
-
-    def pouch_iterator(self) -> __iter__:
-        """
-
-        :return: an Iterator over the Consumables stored in this Backpack
-        """
-        return iter(self.__pouch)
-
-    def get_from_pouch(self, index: int) -> Optional[Consumable]:
-        """
-        Returns the Consumable at the provided index in the pouch if index is valid. Otherwise returns None.
-
-        :param index: index of the Consumable we want to get
-        :return: the Consumable at the given index or None
-        """
-        if 0 <= index < self.consumables_in_pouch:
-            return self.__pouch[index]
-        return None
-
-    def place_in_pouch(self, consumable: Consumable) -> bool:
-        """
-        Places a Consumable in the pouch if possible (i.e. there is still space left).
-
-        :param consumable: the Consumable we want to store in the pouch
-        :return: True if we could add the Consumable, False otherwise
-        """
-        if self.consumables_in_pouch < self.__pouch_size:
-            self.__pouch.append(consumable)
-            return True
-        return False
-
-    def remove_from_pouch(self, consumable: Consumable) -> bool:
-        """
-        Tries to remove a given Consumable from the pouch. Fails if it's not stored in the pouch.
-
-        :param consumable: the Consumable we want to remove
-        :return: True if consumable was removed successfully, False otherwise
-        """
-        try:
-            self.__pouch.remove(consumable)
             return True
         except ValueError:
             return False
@@ -685,8 +623,6 @@ class Robot(Controllable, ABC):
             self.__attributes.increase_energy(collectible.amount)
         elif isinstance(collectible, Instruction):
             self.backpack.add(collectible)
-        elif isinstance(collectible, Consumable):
-            self.backpack.place_in_pouch(collectible)
         elif isinstance(collectible, Qubit):
             self.__attributes.add_qubits(collectible.additional_qubits)
         elif isinstance(collectible, MultiCollectible):
