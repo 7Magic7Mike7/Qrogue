@@ -17,18 +17,10 @@ class LevelInfo:
         #   - alternatively maps can also start with "expedition" to mark them as generated
         0: {
             MapConfig.first_uncleared(): "l0k0v0",
-            "l0k0v0": "l0k0v1",
-            "l0k0v1": "l0k0v2",
-            "l0k0v2": "l0k0v3",
-            "l0k0v3": "l0k0v4",
             "l0k0v4": f"{MapConfig.expedition_map_prefix()}25",
         },
         1: {
             MapConfig.first_uncleared(): "l0k1v0",
-            "l0k1v0": "l0k1v1",
-            "l0k1v1": "l0k1v2",
-            "l0k1v2": "l0k1v3",
-            "l0k1v3": "l0k1v4",
             "l0k1v4": f"{MapConfig.expedition_map_prefix()}25",
         },
     }
@@ -49,6 +41,13 @@ class LevelInfo:
 
     @staticmethod
     def init():
+        # initialize map order in-between tutorials
+        start, end = 0, 3
+        for i in range(start, end+1):
+            for km in [0, 1]:
+                src_name, dst_name = f"l0k{km}v{i}", f"l0k{km}v{i+1}"
+                LevelInfo.__MAP_ORDER[km][src_name] = dst_name
+
         # initialize completion unlocks for experienced tutorials
         values_to_add: Dict[str, List[Unlocks]] = {}
         for name in LevelInfo.__LEVEL_COMPLETION_UNLOCKS:
