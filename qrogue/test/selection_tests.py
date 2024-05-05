@@ -6,7 +6,7 @@ def test():
     sel = test_util.DummySelectionWidget(2, True, False)
     sel.set_data(data=(
         options,
-        [test_util.true_callback] * len(options)
+        [lambda: True] * len(options)
     ))
     sel.get_dummy_widget().selected = True
 

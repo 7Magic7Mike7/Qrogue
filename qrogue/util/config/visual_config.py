@@ -374,6 +374,7 @@ class HudConfig:
     ShowFPS = False
 
 
+# located here and not in util_functions.py because it depends on visual configs
 def split_text(text: str, width: int, padding: int, handle_error: Callable[[str], None]) -> List[str]:
     """
 

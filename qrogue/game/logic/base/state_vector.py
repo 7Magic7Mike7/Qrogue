@@ -1,5 +1,4 @@
-from collections import Iterator
-from typing import List, Optional
+from typing import Iterator, List, Optional
 
 import numpy as np
 
@@ -257,5 +256,3 @@ class StateVector:
 
     def __iter__(self) -> Iterator:
         return iter(self.__amplitudes)
-
-

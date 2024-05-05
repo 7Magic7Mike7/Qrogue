@@ -8,7 +8,7 @@ class Renderable(ABC):
     def count() -> str:
         """
         Utility function to find out about rendering order for debugging purposes
-        :return: string representation of an globally incremented counter
+        :return: string representation of a globally incremented counter
         """
         Renderable.__COUNTER += 1
         return str(Renderable.__COUNTER)
