@@ -21,11 +21,8 @@ class _TileColorer:      # todo: move to ColorConfig? (only value of dictionary 
         TileCode.Goal: PyCuiColors.GREEN_ON_BLACK,
 
         TileCode.Controllable: PyCuiColors.WHITE_ON_GREEN,
-        TileCode.Npc: PyCuiColors.BLUE_ON_BLACK,
         TileCode.Enemy: PyCuiColors.RED_ON_BLACK,
         TileCode.Boss: PyCuiColors.BLACK_ON_RED,
-
-        TileCode.SpaceshipWalk: PyCuiColors.BLACK_ON_WHITE,
     }
 
     @staticmethod
@@ -70,14 +67,6 @@ class ColorRules:
         # goal
         widget.add_text_color_rule(TileCode.Goal.representation, _TileColorer.get_color(TileCode.Goal),
                                    'contains', match_type='regex')
-
-    @staticmethod
-    def apply_spaceship_rules(widget: WidgetWrapper):
-        widget.add_text_color_rule('\.', _TileColorer.get_color(TileCode.SpaceshipWalk), 'contains', match_type='regex')
-        widget.add_text_color_rule('M', _TileColorer.get_color(TileCode.Controllable), 'contains', match_type='regex')
-        widget.add_text_color_rule('R', _TileColorer.get_color(TileCode.Npc), 'contains', match_type='regex')
-        widget.add_text_color_rule('(B|W|N|G)', _TileColorer.get_color(TileCode.SpaceshipWalk), 'contains',
-                                   match_type='regex')
 
     @staticmethod
     def apply_navigation_rules(widget: WidgetWrapper):

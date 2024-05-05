@@ -203,11 +203,6 @@ class WFCLayoutGenerator(WFCGenerator):
         return super(WFCLayoutGenerator, self).generate(seed, width, height, static_entries)
 
 
-class WFCConnectionGenerator(WFCGenerator):
-    # todo implement? but not needed if we use WFC just for the rooms and not the layout
-    pass
-
-
 class WFCRoomGenerator(WFCGenerator):
     @staticmethod
     def get_level_list() -> List[Tuple[str, bool]]:

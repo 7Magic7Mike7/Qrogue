@@ -5,40 +5,7 @@ from qrogue.game.logic.actors import Robot, BaseBot, Enemy, Boss, Riddle, Challe
 from qrogue.game.world.navigation import Direction
 from qrogue.graphics import WidgetWrapper
 from qrogue.graphics.widgets.my_widgets import SelectionWidget
-from qrogue.management import SaveData
-from qrogue.util import RandomManager, Config, PathConfig, Logger, Controls, TestConfig, CheatConfig
-
-
-def true_callback() -> bool:
-    return True
-
-
-def false_callback() -> bool:
-    return False
-
-
-def start_gp(args):
-    print("started game")
-
-
-def start_fight(robot: Robot, enemy: Enemy, direction: Direction):
-    pass
-
-
-def start_boss_fight(robot: Robot, boss: Boss, direction: Direction):
-    pass
-
-
-def open_riddle(robot: Robot, riddle: Riddle):
-    pass
-
-
-def open_challenge(robot: Robot, challenge: Challenge):
-    pass
-
-
-def visit_shop(robot: Robot, items: List[ShopItem]):
-    pass
+from qrogue.util import Logger, Controls, Config, PathConfig, TestConfig, CheatConfig
 
 
 def load_map(map_name: str):

@@ -1,8 +1,7 @@
 import os
 import sys
 
-from qrogue.game.logic.actors import Player
-from qrogue.game.world.dungeon_generator import QrogueWorldGenerator, QrogueLevelGenerator
+from qrogue.game.world.dungeon_generator import QrogueLevelGenerator
 from qrogue.game.world.map import CallbackPack
 from qrogue.management import NewSaveData
 from qrogue.test import test_util
@@ -11,17 +10,12 @@ BASE_PATH = os.path.join("D:\\", "Documents", "Studium", "Master", "3. Semester"
 
 # todo: rewrite tests
 
-def generation_test(file_name: str, world: bool = False):
+def generation_test(file_name: str):
     save_data = NewSaveData()   # todo: use lambdas instead of real functions since the functions do not matter?
     check_achievement = save_data.check_achievement
     trigger_event = lambda event_id: None
-    if world:
-        player = Player()
-        generator = QrogueWorldGenerator(7, player, check_achievement, trigger_event, test_util.load_map,
-                                         test_util.message_popup)
-    else:
-        generator = QrogueLevelGenerator(check_achievement, trigger_event, test_util.load_map,
-                                         test_util.message_popup, CallbackPack.dummy())
+    generator = QrogueLevelGenerator(check_achievement, trigger_event, test_util.load_map,
+                                     test_util.message_popup, CallbackPack.dummy())
     map, success = generator.generate(7, file_name, True)
     if success:
         print(map)
@@ -60,4 +54,4 @@ user_data_path = sys.argv[1]
 test_util.init_singletons(include_config=True, custom_user_path=user_data_path)
 
 file_name = "l1v1"
-generation_test(file_name, world=False)
+generation_test(file_name)

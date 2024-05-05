@@ -59,17 +59,3 @@ class WFCLearner:
         for tc in values:
             if tc in self.__type_weights:
                 self.__type_weights.pop(tc)
-
-
-class WFCRoomLearner(WFCLearner):
-    def __init__(self, pos_weights: Dict[Coordinate, Dict[LearnableRoom.TileData, int]],
-                 type_weights: Dict[Optional[LearnableRoom.TileData], Dict[Optional[LearnableRoom.TileData], int]]):
-        super().__init__(pos_weights, type_weights)
-
-    def remove_unwanted_values(self):
-        super(WFCRoomLearner, self)._remove_unwanted_values(tiles.TileCode.special_values())
-        """
-        Special tiles are non-static tiles that don't work out of the box if simply placed randomly. This includes tiles
-        relevant for story progression and other handcrafted levels like Messages and Triggers but also ones that are
-        relevant for map generation like Void, FogOfWar or Invalid.
-        """

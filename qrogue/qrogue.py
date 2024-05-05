@@ -3,12 +3,10 @@ import random
 import sys
 from typing import Tuple, List, Optional
 
-from qrogue.game.logic.actors import Player
-from qrogue.game.world.dungeon_generator import QrogueLevelGenerator, QrogueWorldGenerator
+from qrogue.game.world.dungeon_generator import QrogueLevelGenerator
 from qrogue.game.world.map import CallbackPack
-from qrogue.game.world.navigation import Coordinate
-from qrogue.management import SaveData, QrogueCUI
-from qrogue.util import PyCuiConfig, Config, Logger, RandomManager, PathConfig, GameplayConfig
+from qrogue.management import QrogueCUI
+from qrogue.util import Logger, Config, PyCuiConfig, PathConfig, GameplayConfig, ErrorConfig
 
 
 def __init_singletons(seed: int):
@@ -209,11 +207,7 @@ def validate_map(path: str, is_level: bool = True, in_base_path: bool = True) ->
                                          show_message_callback=lambda title, text, reopen, position: None,
                                          callback_pack=CallbackPack.dummy())
     else:
-        player = Player()
-        generator = QrogueWorldGenerator(player, check_achievement_callback=lambda achievement: False,
-                                         trigger_event_callback=lambda event: None,
-                                         load_map_callback=lambda name, spawn_pos: None,
-                                         show_message_callback=lambda title, text, reopen, position: None)
+        ErrorConfig.raise_deletion_exception()
 
     try:
         error_occurred = False

@@ -27,7 +27,7 @@ class TileCode(Enum):
     Door = (4, "|")
 
     Controllable = (20, "C")
-    Npc = (25, "N")
+    # Npc = (25, "N")
     Enemy = (30, "E")
     Boss = (40, "B")
 
@@ -37,10 +37,10 @@ class TileCode(Enum):
     Energy = (53, "e")
     Challenger = (54, "!")
 
-    SpaceshipBlock = (70, "/")
-    SpaceshipWalk = (71, ".")
-    SpaceshipTrigger = (72, "T")
-    OuterSpace = (73, "*")
+    # SpaceshipBlock = (70, "/")
+    # SpaceshipWalk = (71, ".")
+    # SpaceshipTrigger = (72, "T")
+    # OuterSpace = (73, "*")
 
     CollectibleKey = (501, "k")
     # CollectibleCoin = (502, "€")
@@ -299,26 +299,3 @@ class ControllableTile(Tile):
 
     def copy(self) -> "Tile":
         return ControllableTile(self.__controllable)
-
-
-class NpcTile(Tile):
-    def __init__(self, name: str, show_message_callback: Callable[[str, str], None],
-                 get_text_callback: Callable[[], str]):
-        super(NpcTile, self).__init__(TileCode.Npc)
-        self.__name = name
-        self.__show_message = show_message_callback
-        self.__get_text = get_text_callback
-
-    @property
-    def data(self) -> str:
-        return self.__name
-
-    def get_img(self):
-        return self.__name[0]
-
-    def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
-        self.__show_message(self.__name, self.__get_text())
-        return False
-
-    def copy(self) -> "Tile":
-        return NpcTile(self.__name, self.__show_message, self.__get_text)

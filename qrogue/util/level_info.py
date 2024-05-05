@@ -16,15 +16,12 @@ class LevelInfo:
         #   - last digit for levels is used to order the levels (only for structure, not used in game logic)
         #   - alternatively maps can also start with "expedition" to mark them as generated
         0: {
-            # MapConfig.spaceship(): MapConfig.intro_level(),
             MapConfig.first_uncleared(): "l0k0v0",
             "l0k0v0": "l0k0v1",
             "l0k0v1": "l0k0v2",
             "l0k0v2": "l0k0v3",
             "l0k0v3": "l0k0v4",
             "l0k0v4": f"{MapConfig.expedition_map_prefix()}25",
-            "l0training": "w0",
-            "l0exam": MapConfig.spaceship(),
         },
         1: {
             MapConfig.first_uncleared(): "l0k1v0",

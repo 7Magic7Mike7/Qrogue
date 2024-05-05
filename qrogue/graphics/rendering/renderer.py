@@ -1,23 +1,6 @@
 from py_cui.renderer import Renderer
 
-from qrogue.game.world.tiles import Tile
-from qrogue.util import ColorConfig, Logger, ErrorConfig
-
-
-class TileRenderer:
-    __instance = None
-
-    @staticmethod
-    def instance() -> "TileRenderer":
-        ErrorConfig.raise_deletion_exception()
-
-    def __init__(self):
-        """ Virtually private constructor. """
-        ErrorConfig.raise_deletion_exception()
-
-    @staticmethod
-    def render(tile: Tile):
-        return tile.get_img()
+from qrogue.util import ColorConfig, Logger
 
 
 class Fragment:

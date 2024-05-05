@@ -40,7 +40,7 @@ class QrogueCUI(PyCUI):
         Riddle = 5
         BossFight = 6
 
-        Spaceship = 7
+        # Spaceship = 7
         Workbench = 8
         Navigation = 9
         Training = 10
@@ -86,8 +86,6 @@ class QrogueCUI(PyCUI):
             elif self.__cur_state == QrogueCUI._State.Pause:
                 self.__renderer._switch_to_pause()
 
-            elif self.__cur_state == QrogueCUI._State.Spaceship:
-                ErrorConfig.raise_deletion_exception()
             elif self.__cur_state == QrogueCUI._State.Training:
                 self.__renderer._switch_to_training(data)
             elif self.__cur_state == QrogueCUI._State.Workbench:
@@ -640,20 +638,10 @@ class QrogueCUI(PyCUI):
         self.apply_widget_set(self.__screen_check)
 
     def __start_playing(self):
-        if self.__save_data.check_unlocks(Unlocks.Spaceship):
-            ErrorConfig.raise_deletion_exception()
-        else:
-            # load the newest level (exam phase) by
-            self.__map_manager.load_first_uncleared_map()
+        self.__map_manager.load_first_uncleared_map()
 
     def __start_expedition(self):
-        if self.__save_data.check_unlocks(Unlocks.Spaceship):
-            self.__map_manager.load_expedition()
-        else:
-            def _callback(selection: int):
-                if selection == 0:
-                    self.__map_manager.load_expedition()
-            CommonQuestions.SkipStoryTutorial.ask(_callback)
+        Popup.error("Expeditions not yet unlocked!")
 
     def _switch_to_training(self, data=None):
         if data:
@@ -736,9 +724,9 @@ class QrogueCUI(PyCUI):
 
     def _switch_to_boss_fight(self, data) -> None:
         if data is not None:
-            player = data[0]
+            robot = data[0]
             boss = data[1]
-            self.__boss_fight.set_data(player, boss, self.__map_manager.in_expedition,
+            self.__boss_fight.set_data(robot, boss, self.__map_manager.in_expedition,
                                        self.__map_manager.show_individual_qubits)
         self.apply_widget_set(self.__boss_fight)
 
@@ -747,9 +735,9 @@ class QrogueCUI(PyCUI):
 
     def _switch_to_riddle(self, data) -> None:
         if data is not None:
-            player = data[0]
+            robot = data[0]
             riddle = data[1]
-            self.__riddle.set_data(player, riddle, self.__map_manager.in_expedition,
+            self.__riddle.set_data(robot, riddle, self.__map_manager.in_expedition,
                                    self.__map_manager.show_individual_qubits)
         self.apply_widget_set(self.__riddle)
 

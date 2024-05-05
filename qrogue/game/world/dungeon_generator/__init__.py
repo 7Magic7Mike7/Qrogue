@@ -1,7 +1,6 @@
 # exporting
 from .generator import DungeonGenerator
 from .QrogueLevelGenerator import QrogueLevelGenerator
-from .QrogueWorldGenerator import QrogueWorldGenerator
 from .random_generator import ExpeditionGenerator
 
 # not exported:

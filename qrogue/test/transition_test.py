@@ -8,7 +8,7 @@ from qrogue.test import test_util
 
 class _TestQrogueCUI(QrogueCUI):
     @staticmethod
-    def exam_spaceship() -> List[TransitionWidgetSet.TextScroll]:
+    def test_text() -> List[TransitionWidgetSet.TextScroll]:
         return [
             TransitionWidgetSet.TextScroll.hasty("A couple of days later...", text_delay=0.5),
             TransitionWidgetSet.TextScroll.fast("Mike received a letter stating he was chosen to join Mission "
@@ -16,7 +16,7 @@ class _TestQrogueCUI(QrogueCUI):
         ]
 
     def start(self, level_name: Optional[str] = None):
-        text_scrolls = self.exam_spaceship()
+        text_scrolls = self.test_text()
         self._execute_transition(text_scrolls, QrogueCUI._State.Menu, None, additional_callback=self.stop)
         super().start()
 

@@ -8,7 +8,6 @@ from qrogue.util.util_functions import cur_datetime
 class Unlocks(enum.Enum):
     # menu unlocks
     MainMenuContinue = (10, "MainMenuContinue")     # unlocked after Level 0
-    MainMenuPlay = (11, "MainMenuPlay")             # unlocked after first "real" level (i.e., after spaceship)
 
     # hud unlocks
     ShowEnergy = (30, "ShowEnergy")     # unlocked after Level 0
@@ -22,13 +21,6 @@ class Unlocks(enum.Enum):
     # level unlocks
     ProceedChoice = (90, "ProceedChoice")   # unlocked after all Tutorial levels (right before Exam)    # todo: should be available as soon as Level Selection is available
     LevelSelection = (91, "LevelSelection")
-
-    # spaceship unlocks
-    Spaceship = (100, "Spaceship")      # unlocked after Tutorial
-    Workbench = (110, "Workbench")      # unlocking not yet implemented
-    Navigation = (130, "Navigation")    # unlocked after Tutorial
-    FreeNavigation = (131, "FreeNavigation")    # unlocked never
-    QuickStart = (140, "QuickStart")    # unlocking not yet implemented
 
     def __init__(self, id_: int, name: str):
         self.__id = id_

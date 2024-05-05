@@ -116,9 +116,6 @@ class CommonQuestions(Enum):
     ProceedToNextMap = (Config.scientist_name(), "Looks like we cleared this map. Shall we proceed directly to the " 
                                                  "next one?", ["Proceed", "Stay", "Back to world"])
     UseTeleporter = (Config.system_name(), "Do you want to use this Teleporter?")
-    SkipStoryTutorial = (Config.system_name(), "Warning: It is recommended to first finish the tutorial parts of the "
-                                               "story. Only continue if you're already familiar with Quantum Computing "
-                                               "and know what you're doing!")
     OpenUserDataFolder = (Config.system_name(), "Do you want to open the folder containing your user data with your "
                                                 "system's explorer?")
     BackToMenu = (Config.system_name(), "Do you want to return to the main menu?")

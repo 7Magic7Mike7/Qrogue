@@ -70,9 +70,11 @@ class MapManager:
 
     def load_map(self, map_name: str, spawn_room: Optional[Coordinate], map_seed: Optional[int] = None):
         if map_name == MapConfig.first_uncleared():
-            next_map = LevelInfo.get_next(MapConfig.spaceship(), self.__save_data.check_level)   # todo: get rid of .spaceship()
+            next_map = LevelInfo.get_next(MapConfig.first_uncleared(), self.__save_data.check_level)
             if next_map is None:
-                self.load_map(MapConfig.hub_world(), spawn_room, map_seed)
+                Popup.error(f"Failed to find the next map of \"{map_name}\". Please restart and try again.\n"
+                            f"If this error still occurs but you're sure that the corresponding file is present:",
+                            add_report_note=True)
             else:
                 self.load_map(next_map, spawn_room, map_seed)
 
@@ -81,9 +83,6 @@ class MapManager:
 
         elif map_name.lower() == MapConfig.back_map_string():
             self.__load_back()
-
-        elif map_name == MapConfig.spaceship():
-            ErrorConfig.raise_deletion_exception()
 
         elif map_name.lower().startswith(MapConfig.world_map_prefix()):
             ErrorConfig.raise_deletion_exception()
@@ -222,8 +221,7 @@ class MapManager:
         if Config.test_level(ignore_debugging=False):
             self.load_map(MapConfig.test_level(), None)
         else:
-            map_name = LevelInfo.get_next(MapConfig.first_uncleared(), self.__save_data.check_level)
-            self.load_map(map_name, None)
+            self.load_map(MapConfig.first_uncleared(), None)
 
     def load_expedition(self, seed: Optional[int] = None) -> None:
         self.load_map(MapConfig.expedition_map_prefix(), None, seed)

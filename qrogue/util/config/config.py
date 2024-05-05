@@ -50,10 +50,6 @@ class Config:   # todo make singleton and handle access to other configs?
         return "System"     # for things the robot's system tells us
 
     @staticmethod
-    def player_name() -> str:
-        return "Mike"
-
-    @staticmethod
     def get_name(value: int) -> str:
         if value == 0:
             return Config.examiner_name()
@@ -61,8 +57,6 @@ class Config:   # todo make singleton and handle access to other configs?
             return Config.scientist_name()
         if value == 2:
             return Config.system_name()
-        if value == 3:
-            return Config.player_name()
 
         return Config.system_name()     # default if nothing valid was specified
 

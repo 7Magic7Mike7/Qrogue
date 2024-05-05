@@ -1824,19 +1824,17 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
 class TrainingsWidgetSet(ReachTargetWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
-                 back_to_spaceship_callback: Callable[[], None], reopen_popup_callback: Callable[[], None],
+                 back_to_menu_callback: Callable[[], None], reopen_popup_callback: Callable[[], None],
                  check_unlocks_callback: Callable[[str], bool]):
-        super().__init__(controls, render, logger, root, back_to_spaceship_callback, reopen_popup_callback,
+        super().__init__(controls, render, logger, root, back_to_menu_callback, reopen_popup_callback,
                          check_unlocks_callback, "Done")
 
     def _on_commit_fail(self) -> bool:
         return True
 
     def _choices_flee(self) -> bool:
-        self._choices.set_data(data=(
-            ["You return to the Spaceship!"],
-            [self._continue_exploration]
-        ))
+        from qrogue.util import ErrorConfig
+        ErrorConfig.raise_deletion_exception()
         return True
 
 

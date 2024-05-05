@@ -20,13 +20,6 @@ class CollectibleType(Enum):
     Score = 54
 
 
-def type_str(c_type: CollectibleType) -> str:
-    if c_type is CollectibleType.Gate:
-        return " Gate"
-    else:
-        return ""
-
-
 class Collectible(ABC):
     def __init__(self, c_type: CollectibleType):
         self.__type = c_type

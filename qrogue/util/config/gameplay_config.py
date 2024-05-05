@@ -84,10 +84,6 @@ class MapConfig:
         return "firstUncleared"
 
     @staticmethod
-    def spaceship() -> str:
-        return "spaceship"
-
-    @staticmethod
     def hub_world() -> str:
         return "worlds"
 
