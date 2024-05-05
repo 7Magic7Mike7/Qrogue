@@ -123,29 +123,6 @@ class MyWidgetSet(WidgetSet, Renderable, ABC):
         pass
 
 
-_ascii_art = """
-
-
-           _______           
-          / _____ \          
-         | |     | |         
-         | |     | |         
-         | |     | |         
-         | |     | |         
-         | |_____| |         
-          \______\_\         
-
- 
-  _ __ ___   __ _ _   _  ___  
- | '__/ _ \ / _` | | | |/ _ \ 
- | | | (_) | (_| | |_| |  __/ 
- |_|  \___/ \__, |\__,_|\___| 
-             __/ |            
-            |___/             
-
-"""
-
-
 class MenuWidgetSet(MyWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  quick_start_callback: Callable[[], None], start_playing_callback: Callable[[], None],
@@ -176,7 +153,7 @@ class MenuWidgetSet(MyWidgetSet):
         title = self.add_block_label("Ascii Art", 0, width, row_span=UIConfig.WINDOW_HEIGHT-1,
                                      column_span=UIConfig.ASCII_ART_WIDTH, center=True)
         self.__title = SimpleWidget(title)
-        self.__title.set_data(_ascii_art)
+        self.__title.set_data(Config.ascii_art())
 
         seed = self.add_block_label("Seed", UIConfig.WINDOW_HEIGHT-1, width, row_span=1,
                                     column_span=UIConfig.ASCII_ART_WIDTH, center=True)

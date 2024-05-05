@@ -22,6 +22,30 @@ class Config:   # todo make singleton and handle access to other configs?
     __CONFIG_HEAD = "[Config]"
 
     @staticmethod
+    def ascii_art() -> str:
+        return """
+
+
+           _______           
+          / _____ \          
+         | |     | |         
+         | |     | |         
+         | |     | |         
+         | |     | |         
+         | |_____| |         
+          \______\_\         
+
+ 
+  _ __ ___   __ _ _   _  ___  
+ | '__/ _ \ / _` | | | |/ _ \ 
+ | | | (_) | (_| | |_| |  __/ 
+ |_|  \___/ \__, |\__,_|\___| 
+             __/ |            
+            |___/             
+
+"""
+
+    @staticmethod
     def HEADER() -> str:
         return Config.__HEADER
 
