@@ -4,7 +4,8 @@ from typing import Callable, Dict, Optional, Tuple, List, Any, Set
 from qrogue.game.logic.actors import Robot
 from qrogue.game.logic.collectibles import GateFactory, Key, instruction, Score, CollectibleType, \
     CollectibleFactory, Instruction
-from qrogue.game.target_factory import PuzzleDifficulty, BossFactory, EnemyFactory, RiddleFactory, EnemyPuzzleFactory
+from qrogue.game.target_difficulty import PuzzleDifficulty
+from qrogue.game.target_factory import BossFactory, EnemyFactory, RiddleFactory, EnemyPuzzleFactory
 from qrogue.game.world import tiles
 from qrogue.game.world.dungeon_generator.wave_function_collapse import WFCRoomGenerator, WFCEmptyRoomGenerator
 from qrogue.game.world.map import CallbackPack, Hallway, Room, ExpeditionMap

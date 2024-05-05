@@ -9,7 +9,8 @@ from qrogue.game.logic.actors.puzzles import Challenge, boss
 from qrogue.game.logic.base import StateVector
 from qrogue.game.logic.collectibles import Collectible, MultiCollectible, pickup, Qubit, instruction, \
     Instruction, InstructionManager, CollectibleFactory, OrderedCollectibleFactory
-from qrogue.game.target_factory import ExplicitTargetDifficulty, ExplicitStvDifficulty, EnemyFactory, EnemyTargetFactory
+from qrogue.game.target_difficulty import ExplicitTargetDifficulty, ExplicitStvDifficulty
+from qrogue.game.target_factory import EnemyFactory, EnemyTargetFactory
 from qrogue.game.world import tiles
 from qrogue.game.world.map import CallbackPack, MapMetaData, LevelMap, rooms
 from qrogue.game.world.navigation import Coordinate, Direction
