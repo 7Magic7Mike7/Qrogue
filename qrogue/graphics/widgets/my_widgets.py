@@ -358,9 +358,15 @@ class HudWidget(Widget):
         self.__map_name = None
         self.__details = None
 
-    def update_render_duration(self, duration: float):
+    def update_render_duration(self, duration: float, force_render: bool = True):
+        """
+        Arguments:
+            duration: time needed to render the screen in microseconds
+            force_render: whether to immediately render or not
+        """
         if Config.debugging():
-            self.__render_duration = duration * 1000
+            self.__render_duration = duration / 1000    # show it in milliseconds
+            if force_render: self.render()
 
     def render(self) -> None:
         text = ""

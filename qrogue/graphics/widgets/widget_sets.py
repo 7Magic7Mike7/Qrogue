@@ -1,6 +1,5 @@
 import threading
 from threading import Timer
-import time
 from abc import abstractmethod, ABC
 from typing import List, Callable, Optional, Tuple, Any, Union
 
@@ -1360,11 +1359,10 @@ class ExploreWidgetSet(MapWidgetSet):
         ]
 
     def render(self) -> None:
-        start = time.time()
+        start = cur_datetime()
         super(ExploreWidgetSet, self).render()
-        duration = time.time() - start
-        self.__hud.update_render_duration(duration)
-        self.__hud.render()
+        duration = cur_datetime() - start
+        self.__hud.update_render_duration(duration.microseconds / 1000.0)
 
 
 class NavigationWidgetSet(MapWidgetSet):
