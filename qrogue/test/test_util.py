@@ -2,7 +2,6 @@ import unittest
 from typing import List, Callable, Any, Tuple, Optional
 
 from qrogue.game.logic.actors import Robot, BaseBot, Enemy, Boss, Riddle, Challenge
-from qrogue.game.logic.collectibles import ShopItem
 from qrogue.game.world.navigation import Direction
 from qrogue.graphics import WidgetWrapper
 from qrogue.graphics.widgets.my_widgets import SelectionWidget
@@ -99,7 +98,7 @@ def init_singletons(include_config: bool = False, custom_data_path: Optional[str
     TestLogger()    # works since we access Logger only via .instance()
     #Logger.instance().info(Config.get_log_head(seed), from_pycui=False)
     Logger.instance().set_popup(error_popup)
-    #CallbackPack(start_gp, start_fight, start_boss_fight, open_riddle, open_challenge, visit_shop, game_over)
+    #CallbackPack(start_gp, start_fight, start_boss_fight, open_riddle, open_challenge, game_over)
 
     CheatConfig.init(lambda s0, s1, i0, i1: None, lambda s, i, c: None, True, True)
 

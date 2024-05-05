@@ -7,7 +7,7 @@ from qrogue.game.logic import Message
 from qrogue.game.logic.actors import Controllable, Riddle, Robot, BaseBot, Boss as BossActor
 from qrogue.game.logic.actors.puzzles import Challenge, boss
 from qrogue.game.logic.base import StateVector
-from qrogue.game.logic.collectibles import Collectible, MultiCollectible, pickup, Qubit, ShopItem, instruction, \
+from qrogue.game.logic.collectibles import Collectible, MultiCollectible, pickup, Qubit, instruction, \
     Instruction, InstructionManager, CollectibleFactory, OrderedCollectibleFactory
 from qrogue.game.target_factory import ExplicitTargetDifficulty, ExplicitStvDifficulty, EnemyFactory, EnemyTargetFactory
 from qrogue.game.world import tiles
@@ -23,7 +23,6 @@ from qrogue.game.world.dungeon_generator.generator import DungeonGenerator
 
 
 class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
-    __DEFAULT_NUM_OF_SHOP_ITEMS = 3
     __DEFAULT_NUM_OF_RIDDLE_ATTEMPTS = 7
     __ROBOT_NO_GATES = "none"
     __SPAWN_ROOM_ID = "SR"
@@ -40,10 +39,6 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         @staticmethod
         def is_pickup_score(ref: str) -> bool:
             return ref in ['score']
-
-        @staticmethod
-        def is_pickup_coin(ref: str) -> bool:
-            return ref in ['coin', 'coins']
 
         @staticmethod
         def is_pickup_key(ref: str) -> bool:
@@ -95,8 +90,6 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             return tiles.TileCode.Energy
         elif tile_str == parser_util.RIDDLER_TILE:
             return tiles.TileCode.Riddler
-        elif tile_str == parser_util.SHOP_KEEPER_TILE:
-            return tiles.TileCode.ShopKeeper
         elif tile_str == parser_util.FLOOR_TILE:
             return tiles.TileCode.Floor
         elif tile_str == parser_util.OBSTACLE_TILE:
@@ -125,8 +118,6 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             return parser_util.RIDDLER_TILE
         elif tile_code is tiles.TileCode.Challenger:
             return parser_util.CHALLENGER_TILE
-        elif tile_code is tiles.TileCode.ShopKeeper:
-            return parser_util.SHOP_KEEPER_TILE
         elif tile_code is tiles.TileCode.Floor:
             return parser_util.FLOOR_TILE
         else:
@@ -265,10 +256,6 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
                             self.__DEFAULT_NUM_OF_RIDDLE_ATTEMPTS)
             return tiles.Riddler(self.__cbp.open_riddle, riddle)
 
-        elif tile_code is tiles.TileCode.ShopKeeper:
-            items = self.__default_collectible_factory.produce_multiple(self.__rm, self.__DEFAULT_NUM_OF_SHOP_ITEMS)
-            return tiles.ShopKeeper(self.__cbp.visit_shop, [ShopItem(item) for item in items])
-
         elif tile_code is tiles.TileCode.Floor:
             return tiles.Floor()
         elif tile_code is tiles.TileCode.Obstacle:
@@ -313,8 +300,6 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             return CollectibleFactory.empty()
         elif QrogueLevelGenerator._StaticTemplates.is_pickup_score(ref):
             pool = [pickup.Score()]
-        elif QrogueLevelGenerator._StaticTemplates.is_pickup_coin(ref):
-            pool = [pickup.Coin()]
         elif QrogueLevelGenerator._StaticTemplates.is_pickup_key(ref):
             pool = [pickup.Key()]
         elif QrogueLevelGenerator._StaticTemplates.is_pickup_energy(ref):
@@ -456,9 +441,6 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         elif ctx.KEY_LITERAL():
             val = self.visit(ctx.integer())
             return pickup.Key(val)
-        elif ctx.COIN_LITERAL():
-            val = self.visit(ctx.integer())
-            return pickup.Coin(val)
         elif ctx.ENERGY_LITERAL():
             val = self.visit(ctx.integer())
             return pickup.Energy(val)
@@ -702,17 +684,6 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
     ##### Room area #####
 
-    def visitShop_descriptor(self, ctx: QrogueDungeonParser.Shop_descriptorContext) -> tiles.ShopKeeper:
-        num_of_items = self.visit(ctx.integer())
-
-        if ctx.REFERENCE():
-            shop_factory = self.__load_collectible_factory(ctx.REFERENCE())
-        else:
-            shop_factory = CollectibleFactory(self.visit(ctx.collectibles()))
-
-        items = shop_factory.produce_multiple(self.__rm, num_of_items)
-        return tiles.ShopKeeper(self.__cbp.visit_shop, [ShopItem(item) for item in items])
-
     def visitPuzzle_parameter(self, ctx: QrogueDungeonParser.Puzzle_parameterContext) \
             -> Tuple[StateVector, Collectible, Optional[StateVector]]:
         ref_index = 0
@@ -946,13 +917,11 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             tile = self.visit(ctx.riddle_descriptor())
         elif ctx.challenge_descriptor():
             tile = self.visit(ctx.challenge_descriptor())
-        elif ctx.shop_descriptor():
-            tile = self.visit(ctx.shop_descriptor())
         elif ctx.message_descriptor():
             tile = self.visit(ctx.message_descriptor())
         else:
             self._warning("Invalid tile_descriptor! It is neither enemy, collectible, trigger or energy. "
-                         "Returning tiles.Invalid() as consequence.")
+                          "Returning tiles.Invalid() as consequence.")   # todo: fix message (doesn't list all valid possibilities)
             return tiles.Invalid()
 
         if isinstance(tile, tiles.WalkTriggerTile):
@@ -987,8 +956,6 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             return rooms.AreaType.BossRoom
         elif ctx.WILD_LITERAL():
             return rooms.AreaType.WildRoom
-        elif ctx.SHOP_LITERAL():
-            return rooms.AreaType.ShopRoom
         elif ctx.RIDDLE_LITERAL():
             return rooms.AreaType.RiddleRoom
         elif ctx.GATE_ROOM_LITERAL():

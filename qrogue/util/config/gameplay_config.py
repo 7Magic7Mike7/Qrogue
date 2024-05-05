@@ -567,12 +567,6 @@ class QuantumSimulationConfig:
     MAX_PERCENTAGE_SPACE = 3    # the maximum (100%) has three digits
 
 
-class ShopConfig:
-    @staticmethod
-    def base_unit() -> int:
-        return 1
-
-
 class InstructionConfig:
     MAX_ABBREVIATION_LEN = 3
 

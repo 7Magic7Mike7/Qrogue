@@ -33,7 +33,7 @@ class TileCode(Enum):
 
     Collectible = (50, "c")
     Riddler = (51, "?")
-    ShopKeeper = (52, "$")
+    # ShopKeeper = (52, "$")
     Energy = (53, "e")
     Challenger = (54, "!")
 
@@ -43,7 +43,7 @@ class TileCode(Enum):
     OuterSpace = (73, "*")
 
     CollectibleKey = (501, "k")
-    CollectibleCoin = (502, "€")
+    # CollectibleCoin = (502, "€")
     CollectibleEnergy = (503, "e")
     CollectibleScore = (504, "s")
     CollectibleGate = (520, "g")
@@ -75,7 +75,7 @@ class TileCode(Enum):
     def collectible_subtypes() -> List["TileCode"]:
         return [
             TileCode.Collectible,
-            TileCode.CollectibleKey, TileCode.CollectibleCoin, TileCode.CollectibleEnergy,
+            TileCode.CollectibleKey, TileCode.CollectibleEnergy,
             TileCode.CollectibleGate, TileCode.CollectibleQubit,
             TileCode.CollectibleScore,
         ]

@@ -74,11 +74,6 @@ class QrogueDungeonVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by QrogueDungeonParser#shop_descriptor.
-    def visitShop_descriptor(self, ctx:QrogueDungeonParser.Shop_descriptorContext):
-        return self.visitChildren(ctx)
-
-
     # Visit a parse tree produced by QrogueDungeonParser#enemy_descriptor.
     def visitEnemy_descriptor(self, ctx:QrogueDungeonParser.Enemy_descriptorContext):
         return self.visitChildren(ctx)

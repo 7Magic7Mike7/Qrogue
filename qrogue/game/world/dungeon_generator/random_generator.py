@@ -24,7 +24,7 @@ class _Code(IntEnum):
     Blocked = 0  # all before Blocked is free, all after Blocked is already taken
     # room codes
     Spawn = 10
-    Shop = 40
+    # Shop = 40
     Riddle = 50
     Boss = 60
     Gate = 70
@@ -42,7 +42,7 @@ class _Code(IntEnum):
 
     @staticmethod
     def special_rooms() -> "[_Code]":
-        return [_Code.Shop, _Code.Riddle, _Code.Boss, _Code.Gate]
+        return [_Code.Riddle, _Code.Boss, _Code.Gate]
 
     @staticmethod
     def get_priority(code: "_Code", inverse: bool) -> float:
@@ -54,7 +54,7 @@ class _Code(IntEnum):
                 return 200
             if code == _Code.Wild:
                 return 12
-            if code in [_Code.Shop, _Code.Riddle, _Code.Gate]:
+            if code in [_Code.Riddle, _Code.Gate]:
                 return 5
         return 0
 
@@ -77,8 +77,6 @@ class _Code(IntEnum):
             return "x"
         if code == _Code.Spawn:
             return "S"
-        if code == _Code.Shop:
-            return "$"
         if code == _Code.Riddle:
             return "?"
         if code == _Code.Boss:
@@ -439,7 +437,6 @@ class RandomLayoutGenerator:
 
             # place the special rooms
             special_rooms = [
-                self.__place_special_room(_Code.Shop),
                 self.__place_special_room(_Code.Riddle),
                 self.__place_special_room(_Code.Boss),
                 self.__place_special_room(_Code.Gate),
@@ -514,7 +511,7 @@ class RandomLayoutGenerator:
             for x in range(self.__width):
                 pos = Coordinate(x, y)
                 code = self.__get(pos)
-                if code in [_Code.Boss, _Code.Shop, _Code.Riddle, _Code.Gate]:
+                if code in [_Code.Boss, _Code.Riddle, _Code.Gate]:
                     connections = self.__hallways[pos]
                     if len(connections) != 1:
                         return False
@@ -805,10 +802,7 @@ class ExpeditionGenerator(DungeonGenerator):
                         elif direction is not None:
                             # special rooms have exactly 1 neighbor which is already stored in direction
                             hw = room_hallways[direction]
-                            if code == _Code.Shop:
-                                # since there was no shop introduction yet, we have to skip creating one.
-                                room = EmptyRoom(room_hallways)  # ShopRoom(hw, direction, shop_items, self.__cbp.visit_shop)
-                            elif code == _Code.Riddle:
+                            if code == _Code.Riddle:
                                 room = RiddleRoom(hw, direction, riddle, self.__cbp.open_riddle)
                             elif code == _Code.Gate:
                                 room = TreasureRoom(tiles.Collectible(gate), hw, direction)

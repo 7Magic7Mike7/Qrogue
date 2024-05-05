@@ -9,7 +9,7 @@ from qiskit.circuit import Gate as QiskitGate
 
 from qrogue.game.logic.base import StateVector, CircuitMatrix, QuantumSimulator, QuantumCircuit
 from qrogue.game.logic.collectibles import Collectible, CollectibleType
-from qrogue.util import ShopConfig, Logger
+from qrogue.util import Logger
 from qrogue.util.achievements import Unlocks
 from qrogue.util.util_functions import rad2deg
 
@@ -90,7 +90,6 @@ class Instruction(Collectible, ABC):
     Wrapper class for gates from qiskit.circuit.library with their needed arguments (qubits/cbits to apply it on)
     """
     MAX_ABBREVIATION_LEN = 5
-    __DEFAULT_PRICE = 15 * ShopConfig.base_unit()
 
     @staticmethod
     def compute_stv(instructions: List["Instruction"], num_of_qubits: int, inverse: bool = False) -> StateVector:
@@ -217,9 +216,6 @@ class Instruction(Collectible, ABC):
     @abstractmethod
     def copy(self) -> "Instruction":
         pass
-
-    def default_price(self) -> int:
-        return Instruction.__DEFAULT_PRICE
 
     def selection_str(self) -> str:
         # Gate (qX, qY, ?, ...)

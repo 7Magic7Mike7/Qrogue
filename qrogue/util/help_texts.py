@@ -9,7 +9,6 @@ class _HL:
     boss = CC.highlight_object("Boss")
     circuit = CC.highlight_object("Circuit")
     circuit_matrix = CC.highlight_object("Circuit Matrix")
-    coins = CC.highlight_object("Coins")
     collec = CC.highlight_object("Collectibles")
     current_state = CC.highlight_object("Current State")
     door = CC.highlight_object("Door")
@@ -35,7 +34,6 @@ class _HL:
     qubit_s = CC.highlight_object("Qubit(s)")
     riddles = CC.highlight_object("Riddles")
     robot = CC.highlight_object("Robot")
-    shop = CC.highlight_object("Shop")
     special_rooms = CC.highlight_object("Special Rooms")
     state = CC.highlight_object("State")
     #state_vectors = CC.highlight_object("StateVectors")
@@ -288,13 +286,6 @@ class HelpText(Enum):       # todo: import Controls to replace static key-mentio
 
     Challenge = \
         "TODO"
-
-    Shop = \
-        f"In the {_HL.shop} you can exchange {_HL.coins} you got (e.g. from solving Puzzles) for various " \
-        f"{_HL.collec}. On the left side is a {_HL.list_} of everything you can {_HL.buy}. Navigate as usual with " \
-        f"{_HL.navigation_keys} and select something with {_HL.action_keys} to see more {_HL.details} on the right " \
-        f"side. There you can also buy it.\n" \
-        f"{_HL.leave} obviously makes you leave the {_HL.shop}. You can always {_HL.reenter} it later if you want!"
 
     BossFight = \
         f"Now it's getting {_HL.serious}! You are fighting against {_HL.bell}. For the {_HL.state} you need to reach " \

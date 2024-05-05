@@ -25,8 +25,5 @@ class Qubit(Collectible):
     def description(self, check_unlocks: Optional[Callable[[str], bool]] = None) -> str:
         return "Qubits are the essence of any circuit you create."
 
-    def default_price(self) -> int:
-        return 100  # currently the plan is to not have it in shops
-
     def to_string(self) -> str:
         return f"Qubit ({self.additional_qubits})"

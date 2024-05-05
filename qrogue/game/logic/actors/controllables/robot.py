@@ -8,7 +8,7 @@ from typing import Tuple, List, Callable, Optional
 from qrogue.game.logic.actors.controllables import Controllable
 from qrogue.game.logic.actors.controllables.qubit import QubitSet, DummyQubitSet
 from qrogue.game.logic.base import StateVector, CircuitMatrix, QuantumSimulator, QuantumCircuit, UnitarySimulator
-from qrogue.game.logic.collectibles import Coin, Collectible, Consumable, Instruction, Key, MultiCollectible, \
+from qrogue.game.logic.collectibles import Collectible, Consumable, Instruction, Key, MultiCollectible, \
     Qubit, Energy, Score
 from qrogue.util import CheatConfig, Config, Logger, GameplayConfig, QuantumSimulationConfig, Options
 
@@ -165,7 +165,6 @@ class _Backpack:
             self.__storage: List[Instruction] = []
         self.__pouch_size: int = _Backpack.__POUCH_SIZE
         self.__pouch: List[Consumable] = []
-        self.__coin_count: int = 0
         self.__key_count: int = 0
 
     def __iter__(self) -> "_BackpackIterator":
@@ -208,16 +207,6 @@ class _Backpack:
         return self.consumables_in_pouch    # later we might add active item(s)?
 
     @property
-    def coin_count(self) -> int:
-        """
-
-        :return: number of Coins we currently have
-        """
-        if CheatConfig.got_inf_resources():
-            return 999
-        return self.__coin_count
-
-    @property
     def key_count(self) -> int:
         """
 
@@ -226,42 +215,6 @@ class _Backpack:
         if CheatConfig.got_inf_resources():
             return 999
         return self.__key_count
-
-    def can_afford(self, price: int) -> bool:
-        """
-        Checks if we have enough resources to afford a Collectible with the given price.
-
-        :param price: how many Coins the item costs
-        :return: whether we could afford a Collectible with this price or not
-        """
-        return self.coin_count >= price
-
-    def give_coin(self, amount: int) -> bool:
-        """
-        Adds the given amount of Coins. Fails if amount is less or equal to 0.
-
-        :param amount: how many Coins we want to add
-        :return: True if the given amount of Coins were handed out successfully, False otherwise
-        """
-        if amount > 0:
-            self.__coin_count += amount
-            return True
-        return False
-
-    def spend_coins(self, amount: int) -> bool:
-        """
-        Spends the given amount of Coins, i.e. decreases coin count by the given amount.
-
-        :param amount: how many Coins we want to spend
-        :return: True if we could successfully spend the amount of Coins, False if it failed (e.g. not enough Coins)
-        """
-        if CheatConfig.got_inf_resources():
-            return True
-
-        if self.can_afford(amount):
-            self.__coin_count -= amount
-            return True
-        return False
 
     def give_key(self, amount: int) -> bool:
         """
@@ -726,8 +679,6 @@ class Robot(Controllable, ABC):
         """
         if isinstance(collectible, Score):
             self.__score += collectible.amount
-        elif isinstance(collectible, Coin):
-            self.backpack.give_coin(collectible.amount)
         elif isinstance(collectible, Key):
             self.backpack.give_key(collectible.amount)
         elif isinstance(collectible, Energy):

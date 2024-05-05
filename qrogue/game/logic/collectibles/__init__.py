@@ -1,7 +1,7 @@
 # exporting
-from .collectible import Collectible, CollectibleType, MultiCollectible, ShopItem
+from .collectible import Collectible, CollectibleType, MultiCollectible
 from .instruction import GateType, Instruction, InstructionManager
-from .pickup import Pickup, Score, Key, Coin, Energy
+from .pickup import Pickup, Score, Key, Energy
 from .qubit import Qubit
 from .consumable import Consumable, EnergyRefill
 from .collectible_factory import CollectibleFactory, GateFactory, OrderedCollectibleFactory

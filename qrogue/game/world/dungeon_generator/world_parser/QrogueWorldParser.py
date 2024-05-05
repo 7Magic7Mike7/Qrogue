@@ -10,7 +10,7 @@ else:
 
 def serializedATN():
     return [
-        4,1,69,240,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,
+        4,1,68,240,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,
         6,2,7,7,7,2,8,7,8,2,9,7,9,2,10,7,10,2,11,7,11,2,12,7,12,2,13,7,13,
         2,14,7,14,2,15,7,15,2,16,7,16,2,17,7,17,2,18,7,18,1,0,1,0,1,0,1,
         0,1,0,1,0,3,0,45,8,0,1,0,1,0,1,1,1,1,1,1,3,1,52,8,1,1,1,1,1,1,1,
@@ -69,26 +69,26 @@ def serializedATN():
         0,0,0,151,152,1,0,0,0,152,25,1,0,0,0,153,157,5,44,0,0,154,156,3,
         28,14,0,155,154,1,0,0,0,156,159,1,0,0,0,157,155,1,0,0,0,157,158,
         1,0,0,0,158,27,1,0,0,0,159,157,1,0,0,0,160,161,5,36,0,0,161,162,
-        3,30,15,0,162,29,1,0,0,0,163,169,5,7,0,0,164,170,5,59,0,0,165,170,
-        5,60,0,0,166,170,5,61,0,0,167,168,5,62,0,0,168,170,5,37,0,0,169,
+        3,30,15,0,162,29,1,0,0,0,163,169,5,7,0,0,164,170,5,58,0,0,165,170,
+        5,59,0,0,166,170,5,60,0,0,167,168,5,61,0,0,168,170,5,37,0,0,169,
         164,1,0,0,0,169,165,1,0,0,0,169,166,1,0,0,0,169,167,1,0,0,0,170,
-        176,1,0,0,0,171,172,5,9,0,0,172,174,5,15,0,0,173,175,5,63,0,0,174,
+        176,1,0,0,0,171,172,5,9,0,0,172,174,5,15,0,0,173,175,5,62,0,0,174,
         173,1,0,0,0,174,175,1,0,0,0,175,177,1,0,0,0,176,171,1,0,0,0,176,
-        177,1,0,0,0,177,189,1,0,0,0,178,179,5,64,0,0,179,180,5,10,0,0,180,
+        177,1,0,0,0,177,189,1,0,0,0,178,179,5,63,0,0,179,180,5,10,0,0,180,
         185,5,36,0,0,181,182,5,22,0,0,182,184,5,36,0,0,183,181,1,0,0,0,184,
         187,1,0,0,0,185,183,1,0,0,0,185,186,1,0,0,0,186,188,1,0,0,0,187,
         185,1,0,0,0,188,190,5,11,0,0,189,178,1,0,0,0,189,190,1,0,0,0,190,
         191,1,0,0,0,191,194,5,8,0,0,192,193,5,16,0,0,193,195,5,37,0,0,194,
         192,1,0,0,0,194,195,1,0,0,0,195,198,1,0,0,0,196,197,5,17,0,0,197,
         199,5,37,0,0,198,196,1,0,0,0,198,199,1,0,0,0,199,31,1,0,0,0,200,
-        204,5,65,0,0,201,202,5,12,0,0,202,203,5,68,0,0,203,205,5,34,0,0,
+        204,5,64,0,0,201,202,5,12,0,0,202,203,5,67,0,0,203,205,5,34,0,0,
         204,201,1,0,0,0,204,205,1,0,0,0,205,209,1,0,0,0,206,208,3,34,17,
         0,207,206,1,0,0,0,208,211,1,0,0,0,209,207,1,0,0,0,209,210,1,0,0,
         0,210,33,1,0,0,0,211,209,1,0,0,0,212,213,5,37,0,0,213,218,3,36,18,
-        0,214,215,5,66,0,0,215,216,5,37,0,0,216,217,5,67,0,0,217,219,5,37,
-        0,0,218,214,1,0,0,0,218,219,1,0,0,0,219,35,1,0,0,0,220,221,5,68,
+        0,214,215,5,65,0,0,215,216,5,37,0,0,216,217,5,66,0,0,217,219,5,37,
+        0,0,218,214,1,0,0,0,218,219,1,0,0,0,219,35,1,0,0,0,220,221,5,67,
         0,0,221,223,5,34,0,0,222,220,1,0,0,0,222,223,1,0,0,0,223,225,1,0,
-        0,0,224,226,5,69,0,0,225,224,1,0,0,0,225,226,1,0,0,0,226,232,1,0,
+        0,0,224,226,5,68,0,0,225,224,1,0,0,0,225,226,1,0,0,0,226,232,1,0,
         0,0,227,229,5,13,0,0,228,230,5,2,0,0,229,228,1,0,0,0,229,230,1,0,
         0,0,230,231,1,0,0,0,231,233,5,26,0,0,232,227,1,0,0,0,232,233,1,0,
         0,0,233,235,1,0,0,0,234,236,5,34,0,0,235,234,1,0,0,0,236,237,1,0,
@@ -117,11 +117,10 @@ class QrogueWorldParser ( Parser ):
                      "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
                      "<INVALID>", "<INVALID>", "<INVALID>", "'[Layout]'", 
                      "<INVALID>", "'[Hallways]'", "'visible'", "'foggy'", 
-                     "'World'", "'Level'", "'Spawn'", "'Wild'", "'Shop'", 
-                     "'Riddle'", "'Boss'", "'Gate'", "'Treasure'", "'Challenge'", 
-                     "'Pause'", "'Story'", "'open'", "'closed'", "'locked'", 
-                     "'event'", "'permanent'", "'entangled'", "'[Messages]'", 
-                     "'when'" ]
+                     "'World'", "'Level'", "'Spawn'", "'Wild'", "'Riddle'", 
+                     "'Boss'", "'Gate'", "'Treasure'", "'Challenge'", "'Pause'", 
+                     "'Story'", "'open'", "'closed'", "'locked'", "'event'", 
+                     "'permanent'", "'entangled'", "'[Messages]'", "'when'" ]
 
     symbolicNames = [ "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
                       "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
@@ -135,7 +134,7 @@ class QrogueWorldParser ( Parser ):
                       "WS", "UNIVERSAL_SEPARATOR", "COMMENT", "LINE_COMMENT", 
                       "LAYOUT", "ROOMS", "HALLWAYS", "VISIBLE_LITERAL", 
                       "FOGGY_LITERAL", "WORLD_LITERAL", "LEVEL_LITERAL", 
-                      "SPAWN_LITERAL", "WILD_LITERAL", "SHOP_LITERAL", "RIDDLE_LITERAL", 
+                      "SPAWN_LITERAL", "WILD_LITERAL", "RIDDLE_LITERAL", 
                       "BOSS_LITERAL", "GATE_ROOM_LITERAL", "TREASURE_LITERAL", 
                       "CHALLENGE_LITERAL", "PAUSE_LITERAL", "STORY_LITERAL", 
                       "OPEN_LITERAL", "CLOSED_LITERAL", "LOCKED_LITERAL", 
@@ -219,25 +218,24 @@ class QrogueWorldParser ( Parser ):
     LEVEL_LITERAL=48
     SPAWN_LITERAL=49
     WILD_LITERAL=50
-    SHOP_LITERAL=51
-    RIDDLE_LITERAL=52
-    BOSS_LITERAL=53
-    GATE_ROOM_LITERAL=54
-    TREASURE_LITERAL=55
-    CHALLENGE_LITERAL=56
-    PAUSE_LITERAL=57
-    STORY_LITERAL=58
-    OPEN_LITERAL=59
-    CLOSED_LITERAL=60
-    LOCKED_LITERAL=61
-    EVENT_LITERAL=62
-    PERMANENT_LITERAL=63
-    ENTANGLED_LITERAL=64
-    MESSAGES=65
-    MSG_EVENT=66
-    MSG_ALTERNATIVE=67
-    MSG_SPEAKER=68
-    MSG_PRIORITY=69
+    RIDDLE_LITERAL=51
+    BOSS_LITERAL=52
+    GATE_ROOM_LITERAL=53
+    TREASURE_LITERAL=54
+    CHALLENGE_LITERAL=55
+    PAUSE_LITERAL=56
+    STORY_LITERAL=57
+    OPEN_LITERAL=58
+    CLOSED_LITERAL=59
+    LOCKED_LITERAL=60
+    EVENT_LITERAL=61
+    PERMANENT_LITERAL=62
+    ENTANGLED_LITERAL=63
+    MESSAGES=64
+    MSG_EVENT=65
+    MSG_ALTERNATIVE=66
+    MSG_SPEAKER=67
+    MSG_PRIORITY=68
 
     def __init__(self, input:TokenStream, output:TextIO = sys.stdout):
         super().__init__(input, output)
@@ -321,7 +319,7 @@ class QrogueWorldParser ( Parser ):
             self.state = 44
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            if _la==65:
+            if _la==64:
                 self.state = 43
                 self.messages()
 
@@ -404,7 +402,7 @@ class QrogueWorldParser ( Parser ):
                 self.state = 57
                 self._errHandler.sync(self)
                 token = self._input.LA(1)
-                if token in [13, 34, 68, 69]:
+                if token in [13, 34, 67, 68]:
                     self.state = 55
                     self.message_body()
                     pass
@@ -1472,19 +1470,19 @@ class QrogueWorldParser ( Parser ):
             self.state = 169
             self._errHandler.sync(self)
             token = self._input.LA(1)
-            if token in [59]:
+            if token in [58]:
                 self.state = 164
                 self.match(QrogueWorldParser.OPEN_LITERAL)
                 pass
-            elif token in [60]:
+            elif token in [59]:
                 self.state = 165
                 self.match(QrogueWorldParser.CLOSED_LITERAL)
                 pass
-            elif token in [61]:
+            elif token in [60]:
                 self.state = 166
                 self.match(QrogueWorldParser.LOCKED_LITERAL)
                 pass
-            elif token in [62]:
+            elif token in [61]:
                 self.state = 167
                 self.match(QrogueWorldParser.EVENT_LITERAL)
                 self.state = 168
@@ -1504,7 +1502,7 @@ class QrogueWorldParser ( Parser ):
                 self.state = 174
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
-                if _la==63:
+                if _la==62:
                     self.state = 173
                     self.match(QrogueWorldParser.PERMANENT_LITERAL)
 
@@ -1514,7 +1512,7 @@ class QrogueWorldParser ( Parser ):
             self.state = 189
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            if _la==64:
+            if _la==63:
                 self.state = 178
                 self.match(QrogueWorldParser.ENTANGLED_LITERAL)
                 self.state = 179
@@ -1708,7 +1706,7 @@ class QrogueWorldParser ( Parser ):
             self.state = 218
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            if _la==66:
+            if _la==65:
                 self.state = 214
                 self.match(QrogueWorldParser.MSG_EVENT)
                 self.state = 215
@@ -1780,7 +1778,7 @@ class QrogueWorldParser ( Parser ):
             self.state = 222
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            if _la==68:
+            if _la==67:
                 self.state = 220
                 self.match(QrogueWorldParser.MSG_SPEAKER)
                 self.state = 221
@@ -1790,7 +1788,7 @@ class QrogueWorldParser ( Parser ):
             self.state = 225
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            if _la==69:
+            if _la==68:
                 self.state = 224
                 self.match(QrogueWorldParser.MSG_PRIORITY)
 

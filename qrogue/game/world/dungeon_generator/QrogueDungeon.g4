@@ -20,13 +20,13 @@ robot : ROBOT DIGIT 'qubits' '[' REFERENCE (LIST_SEPARATOR REFERENCE)* ']'
 // building the non-template rooms used in the layout (note: template rooms are pre-defined rooms)
 room_content : WALL* r_row+ WALL* tile_descriptor* ;
 r_row : WALL tile+ WALL ;
-tile :  'o' | 't' | 'm' | DIGIT | 'b' | 'c' | 'e' | 'r' | '!' | '$' | '_' ;    // obstacle, trigger, message, enemy,
+tile :  'o' | 't' | 'm' | DIGIT | 'b' | 'c' | 'e' | 'r' | '!' | '_' ;          // obstacle, trigger, message, enemy,
                                                                                // boss, collectible, energy, riddle,
-                                                                               // challenge, shop, floor
+                                                                               // challenge, floor
 // further describing the tiles used in the room
 tile_descriptor : (t_descriptor | message_descriptor |
                   enemy_descriptor | boss_descriptor | collectible_descriptor | energy_descriptor | riddle_descriptor |
-                  challenge_descriptor | shop_descriptor)
+                  challenge_descriptor)
                   (TUTORIAL_LITERAL REFERENCE)? (TRIGGER_LITERAL (REFERENCE | GLOBAL_EVENT_REFERENCE | UNLOCK_REFERENCE))? ;  // winning a fight or picking up a collectible can also trigger an event
 t_descriptor : 't' (trigger_descriptor | teleport_descriptor) ;
 trigger_descriptor : (LEVEL_EVENT | GLOBAL_ACHIEVEMENT | UNLOCK)? REFERENCE ;
@@ -35,7 +35,6 @@ teleport_descriptor : (LOCAL_TUNNEL ROOM_ID integer?) |     // no integer given 
 message_descriptor : 'm' integer? (REFERENCE | TEXT) ;    // #times displayed, reference to the text that should be shown
 collectible_descriptor : 'c' ((REFERENCE integer?) | collectible) ; // id of reward pool to draw from, number of rewards to draw (note: template pools like *key provide "normal" collectibles)
 energy_descriptor : 'e' integer ;    // amount
-shop_descriptor : '$' integer (REFERENCE | collectibles) ;   // num of items to draw, reward pool id or collectible list
 
 enemy_descriptor : DIGIT (REFERENCE | stv) (REFERENCE | collectible)? input_stv? ;    // enemy, target stv (pool id or explicit), reward (pool id or explicit)
 boss_descriptor : 'b' (REFERENCE | '[' boss_puzzle (',' boss_puzzle)* ']' (GATE_LITERAL '(' circuit_stv ')')?)
@@ -65,7 +64,7 @@ reward_pools : REWARD_POOLS ('custom' reward_pool+)? 'default' default_reward_po
 default_reward_pool : REFERENCE | draw_strategy? collectibles ;      // the default pool can either be an ID or a list of collectibles
 reward_pool : REFERENCE draw_strategy? collectibles ;     // id, pool of collectibles
 collectibles : '[' collectible (LIST_SEPARATOR collectible)* ']' ;
-collectible :   ((SCORE_LITERAL | KEY_LITERAL | COIN_LITERAL | ENERGY_LITERAL) integer |
+collectible :   ((SCORE_LITERAL | KEY_LITERAL | ENERGY_LITERAL) integer |
                 GATE_LITERAL REFERENCE | QUBIT_LITERAL integer? |
                 NONE_LITERAL) ;
 
@@ -91,7 +90,6 @@ BACKPACK_SPACE : ('backpack' | 'BACKPACK') '_'? ('space' | 'SPACE') ;
 // collectible tiles (token used for easier identification in generator)
 SCORE_LITERAL : 'score' ;
 KEY_LITERAL : 'key' ;
-COIN_LITERAL : 'coin' ;
 ENERGY_LITERAL : 'energy' ;
 GATE_LITERAL : 'gate' ;
 QUBIT_LITERAL : 'qubit' ;

@@ -125,15 +125,6 @@ class QrogueDungeonListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by QrogueDungeonParser#shop_descriptor.
-    def enterShop_descriptor(self, ctx:QrogueDungeonParser.Shop_descriptorContext):
-        pass
-
-    # Exit a parse tree produced by QrogueDungeonParser#shop_descriptor.
-    def exitShop_descriptor(self, ctx:QrogueDungeonParser.Shop_descriptorContext):
-        pass
-
-
     # Enter a parse tree produced by QrogueDungeonParser#enemy_descriptor.
     def enterEnemy_descriptor(self, ctx:QrogueDungeonParser.Enemy_descriptorContext):
         pass

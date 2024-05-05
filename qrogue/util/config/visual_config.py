@@ -351,9 +351,6 @@ class UIConfig:
     STV_HEIGHT = math.floor(WINDOW_HEIGHT * 0.6)
     DIALOG_HEIGHT = 2
 
-    SHOP_INVENTORY_WIDTH = 4
-    SHOP_DETAILS_HEIGHT = 1
-
     LEVEL_SELECT_MAIN_X = 1
     LEVEL_SELECT_MAIN_Y = 4
     LEVEL_SELECT_MAIN_HEIGHT = 5
@@ -377,7 +374,6 @@ class HudConfig:
     ShowMapName = True
     ShowEnergy = False
     ShowKeys = True
-    ShowCoins = False
     ShowFPS = False
 
 

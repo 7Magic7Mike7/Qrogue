@@ -21,10 +21,6 @@ class Consumable(Collectible, ABC):
             return True
         return False
 
-    def default_price(self) -> int:
-        # the higher the number of charges the less the additional price (based on harmonic numbers)
-        return int(sum([Consumable.__DEFAULT_PRICE / (i+1) for i in range(self._charges)]))
-
     @abstractmethod
     def on_consumption(self, robot: "Robot") -> bool:
         """

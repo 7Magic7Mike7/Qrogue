@@ -16,7 +16,7 @@ from qrogue.graphics.popups import Popup, MultilinePopup, ConfirmationPopup
 from qrogue.graphics.rendering import MultiColorRenderer
 from qrogue.graphics.widgets import Renderable, BossFightWidgetSet, ExploreWidgetSet, \
     FightWidgetSet, MenuWidgetSet, MyWidgetSet, NavigationWidgetSet, PauseMenuWidgetSet, RiddleWidgetSet, \
-    ChallengeWidgetSet, ShopWidgetSet, WorkbenchWidgetSet, TrainingsWidgetSet, Widget, TransitionWidgetSet, \
+    ChallengeWidgetSet, WorkbenchWidgetSet, TrainingsWidgetSet, Widget, TransitionWidgetSet, \
     ScreenCheckWidgetSet, LevelSelectWidgetSet
 from qrogue.management import NewSaveData, MapManager
 from qrogue.util import common_messages, CheatConfig, Config, GameplayConfig, UIConfig, HelpText, \
@@ -36,7 +36,7 @@ class QrogueCUI(PyCUI):
         Pause = 1
         Explore = 2
         Fight = 3
-        Shop = 4
+        # Shop = 4
         Riddle = 5
         BossFight = 6
 
@@ -81,8 +81,6 @@ class QrogueCUI(PyCUI):
                 self.__renderer._switch_to_riddle(data)
             elif self.__cur_state == QrogueCUI._State.Challenge:
                 self.__renderer._switch_to_challenge(data)
-            elif self.__cur_state == QrogueCUI._State.Shop:
-                self.__renderer._switch_to_shop(data)
             elif self.__cur_state == QrogueCUI._State.BossFight:
                 self.__renderer._switch_to_boss_fight(data)
             elif self.__cur_state == QrogueCUI._State.Pause:
@@ -249,7 +247,7 @@ class QrogueCUI(PyCUI):
         ConfirmationPopup.update_popup_function(self.__show_confirmation_popup)
 
         self.__cbp = CallbackPack(self.__start_fight, self.__start_boss_fight, self.__open_riddle,
-                                  self.__open_challenge, self.__visit_shop, self.__game_over)
+                                  self.__open_challenge, self.__game_over)
         ########################################
         self.__stored_save: Optional[NewSaveData] = None    # temporarily stores the "real" save data when simulating
         self.__save_data = NewSaveData() if save_data is None else save_data
@@ -330,11 +328,9 @@ class QrogueCUI(PyCUI):
         self.__challenge = ChallengeWidgetSet(self.__controls, self.__render, Logger.instance(), self,
                                               self.__continue_explore, self.__popup_history.show,
                                               self.__save_data.check_unlocks)
-        self.__shop = ShopWidgetSet(self.__controls, self.__render, Logger.instance(), self, self.__continue_explore,
-                                    self.__save_data.check_unlocks)
 
         widget_sets: List[MyWidgetSet] = [self.__training, self.__navigation, self.__explore,
-                                          self.__fight, self.__boss_fight, self.__shop, self.__riddle, self.__challenge,
+                                          self.__fight, self.__boss_fight, self.__riddle, self.__challenge,
                                           self.__workbench]
         # INIT KEYS
         # add the general keys to everything except Transition, Menu and Pause
@@ -767,16 +763,6 @@ class QrogueCUI(PyCUI):
             self.__challenge.set_data(robot, challenge, self.__map_manager.in_expedition,
                                       self.__map_manager.show_individual_qubits)
         self.apply_widget_set(self.__challenge)
-
-    def __visit_shop(self, robot: Robot, items: "list of ShopItems"):
-        self.__state_machine.change_state(QrogueCUI._State.Shop, (robot, items))
-
-    def _switch_to_shop(self, data) -> None:
-        if data is not None:
-            player = data[0]
-            items = data[1]
-            self.__shop.set_data(player, items)
-        self.apply_widget_set(self.__shop)
 
     def _execute_transition(self, text_scrolls: List[TransitionWidgetSet.TextScroll], next_state: "QrogueCUI._State",
                             next_data: Any, additional_callback: Optional[Callable] = None):

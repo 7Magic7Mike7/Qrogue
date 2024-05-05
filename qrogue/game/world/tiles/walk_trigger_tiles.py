@@ -259,23 +259,6 @@ class Challenger(WalkTriggerTile):
             return self._invisible
 
 
-class ShopKeeper(WalkTriggerTile):
-    def __init__(self, visit_shop_callback, inventory: "List[ShopItem]"):
-        super().__init__(TileCode.ShopKeeper)
-        self.__visit_shop = visit_shop_callback
-        self.__inventory = inventory
-
-    def _on_walk(self, direction: Direction, controllable: Controllable) -> bool:
-        self.__visit_shop(controllable, self.__inventory)
-        return True
-
-    def get_img(self):
-        return TileCode.ShopKeeper.representation
-
-    def _copy(self) -> "Tile":
-        return ShopKeeper(self.__visit_shop, self.__inventory.copy())
-
-
 class Collectible(WalkTriggerTile):
     __pickup_message: Callable[["Collectible"], None] = None
 
@@ -316,8 +299,6 @@ class Collectible(WalkTriggerTile):
                 return TileCode.CollectibleGate.representation
             elif self.__collectible.type is CollectibleType.Qubit:
                 return TileCode.CollectibleQubit.representation
-            elif self.__collectible.type is CollectibleType.Coin:
-                return TileCode.CollectibleCoin.representation
             elif self.__collectible.type is CollectibleType.Energy:
                 return TileCode.CollectibleEnergy.representation
             else:

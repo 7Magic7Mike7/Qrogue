@@ -9,7 +9,7 @@ from qrogue.game.logic.actors import Robot, Riddle
 from qrogue.game.logic.collectibles import Instruction
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.game.world.tiles import Enemy as EnemyTile, Tile, Floor, Decoration, Teleport, FogOfWar, Void, Invalid, \
-    Door, Wall, HallwayEntrance, Riddler, ShopKeeper, Boss, Collectible, Message as MessageTile
+    Door, Wall, HallwayEntrance, Riddler, Boss, Collectible, Message as MessageTile
 from qrogue.util import CommonQuestions, MapConfig, Logger, CheatConfig, RandomManager
 
 
@@ -22,7 +22,7 @@ class AreaType(Enum):
 
     SpawnRoom = 10
     WildRoom = 11       # contains mostly normal Enemies/Puzzles
-    ShopRoom = 12
+    # ShopRoom = 12
     RiddleRoom = 13     # room is built around its Riddle(s)
     GateRoom = 14       # room contains mainly a Gate and other Tiles to support it
     BossRoom = 15       # room contains a Boss-Puzzle and other supporting Tiles
@@ -34,12 +34,12 @@ class AreaType(Enum):
 
     @staticmethod
     def values(include_pseudo_areas: Optional[bool] = None, only_rooms: Optional[bool] = None) -> List["AreaType"]:
-        if include_pseudo_areas is None:
+        if include_pseudo_areas is None:    # todo: method is not used
             include_pseudo_areas = False
         if only_rooms is None:
             only_rooms = True
 
-        areas = [AreaType.SpawnRoom, AreaType.WildRoom, AreaType.ShopRoom, AreaType.RiddleRoom, AreaType.GateRoom,
+        areas = [AreaType.SpawnRoom, AreaType.WildRoom, AreaType.RiddleRoom, AreaType.GateRoom,
                  AreaType.BossRoom, AreaType.TreasureRoom]
         if not only_rooms:
             areas += [AreaType.Hallway]
@@ -795,16 +795,6 @@ class RiddleRoom(SpecialRoom):
 
     def abbreviation(self):
         return "RR"
-
-
-class ShopRoom(SpecialRoom):
-    def __init__(self, hallway: Hallway, direction: Direction, inventory: "list of ShopItems",
-                 visit_shop_callback: "void(Robot, list of ShopItems)", tile_dic: "dic of Coordinate and Tile" = None):
-        super().__init__(AreaType.ShopRoom, hallway, direction, tile_dic)
-        self._set_tile(ShopKeeper(visit_shop_callback, inventory), Area.MID_X, Area.MID_Y)
-
-    def abbreviation(self):
-        return "$R"
 
 
 class BossRoom(SpecialRoom):

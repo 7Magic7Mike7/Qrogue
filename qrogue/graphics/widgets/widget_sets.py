@@ -10,7 +10,7 @@ from py_cui.widget_set import WidgetSet
 from qrogue.game.logic.actors import Boss, Enemy, Riddle, Challenge, Robot, BaseBot
 from qrogue.game.logic.actors.puzzles import Target
 from qrogue.game.logic.base import StateVector
-from qrogue.game.logic.collectibles import ShopItem, Collectible, instruction as gates
+from qrogue.game.logic.collectibles import Collectible, instruction as gates
 from qrogue.game.world.map import Map
 from qrogue.game.world.navigation import Direction
 from qrogue.graphics.widget_base import WidgetWrapper
@@ -1912,106 +1912,6 @@ class BossFightWidgetSet(ReachTargetWidgetSet):
         if GameplayConfig.get_option_value(Options.energy_mode):
             self._robot.decrease_energy(PuzzleConfig.BOSS_FAIL_DAMAGE)
         return super(BossFightWidgetSet, self)._on_commit_fail()
-
-
-class ShopWidgetSet(MyWidgetSet):
-    def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
-                 continue_exploration_callback: Callable[[], None], check_unlocks_callback: Callable[[str], bool]):
-        super().__init__(logger, root, render)
-        self.__continue_exploration = continue_exploration_callback
-        self.__check_unlocks = check_unlocks_callback
-        self.__robot = None
-        self.__items = None
-
-        self.__hud = MyWidgetSet.create_hud_row(self)
-
-        inv_width = UIConfig.SHOP_INVENTORY_WIDTH
-        inventory = self.add_block_label("Inventory", UIConfig.HUD_HEIGHT, 0, row_span=UIConfig.NON_HUD_HEIGHT,
-                                         column_span=inv_width)
-        self.__inventory = SelectionWidget(inventory, controls, stay_selected=True)
-
-        details = self.add_block_label("Details", UIConfig.HUD_HEIGHT, inv_width, row_span=UIConfig.SHOP_DETAILS_HEIGHT,
-                                       column_span=UIConfig.WINDOW_WIDTH - inv_width)
-        self.__details = SimpleWidget(details)
-        buy = self.add_block_label("Buy", UIConfig.HUD_HEIGHT + UIConfig.SHOP_DETAILS_HEIGHT, inv_width, row_span=1,
-                                   column_span=UIConfig.WINDOW_WIDTH - inv_width)
-        self.__buy = SelectionWidget(buy, controls, is_second=True)
-
-        # init action key commands
-        def use_inventory():
-            if self.__inventory.use():
-                Widget.move_focus(self.__buy, self)
-                self.render()
-        self.__inventory.widget.add_key_command(controls.action, use_inventory)
-
-        def use_buy():
-            if self.__buy.use():
-                Widget.move_focus(self.__inventory, self)
-                self.__inventory.validate_index()
-                self.__details.render_reset()
-                self.__buy.render_reset()
-                self.render()
-        self.__buy.widget.add_key_command(controls.action, use_buy)
-
-    def get_widget_list(self) -> List[Widget]:
-        return [
-            self.__hud,
-            self.__inventory,
-            self.__details,
-            self.__buy,
-        ]
-
-    def get_main_widget(self) -> WidgetWrapper:
-        return self.__inventory.widget
-
-    def reset(self) -> None:
-        self.__inventory.render_reset()
-
-    def set_data(self, robot: Robot, items: List[ShopItem]) -> None:
-        self.__robot = robot
-        self.__hud.set_data((robot, None, None))    # don't overwrite the current map name
-        self.__update_inventory(items)
-
-    def __update_inventory(self, items: List[ShopItem]):
-        self.__items = items
-        self.__inventory.set_data(data=(
-            [si.to_string() for si in items] + ["-Leave-"],
-            [self.__select_item]
-        ))
-
-    def __select_item(self, index: int = 0) -> bool:
-        if index >= len(self.__items):
-            self.__continue_exploration()
-            return False
-
-        shop_item = self.__items[index]
-        self.__cur_item = shop_item
-        self.__details.set_data(shop_item.collectible.description(self.__check_unlocks))
-        if self.__robot.backpack.can_afford(shop_item.price):
-            self.__buy.set_data(data=(
-                ["Buy!", "No thanks"],
-                [self.__buy_item, self.__back_to_inventory]
-            ))
-        else:
-            self.__buy.set_data(data=(
-                ["You can't afford that!"],
-                [self.__back_to_inventory]
-            ))
-        return True
-
-    def __buy_item(self) -> bool:
-        if self.__robot.backpack.spend_coins(self.__cur_item.price):
-            self.__robot.give_collectible(self.__cur_item.collectible)
-            self.__hud.render()
-            self.__items.remove(self.__cur_item)
-            self.__update_inventory(self.__items)
-            return True
-        else:
-            return False
-
-    def __back_to_inventory(self) -> bool:
-        self.__cur_item = None
-        return True
 
 
 class RiddleWidgetSet(ReachTargetWidgetSet):
