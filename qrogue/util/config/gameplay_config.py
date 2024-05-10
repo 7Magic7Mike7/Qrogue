@@ -64,10 +64,6 @@ class MapConfig:
         return "back"
 
     @staticmethod
-    def world_map_prefix() -> str:
-        return "w"
-
-    @staticmethod
     def level_map_prefix() -> str:
         return "l"
 

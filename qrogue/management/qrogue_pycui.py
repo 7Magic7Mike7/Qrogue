@@ -42,7 +42,7 @@ class QrogueCUI(PyCUI):
 
         # Spaceship = 7
         Workbench = 8
-        Navigation = 9
+        # Navigation = 9
         Training = 10
 
         Challenge = 11
@@ -90,8 +90,6 @@ class QrogueCUI(PyCUI):
                 self.__renderer._switch_to_training(data)
             elif self.__cur_state == QrogueCUI._State.Workbench:
                 self.__renderer._switch_to_workbench(data)
-            elif self.__cur_state == QrogueCUI._State.Navigation:
-                self.__renderer._switch_to_navigation(data)
 
             elif self.__cur_state == QrogueCUI._State.Transition:
                 self.__renderer._switch_to_transition(data)
@@ -100,6 +98,11 @@ class QrogueCUI(PyCUI):
 
             elif self.__cur_state == QrogueCUI._State.LevelSelect:
                 self.__renderer._switch_to_level_select(data)
+
+            else:
+                Popup.error("Illegal Game State! It's still possible that the game works fine, so if nothing seems "
+                            "wrong you can continue to play. However, we recommend to save the game and restart it. ",
+                            add_report_note=True)
 
     class _PopupHistory:
         def __init__(self, show_popup: Callable[[MultilinePopup], None]):
@@ -655,9 +658,6 @@ class QrogueCUI(PyCUI):
     def _switch_to_workbench(self, _=None):
         # no data parameter needed
         self.apply_widget_set(self.__workbench)
-
-    def _switch_to_navigation(self, data) -> None:
-        ErrorConfig.raise_deletion_exception()
 
     def __start_level(self, level: Map) -> None:
         Logger.instance().info(f"Starting level {level.internal_name} with seed={level.seed}.", from_pycui=False)

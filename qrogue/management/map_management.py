@@ -84,9 +84,6 @@ class MapManager:
         elif map_name.lower() == MapConfig.back_map_string():
             self.__load_back()
 
-        elif map_name.lower().startswith(MapConfig.world_map_prefix()):
-            ErrorConfig.raise_deletion_exception()
-
         elif map_name.lower().startswith(MapConfig.level_map_prefix()):
             if map_seed is None:
                 map_seed = self.__rm.get_seed(msg="MapMngr_seedForLevel")
@@ -104,8 +101,7 @@ class MapManager:
                 else:
                     Popup.error(f"Failed to generate level \"{map_name}\"!", add_report_note=True)
             except FileNotFoundError:
-                Popup.error(f"Level-file for \"{map_name}\" was not found! Please download the game files again.\n"
-                            f"If this error still occurs but you're sure that the corresponding file is present:",
+                Popup.error(ErrorConfig.invalid_map(map_name, f"Level-file for \"{map_name}\" was not found! "),
                             add_report_note=True)
 
         elif map_name.lower().startswith(MapConfig.expedition_map_prefix()):
@@ -138,9 +134,7 @@ class MapManager:
                             f"seed or restart the game. Should the error keep occurring:", add_report_note=True)
 
         else:
-            Popup.error(f"Failed to recognize \"{map_name}\" as map. Please download the game files again.\n"
-                        f"If this error still occurs but you're sure that the corresponding file is present:",
-                        add_report_note=True)
+            Popup.error(ErrorConfig.invalid_map(map_name), add_report_note=True)
 
     def __load_next(self):
         next_map = LevelInfo.get_next(self.__cur_map.internal_name, self.__save_data.check_level)
@@ -148,16 +142,13 @@ class MapManager:
             next_display = LevelInfo.convert_to_display_name(next_map)
             self.__start_level_transition(self.__cur_map.name, next_display, lambda: self.load_map(next_map, None, None))
         else:
-            ErrorConfig.raise_deletion_exception()
+            error_text = ErrorConfig.invalid_map(self.__cur_map.name, f"Failed to load next map after "
+                                                                      f"\"{self.__cur_map.name}\". ")
+            Popup.error(error_text, add_report_note=True)
 
     def __load_back(self):
-        if self.__cur_map.get_type() == MapType.Expedition:
-            ErrorConfig.raise_deletion_exception()
-        elif self.__in_level:
-            self.__in_level = False
-            self.__exit_map()
-        else:
-            ErrorConfig.raise_deletion_exception()
+        self.__in_level = False
+        self.__exit_map()
 
     def __proceed(self, confirmed: int = 0):
         if confirmed == 0:
@@ -178,10 +169,6 @@ class MapManager:
 
             if self.__cur_map.get_type() is MapType.Expedition:
                 self.__save_data.add_to_achievement(Achievement.CompletedExpedition, 1)    # todo: add score instead of 1?
-            elif self.__cur_map.get_type() is MapType.Level:
-                pass
-            else:
-                ErrorConfig.raise_deletion_exception()
             self.__save_data.save(is_auto_save=True)
 
             CommonQuestions.proceed_summary(self.__cur_map.name, new_level_data.score, new_level_data.duration,

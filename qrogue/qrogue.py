@@ -181,7 +181,7 @@ def simulate_game(simulation_path: str, from_console: bool = False, debugging: b
     return return_code
 
 
-def validate_map(path: str, is_level: bool = True, in_base_path: bool = True) -> bool:
+def validate_map(path: str, in_base_path: bool = True) -> bool:
     seed = 7
     try:
         Config.load()
@@ -200,14 +200,11 @@ def validate_map(path: str, is_level: bool = True, in_base_path: bool = True) ->
               "validate maps separately!")
         return False
 
-    if is_level:
-        generator = QrogueLevelGenerator(check_achievement_callback=lambda achievement: False,
-                                         trigger_event_callback=lambda event: None,
-                                         load_map_callback=lambda name, spawn_pos: None,
-                                         show_message_callback=lambda title, text, reopen, position: None,
-                                         callback_pack=CallbackPack.dummy())
-    else:
-        ErrorConfig.raise_deletion_exception()
+    generator = QrogueLevelGenerator(check_achievement_callback=lambda achievement: False,
+                                     trigger_event_callback=lambda event: None,
+                                     load_map_callback=lambda name, spawn_pos: None,
+                                     show_message_callback=lambda title, text, reopen, position: None,
+                                     callback_pack=CallbackPack.dummy())
 
     try:
         error_occurred = False

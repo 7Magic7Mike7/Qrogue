@@ -88,5 +88,5 @@ class RandomManager:
     @staticmethod
     def create_new(seed: int) -> MyRandom:
         if seed is None:
-            ErrorConfig.raise_deletion_exception()
+            Logger.instance().throw(Exception("No seed was provided for RandomManager.create_new()!"))
         return MyRandom(seed)

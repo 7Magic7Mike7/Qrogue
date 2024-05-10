@@ -1,3 +1,4 @@
+from typing import Optional
 
 
 class ErrorConfig:
@@ -12,6 +13,13 @@ class ErrorConfig:
     @staticmethod
     def singleton_reset(singleton: str) -> str:
         return f"Can only reset the singleton \"{singleton}\" during testing!"
+
+    @staticmethod
+    def invalid_map(map_name: str, intro_text: Optional[str] = None) -> str:
+        if intro_text is None:
+            intro_text = f"Could not find map \"{map_name}\"! "
+        return intro_text + "Please download the game files again.\n" \
+                            "If this error still occurs but you're sure that the corresponding file is present:"
 
     @staticmethod
     def raise_deletion_exception():

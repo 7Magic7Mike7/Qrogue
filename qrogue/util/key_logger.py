@@ -52,9 +52,6 @@ class KeyLogger:
         self.__keystrokes += 1
         self._flush(force=False)
 
-    def log_error(self, message):
-        ErrorConfig.raise_deletion_exception()
-
     def flush_if_useful(self):
         """
         Flushes only if the .qrkl-file was already created (meaning we already flushed before) or if the buffer has a
