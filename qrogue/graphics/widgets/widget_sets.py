@@ -1,6 +1,6 @@
 import threading
-from threading import Timer
 from abc import abstractmethod, ABC
+from threading import Timer
 from typing import List, Callable, Optional, Tuple, Any, Union
 
 import py_cui
@@ -12,19 +12,18 @@ from qrogue.game.logic.base import StateVector
 from qrogue.game.logic.collectibles import Collectible, instruction as gates
 from qrogue.game.world.map import Map
 from qrogue.game.world.navigation import Direction
+from qrogue.graphics.popups import Popup
+from qrogue.graphics.rendering import ColorRules
 from qrogue.graphics.widget_base import WidgetWrapper
+from qrogue.graphics.widgets import Renderable, Widget, MyBaseWidget
+from qrogue.graphics.widgets.my_widgets import SelectionWidget, CircuitWidget, MapWidget, SimpleWidget, HudWidget, \
+    OutputStateVectorWidget, CircuitMatrixWidget, TargetStateVectorWidget, InputStateVectorWidget, MyMultiWidget, \
+    HistoricWrapperWidget
 from qrogue.util import CommonPopups, Config, Controls, GameplayConfig, HelpText, Logger, PathConfig, \
     Keys, UIConfig, ColorConfig, Options, PuzzleConfig, ScoreConfig, \
     get_filtered_help_texts, CommonQuestions, MapConfig, PyCuiConfig, ColorCode, split_text, MyRandom, \
     LevelInfo, CommonInfos, LevelData
 from qrogue.util.achievements import Unlocks
-
-from qrogue.graphics.popups import Popup
-from qrogue.graphics.rendering import ColorRules
-from qrogue.graphics.widgets import Renderable, Widget, MyBaseWidget
-from qrogue.graphics.widgets.my_widgets import SelectionWidget, CircuitWidget, MapWidget, SimpleWidget, HudWidget, \
-    OutputStateVectorWidget, CircuitMatrixWidget, TargetStateVectorWidget, InputStateVectorWidget, MyMultiWidget, \
-    HistoricWrapperWidget
 from qrogue.util.util_functions import enum_str, cur_datetime, time_diff, open_folder
 
 

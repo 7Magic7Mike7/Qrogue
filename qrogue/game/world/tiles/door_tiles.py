@@ -4,8 +4,8 @@ from typing import Callable, Tuple, Optional
 from qrogue.game.logic.actors import Controllable, Robot
 from qrogue.game.world.navigation import Direction
 from qrogue.util import CommonPopups, Logger, CheatConfig
-
-from qrogue.game.world.tiles import Invalid, TileCode, Tile, Wall, Floor, WalkTriggerTile
+from .tiles import Invalid, TileCode, Tile, Wall, Floor
+from .walk_trigger_tiles import WalkTriggerTile
 
 
 class DoorOpenState(Enum):

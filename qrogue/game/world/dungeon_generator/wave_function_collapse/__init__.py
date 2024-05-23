@@ -1,8 +1,8 @@
 # exporting
-from .wave_function import WaveFunction
 from .learnables import WFCLearnMatrix, LearnableMap, LearnableRoom
-from .wfc_learner import WFCLearner
+from .wave_function import WaveFunction
 from .wfc_generator import WFCGenerator, WFCLayoutGenerator, WFCRoomGenerator, WFCEmptyRoomGenerator
+from .wfc_learner import WFCLearner
 
 # importing
 # +world.map

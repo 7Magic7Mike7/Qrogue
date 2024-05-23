@@ -1,7 +1,6 @@
 import os.path
 from typing import Optional, Callable
 
-from qrogue.util import ErrorConfig
 from qrogue.util.config import PathConfig, Config
 from qrogue.util.controls import Controls, Keys
 

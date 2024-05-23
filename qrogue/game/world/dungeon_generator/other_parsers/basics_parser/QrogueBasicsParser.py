@@ -1,8 +1,9 @@
 # Generated from D:/Workspaces/pycharm-workspace/Qrogue/qrogue/game/world/dungeon_generator/other_parsers\QrogueBasics.g4 by ANTLR 4.12.0
 # encoding: utf-8
-from antlr4 import *
-from io import StringIO
 import sys
+
+from antlr4 import *
+
 if sys.version_info[1] > 5:
 	from typing import TextIO
 else:

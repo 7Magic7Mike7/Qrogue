@@ -2,9 +2,8 @@ from typing import List, Tuple, Optional
 
 from qrogue.game.logic.base import StateVector, CircuitMatrix
 from qrogue.game.logic.collectibles import Collectible, Instruction
-
-from qrogue.game.logic.actors.puzzles import Target
 from qrogue.util import CheatConfig, Logger, Config
+from .target import Target
 
 
 class Challenge(Target):

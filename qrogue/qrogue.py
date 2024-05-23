@@ -6,7 +6,7 @@ from typing import Tuple, List, Optional
 from qrogue.game.world.dungeon_generator import QrogueLevelGenerator
 from qrogue.game.world.map import CallbackPack
 from qrogue.management import QrogueCUI
-from qrogue.util import Logger, Config, PyCuiConfig, PathConfig, GameplayConfig, ErrorConfig
+from qrogue.util import Logger, Config, PyCuiConfig, PathConfig, GameplayConfig
 
 
 def __init_singletons(seed: int):

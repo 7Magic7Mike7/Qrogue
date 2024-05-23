@@ -5,10 +5,9 @@ from typing import List, Callable, Optional, Tuple, Any
 import qrogue.game.world.tiles as tiles
 from qrogue.game.logic import Message
 from qrogue.game.logic.actors import Controllable, Robot
+from qrogue.game.world.map.rooms import Room, Area, Placeholder, SpawnRoom, MetaRoom, AreaType
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.util import Logger, MapConfig
-
-from qrogue.game.world.map.rooms import Room, Area, Placeholder, SpawnRoom, MetaRoom, AreaType
 
 
 class MapType(enum.Enum):

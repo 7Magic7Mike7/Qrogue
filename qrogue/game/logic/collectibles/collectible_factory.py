@@ -1,7 +1,7 @@
 from typing import List, Optional
 
 from qrogue.game.logic.collectibles import Collectible, instruction as gates
-from qrogue.util import Logger, MyRandom, RandomManager
+from qrogue.util import Logger, MyRandom
 
 
 class CollectibleFactory:

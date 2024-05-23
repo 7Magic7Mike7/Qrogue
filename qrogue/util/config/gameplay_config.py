@@ -2,8 +2,10 @@ import enum
 from enum import Enum
 from typing import Callable, Tuple, List, Dict, Any, Optional
 
-from qrogue.util.config import PathConfig, TestConfig, PopupConfig, PyCuiColors
 from qrogue.util.util_functions import open_folder
+from .path_config import PathConfig
+from .test_config import TestConfig
+from .visual_config import PopupConfig, PyCuiColors
 
 
 class MapConfig:

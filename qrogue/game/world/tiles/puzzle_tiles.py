@@ -5,8 +5,8 @@ from qrogue.game.logic.actors import Controllable, Robot, Enemy as EnemyActor, B
 from qrogue.game.target_factory import EnemyFactory
 from qrogue.game.world.navigation import Direction
 from qrogue.util import RandomManager, Logger, CheatConfig, PuzzleConfig
-
-from qrogue.game.world.tiles import Tile, TileCode, WalkTriggerTile
+from .tiles import Tile, TileCode
+from .walk_trigger_tiles import WalkTriggerTile
 
 
 class Enemy(WalkTriggerTile):

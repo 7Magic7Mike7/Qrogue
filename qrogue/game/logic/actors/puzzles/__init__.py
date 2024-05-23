@@ -1,13 +1,13 @@
 # exporting
-from .target import Target
-from .enemy import Enemy
-from .boss import Boss
-from .riddle import Riddle
-from .challenge import Challenge
-
 import itertools
 from typing import Tuple, Optional, List
+
 from qrogue.util import QuantumSimulationConfig
+from .boss import Boss
+from .challenge import Challenge
+from .enemy import Enemy
+from .riddle import Riddle
+from .target import Target
 from ...base import CircuitMatrix, StateVector, QuantumCircuit, UnitarySimulator
 from ...collectibles import Instruction
 

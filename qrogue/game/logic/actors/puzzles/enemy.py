@@ -2,8 +2,7 @@ from typing import Optional
 
 from qrogue.game.logic.base import StateVector
 from qrogue.game.logic.collectibles import Collectible
-from qrogue.util import RandomManager, PuzzleConfig, MyRandom
-
+from qrogue.util import PuzzleConfig
 from .target import Target
 
 

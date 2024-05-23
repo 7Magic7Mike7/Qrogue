@@ -1,8 +1,7 @@
 import enum
+import math
 from abc import ABC, abstractmethod
 from typing import Iterator, Optional, Set, Dict, List, Callable
-
-import math
 
 import qiskit.circuit.library.standard_gates as gates
 from qiskit.circuit import Gate as QiskitGate

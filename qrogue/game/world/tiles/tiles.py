@@ -1,7 +1,7 @@
 
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Callable, List
+from typing import List
 
 from qrogue.game.logic.actors import Controllable
 from qrogue.game.world.navigation import Direction

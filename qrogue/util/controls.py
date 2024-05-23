@@ -3,7 +3,6 @@ from typing import List, Tuple, Callable, Optional
 
 import py_cui.keys
 
-
 # primary keys
 _PK_UP = py_cui.keys.KEY_UP_ARROW
 _PK_RIGHT = py_cui.keys.KEY_RIGHT_ARROW

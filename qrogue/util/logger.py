@@ -2,9 +2,8 @@ from typing import Callable, Optional, List, Union
 
 from py_cui.debug import PyCUILogger
 
-from qrogue.util import ErrorConfig, TestConfig
-from qrogue.util.config import Config, PathConfig
-from qrogue.util.util_functions import cur_datetime
+from .config import Config, ErrorConfig, PathConfig, TestConfig
+from .util_functions import cur_datetime
 
 
 class Logger(PyCUILogger):

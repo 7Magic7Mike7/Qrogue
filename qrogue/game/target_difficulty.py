@@ -1,7 +1,7 @@
 from typing import List, Union, Tuple
 
-from qrogue.game.logic.base import StateVector
 from qrogue.game.logic.actors.controllables import Robot
+from qrogue.game.logic.base import StateVector
 from qrogue.game.logic.collectibles import Collectible, CollectibleFactory, Instruction, Score
 from qrogue.util import Logger, MyRandom
 

@@ -1,4 +1,3 @@
-import numpy as np
 import os
 import unittest
 
@@ -75,7 +74,6 @@ class ValidationTests(unittest.TestCase):
 
     def test_versioning(self):
         from importlib.metadata import version
-        import antlr4
         import numpy as np
         import py_cui
         import qiskit

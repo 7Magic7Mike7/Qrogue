@@ -1,7 +1,7 @@
 from qrogue.game.logic.actors.controllables import ControllableType
 from qrogue.game.world.tiles import TileCode
-from qrogue.graphics import WidgetWrapper
 from qrogue.util import PyCuiColors, ColorConfig
+from ..widget_base import WidgetWrapper
 
 
 class _TileColorer:      # todo: move to ColorConfig? (only value of dictionary since the keys are TileCodes)

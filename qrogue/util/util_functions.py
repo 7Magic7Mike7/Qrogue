@@ -1,8 +1,9 @@
 import datetime
 import enum
 import math
-import numpy as np
 from typing import Optional, Any, Tuple
+
+import numpy as np
 
 __DEFAULT_CHARACTER = " "
 

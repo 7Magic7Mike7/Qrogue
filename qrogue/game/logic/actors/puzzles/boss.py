@@ -5,7 +5,6 @@ from typing import Tuple, List, Optional
 from qrogue.game.logic.base import StateVector, CircuitMatrix
 from qrogue.game.logic.collectibles import Collectible, Score, Instruction, instruction as gates
 from qrogue.util import PuzzleConfig
-
 from .target import Target
 
 

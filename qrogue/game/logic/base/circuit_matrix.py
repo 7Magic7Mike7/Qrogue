@@ -2,10 +2,10 @@ from typing import List, Optional, Union
 
 import numpy as np
 
-from qrogue.game.logic.base import StateVector
 from qrogue.util import Logger, QuantumSimulationConfig, GameplayConfig, Options, Config
 from qrogue.util.quantum_functions import generate_ket, verify_circuit_matrix
 from qrogue.util.util_functions import center_string, complex2string
+from .state_vector import StateVector
 
 
 class CircuitMatrix:

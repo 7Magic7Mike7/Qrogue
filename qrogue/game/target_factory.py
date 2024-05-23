@@ -1,9 +1,9 @@
 from abc import abstractmethod, ABC
 from typing import List, Callable, Optional
 
-from qrogue.game.logic.base import StateVector
 from qrogue.game.logic.actors.controllables import Robot
 from qrogue.game.logic.actors.puzzles import Enemy, Target, Riddle, Boss
+from qrogue.game.logic.base import StateVector
 from qrogue.game.logic.collectibles import Collectible, CollectibleFactory, Instruction, Energy, Score
 from qrogue.game.logic.collectibles.instruction import CXGate, SwapGate, YGate, ZGate
 from qrogue.game.target_difficulty import StvDifficulty, TargetDifficulty, PuzzleDifficulty, RiddleDifficulty

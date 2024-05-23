@@ -12,16 +12,15 @@ from qrogue.game.logic.collectibles import Collectible, MultiCollectible, pickup
 from qrogue.game.target_difficulty import ExplicitTargetDifficulty, ExplicitStvDifficulty
 from qrogue.game.target_factory import EnemyFactory, EnemyTargetFactory
 from qrogue.game.world import tiles
-from qrogue.game.world.map import CallbackPack, MapMetaData, LevelMap, rooms
-from qrogue.game.world.navigation import Coordinate, Direction
-from qrogue.util import Config, MapConfig, PathConfig, Logger, CommonQuestions, RandomManager, MyRandom, \
-    load_help_text, ParserErrorListener
-
 from qrogue.game.world.dungeon_generator import parser_util
 from qrogue.game.world.dungeon_generator.dungeon_parser.QrogueDungeonLexer import QrogueDungeonLexer
 from qrogue.game.world.dungeon_generator.dungeon_parser.QrogueDungeonParser import QrogueDungeonParser
 from qrogue.game.world.dungeon_generator.dungeon_parser.QrogueDungeonVisitor import QrogueDungeonVisitor
 from qrogue.game.world.dungeon_generator.generator import DungeonGenerator
+from qrogue.game.world.map import CallbackPack, MapMetaData, LevelMap, rooms
+from qrogue.game.world.navigation import Coordinate, Direction
+from qrogue.util import Config, MapConfig, PathConfig, Logger, CommonQuestions, RandomManager, MyRandom, \
+    load_help_text, ParserErrorListener
 
 
 class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):

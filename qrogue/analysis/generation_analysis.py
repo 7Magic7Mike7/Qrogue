@@ -7,7 +7,6 @@ from qrogue.game.world.dungeon_generator.random_generator import RandomLayoutGen
 from qrogue.game.world.map import CallbackPack
 from qrogue.test import test_util
 
-
 printing = True
 
 

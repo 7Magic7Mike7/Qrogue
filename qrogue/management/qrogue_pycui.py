@@ -18,13 +18,13 @@ from qrogue.graphics.widgets import Renderable, BossFightWidgetSet, ExploreWidge
     FightWidgetSet, MenuWidgetSet, MyWidgetSet, NavigationWidgetSet, PauseMenuWidgetSet, RiddleWidgetSet, \
     ChallengeWidgetSet, WorkbenchWidgetSet, TrainingsWidgetSet, Widget, TransitionWidgetSet, \
     ScreenCheckWidgetSet, LevelSelectWidgetSet
-from qrogue.management import NewSaveData, MapManager
 from qrogue.util import common_messages, CheatConfig, Config, GameplayConfig, UIConfig, HelpText, \
     Logger, PathConfig, Controls, Keys, RandomManager, PyCuiConfig, PopupConfig, PyCuiColors, Options, \
-    CommonQuestions, ErrorConfig, CommonInfos
-from qrogue.util.achievements import Unlocks
+    CommonInfos
 from qrogue.util.game_simulator import GameSimulator
 from qrogue.util.key_logger import KeyLogger, OverWorldKeyLogger, DummyKeyLogger
+from .map_management import MapManager
+from .save_data import NewSaveData
 
 
 class QrogueCUI(PyCUI):

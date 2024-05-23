@@ -1,4 +1,3 @@
-import math
 from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Iterator, List, Callable, Optional

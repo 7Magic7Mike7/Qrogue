@@ -1,7 +1,7 @@
 # exporting
-from .save_data import NewSaveData
 from .map_management import MapManager
 from .qrogue_pycui import QrogueCUI
+from .save_data import NewSaveData
 
 # importing
 # +game.logic.actors

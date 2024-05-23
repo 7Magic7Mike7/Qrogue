@@ -1,9 +1,7 @@
 from typing import Any, Dict, Optional, List
 
 from qrogue.game.world.dungeon_generator.wave_function_collapse import WFCLearnMatrix
-from qrogue.game.world.dungeon_generator.wave_function_collapse.learnables import LearnableRoom
 from qrogue.game.world.navigation import Coordinate, Direction
-from qrogue.game.world.tiles import tiles
 
 
 class WFCLearner:

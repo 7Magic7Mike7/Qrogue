@@ -2,8 +2,7 @@ from typing import List, Callable, Optional
 
 from qrogue.game.logic.actors import Robot
 from qrogue.game.world.navigation import Coordinate
-
-from qrogue.game.world.map import Map, MapType, Room, MapMetaData
+from .map import Map, MapType, Room, MapMetaData
 
 
 class LevelMap(Map):

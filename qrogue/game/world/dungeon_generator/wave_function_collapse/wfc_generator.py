@@ -2,14 +2,15 @@ import math
 from typing import List, Optional, Dict, Tuple, Iterable, Any
 
 from qrogue.game.world.dungeon_generator import QrogueLevelGenerator
-from qrogue.game.world.dungeon_generator.wave_function_collapse import WaveFunction, WFCLearner, WFCLearnMatrix, \
-    LearnableMap, LearnableRoom
 from qrogue.game.world.map import LevelMap, CallbackPack
 from qrogue.game.world.map.rooms import AreaType
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.game.world.tiles import TileCode
 from qrogue.util import RandomManager, MapConfig, MyRandom
 from qrogue.util.util_functions import my_str
+from .learnables import LearnableMap, LearnableRoom
+from .wave_function import WaveFunction
+from .wfc_learner import WFCLearner, WFCLearnMatrix
 
 
 class WFCGenerator:

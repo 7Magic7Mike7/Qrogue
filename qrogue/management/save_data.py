@@ -1,14 +1,13 @@
+from datetime import datetime
 from typing import Tuple, Optional, List, Union, Dict
 
 from antlr4 import InputStream, CommonTokenStream
-from datetime import datetime
-
-from qrogue.management.save_grammar.SaveDataLexer import SaveDataLexer
-from qrogue.management.save_grammar.SaveDataParser import SaveDataParser
-from qrogue.management.save_grammar.SaveDataVisitor import SaveDataVisitor
 
 from qrogue.game.logic.collectibles import Instruction, InstructionManager
 from qrogue.graphics.popups import Popup
+from qrogue.management.save_grammar.SaveDataLexer import SaveDataLexer
+from qrogue.management.save_grammar.SaveDataParser import SaveDataParser
+from qrogue.management.save_grammar.SaveDataVisitor import SaveDataVisitor
 from qrogue.util import Logger, CommonInfos, LevelInfo, LevelData, Config, PathConfig, FileTypes, ParserErrorListener
 from qrogue.util.achievements import Achievement, Unlocks
 from qrogue.util.util_functions import cur_datetime, datetime2str

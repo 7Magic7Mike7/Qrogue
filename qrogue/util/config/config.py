@@ -1,9 +1,11 @@
 import os
 
-import qiskit   # imported to check its version
+import qiskit  # imported to check its version
 
-from qrogue.util.config import CheatConfig, GameplayConfig, PathConfig, TestConfig
 from qrogue.util.util_functions import cur_datetime
+from .gameplay_config import CheatConfig, GameplayConfig
+from .path_config import PathConfig
+from .test_config import TestConfig
 
 
 class Config:   # todo make singleton and handle access to other configs?

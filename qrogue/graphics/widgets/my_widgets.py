@@ -11,13 +11,12 @@ from qrogue.game.logic.base import StateVector, CircuitMatrix
 from qrogue.game.logic.collectibles import Instruction
 from qrogue.game.world.map import Map
 from qrogue.game.world.navigation import Direction
+from qrogue.graphics.rendering import ColorRules
 from qrogue.util import Controls, Keys, Logger, Options, ColorCode, Config, ColorConfig, HudConfig, GameplayConfig, \
     QuantumSimulationConfig, InstructionConfig
 from qrogue.util.util_functions import center_string, align_string, to_binary_string, int_to_fixed_len_str
-
-from qrogue.graphics import WidgetWrapper
-from qrogue.graphics.rendering import ColorRules
-from qrogue.graphics.widgets import Renderable
+from .renderable import Renderable
+from ..widget_base import WidgetWrapper
 
 
 class MyBaseWidget(BlockLabel, WidgetWrapper):

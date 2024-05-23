@@ -1,4 +1,4 @@
-from typing import Callable, List
+from typing import Callable
 
 from qrogue.game.logic.actors import Boss, Enemy, Robot, Riddle, Challenge
 from qrogue.game.world.navigation import Direction

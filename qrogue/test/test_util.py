@@ -1,8 +1,7 @@
 import unittest
 from typing import List, Callable, Any, Tuple, Optional
 
-from qrogue.game.logic.actors import Robot, BaseBot, Enemy, Boss, Riddle, Challenge
-from qrogue.game.world.navigation import Direction
+from qrogue.game.logic.actors import BaseBot
 from qrogue.graphics import WidgetWrapper
 from qrogue.graphics.widgets.my_widgets import SelectionWidget
 from qrogue.util import Logger, Controls, Config, PathConfig, TestConfig, CheatConfig
