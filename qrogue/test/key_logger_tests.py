@@ -44,7 +44,7 @@ class KeyLoggingTestCase(unittest.TestCase):
             self.__key_logger.log(self.__controls, key_pressed)
 
     def test_simple(self):
-        save_path = os.path.join("test_data", "dynamic_data", "test.qrkl")
+        save_path = os.path.join("test_data", "keylogs", "test.qrkl")
         key_logger = KeyLoggingTestCase._TestKeyLogger()
         key_logger.reinit(7, "TEST", NewSaveData.empty_save_state(), save_path)
         cui = KeyLoggingTestCase._TestCUI(key_logger)
@@ -84,6 +84,8 @@ class KeyLoggingTestCase(unittest.TestCase):
             logged_logical_key = cui.controls.encode(simulator.next())
             self.assertTrue(cui.controls.are_equivalent(logical_keys[i], logged_logical_key, pressed_key))
         self.assertEqual(None, simulator.next(), "Simulator not finished!")
+
+        os.remove(save_path)    # delete the created keylog file
 
 
 if __name__ == '__main__':
