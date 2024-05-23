@@ -1218,7 +1218,7 @@ class PauseMenuWidgetSet(MyWidgetSet):
         self.__description.render_reset(reset_text=False)
 
 
-class WorkbenchWidgetSet(MyWidgetSet):
+class WorkbenchWidgetSet(MyWidgetSet):      # todo: overhaul or remove
     def __init__(self, controls: Controls, logger, root: py_cui.PyCUI, available_robots: List[Robot],
                  render: Callable[[List[Renderable]], None], continue_callback: Callable[[], None]):
         self.__continue = continue_callback
@@ -1791,7 +1791,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         pass
 
 
-class TrainingsWidgetSet(ReachTargetWidgetSet):
+class TrainingsWidgetSet(ReachTargetWidgetSet):     # todo: remove or overhaul
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  back_to_menu_callback: Callable[[], None], reopen_popup_callback: Callable[[], None],
                  check_unlocks_callback: Callable[[str], bool]):
