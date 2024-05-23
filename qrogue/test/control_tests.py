@@ -18,8 +18,10 @@ class ControlTests(unittest.TestCase):
         """
         keys = controls.get_keys(logical_key)
 
-        if category is None: self.assertTrue(physical_key in keys)
-        else: self.assertTrue(physical_key in keys, f"{visual_key} not set as {category}-Key!")
+        if category is None:
+            self.assertTrue(physical_key in keys)
+        else:
+            self.assertTrue(physical_key in keys, f"{visual_key} not set as {category}-Key!")
 
         space_index = keys.index(physical_key)
         self.assertEqual(visual_key, controls.to_keyboard_string(logical_key, space_index))

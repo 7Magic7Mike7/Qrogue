@@ -43,16 +43,16 @@ class GameSimulator:
             version_end = self.__cur_chunk.index(bytes("\n", GameSimulator.__ENCODING), version_start)
             self.__version = str(self.__cur_chunk[version_start:version_end], GameSimulator.__ENCODING)
             seed_start = self.__cur_chunk.index(bytes(Config.SEED_HEAD(), GameSimulator.__ENCODING), version_end) \
-                + len(Config.SEED_HEAD())
+                         + len(Config.SEED_HEAD())
             seed_end = self.__cur_chunk.index(bytes("\n", GameSimulator.__ENCODING), seed_start)
             self.__seed = int(self.__cur_chunk[seed_start:seed_end])
             time_start = self.__cur_chunk.index(bytes(Config.TIME_HEAD(), GameSimulator.__ENCODING), seed_end) \
-                + len(Config.TIME_HEAD())
+                         + len(Config.TIME_HEAD())
             time_end = self.__cur_chunk.index(bytes("\n", GameSimulator.__ENCODING), time_start)
             self.__time = str(self.__cur_chunk[time_start:time_end], GameSimulator.__ENCODING)
 
             start = self.__cur_chunk.index(bytes(Config.CONFIG_HEAD(), GameSimulator.__ENCODING), seed_end) \
-                + len(Config.CONFIG_HEAD()) + 1  # start at the first line after CONFIG_HEAD
+                    + len(Config.CONFIG_HEAD()) + 1  # start at the first line after CONFIG_HEAD
             end = self.__cur_chunk.index(bytes("\n\n", GameSimulator.__ENCODING), start)
             config = str(self.__cur_chunk[start:end], GameSimulator.__ENCODING)
             GameplayConfig.from_log_text(config)
@@ -156,7 +156,7 @@ class GameSimulator:
         if skip_raw_keys and skip_logical_keys:
             return str_repr
 
-        if not skip_header: str_repr += "\n\nKeys:"     # add keys header
+        if not skip_header: str_repr += "\n\nKeys:"  # add keys header
 
         key_strings = []
         while True:
@@ -176,18 +176,18 @@ class GameSimulator:
     def version_warning(self) -> Tuple[str, str]:
         __space = "Space"
         return "Starting Simulation", \
-               f"You started a run with \nseed = {self.seed}\nrecorded at {self.time}.\n" \
-               f"Press {ColorConfig.highlight_key(__space)} to execute the simulation step by step. " \
-               f"Alternatively, if you keep it pressed the simulation will be executed automatically with short " \
-               f"delays after each step until you let go of Space again."
+            f"You started a run with \nseed = {self.seed}\nrecorded at {self.time}.\n" \
+            f"Press {ColorConfig.highlight_key(__space)} to execute the simulation step by step. " \
+            f"Alternatively, if you keep it pressed the simulation will be executed automatically with short " \
+            f"delays after each step until you let go of Space again."
 
     def version_alright(self) -> Tuple[str, str]:
         return "Simulating other version", \
-               "You try to simulate the run of a different game version.\n" \
-               f"Your current version: {Config.version()}\n" \
-               f"Version you try to simulate: {self.version}\n" \
-               "This is not supported and can cause problems. Only continue if you know what you do! Else close this " \
-               "popup and press ESC to abort the simulation."
+            "You try to simulate the run of a different game version.\n" \
+            f"Your current version: {Config.version()}\n" \
+            f"Version you try to simulate: {self.version}\n" \
+            "This is not supported and can cause problems. Only continue if you know what you do! Else close this " \
+            "popup and press ESC to abort the simulation."
 
     def stop_message(self) -> str:
         if self.__finished:

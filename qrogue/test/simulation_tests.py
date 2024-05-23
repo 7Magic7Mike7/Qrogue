@@ -58,8 +58,10 @@ class SimulationTestCase(test_util.SingletonSetupTestCase):
             return self.__name
 
         def start(self) -> Optional[NewSaveData]:
-            if self.__automate: automation_time_step = TestConfig.automation_step_time()
-            else: automation_time_step = None
+            if self.__automate:
+                automation_time_step = TestConfig.automation_step_time()
+            else:
+                automation_time_step = None
             return QrogueCUI.start_simulation(self.__path, self.__in_keylog_folder, automation_time_step,
                                               self.__auto_scroll_transitions, self.__stop_when_finished)
 

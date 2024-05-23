@@ -29,7 +29,7 @@ class KeyLoggingTestCase(unittest.TestCase):
             super().__init__(1, 1)
             self.__controls = Controls(self._handle_key_presses)
             self.__key_logger = key_logger
-            self.__pressed_keys: List[int] = []     # also store the raw key-press
+            self.__pressed_keys: List[int] = []  # also store the raw key-press
 
         @property
         def controls(self) -> Controls:
@@ -53,7 +53,7 @@ class KeyLoggingTestCase(unittest.TestCase):
         for invalid_key in Keys.invalid_values(): logical_keys.remove(invalid_key)  # remove invalid ("meta") keys
         raw_keys = []
         for key in Keys:
-            if key not in Keys.invalid_values():    # remove invalid ("meta") keys
+            if key not in Keys.invalid_values():  # remove invalid ("meta") keys
                 raw_keys.append(cui.controls.get_key(key))
 
         # test if handle() correctly returns the raw (PyCUI-internal) key for all our logical keys
@@ -66,7 +66,7 @@ class KeyLoggingTestCase(unittest.TestCase):
         for i in range(len(raw_keys)):
             self.assertEqual(raw_keys[i], cui.pressed_keys[i], f"Different key pressed @{i}!")
 
-        key_logger.flush_if_useful()    # flush stored data
+        key_logger.flush_if_useful()  # flush stored data
 
         # now test if all keys were logged correctly
         simulator = GameSimulator(save_path, in_keylog_folder=False)
@@ -85,7 +85,7 @@ class KeyLoggingTestCase(unittest.TestCase):
             self.assertTrue(cui.controls.are_equivalent(logical_keys[i], logged_logical_key, pressed_key))
         self.assertEqual(None, simulator.next(), "Simulator not finished!")
 
-        os.remove(save_path)    # delete the created keylog file
+        os.remove(save_path)  # delete the created keylog file
 
 
 if __name__ == '__main__':

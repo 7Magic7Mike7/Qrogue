@@ -16,35 +16,35 @@ from qrogue.util.util_functions import rad2deg
 class GateType(enum.Enum):
     # unique by their short name
     IGate = "I", "Identity", set(), \
-            "An I Gate or Identity Gate doesn't alter the Qubit in any way. It can be used as a placeholder."
+        "An I Gate or Identity Gate doesn't alter the Qubit in any way. It can be used as a placeholder."
     XGate = "X", "Pauli X", {"Pauli-X", "NOT"}, \
-            "In the classical world an X Gate corresponds to an inverter or Not Gate.\n" \
-            "It swaps the amplitudes of |0> and |1>.\n" \
-            "In the quantum world this corresponds to a rotation of 180° along the x-axis, hence the name X Gate."
+        "In the classical world an X Gate corresponds to an inverter or Not Gate.\n" \
+        "It swaps the amplitudes of |0> and |1>.\n" \
+        "In the quantum world this corresponds to a rotation of 180° along the x-axis, hence the name X Gate."
     YGate = "Y", "Pauli Y", {"Pauli-Y"}, \
-            "A Y Gate rotates the Qubit along the y-axis by 180°."
+        "A Y Gate rotates the Qubit along the y-axis by 180°."
     ZGate = "Z", "Pauli Z", {"Pauli-Z"}, \
-            "A Z Gate rotates the Qubit along the z-axis by 180°."
+        "A Z Gate rotates the Qubit along the z-axis by 180°."
     HGate = "H", "Hadamard", set(), \
-            "The Hadamard Gate is often used to bring Qubits into Superposition."
+        "The Hadamard Gate is often used to bring Qubits into Superposition."
 
     SGate = "S", "Phase", {"P", "Phase Shift S"}, \
-            "The S Gate can change the phase of a qubit by multiplying its |1> with i (note that this does not alter " \
-            "the probability of measuring |0> or |1>!). It is equivalent to a rotation along the z-axis by 90°."
+        "The S Gate can change the phase of a qubit by multiplying its |1> with i (note that this does not alter " \
+        "the probability of measuring |0> or |1>!). It is equivalent to a rotation along the z-axis by 90°."
     RYGate = "RY", "Rotational Y", {"Rot Y"}, \
-             "The RY Gate conducts a rotation along the y-axis by a certain angle. In our case the angle is 90°."
+        "The RY Gate conducts a rotation along the y-axis by a certain angle. In our case the angle is 90°."
     RZGate = "RZ", "Rotational Z", {"Rot Z", "Phase Shift Z", "Phase Flip"}, \
-             "The RZ Gate conducts a rotation along the z-axis by a certain angle. In our case the angle is 90°."
+        "The RZ Gate conducts a rotation along the z-axis by a certain angle. In our case the angle is 90°."
 
     SwapGate = "SW", "Swap", set(), \
-               "As the name suggests, Swap Gates swap the amplitude between two Qubits."
+        "As the name suggests, Swap Gates swap the amplitude between two Qubits."
     CXGate = "CX", "Controlled X", {"CNOT", "Controlled NOT"}, \
-             "Applies an X Gate onto its second Qubit (=target) if its first Qubit (=control) is 1."
+        "Applies an X Gate onto its second Qubit (=target) if its first Qubit (=control) is 1."
 
     Combined = "co", "Combined", set(), \
-               "This gate is a combination of multiple gates and acts like a blackbox."
+        "This gate is a combination of multiple gates and acts like a blackbox."
 
-    Debug = "de", "Debug", set(), "Only use for debugging!"   # used to test spacing
+    Debug = "de", "Debug", set(), "Only use for debugging!"  # used to test spacing
 
     def __init__(self, short_name: str, full_name: str, other_names: Set[str], description: str):
         self.__short_name = short_name
@@ -236,7 +236,7 @@ class Instruction(Collectible, ABC):
         # Gate (qX, qY, ?, ...)
         self._qargs.append(next_qubit)  # pretend that we already set the next qubit
         preview = self.selection_str()
-        self._qargs.pop()   # undo setting the next qubit because we only wanted to pretend that we did
+        self._qargs.pop()  # undo setting the next qubit because we only wanted to pretend that we did
         return preview
 
     def to_string(self):
@@ -336,7 +336,7 @@ class RotationGate(SingleQubitGate, ABC):
         return self.__angle
 
     def description(self, check_unlocks: Optional[Callable[[str], bool]] = None) -> str:
-        desc = super().description(check_unlocks)   # remove the stated default angle at the end
+        desc = super().description(check_unlocks)  # remove the stated default angle at the end
         # find indices of "°" and the whitespace before that, so we can replace the angle value.
         degree_index = desc.find("°")
         if degree_index <= 0:
@@ -482,7 +482,7 @@ class InstructionManager:
     @staticmethod
     def validate() -> bool:
         for val in GateType:
-            if val is GateType.Combined: continue   # todo: properly implement for Combined? Or do we have to skip them?
+            if val is GateType.Combined: continue  # todo: properly implement for Combined? Or do we have to skip them?
             assert val in InstructionManager.__GATES, f"{val} not defined in InstructionManager.__GATES!"
         return True
 

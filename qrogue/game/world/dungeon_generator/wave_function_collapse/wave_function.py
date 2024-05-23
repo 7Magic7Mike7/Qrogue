@@ -32,11 +32,11 @@ class WaveFunction:
                 # e.g. increase weight by 20% = multiply by 1.2
                 self.__weights[key] = int(self.__weights[key] * (1 + norm_weight))
             else:
-                self.__weights[key] = 0     # non-existing key is like a 0 weight
+                self.__weights[key] = 0  # non-existing key is like a 0 weight
 
     def collapse(self, rand: MyRandom) -> Any:
         if len(self.__weights) == 0:
-            self.__state = self.__default_value   # collapse to default_value if nothing else is possible
+            self.__state = self.__default_value  # collapse to default_value if nothing else is possible
         if self.is_collapsed:
             return self.__state
 
@@ -49,7 +49,7 @@ class WaveFunction:
             if rand_val < val:
                 self.__state = key
                 return self.__state
-        return None     # this should not be possible to happen
+        return None  # this should not be possible to happen
 
     def force_value(self, value: Any) -> bool:
         assert not self.is_collapsed, f"Forcing an already collapsed WaveFunction to {value}!"

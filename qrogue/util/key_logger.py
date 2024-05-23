@@ -16,11 +16,13 @@ class KeyLogger:
     def __init__(self, write: Optional[Callable[[str, str], None]] = None):
         self.__save_file: Optional[str] = None
         self.__buffer: Optional[str] = None
-        self.__keystrokes = 0   # count how many keys are logged to not persist empty or almost empty runs
-        self.__is_active = False    # whether log() should log or do nothing
+        self.__keystrokes = 0  # count how many keys are logged to not persist empty or almost empty runs
+        self.__is_active = False  # whether log() should log or do nothing
 
-        if write is None: self.__write = lambda path, text: PathConfig.write(path, text, may_exist=True, append=True)
-        else: self.__write = write
+        if write is None:
+            self.__write = lambda path, text: PathConfig.write(path, text, may_exist=True, append=True)
+        else:
+            self.__write = write
 
     def _is_for_levels(self) -> bool:
         return True
@@ -40,12 +42,14 @@ class KeyLogger:
         if self.is_initialized:
             # flush the old data if needed
             self.flush_if_useful()
-        if activate:    # reactivate if requested
+        if activate:  # reactivate if requested
             self.set_active(True)
 
         # start a new logging session
-        if save_path is None: self.__save_file = PathConfig.new_key_log_file(seed, self._is_for_levels())
-        else: self.__save_file = save_path
+        if save_path is None:
+            self.__save_file = PathConfig.new_key_log_file(seed, self._is_for_levels())
+        else:
+            self.__save_file = save_path
         self.__buffer = ""
         self._append(level_name)
         self._append("\n")
@@ -82,9 +86,9 @@ class OverWorldKeyLogger(KeyLogger):
         return False
 
     def level_start(self, level_name: str):
-        #self._append(
+        # self._append(
         #    f"{OverWorldKeyLogger.get_level_start_marker()}{level_name}{OverWorldKeyLogger.get_level_start_marker()}"
-        #)
+        # )
         pass
 
 

@@ -78,13 +78,13 @@ class Popup:
     def on_close() -> bool:
         if Popup.__cur_popup is not None:
             Popup.__cur_popup.on_close_callback()
-            Popup.__cur_popup.__on_close_callback = None    # clear callback to not execute it when reopening!
+            Popup.__cur_popup.__on_close_callback = None  # clear callback to not execute it when reopening!
         Popup.__cur_popup = None
         if len(Popup.__popup_queue) > 0:
             next_popup = Popup.__popup_queue.pop(0)
             next_popup.show()
-            return False        # don't fully close popup
-        return True     # popup no longer needed so we can fully close it
+            return False  # don't fully close popup
+        return True  # popup no longer needed so we can fully close it
 
     @staticmethod
     def message(title: str, text: str, reopen: bool, pos: Optional[int] = None,
@@ -165,7 +165,7 @@ class Popup:
     @staticmethod
     def from_message(message: Message, overwrite: bool = False):
         if Popup.__check_achievement_callback:
-            ret = message.get(Popup.__check_achievement_callback)    # resolve possible alternative messages
+            ret = message.get(Popup.__check_achievement_callback)  # resolve possible alternative messages
             if ret is not None:
                 title, text = ret
                 reopen = message.priority
@@ -175,7 +175,7 @@ class Popup:
     @staticmethod
     def from_message_trigger(message: Message, on_close_callback: Callable[[], None]):
         if Popup.__check_achievement_callback:
-            ret = message.get(Popup.__check_achievement_callback)    # resolve possible alternative messages
+            ret = message.get(Popup.__check_achievement_callback)  # resolve possible alternative messages
             if ret is not None:
                 title, text = ret
                 if Config.debugging():
@@ -207,7 +207,7 @@ class Popup:
         self.__padding_x = padding_x
         self.__importance = importance
         self.__color = color
-        self.__reopen = reopen    # whether this popup should be reopen-able or not
+        self.__reopen = reopen  # whether this popup should be reopen-able or not
         self.__on_close_callback = on_close_callback
         if show:
             self.show(overwrite)
@@ -268,6 +268,7 @@ class ConfirmationPopup(Popup):
                  overwrite: bool = False):
         def on_close():
             callback(self.__confirmed)
+
         self.__answers = answers
         super().__init__(title, text, position, color, show, overwrite, reopen=False,
                          on_close_callback=on_close)

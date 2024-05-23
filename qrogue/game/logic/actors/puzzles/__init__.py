@@ -51,7 +51,7 @@ def __is_reachable_rec(simulator: UnitarySimulator, circuit: QuantumCircuit, inp
         # go one recursion step deeper and try the next gate
         if len(gate_list) > 0:
             ret, winning_circuit = __is_reachable_rec(simulator, cur_circuit, input_stv, target_stv,
-                                                                  gate_list.copy())
+                                                      gate_list.copy())
             if ret: return True, winning_circuit
         # else we try to place cur_gate on different qubits and continue
 

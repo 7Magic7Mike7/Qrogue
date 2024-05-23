@@ -26,7 +26,7 @@ _SK_CANCEL = [py_cui.keys.KEY_SHIFT_LEFT, py_cui.keys.KEY_A_UPPER]
 _SK_SITUATIONAL1 = [py_cui.keys.KEY_Q_LOWER]
 _SK_SITUATIONAL2 = [py_cui.keys.KEY_E_LOWER]
 _SK_PAUSE = [py_cui.keys.KEY_P_LOWER]
-_SK_HELP = []   # no alternative
+_SK_HELP = []  # no alternative
 
 # hot keys (not needed for playing but can be helpful/increase convenience)
 _HOT_KEYS = [
@@ -39,7 +39,7 @@ _HOT_KEYS = [
     [py_cui.keys.KEY_7],
     [py_cui.keys.KEY_8],
     [py_cui.keys.KEY_9],
-    [py_cui.keys.KEY_0, 94],    # 94 = ^
+    [py_cui.keys.KEY_0, 94],  # 94 = ^
 ]
 
 # debug keys (not used in normal gameplay)
@@ -164,7 +164,7 @@ class Keys(IntEnum):
 
 
 class Controls:
-    INVALID_KEY = py_cui.keys.KEY_ALT_I     # is not allowed to be used as a valid key in the controls!
+    INVALID_KEY = py_cui.keys.KEY_ALT_I  # is not allowed to be used as a valid key in the controls!
     __KEYS = [
         # move: 0 - 3
         [_PK_UP] + _SK_UP,
@@ -182,13 +182,13 @@ class Controls:
         [_PK_DOWN] + _SK_DOWN,
         [_PK_RIGHT] + _SK_RIGHT,
         [_PK_LEFT] + _SK_LEFT,
-        [_PK_HELP],     # reopen
+        [_PK_HELP],  # reopen
         # 14 - 19
-        [_PK_CONFIRM] + _SK_CONFIRM,     # action
+        [_PK_CONFIRM] + _SK_CONFIRM,  # action
         [_PK_CANCEL] + _SK_CANCEL,  # cancel/back
         [_PK_SITUATIONAL1] + _SK_SITUATIONAL1,
         [_PK_SITUATIONAL2] + _SK_SITUATIONAL2,
-        [_PK_HELP],     # actual help
+        [_PK_HELP],  # actual help
         [_PK_PAUSE] + _SK_PAUSE,  # (Escape doesn't work here due to its special purpose for the engine)
         [_PK_MATRIX_POPUP],     # special key to open a matrix in a popup (e.g., if window is too narrow to display 3-qubit matrices in their corresponding widget)
 
@@ -206,11 +206,11 @@ class Controls:
 
         # debugging keys: 30 - 32
         _DK_RERENDER,  # render screen
-        _DK_PRINT_SCREEN,   # print screen
-        _DK_STOP_SIM,   # stop simulator
+        _DK_PRINT_SCREEN,  # print screen
+        _DK_STOP_SIM,  # stop simulator
         # cheat keys: 33 - 34
-        _DK_CHEAT_INPUT,   # cheat input
-        _DK_CHEAT_LIST,   # cheat list
+        _DK_CHEAT_INPUT,  # cheat input
+        _DK_CHEAT_LIST,  # cheat list
     ]
 
     def __init__(self, handle_key_presses: Callable[[int], None]):
@@ -254,7 +254,7 @@ class Controls:
 
     def get_hotkey(self, number: int) -> List[int]:
         if number == 0:
-            number = 10     # 0 is after 9, so at the 10th position
+            number = 10  # 0 is after 9, so at the 10th position
         base = Keys.HotKey1.num - 1
         return self.__pycui_keys[base + number]
 
@@ -279,7 +279,7 @@ class Controls:
         # does not work nicely for non-printable keyboard keys (e.g., Spacebar = ' ', Backspace = '\x08')
         # don't use keys.to_char() since it's only for internal use and doesn't correspond to the pressed keyboard key
 
-        if index is None:   # use all possible keyboard keys
+        if index is None:  # use all possible keyboard keys
             chars = [chr(key) for key in self.get_keys(keys)]
             if len(chars) == 0: return "INVALID"
             if len(chars) == 1: return chars[0].upper()

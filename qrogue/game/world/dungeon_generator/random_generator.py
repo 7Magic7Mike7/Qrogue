@@ -201,7 +201,7 @@ class RandomLayoutGenerator:
             direction = self.__rm.get_element(directions, remove=True, msg="RandomGen_borderDirection")
             if direction == Direction.North or direction == Direction.South:
                 y = (self.__height - 1) * (
-                            direction == Direction.South)  # for North this is 0, for South self.__height-1
+                        direction == Direction.South)  # for North this is 0, for South self.__height-1
                 xs = list(range(0, self.__width))
                 while len(xs) > 0:
                     x = self.__rm.get_element(xs, remove=True, msg="RandomGen_borderX")
@@ -236,7 +236,8 @@ class RandomLayoutGenerator:
         raise RandomLayoutGenerator._RLGException(f"Failed to get a random coordinate (generator.py). Please report "
                                                   f"this error as this should not be possible to occur!")
 
-    def __random_free_wildroom_neighbors(self, num: int = 1) -> List[Tuple[Tuple[Direction, _Code, Coordinate], Coordinate]]:
+    def __random_free_wildroom_neighbors(self, num: int = 1)\
+            -> List[Tuple[Tuple[Direction, _Code, Coordinate], Coordinate]]:
         rooms: Set[Coordinate] = self.__normal_rooms
         room_prios: Dict[Tuple[Direction, _Code, Coordinate], Tuple[int, Coordinate]] = {}
         max_distance = self.__width + self.__height - 2
@@ -246,14 +247,14 @@ class RandomLayoutGenerator:
         for room in rooms:
             min_distance = max_distance
             for other in rooms:
-                if room is not other:   # check distance to other WRs and SR except itself
+                if room is not other:  # check distance to other WRs and SR except itself
                     min_distance = min(min_distance, Coordinate.distance(room, other))
             neighbors = self.__get_neighbors(room, free_spots=True)
             for neighbor in neighbors:
                 _, _, neighbor_pos = neighbor
                 neighbor_distance = max_distance
                 for other in rooms:
-                    if room is not other:   # check distance to other WRs and SR (except the WR we know is a neighbor)
+                    if room is not other:  # check distance to other WRs and SR (except the WR we know is a neighbor)
                         neighbor_distance = min(neighbor_distance, Coordinate.distance(neighbor_pos, other))
                 # high isolation of room and low isolation of neighbor means high priority
                 prio = min_distance * (max_distance - neighbor_distance)
@@ -271,7 +272,7 @@ class RandomLayoutGenerator:
             cur_val = 0.0
             for room in room_prios:
                 prio, rp = room_prios[room]
-                cur_val += prio / prio_sum    # both values have the same sign so their fraction is positive
+                cur_val += prio / prio_sum  # both values have the same sign so their fraction is positive
                 if val < cur_val:
                     picked_rooms.append((room, rp))
                     room_prios.pop(room)
@@ -298,7 +299,8 @@ class RandomLayoutGenerator:
             try:
                 pos = self.__random_border()
                 self.__set(pos, code)
-                direction = self.__rm.get_element(self.__available_directions(pos, allow_wildrooms=True), msg="RandomGen_dirSpecialR")
+                direction = self.__rm.get_element(self.__available_directions(pos, allow_wildrooms=True),
+                                                  msg="RandomGen_dirSpecialR")
                 if direction is None:
                     self.__set(pos, _Code.Blocked)  # position is not suited for a special room
                 else:
@@ -399,7 +401,8 @@ class RandomLayoutGenerator:
                 relevant_pos = self.__get_neighbors(dead_end, free_spots=True)
                 # and try to place a new room to connect the dead end to the rest
                 while relevant_pos:
-                    direction, _, new_pos = self.__rm.get_element(relevant_pos, remove=True, msg="RandomGen_astarRelevantPos")
+                    direction, _, new_pos = self.__rm.get_element(relevant_pos, remove=True,
+                                                                  msg="RandomGen_astarRelevantPos")
                     self.__place_wild(dead_end, tiles.Door(direction))
                     visited.add(new_pos)
                     if self.__call_astar(visited, start_pos=new_pos, target_pos=target_pos):
@@ -443,8 +446,8 @@ class RandomLayoutGenerator:
             ]
 
             # create a locked hallway to spawn_pos-neighboring WildRooms if they lead to SpecialRooms
-            #directions = self.__available_directions(self.__spawn_pos, allow_wildrooms=True)
-            #for direction in directions:
+            # directions = self.__available_directions(self.__spawn_pos, allow_wildrooms=True)
+            # for direction in directions:
             #    new_pos = self.__spawn_pos + direction
             #    if self.__get(new_pos) == _Code.Wild:
             #        #wild_directions = self.__available_directions(self.__spawn_pos, allow_wildrooms=True)
@@ -497,8 +500,10 @@ class RandomLayoutGenerator:
                     if not success:
                         return False
 
-            if validate: return self.__validate()
-            else: return True
+            if validate:
+                return self.__validate()
+            else:
+                return True
 
         except RandomLayoutGenerator._RLGException as ex:
             Logger.instance().error(f"An exception occurred while generating a random layout for seed = {seed}:")
@@ -651,7 +656,7 @@ class ExpeditionGenerator(DungeonGenerator):
         riddle_factory = RiddleFactory.default(robot)
         boss_factory = BossFactory.default(robot)
         typed_collectible_factory: Dict[Optional[CollectibleType], CollectibleFactory] = {
-            None: CollectibleFactory([Score(100)]),    # default factory
+            None: CollectibleFactory([Score(100)]),  # default factory
             CollectibleType.Gate: CollectibleFactory([Score(200)]),
             CollectibleType.Pickup: CollectibleFactory([Score(150)])
         }
@@ -809,6 +814,7 @@ class ExpeditionGenerator(DungeonGenerator):
                             elif code == _Code.Boss:
                                 def end_level():
                                     self.__load_map(MapConfig.back_map_string(), None)
+
                                 boss = tiles.Boss(dungeon_boss, self.__cbp.start_boss_fight, end_level)
                                 room = BossRoom(hw, direction, boss)
                         if room:
@@ -855,10 +861,10 @@ class ExpeditionGenerator(DungeonGenerator):
                 coor = Coordinate(x, y)
                 # initialize weight with the minimum distance to one of the hallway entrances
                 weight = min([Coordinate.distance(coor, Room.direction_to_hallway_entrance_pos(direction))
-                             for direction in hallways.keys()])
+                              for direction in hallways.keys()])
                 if weight > 0 and is_blocking(tile_list[Room.coordinate_to_index(coor)]):
                     # if weight is 0 (i.e. coor is an entrance) it should stay 0 because it will be a search target
-                    weight += ExpeditionGenerator.__BLOCKING_WEIGHT     # increase weight if something is blocking
+                    weight += ExpeditionGenerator.__BLOCKING_WEIGHT  # increase weight if something is blocking
                 weight_matrix[coor] = weight
 
         def get_weight(position: Coordinate) -> int:
@@ -930,7 +936,7 @@ class ExpeditionGenerator(DungeonGenerator):
                                                                        visited, target_pos, pos)
             if success:
                 tile = tile_list[pos.x + pos.y * Room.INNER_WIDTH]
-                if is_blocking(tile):       # todo theoretically expandable to also take the direction as parameter
+                if is_blocking(tile):  # todo theoretically expandable to also take the direction as parameter
                     tiles_to_remove = [pos] + tiles_to_remove
                 return True, tiles_to_remove
 

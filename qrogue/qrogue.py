@@ -1,4 +1,3 @@
-
 import random
 import sys
 from typing import Tuple, List, Optional
@@ -27,18 +26,18 @@ def __parse_argument(argument: List[str], has_value: bool = False) -> Tuple[bool
 
 
 def start_qrogue() -> int:
-    Logger.print_to_console("Loading...")     # notify player that the game is loading
+    Logger.print_to_console("Loading...")  # notify player that the game is loading
 
     __CONSOLE_ARGUMENT = ["--from-console", "-fc"]
     __DEBUG_ARGUMENT = ["--debug", "-d"]
-    __SEED_ARGUMENT = ["--seed", "-s"]                      # seed argument
+    __SEED_ARGUMENT = ["--seed", "-s"]  # seed argument
     __TEST_LEVEL_ARGUMENT = ["--test-level", "-tl"]
     __GAME_DATA_PATH_ARGUMENT = ["--game-data", "-gd"]  # path argument
     __USER_DATA_PATH_ARGUMENT = ["--user-data", "-ud"]  # path argument
     # __CONTROLS_ARGUMENT = ["--controls", "-c"]          # int argument
-    __SIMULATION_FILE_ARGUMENT = ["--simulation-path", "-sp"]   # path argument
-    __VALIDATE_MAP_ARGUMENT = ["--validate-map", "-vm"]     # path argument
-    __PLAY_LEVEL_ARGUMENT = ["--play-level", "-pl"]     # str argument
+    __SIMULATION_FILE_ARGUMENT = ["--simulation-path", "-sp"]  # path argument
+    __VALIDATE_MAP_ARGUMENT = ["--validate-map", "-vm"]  # path argument
+    __PLAY_LEVEL_ARGUMENT = ["--play-level", "-pl"]  # str argument
 
     from_console, _ = __parse_argument(__CONSOLE_ARGUMENT)
     debugging, _ = __parse_argument(__DEBUG_ARGUMENT)
@@ -102,8 +101,8 @@ def start_game(from_console: bool = False, debugging: bool = False, test_level: 
             __init_singletons(seed)
             save_data = QrogueCUI(seed).start()
         except PyCuiConfig.OutOfBoundsError:
-            #print("[Qrogue] ERROR!")
-            #print("Your terminal window is too small. "
+            # print("[Qrogue] ERROR!")
+            # print("Your terminal window is too small. "
             #      "Please make it bigger (i.e. maximize it) or reduce the font size.")
             print("---------------------------------------------------------")
             input("[Qrogue] Press ENTER to close the application")
@@ -111,7 +110,7 @@ def start_game(from_console: bool = False, debugging: bool = False, test_level: 
 
         # flush after the player stopped playing
         if GameplayConfig.auto_save():
-            success, message = save_data.save()     # todo: save at a different location?
+            success, message = save_data.save()  # todo: save at a different location?
             if success:
                 print("[Qrogue] Successfully saved the game!")
             else:
@@ -159,7 +158,7 @@ def simulate_game(simulation_path: str, from_console: bool = False, debugging: b
             sys.exit(1)
 
         # flush after the player stopped playing
-        if GameplayConfig.auto_save():      # todo: save at a different location?
+        if GameplayConfig.auto_save():  # todo: save at a different location?
             success, message = save_data.save()
             if success:
                 print("[Qrogue] Successfully saved the game!")

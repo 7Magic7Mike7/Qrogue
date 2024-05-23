@@ -37,15 +37,15 @@ class LevelInfo:
     }
 
     # for converting internal names to display names and vice versa
-    __NAME_CONVERTER: Dict[str, str] = {}   # is filled dynamically within LevelInfo.init()
+    __NAME_CONVERTER: Dict[str, str] = {}  # is filled dynamically within LevelInfo.init()
 
     @staticmethod
     def init():
         # initialize map order in-between tutorials
         start, end = 0, 3
-        for i in range(start, end+1):
+        for i in range(start, end + 1):
             for km in [0, 1]:
-                src_name, dst_name = f"l0k{km}v{i}", f"l0k{km}v{i+1}"
+                src_name, dst_name = f"l0k{km}v{i}", f"l0k{km}v{i + 1}"
                 LevelInfo.__MAP_ORDER[km][src_name] = dst_name
 
         # initialize completion unlocks for experienced tutorials
@@ -65,7 +65,7 @@ class LevelInfo:
                 data = PathConfig.read_level(level, in_dungeon_folder=True)
                 start = data.index(MapGrammarConfig.name_prefix()) + len(MapGrammarConfig.name_prefix())
                 end = data.index(MapGrammarConfig.description_prefix()) - 1  # subtract the new line before description
-                display_name = data[start+1:end-1]      # also remove the enclosing quotes
+                display_name = data[start + 1:end - 1]  # also remove the enclosing quotes
 
                 LevelInfo.__NAME_CONVERTER[level] = display_name
 

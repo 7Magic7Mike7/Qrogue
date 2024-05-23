@@ -37,6 +37,7 @@ def get_dummy_controls(activate_printing: bool = False) -> Controls:
     def handle_key_presses(key: int):
         if activate_printing:
             print(f"{key} was pressed")
+
     return Controls(handle_key_presses)
 
 
@@ -61,10 +62,10 @@ def init_singletons(include_config: bool = False, custom_data_path: Optional[str
             return False
 
     # initialize a special TestLogger instead of the normal Logger
-    TestLogger()    # works since we access Logger only via .instance()
-    #Logger.instance().info(Config.get_log_head(seed), from_pycui=False)
+    TestLogger()  # works since we access Logger only via .instance()
+    # Logger.instance().info(Config.get_log_head(seed), from_pycui=False)
     Logger.instance().set_popup(error_popup)
-    #CallbackPack(start_gp, start_fight, start_boss_fight, open_riddle, open_challenge, game_over)
+    # CallbackPack(start_gp, start_fight, start_boss_fight, open_riddle, open_challenge, game_over)
 
     CheatConfig.init(lambda s0, s1, i0, i1: None, lambda s, i, c: None, True, True)
 

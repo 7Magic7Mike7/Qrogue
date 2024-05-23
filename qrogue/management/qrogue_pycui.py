@@ -48,7 +48,7 @@ class QrogueCUI(PyCUI):
         Challenge = 11
 
         Transition = 12  # for atmospheric transitions and elements
-        ScreenCheck = 13    # a menu to check dimensions and color of the screen/terminal the game is played
+        ScreenCheck = 13  # a menu to check dimensions and color of the screen/terminal the game is played
         LevelSelect = 14
 
     class _StateMachine:
@@ -127,7 +127,7 @@ class QrogueCUI(PyCUI):
             if self.is_empty or self.__index == 0:
                 return  # we already show the oldest popup (or cannot show anything)
             elif self.__index < 0:
-                self.__index = 0    # show oldest popup for invalid indices
+                self.__index = 0  # show oldest popup for invalid indices
             else:
                 self.__index -= 1
 
@@ -137,7 +137,7 @@ class QrogueCUI(PyCUI):
             if self.is_empty or self.__index == self.present_index:
                 return  # we already show the most recent popup (or cannot show anything)
             elif self.__index < 0:
-                self.__index = self.present_index   # show most recent popup for invalid indices
+                self.__index = self.present_index  # show most recent popup for invalid indices
             else:
                 self.__index += 1
 
@@ -170,9 +170,9 @@ class QrogueCUI(PyCUI):
                 return  # can happen if first Popup of a history is not permanent, hence there is nothing to resolve
             if self.__remove_on_close or force_remove:
                 self.__history.pop()
-                self.__index = min(self.__index, self.present_index)    # adapt index if it pointed to the removed popup
+                self.__index = min(self.__index, self.present_index)  # adapt index if it pointed to the removed popup
                 self.__remove_on_close = False
-            elif 0 <= self.present_index < len(self.__history):     # if is needed to not crash on level loading error
+            elif 0 <= self.present_index < len(self.__history):  # if is needed to not crash on level loading error
                 self.__history[self.present_index].freeze()
 
         def reset(self):
@@ -219,8 +219,10 @@ class QrogueCUI(PyCUI):
         except FileNotFoundError as fnf:
             error_text = f"Simulation file \"{simulation_path}\" not found: {fnf}"
             # only create a popup for the error during manual simulations
-            if automation_step_time is None and Popup.is_initialized(): Popup.error(error_text)
-            else: Logger.instance().error(error_text, show=False, from_pycui=False)
+            if automation_step_time is None and Popup.is_initialized():
+                Popup.error(error_text)
+            else:
+                Logger.instance().error(error_text, show=False, from_pycui=False)
             return None
 
     def __init__(self, seed: int, width: int = UIConfig.WINDOW_WIDTH, height: int = UIConfig.WINDOW_HEIGHT,
@@ -237,12 +239,14 @@ class QrogueCUI(PyCUI):
             # this move_focus here)
             if _widget_set is self.__cur_widget_set:
                 self.move_focus(_widget, auto_press_buttons=False)
+
         self._auto_focus_buttons = False
         Widget.set_move_focus_callback(move_focus)
 
         # INIT MANAGEMENT
         Logger.instance().set_popup(lambda text: Popup.error(text, log_error=False, add_report_note=True))
-        CheatConfig.init(self.__show_cheat_info_popup, self.__show_input_popup, deactivate_cheats=not Config.debugging(),
+        CheatConfig.init(self.__show_cheat_info_popup, self.__show_input_popup,
+                         deactivate_cheats=not Config.debugging(),
                          allow_cheats=Config.debugging())
         Popup.update_popup_functions(self.__show_message_popup)
         ConfirmationPopup.update_popup_function(self.__show_confirmation_popup)
@@ -250,7 +254,7 @@ class QrogueCUI(PyCUI):
         self.__cbp = CallbackPack(self.__start_fight, self.__start_boss_fight, self.__open_riddle,
                                   self.__open_challenge, self.__game_over)
         ########################################
-        self.__stored_save: Optional[NewSaveData] = None    # temporarily stores the "real" save data when simulating
+        self.__stored_save: Optional[NewSaveData] = None  # temporarily stores the "real" save data when simulating
         self.__save_data = NewSaveData() if save_data is None else save_data
 
         def start_level_transition(prev_map_name: str, next_map_name: str, callback: Callable[[], None]):
@@ -260,6 +264,7 @@ class QrogueCUI(PyCUI):
             ]
             auto_scroll = self.__auto_scroll_simulation_transitions
             self.__state_machine.change_state(QrogueCUI._State.Transition, data=(texts, callback, auto_scroll))
+
         self.__robot = BaseBot(self.__game_over)
         self.__map_manager = MapManager(self.__save_data, self.__rm.seed, self.__start_level, start_level_transition,
                                         lambda: self._switch_to_menu(None), self.__cbp, self.__robot)
@@ -289,6 +294,7 @@ class QrogueCUI(PyCUI):
         def _show_popup_for_history(historic_popup: MultilinePopup):
             self.__focused_widget = self.get_selected_widget()
             self._popup = historic_popup
+
         self.__popup_history = self._PopupHistory(_show_popup_for_history)
 
         # INIT WIDGET SETS
@@ -312,9 +318,9 @@ class QrogueCUI(PyCUI):
 
         self.__training = TrainingsWidgetSet(self.__controls, self.__render, Logger.instance(), self,
                                              lambda b: None, self.__popup_history.show,
-                                             self.__save_data.check_unlocks)   # todo: update signature
+                                             self.__save_data.check_unlocks)  # todo: update signature
         self.__workbench = WorkbenchWidgetSet(self.__controls, Logger.instance(), self, [self.__robot], self.__render,
-                                              lambda b: None)   # todo: update signature
+                                              lambda b: None)  # todo: update signature
         self.__navigation = NavigationWidgetSet(self.__controls, self.__render, Logger.instance(), self)
 
         self.__explore = ExploreWidgetSet(self.__controls, self.__render, Logger.instance(), self)
@@ -352,7 +358,7 @@ class QrogueCUI(PyCUI):
         self.__pause.get_main_widget().add_key_command(self.__controls.get_keys(Keys.CheatList), CheatConfig.cheat_list)
 
         # INIT STATE MACHINE
-        self.__cur_widget_set: MyWidgetSet = self.__transition      # avoid None value
+        self.__cur_widget_set: MyWidgetSet = self.__transition  # avoid None value
         self.__state_machine = QrogueCUI._StateMachine(self)
         self.__state_machine.change_state(QrogueCUI._State.Menu, self.__rm.seed)
 
@@ -417,8 +423,11 @@ class QrogueCUI(PyCUI):
 
         if self.__save_data.is_fresh_save:
             def knowledge_question(index: int):
-                if index == 0: GameplayConfig.set_newbie_mode()
-                else: GameplayConfig.set_experienced_mode()
+                if index == 0:
+                    GameplayConfig.set_newbie_mode()
+                else:
+                    GameplayConfig.set_experienced_mode()
+
             ConfirmationPopup.ask("WELCOME TO QROGUE!", HelpText.Welcome.text, knowledge_question,
                                   ["Quantum Newbie", "Quantum Experienced"])
 
@@ -431,6 +440,7 @@ class QrogueCUI(PyCUI):
         def call_me():
             time.sleep(QrogueCUI.__INIT_DELAY)
             self.__init_complete = True
+
         Thread(target=call_me).start()
 
         if level_name is not None:
@@ -485,7 +495,7 @@ class QrogueCUI(PyCUI):
         assert self.__stored_save is not None
         self.__save_data = self.__stored_save
         self.__simulator = None
-        self.set_refresh_timeout(-1)    # stop automation   # todo: check if this might interfere with transitions?
+        self.set_refresh_timeout(-1)  # stop automation   # todo: check if this might interfere with transitions?
         if can_stop and self.__stop_with_simulation_end:
             self.stop()
 
@@ -508,14 +518,14 @@ class QrogueCUI(PyCUI):
         # ignore all input before we completed initialization
         if not self.__init_complete: return
 
-        if key_pressed == 0:    # skips the "empty" key press during initialization
+        if key_pressed == 0:  # skips the "empty" key press during initialization
             return
         if key_pressed == PyCuiConfig.KEY_CTRL_Q:
             super(QrogueCUI, self)._handle_key_presses(PyCuiConfig.KEY_ESCAPE)
         if self.__simulator is None:
             if self._ready_for_input(key_pressed, gameplay=True):
                 if key_pressed == PyCuiConfig.KEY_ESCAPE:
-                    pass    # ignore ESC because this makes you leave the CUI
+                    pass  # ignore ESC because this makes you leave the CUI
                 else:
                     if GameplayConfig.log_keys() and not self.is_simulating:
                         self.__key_logger.log(self.__controls, key_pressed)
@@ -523,7 +533,7 @@ class QrogueCUI(PyCUI):
                     super(QrogueCUI, self)._handle_key_presses(key_pressed)
         elif key_pressed in self.__controls.get_keys(Keys.StopSimulator):
             Popup.message("Simulator", "stopped Simulator", reopen=False, overwrite=True)
-            self._end_simulation(can_stop=False)    # since the player stopped the simulation
+            self._end_simulation(can_stop=False)  # since the player stopped the simulation
         else:
             if self._ready_for_input(key_pressed, gameplay=False):
                 key = self.__simulator.next()
@@ -534,7 +544,7 @@ class QrogueCUI(PyCUI):
                     super(QrogueCUI, self)._handle_key_presses(key)
 
     def _cycle_widgets(self, reverse: bool = False) -> None:
-        pass    # this is neither needed nor allowed in Qrogue
+        pass  # this is neither needed nor allowed in Qrogue
 
     def _initialize_widget_renderer(self):
         """Function that creates the renderer object that will draw each widget
@@ -620,7 +630,7 @@ class QrogueCUI(PyCUI):
     def _switch_to_menu(self, data=None) -> None:
         if self.__key_logger and self.__key_logger.is_initialized:
             self.__key_logger.flush_if_useful()
-            self.__key_logger.set_active(False)      # stop logging until we started a level again
+            self.__key_logger.set_active(False)  # stop logging until we started a level again
         if data and data != self.__rm.seed:
             Config.check_reachability("switch_to_menu's seed setting")
             seed = data  # todo: I'm not sure if it is allowed to set a different seed than self.__rm.seed here
@@ -673,7 +683,7 @@ class QrogueCUI(PyCUI):
 
         if level.robot.score > 0:
             Config.check_reachability("QrogueCUI.__start_level() score check")
-        level.robot.reset_score()     # reset the score at the start of each level
+        level.robot.reset_score()  # reset the score at the start of each level
 
         self.__pause.set_data(level.robot, level.name, None)
         self.__state_machine.change_state(QrogueCUI._State.Explore, level)
@@ -684,6 +694,7 @@ class QrogueCUI(PyCUI):
                 self.__map_manager.reload()
             elif confirmed == 1:
                 self.__state_machine.change_state(QrogueCUI._State.Menu, None)
+
         ConfirmationPopup.ask(Config.system_name(), f"Your Robot is out of energy. Emergency departure initiated.\n"
                                                     "Do you want to retry the expedition?", callback, ["Yes", "No"])
 
@@ -755,6 +766,7 @@ class QrogueCUI(PyCUI):
             self.__state_machine.change_state(next_state, next_data)
             if additional_callback is not None:
                 additional_callback()
+
         self.__state_machine.change_state(QrogueCUI._State.Transition, (text_scrolls, callback))
 
     def _switch_to_transition(self, data) -> None:

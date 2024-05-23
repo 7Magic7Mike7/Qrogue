@@ -13,7 +13,7 @@ class Challenge(Target):
         super().__init__(id_, target, reward, input_, allow_target_input_equality=True)
         self.__min_gates = min_gates
         self.__max_gates = max_gates
-        self.__allowed_gates = allowed_gates    # not yet usable!
+        self.__allowed_gates = allowed_gates  # not yet usable!
 
     @property
     def flee_energy(self) -> int:

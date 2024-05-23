@@ -5,10 +5,10 @@ from typing import Iterator, List, Callable, Optional
 
 class CollectibleType(Enum):
     # Consumable = 1      # currently unused
-    ActiveItem = 3      # currently unused
-    PassiveItem = 4     # currently unused
+    ActiveItem = 3  # currently unused
+    PassiveItem = 4  # currently unused
 
-    Multi = 0   # wraps multiple collectibles
+    Multi = 0  # wraps multiple collectibles
     Gate = 2
     Qubit = 6
 

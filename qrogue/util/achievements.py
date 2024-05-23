@@ -7,16 +7,16 @@ from qrogue.util.util_functions import cur_datetime
 
 class Unlocks(enum.Enum):
     # menu unlocks
-    MainMenuContinue = (10, "MainMenuContinue")     # unlocked after Level 0
+    MainMenuContinue = (10, "MainMenuContinue")  # unlocked after Level 0
 
     # hud unlocks
-    ShowEnergy = (30, "ShowEnergy")     # unlocked after Level 0
+    ShowEnergy = (30, "ShowEnergy")  # unlocked after Level 0
 
     # puzzle unlocks
-    ShowEquation = (55, "ShowEquation")   # whether to show the matrix vector multiplication above the circuit
-    GateRemove = (52, "GateRemove")     # unlocked automatically
-    CircuitReset = (50, "CircuitReset")     # unlocked after Tutorial
-    PuzzleFlee = (51, "PuzzleFlee")     # unlocked in Level 1
+    ShowEquation = (55, "ShowEquation")  # whether to show the matrix vector multiplication above the circuit
+    GateRemove = (52, "GateRemove")  # unlocked automatically
+    CircuitReset = (50, "CircuitReset")  # unlocked after Tutorial
+    PuzzleFlee = (51, "PuzzleFlee")  # unlocked in Level 1
 
     # level unlocks
     ProceedChoice = (90, "ProceedChoice")   # unlocked after all Tutorial levels (right before Exam)    # todo: should be available as soon as Level Selection is available
@@ -40,7 +40,7 @@ class Unlocks(enum.Enum):
 
     @staticmethod
     def from_name(name: str) -> Optional["Unlocks"]:
-        name = name.lower()     # normalize name
+        name = name.lower()  # normalize name
         for unlock in Unlocks:
             if unlock.name.lower() == name:
                 return unlock
@@ -56,13 +56,13 @@ class Achievement:
         data = text.split(Achievement.__DATA_SEPARATOR)
         if len(data) == 5:
             name = data[0]
-            #atype = AchievementType(int(data[1]))
+            # atype = AchievementType(int(data[1]))
             score = float(data[2])
             done_score = float(data[3])
             return Achievement(name, score, done_score)
 
-    #@staticmethod
-    #def from_unlock(unlock: Unlocks) -> "Achievement":
+    # @staticmethod
+    # def from_unlock(unlock: Unlocks) -> "Achievement":
     #    return Achievement(unlock.ach_name, AchievementType.Unlock, 1, 1)
 
     def __init__(self, name: str, score: float, done_score: float,
@@ -79,7 +79,7 @@ class Achievement:
         return self.__name
 
     @property
-    def type(self) -> int: #AchievementType:
+    def type(self) -> int:  # AchievementType:
         raise Exception("Should no longer be used!")
 
     @property
@@ -113,7 +113,7 @@ class Achievement:
 
     def to_string(self) -> str:
         text = f"{self.name}{Achievement.__DATA_SEPARATOR}"
-        #text += f"{self.type.value}{Achievement.__DATA_SEPARATOR}"
+        # text += f"{self.type.value}{Achievement.__DATA_SEPARATOR}"
         text += f"{self.score}{Achievement.__DATA_SEPARATOR}"
         text += f"{self.done_score}{Achievement.__DATA_SEPARATOR}"
         return text
@@ -123,9 +123,9 @@ class Achievement:
             text = "[X]"
         else:
             text = "[_]"
-        #if self.type is AchievementType.Secret:
+        # if self.type is AchievementType.Secret:
         #    text += "???"
-        #else:
+        # else:
         text += f" {self.name} ({self.score} / {self.done_score})"
         return text
 

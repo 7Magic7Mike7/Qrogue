@@ -83,7 +83,7 @@ def test_dungeon():
             __print(f"Run {i + 1}): seed = {seed}")
 
         start_time = time.time()
-        map_, success = generator.generate(seed, robot)      # just use an arbitrary seed
+        map_, success = generator.generate(seed, robot)  # just use an arbitrary seed
         duration = time.time() - start_time
         duration_sum += duration
 

@@ -8,7 +8,7 @@ from .path_config import PathConfig
 from .test_config import TestConfig
 
 
-class Config:   # todo make singleton and handle access to other configs?
+class Config:  # todo make singleton and handle access to other configs?
     __frame_count = 0
     MAX_SEED = 1000000
     __VERSION = "v0.7.0.5"
@@ -65,7 +65,7 @@ class Config:   # todo make singleton and handle access to other configs?
 
     @staticmethod
     def examiner_name() -> str:
-        return "Examiner"   # for things the scientist says during the exam
+        return "Examiner"  # for things the scientist says during the exam
 
     @staticmethod
     def scientist_name() -> str:
@@ -73,7 +73,7 @@ class Config:   # todo make singleton and handle access to other configs?
 
     @staticmethod
     def system_name() -> str:
-        return "System"     # for things the robot's system tells us
+        return "System"  # for things the robot's system tells us
 
     @staticmethod
     def get_name(value: int) -> str:
@@ -84,7 +84,7 @@ class Config:   # todo make singleton and handle access to other configs?
         if value == 2:
             return Config.system_name()
 
-        return Config.system_name()     # default if nothing valid was specified
+        return Config.system_name()  # default if nothing valid was specified
 
     @staticmethod
     def version() -> str:
@@ -206,7 +206,7 @@ class Config:   # todo make singleton and handle access to other configs?
         parts = qiskit.__qiskit_version__['qiskit'].split(".")
         major = int(parts[0])
         minor = int(parts[1])
-        return major >= 0 and minor >= 44   # >= 0.44.0
+        return major >= 0 and minor >= 44  # >= 0.44.0
 
     @staticmethod
     def check_reachability(source: str, raise_exception: bool = False):

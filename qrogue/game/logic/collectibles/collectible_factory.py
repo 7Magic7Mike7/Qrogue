@@ -16,7 +16,7 @@ class CollectibleFactory:
         self.__order_index = -1
 
     @property
-    def pool_copy(self) -> List[Collectible]:   # todo make protected instead of public?
+    def pool_copy(self) -> List[Collectible]:  # todo make protected instead of public?
         return self.__pool.copy()
 
     def __produce(self, rm: Optional[MyRandom], remove: bool = False) -> Optional[Collectible]:
@@ -73,6 +73,7 @@ class OrderedCollectibleFactory(CollectibleFactory):
     Same as CollectibleFactory but instead of defaulting to random production this
     class defaults to ordered production
     """
+
     @staticmethod
     def from_factory(factory: CollectibleFactory):
         return OrderedCollectibleFactory(factory.pool_copy)
@@ -92,7 +93,7 @@ class GateFactory:
     @staticmethod
     def default() -> CollectibleFactory:
         return CollectibleFactory(pool=[
-            gates.HGate(), gates.XGate(), #gates.YGate(), gates.ZGate(),
+            gates.HGate(), gates.XGate(),  # gates.YGate(), gates.ZGate(),
             gates.CXGate(), gates.SwapGate(),
         ])
 

@@ -34,7 +34,7 @@ class AreaType(Enum):
 
     @staticmethod
     def values(include_pseudo_areas: Optional[bool] = None, only_rooms: Optional[bool] = None) -> List["AreaType"]:
-        if include_pseudo_areas is None:    # todo: method is not used
+        if include_pseudo_areas is None:  # todo: method is not used
             include_pseudo_areas = False
         if only_rooms is None:
             only_rooms = True
@@ -52,7 +52,7 @@ class Area(ABC):
     __ID = 1
     __FOG = FogOfWar()
     __VOID = Void()
-    UNIT_WIDTH = MapConfig.room_width()     # todo change visibility of UNIT_WIDTH?
+    UNIT_WIDTH = MapConfig.room_width()  # todo change visibility of UNIT_WIDTH?
     UNIT_HEIGHT = MapConfig.room_height()
     MID_X = MapConfig.room_mid_x()
     MID_Y = MapConfig.room_mid_y()
@@ -180,7 +180,8 @@ class Hallway(Area):
             super(Hallway, self).__init__(AreaType.Hallway, [row])
         else:
             missing_half = int((Area.UNIT_HEIGHT - 3) / 2)
-            tiles: List[List[Tile]] = [[Void()]] * missing_half + [[Wall()], [door], [Wall()]] + [[Void()]] * missing_half
+            tiles: List[List[Tile]] = [[Void()]] * missing_half + [[Wall()], [door], [Wall()]] + [
+                [Void()]] * missing_half
             super(Hallway, self).__init__(AreaType.Hallway, tiles)
 
     @property
@@ -230,7 +231,6 @@ class Hallway(Area):
         elif r2id is None:
             Logger.instance().debug(f"#hw{self.id}: room1=#r{r1id} but room2 is None!", from_pycui=False)
 
-
     def get_row_str(self, row: int) -> str:
         if self.__hide:
             if self.__door.check_event():
@@ -264,8 +264,8 @@ class Hallway(Area):
 
 
 class Room(Area):
-    INNER_WIDTH = Area.UNIT_WIDTH - 2        # width inside the room, i.e. without walls and hallways
-    INNER_HEIGHT = Area.UNIT_HEIGHT - 2      # height inside the room, i.e. without walls and hallways
+    INNER_WIDTH = Area.UNIT_WIDTH - 2  # width inside the room, i.e. without walls and hallways
+    INNER_HEIGHT = Area.UNIT_HEIGHT - 2  # height inside the room, i.e. without walls and hallways
     INNER_MID_X = int(INNER_WIDTH / 2)
     INNER_MID_Y = int(INNER_HEIGHT / 2)
 
@@ -378,12 +378,12 @@ class Room(Area):
             north_hallway.set_room(self, Direction.North)
 
         if east_hallway is not None and east_hallway.connects_horizontally():
-            tiles[Area.MID_Y][Area.UNIT_WIDTH-1] = HallwayEntrance(east_hallway.door)
+            tiles[Area.MID_Y][Area.UNIT_WIDTH - 1] = HallwayEntrance(east_hallway.door)
             self.__hallways[Direction.East] = east_hallway
             east_hallway.set_room(self, Direction.East)
 
         if south_hallway is not None and not south_hallway.connects_horizontally():
-            tiles[Area.UNIT_HEIGHT-1][Area.MID_X] = HallwayEntrance(south_hallway.door)
+            tiles[Area.UNIT_HEIGHT - 1][Area.MID_X] = HallwayEntrance(south_hallway.door)
             self.__hallways[Direction.South] = south_hallway
             south_hallway.set_room(self, Direction.South)
 
@@ -496,10 +496,10 @@ class MetaRoom(CopyAbleRoom):
                 else:
                     dash_decoration = Decoration('-')
             else:
-                dash_decoration = Floor()   # ignore it for non-blocking since it might be placed in front of a hallway
+                dash_decoration = Floor()  # ignore it for non-blocking since it might be placed in front of a hallway
 
             type_decoration = Decoration(mtype)
-            num_decoration = Decoration(str(num)[0])        # todo handle double digits
+            num_decoration = Decoration(str(num)[0])  # todo handle double digits
 
             tile_list = Room.get_empty_room_tile_list()
             msg_tile = MessageTile(self.__message, -1)
@@ -791,7 +791,7 @@ class RiddleRoom(SpecialRoom):
     def __init__(self, hallway: Hallway, direction: Direction, riddle: Riddle,
                  open_riddle_callback: Callable[[Robot, Riddle], None], tile_dic: Dict[Coordinate, Tile] = None):
         super().__init__(AreaType.RiddleRoom, hallway, direction, tile_dic)
-        self._set_tile(Riddler(open_riddle_callback, riddle), Area.MID_X, Area.MID_Y)   # todo place in SpecialRoom?
+        self._set_tile(Riddler(open_riddle_callback, riddle), Area.MID_X, Area.MID_Y)  # todo place in SpecialRoom?
 
     def abbreviation(self):
         return "RR"

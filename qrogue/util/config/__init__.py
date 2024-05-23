@@ -1,4 +1,3 @@
-
 from .config import Config
 from .error_config import ErrorConfig
 from .gameplay_config import CheatConfig, GameplayConfig, Options

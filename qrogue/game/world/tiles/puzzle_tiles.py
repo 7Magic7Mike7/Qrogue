@@ -85,7 +85,7 @@ class Enemy(WalkTriggerTile):
         if self._state == Enemy._EnemyState.UNDECIDED:
             self.__state = val
         else:
-            if CheatConfig.did_cheat():     # this is a legal state if we used the "Scared Rabbit" cheat
+            if CheatConfig.did_cheat():  # this is a legal state if we used the "Scared Rabbit" cheat
                 return
             Logger.instance().throw(RuntimeError(
                 f"Illegal enemy state! Tried to set state to {val} although it is already at {self._state}."
@@ -105,7 +105,7 @@ class Enemy(WalkTriggerTile):
         else:
             state = Enemy._EnemyState.FIGHT
         for enemy in entangled_tiles:
-            enemy._set_state(state)     # this will also set self.__state
+            enemy._set_state(state)  # this will also set self.__state
 
         return self.__state is Enemy._EnemyState.FIGHT
 
@@ -133,7 +133,7 @@ class Boss(WalkTriggerTile):
         super().__init__(TileCode.Boss)
         self.__boss = boss
         self.__on_walk = on_walk_callback
-        self.__end_level_callback = end_level_callback      # todo: is this still used?
+        self.__end_level_callback = end_level_callback  # todo: is this still used?
         self.__is_active = True
 
     @property
@@ -148,7 +148,7 @@ class Boss(WalkTriggerTile):
         if isinstance(controllable, Robot):
             if self._is_active:
                 self.__on_walk(controllable, self.__boss, direction)
-            #else:
+            # else:
             #    self.__end_level_callback()
             return True
         else:

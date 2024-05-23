@@ -111,7 +111,7 @@ class MapConfig:
         for knowledge_level in range(2):
             for i in range(MapConfig.num_of_lessons()):
                 levels.append(f"l0k{knowledge_level}v{i}")
-        #levels += ["l0training", "l0exam"]
+        # levels += ["l0training", "l0exam"]
         return levels
 
 
@@ -123,7 +123,7 @@ class CheatConfig:
     __INF_RESOURCES = "Rich"
     __MAP_REVEAL = "Illuminati"
     __OBSTACLE_IGNORE = "Obstacle-Iqnor"
-    __MESSAGE_IGNORE = "Lequsi"     # can only see messages via history (including options and help menus)
+    __MESSAGE_IGNORE = "Lequsi"  # can only see messages via history (including options and help menus)
     __NONE = "n0n3"
     __CHEATS = {
         __GOD_MODE: False,
@@ -181,7 +181,7 @@ class CheatConfig:
         if importance <= PopupConfig.Importance.Dialogue:
             return CheatConfig.__CHEATS[CheatConfig.__MESSAGE_IGNORE]
         else:
-            return False    # messages more important than dialogue are not ignored
+            return False  # messages more important than dialogue are not ignored
 
     @staticmethod
     def cheat_input():
@@ -243,6 +243,7 @@ def _get_boolean_callback() -> Tuple[Callable[[int], str], Callable[[str], bool]
             return True
         else:
             return False
+
     return get, convert
 
 
@@ -255,6 +256,7 @@ def _get_float_callback(min_: float, max_: float, steps: int) -> Tuple[Callable[
     def get(index: int) -> str:
         val = min_ + step_size * index
         return str(val)
+
     return get, float
 
 
@@ -331,7 +333,7 @@ class GameplayConfig:
         Experienced = 1
 
     __KEY_VALUE_SEPARATOR = "="
-    __OPTIONS: Dict[Options, int] = { }
+    __OPTIONS: Dict[Options, int] = {}
 
     __KNOWLEDGE_MODE: _KnowledgeMode = _KnowledgeMode.Newbie
 
@@ -357,6 +359,7 @@ class GameplayConfig:
             GameplayConfig.__OPTIONS[option] = next_index
             # then return the corresponding new value
             return option.get_value(next_index)
+
         return [(option, next_) for option in needed_options]
 
     @staticmethod
@@ -390,7 +393,7 @@ class GameplayConfig:
                 name, index = line.split(GameplayConfig.__KEY_VALUE_SEPARATOR)
                 name = normalize(name)
                 for val in Options.__members__.values():
-                    if normalize(val.name) == name:     # compare the normalized names
+                    if normalize(val.name) == name:  # compare the normalized names
                         GameplayConfig.__OPTIONS[val] = int(index)
                         break
             except IndexError:
@@ -438,7 +441,7 @@ class PuzzleConfig:
 
     @staticmethod
     def calculate_appearance_chance(eid: int) -> float:
-        return 0.1 * (10 - eid)   # the lower the id the higher the chance of a puzzle to appear
+        return 0.1 * (10 - eid)  # the lower the id the higher the chance of a puzzle to appear
 
     @staticmethod
     def calculate_flee_chance(eid: int) -> float:
@@ -472,13 +475,13 @@ class ScoreConfig:
     def _f_bonus(ratio: float, factor: float) -> float:
         # ratio should be < 1
         # gives a higher value the smaller ratio is
-        return 1 + (1 + factor) * 2**(-ratio) - (1 + factor) * 0.5  # 0.5=2**-1, so to normalize it to 1 for ratio==1
+        return 1 + (1 + factor) * 2 ** (-ratio) - (1 + factor) * 0.5  # 0.5=2**-1, so to normalize it to 1 for ratio==1
 
     @staticmethod
     def _f_penalty(ratio: float, factor: float) -> float:
         # ratio should be < 1
         # gives a smaller value the smaller ratio is
-        return (1 + factor)**ratio - factor
+        return (1 + factor) ** ratio - factor
 
     @staticmethod
     def _get_ratio(checks: int, used_gates: int, expected_gates: int) -> float:
@@ -554,11 +557,11 @@ class ScoreConfig:
 
 class QuantumSimulationConfig:
     DECIMALS = 3
-    COMPLEX_DECIMALS = 2    # complex numbers need more space and therefore might show fewer decimals
+    COMPLEX_DECIMALS = 2  # complex numbers need more space and therefore might show fewer decimals
     TOLERANCE = 0.1
     MAX_SPACE_PER_NUMBER = 1 + 1 + 1 + DECIMALS  # sign + "0" + "." + DECIMALS
     MAX_SPACE_PER_COMPLEX_NUMBER = 1 + 1 + COMPLEX_DECIMALS + 1 + 1 + COMPLEX_DECIMALS + 1  # sign, . & j and decimals
-    MAX_PERCENTAGE_SPACE = 3    # the maximum (100%) has three digits
+    MAX_PERCENTAGE_SPACE = 3  # the maximum (100%) has three digits
 
 
 class InstructionConfig:

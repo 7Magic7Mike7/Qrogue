@@ -8,7 +8,7 @@ from qrogue.util import ColorConfig as CC, Keys, Logger, PopupConfig, ColorConfi
 
 
 class MultilinePopup(PyCuiPopup, MenuImplementation):
-    __STATIC_PY_CUI_PADDING = 6     # based on PyCUI "padding" I think
+    __STATIC_PY_CUI_PADDING = 6  # based on PyCUI "padding" I think
     __QUESTION_SPACING = " " * 7
     __QUESTION_ARROW = "-->"
     __QUESTION_SELECTION = " " * (len(__QUESTION_SPACING) - (len(__QUESTION_ARROW) + 1)) + (__QUESTION_ARROW + " ")
@@ -57,7 +57,7 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
             self._height, self._width = MultilinePopup.__BASE_DIMENSIONS
         else:
             # custom dimensions state the size of the content of the popup, so we add additional paddings
-            self._height = dimensions[0] + 2    # top and bottom row are extra
+            self._height = dimensions[0] + 2  # top and bottom row are extra
             # inverse of popup_width_to_content_width():
             self._width = dimensions[1] + MultilinePopup.__STATIC_PY_CUI_PADDING + 2 * padding_x
         self._start_x, self._start_y = self.get_absolute_start_pos()
@@ -65,6 +65,7 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
 
         def _dummy():
             pass
+
         self.__situational_callback1 = _dummy
         self.__situational_callback2 = _dummy
         if situational_callback is not None:
@@ -91,11 +92,11 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
 
         :return: number of rows inside the popup
         """
-        full_page_height = self._height - self._pady - 2    # subtract both title and end line
+        full_page_height = self._height - self._pady - 2  # subtract both title and end line
         if self._is_question:
-            full_page_height -= 2   # subtract the two lines needed for answer selection
+            full_page_height -= 2  # subtract the two lines needed for answer selection
         if len(self.__lines) > full_page_height:
-            return full_page_height - 1     # subtract the space we need for page indication
+            return full_page_height - 1  # subtract the space we need for page indication
         return full_page_height
 
     def __up(self):
@@ -191,7 +192,7 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
         self._renderer.unset_color_mode(self._color)
         self._renderer.reset_cursor(self)
 
-    def get_absolute_start_pos(self) -> Tuple[int,int]:
+    def get_absolute_start_pos(self) -> Tuple[int, int]:
         if self.__custom_size:
             cui_height, cui_width = self._root.get_absolute_size()
 

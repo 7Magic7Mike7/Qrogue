@@ -101,7 +101,7 @@ class WFCGenerator:
                     log_sum += w * math.log(w)
             entropy = math.log(weight_sum) - (log_sum / weight_sum)
             return entropy
-        return 0    # todo check which value to pick
+        return 0  # todo check which value to pick
 
     def generate(self, seed: int, width: Optional[int] = None, height: Optional[int] = None,
                  static_entries: Optional[Dict[Coordinate, Any]] = None) -> List[List[Any]]:
@@ -162,7 +162,7 @@ class WFCGenerator:
 
 
 def load_level(file_name: str, in_dungeon_folder: bool) -> Optional[LevelMap]:
-    static_seed = 7     # seed does not matter since we are only interested in learning placements
+    static_seed = 7  # seed does not matter since we are only interested in learning placements
     generator = QrogueLevelGenerator(lambda s: True, lambda s: None, lambda s, c: None, lambda s0, s1: None,
                                      CallbackPack.dummy())
     level, _ = generator.generate(static_seed, file_name, in_dungeon_folder)
@@ -231,7 +231,7 @@ class WFCRoomGenerator(WFCGenerator):
     @property
     def room_type(self) -> AreaType:
         return self.__room_type
-    
+
     def generate(self, seed: int, width: Optional[int] = None, height: Optional[int] = None,
                  static_entries: Optional[Dict[Coordinate, Any]] = None) -> List[List[LearnableRoom.TileData]]:
         return super().generate(seed, width, height, static_entries)
@@ -244,5 +244,3 @@ class WFCEmptyRoomGenerator(WFCGenerator):
         if height is None: height = MapConfig.room_height()
         # return an empty room (only Floor tiles)
         return [[LearnableRoom.TileData(TileCode.Floor, None) for _ in range(width)] for _ in range(height)]
-    
-    

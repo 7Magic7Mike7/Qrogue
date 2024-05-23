@@ -38,7 +38,7 @@ class MyWidgetSet(WidgetSet, Renderable, ABC):
                                          center=False)
         hud.toggle_border()
         widgets = [hud]
-        width = UIConfig.WINDOW_WIDTH-UIConfig.HUD_WIDTH
+        width = UIConfig.WINDOW_WIDTH - UIConfig.HUD_WIDTH
 
         if Config.debugging():
             width -= 1  # we need space for frame count
@@ -61,7 +61,7 @@ class MyWidgetSet(WidgetSet, Renderable, ABC):
         super().__init__(UIConfig.WINDOW_HEIGHT, UIConfig.WINDOW_WIDTH, logger, root)
         self.__base_render = base_render_callback
 
-    def add_block_label(self, title, row, column, row_span=1, column_span=1, padx=1, pady=0, center=True)\
+    def add_block_label(self, title, row, column, row_span=1, column_span=1, padx=1, pady=0, center=True) \
             -> MyBaseWidget:
         """Function that adds a new block label to the CUI grid
 
@@ -143,17 +143,17 @@ class MenuWidgetSet(MyWidgetSet):
         self.__selection = SelectionWidget(selection, controls)
         self.__update_selection()
 
-        show_controls = self.add_block_label("Show Controls", UIConfig.WINDOW_HEIGHT-2, 0, row_span=2,
+        show_controls = self.add_block_label("Show Controls", UIConfig.WINDOW_HEIGHT - 2, 0, row_span=2,
                                              column_span=width, center=False)
         self.__show_controls = SimpleWidget(show_controls)
         self.__show_controls.set_data("Select with WASD\nConfirm selection with Space or Enter")
 
-        title = self.add_block_label("Ascii Art", 0, width, row_span=UIConfig.WINDOW_HEIGHT-1,
+        title = self.add_block_label("Ascii Art", 0, width, row_span=UIConfig.WINDOW_HEIGHT - 1,
                                      column_span=UIConfig.ASCII_ART_WIDTH, center=True)
         self.__title = SimpleWidget(title)
         self.__title.set_data(Config.ascii_art())
 
-        seed = self.add_block_label("Seed", UIConfig.WINDOW_HEIGHT-1, width, row_span=1,
+        seed = self.add_block_label("Seed", UIConfig.WINDOW_HEIGHT - 1, width, row_span=1,
                                     column_span=UIConfig.ASCII_ART_WIDTH, center=True)
         self.__seed_widget = SimpleWidget(seed)
 
@@ -163,7 +163,7 @@ class MenuWidgetSet(MyWidgetSet):
 
     @property
     def seed(self) -> int:
-        return self.__seed      # used to test whether the simulation needs to set the MenuWidgetSet's seed
+        return self.__seed  # used to test whether the simulation needs to set the MenuWidgetSet's seed
 
     def __qrogue_console(self):
         def open_user_data(answer: int):
@@ -172,6 +172,7 @@ class MenuWidgetSet(MyWidgetSet):
                     open_folder(PathConfig.user_data_path())
                 except Exception as ex:
                     Popup.error(f"Failed to open folder at {PathConfig.user_data_path()}: {ex}")
+
         CommonQuestions.OpenUserDataFolder.ask(open_user_data)
 
     def __update_selection(self):
@@ -189,8 +190,8 @@ class MenuWidgetSet(MyWidgetSet):
             choices.append("SELECT LEVEL\n")
             callbacks.append(self.__show_level_select_callback)
 
-        #choices.append("START AN EXPEDITION\n")
-        #callbacks.append(self.__start_expedition)
+        # choices.append("START AN EXPEDITION\n")
+        # callbacks.append(self.__start_expedition)
 
         choices.append("SCREEN CHECK\n")
         callbacks.append(self.__show_screen_check_callback)
@@ -255,7 +256,7 @@ class LevelSelectWidgetSet(MyWidgetSet):
         ColorRules.apply_level_selection_seed_rules(summary_seed)
         self.__summary_seed = SimpleWidget(summary_seed, f"{LevelSelectWidgetSet.__SEED_HEADER}???")
         col += col_span
-        summary_level = self.add_block_label('Level', row, col, column_span=UIConfig.WINDOW_WIDTH-col, center=False)
+        summary_level = self.add_block_label('Level', row, col, column_span=UIConfig.WINDOW_WIDTH - col, center=False)
         ColorRules.apply_level_selection_level_rules(summary_level)
         self.__summary_level = SimpleWidget(summary_level, f"{LevelSelectWidgetSet.__LEVEL_HEADER}???")
         self.__summary_level.render()
@@ -290,6 +291,7 @@ class LevelSelectWidgetSet(MyWidgetSet):
             if self.__choices.use():
                 Widget.move_focus(self.__details, self)
                 self.render()
+
         self.__choices.widget.add_key_command(controls.action, use_choices)
 
         def use_details():
@@ -299,6 +301,7 @@ class LevelSelectWidgetSet(MyWidgetSet):
                 self.__highscores.render_reset()
                 self.__durations.render_reset()
                 self.render()
+
         self.__details.widget.add_key_command(controls.action, use_details)
 
         self.__summary_seed.set_data(f"Seed: {self.__seed}")
@@ -330,7 +333,7 @@ class LevelSelectWidgetSet(MyWidgetSet):
 
         # add cancel to stop selecting a level
         display_names.append("-Cancel-")
-        internal_names.append(None)   # the selection-object to easily identify cancel
+        internal_names.append(None)  # the selection-object to easily identify cancel
 
         def set_level(index: int) -> bool:
             if self.__details.selected_object is None: return True  # -Cancel- was selected
@@ -478,8 +481,10 @@ class ScreenCheckWidgetSet(MyWidgetSet):
 
     @staticmethod
     def puzzle_description(controls: Optional[Controls] = None) -> str:
-        if controls is None: matrix_key = "M"
-        else: matrix_key = controls.to_keyboard_string(Keys.MatrixPopup)
+        if controls is None:
+            matrix_key = "M"
+        else:
+            matrix_key = controls.to_keyboard_string(Keys.MatrixPopup)
         return f"Here you can see an example of an advanced 3-qubit puzzle. Specifically, there is one matrix " \
                f"followed by three vertical vectors.\n" \
                f"Overall they should contain five different colors:\n" \
@@ -513,7 +518,7 @@ class ScreenCheckWidgetSet(MyWidgetSet):
         self.__mode = -1
 
         details_height = 4
-        details_y = UIConfig.WINDOW_HEIGHT-details_height
+        details_y = UIConfig.WINDOW_HEIGHT - details_height
         select_width = 3
         select_widget = self.add_block_label('Select', details_y, 0, row_span=details_height, column_span=select_width,
                                              center=True)
@@ -538,10 +543,11 @@ class ScreenCheckWidgetSet(MyWidgetSet):
                     self.__hud.update_situational(f"Your window's dimensions:    {cur_dimensions}\n"
                                                   f"Minimum required dimensions: {min_dimensions}")
                 self.render()
+
         self.__select_widget.widget.add_key_command(controls.action, use_select)
 
         desc_widget = self.add_block_label('Desc', details_y, select_width, row_span=details_height,
-                                           column_span=UIConfig.WINDOW_WIDTH-select_width-1, center=False)
+                                           column_span=UIConfig.WINDOW_WIDTH - select_width - 1, center=False)
         desc_widget.activate_individual_coloring()
         self.__desc_widget = SimpleWidget(desc_widget, self._initial_description())
 
@@ -568,7 +574,7 @@ class ScreenCheckWidgetSet(MyWidgetSet):
 
         def matrix_popup():
             if self.__mode != ScreenCheckWidgetSet.__PUZZLE: return
-            popup_text =  \
+            popup_text = \
                 f"If you cannot see the matrix as a whole, you can try {ColorConfig.highlight_word('resizing')} or " \
                 f"{ColorConfig.highlight_word('maximizing')} the window, as well as " \
                 f"{ColorConfig.highlight_word('adapting')} the used {ColorConfig.highlight_word('font')} or font " \
@@ -674,7 +680,7 @@ class ScreenCheckWidgetSet(MyWidgetSet):
         width, _ = self.__desc_widget.widget.get_abs_size()
         # use width-2 because it seems as if PyCUI forces a one-character border on both sides
         # an experiment showed that a width of 104 can only display 102 characters
-        content = split_text(description, width-2, padding,
+        content = split_text(description, width - 2, padding,
                              handle_error=lambda err: Logger.instance().error(err, show=False, from_pycui=False))
         return "\n".join(content)
 
@@ -738,7 +744,7 @@ class ScreenCheckWidgetSet(MyWidgetSet):
 
 class TransitionWidgetSet(MyWidgetSet):
     class TextScroll:
-        __DEFAULT_TEXT_DELAY = 0.01     # 0 can lead to messed up render order, so we just use a very small number
+        __DEFAULT_TEXT_DELAY = 0.01  # 0 can lead to messed up render order, so we just use a very small number
         _SLOW = 1.0
         _RELAXED = 0.65
         _MEDIUM = 0.15
@@ -871,7 +877,7 @@ class TransitionWidgetSet(MyWidgetSet):
         self.__confirm = SimpleWidget(widget)
 
         if Config.debugging():
-            widget = self.add_block_label("Frame count", 0, UIConfig.WINDOW_WIDTH-1)
+            widget = self.add_block_label("Frame count", 0, UIConfig.WINDOW_WIDTH - 1)
             self.__frame_count = SimpleWidget(widget)
 
     @property
@@ -916,7 +922,7 @@ class TransitionWidgetSet(MyWidgetSet):
             self.__display_text += "\n"
             new_text = new_text[remaining_chars:]
             remaining_chars = self.__line_width
-        self.__display_text += new_text     # append the remaining text
+        self.__display_text += new_text  # append the remaining text
 
         self.__text.set_data(self.__display_text)
         self.__text.render()
@@ -1050,7 +1056,7 @@ class TransitionWidgetSet(MyWidgetSet):
 
     def reset(self) -> None:
         pass
-        #self.__confirm.set_data("Press [Confirm] for next text.")  # todo how to handle thread states?
+        # self.__confirm.set_data("Press [Confirm] for next text.")  # todo how to handle thread states?
 
 
 class PauseMenuWidgetSet(MyWidgetSet):
@@ -1076,19 +1082,20 @@ class PauseMenuWidgetSet(MyWidgetSet):
             ("Restart", self.__restart),
             ("Save", self.__save),
             ("Manual", self.__help),
-            #("Achievements", self.__achievements),
+            # ("Achievements", self.__achievements),
             ("Options", self.__options),
             ("Exit", self.__exit),
         ])
 
         details = self.add_block_label('Details', UIConfig.HUD_HEIGHT, UIConfig.PAUSE_CHOICES_WIDTH,
-                                       row_span=UIConfig.WINDOW_HEIGHT-UIConfig.HUD_HEIGHT,
-                                       column_span=UIConfig.WINDOW_WIDTH-UIConfig.PAUSE_CHOICES_WIDTH, center=True)
+                                       row_span=UIConfig.WINDOW_HEIGHT - UIConfig.HUD_HEIGHT,
+                                       column_span=UIConfig.WINDOW_WIDTH - UIConfig.PAUSE_CHOICES_WIDTH, center=True)
         self.__details = SelectionWidget(details, controls, is_second=True)
 
-        description = self.add_block_label('Description', UIConfig.WINDOW_HEIGHT-UIConfig.PAUSE_DESCRIPTION_HEIGHT,
+        description = self.add_block_label('Description', UIConfig.WINDOW_HEIGHT - UIConfig.PAUSE_DESCRIPTION_HEIGHT,
                                            UIConfig.PAUSE_CHOICES_WIDTH, row_span=UIConfig.PAUSE_DESCRIPTION_HEIGHT,
-                                           column_span=UIConfig.WINDOW_WIDTH-UIConfig.PAUSE_CHOICES_WIDTH, center=False)
+                                           column_span=UIConfig.WINDOW_WIDTH - UIConfig.PAUSE_CHOICES_WIDTH,
+                                           center=False)
         self.__description = SimpleWidget(description)
         description.activate_individual_coloring()
 
@@ -1098,11 +1105,13 @@ class PauseMenuWidgetSet(MyWidgetSet):
                 Widget.move_focus(self.__details, self)
                 self.__choices.render()
                 self.__details.render()
+
         self.__choices.widget.add_key_command(controls.action, use_choices)
 
         def use_details():
             if self.__details.use():
                 self.__focus_choices()
+
         self.__details.widget.add_key_command(controls.action, use_details)
 
     def __focus_choices(self):
@@ -1130,9 +1139,11 @@ class PauseMenuWidgetSet(MyWidgetSet):
             def cb():
                 Popup.generic_info(enum_str(val, skip_type_prefix=True), val.text)
                 return False
+
             return cb
+
         callbacks = [func(val) for val in get_filtered_help_texts()]
-        callbacks.append(lambda: True)      # simple callback for "back"
+        callbacks.append(lambda: True)  # simple callback for "back"
 
         self.__details.set_data(data=(texts, callbacks))
         return True
@@ -1143,7 +1154,7 @@ class PauseMenuWidgetSet(MyWidgetSet):
 
     def __options(self) -> bool:
         # hide most options for tutorial's sake
-        options = GameplayConfig.get_options() #[Options.allow_implicit_removal, Options.allow_multi_move])
+        options = GameplayConfig.get_options()  # [Options.allow_implicit_removal, Options.allow_multi_move])
         texts = []
         for op_tup in options:
             op, _ = op_tup
@@ -1172,10 +1183,10 @@ class PauseMenuWidgetSet(MyWidgetSet):
             else:
                 # reset changes
                 try:
-                    Config.load_gameplay_config()   # todo error message or is the file exception good enough?
+                    Config.load_gameplay_config()  # todo error message or is the file exception good enough?
                 except FileNotFoundError as error:
                     Logger.instance().throw(error)
-                return True     # index out of range and no special case -> go back
+                return True  # index out of range and no special case -> go back
 
         self.__details.set_data(data=(
             texts + ["-Save-", MyWidgetSet.BACK_STRING],
@@ -1206,7 +1217,8 @@ class PauseMenuWidgetSet(MyWidgetSet):
     def get_main_widget(self) -> WidgetWrapper:
         return self.__choices.widget
 
-    def set_data(self, robot: Optional[Robot], map_name: str, achievement_manager: Optional["AchievementManager"]): # todo: remove achievement_manager parameter?
+    def set_data(self, robot: Optional[Robot], map_name: str,
+                 achievement_manager: Optional["AchievementManager"]):  # todo: remove achievement_manager parameter?
         # todo maybe needs some overhaul?
         self.__hud.set_data((robot, map_name, None))
         self.__description.set_data(HelpText.Pause.text)
@@ -1217,7 +1229,7 @@ class PauseMenuWidgetSet(MyWidgetSet):
         self.__description.render_reset(reset_text=False)
 
 
-class WorkbenchWidgetSet(MyWidgetSet):      # todo: overhaul or remove
+class WorkbenchWidgetSet(MyWidgetSet):  # todo: overhaul or remove
     def __init__(self, controls: Controls, logger, root: py_cui.PyCUI, available_robots: List[Robot],
                  render: Callable[[List[Renderable]], None], continue_callback: Callable[[], None]):
         self.__continue = continue_callback
@@ -1244,12 +1256,14 @@ class WorkbenchWidgetSet(MyWidgetSet):      # todo: overhaul or remove
                 Widget.move_focus(self.__available_upgrades, self)
                 self.__robot_selection.render()
                 self.__available_upgrades.render()
+
         self.__robot_selection.widget.add_key_command(controls.action, use_selection)
 
         def use_upgrades():
             if self.__available_upgrades.use():
                 Widget.move_focus(self.__robot_selection, self)
                 self.render()
+
         self.__available_upgrades.widget.add_key_command(controls.action, use_upgrades)
 
     def get_widget_list(self) -> List[Widget]:
@@ -1266,8 +1280,8 @@ class WorkbenchWidgetSet(MyWidgetSet):      # todo: overhaul or remove
         pass
 
     def __details(self, index: int) -> bool:
-        if self.__save_data:    # todo fix
-            robot = None#self.__save_data.get_robot(index)
+        if self.__save_data:  # todo fix
+            robot = None  # self.__save_data.get_robot(index)
             if robot:
                 self.__robot_info.set_data(robot.description())
                 self.__available_upgrades.set_data(data=(
@@ -1303,6 +1317,7 @@ class MapWidgetSet(MyWidgetSet, ABC):
                         self.__move_counter -= 1
                 if self.__map_widget.move(direction):
                     self.render()
+
             return _move
 
         self.__map_widget.widget.add_key_command(controls.get_keys(Keys.MoveUp), move(Direction.Up))
@@ -1392,16 +1407,16 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self._check_unlocks = check_unlocks_callback
         self._robot: Optional[Robot] = None
         self._target: Optional[Target] = None
-        self.__num_of_qubits = -1   # needs to be an illegal value because we definitely want to reposition all
+        self.__num_of_qubits = -1  # needs to be an illegal value because we definitely want to reposition all
         # dependent widgets for the first usage of this WidgetSet
         self._choices_content = None
-        self._in_reward_message = False     # _choices currently displays the reward message
+        self._in_reward_message = False  # _choices currently displays the reward message
         self.__in_expedition = False
         self.__puzzle_timer = cur_datetime()
 
         posy = 0
         posx = 0
-        row_span = UIConfig.stv_height(2)   # doesn't matter since we reposition the dependent widgets anyway
+        row_span = UIConfig.stv_height(2)  # doesn't matter since we reposition the dependent widgets anyway
         matrix_width = UIConfig.WINDOW_WIDTH - (UIConfig.INPUT_STV_WIDTH + UIConfig.OUTPUT_STV_WIDTH +
                                                 UIConfig.TARGET_STV_WIDTH + 1 * 3)  # + width of the three signs
         circuit_height = UIConfig.NON_HUD_HEIGHT - row_span - UIConfig.DIALOG_HEIGHT
@@ -1467,6 +1482,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             if self._choices.use():
                 # only other widget to focus (use() == True means we should move focus) is circuit
                 Widget.move_focus(self.__circuit, self)
+
         self._choices.widget.add_key_command(controls.action, use_choices)
 
         def gate_guide():
@@ -1480,7 +1496,8 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                 Popup.generic_info(gate.gate_type.full_name, f"Short name: {gate.gate_type.short_name} Gate\n" +
                                    gate.description(self._check_unlocks) + other_names)
             else:
-                reopen_popup()     # open popup history
+                reopen_popup()  # open popup history
+
         self._choices.widget.add_key_command(controls.get_keys(Keys.Help), gate_guide)
 
         def use_circuit():
@@ -1494,12 +1511,14 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                 self.__choices_commit()
                 Widget.move_focus(self._choices, self)
                 self.render()
+
         self.__circuit.widget.add_key_command(controls.action, use_circuit)
 
         def cancel_circuit():
             self.__circuit.abort_placement()
             Widget.move_focus(self._choices, self)
             self.render()
+
         self.__circuit.widget.add_key_command(controls.get_keys(Keys.Cancel), cancel_circuit)
 
         # situational keys for travelling through history need to be set last because everything needs to be
@@ -1511,7 +1530,9 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                     # (e.g., are manipulating the circuit)
                     if self._choices.widget.is_selected() and not self._in_reward_message:
                         self.__history_widget.travel(forth, render=True)
+
             return func
+
         self.add_key_command(controls.get_keys(Keys.Situational1), travel_history(False), add_to_widgets=True)
         self.add_key_command(controls.get_keys(Keys.Situational2), travel_history(True), add_to_widgets=True)
 
@@ -1519,7 +1540,8 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         def show_matrix_popup():
             text_mat = self.__circuit_matrix.widget.get_title()
             headline = text_mat[:text_mat.index("\n")]
-            Popup.show_matrix(headline, text_mat[len(headline)+1:])
+            Popup.show_matrix(headline, text_mat[len(headline) + 1:])
+
         self.add_key_command(controls.get_keys(Keys.MatrixPopup), show_matrix_popup, add_to_widgets=True)
 
         # clear some widgets if the player hasn't unlocked the equations yet
@@ -1578,7 +1600,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                 self.__circuit.widget.reposition(row=UIConfig.HUD_HEIGHT + row_span)
                 self._choices.widget.reposition(row=UIConfig.WINDOW_HEIGHT - 1, row_span=1)
             else:
-                self.__circuit.widget.reposition(row=UIConfig.HUD_HEIGHT + row_span + 1)    # + 1 for visuals
+                self.__circuit.widget.reposition(row=UIConfig.HUD_HEIGHT + row_span + 1)  # + 1 for visuals
 
     def get_main_widget(self) -> WidgetWrapper:
         return self._choices.widget
@@ -1616,7 +1638,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self.__update_calculation(False)
 
         self.__init_choices()
-        self.__history_widget.clean_history()   # clean/reset history
+        self.__history_widget.clean_history()  # clean/reset history
 
         self.__puzzle_timer = cur_datetime()
         # log info about the puzzle
@@ -1667,7 +1689,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                 self.__eq_widget.set_data(self._sign_offset + "=/=")
 
     def __init_choices(self):
-        choices, objects = [], []   # Tuple[List[str], List[object]]
+        choices, objects = [], []  # Tuple[List[str], List[object]]
         callbacks: List[Callable[[], bool]] = []
         for instruction in self._robot.backpack:
             choices.append(instruction.selection_str())
@@ -1681,7 +1703,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             callbacks.append(self.__remove)
         if self._check_unlocks(Unlocks.PuzzleFlee):
             choices.append(self.__flee_choice)
-            callbacks.append(self.__flee)      # just return True to change back to previous screen
+            callbacks.append(self.__flee)  # just return True to change back to previous screen
 
         self._choices.set_data(data=((choices, objects), callbacks))
 
@@ -1709,11 +1731,11 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
     def __remove(self) -> bool:
         if self._robot.has_empty_circuit:
             CommonPopups.NoGatePlaced.show()
-            return False    # stay in choices
+            return False  # stay in choices
         else:
             self.__circuit.start_gate_placement(None)
             self.render()
-            return True     # focus circuit
+            return True  # focus circuit
 
     def __flee(self) -> bool:
         # last selection possibility in edit is for fleeing
@@ -1724,7 +1746,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         Logger.instance().info(f"[target id={self._target.id}]\n"
                                f"Fled from puzzle after {duration}s "
                                f"and {self._target.checks} steps.", from_pycui=False)
-        return False    # stay in choices
+        return False  # stay in choices
 
     def __choices_commit(self):
         if self._target is None:
@@ -1742,9 +1764,9 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
             def give_reward_and_continue() -> bool:
                 if reward is not None: self._robot.give_collectible(reward)
-                self._in_reward_message = False    # undo the blocking since the success notification is over
+                self._in_reward_message = False  # undo the blocking since the success notification is over
                 self._continue_exploration()
-                return False    # stay in choices
+                return False  # stay in choices
 
             self._in_reward_message = True
             if reward is None:
@@ -1775,7 +1797,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             inst = self._robot.gate_used_at(pos)
             if inst is not None:
                 instructions_str += f"{inst}, "
-        instructions_str = instructions_str[:-2]    # remove trailing ", "
+        instructions_str = instructions_str[:-2]  # remove trailing ", "
         info_msg = f"[target id={self._target.id}]\n" \
                    f"Solved puzzle after {duration}s in {self._target.checks} steps. \n" \
                    f"Used: {instructions_str}"
@@ -1790,7 +1812,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         pass
 
 
-class TrainingsWidgetSet(ReachTargetWidgetSet):     # todo: remove or overhaul
+class TrainingsWidgetSet(ReachTargetWidgetSet):  # todo: remove or overhaul
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  back_to_menu_callback: Callable[[], None], reopen_popup_callback: Callable[[], None],
                  check_unlocks_callback: Callable[[str], bool]):
@@ -1831,7 +1853,7 @@ class FightWidgetSet(ReachTargetWidgetSet):
                 extra_text = f"Your Qubot lost {damage_taken} energy."
             else:
                 CommonPopups.NotEnoughEnergyToFlee.show()
-                return False    # don't switch to choices widget
+                return False  # don't switch to choices widget
 
         if self.__flee_check():
             self._choices.set_data(data=(

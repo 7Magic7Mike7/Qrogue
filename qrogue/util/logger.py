@@ -26,7 +26,7 @@ class Logger(PyCUILogger):
     def reset():
         if TestConfig.is_active():
             if Logger.__instance is None: return
-            Logger.__instance.flush()   # flush before we reset to not lose data
+            Logger.__instance.flush()  # flush before we reset to not lose data
             Logger.__instance = None
         else:
             raise TestConfig.StateException(ErrorConfig.singleton_reset("Logger"))
@@ -46,13 +46,14 @@ class Logger(PyCUILogger):
 
                 def commit_(text: str):
                     PathConfig.write(save_file, text, may_exist=True, append=True)
+
                 self.__commit = commit_
             else:
                 self.__commit = commit
 
             self.__text = ""
             self.__error_popup: Optional[Callable[[str], None]] = None
-            self.__buffer: List[str] = []   # stores logged lines
+            self.__buffer: List[str] = []  # stores logged lines
             self.__error_counter = 0
             Logger.__instance = self
 

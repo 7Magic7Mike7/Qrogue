@@ -26,12 +26,18 @@ def _wrap_in_ket_notation(number: complex, qubit: int, num_of_qubits: int,
     """
     is_complex = number.real != 0 and number.imag != 0
     if decimals is None:
-        if is_complex: decimals = QuantumSimulationConfig.COMPLEX_DECIMALS
-        else: decimals = QuantumSimulationConfig.DECIMALS
+        if is_complex:
+            decimals = QuantumSimulationConfig.COMPLEX_DECIMALS
+        else:
+            decimals = QuantumSimulationConfig.DECIMALS
+
     if space_per_value is None:
-        if is_complex: space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_COMPLEX_NUMBER
-        elif number.imag != 0: space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER + 1   # add the extra "j"
-        else: space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER
+        if is_complex:
+            space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_COMPLEX_NUMBER
+        elif number.imag != 0:
+            space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER + 1  # add the extra "j"
+        else:
+            space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER
 
     value = f"{center_string(complex2string(number, decimals), space_per_value)}"
     if coloring:
@@ -45,7 +51,7 @@ def _wrap_in_ket_notation(number: complex, qubit: int, num_of_qubits: int,
         percentage = StateVector.complex_to_amplitude_percentage_string(number, space)
         space += 1  # +1 because of the additional "%" we have to align
         if percentage == "0%":
-            value += f"  {align_string('', space, left=False)}"     # show whitespace instead of redundant 0% amplitudes
+            value += f"  {align_string('', space, left=False)}"  # show whitespace instead of redundant 0% amplitudes
         else:
             value += f" ~{align_string(percentage, space, left=False)}"
 
@@ -63,24 +69,24 @@ class StateVector:
     @staticmethod
     def complex_to_amplitude_percentage_string(val: complex,
                                                space: int = QuantumSimulationConfig.MAX_PERCENTAGE_SPACE) -> str:
-        amp = np.round(abs(val**2), QuantumSimulationConfig.DECIMALS)
+        amp = np.round(abs(val ** 2), QuantumSimulationConfig.DECIMALS)
         text = str(amp * 100)
         if text[-2:] == ".0":
-            text = text[:-2]        # remove the redundant ".0"
+            text = text[:-2]  # remove the redundant ".0"
         if len(text) > space:
-            text = text[:space]     # clamp to specified space
+            text = text[:space]  # clamp to specified space
         return text + "%"
 
     @staticmethod
     def create_zero_state_vector(num_of_qubits: int) -> "StateVector":
-        amplitudes = [1] + [0] * (2**num_of_qubits - 1)
+        amplitudes = [1] + [0] * (2 ** num_of_qubits - 1)
         return StateVector(amplitudes, num_of_used_gates=0)
 
     @staticmethod
     def create_basis_states(num_of_qubits: int) -> List["StateVector"]:
         states = []
-        for i in range(2**num_of_qubits):
-            amplitudes = [0] * 2**num_of_qubits
+        for i in range(2 ** num_of_qubits):
+            amplitudes = [0] * 2 ** num_of_qubits
             amplitudes[i] = 1
             states.append(StateVector(amplitudes, num_of_used_gates=0))
         return states
@@ -215,9 +221,12 @@ class StateVector:
         # based on whether the vector itself is complex or not
         decimals = QuantumSimulationConfig.COMPLEX_DECIMALS if self.is_complex else QuantumSimulationConfig.DECIMALS
         if space_per_value is None:
-            if self.is_complex: space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_COMPLEX_NUMBER
-            elif self.is_imag: space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER + 1   # add the "j"
-            else: space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER
+            if self.is_complex:
+                space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_COMPLEX_NUMBER
+            elif self.is_imag:
+                space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER + 1  # add the "j"
+            else:
+                space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER
 
         return _wrap_in_ket_notation(self.at(index), index, self.num_of_qubits, decimals, space_per_value, coloring,
                                      correct_amplitude, show_percentage, skip_ket)
@@ -229,7 +238,7 @@ class StateVector:
             text += "\n"
         return text
 
-    def __eq__(self, other) -> bool: # TODO currently not even in use!
+    def __eq__(self, other) -> bool:  # TODO currently not even in use!
         if type(other) is type(self):
             return self.__amplitudes == other.__amplitudes
         elif isinstance(other, list):

@@ -219,7 +219,7 @@ class Map(BaseMap, ABC):
 
         self.__controllable_tile = tiles.ControllableTile(controllable)
         self.__controllable_pos = BaseMap._calculate_pos(spawn_room, Coordinate(Area.MID_X, Area.MID_Y))
-        self.__move_direction = Direction.Center    # initially we didn't move in any direction
+        self.__move_direction = Direction.Center  # initially we didn't move in any direction
 
         self.__cur_area = self.room_at(spawn_room.x, spawn_room.y)
         if self.__cur_area is None:

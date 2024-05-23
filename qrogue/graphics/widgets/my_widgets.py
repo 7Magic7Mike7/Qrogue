@@ -58,7 +58,7 @@ class MyBaseWidget(BlockLabel, WidgetWrapper):
         return super(MyBaseWidget, self).get_title()
 
     def add_text_color_rule(self, regex: str, color: int, rule_type: str, match_type: str = 'line',
-                            region: List[int] = None, include_whitespace: bool = False, selected_color=None)\
+                            region: List[int] = None, include_whitespace: bool = False, selected_color=None) \
             -> None:
         if region is None:
             region = [0, 1]
@@ -106,8 +106,8 @@ class MyMultiWidget(WidgetWrapper):
         self.__pos = x, y
         self.__abs_pos = ax, ay
 
-        widths: Dict[int, int] = {}     # find out width of the longest row
-        heights: Dict[int, int] = {}    # and height of biggest column
+        widths: Dict[int, int] = {}  # find out width of the longest row
+        heights: Dict[int, int] = {}  # and height of biggest column
         abs_widths: Dict[int, int] = {}
         abs_heights: Dict[int, int] = {}
         for w in self.__widgets:
@@ -202,7 +202,7 @@ class MyMultiWidget(WidgetWrapper):
 
             new_column_span = None
             if width_diff is not None:
-                w_mul = width_diff * w_width / old_width    # try to keep the same widget_width / whole_width ratio
+                w_mul = width_diff * w_width / old_width  # try to keep the same widget_width / whole_width ratio
                 width_change = round(w_width * w_mul)
                 width_changes += width_change
                 if width_changes < width_diff:
@@ -364,7 +364,7 @@ class HudWidget(Widget):
             force_render: whether to immediately render or not
         """
         if Config.debugging():
-            self.__render_duration = duration / 1000    # show it in milliseconds
+            self.__render_duration = duration / 1000  # show it in milliseconds
             if force_render: self.render()
 
     def render(self) -> None:
@@ -444,8 +444,8 @@ class CircuitWidget(Widget):
     def __circuit_input_value(self, qubit: int) -> str:
         if self.__input is not None and self.__input.is_classical \
                 and self.__target is not None and self.__target.is_classical \
-                and self.__robot.state_vector.is_classical:     # robot.state_vector cannot be None
-            index = self.__input.to_value().index(1)    # find where the amplitude is 1
+                and self.__robot.state_vector.is_classical:  # robot.state_vector cannot be None
+            index = self.__input.to_value().index(1)  # find where the amplitude is 1
             # get the respective qubit values but in lsb, so we can use $qubit directly as index
             values = to_binary_string(index, self.__input.num_of_qubits, msb=False)
             return f"= {values[qubit]} "
@@ -455,8 +455,8 @@ class CircuitWidget(Widget):
     def __circuit_output_value(self, qubit: int) -> str:
         if self.__input is not None and self.__input.is_classical \
                 and self.__target is not None and self.__target.is_classical \
-                and self.__robot.state_vector.is_classical:     # robot.state_vector cannot be None
-            index = self.__robot.state_vector.to_value().index(1)    # find where the amplitude is 1
+                and self.__robot.state_vector.is_classical:  # robot.state_vector cannot be None
+            index = self.__robot.state_vector.to_value().index(1)  # find where the amplitude is 1
             # get the respective qubit values but in lsb, so we can use $qubit directly as index
             out_values = to_binary_string(index, self.__robot.state_vector.num_of_qubits, msb=False)
             index = self.__target.to_value().index(1)
@@ -610,7 +610,7 @@ class CircuitWidget(Widget):
                         rows[q][pos] = f"--{{{gate.abbreviation(q)}}}--"
                     rows[qubit][pos] = f"-- {gate.abbreviation(qubit)} --"
 
-            circ_str = " In "   # for some reason the whitespace in front is needed to center the text correctly
+            circ_str = " In "  # for some reason the whitespace in front is needed to center the text correctly
             # place qubits from top to bottom, high to low index
             for q in range(len(rows) - 1, -1, -1):
                 circ_str += f"| q{q} {self.__circuit_input_value(q)}>"
@@ -739,14 +739,14 @@ class OutputStateVectorWidget(StateVectorWidget):
                     # check if diff is small enough
                     correct_amplitude=abs(diff_stv.at(i)) <= QuantumSimulationConfig.TOLERANCE,
                     skip_ket=skip_ket)
-                for i in range(output_stv.size)     # do it for every qubit combination
+                for i in range(output_stv.size)  # do it for every qubit combination
             ]
 
         lines = wrap(skip_ket=False)
         # check if the content fits its widget
         max_line_len = max([len(line) for line in lines])
         width, _ = self.widget.get_abs_size()
-        if max_line_len > width: lines = wrap(skip_ket=True)    # shrink content by removing ket
+        if max_line_len > width: lines = wrap(skip_ket=True)  # shrink content by removing ket
 
         self._stv_str_rep = self._headline + "\n".join(lines)
 
@@ -756,7 +756,7 @@ class TargetStateVectorWidget(StateVectorWidget):
         super().__init__(widget, headline)
 
     def set_data(self, state_vector: StateVector) -> None:
-        def wrap(skip_ket: bool):   # wrap values according to TargetStv specifics (show percentages)
+        def wrap(skip_ket: bool):  # wrap values according to TargetStv specifics (show percentages)
             return [
                 state_vector.wrap_in_qubit_conf(
                     i, coloring=False, show_percentage=True,
@@ -772,12 +772,12 @@ class TargetStateVectorWidget(StateVectorWidget):
         # "-2" is magic number found by trial and error that gives feasible results (perfect visual results are hard
         # since it also depends on font and other spacings); possible explanation: coloring of ket needs 2 chars on the
         # right end, meaning if they would be the only cut-off PyCUI could be smart enough to still color it
-        if max_line_len > width-2:
+        if max_line_len > width - 2:
             lines = wrap(skip_ket=True)  # shrink content by removing ket
             # add whitespace so headline is not in the center but more above the amplitudes for better visuals
             split_index = self._headline.index("\n")
             headline = self._headline[:split_index] + " " * QuantumSimulationConfig.MAX_PERCENTAGE_SPACE \
-                + self._headline[split_index:]
+                       + self._headline[split_index:]
             self._stv_str_rep = headline + "\n".join(lines)
         else:
             self._stv_str_rep = self._headline + "\n".join(lines)
@@ -831,7 +831,7 @@ class QubitInfoWidget(Widget):
         box_left = "|" + " " * 2
         box_right = " " * 2 + "|"
         if self.__left_aligned:
-            head_range = range(num_of_qubits-1, -1, -1)
+            head_range = range(num_of_qubits - 1, -1, -1)
         else:
             head_range = range(num_of_qubits)
 
@@ -841,12 +841,12 @@ class QubitInfoWidget(Widget):
         head = box_left[:-1] + "~" + head[1:-1] + "~" + box_right[2:]
 
         for i in range(2 ** num_of_qubits):
-            bin_num = bin(i)[2:]    # get rid of the '0b' at the beginning of the binary representation
+            bin_num = bin(i)[2:]  # get rid of the '0b' at the beginning of the binary representation
             # add 0s to the beginning (left) by justifying the text to the right
             bin_num = bin_num.rjust(num_of_qubits, '0')
             row = "   ".join(bin_num)  # separate the digits in the string with spaces
             if not self.__left_aligned:
-                row = row[::-1]     # [::-1] reverses the list so q0 is on the left
+                row = row[::-1]  # [::-1] reverses the list so q0 is on the left
             body += box_left + row + box_right
             body += "\n"
 
@@ -868,7 +868,7 @@ class SelectionWidget(Widget):
     @staticmethod
     def wrap_in_hotkey_str(options: List[str]) -> List[str]:
         if len(options) <= 1:
-            return options      # no explicit hotkeys if there are not multiple options
+            return options  # no explicit hotkeys if there are not multiple options
         wrapped_options = []
         for i, option in enumerate(options):
             wrapped_options.append(SelectionWidget._wrap_in_hotkey_str(option, i))
@@ -891,6 +891,7 @@ class SelectionWidget(Widget):
 
         def okp(key: Keys):
             if on_key_press is not None: on_key_press(key)
+
         self.__on_key_press = okp
         self.__index = 0
         self.__choices: List[str] = []
@@ -1001,8 +1002,10 @@ class SelectionWidget(Widget):
                 self.__callbacks.append(elem[1])
         else:
             self.__choices, callbacks = data
-            if isinstance(callbacks, list): self.__callbacks = callbacks
-            else: self.__callbacks = [callbacks]
+            if isinstance(callbacks, list):
+                self.__callbacks = callbacks
+            else:
+                self.__callbacks = [callbacks]
 
         if isinstance(self.__choices, tuple):
             self.__choices, self.__choice_objects = self.__choices
@@ -1027,7 +1030,7 @@ class SelectionWidget(Widget):
             else:
                 rows[cur_row] += SelectionWidget.__SEPARATOR
 
-        if len(rows) > 0:   # simple validity check since some selections are dynamically created during runtime
+        if len(rows) > 0:  # simple validity check since some selections are dynamically created during runtime
             max_row_len = max([len(row) for row in rows])
             aligned_rows = [align_string(row, max_row_len) for row in rows]
             self.widget.set_title("\n".join(aligned_rows))
@@ -1131,7 +1134,8 @@ class SelectionWidget(Widget):
         self.render()
 
     def __jump_to_index(self, index: int):
-        self.__on_key_press(Keys.hotkeys()[index])      # todo implement more efficiently? On the other hand hotkeys are not that important maybe
+        self.__on_key_press(Keys.hotkeys()[
+                                index])  # todo implement more efficiently? On the other hand hotkeys are not that important maybe
         if index < 0:
             self.__index = 0
         elif self.num_of_choices <= index:
@@ -1153,7 +1157,7 @@ class SelectionWidget(Widget):
                 Logger.instance().throw(IndexError(f"Invalid index = {self.__index} for {self.__callbacks}. "
                                                    f"Text of choices: {self.__choices}"))
             ret = self.__callbacks[self.__index]()
-        if ret is None:     # move focus if nothing is returned
+        if ret is None:  # move focus if nothing is returned
             return True
         else:
             return ret
@@ -1167,7 +1171,7 @@ class HistoricWrapperWidget:
 
         if render_widgets:
             for widget in widgets:
-                widget.render()     # update the visuals before potentially saving them
+                widget.render()  # update the visuals before potentially saving them
         if save_initial_state:
             self.save_state(rerender=True, force=True)
 
@@ -1207,8 +1211,10 @@ class HistoricWrapperWidget:
         if render: self.render()
 
     def travel(self, forth: bool, render: bool = True):
-        if forth:   self._forth(render)
-        else:       self._back(render)
+        if forth:
+            self._forth(render)
+        else:
+            self._back(render)
 
     def jump_to_present(self, render: bool = True):
         if self.is_in_past:
@@ -1226,7 +1232,7 @@ class HistoricWrapperWidget:
                                                                f"{len(self._cur_data)} != {len(self.__widgets)}"
             for i, widget in enumerate(self.__widgets):
                 widget.widget.set_title(self._cur_data[i])
-                #widget.render()
+                # widget.render()
 
 
 class HistoricProperty(Widget, ABC):
@@ -1266,6 +1272,3 @@ class HistoricProperty(Widget, ABC):
     def render(self) -> None:
         if self._cur_data is not None:
             self.widget.set_title(self._cur_data)
-
-
-

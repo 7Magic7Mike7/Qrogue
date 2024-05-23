@@ -128,7 +128,7 @@ class _Attributes:
         :return: by how much current energy was actually decreased
         """
         if CheatConfig.got_inf_resources():
-            return 0    # no decrease in this case
+            return 0  # no decrease in this case
 
         self.__cur_energy -= amount
         if self.__cur_energy < 0:
@@ -143,7 +143,7 @@ class _Backpack:
     Stores Instructions, Consumables and other Collectibles for a Robot to use.
     """
 
-    __CAPACITY: int = 5      # how many Instructions the Backpack can hold at once
+    __CAPACITY: int = 5  # how many Instructions the Backpack can hold at once
 
     def __init__(self, capacity: int = __CAPACITY, content: Optional[List[Instruction]] = None):
         """
@@ -258,8 +258,8 @@ class _Backpack:
                 self.__storage.remove(instruction)
                 return True
         if Config.debugging():
-            Logger.instance().error("Reached a line in Backpack.remove() that I think should not be reachable "
-                                    "(although it has no game-consequences if I'm wrong).", show=False, from_pycui=False)
+            Logger.instance().error("Reached a line in Backpack.remove() that I think should not be reachable ("
+                                    "although it has no game-consequences if I'm wrong).", show=False, from_pycui=False)
         try:
             self.__storage.remove(instruction)
             return True
@@ -297,7 +297,7 @@ class _BackpackIterator:
 
 class Robot(Controllable, ABC):
     @staticmethod
-    def __counts_to_bit_list(counts):       # todo can be deleted I think
+    def __counts_to_bit_list(counts):  # todo can be deleted I think
         counts = str(counts)
         counts = counts[1:len(counts) - 1]
         arr = counts.split(':')
@@ -334,7 +334,7 @@ class Robot(Controllable, ABC):
             self.__qubit_indices.append(i)
 
         # initialize gate stuff (columns)
-        self.__instruction_count: int = 0   # how many instructions are currently placed on the circuit
+        self.__instruction_count: int = 0  # how many instructions are currently placed on the circuit
         # initialize based on empty circuit
         self.__instructions: List[Optional[Instruction]] = [None] * attributes.circuit_space
         # initially there is no static gate (i.e., a gate that cannot be moved and was added by a puzzle)
@@ -413,7 +413,7 @@ class Robot(Controllable, ABC):
     def reset_score(self):
         self.__score = 0
 
-    def key_count(self) -> int:     # cannot be a property since it is an abstractmethod in Controllable
+    def key_count(self) -> int:  # cannot be a property since it is an abstractmethod in Controllable
         return self.backpack.key_count
 
     def use_key(self) -> bool:
@@ -458,7 +458,7 @@ class Robot(Controllable, ABC):
         if check_for_game_over and self.game_over_check():
             return
 
-        num_of_used_gates: int = 0      # cannot use len(instructions) since this contains None values
+        num_of_used_gates: int = 0  # cannot use len(instructions) since this contains None values
         circuit = QuantumCircuit.from_bit_num(self.num_of_qubits, self.num_of_qubits)
         for inst in self.__instructions:
             if inst is not None:
@@ -470,7 +470,7 @@ class Robot(Controllable, ABC):
         amplitudes = self.__unitary_simulator.execute(circuit, decimals=QuantumSimulationConfig.DECIMALS)
         self.__circuit_matrix = CircuitMatrix(amplitudes, num_of_used_gates)
 
-        if input_stv is None:   # todo: input_stv might only be None if the circuit is empty (reset or initialized)
+        if input_stv is None:  # todo: input_stv might only be None if the circuit is empty (reset or initialized)
             amplitudes = self.__simulator.run(circuit, do_transpile=True)
             self.__stv = StateVector(amplitudes, num_of_used_gates=self.__instruction_count)
         else:
@@ -649,7 +649,7 @@ class Robot(Controllable, ABC):
         :param amount: by how much we want to reduce this Robot's energy, defaults to 1
         :return: the actual amount by how much current energy was decreased, whether this Robot is game over or not
         """
-        assert amount > 0   # todo maybe == 0 is also okay?
+        assert amount > 0  # todo maybe == 0 is also okay?
 
         if self.game_over_check():
             return amount, True
@@ -662,7 +662,7 @@ class Robot(Controllable, ABC):
         :param amount: by how much current energy was increased
         :return: by how much current energy was actually increased.
         """
-        assert amount > 0   # todo maybe == 0 is also okay?
+        assert amount > 0  # todo maybe == 0 is also okay?
         return self.__attributes.increase_energy(amount)
 
     def gate_used_at(self, position: int) -> Optional[Instruction]:

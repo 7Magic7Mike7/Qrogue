@@ -104,7 +104,7 @@ def to_binary_string(num: int, digits: Optional[int] = None, msb: bool = True) -
         elif digits < 0 and num <= 0:
             break
     if msb:
-        return str_rep[::-1]    # reverse the string
+        return str_rep[::-1]  # reverse the string
     else:
         return str_rep
 

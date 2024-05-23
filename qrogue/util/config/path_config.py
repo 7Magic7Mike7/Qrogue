@@ -33,7 +33,7 @@ class PathConfig:
     __SAVE_FILE_PREFIX = "qrogue-save"
     __FRESH_SAVE_FILE = "fresh"
     __SAVE_FILE_NUMERATION_SEPARATOR = "_"
-    __NUMBER_OF_SAVE_FILES = 7    # how many save files can be present before we delete the oldest one
+    __NUMBER_OF_SAVE_FILES = 7  # how many save files can be present before we delete the oldest one
 
     __Base_Path = __DEFAULT_GAME_DATA_PATH
     __User_Data_Path = __DEFAULT_USER_DATA_PATH
@@ -211,7 +211,7 @@ class PathConfig:
         if num_of_files >= PathConfig.__NUMBER_OF_SAVE_FILES:
             oldest_num = num - PathConfig.__NUMBER_OF_SAVE_FILES
             PathConfig.delete(PathConfig.__save_file_str(oldest_num))
-        PathConfig.write(PathConfig.__save_file_str(num),text, may_exist=False)
+        PathConfig.write(PathConfig.__save_file_str(num), text, may_exist=False)
 
     @staticmethod
     def write_auto_save(text: str):
@@ -295,6 +295,6 @@ class PathConfig:
 
     @staticmethod
     def delete(file_name):
-        path = PathConfig.user_data_path(file_name)     # data in base_path is static so we can only delete user data
+        path = PathConfig.user_data_path(file_name)  # data in base_path is static so we can only delete user data
         if os.path.exists(path):
             os.remove(path)

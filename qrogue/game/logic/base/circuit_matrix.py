@@ -12,8 +12,8 @@ class CircuitMatrix:
     @staticmethod
     def create_identity(num_of_qubits: int) -> "CircuitMatrix":
         matrix = []
-        for i in range(2**num_of_qubits):
-            row = [0] * 2**num_of_qubits
+        for i in range(2 ** num_of_qubits):
+            row = [0] * 2 ** num_of_qubits
             row[i] = 1
             matrix.append(row)
         return CircuitMatrix(matrix, num_of_used_gates=0)
@@ -24,7 +24,7 @@ class CircuitMatrix:
         for row in matrix:
             row_sum = 0
             for i, val in enumerate(row):
-                res_val = abs(val)**2
+                res_val = abs(val) ** 2
                 row_sum += res_val
                 col_sum[i] += res_val
             if row_sum < 1 - QuantumSimulationConfig.TOLERANCE or 1 + QuantumSimulationConfig.TOLERANCE < row_sum:
@@ -48,7 +48,7 @@ class CircuitMatrix:
         if GameplayConfig.get_option_value(Options.show_ket_notation, convert=True):
             padding = len(generate_ket(0, num_of_qubits)) + len(spacing)  # also add the space after the ket
             text = " " * padding  # we need to pad the rows' |qubits> prefix
-            for i in range(2**num_of_qubits):
+            for i in range(2 ** num_of_qubits):
                 # space_per_value + 1 due to the trailing space
                 text += center_string(generate_ket(i, num_of_qubits), space_per_value)
                 text += spacing
@@ -94,7 +94,7 @@ class CircuitMatrix:
                 if val != 0 and val != 1:
                     return False
                 mat_sum += val
-        return mat_sum == self.size     # there needs to be one 1 per row
+        return mat_sum == self.size  # there needs to be one 1 per row
 
     @property
     def is_real(self) -> bool:
@@ -134,9 +134,12 @@ class CircuitMatrix:
 
     def to_string(self, space_per_value: Optional[int] = None) -> str:
         if space_per_value is None:
-            if self.is_complex: space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_COMPLEX_NUMBER
-            elif self.is_imag: space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER + 1
-            else: space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER
+            if self.is_complex:
+                space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_COMPLEX_NUMBER
+            elif self.is_imag:
+                space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER + 1
+            else:
+                space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER
 
         return CircuitMatrix.matrix_to_string(self.__matrix, self.num_of_qubits, space_per_value)
 

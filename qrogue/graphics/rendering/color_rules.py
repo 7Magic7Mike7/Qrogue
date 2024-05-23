@@ -4,7 +4,7 @@ from qrogue.util import PyCuiColors, ColorConfig
 from ..widget_base import WidgetWrapper
 
 
-class _TileColorer:      # todo: move to ColorConfig? (only value of dictionary since the keys are TileCodes)
+class _TileColorer:  # todo: move to ColorConfig? (only value of dictionary since the keys are TileCodes)
     __color_manager = {
         TileCode.Invalid: PyCuiColors.RED_ON_BLUE,
         TileCode.Void: PyCuiColors.CYAN_ON_BLACK,

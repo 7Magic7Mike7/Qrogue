@@ -1,4 +1,3 @@
-
 from enum import Enum
 from typing import List, Optional
 
@@ -103,7 +102,8 @@ class Coordinate:
         """
         return self.x + self.y * row_width
 
-    def get_neighbors(self, min_: Optional["Coordinate"] = None, max_: Optional["Coordinate"] = None) -> List["Coordinate"]:
+    def get_neighbors(self, min_: Optional["Coordinate"] = None, max_: Optional["Coordinate"] = None) \
+            -> List["Coordinate"]:
         neighbors = []
         for d in Direction.values():
             pos = self + d

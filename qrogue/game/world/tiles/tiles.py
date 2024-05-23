@@ -1,4 +1,3 @@
-
 from abc import ABC, abstractmethod
 from enum import Enum
 from typing import List
@@ -9,18 +8,18 @@ from qrogue.util import CheatConfig
 
 
 class TileCode(Enum):
-    Invalid = (-1, "§")    # when an error occurs, e.g. a tile at a non-existing position should be retrieved
-    Debug = (-2, "€")      # displays a digit for debugging
-    Void = (7, "_")        # tile outside the playable area
-    Floor = (0, " ")       # simple floor tile without special meaning
-    HallwayEntrance = (5, " ")     # depending on the hallway it refers to is either a Floor or Wall
-    FogOfWar = (3, "~")    # tile of a place we cannot see yet
+    Invalid = (-1, "§")         # when an error occurs, e.g. a tile at a non-existing position should be retrieved
+    Debug = (-2, "€")           # displays a digit for debugging
+    Void = (7, "_")             # tile outside the playable area
+    Floor = (0, " ")            # simple floor tile without special meaning
+    HallwayEntrance = (5, " ")  # depending on the hallway it refers to is either a Floor or Wall
+    FogOfWar = (3, "~")         # tile of a place we cannot see yet
 
-    Message = (6, ".")         # tile for displaying a popup message
+    Message = (6, ".")          # tile for displaying a popup message
     Goal = (61, "G")            # tile for the goal, i.e. end of a level
-    Trigger = (9, "T")         # tile that calls a function on walk, i.e. event tile
-    Teleport = (91, "t")       # special trigger for teleporting between maps
-    Decoration = (11, "d")     # simply displays a specified character
+    Trigger = (9, "T")          # tile that calls a function on walk, i.e. event tile
+    Teleport = (91, "t")        # special trigger for teleporting between maps
+    Decoration = (11, "d")      # simply displays a specified character
 
     Wall = (1, "#")
     Obstacle = (2, "o")
@@ -291,7 +290,7 @@ class ControllableTile(Tile):
         return self.__controllable.get_img()
 
     def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
-        return True # todo check
+        return True  # todo check
 
     @property
     def controllable(self) -> Controllable:

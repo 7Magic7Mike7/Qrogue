@@ -54,6 +54,7 @@ class MapManager:
 
             if callback is not None:
                 callback()
+
         if no_thread:
             fill()
         else:
@@ -129,7 +130,8 @@ class MapManager:
         next_map = LevelInfo.get_next(self.__cur_map.internal_name, self.__save_data.check_level)
         if next_map:
             next_display = LevelInfo.convert_to_display_name(next_map)
-            self.__start_level_transition(self.__cur_map.name, next_display, lambda: self.load_map(next_map, None, None))
+            self.__start_level_transition(self.__cur_map.name, next_display,
+                                          lambda: self.load_map(next_map, None, None))
         else:
             error_text = ErrorConfig.invalid_map(self.__cur_map.name, f"Failed to load next map after "
                                                                       f"\"{self.__cur_map.name}\". ")
@@ -142,21 +144,21 @@ class MapManager:
         if confirmed == 0:
             self.__load_next()
         elif confirmed == 1:
-            pass    # stay
+            pass  # stay
         elif confirmed == 2:
             self.__load_back()
 
     def __trigger_event(self, event_id: str):
         if event_id.lower() == MapConfig.done_event_id():
-            #event_id = MapConfig.specific_done_event_id(self.__cur_map.internal_name)
-            #self.__save_data.trigger_event(event_id)
+            # event_id = MapConfig.specific_done_event_id(self.__cur_map.internal_name)
+            # self.__save_data.trigger_event(event_id)
             prev_level_data = self.__save_data.get_level_data(self.__cur_map.internal_name)
             duration, _ = time_diff(cur_datetime(), self.__level_timer)
             new_level_data = self.__save_data.complete_level(self.__cur_map.internal_name, duration,
                                                              score=self.__cur_map.robot.score)
 
             if self.__cur_map.get_type() is MapType.Expedition:
-                self.__save_data.add_to_achievement(Achievement.CompletedExpedition, 1)    # todo: add score instead of 1?
+                self.__save_data.add_to_achievement(Achievement.CompletedExpedition, 1)  # todo: add score instead of 1?
             self.__save_data.save(is_auto_save=True)
 
             CommonQuestions.proceed_summary(self.__cur_map.name, new_level_data.score, new_level_data.duration,
@@ -167,7 +169,7 @@ class MapManager:
         elif event_id.lower().startswith(MapConfig.unlock_prefix()):
             self.__save_data.unlock(event_id[len(MapConfig.unlock_prefix()):])
         else:
-            if event_id in self.__temp_level_event_storage:     # todo: is score needed? a simple flag might be better
+            if event_id in self.__temp_level_event_storage:  # todo: is score needed? a simple flag might be better
                 event_score, event_done_score = self.__temp_level_event_storage[event_id]
                 if event_score < event_done_score:
                     Config.check_reachability("MapManager.__trigger_event() for existing event")

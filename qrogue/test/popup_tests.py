@@ -60,16 +60,16 @@ class MyTestCase(unittest.TestCase):
 
     def test_screen_check_description(self):
         # Screen dimensions used in visual test: (31, 135)
-        width = 104     # a width that previously produced incorrect splits
+        width = 104  # a width that previously produced incorrect splits
         # the correct splits for the given width
         expected_level = [
             "You should see seven rooms next to each other. While the specific colors don't matter, it is important",
             "to be able to distinguish different elements of the game world (although they also differ in their",
             "character representation).",
             "- //12Pickups// are designed to be //15blue// lower-case characters like //11s//, //11k//, //11c// or "
-                "//11g//.",
+            "//11g//.",
             "- Tiles containing //12Puzzles// are meant to be //15red// and are //11digits//, //11!//, //11?// and "
-                "inverted //11B// for bosses.",
+            "inverted //11B// for bosses.",
             "- The //12Goal// //11G// of a level and the //12Player Character// //11Q// are usually //15green//.",
             "- Level-shaping tiles like //11#// and //11o// are //15white// inverted",
             "- Lastly, simple //15white// dots //11.// are messages that open Popups",
@@ -107,7 +107,7 @@ class MyTestCase(unittest.TestCase):
     def test_small_message_split(self):
         # test split on a small in-game message (l0k0v0, *keyFound)
         # Screen dimensions used in visual test: (31, 135)
-        dimensions = 11, 100        # Popup dimensions retrieved from visual tests
+        dimensions = 11, 100  # Popup dimensions retrieved from visual tests
         padding = 2
         # don't use our padding because it is already considered in __split_compare()
         width = MultilinePopup.popup_width_to_content_width(dimensions[1], padding=0)
@@ -115,16 +115,15 @@ class MyTestCase(unittest.TestCase):
                      "on the //05top left//."
         expected_split = [
             "Great, you found a //02Key//. The //05number of keys// you hold is displayed in the //05HUD// on the "
-                "//05top//",
+            "//05top//",
             "//05left//.",
         ]
         self._split_compare(expected_split, input_text, width, padding, ignore_padding=True)
 
-
     def test_large_message_split(self):
         # test split on a large in-game message
         # Screen dimensions used in visual test: (31, 135)
-        dimensions = 11, 100        # Popup dimensions retrieved from visual tests
+        dimensions = 11, 100  # Popup dimensions retrieved from visual tests
         padding = 2
         # don't use our padding because it is already considered in __split_compare()
         width = MultilinePopup.popup_width_to_content_width(dimensions[1], padding=0)

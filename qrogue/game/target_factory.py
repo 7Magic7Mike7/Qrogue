@@ -23,6 +23,7 @@ class EnemyFactory(ABC):
                 val = self.__next_id
                 self.__next_id += 1
                 return val
+
             self._next_id = _next_id
         else:
             self._next_id = next_id_callback
@@ -74,7 +75,8 @@ class EnemyTargetFactory(EnemyFactory):
             reward = self.__target_difficulty.produce_reward(rm)
 
         target_stv = self.__target_difficulty.create_statevector(robot, rm)
-        if self.__input_difficulty is None: input_stv = None
+        if self.__input_difficulty is None:
+            input_stv = None
         else:
             max_rerolls = 10
             input_stv = self.__input_difficulty.create_statevector(robot, rm)
@@ -145,6 +147,7 @@ class RiddleFactory:
                 val = self.__next_id
                 self.__next_id += 1
                 return val
+
             self._next_id = _next_id
         else:
             self._next_id = next_id_callback
@@ -175,6 +178,7 @@ class BossFactory:
                 val = self.__next_id
                 self.__next_id += 1
                 return val
+
             self._next_id = _next_id
         else:
             self._next_id = next_id_callback
@@ -211,7 +215,7 @@ class BossFactory:
 
         reward = rm.get_element(self.__reward_pool, msg="BossFactory_reward")
         return Boss(self._next_id(), [(Instruction.compute_stv(gates_for_target, self.__robot.num_of_qubits),
-                                      Instruction.compute_stv(gates_for_input, self.__robot.num_of_qubits))], reward)
+                                       Instruction.compute_stv(gates_for_input, self.__robot.num_of_qubits))], reward)
 
     def __prepare_gate(self, rm: MyRandom, gate: Instruction, qubit_count: List[int], qubits: List[int]) -> bool:
         gate_qubits = qubits.copy()

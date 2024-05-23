@@ -1,4 +1,3 @@
-
 from abc import abstractmethod
 from typing import Callable, Any, Optional
 
@@ -123,6 +122,7 @@ class Teleport(WalkTriggerTile):
         def callback(confirm: int = 0):
             if confirm == 0:
                 self.__load_map(self.__target_map, self.__room)
+
         if self.__target_map == MapConfig.back_map_string():
             CommonQuestions.GoingBack.ask(callback)
         else:
@@ -140,6 +140,7 @@ class Tunnel(Teleport):
     """
     Like Teleport but locally. So no map is loaded, just the position of the player changes
     """
+
     def __init__(self, load_room: Callable[[str, Optional[Coordinate]], None], target_room: str,
                  pos: Coordinate):
         super().__init__(load_room, target_room, pos)
@@ -268,6 +269,7 @@ class Collectible(WalkTriggerTile):
             name = collectible.name()
             desc = collectible.description(check_unlocks_callback)
             pickup_message_callback("Collectible", f"You picked up: {ColorConfig.highlight_object(name)}\n{desc}")
+
         Collectible.__pickup_message = pickup_message
 
     def __init__(self, collectible: LogicalCollectible, secret_type: bool = False):

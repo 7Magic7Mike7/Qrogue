@@ -31,7 +31,7 @@ class NewSaveData:
 
     @staticmethod
     def empty_save_state() -> str:
-        save_state =  f"{_SaveDataGenerator.header()}\n"
+        save_state = f"{_SaveDataGenerator.header()}\n"
         save_state += f"{datetime2str(cur_datetime())}\n"
         save_state += f"{_SaveDataGenerator.gates_header()}\n"
         save_state += f"{_SaveDataGenerator.levels_header()}\n"
@@ -70,9 +70,9 @@ class NewSaveData:
         else:
             self.__is_fresh_save = False
 
-        self.__date_time = cur_datetime()    # date and time of the latest save
+        self.__date_time = cur_datetime()  # date and time of the latest save
         self.__gates: List[Instruction] = []
-        self.__levels: Dict[str, LevelData] = {}    # key is a level's internal name
+        self.__levels: Dict[str, LevelData] = {}  # key is a level's internal name
         self.__achievements: Dict[str, Achievement] = {}
         self.__unlocks: Dict[str, datetime] = {}
         self.__has_unsaved_changes = False
@@ -208,7 +208,7 @@ class NewSaveData:
             return True, CommonInfos.NothingToSave
 
         try:
-            self.__date_time = cur_datetime()   # update datetime of the latest save (=now)
+            self.__date_time = cur_datetime()  # update datetime of the latest save (=now)
             data = self.to_string()
             if is_auto_save:
                 PathConfig.write_auto_save(data)
@@ -292,10 +292,10 @@ class _SaveDataGenerator(SaveDataVisitor):
 
     @staticmethod
     def gate_separator() -> str:
-        return ";"      # the general separator can be used to separate gates for improved readability
+        return ";"  # the general separator can be used to separate gates for improved readability
 
-    def load(self, file_data) -> Tuple[datetime, List[Instruction],
-            List[LevelData], List[Tuple[str, datetime]], List[Achievement]]:
+    def load(self, file_data) \
+            -> Tuple[datetime, List[Instruction], List[LevelData], List[Tuple[str, datetime]], List[Achievement]]:
         input_stream = InputStream(file_data)
         lexer = SaveDataLexer(input_stream)
         token_stream = CommonTokenStream(lexer)
@@ -376,8 +376,8 @@ class _SaveDataGenerator(SaveDataVisitor):
 
     #####################################
 
-    def visitStart(self, ctx: SaveDataParser.StartContext) -> Tuple[datetime, List[Instruction], List[LevelData],
-            List[Tuple[str, datetime]], List[Achievement]]:
+    def visitStart(self, ctx: SaveDataParser.StartContext)\
+            -> Tuple[datetime, List[Instruction], List[LevelData], List[Tuple[str, datetime]], List[Achievement]]:
         date_time = self.visitDate_time(ctx.date_time())
         gates = self.visitGates(ctx.gates())
         levels = self.visitLevels(ctx.levels())

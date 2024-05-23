@@ -10,7 +10,8 @@ class ExpeditionMap(Map):
     def __init__(self, seed: int, rooms: List[List[Optional[Room]]], controllable: Controllable, spawn_room: Coordinate,
                  check_achievement: Callable[[str], bool], trigger_event: Callable[[str], None]):
         def show_description():
-            pass    # expeditions don't have anything to show at the moment
+            pass  # expeditions don't have anything to show at the moment
+
         meta_data = MapMetaData(f"Expedition {seed}", None, True, show_description)
         super().__init__(meta_data, f"{MapConfig.expedition_map_prefix()}{seed}", seed, rooms, controllable, spawn_room,
                          check_achievement, trigger_event)

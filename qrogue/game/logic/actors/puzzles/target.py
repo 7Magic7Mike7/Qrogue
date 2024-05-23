@@ -25,15 +25,15 @@ class Target(ABC):
         """
         self.__id = id_
         if isinstance(target, StateVector):
-            self.__target: Callable[[], StateVector] = lambda : target
+            self.__target: Callable[[], StateVector] = lambda: target
         else:
             self.__target: Callable[[], StateVector] = target
 
         if input_ is None:
             base_stv = StateVector.create_zero_state_vector(target.num_of_qubits)
-            self.__input = lambda : base_stv
+            self.__input = lambda: base_stv
         elif isinstance(input_, StateVector):
-            self.__input: Callable[[], StateVector] = lambda : input_
+            self.__input: Callable[[], StateVector] = lambda: input_
         else:
             self.__input: Callable[[], StateVector] = input_
 

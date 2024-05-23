@@ -113,7 +113,7 @@ class CommonInfos(Enum):
 
 class CommonQuestions(Enum):
     GoingBack = (Config.scientist_name(), "We are not done yet. \nDo you really want to go back?")
-    ProceedToNextMap = (Config.scientist_name(), "Looks like we cleared this map. Shall we proceed directly to the " 
+    ProceedToNextMap = (Config.scientist_name(), "Looks like we cleared this map. Shall we proceed directly to the "
                                                  "next one?", ["Proceed", "Stay", "Back to world"])
     UseTeleporter = (Config.system_name(), "Do you want to use this Teleporter?")
     OpenUserDataFolder = (Config.system_name(), "Do you want to open the folder containing your user data with your "
@@ -124,9 +124,9 @@ class CommonQuestions(Enum):
     def proceed_summary(level_name: str, score: int, duration: int, total_score: int, callback: Callable[[int], None],
                         prev_values: Optional[Tuple[int, int]] = None):
         text = f"{level_name}\n" \
-                f"Score:       {score}\n" \
-                f"Duration:    {duration}s\n" \
-                f"Total Score: {total_score}"
+               f"Score:       {score}\n" \
+               f"Duration:    {duration}s\n" \
+               f"Total Score: {total_score}"
         if prev_values is not None:
             text += f"\n\n" \
                     f"Highscore:   {prev_values[0]}\n" \

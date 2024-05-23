@@ -36,7 +36,7 @@ class _HL:
     robot = CC.highlight_object("Robot")
     special_rooms = CC.highlight_object("Special Rooms")
     state = CC.highlight_object("State")
-    #state_vectors = CC.highlight_object("StateVectors")
+    # state_vectors = CC.highlight_object("StateVectors")
     target_state = CC.highlight_object("Target State")
     target_stv = CC.highlight_object("Target State Vector")
 
@@ -150,7 +150,7 @@ class _HL:
     # keys
     action_keys = CC.highlight_key("Space") + " or " + CC.highlight_key("Enter")
     cancel_keys = CC.highlight_key("Backspace") + " or " + CC.highlight_key("Shift+A") + " or " + \
-        CC.highlight_key("Shift+Left")
+                  CC.highlight_key("Shift+Left")
     help_keys = CC.highlight_key("H")
     navigation_keys = CC.highlight_key("WASD") + " or " + CC.highlight_key("Arrow Keys")
     pause_keys = CC.highlight_key("P") + " or " + CC.highlight_key("TAB")
@@ -168,21 +168,21 @@ class _HL:
     teleport_tile = CC.highlight_tile("t")
 
 
-class HelpText(Enum):       # todo: import Controls to replace static key-mentions with dynamic ones?
+class HelpText(Enum):  # todo: import Controls to replace static key-mentions with dynamic ones?
     Controls = f"Move                  -   {_HL.navigation_keys}\n" \
-            f"Navigate menus        -   {_HL.navigation_keys}\n" \
-            f"Confirm               -   {_HL.action_keys}\n" \
-            f"Cancel/Back           -   {_HL.cancel_keys}\n" \
-            f"Scroll in message     -   {_HL.navigation_keys}\n" \
-            f"Close message         -   {_HL.action_keys}\n" \
-            f"Reopen last message   -   {_HL.help_keys}\n" \
-            f"Pause                 -   {_HL.pause_keys}\n" \
-            f"Selection shortcuts   -   {_HL.shortcuts}\n" \
-            "\n" \
-            f"[Should you ever get stuck try to open the pause menu with {_HL.pause_keys} and then select continue. " \
-            f"This way the game refocuses and renders again. In case this still doesn't help or doesn't even work you "\
-            f"can force-quit the game by pressing {_HL.shutdown_keys}. This will still save everything so it is the " \
-            "preferred option over simply closing the window!]"  # let's not mention ESC since it could lead to bugs
+               f"Navigate menus        -   {_HL.navigation_keys}\n" \
+               f"Confirm               -   {_HL.action_keys}\n" \
+               f"Cancel/Back           -   {_HL.cancel_keys}\n" \
+               f"Scroll in message     -   {_HL.navigation_keys}\n" \
+               f"Close message         -   {_HL.action_keys}\n" \
+               f"Reopen last message   -   {_HL.help_keys}\n" \
+               f"Pause                 -   {_HL.pause_keys}\n" \
+               f"Selection shortcuts   -   {_HL.shortcuts}\n" \
+               "\n" \
+               f"[Should you ever get stuck try to open the pause menu with {_HL.pause_keys} and then select continue. " \
+               f"This way the game refocuses and renders again. In case this still doesn't help or doesn't even work you " \
+               f"can force-quit the game by pressing {_HL.shutdown_keys}. This will still save everything so it is the " \
+               "preferred option over simply closing the window!]"  # let's not mention ESC since it could lead to bugs
 
     Fight = \
         f"Basically {_HL.quantum_computing} is just a lot of complex-valued {_HL.mat_vec_mul}:\n" \
@@ -310,9 +310,9 @@ class HelpText(Enum):       # todo: import Controls to replace static key-mentio
 
     Options = "7"
     Welcome = Game + \
-        "\nBut before you can explore the universe you have to complete a trainings program.\n" \
-        f"Now close this dialog by pressing {_HL.action_keys}. Select {_HL.start_journey} with " \
-        f"{_HL.navigation_keys} and confirm your selection with {_HL.action_keys} to begin!"
+              "\nBut before you can explore the universe you have to complete a trainings program.\n" \
+              f"Now close this dialog by pressing {_HL.action_keys}. Select {_HL.start_journey} with " \
+              f"{_HL.navigation_keys} and confirm your selection with {_HL.action_keys} to begin!"
 
     def __init__(self, text: str):
         self.__text = text
@@ -326,9 +326,9 @@ def get_filtered_help_texts() -> List[HelpText]:
     return [
         HelpText.Game,
         HelpText.Controls,
-        #HelpText.Pause,
+        # HelpText.Pause,
         HelpText.Fight, HelpText.Ket, HelpText.ParallelGates, HelpText.SerialGates, HelpText.Amplitudes,
-        #HelpText.Riddle, #HelpText.Challenge,
+        # HelpText.Riddle, #HelpText.Challenge,
     ]
 
 

@@ -45,7 +45,7 @@ class QuantumSimulator:
         self.__simulator = StatevectorSimulator()
 
     def run(self, circuit: QuantumCircuit, do_transpile: bool = False) -> List[complex]:
-        circuit: QiskitCircuit = circuit.circuit    # unwrap circuit
+        circuit: QiskitCircuit = circuit.circuit  # unwrap circuit
 
         if do_transpile:
             circuit = transpile(circuit, self.__simulator)
@@ -58,7 +58,7 @@ class QuantumSimulator:
             # We only do 1 shot since we don't need any measurement but the StateVector
             job = self.__simulator.run(circuit, shots=1)
 
-        return job.result().get_statevector()   # todo maybe pass circuit as experiment?
+        return job.result().get_statevector()  # todo maybe pass circuit as experiment?
 
 
 class UnitarySimulator:
@@ -66,7 +66,7 @@ class UnitarySimulator:
         self.__backend = Aer.get_backend('unitary_simulator')
 
     def execute(self, circuit: QuantumCircuit, decimals: int) -> List[List[complex]]:
-        circuit: QiskitCircuit = circuit.circuit    # unwrap circuit
+        circuit: QiskitCircuit = circuit.circuit  # unwrap circuit
 
         job = execute(circuit, self.__backend)
         result = job.result()

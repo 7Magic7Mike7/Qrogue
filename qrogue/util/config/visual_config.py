@@ -46,7 +46,7 @@ class ColorConfig:
 
     ERROR_COLOR = PyCuiColors.RED_ON_BLUE
     TEXT_HIGHLIGHT = "//"
-    REGEX_TEXT_HIGHLIGHT = "//"     # regex recognizable version of TEXT_HIGHLIGHT (some characters need escaping)
+    REGEX_TEXT_HIGHLIGHT = "//"  # regex recognizable version of TEXT_HIGHLIGHT (some characters need escaping)
     HIGHLIGHT_WIDTH = len(TEXT_HIGHLIGHT)
     __DIC = {
         str(ColorCode.TILE_HIGHLIGHT):      PyCuiColors.WHITE_ON_BLACK,
@@ -61,12 +61,12 @@ class ColorConfig:
         str(ColorCode.INV_KEY_HIGHLIGHT):       PyCuiColors.MAGENTA_ON_BLACK,
         str(ColorCode.INV_WORD_HIGHLIGHT):      PyCuiColors.BLUE_ON_BLACK,
 
-        str(ColorCode.POPUP_META_INFO):     PyCuiColors.WHITE_ON_MAGENTA,
+        str(ColorCode.POPUP_META_INFO):         PyCuiColors.WHITE_ON_MAGENTA,
 
-        str(ColorCode.PUZZLE_WRONG_AMPLITUDE):     PyCuiColors.RED_ON_BLACK,
-        str(ColorCode.PUZZLE_CORRECT_AMPLITUDE):   PyCuiColors.GREEN_ON_BLACK,
-        str(ColorCode.PUZZLE_HEADLINES):    STV_HEADING_COLOR,
-        str(ColorCode.PUZZLE_KET):          QUBIT_CONFIG_COLOR,
+        str(ColorCode.PUZZLE_WRONG_AMPLITUDE):      PyCuiColors.RED_ON_BLACK,
+        str(ColorCode.PUZZLE_CORRECT_AMPLITUDE):    PyCuiColors.GREEN_ON_BLACK,
+        str(ColorCode.PUZZLE_HEADLINES):            STV_HEADING_COLOR,
+        str(ColorCode.PUZZLE_KET):                  QUBIT_CONFIG_COLOR,
     }
 
     @staticmethod
@@ -102,7 +102,7 @@ class ColorConfig:
         character_removals = 0
         # check how many meta-characters (indicating color rules) we have in our line
         highlight_index = ColorConfig.__find(paragraph, 0, width)
-        start = True    # whether we search for the start of a highlighted section or an end
+        start = True  # whether we search for the start of a highlighted section or an end
         while highlight_index > -1:
             highlight_index += ColorConfig.HIGHLIGHT_WIDTH
             if start:
@@ -242,15 +242,15 @@ class PopupConfig:
     __LEFT_POS = 5      # five columns right of left
     # just a very large number that we definitely won't use for regular positions to indicate +0 and -0:
     __ZERO_POS = 1_000_000
-    __POSITIONS = [     # None = center
+    __POSITIONS = [  # None = center
         (__CENTER_POS, __CENTER_POS), (__CENTER_POS, __TOP_POS), (__RIGHT_POS, __TOP_POS), (__RIGHT_POS, __CENTER_POS),
         (__RIGHT_POS, __BOT_POS), (__CENTER_POS, __BOT_POS), (__LEFT_POS, __BOT_POS), (__LEFT_POS, __CENTER_POS),
         (__LEFT_POS, __TOP_POS),
         # special handcrafted positions
-        (+__ZERO_POS, 6),     # for matrix popup on top of normal matrix widget
+        (+__ZERO_POS, 6),  # for matrix popup on top of normal matrix widget
     ]
-    __INDEX_X = 0   # position of X in position tuple
-    __INDEX_Y = 1   # position of Y in position tuple
+    __INDEX_X = 0  # position of X in position tuple
+    __INDEX_Y = 1  # position of Y in position tuple
 
     PADDING_X = 2
     PADDING_Y = 2
@@ -288,7 +288,7 @@ class PopupConfig:
             if val == -PopupConfig.__ZERO_POS: return False, 0
             if val > 0: return True, val
             if val < 0: return False, -val  # since we return a distance, the value needs to be positive
-            return None, 0      # val must be "normal" 0 (or None corresponding to 0)
+            return None, 0  # val must be "normal" 0 (or None corresponding to 0)
         else:
             return PopupConfig.__resolve_pos_val(PopupConfig.default_position(), val_index)
 
@@ -384,13 +384,13 @@ def split_text(text: str, width: int, padding: int, handle_error: Callable[[str]
     :param handle_error: to handle potential errors
     :return: list of text parts with a maximum of #width characters, every text part is rstrip()-ed     # todo: test thoroughly
     """
-    width -= padding * 2    # remove the space needed for padding
+    width -= padding * 2  # remove the space needed for padding
     lines = []
     for paragraph in text.splitlines():
-        paragraph = paragraph.rstrip()   # remove any redundant whitespace after the paragraph
+        paragraph = paragraph.rstrip()  # remove any redundant whitespace after the paragraph
         index = 0
         prepend: Optional[str] = None
-        while True:     # technically: while index < len(paragraph), but we can only exit the loop with our break
+        while True:  # technically: while index < len(paragraph), but we can only exit the loop with our break
             cur_part = paragraph[index:]
 
             # the beginning of a paragraph can have intentional whitespace for indentation, created lines are stripped

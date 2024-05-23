@@ -1,4 +1,3 @@
-
 from abc import ABC
 from typing import Tuple, List, Optional
 
@@ -53,7 +52,7 @@ class Boss(Target, ABC):
     def is_reached(self, state_vector: StateVector, circ_matrix: CircuitMatrix) -> Tuple[bool, Optional[Collectible]]:
         end_index = self.__index
         reward = None
-        while self.__index != end_index or reward is None:    # todo this way we do not see the different puzzles if the player solves it in less steps than the number of puzzles
+        while self.__index != end_index or reward is None:  # todo this way we do not see the different puzzles if the player solves it in less steps than the number of puzzles
             res, reward = super().is_reached(state_vector, circ_matrix)
             # return False if the current puzzle was not reached
             if not res:

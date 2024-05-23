@@ -78,7 +78,7 @@ class FragmentStorage:
             if prev.end != cur.start:
                 formatted_frags.append([self.__og_text[prev.end:cur.start], self.__og_color])
             prev = cur
-        formatted_frags.append(prev.format())   # append the last color
+        formatted_frags.append(prev.format())  # append the last color
         # append the text after the last color
         if prev.end != len(self.__og_text):
             formatted_frags.append([self.__og_text[prev.end:], self.__og_color])
@@ -115,8 +115,8 @@ class MultiColorRenderer(Renderer):
             The text shortened to fit within given space
         """
 
-        padx, _       = ui_element.get_padding()
-        _, width      = ui_element.get_absolute_dimensions()
+        padx, _ = ui_element.get_padding()
+        _, width = ui_element.get_absolute_dimensions()
 
         render_text_length = width - (2 * padx)
         # this line is the only difference to the original (super) function
@@ -128,11 +128,9 @@ class MultiColorRenderer(Renderer):
 
         if len(line) - start_pos < render_text_length:
             if centered:
-                render_text = '{}'.format(  line[start_pos:].center(render_text_length,
-                                            ' '))
+                render_text = '{}'.format(line[start_pos:].center(render_text_length, ' '))
             else:
-                render_text = '{}{}'.format(line[start_pos:],
-                                            ' ' * (render_text_length - len(line[start_pos:])))
+                render_text = '{}{}'.format(line[start_pos:], ' ' * (render_text_length - len(line[start_pos:])))
         else:
             render_text = line[start_pos:start_pos + render_text_length]
 

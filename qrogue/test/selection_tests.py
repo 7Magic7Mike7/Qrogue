@@ -2,7 +2,7 @@ from qrogue.test import test_util
 
 
 def test():
-    options = ["X Gate", "H Gate", "X Gate", "CX Gate",]# "Remove", "-Back-"]
+    options = ["X Gate", "H Gate", "X Gate", "CX Gate", ]  # "Remove", "-Back-"]
     sel = test_util.DummySelectionWidget(2, True, False)
     sel.set_data(data=(
         options,

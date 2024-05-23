@@ -25,7 +25,7 @@ class ValidationTests(unittest.TestCase):
         start = cur_datetime()
         j = 0
         for i in range(100_000):
-            j += i**2
+            j += i ** 2
         print(j)
         end = cur_datetime()
 
@@ -70,7 +70,6 @@ class ValidationTests(unittest.TestCase):
 
                     if "Finished level" in line:
                         filtered_file.write("\n\n\n\n\n")
-
 
     def test_versioning(self):
         from importlib.metadata import version
@@ -144,7 +143,7 @@ class ValidationTests(unittest.TestCase):
                 print("antlr4-python3-runtime version should be fine. If you want to be sure though, we recommend to "
                       "up- or downgrade to either 4.10 or 4.12")
         except:
-           print("Cannot check version of antlr4. Please use 'pip list' and check yourself.")
+            print("Cannot check version of antlr4. Please use 'pip list' and check yourself.")
 
         if versioning_incorrect:
             print("Please consider using supported versions for Python and modules because otherwise the game likely "
