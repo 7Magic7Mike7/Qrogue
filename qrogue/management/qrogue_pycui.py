@@ -622,6 +622,7 @@ class QrogueCUI(PyCUI):
             self.__key_logger.flush_if_useful()
             self.__key_logger.set_active(False)      # stop logging until we started a level again
         if data and data != self.__rm.seed:
+            Config.check_reachability("switch_to_menu's seed setting")
             seed = data  # todo: I'm not sure if it is allowed to set a different seed than self.__rm.seed here
         else:
             seed = self.__rm.seed
