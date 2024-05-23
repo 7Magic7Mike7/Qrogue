@@ -518,8 +518,7 @@ class QrogueCUI(PyCUI):
                     pass    # ignore ESC because this makes you leave the CUI
                 else:
                     if GameplayConfig.log_keys() and not self.is_simulating:
-                        if self.__map_manager.in_level:
-                            self.__key_logger.log(self.__controls, key_pressed)
+                        self.__key_logger.log(self.__controls, key_pressed)
                         self.__ow_key_logger.log(self.__controls, key_pressed)
                     super(QrogueCUI, self)._handle_key_presses(key_pressed)
         elif key_pressed in self.__controls.get_keys(Keys.StopSimulator):
@@ -621,6 +620,7 @@ class QrogueCUI(PyCUI):
     def _switch_to_menu(self, data=None) -> None:
         if self.__key_logger and self.__key_logger.is_initialized:
             self.__key_logger.flush_if_useful()
+            self.__key_logger.set_active(False)      # stop logging until we started a level again
         if data and data != self.__rm.seed:
             seed = data  # todo: I'm not sure if it is allowed to set a different seed than self.__rm.seed here
         else:
@@ -649,7 +649,7 @@ class QrogueCUI(PyCUI):
     def _switch_to_training(self, data=None):
         if data:
             robot, enemy = data
-            self.__training.set_data(robot, enemy, False, False)
+            self.__training.set_data(robot, enemy, False)
         self.apply_widget_set(self.__training)
 
     def __use_workbench(self, direction: Direction, controllable: Controllable):
@@ -718,16 +718,14 @@ class QrogueCUI(PyCUI):
         if data is not None:
             robot = data[0]
             enemy = data[1]
-            self.__fight.set_data(robot, enemy, self.__map_manager.in_expedition,
-                                  self.__map_manager.show_individual_qubits)
+            self.__fight.set_data(robot, enemy, self.__map_manager.show_individual_qubits)
         self.apply_widget_set(self.__fight)
 
     def _switch_to_boss_fight(self, data) -> None:
         if data is not None:
             robot = data[0]
             boss = data[1]
-            self.__boss_fight.set_data(robot, boss, self.__map_manager.in_expedition,
-                                       self.__map_manager.show_individual_qubits)
+            self.__boss_fight.set_data(robot, boss, self.__map_manager.show_individual_qubits)
         self.apply_widget_set(self.__boss_fight)
 
     def __open_riddle(self, robot: Robot, riddle: Riddle):
@@ -737,8 +735,7 @@ class QrogueCUI(PyCUI):
         if data is not None:
             robot = data[0]
             riddle = data[1]
-            self.__riddle.set_data(robot, riddle, self.__map_manager.in_expedition,
-                                   self.__map_manager.show_individual_qubits)
+            self.__riddle.set_data(robot, riddle, self.__map_manager.show_individual_qubits)
         self.apply_widget_set(self.__riddle)
 
     def __open_challenge(self, robot: Robot, challenge: Challenge):
@@ -748,8 +745,7 @@ class QrogueCUI(PyCUI):
         if data is not None:
             robot = data[0]
             challenge = data[1]
-            self.__challenge.set_data(robot, challenge, self.__map_manager.in_expedition,
-                                      self.__map_manager.show_individual_qubits)
+            self.__challenge.set_data(robot, challenge, self.__map_manager.show_individual_qubits)
         self.apply_widget_set(self.__challenge)
 
     def _execute_transition(self, text_scrolls: List[TransitionWidgetSet.TextScroll], next_state: "QrogueCUI._State",

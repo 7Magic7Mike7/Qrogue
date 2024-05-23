@@ -18,6 +18,7 @@ class KeyLogger:
         self.__save_file: Optional[str] = None
         self.__buffer: Optional[str] = None
         self.__keystrokes = 0   # count how many keys are logged to not persist empty or almost empty runs
+        self.__is_active = False    # whether log() should log or do nothing
 
         if write is None: self.__write = lambda path, text: PathConfig.write(path, text, may_exist=True, append=True)
         else: self.__write = write
@@ -29,13 +30,20 @@ class KeyLogger:
     def is_initialized(self) -> bool:
         return self.__save_file is not None and self.__buffer is not None
 
+    def set_active(self, active: bool):
+        self.__is_active = active
+
     def _append(self, text: str):
         self.__buffer += text
 
-    def reinit(self, seed: int, level_name: str, save_state: str, save_path: Optional[str] = None):
+    def reinit(self, seed: int, level_name: str, save_state: str, save_path: Optional[str] = None,
+               activate: bool = True):
         if self.is_initialized:
             # flush the old data if needed
             self.flush_if_useful()
+        if activate:    # reactivate if requested
+            self.set_active(True)
+
         # start a new logging session
         if save_path is None: self.__save_file = PathConfig.new_key_log_file(seed, self._is_for_levels())
         else: self.__save_file = save_path
@@ -46,11 +54,12 @@ class KeyLogger:
         self._append(save_state)
         self.__keystrokes = 0
 
-    def log(self, controls: Controls, key_pressed: int):
-        key = controls.encode(key_pressed)
-        self._append(key.to_char())
-        self.__keystrokes += 1
-        self._flush(force=False)
+    def log(self, controls: Controls, key_pressed: int, force: bool = False):
+        if self.__is_active or force:
+            key = controls.encode(key_pressed)
+            self._append(key.to_char())
+            self.__keystrokes += 1
+            self._flush(force=False)
 
     def flush_if_useful(self):
         """

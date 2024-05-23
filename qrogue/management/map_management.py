@@ -33,18 +33,9 @@ class MapManager:
                                                           self.load_map, callback_pack)
         self.__expedition_queue: List[ExpeditionMap] = []
         self.__cur_map: Map = None
-        self.__in_level = False
 
         self.__level_timer = cur_datetime()
         self.__temp_level_event_storage: Dict[str, Tuple[int, int]] = {}  # event name -> score, done_score
-
-    @property
-    def in_level(self) -> bool:
-        return self.__in_level
-
-    @property
-    def in_expedition(self) -> bool:
-        return self.__cur_map.get_type() is MapType.Expedition
 
     @property
     def show_individual_qubits(self) -> bool:
@@ -96,7 +87,6 @@ class MapManager:
                 level, success = generator.generate(map_seed, map_name)
                 if success:
                     self.__cur_map = level
-                    self.__in_level = True
                     self.__start_level(self.__cur_map)
                 else:
                     Popup.error(f"Failed to generate level \"{map_name}\"!", add_report_note=True)
@@ -127,7 +117,6 @@ class MapManager:
             if success:
                 robot.reset()
                 self.__cur_map = expedition
-                self.__in_level = True
                 self.__start_level(self.__cur_map)
             else:
                 Popup.error(f"Failed to create an expedition for seed = {map_seed}. Please try again with a different "
@@ -147,7 +136,6 @@ class MapManager:
             Popup.error(error_text, add_report_note=True)
 
     def __load_back(self):
-        self.__in_level = False
         self.__exit_map()
 
     def __proceed(self, confirmed: int = 0):
@@ -176,10 +164,6 @@ class MapManager:
                                             None if prev_level_data is None
                                             else (prev_level_data.total_score, prev_level_data.duration))
 
-            #if self.__save_data.check_unlocks(Unlocks.ProceedChoice):
-            #    CommonQuestions.ProceedToNextMap.ask(self.__proceed)    # todo: ask only if we are currently replaying the level (if no proceed, go back to hub)
-            #else:
-            #    self.__proceed()
         elif event_id.lower().startswith(MapConfig.unlock_prefix()):
             self.__save_data.unlock(event_id[len(MapConfig.unlock_prefix()):])
         else:

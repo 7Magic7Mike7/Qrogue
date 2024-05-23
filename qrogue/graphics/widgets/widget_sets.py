@@ -1537,10 +1537,6 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
     def _sign_offset(self) -> str:
         return "\n" * (1 + 2 ** (self._robot.num_of_qubits - 1))  # 1 (headline) + middle of actual Stv
 
-    @property
-    def _is_expedition(self) -> bool:
-        return self.__in_expedition
-
     def _reposition_widgets(self, num_of_qubits: int):
         if num_of_qubits != self.__num_of_qubits:
             self.__num_of_qubits = num_of_qubits
@@ -1588,16 +1584,14 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
     def get_main_widget(self) -> WidgetWrapper:
         return self._choices.widget
 
-    def set_data(self, robot: Robot, target: Target, in_expedition: bool, tutorial_data: Any) -> None:
+    def set_data(self, robot: Robot, target: Target, tutorial_data: Any) -> None:
         """
         :param robot: the Robot that tries to solve the puzzle
         :param target: the Target of which the Robot should reach the StateVector
-        :param in_expedition: whether we're currently in a randomly generated expedition or level
         :param tutorial_data: additional data we might need for tutorial purposes
         """
         self._robot = robot
         self._target = target
-        self.__in_expedition = in_expedition
 
         self._reposition_widgets(robot.num_of_qubits)
 
@@ -1821,8 +1815,8 @@ class FightWidgetSet(ReachTargetWidgetSet):
                                              reopen_popup_callback, check_unlocks_callback)
         self.__flee_check = None
 
-    def set_data(self, robot: Robot, target: Enemy, in_expedition: bool, tutorial_data):
-        super(FightWidgetSet, self).set_data(robot, target, in_expedition, tutorial_data)
+    def set_data(self, robot: Robot, target: Enemy, tutorial_data):
+        super(FightWidgetSet, self).set_data(robot, target, tutorial_data)
         self.__flee_check = target.flee_check
 
     def _on_commit_fail(self) -> bool:
@@ -1869,8 +1863,8 @@ class BossFightWidgetSet(ReachTargetWidgetSet):
         self._robot.reset_static_gate(self.__prev_circuit_space)
         return True
 
-    def set_data(self, robot: Robot, target: Boss, in_expedition: bool, tutorial_data):
-        super(BossFightWidgetSet, self).set_data(robot, target, in_expedition, tutorial_data)
+    def set_data(self, robot: Robot, target: Boss, tutorial_data):
+        super(BossFightWidgetSet, self).set_data(robot, target, tutorial_data)
         self.__prev_circuit_space = robot.circuit_space
         robot.add_static_gate(target.static_gate)
 
@@ -1896,8 +1890,8 @@ class RiddleWidgetSet(ReachTargetWidgetSet):
         super().__init__(controls, render, logger, root, continue_exploration_callback, reopen_popup_callback,
                          check_unlocks_callback, "Give Up")
 
-    def set_data(self, robot: Robot, target: Riddle, in_expedition: bool, tutorial_data) -> None:
-        super(RiddleWidgetSet, self).set_data(robot, target, in_expedition, tutorial_data)
+    def set_data(self, robot: Robot, target: Riddle, tutorial_data) -> None:
+        super(RiddleWidgetSet, self).set_data(robot, target, tutorial_data)
         self._hud.set_data((robot, None, f"Remaining {RiddleWidgetSet.__TRY_PHRASING}: {target.attempts}"))
 
     def _on_commit_fail(self) -> bool:
@@ -1925,8 +1919,8 @@ class ChallengeWidgetSet(ReachTargetWidgetSet):
         super().__init__(controls, render, logger, root, continue_exploration_callback, reopen_popup_callback,
                          check_unlocks_callback)
 
-    def set_data(self, robot: Robot, target: Challenge, in_expedition: bool, tutorial_data) -> None:
-        super(ChallengeWidgetSet, self).set_data(robot, target, in_expedition, tutorial_data)
+    def set_data(self, robot: Robot, target: Challenge, tutorial_data) -> None:
+        super(ChallengeWidgetSet, self).set_data(robot, target, tutorial_data)
         if target.min_gates == target.max_gates:
             constraints = f"Constraints: Use exactly {target.min_gates} gates."
         else:
