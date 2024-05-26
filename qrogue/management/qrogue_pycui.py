@@ -342,7 +342,9 @@ class QrogueCUI(PyCUI):
         # INIT KEYS
         # add the general keys to everything except Transition, Menu and Pause
         for widget_set in widget_sets:
-            widget_set.add_key_command(self.__controls.get_keys(Keys.Pause), self.__pause_game, add_to_widgets=True)
+            # let widgets overwrite the pause key (e.g., disable pausing)
+            widget_set.add_key_command(self.__controls.get_keys(Keys.Pause), self.__pause_game, add_to_widgets=True,
+                                       overwrite_widgets=False)
             widget_set.add_key_command(self.__controls.get_keys(Keys.PopupReopen), self.__popup_history.show,
                                        add_to_widgets=True, overwrite=False)
 

@@ -97,13 +97,15 @@ class MyWidgetSet(WidgetSet, Renderable, ABC):
         return new_widget
 
     def add_key_command(self, keys: List[int], command: Callable[[], Any], add_to_widgets: bool = False,
-                        overwrite: bool = True) -> Any:
+                        overwrite: bool = True, overwrite_widgets: Optional[bool] = None) -> Any:
+        if overwrite_widgets is None:
+            overwrite_widgets = overwrite
         for key in keys:
             if overwrite or key not in self._keybindings:
                 super(MyWidgetSet, self).add_key_command(key, command)
         if add_to_widgets:
             for widget in self.get_widget_list():
-                widget.widget.add_key_command(keys, command, overwrite)
+                widget.widget.add_key_command(keys, command, overwrite_widgets)
 
     def render(self) -> None:
         self.__base_render(self.get_widget_list())
@@ -1510,6 +1512,8 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                 self.render()
 
         self.__circuit.widget.add_key_command(controls.action, use_circuit)
+        # disable pausing mid gate-placement
+        self.__circuit.widget.add_key_command(controls.get_keys(Keys.Pause), lambda: None, overwrite=True)
 
         def cancel_circuit():
             self.__circuit.abort_placement()
