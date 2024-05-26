@@ -62,7 +62,7 @@ class NewSaveData:
             self.__is_fresh_save = not path[-len(FileTypes.Save.value) - 1].isdigit()
             if not self.__is_fresh_save:
                 try:
-                    save_data = PathConfig.read(path, in_user_path=True)#.splitlines()
+                    save_data = PathConfig.read(path, in_user_path=True)
                 except FileNotFoundError:
                     Logger.instance().throw(NotImplementedError("This line should not be reachable! Please send us the "
                                                                 "log files so we can fix the issue as soon as "
