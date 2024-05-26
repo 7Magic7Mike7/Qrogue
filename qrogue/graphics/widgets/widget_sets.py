@@ -1136,11 +1136,8 @@ class PauseMenuWidgetSet(MyWidgetSet):
         texts = [enum_str(val, skip_type_prefix=True) for val in get_filtered_help_texts()] + [MyWidgetSet.BACK_STRING]
 
         def func(val: HelpText) -> Callable[[], bool]:
-            def cb():
-                Popup.generic_info(enum_str(val, skip_type_prefix=True), val.text)
-                return False
-
-            return cb
+            # the check for "is not None" leads to a return value of False (because we don't want to switch widgets)
+            return lambda: Popup.generic_info(enum_str(val, skip_type_prefix=True), val.text) is not None
 
         callbacks = [func(val) for val in get_filtered_help_texts()]
         callbacks.append(lambda: True)  # simple callback for "back"
