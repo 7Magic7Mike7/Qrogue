@@ -1221,10 +1221,9 @@ class HistoricWrapperWidget:
             self.__index = len(self.__history) - 1
             if render: self.render()
 
-    def clean_history(self) -> None:
-        if len(self.__history) > 0:
-            self.__history = [self.__history[-1]]  # only keep the latest element
-            self.__index = 0
+    def clear_history(self) -> None:
+        self.__history.clear()
+        self.__index = 0
 
     def render(self) -> None:
         if self._cur_data is not None:

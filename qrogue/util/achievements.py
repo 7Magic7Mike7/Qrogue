@@ -14,6 +14,7 @@ class Unlocks(enum.Enum):
 
     # puzzle unlocks
     ShowEquation = (55, "ShowEquation")  # whether to show the matrix vector multiplication above the circuit
+    PuzzleHistory = ShowEquation    # when checking for PuzzleHistory, the outcome is the same as for ShowEquation
     GateRemove = (52, "GateRemove")  # unlocked automatically
     CircuitReset = (50, "CircuitReset")  # unlocked after Tutorial
     PuzzleFlee = (51, "PuzzleFlee")  # unlocked in Level 1

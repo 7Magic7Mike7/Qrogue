@@ -28,7 +28,7 @@ class LevelInfo:
     __LEVEL_COMPLETION_UNLOCKS: Dict[str, List[Unlocks]] = {
         # newbie tutorials
         "l0k0v0": [Unlocks.MainMenuContinue, Unlocks.ShowEnergy, ],
-        "l0k0v1": [Unlocks.ShowEquation],
+        "l0k0v1": [Unlocks.ShowEquation, Unlocks.PuzzleHistory],
         "l0k0v4": [Unlocks.LevelSelection],
 
         # experienced tutorials are copied from newbie tutorials entered in init()

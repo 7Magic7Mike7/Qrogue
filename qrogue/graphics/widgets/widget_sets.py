@@ -1460,7 +1460,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         historic_widgets = [self.__circuit, self.__circuit_matrix, self.__stv_robot]
         if self.__dynamic_target: historic_widgets.append(self.__stv_target)
         if self.__dynamic_input: historic_widgets.append(self.__input_stv)
-        self.__history_widget = HistoricWrapperWidget(historic_widgets, render_widgets=True)
+        self.__history_widget = HistoricWrapperWidget(historic_widgets, render_widgets=True, save_initial_state=False)
 
         def jump_to_present(key: Keys):
             # key doesn't matter since we want to jump back to the present on every key press
@@ -1631,11 +1631,11 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             self.__result_widget.set_data(self._sign_offset + "=")
             self.__stv_target.set_data(target.state_vector)
 
+        self.__history_widget.clear_history()  # clean/reset history
         self._robot.update_statevector(input_stv=target.input_stv, use_energy=False, check_for_game_over=False)
-        self.__update_calculation(False)
+        self.__update_calculation(False)    # stores the puzzle's beginning state in history_widget
 
         self.__init_choices()
-        self.__history_widget.clean_history()  # clean/reset history
 
         self.__puzzle_timer = cur_datetime()
         # log info about the puzzle
@@ -1661,12 +1661,13 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
     def reset(self) -> None:
         self._choices.render_reset()
 
-    def save_puzzle_to_history(self, input_stv: StateVector, target_stv: StateVector):
-        self.__input_stv.set_data(input_stv)
-        self.__stv_target.set_data(target_stv)
-        # we don't know equality, and we don't care for this preview
-        self.__eq_widget.set_data(self._sign_offset + "=?=")
-        self.__history_widget.save_state(rerender=True, force=False)
+    def _save_puzzle_to_history(self, input_stv: StateVector, target_stv: StateVector):
+        if self._check_unlocks(Unlocks.PuzzleHistory):
+            self.__input_stv.set_data(input_stv)
+            self.__stv_target.set_data(target_stv)
+            # we don't know equality, and we don't care for this preview
+            self.__eq_widget.set_data(self._sign_offset + "=?=")
+            self.__history_widget.save_state(rerender=True, force=False)
 
     def __update_calculation(self, target_reached: bool):
         if self._check_unlocks(Unlocks.ShowEquation):
@@ -1678,12 +1679,13 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             if self.__dynamic_input: self.__input_stv.set_data(self._target.input_stv)
             if self.__dynamic_target: self.__stv_target.set_data(self._target.state_vector)
 
-            self.__history_widget.save_state(rerender=True, force=False)
-
             if diff_stv.is_zero:
                 self.__eq_widget.set_data(self._sign_offset + "===")
             else:
                 self.__eq_widget.set_data(self._sign_offset + "=/=")
+
+        if self._check_unlocks(Unlocks.PuzzleHistory):
+            self.__history_widget.save_state(rerender=True, force=False)
 
     def __init_choices(self):
         choices, objects = [], []  # Tuple[List[str], List[object]]
@@ -1887,7 +1889,7 @@ class BossFightWidgetSet(ReachTargetWidgetSet):
         robot.add_static_gate(target.static_gate)
 
         for target_stv, input_stv in target.puzzles:
-            self.save_puzzle_to_history(input_stv, target_stv)
+            self._save_puzzle_to_history(input_stv, target_stv)
 
     def _on_success(self):
         super()._on_success()
