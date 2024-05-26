@@ -159,15 +159,22 @@ class Message(WalkTriggerTile):
         return Message(LogicalMessage.create_with_title(f"Msg_{Message.__msg_counter}", title, text, False, None),
                        popup_times)
 
-    def __init__(self, message: LogicalMessage, popup_times: int = 1):
+    def __init__(self, message: LogicalMessage, popup_times: Optional[int] = 1):
         super().__init__(TileCode.Message)
         self.__message = message
-        if popup_times < 0:
-            popup_times = 99999     # display "everytime" the controllable steps on it
-        self.__times = popup_times
+        if popup_times is None or popup_times < 0:
+            self.__times: Optional[int] = None  # display "everytime" the controllable steps on it
+        else:
+            self.__times: Optional[int] = popup_times
+
+    @property
+    def _is_showable(self) -> bool:
+        if self.__times is None:
+            return True    # always show the message
+        return self.__times > 0
 
     def get_img(self):
-        if self.__times > 0:
+        if self._is_showable:
             if self.__message.id == "donemsg":
                 return TileCode.Goal.representation
             return "."
@@ -178,8 +185,9 @@ class Message(WalkTriggerTile):
         return True
 
     def _on_walk(self, direction: Direction, controllable: Controllable) -> bool:
-        self.__times -= 1
-        if self.__times >= 0:
+        if self._is_showable:
+            if self.__times is not None:
+                self.__times -= 1
             if Message.__show:
                 Message.__show(self.__message, self._explicit_trigger)
             else:
