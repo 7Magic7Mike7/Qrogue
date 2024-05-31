@@ -329,7 +329,12 @@ class LevelSelectWidgetSet(MyWidgetSet):
         highscores, durations = [], []
         for level_data in levels_data:
             internal_names.append(level_data.name)
-            display_names.append(LevelInfo.convert_to_display_name(level_data.name, True))
+            display_name = LevelInfo.convert_to_display_name(level_data.name, True)
+            if display_name is None:
+                Logger.instance().warn(f"No display name found for \"{level_data.name}\".", from_pycui=False)
+                display_names.append(f"\"{level_data.name}\"")
+            else:
+                display_names.append(display_name)
             highscores.append(f"#{level_data.total_score}")
             durations.append(f"{level_data.duration}s")
 
