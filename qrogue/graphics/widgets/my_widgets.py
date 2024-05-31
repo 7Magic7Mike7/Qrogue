@@ -1015,6 +1015,10 @@ class SelectionWidget(Widget):
             for i in range(len(self.__choices)):
                 self.__choices[i] = self.__choices[i].ljust(choice_length)
 
+        for i, val in enumerate(self.__choices):
+            if val is None:
+                self.__choices[i] = "-Error: no text specified-"
+
     def render(self) -> None:
         rows = [""] * self.rows
         cur_row = 0
