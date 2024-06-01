@@ -6,7 +6,7 @@ from typing import List, Callable, Optional, Tuple, Any, Union
 import py_cui
 from py_cui.widget_set import WidgetSet
 
-from qrogue.game.logic.actors import Boss, Enemy, Riddle, Challenge, Robot, BaseBot
+from qrogue.game.logic.actors import Enemy, Riddle, Challenge, Boss, Robot, BaseBot
 from qrogue.game.logic.actors.puzzles import Target
 from qrogue.game.logic.base import StateVector
 from qrogue.game.logic.collectibles import Collectible, instruction as gates
@@ -1881,7 +1881,7 @@ class FightWidgetSet(ReachTargetWidgetSet):
 
 
 class RiddleWidgetSet(ReachTargetWidgetSet):
-    __TRY_PHRASING = "edits"
+    _TRY_PHRASING = "edits"
 
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  continue_exploration_callback: Callable[[bool], None], reopen_popup_callback: Callable[[], None],
@@ -1896,16 +1896,16 @@ class RiddleWidgetSet(ReachTargetWidgetSet):
 
     def set_data(self, robot: Robot, target: Riddle, tutorial_data) -> None:
         super(RiddleWidgetSet, self).set_data(robot, target, tutorial_data)
-        self._hud.set_data((robot, None, f"Remaining {RiddleWidgetSet.__TRY_PHRASING}: {target.attempts}"))
+        self._hud.set_data((robot, None, f"Remaining {RiddleWidgetSet._TRY_PHRASING}: {target.attempts}"))
 
     def _on_commit_fail(self) -> bool:
         if not self._target.can_attempt:
             self._choices.set_data(data=(
-                [f"You couldn't solve the riddle within the given number of {RiddleWidgetSet.__TRY_PHRASING}. "
+                [f"You couldn't solve the riddle within the given number of {RiddleWidgetSet._TRY_PHRASING}. "
                  f"It vanished together with its reward."],
                 [self._continue_exploration]
             ))
-        self._hud.update_situational(f"Remaining {RiddleWidgetSet.__TRY_PHRASING}: {self._target.attempts}")
+        self._hud.update_situational(f"Remaining {RiddleWidgetSet._TRY_PHRASING}: {self._target.attempts}")
         return True
 
     def _choices_flee(self) -> bool:
@@ -1951,34 +1951,35 @@ class ChallengeWidgetSet(ReachTargetWidgetSet):
         return True
 
 
-class BossFightWidgetSet(ReachTargetWidgetSet):
+class BossFightWidgetSet(RiddleWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  continue_exploration_callback: Callable[[bool], None], reopen_popup_callback: Callable[[], None],
-                 check_unlocks_callback: Callable[[str], bool]):
+                 check_unlocks_callback: Callable[[str], bool], exit_level_callback: Callable[[], None]):
         super().__init__(controls, render, logger, root, continue_exploration_callback, reopen_popup_callback,
-                         check_unlocks_callback, dynamic_input=True, dynamic_target=True)
-        self.__prev_circuit_space = 0
+                         check_unlocks_callback)
+        self._exit_level = exit_level_callback
 
     def _choices_flee(self) -> bool:
         self._choices.set_data(data=(
             ["You fled to try again later."],
             [self._continue_and_undo_callback]
         ))
-        self._robot.reset_static_gate(self.__prev_circuit_space)
         return True
 
     def set_data(self, robot: Robot, target: Boss, tutorial_data):
+        # override to make sure a Boss is passed
         super(BossFightWidgetSet, self).set_data(robot, target, tutorial_data)
-        self.__prev_circuit_space = robot.circuit_space
-
-        for target_stv, input_stv in target.puzzles:
-            self._save_puzzle_to_history(input_stv, target_stv)
-
-    def _on_success(self):
-        super()._on_success()
-        self._robot.reset_static_gate(self.__prev_circuit_space)
 
     def _on_commit_fail(self) -> bool:
         if GameplayConfig.get_option_value(Options.energy_mode):
-            self._robot.decrease_energy(PuzzleConfig.BOSS_FAIL_DAMAGE)
-        return super(BossFightWidgetSet, self)._on_commit_fail()
+            if self._robot.decrease_energy(PuzzleConfig.BOSS_FAIL_DAMAGE)[1]:
+                pass    # todo: show message and call game_over()
+
+        if not self._target.can_attempt:
+            self._choices.set_data(data=(
+                [f"You couldn't solve the Boss puzzle within the given number of {RiddleWidgetSet._TRY_PHRASING}. "
+                 f"You exit the level with your emergency kit."],
+                [self._exit_level]
+            ))
+        self._hud.update_situational(f"Remaining {RiddleWidgetSet._TRY_PHRASING}: {self._target.attempts}")
+        return True

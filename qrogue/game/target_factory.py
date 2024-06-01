@@ -214,8 +214,8 @@ class BossFactory:
                 gates_for_target.append(gate)
 
         reward = rm.get_element(self.__reward_pool, msg="BossFactory_reward")
-        return Boss(self._next_id(), [(Instruction.compute_stv(gates_for_target, self.__robot.num_of_qubits),
-                                       Instruction.compute_stv(gates_for_input, self.__robot.num_of_qubits))], reward)
+        return Boss(self._next_id(), Instruction.compute_stv(gates_for_target, self.__robot.num_of_qubits),
+                                       Instruction.compute_stv(gates_for_input, self.__robot.num_of_qubits), reward)
 
     def __prepare_gate(self, rm: MyRandom, gate: Instruction, qubit_count: List[int], qubits: List[int]) -> bool:
         gate_qubits = qubits.copy()

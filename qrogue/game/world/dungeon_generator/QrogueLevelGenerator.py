@@ -825,14 +825,9 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             puzzles = []
             for boss_puzzle in ctx.boss_puzzle():
                 puzzles.append(self.visit(boss_puzzle))
-
-            # retrieve the static gate that is used in this puzzle
-            if ctx.GATE_LITERAL():
-                gates, num_qubits = self.visit(ctx.circuit_stv())
-                static_gate = instruction.CombinedGates(gates, num_qubits)
-            else:
-                static_gate = None
-            boss_actor = actors.Boss(self._next_target_id(), puzzles, reward, static_gate)
+            target_stv = puzzles[0][0]
+            input_stv = puzzles[0][1]
+            boss_actor = actors.Boss(self._next_target_id(), target_stv, input_stv, reward)     # todo: attempts
 
         return tiles.Boss(boss_actor, self.__cbp.start_boss_fight, self.__cbp.game_over)  # todo replace game_over
 

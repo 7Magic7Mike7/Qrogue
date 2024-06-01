@@ -328,7 +328,7 @@ class QrogueCUI(PyCUI):
                                       self.__popup_history.show, self.__save_data.check_unlocks)
         self.__boss_fight = BossFightWidgetSet(self.__controls, self.__render, Logger.instance(), self,
                                                self.__continue_explore, self.__popup_history.show,
-                                               self.__save_data.check_unlocks)
+                                               self.__save_data.check_unlocks, self.__game_over)
         self.__riddle = RiddleWidgetSet(self.__controls, self.__render, Logger.instance(), self,
                                         self.__continue_explore, self.__popup_history.show,
                                         self.__save_data.check_unlocks)
