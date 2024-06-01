@@ -11,12 +11,17 @@ class Riddle(Target):
     A Target with a restricted amount of attempts to reach its StateVector.
     """
 
-    __UNSTABLE_PROBABILITY = 0.5
+    __STABLE_PROBABILITY = 0.5
 
     def __init__(self, id_: int, target: StateVector, reward: Collectible, seed: int, attempts: int = 1,
-                 input_: Optional[StateVector] = None):
+                 input_: Optional[StateVector] = None, stable_probability: float = __STABLE_PROBABILITY):
+        """
+        :param stable_probability: how likely it is to stay stable after all attempts are used up
+            (0=no additional attempts possible, 1=infinitely many additional attempts possible)
+        """
         super().__init__(id_, target, reward, input_)
         self.__attempts = attempts
+        self.__stable_probability = stable_probability
         self.__rm = RandomManager.create_new(seed)
         self.__can_attempt = True
 
@@ -33,7 +38,7 @@ class Riddle(Target):
         if self.attempts > 0:
             self.__can_attempt = True
         else:
-            self.__can_attempt = self.__rm.get() < Riddle.__UNSTABLE_PROBABILITY
+            self.__can_attempt = self.__rm.get() < self.__stable_probability
         return self.__can_attempt
 
     @property
