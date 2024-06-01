@@ -163,11 +163,19 @@ class BossFactory:
     @staticmethod
     def default(robot: Robot) -> "BossFactory":
         pool = [CXGate(), SwapGate(), Energy(100)]
-        return BossFactory(robot, pool)
+        return BossFactory.from_robot(robot, pool)
 
-    def __init__(self, robot: Robot, reward_pool: List[Collectible],
-                 next_id_callback: Optional[Callable[[], int]] = None):
-        self.__robot = robot
+    @staticmethod
+    def from_robot(robot: Robot, reward_pool: List[Collectible], next_id_callback: Optional[Callable[[], int]] = None) \
+            -> "BossFactory":
+        return BossFactory(robot.num_of_qubits, robot.circuit_space, robot.get_available_instructions(), reward_pool,
+                           next_id_callback)
+
+    def __init__(self, num_of_qubits: int, circuit_space: int, available_gates: List[Instruction],
+                 reward_pool: List[Collectible], next_id_callback: Optional[Callable[[], int]] = None):
+        self.__num_of_qubits = num_of_qubits
+        self.__circuit_space = circuit_space
+        self.__available_gates = available_gates
         self.__reward_pool = reward_pool
         self.__next_id = 0
 
@@ -190,39 +198,39 @@ class BossFactory:
 
         gates_for_target: List[Instruction] = []
         gates_for_input: List[Instruction] = []
-        qubit_count = [0] * self.__robot.num_of_qubits
-        qubits = list(range(self.__robot.num_of_qubits))
+        qubit_count = [0] * self.__num_of_qubits
+        qubits = list(range(self.__num_of_qubits))
 
         for g in input_gates:
             # stop before we're using more gates than the robot can place
-            if len(gates_for_target) >= self.__robot.circuit_space: break
+            if len(gates_for_target) >= self.__circuit_space: break
 
             gate = g.copy()
             if self.__prepare_gate(rm, gate, qubit_count, qubits): gates_for_input.append(gate)
 
         for g in include_gates:
             # stop before we're using more gates than the robot can place
-            if len(gates_for_target) >= self.__robot.circuit_space: break
+            if len(gates_for_target) >= self.__circuit_space: break
 
             gate = g.copy()
             if self.__prepare_gate(rm, gate, qubit_count, qubits): gates_for_target.append(gate)
 
-        usable_gates = self.__robot.get_available_instructions()
-        while len(usable_gates) > 0 and len(gates_for_target) < self.__robot.circuit_space:
+        usable_gates = self.__available_gates.copy()
+        while len(usable_gates) > 0 and len(gates_for_target) < self.__circuit_space:
             gate = rm.get_element(usable_gates, remove=True, msg="BossFactory_selectGate")
             if self.__prepare_gate(rm, gate, qubit_count, qubits):
                 gates_for_target.append(gate)
 
         reward = rm.get_element(self.__reward_pool, msg="BossFactory_reward")
-        return Boss(self._next_id(), Instruction.compute_stv(gates_for_target, self.__robot.num_of_qubits),
-                                       Instruction.compute_stv(gates_for_input, self.__robot.num_of_qubits), reward)
+        return Boss(self._next_id(), Instruction.compute_stv(gates_for_target, self.__num_of_qubits),
+                    Instruction.compute_stv(gates_for_input, self.__num_of_qubits), reward)
 
     def __prepare_gate(self, rm: MyRandom, gate: Instruction, qubit_count: List[int], qubits: List[int]) -> bool:
         gate_qubits = qubits.copy()
         while len(gate_qubits) > 0:
             qubit = rm.get_element(gate_qubits, remove=True, msg="BossFactory_selectQubit")
             qubit_count[qubit] += 1
-            if qubit_count[qubit] >= self.__robot.circuit_space:
+            if qubit_count[qubit] >= self.__circuit_space:
                 qubits.remove(qubit)
             if not gate.use_qubit(qubit):
                 return True
