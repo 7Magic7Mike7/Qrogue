@@ -4,7 +4,8 @@ from antlr4 import InputStream, CommonTokenStream
 from antlr4.tree.Tree import TerminalNodeImpl
 
 from qrogue.game.logic import Message
-from qrogue.game.logic.actors import Controllable, Riddle, Robot, BaseBot, Boss as BossActor
+from qrogue.game.logic import actors
+from qrogue.game.logic.actors import Controllable, Riddle, Robot, BaseBot
 from qrogue.game.logic.actors.puzzles import Challenge, boss
 from qrogue.game.logic.base import StateVector
 from qrogue.game.logic.collectibles import Collectible, MultiCollectible, pickup, Qubit, instruction, \
@@ -66,7 +67,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             return dir_str == "West"
 
         @staticmethod
-        def get_boss(ref: QrogueDungeonParser.REFERENCE, reward: Collectible) -> Optional[BossActor]:
+        def get_boss(ref: QrogueDungeonParser.REFERENCE, reward: Collectible) -> Optional[actors.Boss]:
             ref = parser_util.normalize_reference(ref.getText())
             if ref in ["antientangle", "antientanglement"]:
                 return boss.AntiEntangleBoss(reward)
@@ -831,7 +832,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
                 static_gate = instruction.CombinedGates(gates, num_qubits)
             else:
                 static_gate = None
-            boss_actor = BossActor(self._next_target_id(), puzzles, reward, static_gate)
+            boss_actor = actors.Boss(self._next_target_id(), puzzles, reward, static_gate)
 
         return tiles.Boss(boss_actor, self.__cbp.start_boss_fight, self.__cbp.game_over)  # todo replace game_over
 
