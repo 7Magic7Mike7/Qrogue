@@ -805,7 +805,9 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         return tiles.Collectible(collectible)
 
     def visitBoss_descriptor(self, ctx: QrogueDungeonParser.Boss_descriptorContext) -> tiles.Boss:
+        # if boss_puzzle is given, the only possible reference is the reward
         ref_index = 1 if ctx.boss_puzzle(0) is None else 0
+        # retrieve the specified reward
         if ctx.collectible():
             reward = self.visit(ctx.collectible())
         elif ctx.REFERENCE(ref_index):
@@ -815,12 +817,15 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             reward = self.__default_collectible_factory.produce(self.__rm)
 
         if ctx.boss_puzzle(0) is None:
+            # retrieve the boss' puzzle by reference
             boss_actor = QrogueLevelGenerator._StaticTemplates.get_boss(ctx.REFERENCE(0), reward)
         else:
+            # there are one or multiple puzzles that need to be solved at once
             puzzles = []
             for boss_puzzle in ctx.boss_puzzle():
                 puzzles.append(self.visit(boss_puzzle))
 
+            # retrieve the static gate that is used in this puzzle
             if ctx.GATE_LITERAL():
                 gates, num_qubits = self.visit(ctx.circuit_stv())
                 static_gate = instruction.CombinedGates(gates, num_qubits)
