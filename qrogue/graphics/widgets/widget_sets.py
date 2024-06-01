@@ -1410,7 +1410,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self._continue_and_undo_callback = lambda: continue_exploration_callback(True)
         self._check_unlocks = check_unlocks_callback
         self._robot: Optional[Robot] = None
-        self._target: Optional[Target] = None
+        self.__target: Optional[Target] = None
         self.__num_of_qubits = -1  # needs to be an illegal value because we definitely want to reposition all
         # dependent widgets for the first usage of this WidgetSet
         self._choices_content = None
@@ -1561,6 +1561,10 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             self.__stv_target.render_reset()
 
     @property
+    def _target(self) -> Target:
+        return self.__target
+
+    @property
     def _sign_offset(self) -> str:
         return "\n" * (1 + 2 ** (self._robot.num_of_qubits - 1))  # 1 (headline) + middle of actual Stv
 
@@ -1618,7 +1622,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         :param tutorial_data: additional data we might need for tutorial purposes
         """
         self._robot = robot
-        self._target = target
+        self.__target = target
 
         self._reposition_widgets(robot.num_of_qubits)
 
@@ -1884,6 +1888,11 @@ class RiddleWidgetSet(ReachTargetWidgetSet):
                  check_unlocks_callback: Callable[[str], bool]):
         super().__init__(controls, render, logger, root, continue_exploration_callback, reopen_popup_callback,
                          check_unlocks_callback, "Give Up")
+
+    @property
+    def _target(self) -> Riddle:
+        # override this property to return the correct, specialised subtype of Target
+        return super()._target
 
     def set_data(self, robot: Robot, target: Riddle, tutorial_data) -> None:
         super(RiddleWidgetSet, self).set_data(robot, target, tutorial_data)
