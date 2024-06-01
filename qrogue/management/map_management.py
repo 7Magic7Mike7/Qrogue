@@ -38,6 +38,14 @@ class MapManager:
         self.__temp_level_event_storage: Dict[str, Tuple[int, int]] = {}  # event name -> score, done_score
 
     @property
+    def is_in_level(self) -> bool:
+        return self.__cur_map is not None and self.__cur_map.get_type() is MapType.Level
+
+    @property
+    def is_in_expedition(self) -> bool:
+        return self.__cur_map is not None and self.__cur_map.get_type() is MapType.Expedition
+
+    @property
     def show_individual_qubits(self) -> bool:
         return self.__cur_map.show_individual_qubits
 

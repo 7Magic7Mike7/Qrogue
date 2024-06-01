@@ -697,8 +697,14 @@ class QrogueCUI(PyCUI):
             elif confirmed == 1:
                 self.__state_machine.change_state(QrogueCUI._State.Menu, None)
 
-        ConfirmationPopup.ask(Config.system_name(), f"Your Robot is out of energy. Emergency departure initiated.\n"
-                                                    "Do you want to retry the expedition?", callback, ["Yes", "No"])
+        if self.__map_manager.is_in_level:
+            text = "Do you want to retry the level?"
+        elif self.__map_manager.is_in_expedition:
+            text = "Do you want to retry the expedition?"
+        else:
+            text = "Do you want to retry?"
+            Logger.instance().warn("__game_over() called without being in a level or expedition", from_pycui=False)
+        ConfirmationPopup.ask(Config.system_name(), text, callback, ["Retry", "Back to Main Menu"])
 
     def __start_fight(self, robot: Robot, enemy: Enemy, direction: Direction) -> None:
         self.__state_machine.change_state(QrogueCUI._State.Fight, (robot, enemy))
