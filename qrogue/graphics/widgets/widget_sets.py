@@ -1876,40 +1876,6 @@ class FightWidgetSet(ReachTargetWidgetSet):
         return True
 
 
-class BossFightWidgetSet(ReachTargetWidgetSet):
-    def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
-                 continue_exploration_callback: Callable[[bool], None], reopen_popup_callback: Callable[[], None],
-                 check_unlocks_callback: Callable[[str], bool]):
-        super().__init__(controls, render, logger, root, continue_exploration_callback, reopen_popup_callback,
-                         check_unlocks_callback, dynamic_input=True, dynamic_target=True)
-        self.__prev_circuit_space = 0
-
-    def _choices_flee(self) -> bool:
-        self._choices.set_data(data=(
-            ["You fled to try again later."],
-            [self._continue_and_undo_callback]
-        ))
-        self._robot.reset_static_gate(self.__prev_circuit_space)
-        return True
-
-    def set_data(self, robot: Robot, target: Boss, tutorial_data):
-        super(BossFightWidgetSet, self).set_data(robot, target, tutorial_data)
-        self.__prev_circuit_space = robot.circuit_space
-        robot.add_static_gate(target.static_gate)
-
-        for target_stv, input_stv in target.puzzles:
-            self._save_puzzle_to_history(input_stv, target_stv)
-
-    def _on_success(self):
-        super()._on_success()
-        self._robot.reset_static_gate(self.__prev_circuit_space)
-
-    def _on_commit_fail(self) -> bool:
-        if GameplayConfig.get_option_value(Options.energy_mode):
-            self._robot.decrease_energy(PuzzleConfig.BOSS_FAIL_DAMAGE)
-        return super(BossFightWidgetSet, self)._on_commit_fail()
-
-
 class RiddleWidgetSet(ReachTargetWidgetSet):
     __TRY_PHRASING = "edits"
 
@@ -1974,3 +1940,36 @@ class ChallengeWidgetSet(ReachTargetWidgetSet):
             [self._continue_and_undo_callback]
         ))
         return True
+
+
+class BossFightWidgetSet(ReachTargetWidgetSet):
+    def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
+                 continue_exploration_callback: Callable[[bool], None], reopen_popup_callback: Callable[[], None],
+                 check_unlocks_callback: Callable[[str], bool]):
+        super().__init__(controls, render, logger, root, continue_exploration_callback, reopen_popup_callback,
+                         check_unlocks_callback, dynamic_input=True, dynamic_target=True)
+        self.__prev_circuit_space = 0
+
+    def _choices_flee(self) -> bool:
+        self._choices.set_data(data=(
+            ["You fled to try again later."],
+            [self._continue_and_undo_callback]
+        ))
+        self._robot.reset_static_gate(self.__prev_circuit_space)
+        return True
+
+    def set_data(self, robot: Robot, target: Boss, tutorial_data):
+        super(BossFightWidgetSet, self).set_data(robot, target, tutorial_data)
+        self.__prev_circuit_space = robot.circuit_space
+
+        for target_stv, input_stv in target.puzzles:
+            self._save_puzzle_to_history(input_stv, target_stv)
+
+    def _on_success(self):
+        super()._on_success()
+        self._robot.reset_static_gate(self.__prev_circuit_space)
+
+    def _on_commit_fail(self) -> bool:
+        if GameplayConfig.get_option_value(Options.energy_mode):
+            self._robot.decrease_energy(PuzzleConfig.BOSS_FAIL_DAMAGE)
+        return super(BossFightWidgetSet, self)._on_commit_fail()
