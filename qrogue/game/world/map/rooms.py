@@ -731,7 +731,7 @@ class WildRoom(BaseWildRoom):
         for y in range(Room.INNER_HEIGHT):
             available_positions += [Coordinate(x, y) for x in range(Room.INNER_WIDTH)]
         num_of_enemies = len(available_positions) * chance
-        if rm.get(msg="WR_enemyPlacementRounding") < 0.5:
+        if rm.get_bool(msg="WR_enemyPlacementRounding"):
             num_of_enemies = math.floor(num_of_enemies)
         else:
             num_of_enemies = math.ceil(num_of_enemies)
