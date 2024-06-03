@@ -328,6 +328,9 @@ class RotationGate(SingleQubitGate, ABC):
     _DEFAULT_ANGLE = math.pi / 2
 
     def __init__(self, gate_type: GateType, instruction: QiskitGate, angle: float):
+        """
+        :param angle: value between 0 and PI (other values possible, but they correspond to an angle in said range)
+        """
         super().__init__(gate_type, instruction)
         self.__angle = angle
 
