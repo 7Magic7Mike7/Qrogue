@@ -186,3 +186,88 @@ class PuzzleDifficulty:
             inst_text = "; ".join([str(inst) for inst in robot.get_available_instructions()])
             Logger.instance().warn(f"Couldn't re-roll input and target to be different! {inst_text}", from_pycui=False)
         return input_stv, target_stv
+
+
+class BossDifficulty:
+    @staticmethod
+    def from_percentages(num_of_qubits: int, circuit_space: int, circuit_exuberance: float, qubit_exuberance: float,
+                         rotation_exuberance: float, randomization_degree: int) -> "BossDifficulty":
+        """
+
+        :param num_of_qubits: number of qubits available
+        :param circuit_space: maximum number of gates that can be placed in the circuit
+        :param circuit_exuberance: how full (]0, 1]) the circuit should be, e.g., 0.5 = half of the circuit_space is
+            used, while 1.0 implies all of it is used (if possible based on gates actually available to create the
+            puzzle)
+        :param qubit_exuberance: how many of the qubits  (]0, 1]) should be rotated randomly, e.g., 0.5 rotates half of
+            all qubits, while 1.0 rotates all of them once
+        :param rotation_exuberance: how many rotated qubits ([0, 1]) should be rotated along a second axis
+        :param randomization_degree: how many angles are available to random rotations (2*PI / randomization_degree),
+            a value of 0 implies no restrictions (i.e., any real number is allowed)
+        """
+        assert 0 < circuit_exuberance <= 1.0, f"Invalid circuit exuberance: 0 < {circuit_exuberance} <= 1 is False!"
+        assert 0 < qubit_exuberance <= 1.0, f"Invalid qubit exuberance: 0 < {qubit_exuberance} <= 1 is False!"
+        assert 0 <= rotation_exuberance <= 1.0, f"Invalid rotation exuberance: 0 < {rotation_exuberance} <= 1 is False!"
+
+        num_of_gates = int(circuit_space * circuit_exuberance)
+        num_of_rotated_qubits = int(num_of_qubits * qubit_exuberance)
+        rotation_degree = int(num_of_rotated_qubits * rotation_exuberance)
+        return BossDifficulty(num_of_gates, num_of_rotated_qubits, rotation_degree, randomization_degree)
+
+    def __init__(self, num_of_gates: int, num_of_rotated_qubits: int, rotation_degree: int, randomization_degree: int):
+        """
+        :param randomization_degree: how many angles are available to random rotations (2*PI / randomization_degree),
+            a value of 0 implies no restrictions (i.e., any real number is allowed)
+        """
+        assert num_of_gates > 0, f"At least one gate needs to be placed: {num_of_gates} > 0 is False!"
+        assert num_of_rotated_qubits >= 0, f"No negative value allowed for " \
+                                           f"num_of_rotated_qubits={num_of_rotated_qubits}"
+        assert rotation_degree >= 0, f"No negative value allowed for rotation_degree={rotation_degree}"
+        assert randomization_degree >= 0, f"No negative value allowed for randomization_degree={randomization_degree}"
+
+        if rotation_degree > num_of_rotated_qubits:
+            Logger.instance().warn(f"rotation_degree (={rotation_degree}) > num_of_rotated_qubits "
+                                   f"(={num_of_rotated_qubits}) - using num_of_rotated_qubits instead")
+            rotation_degree = num_of_rotated_qubits     # we cannot have more additional rotations than qubits
+
+        self.__num_of_gates = num_of_gates
+        self.__num_of_rotated_qubits = num_of_rotated_qubits
+        self.__rotation_degree = rotation_degree
+        self.__randomization_degree = randomization_degree
+
+    @property
+    def num_of_gates(self) -> int:
+        """
+        :return: how many gates can be used to calculate the target
+        """
+        return self.__num_of_gates
+
+    @property
+    def num_of_rotated_qubits(self) -> int:
+        """
+        :return: how many qubits should be randomly rotated to determine |In>
+        """
+        return self.__num_of_rotated_qubits
+
+    @property
+    def rotation_degree(self) -> int:
+        """
+        <= num_of_rotated_qubits
+        :return: how many rotated qubits should also be rotated along a second axis
+        """
+        return self.__rotation_degree
+
+    @property
+    def randomization_degree(self) -> int:
+        """
+        A value of 0 implies no restriction (i.e., any real value is allowed)
+
+        :return: how many degrees of freedom the random rotation angles have
+        """
+        return self.__randomization_degree
+
+    def normalize(self, num_of_qubits: int, circuit_space: int) -> "BossDifficulty":
+        num_of_gates = circuit_space if circuit_space < self.__num_of_gates else self.__num_of_gates
+        num_of_rotated_qubits = num_of_qubits if num_of_qubits < self.__num_of_rotated_qubits\
+            else self.__num_of_rotated_qubits
+        return BossDifficulty(num_of_gates, num_of_rotated_qubits, self.__rotation_degree, self.__randomization_degree)

@@ -1,3 +1,4 @@
+import math
 from abc import abstractmethod, ABC
 from typing import List, Callable, Optional
 
@@ -5,8 +6,9 @@ from qrogue.game.logic.actors.controllables import Robot
 from qrogue.game.logic.actors.puzzles import Enemy, Target, Riddle, Boss
 from qrogue.game.logic.base import StateVector
 from qrogue.game.logic.collectibles import Collectible, CollectibleFactory, Instruction, Energy, Score
-from qrogue.game.logic.collectibles.instruction import CXGate, SwapGate, YGate, ZGate
-from qrogue.game.target_difficulty import StvDifficulty, TargetDifficulty, PuzzleDifficulty, RiddleDifficulty
+import qrogue.game.logic.collectibles.instruction as gates
+from qrogue.game.target_difficulty import StvDifficulty, TargetDifficulty, PuzzleDifficulty, RiddleDifficulty, \
+    BossDifficulty
 from qrogue.game.world.navigation import Direction
 from qrogue.util import Logger, MyRandom
 
@@ -130,7 +132,7 @@ class EnemyPuzzleFactory(EnemyFactory):
 class RiddleFactory:
     @staticmethod
     def default(robot: Robot) -> "RiddleFactory":
-        reward_pool = [YGate(), ZGate()]
+        reward_pool = [gates.YGate(), gates.ZGate()]
         difficulty = RiddleDifficulty(num_of_instructions=4, reward_pool=reward_pool, min_attempts=4, max_attempts=9)
         return RiddleFactory(robot, difficulty)
 
@@ -162,17 +164,22 @@ class RiddleFactory:
 class BossFactory:
     @staticmethod
     def default(robot: Robot) -> "BossFactory":
-        pool = [CXGate(), SwapGate(), Energy(100)]
-        return BossFactory.from_robot(robot, pool)
+        pool = [gates.CXGate(), gates.SwapGate(), Energy(100)]
+        difficulty = BossDifficulty.from_percentages(robot.num_of_qubits, robot.circuit_space, 1.0, 0.5, 0.75, 4)
+        return BossFactory.from_robot(difficulty, robot, pool)
 
     @staticmethod
-    def from_robot(robot: Robot, reward_pool: List[Collectible], next_id_callback: Optional[Callable[[], int]] = None) \
+    def from_robot(difficulty: BossDifficulty, robot: Robot, reward_pool: List[Collectible],
+                   next_id_callback: Optional[Callable[[], int]] = None) \
             -> "BossFactory":
-        return BossFactory(robot.num_of_qubits, robot.circuit_space, robot.get_available_instructions(), reward_pool,
+        available_gates = robot.get_available_instructions()
+        return BossFactory(difficulty, robot.num_of_qubits, robot.circuit_space, available_gates, reward_pool,
                            next_id_callback)
 
-    def __init__(self, num_of_qubits: int, circuit_space: int, available_gates: List[Instruction],
-                 reward_pool: List[Collectible], next_id_callback: Optional[Callable[[], int]] = None):
+    def __init__(self, difficulty: BossDifficulty, num_of_qubits: int, circuit_space: int,
+                 available_gates: List[Instruction], reward_pool: List[Collectible],
+                 next_id_callback: Optional[Callable[[], int]] = None):
+        self.__difficulty = difficulty
         self.__num_of_qubits = num_of_qubits
         self.__circuit_space = circuit_space
         self.__available_gates = available_gates
@@ -194,19 +201,10 @@ class BossFactory:
     def produce(self, rm: MyRandom, include_gates: Optional[List[Instruction]],
                 input_gates: Optional[List[Instruction]] = None) -> Boss:
         if include_gates is None: include_gates = []
-        if input_gates is None: input_gates = []
 
         gates_for_target: List[Instruction] = []
-        gates_for_input: List[Instruction] = []
         qubit_count = [0] * self.__num_of_qubits
         qubits = list(range(self.__num_of_qubits))
-
-        for g in input_gates:
-            # stop before we're using more gates than the robot can place
-            if len(gates_for_target) >= self.__circuit_space: break
-
-            gate = g.copy()
-            if self.__prepare_gate(rm, gate, qubit_count, qubits): gates_for_input.append(gate)
 
         for g in include_gates:
             # stop before we're using more gates than the robot can place
@@ -216,14 +214,64 @@ class BossFactory:
             if self.__prepare_gate(rm, gate, qubit_count, qubits): gates_for_target.append(gate)
 
         usable_gates = self.__available_gates.copy()
-        while len(usable_gates) > 0 and len(gates_for_target) < self.__circuit_space:
+        while len(usable_gates) > 0 and len(gates_for_target) < self.__circuit_space:   # todo: use difficulty.num_of_gates?
             gate = rm.get_element(usable_gates, remove=True, msg="BossFactory_selectGate")
             if self.__prepare_gate(rm, gate, qubit_count, qubits):
                 gates_for_target.append(gate)
+        rm.shuffle_list(gates_for_target)   # shuffle list so the gates from include_gates don't gather up-front
 
+        gates_for_input: List[Instruction] = []
+        if input_gates is None:
+            # apply randomly rotated gates to the 0-basis state based on difficulty
+            temp_qubit_count = [0] * self.__num_of_qubits
+            temp_qubits = qubits.copy()
+            rotated_qubits = [rm.get_element(temp_qubits, remove=True)
+                              for _ in range(self.__difficulty.num_of_rotated_qubits)]
+            rotated_qubits2 = rotated_qubits.copy()
+
+            for _ in range(len(rotated_qubits) - self.__difficulty.rotation_degree):
+                # remove qubits until only #rotation_degree qubits are left in rotated_qubits2
+                rm.get_element(rotated_qubits2, remove=True)
+
+            for qubit in rotated_qubits:
+                # find a random angle for the rotation
+                if self.__difficulty.randomization_degree == 0:
+                    angle = rm.get(msg="BossFactory.produce()_unrestrictedAngle")
+                else:   # todo: what about randomization_degree==1?
+                    # start with 1 because rotating by 0° does nothing (since range-end is exclusive, 360° can't happen)
+                    angle = rm.get_element([(2*math.pi) * i / self.__difficulty.randomization_degree
+                                            for i in range(1, self.__difficulty.randomization_degree)],
+                                           msg="BossFactory.produce()_restrictedAngle")
+                # prepare and append either an RY- or RZGate
+                rotate_y = rm.get_bool(msg="BossFactory.produce()_chooseRGate")
+                gate = gates.RYGate(angle) if rotate_y else gates.RZGate(angle)
+                self.__prepare_gate(rm, gate, temp_qubit_count, [qubit])
+                gates_for_input.append(gate)
+                # append the other rotational gate if the qubit is also in rotated_qubits2
+                if qubit in rotated_qubits2:
+                    # now use RZGate if rotate_y is True (RYGate was used before), and vice versa
+                    gate = gates.RZGate(angle) if rotate_y else gates.RYGate(angle)
+                    self.__prepare_gate(rm, gate, temp_qubit_count, [qubit])
+                    gates_for_input.append(gate)
+
+            # to make sure that the target can be reached from the randomized input state, gates_for_input is prepended
+            #  to gates_for_target such that the difference between target and input is solely the previously generated
+            #  gates_for_target
+            gates_for_target = gates_for_input + gates_for_target
+
+        else:
+            # use the provided input gates
+            for g in input_gates:
+                # stop before we're using more gates than the robot can place
+                if len(gates_for_target) >= self.__circuit_space: break
+
+                gate = g.copy()
+                if self.__prepare_gate(rm, gate, qubit_count, qubits): gates_for_input.append(gate)
+
+        target_stv = Instruction.compute_stv(gates_for_target, self.__num_of_qubits)
+        input_stv = Instruction.compute_stv(gates_for_input, self.__num_of_qubits)
         reward = rm.get_element(self.__reward_pool, msg="BossFactory_reward")
-        return Boss(self._next_id(), Instruction.compute_stv(gates_for_target, self.__num_of_qubits),
-                    Instruction.compute_stv(gates_for_input, self.__num_of_qubits), reward)
+        return Boss(self._next_id(), target_stv, input_stv, reward) # todo: get attempts from difficulty?
 
     def __prepare_gate(self, rm: MyRandom, gate: Instruction, qubit_count: List[int], qubits: List[int]) -> bool:
         gate_qubits = qubits.copy()
