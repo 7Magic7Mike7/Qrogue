@@ -11,16 +11,16 @@ class Boss(Riddle, ABC):
     A special Enemy with specified target and reward.
     """
 
+    __DEFAULT_ATTEMPTS = 10
     __BOSS_ID: int = 0
     # we have to pass a seed to Riddle(), but we don't have instability so its value doesn't matter
     __PLACEHOLDER_SEED = 714985
 
     def __init__(self, id_: int, target: StateVector, input_: StateVector, reward: Collectible,
-                 attempts: int = 10):  # todo: later attempts cannot be optional
+                 attempts: int = __DEFAULT_ATTEMPTS):  # todo: later attempts cannot be optional
         """
         Creates a boss enemy with a list of specified target and input StateVectors and a specified reward.
         :param id_: an integer unique per level to identify the target
-        :param puzzles: list of (target stv, input stv)
         :param reward: the reward for winning against the boss
         """
         self.__index = 0
