@@ -1,3 +1,4 @@
+import random
 from random import Random
 from typing import List, Any
 
@@ -37,6 +38,9 @@ class MyRandom:
         """
         return min_ + int(self.get(msg=msg) * (max_ - min_))
 
+    def get_bool(self, msg: str = str(COUNTER)) -> bool:
+        return self.get(msg=msg) < 0.5
+
     def get_seed(self, msg: str = str(COUNTER)) -> int:
         return self.get_int(min_=0, max_=Config.MAX_SEED, msg=msg)
 
@@ -49,7 +53,6 @@ class MyRandom:
             try:
                 iterable.pop(index)
             except ValueError:
-                from qrogue.util.logger import Logger
                 Logger.instance().error(f"{iterable} doesn't contain {elem}", show=False, from_pycui=False)
         return elem
 
@@ -81,6 +84,9 @@ class MyRandom:
             index += 1
         Logger.instance().throw(ValueError("This line should not be reachable. Please report this error so it can be "
                                            "fixed as soon as possible!"))
+
+    def shuffle_list(self, list_: List[Any]) -> None:
+        random.shuffle(list_, lambda: self.get())
 
 
 class RandomManager:
