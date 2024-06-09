@@ -178,7 +178,7 @@ class BossFactory:
     def __init__(self, difficulty: BossDifficulty, num_of_qubits: int, circuit_space: int,
                  available_gates: List[Instruction], reward_pool: List[Collectible],
                  next_id_callback: Optional[Callable[[], int]] = None):
-        self.__difficulty = difficulty
+        self.__difficulty = difficulty.normalize(num_of_qubits, circuit_space)
         self.__num_of_qubits = num_of_qubits
         self.__circuit_space = circuit_space
         self.__available_gates = available_gates
@@ -213,7 +213,7 @@ class BossFactory:
             if self.__prepare_gate(rm, gate, qubit_count, qubits): gates_for_target.append(gate)
 
         usable_gates = self.__available_gates.copy()
-        while len(usable_gates) > 0 and len(gates_for_target) < self.__circuit_space:   # todo: use difficulty.num_of_gates?
+        while len(usable_gates) > 0 and len(gates_for_target) < self.__difficulty.num_of_gates:
             gate = rm.get_element(usable_gates, remove=True, msg="BossFactory_selectGate")
             if self.__prepare_gate(rm, gate, qubit_count, qubits):
                 gates_for_target.append(gate)
