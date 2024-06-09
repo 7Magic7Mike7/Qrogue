@@ -67,7 +67,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             return dir_str == "West"
 
         @staticmethod
-        def get_boss(ref: QrogueDungeonParser.REFERENCE, reward: Collectible) -> Optional[actors.Boss]:
+        def get_boss(ref: QrogueDungeonParser.REFERENCE, gate: Optional[Instruction], reward: Collectible,
+                     attempts: Optional[int]) -> Optional[actors.Boss]:
             ref = parser_util.normalize_reference(ref.getText())
             if ref in ["antientangle", "antientanglement"]:
                 return boss.AntiEntangleBoss(reward)
@@ -806,30 +807,23 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         return tiles.Collectible(collectible)
 
     def visitBoss_descriptor(self, ctx: QrogueDungeonParser.Boss_descriptorContext) -> tiles.Boss:
-        # if boss_puzzle is given, the only possible reference is the reward
-        ref_index = 1 if ctx.boss_puzzle(0) is None else 0
+        ref_index = 2 if ctx.GATE_LITERAL() else 1
+
+        # [optional] retrieve the gate that has to be part of the puzzle
+        gate = self.__load_gate(ctx.REFERENCE(1)) if ctx.GATE_LITERAL() else None
+
         # retrieve the specified reward
         if ctx.collectible():
             reward = self.visit(ctx.collectible())
         elif ctx.REFERENCE(ref_index):
-            reward = self.__load_collectible_factory(ctx.REFERENCE()).produce(self.__rm)
+            reward = self.__load_collectible_factory(ctx.REFERENCE(ref_index)).produce(self.__rm)
         else:
             # if neither a collectible nor a reference to a reward_factory is given we use the default one
             reward = self.__default_collectible_factory.produce(self.__rm)
 
-        if ctx.boss_puzzle(0) is None:
-            # retrieve the boss' puzzle by reference
-            boss_actor = QrogueLevelGenerator._StaticTemplates.get_boss(ctx.REFERENCE(0), reward)
-        else:
-            # there are one or multiple puzzles that need to be solved at once
-            puzzles = []
-            for boss_puzzle in ctx.boss_puzzle():
-                puzzles.append(self.visit(boss_puzzle))
-            target_stv = puzzles[0][0]
-            input_stv = puzzles[0][1]
-            boss_actor = actors.Boss(self._next_target_id(), target_stv, input_stv, reward)     # todo: attempts
-
-        return tiles.Boss(boss_actor, self.__cbp.start_boss_fight, self.__cbp.game_over)  # todo replace game_over
+        attempts = self.visitInteger(ctx.integer())
+        boss_actor = QrogueLevelGenerator._StaticTemplates.get_boss(ctx.REFERENCE(0), gate, reward, attempts)
+        return tiles.Boss(boss_actor, self.__cbp.start_boss_fight, self.__cbp.game_over)
 
     def visitBoss_puzzle(self, ctx: QrogueDungeonParser.Boss_puzzleContext) -> Tuple[StateVector, StateVector]:
         if ctx.REFERENCE():
