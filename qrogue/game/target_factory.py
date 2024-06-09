@@ -1,6 +1,6 @@
 import math
 from abc import abstractmethod, ABC
-from typing import List, Callable, Optional
+from typing import List, Callable, Optional, Dict
 
 from qrogue.game.logic.actors.controllables import Robot
 from qrogue.game.logic.actors.puzzles import Enemy, Target, Riddle, Boss
@@ -162,11 +162,25 @@ class RiddleFactory:
 
 
 class BossFactory:
+    __LEVELED_REWARD_POOLS: Dict[int, List[Collectible]] = {
+        0: [gates.XGate(), gates.CXGate(), gates.HGate()],
+        1: [gates.HGate(), gates.CXGate(), gates.SwapGate()],
+        2: [gates.HGate(), gates.SGate()],
+        3: [gates.SGate(), gates.YGate(), gates.ZGate()],
+        4: [gates.RYGate(), gates.RZGate()],
+        5: [gates.RYGate(0.7), gates.RYGate(1.2), gates.RYGate(1.6), gates.RYGate(2.5),
+            gates.RZGate(0.7), gates.RZGate(1.2), gates.RZGate(1.6), gates.RZGate(2.5), ],
+        6: [gates.HGate()],
+    }
+
     @staticmethod
-    def default(robot: Robot) -> "BossFactory":
-        pool = [gates.CXGate(), gates.SwapGate(), Energy(100)]
-        difficulty = BossDifficulty.from_percentages(robot.num_of_qubits, robot.circuit_space, 1.0, 0.5, 0.75, 4, 0.5)
-        return BossFactory.from_robot(difficulty, robot, pool)
+    def validate() -> bool:
+        if len(BossFactory.__LEVELED_REWARD_POOLS) != BossDifficulty.max_difficulty_level():
+            return False
+        for i in range(BossDifficulty.max_difficulty_level()):
+            if i not in BossFactory.__LEVELED_REWARD_POOLS:
+                return False
+        return True
 
     @staticmethod
     def from_robot(difficulty: BossDifficulty, robot: Robot, reward_pool: List[Collectible],
@@ -174,6 +188,26 @@ class BossFactory:
         available_gates = robot.get_available_instructions()
         return BossFactory(difficulty, robot.num_of_qubits, robot.circuit_space, available_gates, reward_pool,
                            next_id_callback)
+
+    @staticmethod
+    def from_difficulty_code(code: str, robot: Robot, reward_pool: Optional[List[Collectible]] = None) -> "BossFactory":
+        difficulty = BossDifficulty.from_difficulty_code(code, robot.num_of_qubits, robot.circuit_space)
+        assert difficulty.level >= 0, f"Code \"{code}\" produced invalid level: {difficulty.level} >= 0 is False!"
+        if reward_pool is None:
+            reward_pool = BossFactory.__LEVELED_REWARD_POOLS[difficulty.level]
+        return BossFactory.from_robot(difficulty, robot, reward_pool)
+
+    @staticmethod
+    def from_difficulty_level(level: int, robot: Robot, reward_pool: Optional[List[Collectible]] = None) \
+            -> "BossFactory":
+        difficulty = BossDifficulty.from_difficulty_level(level, robot.num_of_qubits, robot.circuit_space)
+        if reward_pool is None:
+            reward_pool = BossFactory.__LEVELED_REWARD_POOLS[level]
+        return BossFactory.from_robot(difficulty, robot, reward_pool)
+
+    @staticmethod
+    def default(robot: Robot) -> "BossFactory":
+        return BossFactory.from_difficulty_level(1, robot)
 
     def __init__(self, difficulty: BossDifficulty, num_of_qubits: int, circuit_space: int,
                  available_gates: List[Instruction], reward_pool: List[Collectible],

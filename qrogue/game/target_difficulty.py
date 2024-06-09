@@ -1,4 +1,4 @@
-from typing import List, Union, Tuple
+from typing import List, Union, Tuple, Optional
 
 from qrogue.game.logic.actors.controllables import Robot
 from qrogue.game.logic.base import StateVector
@@ -189,9 +189,27 @@ class PuzzleDifficulty:
 
 
 class BossDifficulty:
+    __DIFF_DEGREES_OF_FREEDOM = 5   # number of variables to define a difficulty (i.e., number of lists below)
+    __DIFF_CIRCUIT_EXUBERANCES = []
+    __DIFF_QUBIT_EXUBERANCES = []
+    __DIFF_ROTATION_EXUBERANCES = []
+    __DIFF_RANDOMIZATION_DEGREES = []
+    __DIFF_BONUS_EDIT_RATIO = []
+
+    @staticmethod
+    def max_difficulty_level() -> int:
+        return len(BossDifficulty.__DIFF_CIRCUIT_EXUBERANCES)
+
+    @staticmethod
+    def validate() -> bool:
+        return len(BossDifficulty.__DIFF_CIRCUIT_EXUBERANCES) == len(BossDifficulty.__DIFF_QUBIT_EXUBERANCES) == \
+            len(BossDifficulty.__DIFF_ROTATION_EXUBERANCES) == len(BossDifficulty.__DIFF_RANDOMIZATION_DEGREES) == \
+            len(BossDifficulty.__DIFF_BONUS_EDIT_RATIO) == BossDifficulty.max_difficulty_level()
+
     @staticmethod
     def from_percentages(num_of_qubits: int, circuit_space: int, circuit_exuberance: float, qubit_exuberance: float,
-                         rotation_exuberance: float, randomization_degree: int, bonus_edit_ratio: float) -> "BossDifficulty":
+                         rotation_exuberance: float, randomization_degree: int, bonus_edit_ratio: float,
+                         level: Optional[int] = None) -> "BossDifficulty":
         """
 
         :param num_of_qubits: number of qubits available
@@ -207,6 +225,7 @@ class BossDifficulty:
         :param bonus_edit_ratio: how many additional edits the puzzle provides relative to the number of used gates,
             e.g., a value of 1.0 means that the player has twice as many edits as gates actually needed to solve the
             puzzle, needs to be >= 0
+        :param level: level of the difficulty
         """
         assert 0 < circuit_exuberance <= 1.0, f"Invalid circuit exuberance: 0 < {circuit_exuberance} <= 1 is False!"
         assert 0 < qubit_exuberance <= 1.0, f"Invalid qubit exuberance: 0 < {qubit_exuberance} <= 1 is False!"
@@ -217,10 +236,43 @@ class BossDifficulty:
         num_of_rotated_qubits = int(num_of_qubits * qubit_exuberance)
         rotation_degree = int(num_of_rotated_qubits * rotation_exuberance)
         bonus_edits = int(num_of_gates * bonus_edit_ratio)
-        return BossDifficulty(num_of_gates, num_of_rotated_qubits, rotation_degree, randomization_degree, bonus_edits)
+        return BossDifficulty(num_of_gates, num_of_rotated_qubits, rotation_degree, randomization_degree, bonus_edits,
+                              level)
+
+    @staticmethod
+    def from_difficulty_code(code: str, num_of_qubits: int, circuit_space: int) -> "BossDifficulty":
+        level_len = len(str(BossDifficulty.max_difficulty_level()))  # how many characters a single level code has
+        assert len(code) <= BossDifficulty.__DIFF_DEGREES_OF_FREEDOM * level_len, \
+            f"Level code \"{code}\" is too short! At least {BossDifficulty.__DIFF_DEGREES_OF_FREEDOM * level_len} " \
+            f"characters are needed."
+
+        circ_level  = int(code[0 * level_len:1 * level_len])
+        qubit_level = int(code[1 * level_len:2 * level_len])
+        rot_level   = int(code[2 * level_len:3 * level_len])
+        rand_level  = int(code[3 * level_len:4 * level_len])
+        edit_level  = int(code[4 * level_len:5 * level_len])
+        # calculate the overall level weighted from the individual levels
+        overall_level = int(sum([circ_level * 1.15, qubit_level * 1.15, rot_level * 0.7, rand_level * 0.9,
+                                 edit_level * 1.1]) / BossDifficulty.__DIFF_DEGREES_OF_FREEDOM)
+
+        circuit_exuberance = BossDifficulty.__DIFF_CIRCUIT_EXUBERANCES[circ_level]
+        qubit_exuberance = BossDifficulty.__DIFF_QUBIT_EXUBERANCES[qubit_level]
+        rotation_exuberance = BossDifficulty.__DIFF_ROTATION_EXUBERANCES[rot_level]
+        randomization_degree = BossDifficulty.__DIFF_RANDOMIZATION_DEGREES[rand_level]
+        bonus_edit_ratio = BossDifficulty.__DIFF_BONUS_EDIT_RATIO[edit_level]
+        return BossDifficulty.from_percentages(num_of_qubits, circuit_space, circuit_exuberance, qubit_exuberance,
+                                               rotation_exuberance, randomization_degree, bonus_edit_ratio,
+                                               overall_level)
+
+    @staticmethod
+    def from_difficulty_level(level: int, num_of_qubits: int, circuit_space: int) -> "BossDifficulty":
+        assert 0 <= level < BossDifficulty.max_difficulty_level(), \
+            f"Invalid level: 0 <= {level} < {BossDifficulty.max_difficulty_level()} is False!"
+        code = f"{level}{level}{level}{level}{level}"   # all variables have the same level
+        return BossDifficulty.from_difficulty_code(code, num_of_qubits, circuit_space)
 
     def __init__(self, num_of_gates: int, num_of_rotated_qubits: int, rotation_degree: int, randomization_degree: int,
-                 bonus_edits: int):
+                 bonus_edits: int, level: Optional[int] = None):
         """
         :param randomization_degree: how many angles are available to random rotations (2*PI / randomization_degree),
             a value of 0 implies no restrictions (i.e., any real number is allowed)
@@ -242,6 +294,15 @@ class BossDifficulty:
         self.__rotation_degree = rotation_degree
         self.__randomization_degree = randomization_degree
         self.__bonus_edits = bonus_edits
+        self.__level = -1 if level is None else level
+
+    @property
+    def is_leveled(self) -> bool:
+        return self.__level >= 0
+
+    @property
+    def level(self) -> int:
+        return self.__level
 
     @property
     def num_of_gates(self) -> int:
