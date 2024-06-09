@@ -165,13 +165,12 @@ class BossFactory:
     @staticmethod
     def default(robot: Robot) -> "BossFactory":
         pool = [gates.CXGate(), gates.SwapGate(), Energy(100)]
-        difficulty = BossDifficulty.from_percentages(robot.num_of_qubits, robot.circuit_space, 1.0, 0.5, 0.75, 4)
+        difficulty = BossDifficulty.from_percentages(robot.num_of_qubits, robot.circuit_space, 1.0, 0.5, 0.75, 4, 0.5)
         return BossFactory.from_robot(difficulty, robot, pool)
 
     @staticmethod
     def from_robot(difficulty: BossDifficulty, robot: Robot, reward_pool: List[Collectible],
-                   next_id_callback: Optional[Callable[[], int]] = None) \
-            -> "BossFactory":
+                   next_id_callback: Optional[Callable[[], int]] = None) -> "BossFactory":
         available_gates = robot.get_available_instructions()
         return BossFactory(difficulty, robot.num_of_qubits, robot.circuit_space, available_gates, reward_pool,
                            next_id_callback)
@@ -271,7 +270,7 @@ class BossFactory:
         target_stv = Instruction.compute_stv(gates_for_target, self.__num_of_qubits)
         input_stv = Instruction.compute_stv(gates_for_input, self.__num_of_qubits)
         reward = rm.get_element(self.__reward_pool, msg="BossFactory_reward")
-        return Boss(self._next_id(), target_stv, input_stv, reward) # todo: get attempts from difficulty?
+        return Boss(self._next_id(), target_stv, input_stv, reward, self.__difficulty.edits)
 
     def __prepare_gate(self, rm: MyRandom, gate: Instruction, qubit_count: List[int], qubits: List[int]) -> bool:
         gate_qubits = qubits.copy()

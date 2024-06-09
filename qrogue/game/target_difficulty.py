@@ -191,7 +191,7 @@ class PuzzleDifficulty:
 class BossDifficulty:
     @staticmethod
     def from_percentages(num_of_qubits: int, circuit_space: int, circuit_exuberance: float, qubit_exuberance: float,
-                         rotation_exuberance: float, randomization_degree: int) -> "BossDifficulty":
+                         rotation_exuberance: float, randomization_degree: int, bonus_edit_ratio: float) -> "BossDifficulty":
         """
 
         :param num_of_qubits: number of qubits available
@@ -204,20 +204,27 @@ class BossDifficulty:
         :param rotation_exuberance: how many rotated qubits ([0, 1]) should be rotated along a second axis
         :param randomization_degree: how many angles are available to random rotations (2*PI / randomization_degree),
             a value of 0 implies no restrictions (i.e., any real number is allowed)
+        :param bonus_edit_ratio: how many additional edits the puzzle provides relative to the number of used gates,
+            e.g., a value of 1.0 means that the player has twice as many edits as gates actually needed to solve the
+            puzzle, needs to be >= 0
         """
         assert 0 < circuit_exuberance <= 1.0, f"Invalid circuit exuberance: 0 < {circuit_exuberance} <= 1 is False!"
         assert 0 < qubit_exuberance <= 1.0, f"Invalid qubit exuberance: 0 < {qubit_exuberance} <= 1 is False!"
         assert 0 <= rotation_exuberance <= 1.0, f"Invalid rotation exuberance: 0 < {rotation_exuberance} <= 1 is False!"
+        assert 0 <= bonus_edit_ratio, f"Invalid edit ratio: 0 <= {bonus_edit_ratio} is False!"
 
         num_of_gates = int(circuit_space * circuit_exuberance)
         num_of_rotated_qubits = int(num_of_qubits * qubit_exuberance)
         rotation_degree = int(num_of_rotated_qubits * rotation_exuberance)
-        return BossDifficulty(num_of_gates, num_of_rotated_qubits, rotation_degree, randomization_degree)
+        bonus_edits = int(num_of_gates * bonus_edit_ratio)
+        return BossDifficulty(num_of_gates, num_of_rotated_qubits, rotation_degree, randomization_degree, bonus_edits)
 
-    def __init__(self, num_of_gates: int, num_of_rotated_qubits: int, rotation_degree: int, randomization_degree: int):
+    def __init__(self, num_of_gates: int, num_of_rotated_qubits: int, rotation_degree: int, randomization_degree: int,
+                 bonus_edits: int):
         """
         :param randomization_degree: how many angles are available to random rotations (2*PI / randomization_degree),
             a value of 0 implies no restrictions (i.e., any real number is allowed)
+        :param bonus_edits: how many more edits than placed gates (min number of needed edits) the player has
         """
         assert num_of_gates > 0, f"At least one gate needs to be placed: {num_of_gates} > 0 is False!"
         assert num_of_rotated_qubits >= 0, f"No negative value allowed for " \
@@ -234,6 +241,7 @@ class BossDifficulty:
         self.__num_of_rotated_qubits = num_of_rotated_qubits
         self.__rotation_degree = rotation_degree
         self.__randomization_degree = randomization_degree
+        self.__bonus_edits = bonus_edits
 
     @property
     def num_of_gates(self) -> int:
@@ -266,8 +274,13 @@ class BossDifficulty:
         """
         return self.__randomization_degree
 
+    @property
+    def edits(self) -> int:
+        return self.__num_of_gates + self.__bonus_edits
+
     def normalize(self, num_of_qubits: int, circuit_space: int) -> "BossDifficulty":
         num_of_gates = circuit_space if circuit_space < self.__num_of_gates else self.__num_of_gates
         num_of_rotated_qubits = num_of_qubits if num_of_qubits < self.__num_of_rotated_qubits\
             else self.__num_of_rotated_qubits
-        return BossDifficulty(num_of_gates, num_of_rotated_qubits, self.__rotation_degree, self.__randomization_degree)
+        return BossDifficulty(num_of_gates, num_of_rotated_qubits, self.__rotation_degree, self.__randomization_degree,
+                              self.__bonus_edits)

@@ -11,13 +11,11 @@ class Boss(Riddle, ABC):
     A special Enemy with specified target and reward.
     """
 
-    __DEFAULT_ATTEMPTS = 10
     __BOSS_ID: int = 0
     # we have to pass a seed to Riddle(), but we don't have instability so its value doesn't matter
     __PLACEHOLDER_SEED = 714985
 
-    def __init__(self, id_: int, target: StateVector, input_: StateVector, reward: Collectible,
-                 attempts: int = __DEFAULT_ATTEMPTS):  # todo: later attempts cannot be optional
+    def __init__(self, id_: int, target: StateVector, input_: StateVector, reward: Collectible, edits: int):
         """
         Creates a boss enemy with a list of specified target and input StateVectors and a specified reward.
         :param id_: an integer unique per level to identify the target
@@ -25,7 +23,7 @@ class Boss(Riddle, ABC):
         """
         self.__index = 0
 
-        super().__init__(id_, target, reward, Boss.__PLACEHOLDER_SEED, attempts, input_, stable_probability=0)
+        super().__init__(id_, target, reward, Boss.__PLACEHOLDER_SEED, edits, input_, stable_probability=0)
 
     @property
     def flee_energy(self) -> int:
@@ -64,4 +62,4 @@ class AntiEntangleBoss(Boss):
             (target2, basis_states[2]),
             (target2, basis_states[3]),
         ]
-        super().__init__(0, puzzles[0][0], puzzles[0][1], reward, attempts=5)
+        super().__init__(0, puzzles[0][0], puzzles[0][1], reward, edits=5)

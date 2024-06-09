@@ -1896,7 +1896,7 @@ class RiddleWidgetSet(ReachTargetWidgetSet):
 
     def set_data(self, robot: Robot, target: Riddle, tutorial_data) -> None:
         super(RiddleWidgetSet, self).set_data(robot, target, tutorial_data)
-        self._hud.set_data((robot, None, f"Remaining {RiddleWidgetSet._TRY_PHRASING}: {target.attempts}"))
+        self._hud.set_data((robot, None, f"Remaining {RiddleWidgetSet._TRY_PHRASING}: {target.edits}"))
 
     def _on_commit_fail(self) -> bool:
         if not self._target.can_attempt:
@@ -1905,7 +1905,7 @@ class RiddleWidgetSet(ReachTargetWidgetSet):
                  f"It vanished together with its reward."],
                 [self._continue_exploration]
             ))
-        self._hud.update_situational(f"Remaining {RiddleWidgetSet._TRY_PHRASING}: {self._target.attempts}")
+        self._hud.update_situational(f"Remaining {RiddleWidgetSet._TRY_PHRASING}: {self._target.edits}")
         return True
 
     def _choices_flee(self) -> bool:
@@ -1981,5 +1981,5 @@ class BossFightWidgetSet(RiddleWidgetSet):
                  f"You exit the level with your emergency kit."],
                 [self._exit_level]
             ))
-        self._hud.update_situational(f"Remaining {RiddleWidgetSet._TRY_PHRASING}: {self._target.attempts}")
+        self._hud.update_situational(f"Remaining {RiddleWidgetSet._TRY_PHRASING}: {self._target.edits}")
         return True

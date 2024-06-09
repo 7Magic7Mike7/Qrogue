@@ -210,7 +210,7 @@ class Riddler(WalkTriggerTile):
     @property
     def data(self) -> Optional[int]:
         if self.__is_active:
-            return self.__riddle.attempts
+            return self.__riddle.edits
         else:
             return None
 
