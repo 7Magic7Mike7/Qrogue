@@ -28,14 +28,6 @@ class Enemy(Target):
     def flee_energy(self) -> int:
         return PuzzleConfig.calculate_flee_energy(self.__id)
 
-    def _on_reached(self):
-        """
-        Nothing to do here.
-
-        :return: None
-        """
-        pass
-
     def flee_check(self) -> bool:
         """
         Check if we are allowed to flee or not.

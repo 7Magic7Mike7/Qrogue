@@ -38,6 +38,3 @@ class Challenge(Target):
         if self.__min_gates <= circ_matrix.num_of_used_gates <= self.__max_gates or CheatConfig.in_god_mode():
             return super(Challenge, self).is_reached(state_vector, circ_matrix)
         return False, None
-
-    def _on_reached(self):
-        pass

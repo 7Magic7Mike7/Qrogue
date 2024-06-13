@@ -29,9 +29,6 @@ class Boss(Riddle, ABC):
     def flee_energy(self) -> int:
         return PuzzleConfig.BOSS_FLEE_ENERGY
 
-    def _on_reached(self):
-        pass    # todo: end level?
-
     def flee_check(self) -> bool:
         return True
 

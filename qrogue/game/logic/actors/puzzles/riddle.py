@@ -62,10 +62,3 @@ class Riddle(Target):
             self.__edits = max(self.__edits - 1, 0)
             self.__can_attempt = self.can_attempt
         return success, reward
-
-    def _on_reached(self):
-        """
-        Nothing additional to do for reached Riddles.
-        :return: None
-        """
-        pass
