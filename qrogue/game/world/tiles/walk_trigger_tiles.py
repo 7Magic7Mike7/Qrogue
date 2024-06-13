@@ -7,7 +7,7 @@ from qrogue.game.logic.collectibles import Collectible as LogicalCollectible, En
     Score as LogicalScore, CollectibleType
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.game.world.tiles.tiles import Tile, TileCode
-from qrogue.util import Logger, ColorConfig, CommonQuestions, MapConfig
+from qrogue.util import Logger, ColorConfig, CommonQuestions, MapConfig, Config
 
 
 class WalkTriggerTile(Tile):
@@ -61,6 +61,8 @@ class WalkTriggerTile(Tile):
         self.__explanation = message
 
     def set_event(self, event_id: str):
+        if self.__event_id is not None:
+            Config.check_reachability("WalkTriggerTile.set_event()")
         self.__event_id = event_id
 
     def trigger(self, direction: Direction, controllable: Controllable, trigger_event_callback: Callable[[str], Any]) \
