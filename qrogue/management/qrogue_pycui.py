@@ -683,9 +683,8 @@ class QrogueCUI(PyCUI):
         self.__key_logger.reinit(level.seed, level.internal_name, self.__save_data.to_keylog_string())
         self.__ow_key_logger.level_start(level.internal_name)
 
-        if level.robot.score > 0:
-            Config.check_reachability("QrogueCUI.__start_level() score check")
-        level.robot.reset_score()  # reset the score at the start of each level
+        # reset the score at the start of each level
+        level.robot.reset_score()   # needed because the player can restart levels to try again
 
         self.__pause.set_data(level.robot, level.name, None)
         self.__state_machine.change_state(QrogueCUI._State.Explore, level)
