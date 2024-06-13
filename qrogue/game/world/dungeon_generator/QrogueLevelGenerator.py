@@ -11,7 +11,7 @@ from qrogue.game.logic.base import StateVector
 from qrogue.game.logic.collectibles import Collectible, MultiCollectible, pickup, Qubit, instruction, \
     Instruction, InstructionManager, CollectibleFactory, OrderedCollectibleFactory
 from qrogue.game.target_difficulty import ExplicitTargetDifficulty, ExplicitStvDifficulty
-from qrogue.game.target_factory import EnemyFactory, EnemyTargetFactory
+from qrogue.game.target_factory import EnemyFactory, EnemyTargetFactory, BossFactory
 from qrogue.game.world import tiles
 from qrogue.game.world.dungeon_generator import parser_util
 from qrogue.game.world.dungeon_generator.dungeon_parser.QrogueDungeonLexer import QrogueDungeonLexer
@@ -823,6 +823,10 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
         attempts = self.visitInteger(ctx.integer())
         boss_actor = QrogueLevelGenerator._StaticTemplates.get_boss(ctx.REFERENCE(0), gate, reward, attempts)
+        if boss_actor is None:
+            Logger.instance().warn(f"Could not find template for Boss \"{ctx.REFERENCE(0)}\". Using default instead",
+                                   from_pycui=False)
+            boss_actor = BossFactory.default(self.__robot).produce(self.__rm, include_gates=[gate] if gate else None)
         return tiles.Boss(boss_actor, self.__cbp.start_boss_fight, self.__cbp.game_over)
 
     def visitBoss_puzzle(self, ctx: QrogueDungeonParser.Boss_puzzleContext) -> Tuple[StateVector, StateVector]:
