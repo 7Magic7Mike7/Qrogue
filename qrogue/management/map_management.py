@@ -29,7 +29,7 @@ class MapManager:
         self.__rm = RandomManager.create_new(seed)
         self.__start_level = start_level
         self.__start_level_transition = start_level_transition_callback
-        self.__expedition_generator = ExpeditionGenerator(self.__save_data.check_achievement, self.__trigger_event,
+        self.__expedition_generator = ExpeditionGenerator(self.__save_data.check_achievement, self.trigger_event,
                                                           self.load_map, callback_pack)
         self.__expedition_queue: List[ExpeditionMap] = []
         self.__cur_map: Map = None
@@ -90,7 +90,7 @@ class MapManager:
 
             # todo maybe levels should be able to have arbitrary names except "w..." or "e..." or "back" or "next"?
             check_achievement = self.__save_data.check_achievement
-            generator = QrogueLevelGenerator(check_achievement, self.__trigger_event, self.load_map,
+            generator = QrogueLevelGenerator(check_achievement, self.trigger_event, self.load_map,
                                              Popup.npc_says, self.__cbp)
             try:
                 level, success = generator.generate(map_seed, map_name)
@@ -156,7 +156,7 @@ class MapManager:
         elif confirmed == 2:
             self.__load_back()
 
-    def __trigger_event(self, event_id: str):
+    def trigger_event(self, event_id: str):
         if event_id.lower() == MapConfig.done_event_id():
             # event_id = MapConfig.specific_done_event_id(self.__cur_map.internal_name)
             # self.__save_data.trigger_event(event_id)
@@ -180,7 +180,7 @@ class MapManager:
             if event_id in self.__temp_level_event_storage:  # todo: is score needed? a simple flag might be better
                 event_score, event_done_score = self.__temp_level_event_storage[event_id]
                 if event_score < event_done_score:
-                    Config.check_reachability("MapManager.__trigger_event() for existing event")
+                    Config.check_reachability("MapManager.trigger_event() for existing event")
                     self.__temp_level_event_storage[event_id] = event_score + 1, event_done_score
             else:
                 self.__temp_level_event_storage[event_id] = 1, 1

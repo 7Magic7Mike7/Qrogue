@@ -1773,29 +1773,30 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             self._robot.increase_score(ScoreConfig.get_puzzle_score(self._target.checks,
                                                                     self._robot.state_vector.num_of_used_gates,
                                                                     self._target.state_vector.num_of_used_gates))
-
-            def give_reward_and_continue() -> bool:
-                if reward is not None: self._robot.give_collectible(reward)
-                self._in_reward_message = False  # undo the blocking since the success notification is over
-                self._continue_exploration()
-                return False  # stay in choices
-
             self._in_reward_message = True
-            if reward is None:
-                self._choices.set_data(data=(
-                    [f"Congratulations, you solved the {ColorConfig.highlight_object('Puzzle', invert=True)}!"],
-                    [give_reward_and_continue]
-                ))
-            else:
-                Logger.instance().assertion(isinstance(reward, Collectible),
-                                            f"Error! Reward is not a Collectible: {reward}")
-                self._choices.set_data(data=(
-                    [f"Congratulations! Your reward: {ColorConfig.highlight_object(reward.to_string())}"],
-                    [give_reward_and_continue]
-                ))
+            self._prepare_reward_message(reward)
             self._on_success()
         else:
             self._on_commit_fail()
+
+    def _prepare_reward_message(self, reward: Collectible):
+        def give_reward_and_continue() -> bool:
+            if reward is not None: self._robot.give_collectible(reward)
+            self._in_reward_message = False  # undo the blocking since the success notification is over
+            self._continue_exploration()
+            return False  # stay in choices
+
+        if reward is None:
+            self._choices.set_data(data=(
+                [f"Congratulations, you solved the {ColorConfig.highlight_object('Puzzle', invert=True)}!"],
+                [give_reward_and_continue]
+            ))
+        else:
+            Logger.instance().assertion(isinstance(reward, Collectible), f"Reward is no Collectible: {reward}")
+            self._choices.set_data(data=(
+                [f"Congratulations! Your reward: {ColorConfig.highlight_object(reward.to_string())}"],
+                [give_reward_and_continue]
+            ))
 
     def _fleeing_failed_callback(self) -> bool:
         self.__init_choices()
@@ -1954,10 +1955,12 @@ class ChallengeWidgetSet(ReachTargetWidgetSet):
 class BossFightWidgetSet(RiddleWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  continue_exploration_callback: Callable[[bool], None], reopen_popup_callback: Callable[[], None],
-                 check_unlocks_callback: Callable[[str], bool], exit_level_callback: Callable[[], None]):
+                 check_unlocks_callback: Callable[[str], bool], exit_level_callback: Callable[[], None],
+                 proceed_to_next_level_callback: Callable[[], None]):
         super().__init__(controls, render, logger, root, continue_exploration_callback, reopen_popup_callback,
                          check_unlocks_callback)
         self._exit_level = exit_level_callback
+        self._proceed_to_next_level = proceed_to_next_level_callback
 
     def _choices_flee(self) -> bool:
         self._choices.set_data(data=(
@@ -1969,6 +1972,23 @@ class BossFightWidgetSet(RiddleWidgetSet):
     def set_data(self, robot: Robot, target: Boss, tutorial_data):
         # override to make sure a Boss is passed
         super(BossFightWidgetSet, self).set_data(robot, target, tutorial_data)
+
+    def _prepare_reward_message(self, reward: Collectible):
+        if reward is None:
+            Logger.instance().warn("No reward specified for Boss!", from_pycui=False)
+            reward_text = ""
+        else:
+            reward_text = f"Your reward: {ColorConfig.highlight_object(reward.to_string())}."
+
+        def callback() -> bool:
+            self._continue_exploration()    # leave the fight screen
+            self._proceed_to_next_level()   # and then proceed
+            return False
+
+        self._choices.set_data(data=(
+            [f"Congratulations, you solved the {ColorConfig.highlight_object('Boss Puzzle')}!\n" + reward_text],
+            [callback]
+        ))
 
     def _on_commit_fail(self) -> bool:
         if GameplayConfig.get_option_value(Options.energy_mode):

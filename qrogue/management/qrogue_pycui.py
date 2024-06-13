@@ -20,7 +20,7 @@ from qrogue.graphics.widgets import Renderable, BossFightWidgetSet, ExploreWidge
     ScreenCheckWidgetSet, LevelSelectWidgetSet
 from qrogue.util import common_messages, CheatConfig, Config, GameplayConfig, UIConfig, HelpText, \
     Logger, PathConfig, Controls, Keys, RandomManager, PyCuiConfig, PopupConfig, PyCuiColors, Options, \
-    CommonInfos
+    CommonInfos, MapConfig
 from qrogue.util.game_simulator import GameSimulator
 from qrogue.util.key_logger import KeyLogger, OverWorldKeyLogger, DummyKeyLogger
 from .map_management import MapManager
@@ -328,7 +328,8 @@ class QrogueCUI(PyCUI):
                                       self.__popup_history.show, self.__save_data.check_unlocks)
         self.__boss_fight = BossFightWidgetSet(self.__controls, self.__render, Logger.instance(), self,
                                                self.__continue_explore, self.__popup_history.show,
-                                               self.__save_data.check_unlocks, self.__game_over)
+                                               self.__save_data.check_unlocks, self._switch_to_menu,
+                                               lambda: self.__map_manager.trigger_event(MapConfig.done_event_id()))
         self.__riddle = RiddleWidgetSet(self.__controls, self.__render, Logger.instance(), self,
                                         self.__continue_explore, self.__popup_history.show,
                                         self.__save_data.check_unlocks)
