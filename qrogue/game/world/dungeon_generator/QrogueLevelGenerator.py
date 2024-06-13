@@ -827,7 +827,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             Logger.instance().warn(f"Could not find template for Boss \"{ctx.REFERENCE(0)}\". Using default instead",
                                    from_pycui=False)
             boss_actor = BossFactory.default(self.__robot).produce(self.__rm, include_gates=[gate] if gate else None)
-        return tiles.Boss(boss_actor, self.__cbp.start_boss_fight, self.__cbp.game_over)
+        return tiles.Boss(boss_actor, self.__cbp.start_boss_fight)
 
     def visitBoss_puzzle(self, ctx: QrogueDungeonParser.Boss_puzzleContext) -> Tuple[StateVector, StateVector]:
         if ctx.REFERENCE():

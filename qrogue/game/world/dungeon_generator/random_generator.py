@@ -812,10 +812,7 @@ class ExpeditionGenerator(DungeonGenerator):
                             elif code == _Code.Gate:
                                 room = TreasureRoom(tiles.Collectible(gate), hw, direction)
                             elif code == _Code.Boss:
-                                def end_level():
-                                    self.__load_map(MapConfig.back_map_string(), None)
-
-                                boss = tiles.Boss(dungeon_boss, self.__cbp.start_boss_fight, end_level)
+                                boss = tiles.Boss(dungeon_boss, self.__cbp.start_boss_fight)
                                 room = BossRoom(hw, direction, boss)
                         if room:
                             rooms[y][x] = room
