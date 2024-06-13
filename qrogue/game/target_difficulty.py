@@ -1,4 +1,5 @@
-from typing import List, Union, Tuple, Optional
+import enum
+from typing import List, Union, Tuple, Optional, Dict
 
 from qrogue.game.logic.actors.controllables import Robot
 from qrogue.game.logic.base import StateVector
@@ -189,22 +190,63 @@ class PuzzleDifficulty:
 
 
 class BossDifficulty:
-    __DIFF_DEGREES_OF_FREEDOM = 5   # number of variables to define a difficulty (i.e., number of lists below)
-    __DIFF_CIRCUIT_EXUBERANCES = []
-    __DIFF_QUBIT_EXUBERANCES = []
-    __DIFF_ROTATION_EXUBERANCES = []
-    __DIFF_RANDOMIZATION_DEGREES = []
-    __DIFF_BONUS_EDIT_RATIO = []
+    class DifficultyType(enum.Enum):
+        # how much of the circuit space should be used up, values in [0, 1]
+        CircuitExuberance = ("Circuit Exuberance", 1.15)
+        # how many of the available qubits should be rotated, values in [0, 1]
+        QubitExuberance = ("Qubit Exuberance", 1.15)
+        # how many changed qubits should receive a second rotation, values in [0, 1]
+        RotationExuberance = ("Rotation Exuberance", 0.7)
+        # how many angles are available to rotations, values are any integers (negatives imply unrestricted real angles)
+        RandomizationDegree = ("Randomization Exuberance", 0.9)
+        # how many additional edits are given based on used gates, values >= 0
+        BonusEditRatio = ("Bonus Edit Ratio", 1.1)
+
+        def __init__(self, name: str, level_ratio: float):
+            self.__name = name
+            self.__level_ratio = level_ratio    # how much this difficulty type affects the overall difficulty level
+
+        @property
+        def name(self) -> str:
+            return self.__name
+
+        @property
+        def _level_ratio(self) -> float:
+            return self.__level_ratio
+
+        def __str__(self) -> str:
+            return self.__name
+
+    __DIFF_VALUES: Dict[DifficultyType, List[int]] = {
+        DifficultyType.CircuitExuberance:   [0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+        DifficultyType.QubitExuberance:     [0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+        DifficultyType.RotationExuberance:  [0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+        DifficultyType.RandomizationDegree: [  2,   4,  10,  19,  37,  -1],
+        DifficultyType.BonusEditRatio:      [2.0, 1.5, 1.0, 0.6, 1.3, 0.0],
+    }
 
     @staticmethod
     def max_difficulty_level() -> int:
-        return len(BossDifficulty.__DIFF_CIRCUIT_EXUBERANCES)
+        return len(BossDifficulty.__DIFF_VALUES[BossDifficulty.DifficultyType.CircuitExuberance])
+
+    @staticmethod
+    def degrees_of_freedom() -> int:
+        return len(BossDifficulty.__DIFF_VALUES)
 
     @staticmethod
     def validate() -> bool:
-        return len(BossDifficulty.__DIFF_CIRCUIT_EXUBERANCES) == len(BossDifficulty.__DIFF_QUBIT_EXUBERANCES) == \
-            len(BossDifficulty.__DIFF_ROTATION_EXUBERANCES) == len(BossDifficulty.__DIFF_RANDOMIZATION_DEGREES) == \
-            len(BossDifficulty.__DIFF_BONUS_EDIT_RATIO) == BossDifficulty.max_difficulty_level()
+        for values in BossDifficulty.__DIFF_VALUES.values():
+            if len(values) != BossDifficulty.max_difficulty_level():
+                return False
+        return True
+
+    @staticmethod
+    def _calc_avg_level(values: Dict[DifficultyType, int]) -> int:
+        level_sum = 0
+        for val in BossDifficulty.DifficultyType:
+            if val in values:
+                level_sum += values[val] * val._level_ratio
+        return int(level_sum / len(values))
 
     @staticmethod
     def from_percentages(num_of_qubits: int, circuit_space: int, circuit_exuberance: float, qubit_exuberance: float,
@@ -240,36 +282,41 @@ class BossDifficulty:
                               level)
 
     @staticmethod
+    def from_difficulty_dict(num_of_qubits: int, circuit_space: int, values: Dict[DifficultyType, int]) \
+            -> "BossDifficulty":
+        avg_level = BossDifficulty._calc_avg_level(values)
+
+        def get_diff_val(diff_type: BossDifficulty.DifficultyType) -> int:
+            level = values[diff_type] if diff_type in values else avg_level
+            return BossDifficulty.__DIFF_VALUES[diff_type][level]
+        circuit_exuberance = get_diff_val(BossDifficulty.DifficultyType.CircuitExuberance)
+        qubit_exuberance = get_diff_val(BossDifficulty.DifficultyType.QubitExuberance)
+        rotation_exuberance = get_diff_val(BossDifficulty.DifficultyType.RotationExuberance)
+        randomization_degree = get_diff_val(BossDifficulty.DifficultyType.RandomizationDegree)
+        bonus_edit_ratio = get_diff_val(BossDifficulty.DifficultyType.BonusEditRatio)
+
+        return BossDifficulty.from_percentages(num_of_qubits, circuit_space, circuit_exuberance, qubit_exuberance,
+                                               rotation_exuberance, randomization_degree, bonus_edit_ratio, avg_level)
+
+    @staticmethod
     def from_difficulty_code(code: str, num_of_qubits: int, circuit_space: int) -> "BossDifficulty":
         level_len = len(str(BossDifficulty.max_difficulty_level()))  # how many characters a single level code has
-        assert len(code) <= BossDifficulty.__DIFF_DEGREES_OF_FREEDOM * level_len, \
-            f"Level code \"{code}\" is too short! At least {BossDifficulty.__DIFF_DEGREES_OF_FREEDOM * level_len} " \
+        assert len(code) <= BossDifficulty.degrees_of_freedom() * level_len, \
+            f"Level code \"{code}\" is too short! At least {BossDifficulty.degrees_of_freedom() * level_len} " \
             f"characters are needed."
 
-        circ_level  = int(code[0 * level_len:1 * level_len])
-        qubit_level = int(code[1 * level_len:2 * level_len])
-        rot_level   = int(code[2 * level_len:3 * level_len])
-        rand_level  = int(code[3 * level_len:4 * level_len])
-        edit_level  = int(code[4 * level_len:5 * level_len])
-        # calculate the overall level weighted from the individual levels
-        overall_level = int(sum([circ_level * 1.15, qubit_level * 1.15, rot_level * 0.7, rand_level * 0.9,
-                                 edit_level * 1.1]) / BossDifficulty.__DIFF_DEGREES_OF_FREEDOM)
-
-        circuit_exuberance = BossDifficulty.__DIFF_CIRCUIT_EXUBERANCES[circ_level]
-        qubit_exuberance = BossDifficulty.__DIFF_QUBIT_EXUBERANCES[qubit_level]
-        rotation_exuberance = BossDifficulty.__DIFF_ROTATION_EXUBERANCES[rot_level]
-        randomization_degree = BossDifficulty.__DIFF_RANDOMIZATION_DEGREES[rand_level]
-        bonus_edit_ratio = BossDifficulty.__DIFF_BONUS_EDIT_RATIO[edit_level]
-        return BossDifficulty.from_percentages(num_of_qubits, circuit_space, circuit_exuberance, qubit_exuberance,
-                                               rotation_exuberance, randomization_degree, bonus_edit_ratio,
-                                               overall_level)
+        values: Dict[BossDifficulty.DifficultyType, int] = {}
+        for i, diff_type in enumerate(BossDifficulty.DifficultyType):
+            values[diff_type] = int(code[i * level_len:(i+1) * level_len])
+        return BossDifficulty.from_difficulty_dict(num_of_qubits, circuit_space, values)
 
     @staticmethod
     def from_difficulty_level(level: int, num_of_qubits: int, circuit_space: int) -> "BossDifficulty":
         assert 0 <= level < BossDifficulty.max_difficulty_level(), \
             f"Invalid level: 0 <= {level} < {BossDifficulty.max_difficulty_level()} is False!"
-        code = f"{level}{level}{level}{level}{level}"   # all variables have the same level
-        return BossDifficulty.from_difficulty_code(code, num_of_qubits, circuit_space)
+        values: Dict[BossDifficulty.DifficultyType, int] = {}
+        for diff_type in BossDifficulty.DifficultyType: values[diff_type] = level
+        return BossDifficulty.from_difficulty_dict(num_of_qubits, circuit_space, values)
 
     def __init__(self, num_of_gates: int, num_of_rotated_qubits: int, rotation_degree: int, randomization_degree: int,
                  bonus_edits: int, level: Optional[int] = None):

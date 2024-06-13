@@ -168,9 +168,7 @@ class BossFactory:
         2: [gates.HGate(), gates.SGate()],
         3: [gates.SGate(), gates.YGate(), gates.ZGate()],
         4: [gates.RYGate(), gates.RZGate()],
-        5: [gates.RYGate(0.7), gates.RYGate(1.2), gates.RYGate(1.6), gates.RYGate(2.5),
-            gates.RZGate(0.7), gates.RZGate(1.2), gates.RZGate(1.6), gates.RZGate(2.5), ],
-        6: [gates.HGate()],
+        5: [gates.HGate()],
     }
 
     @staticmethod
