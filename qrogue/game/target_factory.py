@@ -231,6 +231,11 @@ class BossFactory:
 
     def produce(self, rm: MyRandom, include_gates: Optional[List[Instruction]],
                 input_gates: Optional[List[Instruction]] = None) -> Boss:
+        """
+        :param rm: used for randomization during the puzzle generation
+        :param include_gates: a list of gates that will be included in the puzzle additionally to the available gates
+        :param input_gates: a list of additional gates used to compute the input stv
+        """
         if include_gates is None: include_gates = []
 
         gates_for_target: List[Instruction] = []

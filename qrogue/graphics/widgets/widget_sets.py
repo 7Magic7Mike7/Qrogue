@@ -1402,6 +1402,17 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                  continue_exploration_callback: Callable[[bool], None], reopen_popup: Callable[[], None],
                  check_unlocks_callback: Callable[[Union[str, Unlocks]], bool],
                  flee_choice: str = "Flee", dynamic_input: bool = True, dynamic_target: bool = True):
+        """
+        :param controls: controls used by the CUI to add keys
+        :param render: callback to render the CUI
+        :param logger: logger for the CUI
+        :param continue_exploration_callback: callback to exit this WidgetSet and continue exploration
+        :param reopen_popup: callback to reopen popup history
+        :param check_unlocks_callback: callback to check if certain locked features were already unlocked
+        :param flee_choice: the text used to prompt the player with aborting this widget set's puzzle
+        :param dynamic_input:
+        :param dynamic_target:
+        """
         super().__init__(logger, root, render)
         self.__flee_choice = flee_choice
         self.__dynamic_input = dynamic_input
