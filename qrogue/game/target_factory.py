@@ -10,7 +10,7 @@ import qrogue.game.logic.collectibles.instruction as gates
 from qrogue.game.target_difficulty import StvDifficulty, TargetDifficulty, PuzzleDifficulty, RiddleDifficulty, \
     BossDifficulty
 from qrogue.game.world.navigation import Direction
-from qrogue.util import Logger, MyRandom
+from qrogue.util import Logger, MyRandom, Config
 
 
 class EnemyFactory(ABC):
@@ -296,6 +296,7 @@ class BossFactory:
             gates_for_target = gates_for_input + gates_for_target
 
         else:
+            Config.check_reachability("BossFactory.produce() with input_gates")
             # use the provided input gates
             for g in input_gates:
                 # stop before we're using more gates than the robot can place

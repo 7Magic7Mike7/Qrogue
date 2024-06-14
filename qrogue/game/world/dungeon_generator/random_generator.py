@@ -670,7 +670,7 @@ class ExpeditionGenerator(DungeonGenerator):
 
         gate: Instruction = gate_factory.produce(rm)
         riddle = riddle_factory.produce(rm)
-        dungeon_boss = boss_factory.produce(rm, include_gates=[], input_gates=[gate])
+        dungeon_boss = boss_factory.produce(rm, include_gates=[gate])
 
         # Difficulties can be misleading since picking one gate can result in CX Gate which does nothing if it's the
         # only gate on a zero-state. Also picking multiple gates where one is CX has a higher probability of doing
