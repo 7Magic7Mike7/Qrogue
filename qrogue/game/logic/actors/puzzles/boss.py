@@ -33,18 +33,6 @@ class Boss(Riddle, ABC):
         return True
 
 
-class DummyBoss(Boss):
-    def __init__(self):
-        # needs the player to implement a SwapGate
-        puzzles = [
-            (Instruction.compute_stv([gates.XGate().setup([0])], 2),
-             Instruction.compute_stv([gates.XGate().setup([1])], 2)),
-            (Instruction.compute_stv([gates.XGate().setup([1])], 2),
-             Instruction.compute_stv([gates.XGate().setup([0])], 2)),
-        ]
-        super(DummyBoss, self).__init__(puzzles, Score(1000))
-
-
 class AntiEntangleBoss(Boss):
     def __init__(self, reward: Collectible):
         comb_gate = gates.CombinedGates([
