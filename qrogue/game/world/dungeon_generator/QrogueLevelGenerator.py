@@ -67,11 +67,11 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             return dir_str == "West"
 
         @staticmethod
-        def get_boss(ref: QrogueDungeonParser.REFERENCE, gate: Optional[Instruction], reward: Collectible,
-                     attempts: Optional[int]) -> Optional[actors.Boss]:
+        def get_boss(ref: QrogueDungeonParser.REFERENCE, reward: Collectible, edits: Optional[int]) \
+                -> Optional[actors.Boss]:
             ref = parser_util.normalize_reference(ref.getText())
             if ref in ["antientangle", "antientanglement"]:
-                return boss.AntiEntangleBoss(reward)
+                return boss.AntiEntangleBoss(reward, edits)
             return None
 
     @staticmethod
@@ -821,8 +821,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             # if neither a collectible nor a reference to a reward_factory is given we use the default one
             reward = self.__default_collectible_factory.produce(self.__rm)
 
-        attempts = self.visitInteger(ctx.integer())
-        boss_actor = QrogueLevelGenerator._StaticTemplates.get_boss(ctx.REFERENCE(0), gate, reward, attempts)
+        edits = self.visitInteger(ctx.integer())
+        boss_actor = QrogueLevelGenerator._StaticTemplates.get_boss(ctx.REFERENCE(0), reward, edits)
         if boss_actor is None:
             Logger.instance().warn(f"Could not find template for Boss \"{ctx.REFERENCE(0)}\". Using default instead",
                                    from_pycui=False)

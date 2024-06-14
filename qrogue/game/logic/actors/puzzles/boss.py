@@ -1,4 +1,5 @@
 from abc import ABC
+from typing import Optional
 
 from qrogue.game.logic.base import StateVector
 from qrogue.game.logic.collectibles import Collectible, Instruction, instruction as gates
@@ -34,7 +35,9 @@ class Boss(Riddle, ABC):
 
 
 class AntiEntangleBoss(Boss):
-    def __init__(self, reward: Collectible):
+    def __init__(self, reward: Collectible, edits: Optional[int] = None):
+        if edits is None: edits = 5
+
         comb_gate = gates.CombinedGates([
             gates.HGate().setup([0]), gates.CXGate().setup([0, 1]), gates.XGate().setup([0])
         ], 2, label="Anti Entanglement").setup([0, 1])
@@ -47,4 +50,4 @@ class AntiEntangleBoss(Boss):
             (target2, basis_states[2]),
             (target2, basis_states[3]),
         ]
-        super().__init__(0, puzzles[0][0], puzzles[0][1], reward, edits=5)
+        super().__init__(0, puzzles[0][0], puzzles[0][1], reward, edits)
