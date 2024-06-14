@@ -1997,8 +1997,9 @@ class BossFightWidgetSet(RiddleWidgetSet):
 
         if not self._target.can_attempt:
             self._choices.set_data(data=(
-                [f"You couldn't solve the Boss puzzle within the given number of {RiddleWidgetSet._TRY_PHRASING}. "
-                 f"You exit the level with your emergency kit."],
+                [f"You {ColorConfig.highlight_word('could not solve')} the Boss puzzle within the given number of "
+                 f"{RiddleWidgetSet._TRY_PHRASING}.\n"
+                 f"You {ColorConfig.highlight_word('exit the level')} with your emergency kit."],
                 [self._exit_level]
             ))
         self._hud.update_situational(f"Remaining {RiddleWidgetSet._TRY_PHRASING}: {self._target.edits}")

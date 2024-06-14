@@ -123,14 +123,15 @@ class CommonQuestions(Enum):
     @staticmethod
     def proceed_summary(level_name: str, score: int, duration: int, total_score: int, callback: Callable[[int], None],
                         prev_values: Optional[Tuple[int, int]] = None):
-        text = f"{level_name}\n" \
+        text = f"Congratulations for completing \"{level_name}\"\n" \
+               f"Your stats:\n" \
                f"Score:       {score}\n" \
                f"Duration:    {duration}s\n" \
                f"Total Score: {total_score}"
         if prev_values is not None:
-            text += f"\n\n" \
-                    f"Highscore:   {prev_values[0]}\n" \
-                    f"Duration:    {prev_values[1]}"
+            text += f"\n\nStats of best attempt:" \
+                    f"Duration:    {prev_values[1]}\n" \
+                    f"Total Score: {prev_values[0]}"
         _CallbackHandler.ask(Config.system_name(), text, callback, ["Proceed", "Stay", "Back to Main Menu"])    # todo: does stay work?
 
     def __init__(self, title: str, text: str, answers: Optional[List[str]] = None):
