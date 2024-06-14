@@ -1429,6 +1429,9 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self.__in_expedition = False
         self.__puzzle_timer = cur_datetime()
 
+        if not (self.__dynamic_target and self.__dynamic_input):
+            Config.check_reachability("ReachTargetWidgetSet() - dynamic target and input?", raise_exception=True)
+
         posy = 0
         posx = 0
         row_span = UIConfig.stv_height(2)  # doesn't matter since we reposition the dependent widgets anyway
