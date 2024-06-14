@@ -149,6 +149,8 @@ class MapManager:
         self.__exit_map()
 
     def __proceed(self, confirmed: int = 0):
+        # not defined inside trigger_event() since it doesn't depend on any internal state of trigger_event() and,
+        #  therefore, it's unnecessary to create __proceed again for every trigger_event()-call
         if confirmed == 0:
             self.__load_next()
         elif confirmed == 1:
