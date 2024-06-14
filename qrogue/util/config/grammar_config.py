@@ -9,3 +9,9 @@ class MapGrammarConfig:
     @staticmethod
     def description_prefix() -> str:
         return "Description = "
+
+
+class PuzzleGrammarConfig:
+    @staticmethod
+    def boss_code() -> str:
+        return "code"

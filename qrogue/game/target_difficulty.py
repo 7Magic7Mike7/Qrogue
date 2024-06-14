@@ -301,6 +301,8 @@ class BossDifficulty:
     @staticmethod
     def from_difficulty_code(code: str, num_of_qubits: int, circuit_space: int) -> "BossDifficulty":
         level_len = len(str(BossDifficulty.max_difficulty_level()))  # how many characters a single level code has
+        if len(code) == level_len:
+            code = code * BossDifficulty.degrees_of_freedom()   # extend code so every DiffType has the same level
         assert len(code) <= BossDifficulty.degrees_of_freedom() * level_len, \
             f"Level code \"{code}\" is too short! At least {BossDifficulty.degrees_of_freedom() * level_len} " \
             f"characters are needed."

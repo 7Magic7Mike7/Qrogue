@@ -21,7 +21,7 @@ from qrogue.game.world.dungeon_generator.generator import DungeonGenerator
 from qrogue.game.world.map import CallbackPack, MapMetaData, LevelMap, rooms
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.util import Config, MapConfig, PathConfig, Logger, CommonQuestions, RandomManager, MyRandom, \
-    load_help_text, ParserErrorListener
+    load_help_text, ParserErrorListener, PuzzleGrammarConfig
 
 
 class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
@@ -824,9 +824,15 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         edits = self.visitInteger(ctx.integer())
         boss_actor = QrogueLevelGenerator._StaticTemplates.get_boss(ctx.REFERENCE(0), reward, edits)
         if boss_actor is None:
-            Logger.instance().warn(f"Could not find template for Boss \"{ctx.REFERENCE(0)}\". Using default instead",
-                                   from_pycui=False)
-            boss_actor = BossFactory.default(self.__robot).produce(self.__rm, include_gates=[gate] if gate else None)
+            boss_ref = parser_util.normalize_reference(ctx.REFERENCE(0).getText())
+            if boss_ref[:len(PuzzleGrammarConfig.boss_code())] == PuzzleGrammarConfig.boss_code():
+                code = boss_ref[len(PuzzleGrammarConfig.boss_code()):]
+                factory = BossFactory.from_difficulty_code(code, self.__robot, [reward])
+            else:
+                Logger.instance().warn(f"Could not find template for Boss \"{boss_ref}\". Using default "
+                                       f"instead.", from_pycui=False)
+                factory = BossFactory.default(self.__robot)
+            boss_actor = factory.produce(self.__rm, include_gates=[gate] if gate else None)
         return tiles.Boss(boss_actor, self.__cbp.start_boss_fight)
 
     def visitBoss_puzzle(self, ctx: QrogueDungeonParser.Boss_puzzleContext) -> Tuple[StateVector, StateVector]:
