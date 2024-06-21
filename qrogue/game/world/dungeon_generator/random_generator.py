@@ -8,7 +8,7 @@ from qrogue.game.target_difficulty import PuzzleDifficulty
 from qrogue.game.target_factory import BossFactory, EnemyFactory, RiddleFactory, EnemyPuzzleFactory
 from qrogue.game.world import tiles
 from qrogue.game.world.dungeon_generator.generator import DungeonGenerator
-from qrogue.game.world.dungeon_generator.wave_function_collapse import WFCRoomGenerator, WFCEmptyRoomGenerator
+from qrogue.game.world.dungeon_generator.wave_function_collapse import WFCManager, LearnableRoom
 from qrogue.game.world.map import CallbackPack, Hallway, Room, ExpeditionMap
 from qrogue.game.world.map.rooms import AreaType, DefinedWildRoom, EmptyRoom, SpawnRoom, RiddleRoom, BossRoom, \
     TreasureRoom
@@ -630,10 +630,12 @@ class ExpeditionGenerator(DungeonGenerator):
         self.__remaining_keys = 0
         self.__room_has_key = False
 
+        self.__wfc_manager = WFCManager()
         if Config.skip_learning():
-            self.__wild_room_generator = WFCEmptyRoomGenerator()
+            self.__wfc_manager.load("wfc.txt")
         else:
-            self.__wild_room_generator = WFCRoomGenerator(WFCRoomGenerator.get_level_list()[2:], AreaType.WildRoom)
+            self.__wfc_manager.learn()
+            self.__wfc_manager.store("wfc.txt")
 
     def _next_target_id(self) -> int:
         val = self.__next_target_id
@@ -690,6 +692,7 @@ class ExpeditionGenerator(DungeonGenerator):
         created_hallways = {}
         layout = RandomLayoutGenerator(self.width, self.height)
         if layout.generate(seed, validate=True):
+            wild_room_generator = self.__wfc_manager.get_generator(AreaType.WildRoom, rm)
             for y in range(self.height):
                 for x in range(self.width):
                     self.__room_has_key = False
@@ -768,7 +771,7 @@ class ExpeditionGenerator(DungeonGenerator):
                             # reachable for player, implies that the previous layout reachability-check still holds)
                             gen_tries = 0
                             while gen_tries < ExpeditionGenerator.__MAX_ROOM_GEN_TRIES:
-                                tile_matrix: List[List["TileData"]] = self.__wild_room_generator.generate(
+                                tile_matrix: List[List["LearnableRoom.TileData"]] = wild_room_generator.generate(
                                     seed=rm.get_seed("generating a room in ExpeditionGenerator")
                                 )
                                 tile_list = [tile_from_tile_data(entry.code, entry.data)

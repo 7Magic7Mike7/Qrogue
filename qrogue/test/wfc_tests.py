@@ -24,8 +24,8 @@ class WFCGeneratorTestCases(test_util.SingletonSetupTestCase):
             self._print()
 
     def test_room_generator(self):
-        generator = WFCRoomGenerator([(level, True) for level in MapConfig.level_list()],
-                                     room_type=AreaType.WildRoom)
+        generator = WFCRoomGenerator.from_level_files([(level, True) for level in MapConfig.level_list()],
+                                                      room_type=AreaType.WildRoom)
         for i in range(7):
             room = generator.generate(7)
 

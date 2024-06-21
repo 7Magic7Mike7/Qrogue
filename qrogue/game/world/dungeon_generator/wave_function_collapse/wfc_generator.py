@@ -1,3 +1,4 @@
+import json
 import math
 from typing import List, Optional, Dict, Tuple, Iterable, Any
 
@@ -15,6 +16,28 @@ from .wfc_learner import WFCLearner, WFCLearnMatrix
 
 class WFCGenerator:
     @staticmethod
+    def get_pos_weight_json_string(wfc_gen: "WFCGenerator") -> str:
+        json_dicts = []
+        for pos in wfc_gen.__learner.positions:
+            json_dict = {}
+            for key, value in wfc_gen.__learner.pos_weights(pos).items():
+                json_dict[my_str(key)] = my_str(value)
+            json_str = json.dumps(json_dict)
+            json_dicts.append(f"\t\"{my_str(pos)}\": {json_str}")
+        return "{\n" + ", \n".join(json_dicts) + "\n}"
+
+    @staticmethod
+    def get_type_weight_json_string(wfc_gen: "WFCGenerator") -> str:
+        json_dicts = []
+        for type_ in wfc_gen.__learner.types:
+            json_dict = {}
+            for key, value in wfc_gen.__learner.type_weights(type_).items():
+                json_dict[my_str(key)] = my_str(value)
+            json_str = json.dumps(json_dict)
+            json_dicts.append(f"\t\"{my_str(type_)}\": {json_str}")
+        return "{\n" + ", \n".join(json_dicts) + "\n}"
+
+    @staticmethod
     def min_entropy(entropies: Dict[Coordinate, float]) -> Coordinate:
         min_pos = None
         min_val = -1
@@ -25,19 +48,15 @@ class WFCGenerator:
                 min_val = val
         return min_pos
 
-    def __init__(self, data: Optional[List[WFCLearnMatrix]] = None):
+    def __init__(self, pos_weights: Optional[Dict[Coordinate, Dict[Any, int]]] = None,
+                 type_weights: Optional[Dict[Optional[Any], Dict[Any, int]]] = None,
+                 data: Optional[List[WFCLearnMatrix]] = None):
         """
-        Learns the wave function from the given templates and builds a level layout based on that.
+        Learns a wave function from the given data.
         """
-        self.__pos_weights: Dict[Coordinate, Dict[Any, int]] = {}
-        self.__type_weights: Dict[Optional[Any], Dict[Optional[Any], int]] = {}
-        self.__learner = WFCLearner(self.__pos_weights, self.__type_weights)
-
-        self.__entropies: Dict[Coordinate, float] = {}
-        self.__wave_functions: Dict[Coordinate, WaveFunction] = {}
-        self.__width: Optional[int] = None
-        self.__height: Optional[int] = None
-        self.__data = []
+        if pos_weights is None: pos_weights = {}
+        if type_weights is None: type_weights = {}
+        self.__learner = WFCLearner(pos_weights, type_weights)
 
         if data is not None:
             self.add_knowledge(data)
@@ -46,57 +65,36 @@ class WFCGenerator:
         assert len(data) > 0, "Cannot learn from empty list!"
 
         for matrix in data:
-            self.__learner.learn(matrix)
+            self.__learner.learn(matrix)    # this updates pos_weights and type_weights
         self.__learner.remove_unwanted_values()
-        self.__data += data
-
-        width = min([val.width for val in data])
-        if self.__width is None:
-            self.__width = width
-        else:
-            self.__width = min(self.__width, width)
-        height = min([val.height for val in data])
-        if self.__height is None:
-            self.__height = height
-        else:
-            self.__height = min(self.__height, height)
-
-        for x in range(self.__width):
-            for y in range(self.__height):
-                c = Coordinate(x, y)
-                self.__entropies[c] = self.__get_entropy(c)
-                if c in self.__pos_weights:
-                    self.__wave_functions[c] = WaveFunction(self.__pos_weights[c])
-                else:
-                    self.__wave_functions[c] = WaveFunction({})
 
     def __weight(self, main: Any, neighbor: Any) -> float:
         """
 
         :param main: type of the main room
-        :param neighbor: type of a potential neighbor
+        :param neighbor: type of potential neighbor
         :return: normalized weight for the corresponding types
         """
-        if main not in self.__type_weights or neighbor not in self.__type_weights[main]:
+        if main not in self.__learner.types or neighbor not in self.__learner.type_weights(main):
             return 0
-        return self.__type_weights[main][neighbor] / sum(self.__type_weights[main].values())
+        return self.__learner.type_weights(main)[neighbor] / sum(self.__learner.type_weights(main).values())
 
     def __weight_values(self, main: Any) -> Iterable[int]:
-        if main not in self.__type_weights:
+        if main not in self.__learner.types:
             return []
-        return self.__type_weights[main].values()
+        return self.__learner.type_weights(main).values()
 
     def __weight_sum(self, main: Any) -> int:
-        if main not in self.__type_weights:
+        if main not in self.__learner.types:
             return 0
-        return sum(self.__type_weights[main].values())
+        return sum(self.__learner.type_weights(main).values())
 
     def __get_entropy(self, pos: Coordinate) -> float:
-        if pos in self.__pos_weights:
+        if pos in self.__learner.positions:
             # shannon_entropy_for_square = log(sum(weight)) - (sum(weight * log(weight)) / sum(weight))
-            weight_sum = sum(self.__pos_weights[pos].values())
+            weight_sum = sum(self.__learner.pos_weights(pos).values())
             log_sum = 0
-            for w in self.__pos_weights[pos].values():
+            for w in self.__learner.pos_weights(pos).values():
                 if w > 0:
                     log_sum += w * math.log(w)
             entropy = math.log(weight_sum) - (log_sum / weight_sum)
@@ -105,27 +103,33 @@ class WFCGenerator:
 
     def generate(self, seed: int, width: Optional[int] = None, height: Optional[int] = None,
                  static_entries: Optional[Dict[Coordinate, Any]] = None) -> List[List[Any]]:
-        assert len(self.__data) > 0, "Cannot generate without learning from data before!"
+        assert self.__learner.width > 0 and self.__learner.height > 0, \
+            "Cannot generate without learning from data before!"
 
         rand: MyRandom = RandomManager.create_new(seed)
 
-        # if no dimensions are given we take the smallest one that fits all data
-        if width is None:
-            width = min([val.width for val in self.__data])
-        if height is None:
-            height = min([val.height for val in self.__data])
+        # if no dimensions are given we take the learned one
+        if width is None: width = self.__learner.width
+        if height is None: height = self.__learner.height
 
-        # copy wave functions
+        # create wave functions
         wave_functions: Dict[Coordinate, WaveFunction] = {}
-        for pos in self.__wave_functions:
-            wave_functions[pos] = self.__wave_functions[pos].copy()
+        entropies: Dict[Coordinate, float] = {}
+        for x in range(self.__learner.width):
+            for y in range(self.__learner.height):
+                c = Coordinate(x, y)
+                entropies[c] = self.__get_entropy(c)
+                if c in self.__learner.positions:
+                    wave_functions[c] = WaveFunction(self.__learner.pos_weights(c))
+                else:
+                    wave_functions[c] = WaveFunction({})
 
         def propagate_collapse(position: Coordinate, collapsed_state: Any):
             # propagate collapse to all neighbors
             for direction in Direction.values():
                 neighbor_pos = position + direction
                 if 0 <= neighbor_pos.x < width and 0 <= neighbor_pos.y < height:
-                    wave_functions[neighbor_pos].adapt_weights(self.__type_weights[collapsed_state])
+                    wave_functions[neighbor_pos].adapt_weights(self.__learner.type_weights(collapsed_state))
 
         if static_entries is not None:
             for pos in static_entries:
@@ -133,7 +137,6 @@ class WFCGenerator:
                 wave_functions[pos].force_value(value)
                 propagate_collapse(pos, value)
 
-        entropies = self.__entropies.copy()
         while len(entropies) > 0:
             pos = WFCGenerator.min_entropy(entropies)
             value = wave_functions[pos].collapse(rand)
@@ -158,7 +161,7 @@ class WFCGenerator:
         return text
 
     def __str__(self):
-        return self.to_string(self.__type_weights)
+        return self.to_string(self.__learner.types)
 
 
 def load_level(file_name: str, in_dungeon_folder: bool) -> Optional[LevelMap]:
@@ -174,7 +177,6 @@ class WFCLayoutGenerator(WFCGenerator):
         """
         Learns the wave function from the given templates and builds a level layout based on that.
 
-        :param seed:
         :param templates: list of tuples that define a filename and whether it can be found in the dungeon folder or not
         """
         self.__connection_weights: Dict[Optional[AreaType], Dict[Optional[AreaType], int]] = {}
@@ -188,7 +190,7 @@ class WFCLayoutGenerator(WFCGenerator):
 
             data.append(LearnableMap(level))
 
-        super(WFCLayoutGenerator, self).__init__(data)
+        super(WFCLayoutGenerator, self).__init__(data=data)
 
     def generate(self, seed: int, width: Optional[int] = None, height: Optional[int] = None,
                  static_entries: Optional[Dict[Coordinate, Any]] = None) -> List[List[AreaType]]:
@@ -207,11 +209,10 @@ class WFCLayoutGenerator(WFCGenerator):
 class WFCRoomGenerator(WFCGenerator):
     @staticmethod
     def get_level_list() -> List[Tuple[str, bool]]:
-        return [(level, True) for level in MapConfig.level_list()]
+        return [(level, True) for level in MapConfig.level_list()[2:]]
 
-    def __init__(self, templates: List[Tuple[str, bool]], room_type: AreaType):
-        self.__room_type = room_type
-
+    @staticmethod
+    def from_level_files(templates: List[Tuple[str, bool]], room_type: AreaType) -> "WFCRoomGenerator":
         data: List[LearnableRoom] = []
         for template in templates:
             # load levels
@@ -225,8 +226,38 @@ class WFCRoomGenerator(WFCGenerator):
                     room = level.room_at(x, y)
                     if room is not None and room.type == room_type:
                         data.append(LearnableRoom(room))
+        return WFCRoomGenerator(room_type, data=data)
 
-        super(WFCRoomGenerator, self).__init__(data)
+    @staticmethod
+    def from_json_dicts(room_type: AreaType, json_pos: Dict[str, Dict[str, str]],
+                        json_type: Dict[str, Dict[str, str]]) -> Optional["WFCRoomGenerator"]:
+        pos_weights: Dict[Coordinate, Dict[LearnableRoom.TileData, int]] = {}
+        for str_pos in json_pos:
+            pos = Coordinate.from_string(str_pos)
+            if pos is None: return None     # todo: maybe just skip instead? the remaining data might still be valuable
+
+            pos_weights[pos] = {}
+            for key, value in json_pos[str_pos].items():
+                tile_data = LearnableRoom.TileData.from_string(key)
+                weight = int(value)
+                pos_weights[pos][tile_data] = weight
+
+        type_weights: Dict[Optional[LearnableRoom.TileData], Dict[LearnableRoom.TileData, int]] = {}
+        for str_type in json_type:
+            tile_data = LearnableRoom.TileData.from_string(str_type)
+            type_weights[tile_data] = {}
+            for key, value in json_type[str_type].items():
+                neighbor_data = LearnableRoom.TileData.from_string(key)
+                weight = int(value)
+                type_weights[tile_data][neighbor_data] = weight
+
+        return WFCRoomGenerator(room_type, pos_weights, type_weights)
+
+    def __init__(self, room_type: AreaType, pos_weights: Optional[Dict[Coordinate, Dict[Any, int]]] = None,
+                 type_weights: Optional[Dict[Optional[Any], Dict[Any, int]]] = None,
+                 data: Optional[List[WFCLearnMatrix]] = None):
+        self.__room_type = room_type
+        super(WFCRoomGenerator, self).__init__(pos_weights, type_weights, data)
 
     @property
     def room_type(self) -> AreaType:
