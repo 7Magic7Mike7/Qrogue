@@ -152,10 +152,12 @@ class WFCGenerator:
         text = "WFC probabilities by feature type {\n"
         for main in values_of_interest:
             text += f"\t{my_str(main)} ("
+            neighbor_texts = []
             for neighbor in values_of_interest:
                 probability = self.__weight(main, neighbor)
                 if probability > 0:
-                    text += f"{my_str(neighbor)}: {probability * 100}%, "
+                    neighbor_texts.append(f"{my_str(neighbor)}: {probability * 100:2f}%")
+            text += ", ".join(neighbor_texts)
             text += ")\n"
         text += "}"
         return text
