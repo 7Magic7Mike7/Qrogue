@@ -631,11 +631,7 @@ class ExpeditionGenerator(DungeonGenerator):
         self.__room_has_key = False
 
         self.__wfc_manager = WFCManager()
-        if Config.skip_learning():
-            self.__wfc_manager.load("wfc.txt")
-        else:
-            self.__wfc_manager.learn()
-            self.__wfc_manager.store("wfc.txt")
+        self.__wfc_manager.load()
 
     def _next_target_id(self) -> int:
         val = self.__next_target_id

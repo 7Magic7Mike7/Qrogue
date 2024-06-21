@@ -9,6 +9,7 @@ from .wfc_generator import WFCGenerator, WFCRoomGenerator
 
 
 class WFCManager:
+    __DEFAULT_FILE = "wfc.txt"
     __AREA_TYPE_START = "_start"
     __AREA_TYPE_END = "_end"
     __POS_WEIGHTS_START = "pos_weights ="
@@ -26,7 +27,8 @@ class WFCManager:
         else:
             self.__area_data[AreaType.WildRoom] = [wr_gen]
 
-    def store(self, file_name: str):
+    def store(self, file_name: Optional[str] = None):
+        if file_name is None: file_name = WFCManager.__DEFAULT_FILE
         data = ""
         for area_type in self.__area_data:
             data += f"{area_type.name}{WFCManager.__AREA_TYPE_START}\n"
@@ -42,7 +44,8 @@ class WFCManager:
 
         PathConfig.write(file_name, data)
 
-    def load(self, file_name: str):
+    def load(self, file_name: Optional[str] = None):
+        if file_name is None: file_name = WFCManager.__DEFAULT_FILE
         data = PathConfig.read(file_name, in_user_path=True)
         line_start = 0
         while line_start < len(data):
