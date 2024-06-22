@@ -7,9 +7,9 @@ from qrogue.game.logic.actors.puzzles import Enemy, Target, Riddle, Boss
 from qrogue.game.logic.base import StateVector
 from qrogue.game.logic.collectibles import Collectible, CollectibleFactory, Instruction, Energy, Score
 import qrogue.game.logic.collectibles.instruction as gates
-from qrogue.game.target_difficulty import PuzzleDifficulty, BossDifficulty, ExplicitTargetDifficulty
+from qrogue.game.target_difficulty import PuzzleDifficulty, ExplicitTargetDifficulty
 from qrogue.game.world.navigation import Direction
-from qrogue.util import Logger, MyRandom, Config
+from qrogue.util import Logger, MyRandom, Config, StvDifficulty
 
 
 class EnemyFactory(ABC):
@@ -130,15 +130,15 @@ class BossFactory:
 
     @staticmethod
     def validate() -> bool:
-        if len(BossFactory.__LEVELED_REWARD_POOLS) != BossDifficulty.max_difficulty_level():
+        if len(BossFactory.__LEVELED_REWARD_POOLS) != StvDifficulty.max_difficulty_level():
             return False
-        for i in range(BossDifficulty.max_difficulty_level()):
+        for i in range(StvDifficulty.max_difficulty_level()):
             if i not in BossFactory.__LEVELED_REWARD_POOLS:
                 return False
         return True
 
     @staticmethod
-    def from_robot(difficulty: BossDifficulty, robot: Robot, reward_pool: List[Collectible],
+    def from_robot(difficulty: StvDifficulty, robot: Robot, reward_pool: List[Collectible],
                    next_id_callback: Optional[Callable[[], int]] = None) -> "BossFactory":
         available_gates = robot.get_available_instructions()
         return BossFactory(difficulty, robot.num_of_qubits, robot.circuit_space, available_gates, reward_pool,
@@ -146,7 +146,7 @@ class BossFactory:
 
     @staticmethod
     def from_difficulty_code(code: str, robot: Robot, reward_pool: Optional[List[Collectible]] = None) -> "BossFactory":
-        difficulty = BossDifficulty.from_difficulty_code(code, robot.num_of_qubits, robot.circuit_space)
+        difficulty = StvDifficulty.from_difficulty_code(code, robot.num_of_qubits, robot.circuit_space)
         assert difficulty.level >= 0, f"Code \"{code}\" produced invalid level: {difficulty.level} >= 0 is False!"
         if reward_pool is None:
             reward_pool = BossFactory.__LEVELED_REWARD_POOLS[difficulty.level]
@@ -155,7 +155,7 @@ class BossFactory:
     @staticmethod
     def from_difficulty_level(level: int, robot: Robot, reward_pool: Optional[List[Collectible]] = None) \
             -> "BossFactory":
-        difficulty = BossDifficulty.from_difficulty_level(level, robot.num_of_qubits, robot.circuit_space)
+        difficulty = StvDifficulty.from_difficulty_level(level, robot.num_of_qubits, robot.circuit_space)
         if reward_pool is None:
             reward_pool = BossFactory.__LEVELED_REWARD_POOLS[level]
         return BossFactory.from_robot(difficulty, robot, reward_pool)
@@ -164,7 +164,7 @@ class BossFactory:
     def default(robot: Robot) -> "BossFactory":
         return BossFactory.from_difficulty_level(1, robot)
 
-    def __init__(self, difficulty: BossDifficulty, num_of_qubits: int, circuit_space: int,
+    def __init__(self, difficulty: StvDifficulty, num_of_qubits: int, circuit_space: int,
                  available_gates: List[Instruction], reward_pool: List[Collectible],
                  next_id_callback: Optional[Callable[[], int]] = None):
         self.__difficulty = difficulty.normalize(num_of_qubits, circuit_space)
