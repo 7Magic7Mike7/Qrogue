@@ -7,39 +7,7 @@ from qrogue.game.logic.collectibles import Collectible, CollectibleFactory, Inst
 from qrogue.util import Logger, MyRandom
 
 
-class StvDifficulty:
-    def __init__(self, num_of_instructions: int):
-        self.__num_of_instructions = num_of_instructions
-
-    def create_statevector(self, robot: Robot, rm: MyRandom) -> StateVector:
-        """
-        Creates a random StateVector that is reachable for the given Robot.
-
-        :param robot: provides the needed information regarding the number of qubits and usable Instructions for
-        creating a StateVector
-        :param rm: seeded randomness for choosing Instructions and the Qubit(s) to use them on
-        :return: a StateVector reachable for the provided Robot
-        """
-        num_of_qubits = robot.num_of_qubits
-
-        # choose random circuits on random qubits and cbits
-        instruction_pool = robot.get_available_instructions()
-        instructions = []
-        num_of_instructions = min(self.__num_of_instructions, robot.circuit_space)
-        for i in range(num_of_instructions):
-            qubits = list(range(num_of_qubits))
-            # remove = len(instruction_pool) - (self.__num_of_instructions - i) >= 0
-            # if not remove:
-            #     Logger.instance().throw(Exception(
-            #         "this should always remove because else we would duplicate instructions"))
-            instruction = rm.get_element(instruction_pool, remove=True, msg="StvDiff_selectInstruction")
-            while instruction.use_qubit(rm.get_element(qubits, remove=True, msg="StvDiff_selectQubit")):
-                pass
-            instructions.append(instruction)
-        return Instruction.compute_stv(instructions, num_of_qubits)
-
-
-class ExplicitTargetDifficulty(StvDifficulty):
+class ExplicitTargetDifficulty:
     """
     A TargetDifficulty that doesn't create StateVectors based on a Robot's possibilities but by choosing from a pool
     of explicitly provided StateVectors
@@ -53,7 +21,6 @@ class ExplicitTargetDifficulty(StvDifficulty):
         :param reward: factory for creating a reward or a specific reward (Collectible)
         :param ordered: whether StateVectors should be chosen in order or randomly from the given stv_pool
         """
-        super().__init__(-1)
         self.__pool = stv_pool
         self.__ordered = ordered
         self.__order_index = -1
