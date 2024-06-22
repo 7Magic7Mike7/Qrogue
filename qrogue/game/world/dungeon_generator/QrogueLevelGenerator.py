@@ -821,10 +821,12 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         boss_actor = QrogueLevelGenerator._StaticTemplates.get_boss(ctx.REFERENCE(0), reward, edits)
         if boss_actor is None:
             boss_ref = parser_util.normalize_reference(ctx.REFERENCE(0).getText())
+            # check if boss is specified by a dynamic code
             if boss_ref[:len(PuzzleGrammarConfig.boss_code())] == PuzzleGrammarConfig.boss_code():
                 code = boss_ref[len(PuzzleGrammarConfig.boss_code()):]
                 factory = BossFactory.from_difficulty_code(code, self.__robot, [reward])
             else:
+                # produce default boss
                 Logger.instance().warn(f"Could not find template for Boss \"{boss_ref}\". Using default "
                                        f"instead.", from_pycui=False)
                 factory = BossFactory.default(self.__robot)
