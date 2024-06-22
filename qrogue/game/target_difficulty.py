@@ -31,6 +31,10 @@ class ExplicitTargetDifficulty:
         else:
             self.__reward_factory = CollectibleFactory([reward])
 
+    @property
+    def has_reward_factory(self) -> bool:
+        return self.__reward_factory is not None
+
     def create_statevector(self, robot: Robot, rm: MyRandom) -> StateVector:
         if self.__ordered or rm is None:
             self.__order_index += 1
