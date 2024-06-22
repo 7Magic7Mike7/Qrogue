@@ -893,7 +893,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
         if ctx.input_stv():
             input_stv = self.visit(ctx.input_stv())
-            input_difficulty = ExplicitTargetDifficulty([input_stv], pickup.Score())    # reward does not matter
+            input_difficulty = ExplicitTargetDifficulty([input_stv])
         else:
             input_difficulty = None
 

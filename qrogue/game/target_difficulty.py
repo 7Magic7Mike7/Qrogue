@@ -13,7 +13,7 @@ class ExplicitTargetDifficulty:
     of explicitly provided StateVectors
     """
 
-    def __init__(self, stv_pool: List[StateVector], reward: Union[CollectibleFactory, Collectible],
+    def __init__(self, stv_pool: List[StateVector], reward: Optional[Union[CollectibleFactory, Collectible]] = None,
                  ordered: bool = False):
         """
 
@@ -24,7 +24,9 @@ class ExplicitTargetDifficulty:
         self.__pool = stv_pool
         self.__ordered = ordered
         self.__order_index = -1
-        if isinstance(reward, CollectibleFactory):
+        if reward is None:
+            self.__reward_factory = None
+        elif isinstance(reward, CollectibleFactory):
             self.__reward_factory = reward
         else:
             self.__reward_factory = CollectibleFactory([reward])
@@ -43,7 +45,9 @@ class ExplicitTargetDifficulty:
                                     f"{robot.num_of_qubits})!", show=False, from_pycui=False)
         return stv
 
-    def produce_reward(self, rm: MyRandom):
+    def produce_reward(self, rm: MyRandom) -> Optional[Collectible]:
+        if self.__reward_factory is None:
+            return None
         return self.__reward_factory.produce(rm)
 
     def copy_pool(self) -> List[StateVector]:

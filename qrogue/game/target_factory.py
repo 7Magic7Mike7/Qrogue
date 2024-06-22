@@ -74,6 +74,9 @@ class EnemyTargetFactory(EnemyFactory):
             reward = self.__custom_reward_factory.produce(rm)
         else:
             reward = self.__target_difficulty.produce_reward(rm)
+            if reward is None:
+                Config.check_reachability("EnemyTargetFactory.produce(): no reward")
+                reward = Score()
 
         target_stv = self.__target_difficulty.create_statevector(robot, rm)
         if self.__input_difficulty is None:
