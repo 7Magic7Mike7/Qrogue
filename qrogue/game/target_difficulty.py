@@ -129,17 +129,6 @@ class ExplicitTargetDifficulty(TargetDifficulty):
         return self.__pool.copy()
 
 
-class RiddleDifficulty(TargetDifficulty):
-    def __init__(self, num_of_instructions: int, reward_pool: List[Collectible], min_attempts: int = 1,
-                 max_attempts: int = 10):
-        super().__init__(num_of_instructions, reward_pool)
-        self.__min_attempts = min_attempts
-        self.__max_attempts = max_attempts
-
-    def get_attempts(self, rm: MyRandom) -> int:
-        return rm.get_int(self.__min_attempts, self.__max_attempts, msg="RiddleDiff.get_attempts()")
-
-
 class PuzzleDifficulty:
     @staticmethod
     def __create_stv(pool: List[Instruction], num_gates: int, num_qubits: int, rm: MyRandom, inverse: bool = False) \

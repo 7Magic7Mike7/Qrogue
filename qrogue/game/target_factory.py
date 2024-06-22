@@ -7,8 +7,7 @@ from qrogue.game.logic.actors.puzzles import Enemy, Target, Riddle, Boss
 from qrogue.game.logic.base import StateVector
 from qrogue.game.logic.collectibles import Collectible, CollectibleFactory, Instruction, Energy, Score
 import qrogue.game.logic.collectibles.instruction as gates
-from qrogue.game.target_difficulty import StvDifficulty, TargetDifficulty, PuzzleDifficulty, RiddleDifficulty, \
-    BossDifficulty
+from qrogue.game.target_difficulty import StvDifficulty, TargetDifficulty, PuzzleDifficulty, BossDifficulty
 from qrogue.game.world.navigation import Direction
 from qrogue.util import Logger, MyRandom, Config
 
@@ -127,38 +126,6 @@ class EnemyPuzzleFactory(EnemyFactory):
         input_stv, target_stv = self.__difficulty.produce(robot, rm)
         reward = Score(100)
         return Enemy(self._next_id(), eid, target_stv, reward, input_=input_stv)
-
-
-class RiddleFactory:
-    @staticmethod
-    def default(robot: Robot) -> "RiddleFactory":
-        reward_pool = [gates.YGate(), gates.ZGate()]
-        difficulty = RiddleDifficulty(num_of_instructions=4, reward_pool=reward_pool, min_attempts=4, max_attempts=9)
-        return RiddleFactory(robot, difficulty)
-
-    def __init__(self, robot: Robot, difficulty: RiddleDifficulty,
-                 next_id_callback: Optional[Callable[[], int]] = None):
-        self.__robot = robot
-        self.__difficulty = difficulty
-        self.__next_id = 0
-
-        if next_id_callback is None:
-            self.__next_id = 0
-
-            def _next_id() -> int:
-                val = self.__next_id
-                self.__next_id += 1
-                return val
-
-            self._next_id = _next_id
-        else:
-            self._next_id = next_id_callback
-
-    def produce(self, rm: MyRandom) -> Riddle:
-        stv = self.__difficulty.create_statevector(self.__robot, rm)
-        reward = self.__difficulty.produce_reward(rm)
-        attempts = self.__difficulty.get_attempts(rm)
-        return Riddle(self._next_id(), stv, reward, rm.get_seed("producing a Riddle"), attempts)
 
 
 class BossFactory:

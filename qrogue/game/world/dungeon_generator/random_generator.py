@@ -5,12 +5,12 @@ from qrogue.game.logic.actors import Robot
 from qrogue.game.logic.collectibles import GateFactory, Key, instruction, Score, CollectibleType, \
     CollectibleFactory, Instruction
 from qrogue.game.target_difficulty import PuzzleDifficulty
-from qrogue.game.target_factory import BossFactory, EnemyFactory, RiddleFactory, EnemyPuzzleFactory
+from qrogue.game.target_factory import BossFactory, EnemyFactory, EnemyPuzzleFactory
 from qrogue.game.world import tiles
 from qrogue.game.world.dungeon_generator.generator import DungeonGenerator
 from qrogue.game.world.dungeon_generator.wave_function_collapse import WFCManager, LearnableRoom
 from qrogue.game.world.map import CallbackPack, Hallway, Room, ExpeditionMap
-from qrogue.game.world.map.rooms import AreaType, DefinedWildRoom, EmptyRoom, SpawnRoom, RiddleRoom, BossRoom, \
+from qrogue.game.world.map.rooms import AreaType, DefinedWildRoom, EmptyRoom, SpawnRoom, BossRoom, \
     TreasureRoom
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.graphics.popups import Popup
@@ -42,7 +42,7 @@ class _Code(IntEnum):
 
     @staticmethod
     def special_rooms() -> "[_Code]":
-        return [_Code.Riddle, _Code.Boss, _Code.Gate]
+        return [_Code.Boss, _Code.Gate]     # todo: add Challenge as MiniBoss
 
     @staticmethod
     def get_priority(code: "_Code", inverse: bool) -> float:
@@ -440,7 +440,6 @@ class RandomLayoutGenerator:
 
             # place the special rooms
             special_rooms = [
-                self.__place_special_room(_Code.Riddle),
                 self.__place_special_room(_Code.Boss),
                 self.__place_special_room(_Code.Gate),
             ]
@@ -651,7 +650,6 @@ class ExpeditionGenerator(DungeonGenerator):
 
         rm = RandomManager.create_new(seed)  # needed for WildRooms
         gate_factory = GateFactory.quantum()
-        riddle_factory = RiddleFactory.default(robot)
         boss_factory = BossFactory.default(robot)
         typed_collectible_factory: Dict[Optional[CollectibleType], CollectibleFactory] = {
             None: CollectibleFactory([Score(100)]),  # default factory
@@ -667,7 +665,6 @@ class ExpeditionGenerator(DungeonGenerator):
             return typed_collectible_factory[None]
 
         gate: Instruction = gate_factory.produce(rm)
-        riddle = riddle_factory.produce(rm)
         dungeon_boss = boss_factory.produce(rm, include_gates=[gate])
 
         # Difficulties can be misleading since picking one gate can result in CX Gate which does nothing if it's the
@@ -806,9 +803,7 @@ class ExpeditionGenerator(DungeonGenerator):
                         elif direction is not None:
                             # special rooms have exactly 1 neighbor which is already stored in direction
                             hw = room_hallways[direction]
-                            if code == _Code.Riddle:
-                                room = RiddleRoom(hw, direction, riddle, self.__cbp.open_riddle)
-                            elif code == _Code.Gate:
+                            if code == _Code.Gate:
                                 room = TreasureRoom(tiles.Collectible(gate), hw, direction)
                             elif code == _Code.Boss:
                                 boss = tiles.Boss(dungeon_boss, self.__cbp.start_boss_fight)
