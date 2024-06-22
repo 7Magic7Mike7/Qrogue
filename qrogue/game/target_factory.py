@@ -7,7 +7,7 @@ from qrogue.game.logic.actors.puzzles import Enemy, Target, Riddle, Boss
 from qrogue.game.logic.base import StateVector
 from qrogue.game.logic.collectibles import Collectible, CollectibleFactory, Instruction, Energy, Score
 import qrogue.game.logic.collectibles.instruction as gates
-from qrogue.game.target_difficulty import StvDifficulty, TargetDifficulty, PuzzleDifficulty, BossDifficulty
+from qrogue.game.target_difficulty import StvDifficulty, PuzzleDifficulty, BossDifficulty, ExplicitTargetDifficulty
 from qrogue.game.world.navigation import Direction
 from qrogue.util import Logger, MyRandom, Config
 
@@ -44,7 +44,7 @@ class EnemyTargetFactory(EnemyFactory):
     """
 
     def __init__(self, start_fight_callback: Callable[[Robot, Enemy, Direction], None],
-                 target_difficulty: TargetDifficulty, default_flee_chance: float = 0.5,
+                 target_difficulty: ExplicitTargetDifficulty, default_flee_chance: float = 0.5,
                  input_difficulty: Optional[StvDifficulty] = None,
                  next_id_callback: Optional[Callable[[], int]] = None):
         """
@@ -101,19 +101,6 @@ class EnemyTargetFactory(EnemyFactory):
                                            from_pycui=False)
 
         return Enemy(self._next_id(), eid, target_stv, reward, input_=input_stv)
-
-
-class ExplicitEnemyFactory(EnemyTargetFactory):
-    def __init__(self, start_fight_callback: Callable[[Robot, Target, Direction], None], stv_pool: List[StateVector],
-                 reward_pool: List[Collectible]):
-        self.__stv_pool = stv_pool
-        self.__reward_pool = reward_pool
-        super().__init__(start_fight_callback, TargetDifficulty.dummy())
-
-    def produce(self, robot: Robot, rm: MyRandom, eid: int) -> Enemy:
-        stv = rm.get_element(self.__stv_pool, msg="ExplicitEnemyFactory_stv")
-        reward = rm.get_element(self.__reward_pool, msg="ExplicitEnemyFactory_reward")
-        return Enemy(self._next_id(), eid, stv, reward)
 
 
 class EnemyPuzzleFactory(EnemyFactory):

@@ -64,36 +64,7 @@ class ExplicitStvDifficulty(StvDifficulty):
         return self.__pool.copy()
 
 
-class TargetDifficulty(StvDifficulty):
-    """
-    A class that handles all parameters that define the difficulty of target of a fight.
-    """
-
-    @staticmethod
-    def dummy() -> "TargetDifficulty":
-        return TargetDifficulty(2, [Score(50), Score(100)])
-
-    def __init__(self, num_of_instructions: int, rewards: Union[List[Collectible], CollectibleFactory]):
-        """
-
-        :param num_of_instructions: number of Instructions used to create a target StateVector
-        :param rewards: either a list of Collectibles or a CollectibleFactory for creating a reward when reaching
-        a Target
-        """
-        super().__init__(num_of_instructions)
-        if isinstance(rewards, list):
-            self.__reward_factory = CollectibleFactory(rewards)
-        elif isinstance(rewards, CollectibleFactory):
-            self.__reward_factory = rewards
-        else:
-            Logger.instance().throw(ValueError(
-                "rewards must be either a list of Collectibles or a CollectibleFactory"))
-
-    def produce_reward(self, rm: MyRandom):
-        return self.__reward_factory.produce(rm)
-
-
-class ExplicitTargetDifficulty(TargetDifficulty):
+class ExplicitTargetDifficulty(StvDifficulty):
     """
     A TargetDifficulty that doesn't create StateVectors based on a Robot's possibilities but by choosing from a pool
     of explicitly provided StateVectors
@@ -106,10 +77,11 @@ class ExplicitTargetDifficulty(TargetDifficulty):
         :param reward_factory: factory for creating a reward
         :param ordered: whether StateVectors should be chosen in order or randomly from the given stv_pool
         """
-        super().__init__(-1, reward_factory)
+        super().__init__(-1)
         self.__pool = stv_pool
         self.__ordered = ordered
         self.__order_index = -1
+        self.__reward_factory = reward_factory
 
     def create_statevector(self, robot: Robot, rm: MyRandom) -> StateVector:
         if self.__ordered or rm is None:
@@ -124,6 +96,9 @@ class ExplicitTargetDifficulty(TargetDifficulty):
             Logger.instance().error(f"Stv (={stv}) from pool does not have correct number of qubits (="
                                     f"{robot.num_of_qubits})!", show=False, from_pycui=False)
         return stv
+
+    def produce_reward(self, rm: MyRandom):
+        return self.__reward_factory.produce(rm)
 
     def copy_pool(self) -> List[StateVector]:
         return self.__pool.copy()
