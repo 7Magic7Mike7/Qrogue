@@ -172,7 +172,7 @@ def align_string(text: str, line_width: int, left: bool = True, character: str =
         return diff * character + text
 
 
-def enum_str(value: enum.Enum, skip_type_prefix: bool = True) -> str:
+def enum_string(value: enum.Enum, skip_type_prefix: bool = True) -> str:
     text = str(value)
     if skip_type_prefix and "." in text:
         index = text.index(".")
@@ -180,7 +180,7 @@ def enum_str(value: enum.Enum, skip_type_prefix: bool = True) -> str:
     return text
 
 
-def enum_from_str(enum_type, text: str) -> Optional:
+def enum_from_string(enum_type, text: str) -> Optional:
     # remove potential AreaType-prefix
     type_string = str(enum_type)
     # the enum_type is written like this: "<enum '{ActualEnumName}'>"
@@ -205,7 +205,7 @@ def my_str(value: Any) -> str:
     :return: string representation of the given value
     """
     if isinstance(value, enum.Enum):
-        return enum_str(value)
+        return enum_string(value)
     else:
         return str(value)
 

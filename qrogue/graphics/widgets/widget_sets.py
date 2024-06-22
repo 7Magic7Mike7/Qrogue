@@ -24,7 +24,7 @@ from qrogue.util import CommonPopups, Config, Controls, GameplayConfig, HelpText
     get_filtered_help_texts, CommonQuestions, MapConfig, PyCuiConfig, ColorCode, split_text, MyRandom, \
     LevelInfo, CommonInfos, LevelData
 from qrogue.util.achievements import Unlocks
-from qrogue.util.util_functions import enum_str, cur_datetime, time_diff, open_folder
+from qrogue.util.util_functions import enum_string, cur_datetime, time_diff, open_folder
 
 
 class MyWidgetSet(WidgetSet, Renderable, ABC):
@@ -1140,11 +1140,11 @@ class PauseMenuWidgetSet(MyWidgetSet):
         return False
 
     def __help(self) -> bool:
-        texts = [enum_str(val, skip_type_prefix=True) for val in get_filtered_help_texts()] + [MyWidgetSet.BACK_STRING]
+        texts = [enum_string(val, skip_type_prefix=True) for val in get_filtered_help_texts()] + [MyWidgetSet.BACK_STRING]
 
         def func(val: HelpText) -> Callable[[], bool]:
             # the check for "is not None" leads to a return value of False (because we don't want to switch widgets)
-            return lambda: Popup.generic_info(enum_str(val, skip_type_prefix=True), val.text) is not None
+            return lambda: Popup.generic_info(enum_string(val, skip_type_prefix=True), val.text) is not None
 
         callbacks = [func(val) for val in get_filtered_help_texts()]
         callbacks.append(lambda: True)  # simple callback for "back"

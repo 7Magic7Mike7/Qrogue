@@ -6,7 +6,7 @@ from qrogue.game.world import tiles
 from qrogue.game.world.map import rooms, LevelMap
 from qrogue.game.world.navigation import Coordinate
 from qrogue.util import Logger
-from qrogue.util.util_functions import my_str, enum_from_str
+from qrogue.util.util_functions import my_str, enum_from_string
 
 
 class WFCLearnMatrix(ABC):
@@ -77,7 +77,7 @@ class LearnableRoom(WFCLearnMatrix):
                 data = None
 
             # parse TileCode
-            tile_code = enum_from_str(tiles.TileCode, tile_data)
+            tile_code = enum_from_string(tiles.TileCode, tile_data)
             if tile_code is tiles.TileCode.Enemy:
                 if data is None:
                     Logger.instance().warn(f"Tried to create TileData for Enemy without specified data: {tile_data}",
@@ -90,7 +90,7 @@ class LearnableRoom(WFCLearnMatrix):
                     Logger.instance().warn(f"Tried to create TileData for unspecified Collectible without data: "
                                            f"{tile_data}", from_pycui=False)
                     return None
-                data = enum_from_str(CollectibleType, data)
+                data = enum_from_string(CollectibleType, data)
 
             return LearnableRoom.TileData(tile_code, data)
 

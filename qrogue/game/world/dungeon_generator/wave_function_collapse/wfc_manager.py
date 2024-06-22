@@ -3,7 +3,7 @@ from typing import List, Dict, Union, Tuple, Optional
 
 from qrogue.game.world.map.rooms import AreaType
 from qrogue.util import PathConfig, MyRandom
-from qrogue.util.util_functions import enum_from_str
+from qrogue.util.util_functions import enum_from_string
 
 from .wfc_generator import WFCGenerator, WFCRoomGenerator
 
@@ -53,7 +53,7 @@ class WFCManager:
             line_end = data.index("\n", line_start)
             area_type = data[line_start:line_end]
             area_type = area_type[:-len(WFCManager.__AREA_TYPE_START)]  # remove meta suffix
-            area_type = enum_from_str(AreaType, area_type)
+            area_type = enum_from_string(AreaType, area_type)
 
             # read number of upcoming WFCGenerator data (pos and type weights)
             line_start = line_end + 1
