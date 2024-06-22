@@ -75,10 +75,6 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             return None
 
     @staticmethod
-    def __normalize_reference(reference: str) -> str:
-        return parser_util.normalize_reference(reference)
-
-    @staticmethod
     def __tile_str_to_code(tile_str: str) -> tiles.TileCode:
         if tile_str.isdigit():
             return tiles.TileCode.Enemy
