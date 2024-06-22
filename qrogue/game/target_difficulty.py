@@ -39,49 +39,28 @@ class StvDifficulty:
         return Instruction.compute_stv(instructions, num_of_qubits)
 
 
-class ExplicitStvDifficulty(StvDifficulty):
-    def __init__(self, pool: List[StateVector], ordered: bool = False):
-        super().__init__(num_of_instructions=-1)
-        self.__pool = pool
-        self.__ordered = ordered
-        self.__order_index = -1
-
-    def create_statevector(self, robot: Robot, rm: MyRandom) -> StateVector:
-        if self.__ordered or rm is None:
-            self.__order_index += 1
-            if self.__order_index >= len(self.__pool):
-                self.__order_index = 0
-            stv = self.__pool[self.__order_index]
-        else:
-            stv = rm.get_element(self.__pool, msg="ExplicitStvDiff_selectStv")
-
-        if stv.num_of_qubits != robot.num_of_qubits:
-            Logger.instance().error(f"Stv (={stv}) from pool does not have correct number of qubits (="
-                                    f"{robot.num_of_qubits})!", show=False, from_pycui=False)
-        return stv
-
-    def copy_pool(self) -> List[StateVector]:
-        return self.__pool.copy()
-
-
 class ExplicitTargetDifficulty(StvDifficulty):
     """
     A TargetDifficulty that doesn't create StateVectors based on a Robot's possibilities but by choosing from a pool
     of explicitly provided StateVectors
     """
 
-    def __init__(self, stv_pool: List[StateVector], reward_factory: CollectibleFactory, ordered: bool = False):
+    def __init__(self, stv_pool: List[StateVector], reward: Union[CollectibleFactory, Collectible],
+                 ordered: bool = False):
         """
 
         :param stv_pool: list of StateVectors to choose from
-        :param reward_factory: factory for creating a reward
+        :param reward: factory for creating a reward or a specific reward (Collectible)
         :param ordered: whether StateVectors should be chosen in order or randomly from the given stv_pool
         """
         super().__init__(-1)
         self.__pool = stv_pool
         self.__ordered = ordered
         self.__order_index = -1
-        self.__reward_factory = reward_factory
+        if isinstance(reward, CollectibleFactory):
+            self.__reward_factory = reward
+        else:
+            self.__reward_factory = CollectibleFactory([reward])
 
     def create_statevector(self, robot: Robot, rm: MyRandom) -> StateVector:
         if self.__ordered or rm is None:

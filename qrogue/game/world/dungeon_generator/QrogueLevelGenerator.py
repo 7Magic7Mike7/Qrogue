@@ -10,7 +10,7 @@ from qrogue.game.logic.actors.puzzles import Challenge, boss
 from qrogue.game.logic.base import StateVector
 from qrogue.game.logic.collectibles import Collectible, MultiCollectible, pickup, Qubit, instruction, \
     Instruction, InstructionManager, CollectibleFactory, OrderedCollectibleFactory
-from qrogue.game.target_difficulty import ExplicitTargetDifficulty, ExplicitStvDifficulty
+from qrogue.game.target_difficulty import ExplicitTargetDifficulty
 from qrogue.game.target_factory import EnemyFactory, EnemyTargetFactory, BossFactory
 from qrogue.game.world import tiles
 from qrogue.game.world.dungeon_generator import parser_util
@@ -893,7 +893,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
         if ctx.input_stv():
             input_stv = self.visit(ctx.input_stv())
-            input_difficulty = ExplicitStvDifficulty([input_stv])
+            input_difficulty = ExplicitTargetDifficulty([input_stv], pickup.Score())    # reward does not matter
         else:
             input_difficulty = None
 
