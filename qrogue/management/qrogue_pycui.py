@@ -270,8 +270,7 @@ class QrogueCUI(PyCUI):
                                         lambda: self._switch_to_menu(None), self.__cbp, self.__robot)
         ########################################
 
-        if not Config.skip_learning():
-            self.__map_manager.fill_expedition_queue(lambda: None, no_thread=True)
+        self.__map_manager.fill_expedition_queue(lambda: None, no_thread=True)
 
         Popup.update_check_achievement_function(self.__map_manager.check_level_event)
         common_messages.set_show_callback(lambda text: Popup.generic_info(Config.system_name(), text))

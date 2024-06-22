@@ -16,7 +16,6 @@ class Config:  # todo make singleton and handle access to other configs?
     __GAMEPLAY_HEAD = "[Gameplay]\n"
     __DEBUG = False
     __TEST_LEVEL = False
-    __SKIP_LEARNING = False
 
     __HEADER = "QRogue "
     __SEED_HEAD = "Seed="
@@ -121,10 +120,6 @@ class Config:  # todo make singleton and handle access to other configs?
     @staticmethod
     def test_level(ignore_debugging: bool = False) -> bool:
         return Config.__TEST_LEVEL and (Config.debugging() or ignore_debugging)
-
-    @staticmethod
-    def skip_learning(ignore_debugging: bool = False) -> bool:
-        return Config.__SKIP_LEARNING and (Config.debugging() or ignore_debugging)
 
     @staticmethod
     def debug_print(text: str):
