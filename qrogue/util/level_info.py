@@ -94,7 +94,8 @@ class LevelInfo:
             if km.isdigit():
                 knowledge_mode = km
             else:
-                debug_me = True
+                from qrogue.util import Config
+                Config.check_reachability("LevelInfo.get_prev(): invalid knowledge mode")
 
         if cur_map.startswith(MapConfig.expedition_map_prefix()):
             return f"l0k{knowledge_mode}v4"  # last level
