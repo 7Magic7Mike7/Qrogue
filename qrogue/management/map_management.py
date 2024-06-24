@@ -4,18 +4,19 @@ from typing import Callable, Optional, Dict, List, Tuple
 
 from qrogue.game.logic.actors import Robot
 from qrogue.game.world.dungeon_generator import ExpeditionGenerator, QrogueLevelGenerator
+from qrogue.game.world.dungeon_generator.wave_function_collapse import WFCManager
 from qrogue.game.world.map import Map, MapType, ExpeditionMap, CallbackPack
 from qrogue.game.world.navigation import Coordinate
 from qrogue.graphics.popups import Popup
 from qrogue.management.save_data import NewSaveData
 from qrogue.util import CommonQuestions, RandomManager, LevelInfo, Config, MapConfig, ErrorConfig, \
-    ExpeditionConfig
+    ExpeditionConfig, StvDifficulty
 from qrogue.util.achievements import Achievement
 from qrogue.util.util_functions import cur_datetime, time_diff
 
 
 class MapManager:
-    def __init__(self, save_data: NewSaveData, seed: int, start_level: Callable[[Map], None],
+    def __init__(self, wfc_manager: WFCManager, save_data: NewSaveData, seed: int, start_level: Callable[[Map], None],
                  start_level_transition_callback: Callable[[str, str, Callable[[], None]], None],
                  exit_map_callback: Callable[[], None], callback_pack: CallbackPack, robot: Robot,
                  queue_size: int = ExpeditionConfig.DEFAULT_QUEUE_SIZE):
@@ -29,8 +30,8 @@ class MapManager:
         self.__rm = RandomManager.create_new(seed)
         self.__start_level = start_level
         self.__start_level_transition = start_level_transition_callback
-        self.__expedition_generator = ExpeditionGenerator(self.__save_data.check_achievement, self.trigger_event,
-                                                          self.load_map, callback_pack)
+        self.__expedition_generator = ExpeditionGenerator(wfc_manager, self.__save_data.check_achievement,
+                                                          self.trigger_event, self.load_map, callback_pack)
         self.__expedition_queue: List[ExpeditionMap] = []
         self.__cur_map: Map = None
 
@@ -56,7 +57,9 @@ class MapManager:
         def fill():
             robot = self.__robot
             while len(self.__expedition_queue) < self.__queue_size:
-                expedition, success = self.__expedition_generator.generate(self.__rm.get_seed(), robot)
+                # todo: how to handle difficulty?
+                difficulty = StvDifficulty.from_difficulty_code("1", robot.num_of_qubits, robot.circuit_space)
+                expedition, success = self.__expedition_generator.generate(self.__rm.get_seed(), (robot, difficulty))
                 if success:
                     self.__expedition_queue.append(expedition)
 
@@ -105,10 +108,15 @@ class MapManager:
 
         elif map_name.lower().startswith(MapConfig.expedition_map_prefix()):
             if len(map_name) > len(MapConfig.expedition_map_prefix()):
-                # difficulty = int(map_name[len(MapConfig.expedition_map_prefix()):])
-                map_seed = int(map_name[len(MapConfig.expedition_map_prefix()):])
+                diff_code_start = len(MapConfig.expedition_map_prefix())
+                diff_code = map_name[diff_code_start:diff_code_start+StvDifficulty.code_len()]
+                if map_seed is None:
+                    # as long as we are consistent it doesn't matter if seed contains diff_code
+                    map_seed = int(map_name[diff_code_start:])
+                    Config.check_reachability("load_map(): expedition without seed")
             else:
-                # difficulty = ExpeditionConfig.DEFAULT_DIFFICULTY
+                expedition_progress = int(self.__save_data.get_progress(Achievement.CompletedExpedition)[0])
+                diff_code = LevelInfo.get_expedition_difficulty(expedition_progress)
                 map_seed = None
 
             robot = self.__robot
@@ -119,9 +127,10 @@ class MapManager:
                 expedition = self.__expedition_queue.pop(0)
                 self.fill_expedition_queue()
             else:
+                difficulty = StvDifficulty.from_difficulty_code(diff_code, robot.num_of_qubits, robot.circuit_space)
                 if map_seed is None:
                     map_seed = self.__rm.get_seed()
-                expedition, success = self.__expedition_generator.generate(map_seed, robot)
+                expedition, success = self.__expedition_generator.generate(map_seed, (robot, difficulty))
 
             if success:
                 robot.reset()
@@ -136,14 +145,24 @@ class MapManager:
 
     def __load_next(self):
         next_map = LevelInfo.get_next(self.__cur_map.internal_name, self.__save_data.check_level)
-        if next_map:
-            next_display = LevelInfo.convert_to_display_name(next_map)
-            self.__start_level_transition(self.__cur_map.name, next_display,
-                                          lambda: self.load_map(next_map, None, None))
-        else:
+        if next_map is None:
             error_text = ErrorConfig.invalid_map(self.__cur_map.name, f"Failed to load next map after "
                                                                       f"\"{self.__cur_map.name}\". ")
             Popup.error(error_text, add_report_note=True)
+
+        elif next_map.startswith(MapConfig.expedition_map_prefix()):
+            # create difficulty code based on expedition progress
+            expedition_progress = int(self.__save_data.get_progress(Achievement.CompletedExpedition)[0])
+            diff_code = LevelInfo.get_expedition_difficulty(expedition_progress)
+            seed = self.__rm.get_seed("MapManager_load_next()@expedition")
+
+            self.__start_level_transition(self.__cur_map.name, f"Expedition {diff_code}{seed}",
+                                          lambda: self.__load_expedition(diff_code, seed))
+
+        else:
+            next_display = LevelInfo.convert_to_display_name(next_map)
+            self.__start_level_transition(self.__cur_map.name, next_display,
+                                          lambda: self.load_map(next_map, None, None))
 
     def __load_back(self):
         self.__exit_map()
@@ -206,8 +225,8 @@ class MapManager:
         else:
             self.load_map(MapConfig.first_uncleared(), None)
 
-    def load_expedition(self, seed: Optional[int] = None) -> None:
-        self.load_map(MapConfig.expedition_map_prefix(), None, seed)
+    def __load_expedition(self, diff_code: str, seed: Optional[int] = None) -> None:
+        self.load_map(MapConfig.expedition_map_prefix() + diff_code, None, seed)
 
     def reload(self):
         self.load_map(self.__cur_map.internal_name, None, self.__cur_map.seed)

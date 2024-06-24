@@ -5,9 +5,10 @@ import test_util
 from qrogue.game.world import tiles
 from qrogue.game.world.dungeon_generator import DungeonGenerator
 from qrogue.game.world.dungeon_generator.random_generator import RandomLayoutGenerator, ExpeditionGenerator
+from qrogue.game.world.dungeon_generator.wave_function_collapse import WFCManager
 from qrogue.game.world.map import Room, Hallway, CallbackPack
 from qrogue.game.world.navigation import Direction, Coordinate
-from qrogue.util import CheatConfig
+from qrogue.util import CheatConfig, StvDifficulty
 
 
 class LayoutGenTestCase(test_util.SingletonSetupTestCase):
@@ -49,9 +50,16 @@ class LayoutGenTestCase(test_util.SingletonSetupTestCase):
 class LevelGenTestCase(test_util.SingletonSetupTestCase):
     def test_single_seed(self):
         CheatConfig.use_cheat("Illuminati")
-        generator = ExpeditionGenerator(lambda s: True, lambda s: None, lambda s: None, CallbackPack.dummy())
+        robot = test_util.DummyRobot()
+        wfc_manager = WFCManager()
+        wfc_manager.load()
+        diff_code = "1" * StvDifficulty.degrees_of_freedom()
+        difficulty = StvDifficulty.from_difficulty_code(diff_code, robot.num_of_qubits, robot.circuit_space)
+
+        generator = ExpeditionGenerator(wfc_manager, lambda s: True, lambda s: None, lambda s: None,
+                                        CallbackPack.dummy())
         seed = 297
-        map_, success = generator.generate(seed, test_util.DummyRobot())
+        map_, success = generator.generate(seed, (robot, difficulty))
         self.assertTrue(success, "Failed to generate.")
         self._print(map_)
 
@@ -62,11 +70,18 @@ class LevelGenTestCase(test_util.SingletonSetupTestCase):
         end_seed = 5
         failing_seeds = []
 
-        generator = ExpeditionGenerator(lambda s: True, lambda s: None, lambda s: None, CallbackPack.dummy())
+        robot = test_util.DummyRobot()
+        wfc_manager = WFCManager()
+        wfc_manager.load()
+        diff_code = "1" * StvDifficulty.degrees_of_freedom()
+        difficulty = StvDifficulty.from_difficulty_code(diff_code, robot.num_of_qubits, robot.circuit_space)
+
+        generator = ExpeditionGenerator(wfc_manager, lambda s: True, lambda s: None, lambda s: None,
+                                        CallbackPack.dummy())
         for i, seed in enumerate(range(start_seed, end_seed)):
             if i % 1000 == 0:
                 self._print(f"Run {i + 1}): seed = {seed}")
-            map_, success = generator.generate(seed, test_util.DummyRobot())
+            map_, success = generator.generate(seed, (robot, difficulty))
             if not success:
                 failing_seeds.append((generator, seed))
                 self._print(f"Failed for seed = {seed}")

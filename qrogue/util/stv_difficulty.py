@@ -1,7 +1,7 @@
 import enum
 from typing import Dict, Optional, List
 
-from qrogue.util import Logger
+from .logger import Logger
 
 
 class StvDifficulty:
@@ -47,6 +47,10 @@ class StvDifficulty:
     @staticmethod
     def degrees_of_freedom() -> int:
         return len(StvDifficulty.__DIFF_VALUES)
+
+    @staticmethod
+    def code_len() -> int:
+        return StvDifficulty.degrees_of_freedom() * len(str(StvDifficulty.max_difficulty_level()))
 
     @staticmethod
     def validate() -> bool:
@@ -136,7 +140,7 @@ class StvDifficulty:
         return StvDifficulty.from_difficulty_dict(num_of_qubits, circuit_space, values)
 
     def __init__(self, num_of_gates: int, num_of_rotated_qubits: int, rotation_degree: int, randomization_degree: int,
-                 bonus_edits: int, level: Optional[int] = None):
+                 bonus_edits: int, __level: Optional[int] = None):
         """
         :param randomization_degree: how many angles are available to random rotations (2*PI / randomization_degree),
             a value of 0 implies no restrictions (i.e., any real number is allowed)
@@ -158,7 +162,7 @@ class StvDifficulty:
         self.__rotation_degree = rotation_degree
         self.__randomization_degree = randomization_degree
         self.__bonus_edits = bonus_edits
-        self.__level = -1 if level is None else level
+        self.__level = -1 if __level is None else __level
 
     @property
     def is_leveled(self) -> bool:

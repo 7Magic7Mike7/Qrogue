@@ -144,6 +144,12 @@ class NewSaveData:
             return self.__levels[level_name]
         return None
 
+    def get_progress(self, achievement: str) -> Tuple[float, float]:
+        if achievement in self.__achievements:
+            ach = self.__achievements[achievement]
+            return ach.score, ach.done_score
+        return -1, -1
+
     def to_achievements_string(self) -> str:
         # todo: improve readability
         text = ""

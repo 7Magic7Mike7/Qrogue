@@ -14,7 +14,7 @@ from qrogue.game.world.map.rooms import AreaType, DefinedWildRoom, EmptyRoom, Sp
     TreasureRoom
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.graphics.popups import Popup
-from qrogue.util import Logger, RandomManager, MapConfig, Config, MyRandom
+from qrogue.util import Logger, RandomManager, MapConfig, Config, MyRandom, StvDifficulty
 
 
 class _Code(IntEnum):
@@ -615,9 +615,10 @@ class ExpeditionGenerator(DungeonGenerator):
         update_entangled_room_groups(enemy)
         return enemy
 
-    def __init__(self, check_achievement: Callable[[str], bool], trigger_event: Callable[[str], None],
-                 load_map_callback: Callable[[str, Optional[Coordinate]], None], callback_pack: CallbackPack,
-                 width: int = DungeonGenerator.WIDTH, height: int = DungeonGenerator.HEIGHT):
+    def __init__(self, wfc_manager: WFCManager, check_achievement: Callable[[str], bool],
+                 trigger_event: Callable[[str], None], load_map_callback: Callable[[str, Optional[Coordinate]], None],
+                 callback_pack: CallbackPack, width: int = DungeonGenerator.WIDTH,
+                 height: int = DungeonGenerator.HEIGHT):
         super(ExpeditionGenerator, self).__init__(width, height)
         self.__check_achievement = check_achievement
         self.__trigger_event = trigger_event
@@ -629,8 +630,7 @@ class ExpeditionGenerator(DungeonGenerator):
         self.__remaining_keys = 0
         self.__room_has_key = False
 
-        self.__wfc_manager = WFCManager()
-        self.__wfc_manager.load()
+        self.__wfc_manager = wfc_manager
 
     def _next_target_id(self) -> int:
         val = self.__next_target_id
@@ -642,7 +642,8 @@ class ExpeditionGenerator(DungeonGenerator):
         self.__next_tile_id += 1
         return val
 
-    def generate(self, seed: int, robot: Robot) -> Tuple[Optional[ExpeditionMap], bool]:
+    def generate(self, seed: int, data: Tuple[Robot, StvDifficulty]) -> Tuple[Optional[ExpeditionMap], bool]:
+        robot, difficulty = data
         if len(robot.get_available_instructions()) <= 0:
             gates = [instruction.HGate(), instruction.SGate(), instruction.XGate(), instruction.CXGate()]
             for gate in gates:

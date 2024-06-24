@@ -1,9 +1,10 @@
 from datetime import datetime
 from typing import Dict, List, Optional, Callable
 
-from qrogue.util import MapConfig, GameplayConfig, PathConfig, MapGrammarConfig, ScoreConfig
-from qrogue.util.achievements import Unlocks
-from qrogue.util.util_functions import datetime2str
+from .achievements import Unlocks
+from .config import MapConfig, GameplayConfig, PathConfig, MapGrammarConfig, ScoreConfig
+from .stv_difficulty import StvDifficulty
+from .util_functions import datetime2str
 
 
 class LevelInfo:
@@ -81,6 +82,8 @@ class LevelInfo:
             return next_map
         elif cur_map in LevelInfo.__MAP_ORDER[GameplayConfig.get_knowledge_mode()]:
             return LevelInfo.__MAP_ORDER[GameplayConfig.get_knowledge_mode()][cur_map]
+        elif cur_map.startswith(MapConfig.expedition_map_prefix()):
+            return MapConfig.expedition_map_prefix()
         return None
 
     @staticmethod
@@ -129,6 +132,13 @@ class LevelInfo:
             internal_name: the internal name of the level we want to retrieve the display name of
             allow_display_name: whether we allow internal_name to already be a display name and return it in case it is
         """
+        if internal_name.startswith(MapConfig.expedition_map_prefix()):
+            temp_nums = internal_name[len(MapConfig.expedition_map_prefix()):]
+            from qrogue.util import Config
+            Config.check_reachability("LevelInfo.convert_to_display_name()")
+
+            return f"Expedition {temp_nums}"
+
         if internal_name in LevelInfo.__NAME_CONVERTER:
             return LevelInfo.__NAME_CONVERTER[internal_name]
 
@@ -153,6 +163,12 @@ class LevelInfo:
             # this call cannot allow a display name to avoid an endless recursion
             return LevelInfo.convert_to_display_name(display_name, allow_display_name=False)
         return None
+
+    @staticmethod
+    def get_expedition_difficulty(expedition_progress: int) -> str:
+        # level is at least 1 and at most max_difficulty_level
+        diff_level = min(max(expedition_progress / 10, 1), StvDifficulty.max_difficulty_level())
+        return f"{diff_level}" * StvDifficulty.degrees_of_freedom()
 
 
 class LevelData:

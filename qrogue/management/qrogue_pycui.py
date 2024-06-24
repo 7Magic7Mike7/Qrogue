@@ -8,6 +8,7 @@ from py_cui import popups
 from py_cui.widget_set import WidgetSet
 
 from qrogue.game.logic.actors import Boss, Controllable, Enemy, Riddle, Challenge, Robot, BaseBot
+from qrogue.game.world.dungeon_generator.wave_function_collapse import WFCManager
 from qrogue.game.world.map import CallbackPack, Map
 from qrogue.game.world.navigation import Direction
 from qrogue.game.world.tiles import WalkTriggerTile, Message, Collectible
@@ -233,6 +234,8 @@ class QrogueCUI(PyCUI):
         self.set_title(f"Qrogue {Config.version()}")
         self.__controls = Controls(self._handle_key_presses)
         self.__rm = RandomManager.create_new(seed)
+        self.__wfc_manager = WFCManager()
+        self.__wfc_manager.load()
 
         def move_focus(_widget: WidgetWrapper, _widget_set: WidgetSet):
             # this check is necessary for manual widget-set switches due to the call-order (the callback happens before
@@ -266,8 +269,9 @@ class QrogueCUI(PyCUI):
             self.__state_machine.change_state(QrogueCUI._State.Transition, data=(texts, callback, auto_scroll))
 
         self.__robot = BaseBot(self.__game_over)
-        self.__map_manager = MapManager(self.__save_data, self.__rm.seed, self.__start_level, start_level_transition,
-                                        lambda: self._switch_to_menu(None), self.__cbp, self.__robot)
+        self.__map_manager = MapManager(self.__wfc_manager, self.__save_data, self.__rm.seed, self.__start_level,
+                                        start_level_transition, lambda: self._switch_to_menu(None), self.__cbp,
+                                        self.__robot)
         ########################################
 
         self.__map_manager.fill_expedition_queue(lambda: None, no_thread=True)

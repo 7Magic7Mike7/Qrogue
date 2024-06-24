@@ -4,8 +4,10 @@ from typing import Optional, Any, List
 from qrogue.game.logic.actors.controllables import BaseBot
 from qrogue.game.world.dungeon_generator import DungeonGenerator
 from qrogue.game.world.dungeon_generator.random_generator import RandomLayoutGenerator, ExpeditionGenerator
+from qrogue.game.world.dungeon_generator.wave_function_collapse import WFCManager
 from qrogue.game.world.map import CallbackPack
 from qrogue.test import test_util
+from qrogue.util import StvDifficulty
 
 printing = True
 
@@ -76,14 +78,17 @@ def test_dungeon():
     failing_seeds = []
 
     robot = BaseBot(lambda: None)
-    generator = ExpeditionGenerator(lambda s: True, lambda s: None, lambda s: None, CallbackPack.dummy())
+    wfc_manager = WFCManager()
+    wfc_manager.load()
+    difficulty = StvDifficulty.from_difficulty_code("1", robot.num_of_qubits, robot.circuit_space)
+    generator = ExpeditionGenerator(wfc_manager, lambda s: True, lambda s: None, lambda s: None, CallbackPack.dummy())
     i = 0
     for seed in range(start_seed, end_seed):
         if i % 1000 == 0:
             __print(f"Run {i + 1}): seed = {seed}")
 
         start_time = time.time()
-        map_, success = generator.generate(seed, robot)  # just use an arbitrary seed
+        map_, success = generator.generate(seed, (robot, difficulty))
         duration = time.time() - start_time
         duration_sum += duration
 
