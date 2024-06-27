@@ -33,7 +33,7 @@ class MapManager:
         self.__expedition_generator = ExpeditionGenerator(wfc_manager, self.__save_data.check_achievement,
                                                           self.trigger_event, self.load_map, callback_pack)
         self.__expedition_queue: List[ExpeditionMap] = []
-        self.__cur_map: Map = None
+        self.__cur_map: Optional[Map] = None
 
         self.__level_timer = cur_datetime()
         self.__temp_level_event_storage: Dict[str, Tuple[int, int]] = {}  # event name -> score, done_score
