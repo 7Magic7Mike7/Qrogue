@@ -18,11 +18,11 @@ class LevelInfo:
         #   - alternatively maps can also start with "expedition" to mark them as generated
         0: {
             MapConfig.first_uncleared(): "l0k0v0",
-            "l0k0v4": f"{MapConfig.expedition_map_prefix()}25",
+            "l0k0v4": f"{MapConfig.expedition_map_prefix()}",
         },
         1: {
             MapConfig.first_uncleared(): "l0k1v0",
-            "l0k1v4": f"{MapConfig.expedition_map_prefix()}25",
+            "l0k1v4": f"{MapConfig.expedition_map_prefix()}",
         },
     }
 
