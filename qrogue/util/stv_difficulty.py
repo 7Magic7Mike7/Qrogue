@@ -13,7 +13,7 @@ class StvDifficulty:
         # how many changed qubits should receive a second rotation, values in [0, 1]
         RotationExuberance = ("Rotation Exuberance", 0.7)
         # how many angles are available to rotations, values are any integers (negatives imply unrestricted real angles)
-        RandomizationDegree = ("Randomization Exuberance", 0.9)
+        RandomizationDegree = ("Randomization Degree", 0.9)
         # how many additional edits are given based on used gates, values >= 0
         BonusEditRatio = ("Bonus Edit Ratio", 1.1)
 
@@ -36,7 +36,7 @@ class StvDifficulty:
         DifficultyType.CircuitExuberance:   [0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
         DifficultyType.QubitExuberance:     [0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
         DifficultyType.RotationExuberance:  [0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
-        DifficultyType.RandomizationDegree: [  2,   4,  10,  19,  37,  -1],
+        DifficultyType.RandomizationDegree: [  2,   4,  10,  19,  37,  0],
         DifficultyType.BonusEditRatio:      [2.0, 1.5, 1.0, 0.6, 1.3, 0.0],
     }
 
