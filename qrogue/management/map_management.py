@@ -108,13 +108,24 @@ class MapManager:
 
         elif map_name.lower().startswith(MapConfig.expedition_map_prefix()):
             if len(map_name) > len(MapConfig.expedition_map_prefix()):
-                diff_code_start = len(MapConfig.expedition_map_prefix())
-                diff_code = map_name[diff_code_start:diff_code_start+StvDifficulty.code_len()]
-                if map_seed is None:
-                    # as long as we are consistent it doesn't matter if seed contains diff_code
-                    map_seed = int(map_name[diff_code_start:])
+                # map_name contains additional information
+                info = map_name[len(MapConfig.expedition_map_prefix()):]
+                if map_seed is not None:
+                    # if a map_seed was provided, info is solely for difficulty
+                    diff_code = info
+                elif MapConfig.diff_code_separator() in info:
+                    # info contains both difficulty and seed information if there is a separator
+                    info_diff, info_seed = info.split(MapConfig.diff_code_separator())
+                    diff_code = info_diff
+                    map_seed = int(info_seed)
+                else:
+                    # there is no difficulty code, just a seed (map_seed is implicitly None due to first if-branch)
+                    expedition_progress = int(self.__save_data.get_progress(Achievement.CompletedExpedition)[0])
+                    diff_code = LevelInfo.get_expedition_difficulty(expedition_progress)
+                    map_seed = int(info)
                     Config.check_reachability("load_map(): expedition without seed")
             else:
+                # no additional information given, hence, we use default values
                 expedition_progress = int(self.__save_data.get_progress(Achievement.CompletedExpedition)[0])
                 diff_code = LevelInfo.get_expedition_difficulty(expedition_progress)
                 map_seed = None

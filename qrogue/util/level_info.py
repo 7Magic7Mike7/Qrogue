@@ -168,7 +168,7 @@ class LevelInfo:
     def get_expedition_difficulty(expedition_progress: int) -> str:
         # level is at least 1 and at most max_difficulty_level
         diff_level = min(max(expedition_progress / 10, 1), StvDifficulty.max_difficulty_level())
-        return f"{diff_level}" * StvDifficulty.degrees_of_freedom()
+        return f"{diff_level}"
 
 
 class LevelData:

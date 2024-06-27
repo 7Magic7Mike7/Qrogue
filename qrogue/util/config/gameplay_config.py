@@ -74,6 +74,10 @@ class MapConfig:
         return "expedition"
 
     @staticmethod
+    def diff_code_separator() -> str:
+        return "d"
+
+    @staticmethod
     def tutorial_lesson_prefix() -> str:
         return "l0v"
 
