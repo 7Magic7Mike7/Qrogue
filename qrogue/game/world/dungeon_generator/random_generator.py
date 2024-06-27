@@ -591,6 +591,7 @@ class ExpeditionGenerator(DungeonGenerator):
     __MAX_ROOM_GEN_TRIES = 10
     __BLOCKING_WEIGHT = 2
     __INVALID_WEIGHT = 1_000_000
+    __DEFAULT_GATES = [instruction.HGate(), instruction.SGate(), instruction.XGate(), instruction.CXGate()]
 
     def __create_enemy(self, enemy_seed: int, enemy_id: int, room_pos: Coordinate, enemy_factory: EnemyFactory,
                        enemy_groups_by_room: Dict[Coordinate, Dict[int, List[tiles.Enemy]]]) -> tiles.Enemy:
@@ -645,8 +646,7 @@ class ExpeditionGenerator(DungeonGenerator):
     def generate(self, seed: int, data: Tuple[Robot, StvDifficulty]) -> Tuple[Optional[ExpeditionMap], bool]:
         robot, difficulty = data
         if len(robot.get_available_instructions()) <= 0:
-            gates = [instruction.HGate(), instruction.SGate(), instruction.XGate(), instruction.CXGate()]
-            for gate in gates:
+            for gate in ExpeditionGenerator.__DEFAULT_GATES:
                 robot.give_collectible(gate)
 
         rm = RandomManager.create_new(seed)  # needed for WildRooms
