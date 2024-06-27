@@ -666,6 +666,7 @@ class ExpeditionGenerator(DungeonGenerator):
             return typed_collectible_factory[None]
 
         gate: Instruction = gate_factory.produce(rm)
+        assert gate is not None and isinstance(gate, Instruction), f"Invalid product of GateFactory: \"{gate}\"!"
         dungeon_boss = boss_factory.produce(rm, include_gates=[gate])
 
         # Difficulties can be misleading since picking one gate can result in CX Gate which does nothing if it's the
