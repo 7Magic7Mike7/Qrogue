@@ -651,7 +651,7 @@ class ExpeditionGenerator(DungeonGenerator):
 
         rm = RandomManager.create_new(seed)  # needed for WildRooms
         gate_factory = GateFactory.quantum()
-        boss_factory = BossFactory.default(robot)
+        boss_factory = BossFactory.from_robot(difficulty, robot)
         typed_collectible_factory: Dict[Optional[CollectibleType], CollectibleFactory] = {
             None: CollectibleFactory([Score(100)]),  # default factory
             CollectibleType.Gate: CollectibleFactory([Score(200)]),

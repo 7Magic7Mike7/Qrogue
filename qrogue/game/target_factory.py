@@ -135,9 +135,17 @@ class BossFactory:
         return True
 
     @staticmethod
-    def from_robot(difficulty: StvDifficulty, robot: Robot, reward_pool: List[Collectible],
+    def get_leveled_rewards(level: int) -> List[Collectible]:
+        assert 0 <= level < StvDifficulty.max_difficulty_level(), \
+            f"Invalid reward level: 0 <= {level} < {StvDifficulty.max_difficulty_level()} is False!"
+        return BossFactory.__LEVELED_REWARD_POOLS[level].copy()
+
+    @staticmethod
+    def from_robot(difficulty: StvDifficulty, robot: Robot, reward_pool: Optional[List[Collectible]] = None,
                    next_id_callback: Optional[Callable[[], int]] = None) -> "BossFactory":
         available_gates = robot.get_available_instructions()
+        if reward_pool is None:
+            reward_pool = BossFactory.__LEVELED_REWARD_POOLS[difficulty.level]
         return BossFactory(difficulty, robot.num_of_qubits, robot.circuit_space, available_gates, reward_pool,
                            next_id_callback)
 
@@ -145,16 +153,12 @@ class BossFactory:
     def from_difficulty_code(code: str, robot: Robot, reward_pool: Optional[List[Collectible]] = None) -> "BossFactory":
         difficulty = StvDifficulty.from_difficulty_code(code, robot.num_of_qubits, robot.circuit_space)
         assert difficulty.level >= 0, f"Code \"{code}\" produced invalid level: {difficulty.level} >= 0 is False!"
-        if reward_pool is None:
-            reward_pool = BossFactory.__LEVELED_REWARD_POOLS[difficulty.level]
         return BossFactory.from_robot(difficulty, robot, reward_pool)
 
     @staticmethod
     def from_difficulty_level(level: int, robot: Robot, reward_pool: Optional[List[Collectible]] = None) \
             -> "BossFactory":
         difficulty = StvDifficulty.from_difficulty_level(level, robot.num_of_qubits, robot.circuit_space)
-        if reward_pool is None:
-            reward_pool = BossFactory.__LEVELED_REWARD_POOLS[level]
         return BossFactory.from_robot(difficulty, robot, reward_pool)
 
     @staticmethod
