@@ -766,7 +766,7 @@ class ExpeditionGenerator(DungeonGenerator):
                             # reachable for player, implies that the previous layout reachability-check still holds)
                             gen_tries = 0
                             while gen_tries < ExpeditionGenerator.__MAX_ROOM_GEN_TRIES:
-                                tile_matrix: List[List["LearnableRoom.TileData"]] = wild_room_generator.generate(
+                                tile_matrix: List[List[LearnableRoom.TileData]] = wild_room_generator.generate(
                                     seed=rm.get_seed("generating a room in ExpeditionGenerator")
                                 )
                                 tile_list = [tile_from_tile_data(entry.code, entry.data)
