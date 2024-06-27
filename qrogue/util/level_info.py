@@ -133,11 +133,9 @@ class LevelInfo:
             allow_display_name: whether we allow internal_name to already be a display name and return it in case it is
         """
         if internal_name.startswith(MapConfig.expedition_map_prefix()):
-            temp_nums = internal_name[len(MapConfig.expedition_map_prefix()):]
             from qrogue.util import Config
-            Config.check_reachability("LevelInfo.convert_to_display_name()")
-
-            return f"Expedition {temp_nums}"
+            Config.check_reachability(f"LevelInfo.convert_to_display_name({internal_name})")
+            return f"Expedition"
 
         if internal_name in LevelInfo.__NAME_CONVERTER:
             return LevelInfo.__NAME_CONVERTER[internal_name]
