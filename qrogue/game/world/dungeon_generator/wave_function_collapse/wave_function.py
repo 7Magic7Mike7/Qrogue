@@ -19,6 +19,9 @@ class WaveFunction:
         return self.__state
 
     def adapt_weights(self, type_weights: Dict[Optional[Any], int]):
+        """
+        type_weights is only read, never written
+        """
         if self.is_collapsed:
             return  # no need to adapt anything
 
