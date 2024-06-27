@@ -208,7 +208,9 @@ class MapManager:
                                                              score=self.__cur_map.robot.score)
 
             if self.__cur_map.get_type() is MapType.Expedition:
-                self.__save_data.add_to_achievement(Achievement.CompletedExpedition, 1)  # todo: add score instead of 1?
+                assert isinstance(self.__cur_map, ExpeditionMap), \
+                    f"CurMap has wrong type: \"{self.__cur_map.internal_name}\" is no ExpeditionMap!"
+                self.__save_data.add_to_achievement(Achievement.CompletedExpedition, self.__cur_map.difficulty_level)
             self.__save_data.save(is_auto_save=True)
 
             CommonQuestions.proceed_summary(self.__cur_map.name, new_level_data.score, new_level_data.duration,
