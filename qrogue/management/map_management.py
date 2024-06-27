@@ -1,6 +1,6 @@
 import time
 from threading import Thread
-from typing import Callable, Optional, Dict, List, Tuple
+from typing import Callable, Optional, Dict, List, Tuple, Union
 
 from qrogue.game.logic.actors import Robot
 from qrogue.game.world.dungeon_generator import ExpeditionGenerator, QrogueLevelGenerator
@@ -71,23 +71,8 @@ class MapManager:
         else:
             Thread(target=fill, args=(), daemon=True).start()
 
-    def load_map(self, map_name: str, spawn_room: Optional[Coordinate], map_seed: Optional[int] = None):
-        if map_name == MapConfig.first_uncleared():
-            next_map = LevelInfo.get_next(MapConfig.first_uncleared(), self.__save_data.check_level)
-            if next_map is None:
-                Popup.error(f"Failed to find the next map of \"{map_name}\". Please restart and try again.\n"
-                            f"If this error still occurs but you're sure that the corresponding file is present:",
-                            add_report_note=True)
-            else:
-                self.load_map(next_map, spawn_room, map_seed)
-
-        elif map_name.lower() == MapConfig.next_map_string():
-            self.__load_next()
-
-        elif map_name.lower() == MapConfig.back_map_string():
-            self.__load_back()
-
-        elif map_name.lower().startswith(MapConfig.level_map_prefix()):
+    def __load_level(self, map_name: str, spawn_room: Optional[Coordinate] = None, map_seed: Optional[int] = None):
+        if map_name.lower().startswith(MapConfig.level_map_prefix()):
             if map_seed is None:
                 map_seed = self.__rm.get_seed(msg="MapMngr_seedForLevel")
 
@@ -106,7 +91,51 @@ class MapManager:
                 Popup.error(ErrorConfig.invalid_map(map_name, f"Level-file for \"{map_name}\" was not found! "),
                             add_report_note=True)
 
+    def __load_expedition(self, difficulty: Union[StvDifficulty, str], map_seed: Optional[int] = None) -> None:
+        if isinstance(difficulty, str):
+            difficulty = StvDifficulty.from_difficulty_code(difficulty, self.__robot.num_of_qubits,
+                                                            self.__robot.circuit_space)
+        if map_seed is None and self.__queue_size > 0:
+            while len(self.__expedition_queue) <= 0:
+                time.sleep(Config.loading_refresh_time())
+            success = True
+            expedition = self.__expedition_queue.pop(0)
+            self.fill_expedition_queue()  # todo: how to handle difficulty? dictionary?
+            Config.check_reachability("post queue filling")
+        else:
+            if map_seed is None:
+                map_seed = self.__rm.get_seed()
+            expedition, success = self.__expedition_generator.generate(map_seed, (self.__robot, difficulty))
+
+        if success:
+            self.__robot.reset()
+            self.__cur_map = expedition
+            self.__start_level(self.__cur_map)
+        else:
+            Popup.error(f"Failed to create an expedition for seed = {map_seed}. Please try again with a different "
+                        f"seed or restart the game. Should the error keep occurring:", add_report_note=True)
+
+    def load_map(self, map_name: str, spawn_room: Optional[Coordinate], map_seed: Optional[int] = None):
+        if map_name == MapConfig.first_uncleared():
+            next_map = LevelInfo.get_next(MapConfig.first_uncleared(), self.__save_data.check_level)
+            if next_map is None:
+                Popup.error(f"Failed to find the next map of \"{map_name}\". Please restart and try again.\n"
+                            f"If this error still occurs but you're sure that the corresponding file is present:",
+                            add_report_note=True)
+            else:
+                self.load_map(next_map, spawn_room, map_seed)
+
+        elif map_name.lower() == MapConfig.next_map_string():
+            self.__load_next()
+
+        elif map_name.lower() == MapConfig.back_map_string():
+            self.__load_back()
+
+        elif map_name.lower().startswith(MapConfig.level_map_prefix()):
+            self.__load_level(map_name, spawn_room, map_seed)
+
         elif map_name.lower().startswith(MapConfig.expedition_map_prefix()):
+            # first: extract difficulty and seed information from map_name if available
             if len(map_name) > len(MapConfig.expedition_map_prefix()):
                 # map_name contains additional information
                 info = map_name[len(MapConfig.expedition_map_prefix()):]
@@ -128,28 +157,9 @@ class MapManager:
                 # no additional information given, hence, we use default values
                 expedition_progress = int(self.__save_data.get_progress(Achievement.CompletedExpedition)[0])
                 diff_code = LevelInfo.get_expedition_difficulty(expedition_progress)
-                map_seed = None
 
-            robot = self.__robot
-            if map_seed is None and self.__queue_size > 0:
-                while len(self.__expedition_queue) <= 0:
-                    time.sleep(Config.loading_refresh_time())
-                success = True
-                expedition = self.__expedition_queue.pop(0)
-                self.fill_expedition_queue()
-            else:
-                difficulty = StvDifficulty.from_difficulty_code(diff_code, robot.num_of_qubits, robot.circuit_space)
-                if map_seed is None:
-                    map_seed = self.__rm.get_seed()
-                expedition, success = self.__expedition_generator.generate(map_seed, (robot, difficulty))
-
-            if success:
-                robot.reset()
-                self.__cur_map = expedition
-                self.__start_level(self.__cur_map)
-            else:
-                Popup.error(f"Failed to create an expedition for seed = {map_seed}. Please try again with a different "
-                            f"seed or restart the game. Should the error keep occurring:", add_report_note=True)
+            # load expedition
+            self.__load_expedition(diff_code, map_seed)
 
         else:
             Popup.error(ErrorConfig.invalid_map(map_name), add_report_note=True)
@@ -167,12 +177,12 @@ class MapManager:
             diff_code = LevelInfo.get_expedition_difficulty(expedition_progress)
             seed = self.__rm.get_seed("MapManager_load_next()@expedition")
 
-            self.__start_level_transition(self.__cur_map.name, f"Expedition {diff_code}{seed}",
-                                          lambda: self.__load_expedition(diff_code, seed))
-
+            difficulty = StvDifficulty.from_difficulty_code(diff_code, self.__robot.num_of_qubits,
+                                                            self.__robot.circuit_space)
+            self.__start_level_transition(self.__cur_map.name, ExpeditionMap.to_display_name(difficulty, seed),
+                                          lambda: self.__load_expedition(difficulty, seed))
         else:
-            next_display = LevelInfo.convert_to_display_name(next_map)
-            self.__start_level_transition(self.__cur_map.name, next_display,
+            self.__start_level_transition(self.__cur_map.name, LevelInfo.convert_to_display_name(next_map),
                                           lambda: self.load_map(next_map, None, None))
 
     def __load_back(self):
@@ -235,9 +245,6 @@ class MapManager:
             self.load_map(MapConfig.test_level(), None)
         else:
             self.load_map(MapConfig.first_uncleared(), None)
-
-    def __load_expedition(self, diff_code: str, seed: Optional[int] = None) -> None:
-        self.load_map(MapConfig.expedition_map_prefix() + diff_code, None, seed)
 
     def reload(self):
         self.load_map(self.__cur_map.internal_name, None, self.__cur_map.seed)

@@ -7,7 +7,7 @@ from .level_info import LevelInfo, LevelData
 from .logger import Logger
 from .my_random import MyRandom, RandomManager
 from .parser_util import ParserErrorListener
-from .stv_difficulty import StvDifficulty
+from .stv_difficulty import StvDifficulty, DifficultyType
 
 # not exported:
 # - KeyLogger etc.

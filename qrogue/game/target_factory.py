@@ -9,7 +9,7 @@ from qrogue.game.logic.collectibles import Collectible, CollectibleFactory, Inst
 import qrogue.game.logic.collectibles.instruction as gates
 from qrogue.game.target_difficulty import PuzzleDifficulty, ExplicitTargetDifficulty
 from qrogue.game.world.navigation import Direction
-from qrogue.util import Logger, MyRandom, Config, StvDifficulty
+from qrogue.util import Logger, MyRandom, Config, StvDifficulty, DifficultyType
 
 
 class EnemyFactory(ABC):
@@ -164,7 +164,7 @@ class BossFactory:
     def __init__(self, difficulty: StvDifficulty, num_of_qubits: int, circuit_space: int,
                  available_gates: List[Instruction], reward_pool: List[Collectible],
                  next_id_callback: Optional[Callable[[], int]] = None):
-        self.__difficulty = difficulty.normalize(num_of_qubits, circuit_space)
+        self.__difficulty = difficulty
         self.__num_of_qubits = num_of_qubits
         self.__circuit_space = circuit_space
         self.__available_gates = available_gates
@@ -196,6 +196,14 @@ class BossFactory:
         qubit_count = [0] * self.__num_of_qubits
         qubits = list(range(self.__num_of_qubits))
 
+        # absolute difficulty values
+        diff_values = self.__difficulty.get_absolute_dict(self.__num_of_qubits, self.__circuit_space)
+        num_of_gates = diff_values[DifficultyType.CircuitExuberance]
+        num_of_rotated_qubits = diff_values[DifficultyType.QubitExuberance]
+        rotation_degree = diff_values[DifficultyType.RotationExuberance]
+        randomization_degree = diff_values[DifficultyType.RandomizationDegree]
+        edits = diff_values[DifficultyType.BonusEditRatio]
+
         for g in include_gates:
             # stop before we're using more gates than the robot can place
             if len(gates_for_target) >= self.__circuit_space: break
@@ -204,7 +212,7 @@ class BossFactory:
             if self.__prepare_gate(rm, gate, qubit_count, qubits): gates_for_target.append(gate)
 
         usable_gates = self.__available_gates.copy()
-        while len(usable_gates) > 0 and len(gates_for_target) < self.__difficulty.num_of_gates:
+        while len(usable_gates) > 0 and len(gates_for_target) < num_of_gates:
             gate = rm.get_element(usable_gates, remove=True, msg="BossFactory_selectGate")
             if self.__prepare_gate(rm, gate, qubit_count, qubits):
                 gates_for_target.append(gate)
@@ -215,22 +223,21 @@ class BossFactory:
             # apply randomly rotated gates to the 0-basis state based on difficulty
             temp_qubit_count = [0] * self.__num_of_qubits
             temp_qubits = qubits.copy()
-            rotated_qubits = [rm.get_element(temp_qubits, remove=True)
-                              for _ in range(self.__difficulty.num_of_rotated_qubits)]
+            rotated_qubits = [rm.get_element(temp_qubits, remove=True) for _ in range(num_of_rotated_qubits)]
             rotated_qubits2 = rotated_qubits.copy()
 
-            for _ in range(len(rotated_qubits) - self.__difficulty.rotation_degree):
+            for _ in range(len(rotated_qubits) - rotation_degree):
                 # remove qubits until only #rotation_degree qubits are left in rotated_qubits2
                 rm.get_element(rotated_qubits2, remove=True)
 
             for qubit in rotated_qubits:
                 # find a random angle for the rotation
-                if self.__difficulty.randomization_degree == 0:
+                if randomization_degree == 0:
                     angle = rm.get(msg="BossFactory.produce()_unrestrictedAngle")
                 else:   # todo: what about randomization_degree==1?
                     # start with 1 because rotating by 0° does nothing (since range-end is exclusive, 360° can't happen)
-                    angle = rm.get_element([(2*math.pi) * i / self.__difficulty.randomization_degree
-                                            for i in range(1, self.__difficulty.randomization_degree)],
+                    angle = rm.get_element([(2*math.pi) * i / randomization_degree
+                                            for i in range(1, randomization_degree)],
                                            msg="BossFactory.produce()_restrictedAngle")
                 # prepare and append either an RY- or RZGate
                 rotate_y = rm.get_bool(msg="BossFactory.produce()_chooseRGate")
@@ -262,7 +269,7 @@ class BossFactory:
         target_stv = Instruction.compute_stv(gates_for_target, self.__num_of_qubits)
         input_stv = Instruction.compute_stv(gates_for_input, self.__num_of_qubits)
         reward = rm.get_element(self.__reward_pool, msg="BossFactory_reward")
-        return Boss(self._next_id(), target_stv, input_stv, reward, self.__difficulty.edits)
+        return Boss(self._next_id(), target_stv, input_stv, reward, edits)
 
     def __prepare_gate(self, rm: MyRandom, gate: Instruction, qubit_count: List[int], qubits: List[int]) -> bool:
         gate_qubits = qubits.copy()
