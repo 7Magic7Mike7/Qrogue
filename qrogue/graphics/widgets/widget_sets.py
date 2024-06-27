@@ -338,6 +338,10 @@ class LevelSelectWidgetSet(MyWidgetSet):
             highscores.append(f"#{level_data.total_score}")
             durations.append(f"{level_data.duration}s")
 
+        # add expeditions
+        display_names.append("Expedition")
+        internal_names.append(MapConfig.expedition_map_prefix())
+
         # add cancel to stop selecting a level
         display_names.append("-Cancel-")
         internal_names.append(None)  # the selection-object to easily identify cancel
@@ -346,8 +350,11 @@ class LevelSelectWidgetSet(MyWidgetSet):
             if self.__details.selected_object is None: return True  # -Cancel- was selected
 
             self.__level = self.__details.selected_object
-            self.__summary_level.set_data(f"{LevelSelectWidgetSet.__LEVEL_HEADER}{display_names[index]} "
-                                          f"({highscores[index]}, {durations[index]})")
+            if self.__details.selected_object == MapConfig.expedition_map_prefix():
+                self.__summary_level.set_data(f"{LevelSelectWidgetSet.__LEVEL_HEADER}{display_names[index]} ")
+            else:
+                self.__summary_level.set_data(f"{LevelSelectWidgetSet.__LEVEL_HEADER}{display_names[index]} "
+                                              f"({highscores[index]}, {durations[index]})")
             return True
 
         self.__details.set_data(((display_names, internal_names), set_level))
