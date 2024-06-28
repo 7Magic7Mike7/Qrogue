@@ -22,7 +22,7 @@ from qrogue.graphics.widgets.my_widgets import SelectionWidget, CircuitWidget, M
 from qrogue.util import CommonPopups, Config, Controls, GameplayConfig, HelpText, Logger, PathConfig, \
     Keys, UIConfig, ColorConfig, Options, PuzzleConfig, ScoreConfig, \
     get_filtered_help_texts, CommonQuestions, MapConfig, PyCuiConfig, ColorCode, split_text, MyRandom, \
-    LevelInfo, CommonInfos, LevelData
+    LevelInfo, CommonInfos, LevelData, StvDifficulty
 from qrogue.util.achievements import Unlocks
 from qrogue.util.util_functions import enum_string, cur_datetime, time_diff, open_folder
 
@@ -236,7 +236,8 @@ class LevelSelectWidgetSet(MyWidgetSet):
                  base_render_callback: Callable[[List[Renderable]], None], rm: MyRandom,
                  show_input_popup_callback: Callable[[str, int, Callable[[str], None]], None],
                  get_available_levels_callback: Callable[[], List[LevelData]], switch_to_menu: Callable[[], None],
-                 start_level_callback: Callable[[Optional[int], str], None]):
+                 start_level_callback: Callable[[Optional[int], str], None],
+                 get_expedition_progress: Callable[[], int]):
         super().__init__(logger, root, base_render_callback)
         # select seed
         # select level (or choose Expedition)
@@ -247,6 +248,7 @@ class LevelSelectWidgetSet(MyWidgetSet):
         self.__show_input_popup = show_input_popup_callback
         self.__get_available_levels = get_available_levels_callback
         self.__start_level = start_level_callback
+        self.__get_expedition_progress = get_expedition_progress
 
         self.__seed = self.__rm.get_seed('init level select seed')
         self.__level: Optional[str] = None
@@ -339,8 +341,13 @@ class LevelSelectWidgetSet(MyWidgetSet):
             durations.append(f"{level_data.duration}s")
 
         # add expeditions
-        display_names.append("Expedition")
-        internal_names.append(MapConfig.expedition_map_prefix())
+        # the next difficulty is also unlocked from the get go, so you can always challenge yourself to harder puzzles
+        max_expedition_level = min(LevelInfo.get_expedition_difficulty(self.__get_expedition_progress()) + 1,
+                                   StvDifficulty.max_difficulty_level())
+        for i in range(max_expedition_level + 1):   # +1 because max_expedition_level should be included
+            diff_code = str(i + StvDifficulty.min_difficulty_level())
+            display_names.append(f"Expedition {diff_code}")
+            internal_names.append(f"{MapConfig.expedition_map_prefix()}{diff_code}")
 
         # add cancel to stop selecting a level
         display_names.append("-Cancel-")
@@ -350,7 +357,7 @@ class LevelSelectWidgetSet(MyWidgetSet):
             if self.__details.selected_object is None: return True  # -Cancel- was selected
 
             self.__level = self.__details.selected_object
-            if self.__details.selected_object == MapConfig.expedition_map_prefix():
+            if self.__details.selected_object.startswith(MapConfig.expedition_map_prefix()):
                 self.__summary_level.set_data(f"{LevelSelectWidgetSet.__LEVEL_HEADER}{display_names[index]} ")
             else:
                 self.__summary_level.set_data(f"{LevelSelectWidgetSet.__LEVEL_HEADER}{display_names[index]} "

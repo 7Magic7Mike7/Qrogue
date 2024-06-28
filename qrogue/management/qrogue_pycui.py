@@ -24,6 +24,7 @@ from qrogue.util import common_messages, CheatConfig, Config, GameplayConfig, UI
     CommonInfos, MapConfig
 from qrogue.util.game_simulator import GameSimulator
 from qrogue.util.key_logger import KeyLogger, OverWorldKeyLogger, DummyKeyLogger
+from qrogue.util.achievements import Achievement
 from .map_management import MapManager
 from .save_data import NewSaveData
 
@@ -308,7 +309,8 @@ class QrogueCUI(PyCUI):
         self.__level_select = LevelSelectWidgetSet(
             self.__controls, Logger.instance(), self, self.__render, self.__rm, self.__show_input_popup,
             self.__save_data.get_completed_levels,
-            self._switch_to_menu, lambda map_seed, map_name: self.__map_manager.load_map(map_name, None, map_seed)
+            self._switch_to_menu, lambda map_seed, map_name: self.__map_manager.load_map(map_name, None, map_seed),
+            lambda: int(self.__save_data.get_progress(Achievement.CompletedExpedition)[0])
         )
         self.__screen_check = ScreenCheckWidgetSet(self.__controls, Logger.instance(), self, self.__render,
                                                    self._switch_to_menu)
