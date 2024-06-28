@@ -117,18 +117,18 @@ class MapManager:
         else:
             Thread(target=fill, args=(), daemon=True).start()
 
-    def __load_level(self, map_name: str, spawn_room: Optional[Coordinate] = None, map_seed: Optional[int] = None):
+    def __load_level(self, map_name: str, spawn_room: Optional[Coordinate] = None, seed: Optional[int] = None):
         # generate a random seed for all paths since the randomizer state should not depend on whether we passed a seed
         # manually (e.g., during debugging) or not
-        rand_map_seed = self.__rm.get_seed("MapManager.__load_level()@seedForLevel")
-        if map_seed is None: map_seed = rand_map_seed
+        rand_seed = self.__rm.get_seed("MapManager.__load_level()@seedForLevel")
+        if seed is None: seed = rand_seed
 
         # todo maybe levels should be able to have arbitrary names except "w..." or "e..." or "back" or "next"?
         check_achievement = self.__save_data.check_achievement
         generator = QrogueLevelGenerator(check_achievement, self.trigger_event, self.load_map, Popup.npc_says,
                                          self.__cbp)
         try:
-            level, success = generator.generate(map_seed, map_name)
+            level, success = generator.generate(seed, map_name)
             if success:
                 self.__cur_map = level
                 self.__start_level(self.__cur_map)
@@ -169,7 +169,7 @@ class MapManager:
             Popup.error(f"Failed to create an expedition for seed = {map_seed}. Please try again with a different "
                         f"seed or restart the game. Should the error keep occurring:", add_report_note=True)
 
-    def load_map(self, map_name: str, spawn_room: Optional[Coordinate], map_seed: Optional[int] = None):
+    def load_map(self, map_name: str, spawn_room: Optional[Coordinate], seed: Optional[int] = None):
         if map_name == MapConfig.first_uncleared():
             next_map = LevelInfo.get_next(MapConfig.first_uncleared(), self.__save_data.check_level)
             if next_map is None:
@@ -177,7 +177,7 @@ class MapManager:
                             f"If this error still occurs but you're sure that the corresponding file is present:",
                             add_report_note=True)
             else:
-                self.load_map(next_map, spawn_room, map_seed)
+                self.load_map(next_map, spawn_room, seed)
 
         elif map_name.lower() == MapConfig.next_map_string():
             self.__load_next()
@@ -186,11 +186,11 @@ class MapManager:
             self.__load_back()
 
         elif map_name.lower().startswith(MapConfig.level_map_prefix()):
-            self.__load_level(map_name, spawn_room, map_seed)
+            self.__load_level(map_name, spawn_room, seed)
 
         elif map_name.lower().startswith(MapConfig.expedition_map_prefix()):
             expedition_progress = int(self.__save_data.get_progress(Achievement.CompletedExpedition)[0])
-            diff_code, map_seed, puzzle_seed = MapManager.parse_expedition_parameters(map_name, map_seed,
+            diff_code, map_seed, puzzle_seed = MapManager.parse_expedition_parameters(map_name, seed,
                                                                                       expedition_progress)
             # load expedition
             self.__load_expedition(diff_code, map_seed, puzzle_seed)
