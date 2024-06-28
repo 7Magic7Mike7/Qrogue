@@ -100,12 +100,14 @@ class StvDifficulty:
         level_len = len(str(StvDifficulty.max_difficulty_level()))  # how many characters a single level code has
         if len(code) == level_len:
             code = code * StvDifficulty.degrees_of_freedom()   # extend code so every DiffType has the same level
-        assert len(code) <= StvDifficulty.code_len(), \
-            f"Level code \"{code}\" is too short! At least {StvDifficulty.code_len()} characters are needed."
 
         values: Dict[DifficultyType, int] = {}
         for i, diff_type in enumerate(DifficultyType):
-            values[diff_type] = int(code[i * level_len:(i+1) * level_len])
+            if i >= len(code):
+                cur_level = StvDifficulty._calc_avg_level(values)   # extend by average if code is too short
+            else:
+                cur_level = int(code[i * level_len:(i+1) * level_len])
+            values[diff_type] = cur_level
         return StvDifficulty(values)
 
     @staticmethod
