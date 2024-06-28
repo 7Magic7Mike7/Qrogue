@@ -231,6 +231,7 @@ class MenuWidgetSet(MyWidgetSet):
 class LevelSelectWidgetSet(MyWidgetSet):
     __SEED_HEADER = "Seed: "
     __LEVEL_HEADER = "Level: "
+    __CUSTOM_MAP_CODE = "custom"
 
     def __init__(self, controls: Controls, logger: Logger, root: py_cui.PyCUI,
                  base_render_callback: Callable[[List[Renderable]], None], rm: MyRandom,
@@ -349,6 +350,11 @@ class LevelSelectWidgetSet(MyWidgetSet):
             display_names.append(f"Expedition {diff_code}")
             internal_names.append(f"{MapConfig.expedition_map_prefix()}{diff_code}")
 
+        if Config.debugging():
+            # add custom option so the player can use custom difficulty or load levels otherwise
+            display_names.append("+Select via Map Code+")
+            internal_names.append(LevelSelectWidgetSet.__CUSTOM_MAP_CODE)
+
         # add cancel to stop selecting a level
         display_names.append("-Cancel-")
         internal_names.append(None)  # the selection-object to easily identify cancel
@@ -357,7 +363,14 @@ class LevelSelectWidgetSet(MyWidgetSet):
             if self.__details.selected_object is None: return True  # -Cancel- was selected
 
             self.__level = self.__details.selected_object
-            if self.__details.selected_object.startswith(MapConfig.expedition_map_prefix()):
+            if self.__details.selected_object == LevelSelectWidgetSet.__CUSTOM_MAP_CODE:
+                def callback(map_code: str):
+                    self.__summary_level.set_data(f"Map Code: {map_code}")
+                    self.__level = map_code
+                    self.render()
+                    Widget.move_focus(self.__choices, self)
+                self.__show_input_popup("Enter map code", ColorConfig.LEVEL_SELECTION_INPUT_MAP_CODE, callback)
+            elif self.__details.selected_object.startswith(MapConfig.expedition_map_prefix()):
                 self.__summary_level.set_data(f"{LevelSelectWidgetSet.__LEVEL_HEADER}{display_names[index]} ")
             else:
                 self.__summary_level.set_data(f"{LevelSelectWidgetSet.__LEVEL_HEADER}{display_names[index]} "
