@@ -245,7 +245,7 @@ class MapManager:
             new_level_data = self.__save_data.complete_level(self.__cur_map.internal_name, duration,
                                                              score=self.__cur_map.robot.score)
 
-            if self.__cur_map.get_type() is MapType.Expedition:
+            if self.is_in_expedition:
                 assert isinstance(self.__cur_map, ExpeditionMap), \
                     f"CurMap has wrong type: \"{self.__cur_map.internal_name}\" is no ExpeditionMap!"
                 self.__save_data.add_to_achievement(Achievement.CompletedExpedition, self.__cur_map.difficulty.level)
