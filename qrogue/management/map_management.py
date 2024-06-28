@@ -248,7 +248,7 @@ class MapManager:
             if self.__cur_map.get_type() is MapType.Expedition:
                 assert isinstance(self.__cur_map, ExpeditionMap), \
                     f"CurMap has wrong type: \"{self.__cur_map.internal_name}\" is no ExpeditionMap!"
-                self.__save_data.add_to_achievement(Achievement.CompletedExpedition, self.__cur_map.difficulty_level)
+                self.__save_data.add_to_achievement(Achievement.CompletedExpedition, self.__cur_map.difficulty.level)
             self.__save_data.save(is_auto_save=True)
 
             CommonQuestions.proceed_summary(self.__cur_map.name, new_level_data.score, new_level_data.duration,
@@ -287,4 +287,12 @@ class MapManager:
             self.load_map(MapConfig.first_uncleared(), None)
 
     def reload(self):
-        self.load_map(self.__cur_map.internal_name, None, self.__cur_map.seed)
+        if self.is_in_level:
+            self.__load_level(self.__cur_map.internal_name, None, None)     # re-randomize level seed
+        elif self.is_in_expedition:
+            exp_map: ExpeditionMap = self.__cur_map
+            # use same difficulty and map_seed but re-randomize puzzle_seed
+            self.__load_expedition(exp_map.difficulty, exp_map.seed, None)
+        else:
+            Popup.error(f"Can only reload levels and expeditions, but the current map "
+                        f"\"{self.__cur_map.internal_name}\" is neither. Please exit the map.", add_report_note=True)

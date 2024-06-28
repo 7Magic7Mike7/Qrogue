@@ -33,6 +33,8 @@ class DifficultyType(enum.Enum):
 
 
 class StvDifficulty:
+    """This class is immutable."""
+
     __DIFF_VALUES: Dict[DifficultyType, List[int]] = {
         DifficultyType.CircuitExuberance:   [0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
         DifficultyType.QubitExuberance:     [0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
