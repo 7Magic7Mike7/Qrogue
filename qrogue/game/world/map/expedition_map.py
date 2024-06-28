@@ -41,8 +41,8 @@ class ExpeditionMap(Map):
         # expeditions don't have a description to show, so we pass an empty lambda
         meta_data = MapMetaData(ExpeditionMap.to_display_name(difficulty, seed), None, True, lambda: None)
         self.__diff_level = difficulty.level
-        super().__init__(meta_data, f"{MapConfig.expedition_map_prefix()}{seed}", seed, rooms, controllable, spawn_room,
-                         check_achievement, trigger_event)
+        super().__init__(meta_data, f"{MapConfig.expedition_map_prefix()}{difficulty.to_code()}", seed, rooms,
+                         controllable, spawn_room, check_achievement, trigger_event)
 
     @property
     def difficulty_level(self) -> int:
