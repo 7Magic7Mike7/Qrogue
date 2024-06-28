@@ -649,8 +649,8 @@ class ExpeditionGenerator(DungeonGenerator):
             for gate in ExpeditionGenerator.__DEFAULT_GATES:
                 robot.give_collectible(gate)
 
-        map_rm = RandomManager.create_new(map_seed)
-        puzzle_rm = RandomManager.create_new(puzzle_seed)
+        map_rm = RandomManager.create_new(map_seed)         # used for layout, rooms (tile placement), collectibles
+        puzzle_rm = RandomManager.create_new(puzzle_seed)   # used for all puzzles
 
         gate_factory = GateFactory.quantum()
         boss_factory = BossFactory.from_robot(difficulty, robot)
@@ -669,7 +669,7 @@ class ExpeditionGenerator(DungeonGenerator):
 
         gate: Instruction = gate_factory.produce(map_rm)
         assert gate is not None and isinstance(gate, Instruction), f"Invalid product of GateFactory: \"{gate}\"!"
-        dungeon_boss = boss_factory.produce(map_rm, include_gates=[gate])
+        dungeon_boss = boss_factory.produce(puzzle_rm, include_gates=[gate])
 
         # Difficulties can be misleading since picking one gate can result in CX Gate which does nothing if it's the
         # only gate on a zero-state. Also picking multiple gates where one is CX has a higher probability of doing
@@ -739,12 +739,12 @@ class ExpeditionGenerator(DungeonGenerator):
                                              west_hallway=room_hallways[Direction.West],
                                              place_teleporter=False)
                         elif code == _Code.Wild:
-                            enemy_factory = map_rm.get_element_prioritized(enemy_factories, enemy_factory_priorities,
-                                                                       msg="RandomDG_elemPrioritized")
+                            enemy_factory = puzzle_rm.get_element_prioritized(enemy_factories, enemy_factory_priorities,
+                                                                              msg="RandomDG_elemPrioritized")
 
                             def tile_from_tile_data(tile_code: tiles.TileCode, tile_data: Any) -> tiles.Tile:
                                 if tile_code == tiles.TileCode.Enemy:
-                                    enemy_seed = map_rm.get_seed("Create enemy for expedition")
+                                    enemy_seed = puzzle_rm.get_seed("Create enemy for expedition")
                                     return self.__create_enemy(enemy_seed, tile_data, pos, enemy_factory,
                                                                enemy_groups_by_room)
                                 elif tile_code == tiles.TileCode.CollectibleScore:
