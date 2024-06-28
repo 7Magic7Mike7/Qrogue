@@ -118,9 +118,12 @@ class MapManager:
             Thread(target=fill, args=(), daemon=True).start()
 
     def __load_level(self, map_name: str, spawn_room: Optional[Coordinate] = None, map_seed: Optional[int] = None):
+        # generate a random seed for all paths since the randomizer state should not depend on whether we passed a seed
+        # manually (e.g., during debugging) or not
+        rand_map_seed = self.__rm.get_seed("MapManager.__load_level()@seedForLevel")
+
         if map_name.lower().startswith(MapConfig.level_map_prefix()):
-            if map_seed is None:
-                map_seed = self.__rm.get_seed(msg="MapMngr_seedForLevel")
+            if map_seed is None: map_seed = rand_map_seed
 
             # todo maybe levels should be able to have arbitrary names except "w..." or "e..." or "back" or "next"?
             check_achievement = self.__save_data.check_achievement
@@ -139,6 +142,11 @@ class MapManager:
 
     def __load_expedition(self, difficulty: Union[StvDifficulty, str], map_seed: Optional[int] = None,
                           puzzle_seed: Optional[int] = None) -> None:
+        # generate random seeds for all paths since the randomizer state should not depend on whether we passed a seed
+        # manually (e.g., during debugging) or not
+        rand_map_seed = self.__rm.get_seed("MapManager.__load_expedition()@map_seed")
+        rand_puzzle_seed = self.__rm.get_seed("MapManager.__load_expedition()@puzzle_seed")
+
         if isinstance(difficulty, str):
             difficulty = StvDifficulty.from_difficulty_code(difficulty, self.__robot.num_of_qubits,
                                                             self.__robot.circuit_space)
@@ -150,10 +158,8 @@ class MapManager:
             self.fill_expedition_queue()  # todo: how to handle difficulty? dictionary?
             Config.check_reachability("post queue filling")
         else:
-            if map_seed is None:
-                map_seed = self.__rm.get_seed("MapManager.__load_expedition()@map_seed")
-            if puzzle_seed is None:
-                puzzle_seed = self.__rm.get_seed("MapManager.__load_expedition()@puzzle_seed")
+            if map_seed is None: map_seed = rand_map_seed
+            if puzzle_seed is None: puzzle_seed = rand_puzzle_seed
             expedition, success = self.__expedition_generator.generate(map_seed, (self.__robot, difficulty,
                                                                                   puzzle_seed))
 
@@ -195,6 +201,11 @@ class MapManager:
             Popup.error(ErrorConfig.invalid_map(map_name), add_report_note=True)
 
     def __load_next(self):
+        # generate random seeds for all paths since the randomizer state should not depend on whether we passed a seed
+        # manually (e.g., during debugging) or not
+        rand_map_seed = self.__rm.get_seed("MapManager.load_next()@expedition>map_seed")
+        rand_puzzle_seed = self.__rm.get_seed("MapManager.load_next()@expedition>puzzle_seed")
+
         next_map = LevelInfo.get_next(self.__cur_map.internal_name, self.__save_data.check_level)
         if next_map is None:
             error_text = ErrorConfig.invalid_map(self.__cur_map.name, f"Failed to load next map after "
@@ -205,13 +216,11 @@ class MapManager:
             # create difficulty code based on expedition progress
             expedition_progress = int(self.__save_data.get_progress(Achievement.CompletedExpedition)[0])
             diff_code = LevelInfo.get_expedition_difficulty(expedition_progress)
-            map_seed = self.__rm.get_seed("MapManager.load_next()@expedition>map_seed")
-            puzzle_seed = self.__rm.get_seed("MapManager.load_next()@expedition>puzzle_seed")
 
             difficulty = StvDifficulty.from_difficulty_code(diff_code, self.__robot.num_of_qubits,
                                                             self.__robot.circuit_space)
-            self.__start_level_transition(self.__cur_map.name, ExpeditionMap.to_display_name(difficulty, map_seed),
-                                          lambda: self.__load_expedition(difficulty, map_seed, puzzle_seed))
+            self.__start_level_transition(self.__cur_map.name, ExpeditionMap.to_display_name(difficulty, rand_map_seed),
+                                          lambda: self.__load_expedition(difficulty, rand_map_seed, rand_puzzle_seed))
         else:
             self.__start_level_transition(self.__cur_map.name, LevelInfo.convert_to_display_name(next_map),
                                           lambda: self.load_map(next_map, None, None))
