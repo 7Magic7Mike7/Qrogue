@@ -9,20 +9,7 @@ class SaveDataOverhaulTests(test_util.SingletonSetupTestCase):
     def test_fresh_save(self):
         self.set_printing(False)
 
-        new_save_data = "\n".join([
-            "Qrogue<",
-            "12d11m2024y 14:23:11",
-            "[GATES]",
-            "",
-            "[LEVELS]",
-            "",
-            "[UNLOCKS]",
-            "",
-            "[ACHIEVEMENTS]",
-            "",
-            ">Qrogue",
-            "",
-        ])
+        new_save_data = NewSaveData.empty_save_state()
         new_save = NewSaveData(new_save_data)
         self.assertEqual(new_save_data, new_save.to_string())
 
@@ -53,7 +40,6 @@ class SaveDataOverhaulTests(test_util.SingletonSetupTestCase):
             "Qrogue<",
             "14d03m2024y 15:47:37",
             "[GATES]",
-            "",
             "[LEVELS]",
             "l0k0v0 @ 14d03m2024y 15:49:03 74 seconds Score = 0",
             "[UNLOCKS]",

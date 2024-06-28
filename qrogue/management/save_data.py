@@ -180,25 +180,22 @@ class NewSaveData:
         text += f"{datetime2str(self.__date_time)}\n"
 
         text += f"{_SaveDataGenerator.gates_header()}\n"
-        text += _SaveDataGenerator.gate_separator().join([gate.gate_type.short_name for gate in self.__gates])
-        text += "\n"
+        if len(self.__gates) > 0:
+            text += _SaveDataGenerator.gate_separator().join([gate.gate_type.short_name for gate in self.__gates])
+            text += "\n"
 
         text += f"{_SaveDataGenerator.levels_header()}\n"
-        text += "\n".join([f"{level.name} @ {datetime2str(level.date_time)} "
-                           f"{level.duration} {_SaveDataGenerator.duration_unit()} Score = {level.score}"
-                           for level in self.__levels.values()])
-        text += "\n"
+        for level in self.__levels.values():
+            text += f"{level.name} @ {datetime2str(level.date_time)} {level.duration} " \
+                    f"{_SaveDataGenerator.duration_unit()} Score = {level.score}\n"
 
         text += f"{_SaveDataGenerator.unlocks_header()}\n"
-        text += "\n".join([f"{unlock} @ {datetime2str(self.__unlocks[unlock])}"
-                           for unlock in self.__unlocks])
-        text += "\n"
+        for unlock in self.__unlocks:
+            text += f"{unlock} @ {datetime2str(self.__unlocks[unlock])}\n"
 
         text += f"{_SaveDataGenerator.achievements_header()}\n"
-        text += "\n".join([f"{ach.name} @ {datetime2str(ach.date_time)} "
-                           f"Score = {ach.score} out of {ach.done_score}"
-                           for ach in self.__achievements.values()])
-        text += "\n"
+        for ach in self.__achievements.values():
+            text += f"{ach.name} @ {datetime2str(ach.date_time)} Score = {ach.score} out of {ach.done_score}\n"
 
         return text + f"{_SaveDataGenerator.ender()}\n"
 
