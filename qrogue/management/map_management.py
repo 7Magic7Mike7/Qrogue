@@ -121,24 +121,22 @@ class MapManager:
         # generate a random seed for all paths since the randomizer state should not depend on whether we passed a seed
         # manually (e.g., during debugging) or not
         rand_map_seed = self.__rm.get_seed("MapManager.__load_level()@seedForLevel")
+        if map_seed is None: map_seed = rand_map_seed
 
-        if map_name.lower().startswith(MapConfig.level_map_prefix()):
-            if map_seed is None: map_seed = rand_map_seed
-
-            # todo maybe levels should be able to have arbitrary names except "w..." or "e..." or "back" or "next"?
-            check_achievement = self.__save_data.check_achievement
-            generator = QrogueLevelGenerator(check_achievement, self.trigger_event, self.load_map,
-                                             Popup.npc_says, self.__cbp)
-            try:
-                level, success = generator.generate(map_seed, map_name)
-                if success:
-                    self.__cur_map = level
-                    self.__start_level(self.__cur_map)
-                else:
-                    Popup.error(f"Failed to generate level \"{map_name}\"!", add_report_note=True)
-            except FileNotFoundError:
-                Popup.error(ErrorConfig.invalid_map(map_name, f"Level-file for \"{map_name}\" was not found! "),
-                            add_report_note=True)
+        # todo maybe levels should be able to have arbitrary names except "w..." or "e..." or "back" or "next"?
+        check_achievement = self.__save_data.check_achievement
+        generator = QrogueLevelGenerator(check_achievement, self.trigger_event, self.load_map, Popup.npc_says,
+                                         self.__cbp)
+        try:
+            level, success = generator.generate(map_seed, map_name)
+            if success:
+                self.__cur_map = level
+                self.__start_level(self.__cur_map)
+            else:
+                Popup.error(f"Failed to generate level \"{map_name}\"!", add_report_note=True)
+        except FileNotFoundError:
+            Popup.error(ErrorConfig.invalid_map(map_name, f"Level-file for \"{map_name}\" was not found! "),
+                        add_report_note=True)
 
     def __load_expedition(self, difficulty: Union[StvDifficulty, str], map_seed: Optional[int] = None,
                           puzzle_seed: Optional[int] = None) -> None:
