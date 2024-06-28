@@ -127,17 +127,18 @@ class BossFactory:
 
     @staticmethod
     def validate() -> bool:
-        if len(BossFactory.__LEVELED_REWARD_POOLS) != StvDifficulty.max_difficulty_level():
+        if len(BossFactory.__LEVELED_REWARD_POOLS) != StvDifficulty.num_of_difficulty_levels():
             return False
-        for i in range(StvDifficulty.max_difficulty_level()):
-            if i not in BossFactory.__LEVELED_REWARD_POOLS:
+        for i in range(StvDifficulty.num_of_difficulty_levels()):
+            if i + StvDifficulty.min_difficulty_level() not in BossFactory.__LEVELED_REWARD_POOLS:
                 return False
         return True
 
     @staticmethod
     def get_leveled_rewards(level: int) -> List[Collectible]:
-        assert 0 <= level < StvDifficulty.max_difficulty_level(), \
-            f"Invalid reward level: 0 <= {level} < {StvDifficulty.max_difficulty_level()} is False!"
+        assert StvDifficulty.min_difficulty_level() <= level <= StvDifficulty.max_difficulty_level(), \
+            "Invalid reward level: " \
+            f"{StvDifficulty.min_difficulty_level()} <= {level} <= {StvDifficulty.max_difficulty_level()} is False!"
         return BossFactory.__LEVELED_REWARD_POOLS[level].copy()
 
     @staticmethod

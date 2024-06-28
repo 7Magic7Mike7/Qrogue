@@ -27,9 +27,9 @@ class ExpeditionMap(Map):
         index = 0
         for i, diff_level in enumerate(difficulty.to_code()):
             # offset makes it so the next character is definitely different
-            offset = rm.get_int(min_=1, max_=len(ExpeditionMap.__NAME_CHARS) - StvDifficulty.max_difficulty_level())
+            offset = rm.get_int(min_=1, max_=len(ExpeditionMap.__NAME_CHARS) - StvDifficulty.num_of_difficulty_levels())
             character = ExpeditionMap.__get_character(index + int(diff_level), offset)
-            index += StvDifficulty.max_difficulty_level() + offset
+            index += StvDifficulty.num_of_difficulty_levels() + offset
             # the first letter is always upper case
             if i == 0: display_name += character.upper()
             else: display_name += character

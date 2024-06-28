@@ -49,6 +49,10 @@ class StvDifficulty:
 
     @staticmethod
     def max_difficulty_level() -> int:
+        return StvDifficulty.num_of_difficulty_levels() - 1
+
+    @staticmethod
+    def num_of_difficulty_levels() -> int:
         return len(StvDifficulty.__DIFF_VALUES[DifficultyType.CircuitExuberance])
 
     @staticmethod
@@ -63,7 +67,7 @@ class StvDifficulty:
     def validate() -> bool:
         test_diff = StvDifficulty.from_difficulty_code("1")
         for diff_type, values in StvDifficulty.__DIFF_VALUES.items():
-            if len(values) != StvDifficulty.max_difficulty_level():
+            if len(values) != StvDifficulty.num_of_difficulty_levels():
                 return False
             if test_diff.get_absolute_value(diff_type, 1, 1) is None:
                 return False    # a conversion is missing
@@ -96,9 +100,8 @@ class StvDifficulty:
         level_len = len(str(StvDifficulty.max_difficulty_level()))  # how many characters a single level code has
         if len(code) == level_len:
             code = code * StvDifficulty.degrees_of_freedom()   # extend code so every DiffType has the same level
-        assert len(code) <= StvDifficulty.degrees_of_freedom() * level_len, \
-            f"Level code \"{code}\" is too short! At least {StvDifficulty.degrees_of_freedom() * level_len} " \
-            f"characters are needed."
+        assert len(code) <= StvDifficulty.code_len(), \
+            f"Level code \"{code}\" is too short! At least {StvDifficulty.code_len()} characters are needed."
 
         values: Dict[DifficultyType, int] = {}
         for i, diff_type in enumerate(DifficultyType):
@@ -107,8 +110,8 @@ class StvDifficulty:
 
     @staticmethod
     def from_difficulty_level(level: int, num_of_qubits: int = 0, circuit_space: int = 0) -> "StvDifficulty":
-        assert 0 <= level < StvDifficulty.max_difficulty_level(), \
-            f"Invalid level: 0 <= {level} < {StvDifficulty.max_difficulty_level()} is False!"
+        assert StvDifficulty.min_difficulty_level() <= level <= StvDifficulty.max_difficulty_level(), "Invalid level: " \
+            f"{StvDifficulty.min_difficulty_level()} <= {level} <= {StvDifficulty.max_difficulty_level()} is False!"
         return StvDifficulty.from_difficulty_code(str(level))
 
     def __init__(self, level_values: Dict[DifficultyType, int]):
@@ -127,8 +130,9 @@ class StvDifficulty:
 
     def get_relative_value(self, diff_type: DifficultyType) -> float:
         level = self.get_level(diff_type)
-        assert 0 <= level < StvDifficulty.max_difficulty_level(), \
-            f"Invalid difficulty level: 0 <= {level} <= {StvDifficulty.max_difficulty_level()} is False!"
+        assert StvDifficulty.min_difficulty_level() <= level <= StvDifficulty.max_difficulty_level(), \
+            "Invalid difficulty level: " \
+            f"{StvDifficulty.min_difficulty_level()} <= {level} <= {StvDifficulty.max_difficulty_level()} is False!"
         return StvDifficulty.__DIFF_VALUES[diff_type][level]
 
     def get_absolute_value(self, diff_type: DifficultyType, num_of_qubits: int, circuit_space: int) -> int:
