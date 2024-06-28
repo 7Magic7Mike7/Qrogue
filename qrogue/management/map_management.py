@@ -54,7 +54,6 @@ class MapManager:
                 puzzle_seed = None
         else:
             # no additional information given, hence, we use default values
-            expedition_progress = int(expedition_progress)
             diff_code = LevelInfo.get_expedition_difficulty(expedition_progress)
             puzzle_seed = None
 
