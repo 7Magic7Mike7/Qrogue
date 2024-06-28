@@ -221,7 +221,7 @@ class MapManager:
                                           lambda: self.__load_expedition(difficulty, rand_map_seed, rand_puzzle_seed))
         else:
             self.__start_level_transition(self.__cur_map.name, LevelInfo.convert_to_display_name(next_map),
-                                          lambda: self.load_map(next_map, None, None))
+                                          lambda: self.load_map(next_map, None, rand_map_seed))
 
     def __load_back(self):
         self.__exit_map()
