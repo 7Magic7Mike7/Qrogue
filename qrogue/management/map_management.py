@@ -16,6 +16,51 @@ from qrogue.util.util_functions import cur_datetime, time_diff
 
 
 class MapManager:
+    @staticmethod
+    def parse_expedition_parameters(map_name: str, map_seed: Optional[int], expedition_progress: int) \
+            -> Tuple[str, int, Optional[int]]:
+        # first: extract difficulty and seed information from map_name if available
+        if len(map_name) > len(MapConfig.expedition_map_prefix()):
+            # map_name contains additional information
+            info = map_name[len(MapConfig.expedition_map_prefix()):]
+
+            def parse_seed_info(_seed_info: str) -> Tuple[Optional[int], int]:
+                # seed info is either solely for map_seed or for both type of seeds
+                if MapConfig.puzzle_seed_separator() in _seed_info:
+                    # info_seed contains information about both seeds
+                    _info_puzzle, _info_map = _seed_info.split(MapConfig.puzzle_seed_separator())
+                    return int(_info_puzzle), int(_info_map)
+                else:
+                    # _seed_info only contains information about map_seed
+                    return None, int(_seed_info)
+
+            if MapConfig.diff_code_separator() in info:
+                diff_code, info_seed = info.split(MapConfig.diff_code_separator())
+                # info contains both difficulty and seed information
+                if map_seed is None:
+                    puzzle_seed, map_seed = parse_seed_info(info_seed)
+                else:
+                    # seed info is solely for puzzle_seed
+                    puzzle_seed = int(info_seed)
+            elif map_seed is None:
+                # there is no difficulty code, just seed information (map_seed is implicitly None due to 1st if)
+                expedition_progress = int(expedition_progress)
+                diff_code = LevelInfo.get_expedition_difficulty(expedition_progress)
+                puzzle_seed, map_seed = parse_seed_info(info)
+                Config.check_reachability("load_map(): expedition without seed")
+            else:
+                # a map_seed was provided and there is no diff_code separator -> info is solely for diff_code
+                diff_code = info
+                puzzle_seed = None
+        else:
+            # no additional information given, hence, we use default values
+            expedition_progress = int(expedition_progress)
+            diff_code = LevelInfo.get_expedition_difficulty(expedition_progress)
+            puzzle_seed = None
+
+        assert map_seed is not None, "MapSeed is None after parsing expedition arguments!"
+        return diff_code, map_seed, puzzle_seed
+
     def __init__(self, wfc_manager: WFCManager, save_data: NewSaveData, seed: int, start_level: Callable[[Map], None],
                  start_level_transition_callback: Callable[[str, str, Callable[[], None]], None],
                  exit_map_callback: Callable[[], None], callback_pack: CallbackPack, robot: Robot,
@@ -59,7 +104,9 @@ class MapManager:
             while len(self.__expedition_queue) < self.__queue_size:
                 # todo: how to handle difficulty?
                 difficulty = StvDifficulty.from_difficulty_code("1", robot.num_of_qubits, robot.circuit_space)
-                expedition, success = self.__expedition_generator.generate(self.__rm.get_seed(), (robot, difficulty))
+                map_seed = self.__rm.get_seed("MapManager.fill()@map_seed")
+                puzzle_seed = self.__rm.get_seed("MapManager.fill()@puzzle_seed")
+                expedition, success = self.__expedition_generator.generate(map_seed, (robot, difficulty, puzzle_seed))
                 if success:
                     self.__expedition_queue.append(expedition)
 
@@ -91,7 +138,8 @@ class MapManager:
                 Popup.error(ErrorConfig.invalid_map(map_name, f"Level-file for \"{map_name}\" was not found! "),
                             add_report_note=True)
 
-    def __load_expedition(self, difficulty: Union[StvDifficulty, str], map_seed: Optional[int] = None) -> None:
+    def __load_expedition(self, difficulty: Union[StvDifficulty, str], map_seed: Optional[int] = None,
+                          puzzle_seed: Optional[int] = None) -> None:
         if isinstance(difficulty, str):
             difficulty = StvDifficulty.from_difficulty_code(difficulty, self.__robot.num_of_qubits,
                                                             self.__robot.circuit_space)
@@ -104,8 +152,11 @@ class MapManager:
             Config.check_reachability("post queue filling")
         else:
             if map_seed is None:
-                map_seed = self.__rm.get_seed()
-            expedition, success = self.__expedition_generator.generate(map_seed, (self.__robot, difficulty))
+                map_seed = self.__rm.get_seed("MapManager.__load_expedition()@map_seed")
+            if puzzle_seed is None:
+                puzzle_seed = self.__rm.get_seed("MapManager.__load_expedition()@puzzle_seed")
+            expedition, success = self.__expedition_generator.generate(map_seed, (self.__robot, difficulty,
+                                                                                  puzzle_seed))
 
         if success:
             self.__robot.reset()
@@ -135,31 +186,11 @@ class MapManager:
             self.__load_level(map_name, spawn_room, map_seed)
 
         elif map_name.lower().startswith(MapConfig.expedition_map_prefix()):
-            # first: extract difficulty and seed information from map_name if available
-            if len(map_name) > len(MapConfig.expedition_map_prefix()):
-                # map_name contains additional information
-                info = map_name[len(MapConfig.expedition_map_prefix()):]
-                if map_seed is not None:
-                    # if a map_seed was provided, info is solely for difficulty
-                    diff_code = info
-                elif MapConfig.diff_code_separator() in info:
-                    # info contains both difficulty and seed information if there is a separator
-                    info_diff, info_seed = info.split(MapConfig.diff_code_separator())
-                    diff_code = info_diff
-                    map_seed = int(info_seed)
-                else:
-                    # there is no difficulty code, just a seed (map_seed is implicitly None due to first if-branch)
-                    expedition_progress = int(self.__save_data.get_progress(Achievement.CompletedExpedition)[0])
-                    diff_code = LevelInfo.get_expedition_difficulty(expedition_progress)
-                    map_seed = int(info)
-                    Config.check_reachability("load_map(): expedition without seed")
-            else:
-                # no additional information given, hence, we use default values
-                expedition_progress = int(self.__save_data.get_progress(Achievement.CompletedExpedition)[0])
-                diff_code = LevelInfo.get_expedition_difficulty(expedition_progress)
-
+            expedition_progress = int(self.__save_data.get_progress(Achievement.CompletedExpedition)[0])
+            diff_code, map_seed, puzzle_seed = MapManager.parse_expedition_parameters(map_name, map_seed,
+                                                                                      expedition_progress)
             # load expedition
-            self.__load_expedition(diff_code, map_seed)
+            self.__load_expedition(diff_code, map_seed, puzzle_seed)
 
         else:
             Popup.error(ErrorConfig.invalid_map(map_name), add_report_note=True)
@@ -175,12 +206,13 @@ class MapManager:
             # create difficulty code based on expedition progress
             expedition_progress = int(self.__save_data.get_progress(Achievement.CompletedExpedition)[0])
             diff_code = LevelInfo.get_expedition_difficulty(expedition_progress)
-            seed = self.__rm.get_seed("MapManager_load_next()@expedition")
+            map_seed = self.__rm.get_seed("MapManager.load_next()@expedition>map_seed")
+            puzzle_seed = self.__rm.get_seed("MapManager.load_next()@expedition>puzzle_seed")
 
             difficulty = StvDifficulty.from_difficulty_code(diff_code, self.__robot.num_of_qubits,
                                                             self.__robot.circuit_space)
-            self.__start_level_transition(self.__cur_map.name, ExpeditionMap.to_display_name(difficulty, seed),
-                                          lambda: self.__load_expedition(difficulty, seed))
+            self.__start_level_transition(self.__cur_map.name, ExpeditionMap.to_display_name(difficulty, map_seed),
+                                          lambda: self.__load_expedition(difficulty, map_seed, puzzle_seed))
         else:
             self.__start_level_transition(self.__cur_map.name, LevelInfo.convert_to_display_name(next_map),
                                           lambda: self.load_map(next_map, None, None))

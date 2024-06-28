@@ -643,13 +643,15 @@ class ExpeditionGenerator(DungeonGenerator):
         self.__next_tile_id += 1
         return val
 
-    def generate(self, seed: int, data: Tuple[Robot, StvDifficulty]) -> Tuple[Optional[ExpeditionMap], bool]:
-        robot, difficulty = data
+    def generate(self, map_seed: int, data: Tuple[Robot, StvDifficulty, int]) -> Tuple[Optional[ExpeditionMap], bool]:
+        robot, difficulty, puzzle_seed = data
         if len(robot.get_available_instructions()) <= 0:
             for gate in ExpeditionGenerator.__DEFAULT_GATES:
                 robot.give_collectible(gate)
 
-        rm = RandomManager.create_new(seed)  # needed for WildRooms
+        map_rm = RandomManager.create_new(map_seed)
+        puzzle_rm = RandomManager.create_new(puzzle_seed)
+
         gate_factory = GateFactory.quantum()
         boss_factory = BossFactory.from_robot(difficulty, robot)
         typed_collectible_factory: Dict[Optional[CollectibleType], CollectibleFactory] = {
@@ -665,9 +667,9 @@ class ExpeditionGenerator(DungeonGenerator):
                 return typed_collectible_factory[type_]
             return typed_collectible_factory[None]
 
-        gate: Instruction = gate_factory.produce(rm)
+        gate: Instruction = gate_factory.produce(map_rm)
         assert gate is not None and isinstance(gate, Instruction), f"Invalid product of GateFactory: \"{gate}\"!"
-        dungeon_boss = boss_factory.produce(rm, include_gates=[gate])
+        dungeon_boss = boss_factory.produce(map_rm, include_gates=[gate])
 
         # Difficulties can be misleading since picking one gate can result in CX Gate which does nothing if it's the
         # only gate on a zero-state. Also picking multiple gates where one is CX has a higher probability of doing
@@ -686,8 +688,8 @@ class ExpeditionGenerator(DungeonGenerator):
         spawn_room = None
         created_hallways = {}
         layout = RandomLayoutGenerator(self.width, self.height)
-        if layout.generate(seed, validate=True):
-            wild_room_generator = self.__wfc_manager.get_generator(AreaType.WildRoom, rm)
+        if layout.generate(map_seed, validate=True):
+            wild_room_generator = self.__wfc_manager.get_generator(AreaType.WildRoom, map_rm)
             for y in range(self.height):
                 for x in range(self.width):
                     self.__room_has_key = False
@@ -704,7 +706,7 @@ class ExpeditionGenerator(DungeonGenerator):
                                 continue
                             else:
                                 Popup.error(f"Found a SpecialRoom ({code}) without connecting Hallways for seed = "
-                                            f"{seed}.", add_report_note=True)
+                                            f"{map_seed}.", add_report_note=True)
 
                         direction: Optional[Direction] = None
                         for neighbor in hallways:
@@ -737,23 +739,23 @@ class ExpeditionGenerator(DungeonGenerator):
                                              west_hallway=room_hallways[Direction.West],
                                              place_teleporter=False)
                         elif code == _Code.Wild:
-                            enemy_factory = rm.get_element_prioritized(enemy_factories, enemy_factory_priorities,
+                            enemy_factory = map_rm.get_element_prioritized(enemy_factories, enemy_factory_priorities,
                                                                        msg="RandomDG_elemPrioritized")
 
                             def tile_from_tile_data(tile_code: tiles.TileCode, tile_data: Any) -> tiles.Tile:
                                 if tile_code == tiles.TileCode.Enemy:
-                                    enemy_seed = rm.get_seed("Create enemy for expedition")
+                                    enemy_seed = map_rm.get_seed("Create enemy for expedition")
                                     return self.__create_enemy(enemy_seed, tile_data, pos, enemy_factory,
                                                                enemy_groups_by_room)
                                 elif tile_code == tiles.TileCode.CollectibleScore:
                                     return tiles.Collectible(Score(tile_data))
                                 elif tile_code == tiles.TileCode.Collectible:
                                     if self.__remaining_keys > 0 and not self.__room_has_key \
-                                            and rm.get(msg="key placement") > 0.6:
+                                            and map_rm.get(msg="key placement") > 0.6:
                                         self.__remaining_keys -= 1
                                         self.__room_has_key = True
                                         return tiles.Collectible(Key())
-                                    return tiles.Collectible(get_collectible_factory(tile_data).produce(rm))
+                                    return tiles.Collectible(get_collectible_factory(tile_data).produce(map_rm))
                                 elif tile_code == tiles.TileCode.Wall:
                                     return tiles.Wall()
                                 elif tile_code == tiles.TileCode.Obstacle:
@@ -767,14 +769,14 @@ class ExpeditionGenerator(DungeonGenerator):
                             gen_tries = 0
                             while gen_tries < ExpeditionGenerator.__MAX_ROOM_GEN_TRIES:
                                 tile_matrix: List[List[LearnableRoom.TileData]] = wild_room_generator.generate(
-                                    seed=rm.get_seed("generating a room in ExpeditionGenerator")
+                                    seed=map_rm.get_seed("generating a room in ExpeditionGenerator")
                                 )
                                 tile_list = [tile_from_tile_data(entry.code, entry.data)
                                              for row in tile_matrix for entry in row]
 
                                 if self.correct_tile_list(tile_list, room_hallways) >= 0:
                                     break
-                                Logger.instance().warn(f"Failed to generate a room: try #{gen_tries}, seed={seed}")
+                                Logger.instance().warn(f"Failed to generate a room: try #{gen_tries}, seed={map_seed}")
                                 gen_tries += 1
                             if gen_tries >= ExpeditionGenerator.__MAX_ROOM_GEN_TRIES:
                                 # todo don't care about potentially impossible Expedition?
@@ -792,7 +794,7 @@ class ExpeditionGenerator(DungeonGenerator):
                             """
                             room = WildRoom(
                                 enemy_factory,
-                                chance=rm.get(ExpeditionGenerator.__MIN_ENEMY_FACTORY_CHANCE,
+                                chance=map_rm.get(ExpeditionGenerator.__MIN_ENEMY_FACTORY_CHANCE,
                                               ExpeditionGenerator.__MAX_ENEMY_FACTORY_CHANCE,
                                               msg="RandomDG_WRPuzzleDistribution"),
                                 north_hallway=room_hallways[Direction.North],
@@ -813,7 +815,7 @@ class ExpeditionGenerator(DungeonGenerator):
                         if room:
                             rooms[y][x] = room
             if spawn_room:
-                my_map = ExpeditionMap(seed, difficulty, rooms, robot, spawn_room, self.__check_achievement,
+                my_map = ExpeditionMap(map_seed, difficulty, rooms, robot, spawn_room, self.__check_achievement,
                                        self.__trigger_event)
                 return my_map, True
             else:

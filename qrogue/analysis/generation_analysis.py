@@ -82,13 +82,13 @@ def test_dungeon():
     wfc_manager.load()
     difficulty = StvDifficulty.from_difficulty_code("1", robot.num_of_qubits, robot.circuit_space)
     generator = ExpeditionGenerator(wfc_manager, lambda s: True, lambda s: None, lambda s: None, CallbackPack.dummy())
-    i = 0
-    for seed in range(start_seed, end_seed):
+    puzzle_seed = 7
+    for i, seed in enumerate(range(start_seed, end_seed)):
         if i % 1000 == 0:
             __print(f"Run {i + 1}): seed = {seed}")
 
         start_time = time.time()
-        map_, success = generator.generate(seed, (robot, difficulty))
+        map_, success = generator.generate(seed, (robot, difficulty, puzzle_seed))
         duration = time.time() - start_time
         duration_sum += duration
 
@@ -100,8 +100,6 @@ def test_dungeon():
             min_duration = (duration, seed)
         elif duration > max_duration[0]:
             max_duration = (duration, seed)
-
-        i += 1
 
     # last result: 0.3 seconds per (wfc) map on average
     __print(f"Average time needed for generating a map: {duration_sum / (end_seed - start_seed)} seconds")

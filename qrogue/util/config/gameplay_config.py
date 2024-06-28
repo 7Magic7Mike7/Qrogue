@@ -78,6 +78,10 @@ class MapConfig:
         return "d"
 
     @staticmethod
+    def puzzle_seed_separator() -> str:
+        return "p"
+
+    @staticmethod
     def tutorial_lesson_prefix() -> str:
         return "l0v"
 
