@@ -44,6 +44,10 @@ class StvDifficulty:
     }
 
     @staticmethod
+    def min_difficulty_level() -> int:
+        return 0
+
+    @staticmethod
     def max_difficulty_level() -> int:
         return len(StvDifficulty.__DIFF_VALUES[DifficultyType.CircuitExuberance])
 

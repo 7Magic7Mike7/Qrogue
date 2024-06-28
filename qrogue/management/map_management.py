@@ -45,7 +45,7 @@ class MapManager:
             elif map_seed is None:
                 # there is no difficulty code, just seed information (map_seed is implicitly None due to 1st if)
                 expedition_progress = int(expedition_progress)
-                diff_code = LevelInfo.get_expedition_difficulty(expedition_progress)
+                diff_code = str(LevelInfo.get_expedition_difficulty(expedition_progress))
                 puzzle_seed, map_seed = parse_seed_info(info)
                 Config.check_reachability("load_map(): expedition without seed")
             else:
@@ -54,7 +54,7 @@ class MapManager:
                 puzzle_seed = None
         else:
             # no additional information given, hence, we use default values
-            diff_code = LevelInfo.get_expedition_difficulty(expedition_progress)
+            diff_code = str(LevelInfo.get_expedition_difficulty(expedition_progress))
             puzzle_seed = None
 
         assert map_seed is not None, "MapSeed is None after parsing expedition arguments!"
@@ -213,7 +213,7 @@ class MapManager:
         elif next_map.startswith(MapConfig.expedition_map_prefix()):
             # create difficulty code based on expedition progress
             expedition_progress = int(self.__save_data.get_progress(Achievement.CompletedExpedition)[0])
-            diff_code = LevelInfo.get_expedition_difficulty(expedition_progress)
+            diff_code = str(LevelInfo.get_expedition_difficulty(expedition_progress))
 
             difficulty = StvDifficulty.from_difficulty_code(diff_code, self.__robot.num_of_qubits,
                                                             self.__robot.circuit_space)
