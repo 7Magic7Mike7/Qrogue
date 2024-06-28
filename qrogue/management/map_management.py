@@ -37,7 +37,7 @@ class MapManager:
             if MapConfig.diff_code_separator() in info:
                 diff_code, info_seed = info.split(MapConfig.diff_code_separator())
                 # info contains both difficulty and seed information
-                if map_seed is None:
+                if map_seed is None or MapConfig.puzzle_seed_separator() in info_seed:
                     puzzle_seed, map_seed = parse_seed_info(info_seed)
                 else:
                     # seed info is solely for puzzle_seed
