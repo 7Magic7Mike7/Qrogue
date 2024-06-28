@@ -236,7 +236,7 @@ class LevelSelectWidgetSet(MyWidgetSet):
                  base_render_callback: Callable[[List[Renderable]], None], rm: MyRandom,
                  show_input_popup_callback: Callable[[str, int, Callable[[str], None]], None],
                  get_available_levels_callback: Callable[[], List[LevelData]], switch_to_menu: Callable[[], None],
-                 start_level: Callable[[Optional[int], str], None]):
+                 start_level_callback: Callable[[Optional[int], str], None]):
         super().__init__(logger, root, base_render_callback)
         # select seed
         # select level (or choose Expedition)
@@ -246,7 +246,7 @@ class LevelSelectWidgetSet(MyWidgetSet):
         self.__rm = rm
         self.__show_input_popup = show_input_popup_callback
         self.__get_available_levels = get_available_levels_callback
-        self.__start_level = start_level
+        self.__start_level = start_level_callback
 
         self.__seed = self.__rm.get_seed('init level select seed')
         self.__level: Optional[str] = None
