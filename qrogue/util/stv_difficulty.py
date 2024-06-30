@@ -75,10 +75,7 @@ class StvDifficulty:
 
     @staticmethod
     def _calc_avg_level(values: Dict[DifficultyType, int]) -> int:
-        level_sum = 0
-        for val in DifficultyType:
-            if val in values:
-                level_sum += values[val] * val._level_ratio
+        level_sum = sum([values[diff_type] * diff_type._level_ratio for diff_type in values])
         return int(level_sum / len(values))
 
     """
