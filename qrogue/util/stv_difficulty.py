@@ -1,5 +1,5 @@
 import enum
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from .util_functions import enum_string
 
@@ -44,6 +44,11 @@ class StvDifficulty:
     }
 
     @staticmethod
+    def _get_diff_value(diff_type: DifficultyType, level: int) -> float:
+        index = level - StvDifficulty.min_difficulty_level()   # normalize level to index
+        return StvDifficulty.__DIFF_VALUES[diff_type][index]
+
+    @staticmethod
     def min_difficulty_level() -> int:
         return 0
 
@@ -77,6 +82,28 @@ class StvDifficulty:
     def _calc_avg_level(values: Dict[DifficultyType, int]) -> int:
         level_sum = sum([values[diff_type] * diff_type._level_ratio for diff_type in values])
         return int(level_sum / len(values))
+
+    @staticmethod
+    def _compute_absolute_value(diff_type: DifficultyType, diff_dict: Dict[DifficultyType, float], num_of_qubits: int,
+                                circuit_space: int, fallback_value: Optional[float]) -> int:
+        if diff_type in diff_dict:
+            rel_val = diff_dict[diff_type]
+        else:
+            rel_val = fallback_value
+
+        if diff_type is DifficultyType.CircuitExuberance:
+            return int(rel_val * circuit_space)
+        if diff_type is DifficultyType.QubitExuberance:
+            return int(rel_val * num_of_qubits)
+        if diff_type is DifficultyType.RotationExuberance:
+            return int(rel_val * StvDifficulty._compute_absolute_value(DifficultyType.QubitExuberance, diff_dict,
+                                                                       num_of_qubits, circuit_space, fallback_value))
+        if diff_type is DifficultyType.RandomizationDegree:
+            return int(rel_val)
+        if diff_type is DifficultyType.BonusEditRatio:
+            return int(rel_val * StvDifficulty._compute_absolute_value(DifficultyType.CircuitExuberance, diff_dict,
+                                                                       num_of_qubits, circuit_space, fallback_value))
+        raise NotImplementedError(f"No absolute value computation implemented for {enum_string(diff_type)}")
 
     """
     circuit_exuberance: how full (]0, 1]) the circuit should be, e.g., 0.5 = half of the circuit_space is
@@ -132,28 +159,26 @@ class StvDifficulty:
         assert StvDifficulty.min_difficulty_level() <= level <= StvDifficulty.max_difficulty_level(), \
             "Invalid difficulty level: " \
             f"{StvDifficulty.min_difficulty_level()} <= {level} <= {StvDifficulty.max_difficulty_level()} is False!"
-        return StvDifficulty.__DIFF_VALUES[diff_type][level]
+        return StvDifficulty._get_diff_value(diff_type, level)
 
     def get_absolute_value(self, diff_type: DifficultyType, num_of_qubits: int, circuit_space: int) -> int:
-        rel_val = self.get_relative_value(diff_type)
-        if diff_type is DifficultyType.CircuitExuberance:
-            return int(rel_val * circuit_space)
-        if diff_type is DifficultyType.QubitExuberance:
-            return int(rel_val * num_of_qubits)
-        if diff_type is DifficultyType.RotationExuberance:
-            return int(rel_val * self.get_absolute_value(DifficultyType.QubitExuberance, num_of_qubits, circuit_space))
-        if diff_type is DifficultyType.RandomizationDegree:
-            return int(rel_val)
-        if diff_type is DifficultyType.BonusEditRatio:
-            return int(rel_val * self.get_absolute_value(DifficultyType.CircuitExuberance, num_of_qubits,
-                                                         circuit_space))
-        raise NotImplementedError(f"No absolute value calculation implemented for {enum_string(diff_type)}")
-
-    def get_absolute_dict(self, num_of_qubits: int, circuit_space: int) -> Dict[DifficultyType, int]:
         diff_dict = {}
         for diff_type in DifficultyType:
-            diff_dict[diff_type] = self.get_absolute_value(diff_type, num_of_qubits, circuit_space)
-        return diff_dict
+            diff_dict[diff_type] = self.get_relative_value(diff_type)
+        fallback_value = StvDifficulty._get_diff_value(diff_type, self.level)
+        return StvDifficulty._compute_absolute_value(diff_type, diff_dict, num_of_qubits, circuit_space, fallback_value)
+
+    def get_absolute_dict(self, num_of_qubits: int, circuit_space: int) -> Dict[DifficultyType, int]:
+        # 1) prepare all relative values
+        rel_diff_dict = {}
+        for diff_type in DifficultyType: rel_diff_dict[diff_type] = self.get_relative_value(diff_type)
+        # 2) prepare the absolute values based on the relative ones
+        abs_diff_dict = {}
+        for diff_type in DifficultyType:
+            fallback_value = StvDifficulty._get_diff_value(diff_type, self.level)
+            abs_diff_dict[diff_type] = StvDifficulty._compute_absolute_value(diff_type, rel_diff_dict, num_of_qubits,
+                                                                             circuit_space, fallback_value)
+        return abs_diff_dict
 
     def to_code(self) -> str:
         return "".join([str(self.get_level(diff_type)) for diff_type in DifficultyType])
