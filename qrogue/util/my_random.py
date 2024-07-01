@@ -86,6 +86,9 @@ class MyRandom:
                                            "fixed as soon as possible!"))
 
     def shuffle_list(self, list_: List[Any]) -> None:
+        """
+        Shuffles in place.
+        """
         random.shuffle(list_, lambda: self.get())
 
 
