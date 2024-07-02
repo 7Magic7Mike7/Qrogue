@@ -316,7 +316,7 @@ class RandomLayoutGenerator:
             except RandomLayoutGenerator._RLGException:
                 Popup.error("Unimplemented case happened during layout generation!\nSince this could lead to a faulty "
                             "level, we recommend exiting the level and starting it again. Should this error keep "
-                            "occuring:", add_report_note=True)
+                            "occurring:", add_report_note=True)
 
     def __astar_connect_neighbors(self, visited: set, pos: Coordinate) -> Tuple[Coordinate, bool]:
         """
