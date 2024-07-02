@@ -163,8 +163,8 @@ class StvDifficulty:
 
     def get_absolute_value(self, diff_type: DifficultyType, num_of_qubits: int, circuit_space: int) -> int:
         diff_dict = {}
-        for diff_type in DifficultyType:
-            diff_dict[diff_type] = self.get_relative_value(diff_type)
+        for dt in DifficultyType:
+            diff_dict[dt] = self.get_relative_value(dt)
         fallback_value = StvDifficulty._get_diff_value(diff_type, self.level)
         return StvDifficulty._compute_absolute_value(diff_type, diff_dict, num_of_qubits, circuit_space, fallback_value)
 
