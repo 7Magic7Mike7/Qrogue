@@ -54,7 +54,7 @@ class Enemy(WalkTriggerTile):
 
     def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
         if isinstance(controllable, Robot):
-            if controllable.backpack.used_capacity > 0:
+            if controllable.backpack.used_capacity > 0:     # make sure that the robot has at least one gate
                 return super(Enemy, self).is_walkable(direction, controllable)
             else:
                 # noting happens in case the robot doesn't have any gates
