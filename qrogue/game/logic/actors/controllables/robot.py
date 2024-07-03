@@ -143,9 +143,9 @@ class _Backpack:
     Stores Instructions, Consumables and other Collectibles for a Robot to use.
     """
 
-    __CAPACITY: int = 5  # how many Instructions the Backpack can hold at once
+    __DEFAULT_CAPACITY: int = 5  # how many Instructions the Backpack can hold at once
 
-    def __init__(self, capacity: int = __CAPACITY, content: Optional[List[Instruction]] = None):
+    def __init__(self, capacity: Optional[int] = None, content: Optional[List[Instruction]] = None):
         """
         Backpack is a storage/management class for Collectibles.
 
@@ -153,7 +153,7 @@ class _Backpack:
         :param content: list of initially stored Instructions
         """
         if capacity is None:
-            capacity = _Backpack.__CAPACITY
+            capacity = _Backpack.__DEFAULT_CAPACITY
 
         self.__capacity: int = capacity
         if content:
