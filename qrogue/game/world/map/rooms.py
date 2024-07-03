@@ -278,6 +278,13 @@ class Room(Area):
         return False
 
     @staticmethod
+    def mid(inner: bool = True) -> Coordinate:
+        if inner:
+            return Coordinate(Room.INNER_MID_X, Room.INNER_MID_Y)
+        else:
+            return Coordinate(Area.MID_X, Area.MID_Y)
+
+    @staticmethod
     def coordinate_to_index(pos: Union[Coordinate, Tuple[int, int]], in_room: bool = True) -> int:
         """
 
@@ -641,13 +648,17 @@ class SpecialRoom(Room, ABC):
     # todo answering thoughts after some time: If they can have multiple entrances/exits Key placement gets much harder
     # todo we could not simply place keys in non-special rooms but would also have to check if 1st key is reachable from
     # todo SpawnRoom, 2nd key from SpawnRoom and one special room, ...
-    def __init__(self, type_: AreaType, hallway: Hallway, direction: Direction, tile_dic: Dict[Coordinate, Tile]):
+    def __init__(self, type_: AreaType, hallway: Hallway, direction: Direction, special_tile: Tile,
+                 tile_dic: Optional[Dict[Coordinate, Tile]] = None):
         """
 
         :param hallway:
         :param direction: the Direction to the Hallway based on the Room's perspective
+        :param special_tile: the tile this room is dedicated to, placed in the middle
         :param tile_dic:
         """
+        if tile_dic is None: tile_dic = {}
+        tile_dic[Room.mid()] = special_tile
         tile_list = Room.dic_to_tile_list(tile_dic)
         if Hallway.is_first(direction):
             if hallway.connects_horizontally():
@@ -772,16 +783,12 @@ class DefinedWildRoom(BaseWildRoom):
 
 
 class TreasureRoom(SpecialRoom):
-    def __init__(self, treasure: Collectible, hallway: Hallway, direction: Direction,
+    def __init__(self, treasure: Union[Collectible, Instruction], hallway: Hallway, direction: Direction,
                  tile_dic: Dict[Coordinate, Tile] = None):
-        coordinate = Coordinate(Area.MID_X, Area.MID_Y)
-        if not tile_dic:
-            tile_dic = {}
-        tile_dic[coordinate] = treasure
         if isinstance(treasure, Instruction):
-            super().__init__(AreaType.GateRoom, hallway, direction, tile_dic)
+            super().__init__(AreaType.GateRoom, hallway, direction, Collectible(treasure), tile_dic)
         else:
-            super().__init__(AreaType.TreasureRoom, hallway, direction, tile_dic)
+            super().__init__(AreaType.TreasureRoom, hallway, direction, treasure, tile_dic)
 
     def abbreviation(self) -> str:
         return "TR"
@@ -790,8 +797,7 @@ class TreasureRoom(SpecialRoom):
 class RiddleRoom(SpecialRoom):
     def __init__(self, hallway: Hallway, direction: Direction, riddle: Riddle,
                  open_riddle_callback: Callable[[Robot, Riddle], None], tile_dic: Dict[Coordinate, Tile] = None):
-        super().__init__(AreaType.RiddleRoom, hallway, direction, tile_dic)
-        self._set_tile(Riddler(open_riddle_callback, riddle), Area.MID_X, Area.MID_Y)  # todo place in SpecialRoom?
+        super().__init__(AreaType.RiddleRoom, hallway, direction, Riddler(open_riddle_callback, riddle), tile_dic)
 
     def abbreviation(self):
         return "RR"
@@ -799,8 +805,7 @@ class RiddleRoom(SpecialRoom):
 
 class BossRoom(SpecialRoom):
     def __init__(self, hallway: Hallway, direction: Direction, boss: Boss, tile_dic: Dict[Coordinate, Tile] = None):
-        super().__init__(AreaType.BossRoom, hallway, direction, tile_dic)
-        self._set_tile(boss, x=Area.MID_X, y=Area.MID_Y)
+        super().__init__(AreaType.BossRoom, hallway, direction, boss, tile_dic)
 
     def abbreviation(self) -> str:
         return "BR"
