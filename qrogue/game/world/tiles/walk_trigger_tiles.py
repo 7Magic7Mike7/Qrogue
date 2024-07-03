@@ -7,7 +7,7 @@ from qrogue.game.logic.collectibles import Collectible as LogicalCollectible, En
     Score as LogicalScore, CollectibleType
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.game.world.tiles.tiles import Tile, TileCode
-from qrogue.util import Logger, ColorConfig, CommonQuestions, MapConfig, Config
+from qrogue.util import Logger, ColorConfig, CommonQuestions, MapConfig, Config, CommonPopups
 
 
 class WalkTriggerTile(Tile):
@@ -322,15 +322,17 @@ class Collectible(WalkTriggerTile):
 
     def _on_walk(self, direction: Direction, controllable: Controllable) -> bool:
         if self.__active:
-            if not self.has_explanation:
-                if self.__collectible.type is CollectibleType.Gate:
-                    if Collectible.__pickup_message:
-                        Collectible.__pickup_message(self.__collectible)
-                    else:
-                        Logger.instance().error("Collectible's pickup message callback is None!", show=False,
-                                                from_pycui=False)
-            controllable.give_collectible(self.__collectible)
-            self.__active = False
+            if controllable.give_collectible(self.__collectible):
+                if not self.has_explanation:
+                    if self.__collectible.type is CollectibleType.Gate:
+                        if Collectible.__pickup_message:
+                            Collectible.__pickup_message(self.__collectible)
+                        else:
+                            Logger.instance().error("Collectible's pickup message callback is None!", show=False,
+                                                    from_pycui=False)
+                self.__active = False
+            else:
+                CommonPopups.BackpackFull.show()
             return True
         return False
 

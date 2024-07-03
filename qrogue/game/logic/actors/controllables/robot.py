@@ -613,23 +613,29 @@ class Robot(Controllable, ABC):
         Gives collectible to this Robot.
 
         :param collectible: the Collectible we want to give this Robot
-        :return: None
+        :return: True if the collectible was given successfully, False otherwise
         """
         if isinstance(collectible, Score):
             self.__score += collectible.amount
+            return True
         elif isinstance(collectible, Key):
-            self.backpack.give_key(collectible.amount)
+            return self.backpack.give_key(collectible.amount)
         elif isinstance(collectible, Energy):
             self.__attributes.increase_energy(collectible.amount)
+            return True
         elif isinstance(collectible, Instruction):
-            self.backpack.add(collectible)
+            return self.backpack.add(collectible)
         elif isinstance(collectible, Qubit):
             self.__attributes.add_qubits(collectible.additional_qubits)
+            return True
         elif isinstance(collectible, MultiCollectible):
+            success = True
             for c in collectible.iterator():
-                self.give_collectible(c)
+                success = success and self.give_collectible(c)
+            return success
         else:
             Logger.instance().error(f"Received uncovered collectible: {collectible}", show=False, from_pycui=False)
+            return False
 
     def on_move(self):
         """
