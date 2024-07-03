@@ -816,7 +816,7 @@ class ExpeditionGenerator(DungeonGenerator):
                             # special rooms have exactly 1 neighbor which is already stored in direction
                             hw = room_hallways[direction]
                             if code == _Code.Gate:
-                                room = TreasureRoom(tiles.Collectible(gate), hw, direction)
+                                room = TreasureRoom(tiles.Collectible(gate, force_add=True), hw, direction)
                             elif code == _Code.Boss:
                                 boss = tiles.Boss(dungeon_boss, self.__cbp.start_boss_fight)
                                 room = BossRoom(hw, direction, boss)

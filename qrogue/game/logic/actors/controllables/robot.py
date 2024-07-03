@@ -234,14 +234,15 @@ class _Backpack:
             return self.__storage[index]
         return None
 
-    def add(self, instruction: Instruction) -> bool:
+    def add(self, instruction: Instruction, force: bool = False) -> bool:
         """
         Adds an Instruction to the backpack if possible (i.e. if there is still space left).
 
         :param instruction: the Instruction to add
+        :param force: whether we force instruction to be added, defaults to False
         :return: True if there is enough capacity left to store the Instruction, False otherwise
         """
-        if self.used_capacity < self.__capacity:
+        if self.used_capacity < self.__capacity or force:
             self.__storage.append(instruction)
             return True
         return False
@@ -608,11 +609,12 @@ class Robot(Controllable, ABC):
         """
         return self.backpack.copy_gates()
 
-    def give_collectible(self, collectible: Collectible):
+    def give_collectible(self, collectible: Collectible, force: bool = False) -> bool:
         """
         Gives collectible to this Robot.
 
         :param collectible: the Collectible we want to give this Robot
+        :param force: whether we force collectible to be added, defaults to False
         :return: True if the collectible was given successfully, False otherwise
         """
         if isinstance(collectible, Score):
@@ -624,14 +626,14 @@ class Robot(Controllable, ABC):
             self.__attributes.increase_energy(collectible.amount)
             return True
         elif isinstance(collectible, Instruction):
-            return self.backpack.add(collectible)
+            return self.backpack.add(collectible, force)
         elif isinstance(collectible, Qubit):
             self.__attributes.add_qubits(collectible.additional_qubits)
             return True
         elif isinstance(collectible, MultiCollectible):
             success = True
             for c in collectible.iterator():
-                success = success and self.give_collectible(c)
+                success = success and self.give_collectible(c, force)
             return success
         else:
             Logger.instance().error(f"Received uncovered collectible: {collectible}", show=False, from_pycui=False)

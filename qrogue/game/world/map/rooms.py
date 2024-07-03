@@ -786,7 +786,7 @@ class TreasureRoom(SpecialRoom):
     def __init__(self, treasure: Union[Collectible, Instruction], hallway: Hallway, direction: Direction,
                  tile_dic: Dict[Coordinate, Tile] = None):
         if isinstance(treasure, Instruction):
-            super().__init__(AreaType.GateRoom, hallway, direction, Collectible(treasure), tile_dic)
+            super().__init__(AreaType.GateRoom, hallway, direction, Collectible(treasure, force_add=True), tile_dic)
         else:
             super().__init__(AreaType.TreasureRoom, hallway, direction, treasure, tile_dic)
 

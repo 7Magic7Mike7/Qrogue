@@ -282,13 +282,14 @@ class Collectible(WalkTriggerTile):
 
         Collectible.__pickup_message = pickup_message
 
-    def __init__(self, collectible: LogicalCollectible, secret_type: bool = False):
+    def __init__(self, collectible: LogicalCollectible, secret_type: bool = False, force_add: bool = False):
         super().__init__(TileCode.Collectible)
         if collectible is None:
             Logger.instance().warn("Collectible is None!", from_pycui=False)
             collectible = LogicalScore()
         self.__collectible = collectible
         self.__secret_type = secret_type
+        self.__force_add = force_add
         self.__active = True
 
     @property
@@ -322,7 +323,7 @@ class Collectible(WalkTriggerTile):
 
     def _on_walk(self, direction: Direction, controllable: Controllable) -> bool:
         if self.__active:
-            if controllable.give_collectible(self.__collectible):
+            if controllable.give_collectible(self.__collectible, force=self.__force_add):
                 if not self.has_explanation:
                     if self.__collectible.type is CollectibleType.Gate:
                         if Collectible.__pickup_message:
@@ -337,7 +338,7 @@ class Collectible(WalkTriggerTile):
         return False
 
     def _copy(self) -> "Tile":
-        return Collectible(self.__collectible)
+        return Collectible(self.__collectible, self.__secret_type, self.__force_add)
 
 
 class Energy(WalkTriggerTile):  # todo why is this extra and not Collectible?
