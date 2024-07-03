@@ -295,6 +295,8 @@ class RandomLayoutGenerator:
         self.__add_hallway(room, pos, door)
 
     def __place_special_room(self, code: _Code) -> Coordinate:
+        # only Boss rooms are locked
+        open_state = tiles.DoorOpenState.KeyLocked if code is _Code.Boss else tiles.DoorOpenState.Closed
         while True:
             try:
                 pos = self.__random_border()
@@ -308,10 +310,10 @@ class RandomLayoutGenerator:
                     if self.__is_corner(wild_room):
                         # if the connected WildRoom is in the corner, we swap position between it and the SpecialRoom
                         self.__set(wild_room, code)
-                        self.__place_wild(wild_room, tiles.Door(direction.opposite(), tiles.DoorOpenState.KeyLocked))
+                        self.__place_wild(wild_room, tiles.Door(direction.opposite(), open_state))
                         return wild_room
                     else:
-                        self.__place_wild(pos, tiles.Door(direction, tiles.DoorOpenState.KeyLocked))
+                        self.__place_wild(pos, tiles.Door(direction, open_state))
                         return pos
             except RandomLayoutGenerator._RLGException:
                 Popup.error("Unimplemented case happened during layout generation!\nSince this could lead to a faulty "
@@ -628,9 +630,6 @@ class ExpeditionGenerator(DungeonGenerator):
         self.__next_target_id = 0
         self.__next_tile_id = 0
 
-        self.__remaining_keys = 0
-        self.__room_has_key = False
-
         self.__wfc_manager = wfc_manager
 
     def _next_target_id(self) -> int:
@@ -659,8 +658,6 @@ class ExpeditionGenerator(DungeonGenerator):
             CollectibleType.Gate: CollectibleFactory([Score(200)]),
             CollectibleType.Pickup: CollectibleFactory([Score(150)])
         }
-        self.__remaining_keys = 3
-        self.__room_has_key = False
 
         def get_collectible_factory(type_: CollectibleType) -> CollectibleFactory:
             if type_ in typed_collectible_factory:
@@ -689,10 +686,20 @@ class ExpeditionGenerator(DungeonGenerator):
         created_hallways = {}
         layout = RandomLayoutGenerator(self.width, self.height)
         if layout.generate(map_seed, validate=True):
+            # extract all wild rooms, so we can choose where to place the key
+            wild_room_coordinates: List[Coordinate] = []
+            for y in range(self.height):
+                for x in range(self.width):
+                    pos = Coordinate(x, y)
+                    code = layout.get_room(pos)
+                    if code is _Code.Wild:
+                        wild_room_coordinates.append(pos)
+            # choose a random wild room to place the key in
+            key_room_pos = map_rm.get_element(wild_room_coordinates)
+
             wild_room_generator = self.__wfc_manager.get_generator(AreaType.WildRoom, map_rm)
             for y in range(self.height):
                 for x in range(self.width):
-                    self.__room_has_key = False
                     pos = Coordinate(x, y)
                     code = layout.get_room(pos)
                     if code is not None and code > _Code.Blocked:
@@ -773,6 +780,8 @@ class ExpeditionGenerator(DungeonGenerator):
                                 )
                                 tile_list = [tile_from_tile_data(entry.code, entry.data)
                                              for row in tile_matrix for entry in row]
+                                if pos == key_room_pos:
+                                    tile_list[Room.coordinate_to_index(Room.mid())] = tiles.Collectible(Key())
 
                                 if self.correct_tile_list(tile_list, room_hallways) >= 0:
                                     break
@@ -780,9 +789,8 @@ class ExpeditionGenerator(DungeonGenerator):
                                 gen_tries += 1
                             if gen_tries >= ExpeditionGenerator.__MAX_ROOM_GEN_TRIES:
                                 # todo don't care about potentially impossible Expedition?
-                                Logger.instance().error(
-                                    "Failed to validate generated room! Expedition might be "
-                                    "impossible to clear.", from_pycui=False)
+                                Logger.instance().error("Failed to validate generated room! Expedition might be "
+                                                        "impossible to clear.", from_pycui=False)
 
                             room = DefinedWildRoom(
                                 tile_list,
