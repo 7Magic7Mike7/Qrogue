@@ -83,15 +83,15 @@ class PuzzleGenerator:
             # prepare and append either an RY- or RZ-Gate
             rotate_y = rm.get_bool(msg="PuzzleGenerator.produce()_chooseRGate")
             rot_gate1 = RYGate(angle) if rotate_y else RZGate(angle)
-            PuzzleGenerator.__prepare_gate_at(rm, circuit_space, rot_gate1, qubit_count, [qubit], qubit)
-            input_gates.append(rot_gate1)
+            if PuzzleGenerator.__prepare_gate_at(rm, circuit_space, rot_gate1, qubit_count, [qubit], qubit):
+                input_gates.append(rot_gate1)
 
             # append the other rotational gate if the qubit is also in rotated_qubits2 (i.e., it receives two rotations)
             if qubit in rotated_qubits2:
                 # now use RZGate if rotate_y is True (RYGate was used before), and vice versa
                 rot_gate2 = RZGate(angle) if rotate_y else RYGate(angle)
-                PuzzleGenerator.__prepare_gate_at(rm, circuit_space, rot_gate2, qubit_count, [qubit], qubit)
-                input_gates.append(rot_gate2)
+                if PuzzleGenerator.__prepare_gate_at(rm, circuit_space, rot_gate2, qubit_count, [qubit], qubit):
+                    input_gates.append(rot_gate2)
         ############################
 
         return input_gates
@@ -155,7 +155,8 @@ class PuzzleGenerator:
             # try to add the currently selected gate on different qubits until the resulting stv is completely new
             for qu in cur_qubits:
                 cur_gate = selected_gates[i].copy()
-                PuzzleGenerator.__prepare_gate_at(rm, circuit_space, cur_gate, qubit_count, qubits, qu)
+                if not PuzzleGenerator.__prepare_gate_at(rm, circuit_space, cur_gate, qubit_count, qubits, qu):
+                    continue    # failed to prepare the gate, so let's try with a different qubit
 
                 real_circuit = circuits[-1]
                 new_stv = Instruction.compute_stv(real_circuit.copy() + [cur_gate], num_of_qubits, inverse)
@@ -232,7 +233,8 @@ class PuzzleGenerator:
             # try to add the currently selected gate on different qubits until the resulting stv is completely new
             for cur_qubit in cur_qubits:
                 cur_gate = selected_gates[i].copy()
-                PuzzleGenerator.__prepare_gate_at(rm, circuit_space, cur_gate, qubit_count, qubits, cur_qubit)
+                if not PuzzleGenerator.__prepare_gate_at(rm, circuit_space, cur_gate, qubit_count, qubits, cur_qubit):
+                    continue    # failed to prepare the gate, so let's try with a different qubit
 
                 # if stv of circuit together with cur_gate would result in a 0-state, we continue with the next qubit
                 if Instruction.compute_stv(circuit + [cur_gate], num_of_qubits, inverse).is_zero: continue
