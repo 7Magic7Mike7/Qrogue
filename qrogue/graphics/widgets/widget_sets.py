@@ -1364,7 +1364,8 @@ class MapWidgetSet(MyWidgetSet, ABC):
 
             self.__map_widget.widget.add_key_command(controls.get_hotkey(number), set_move_counter)
 
-        [setup_hotkey(i) for i in range(10)]
+        if Config.debugging():
+            [setup_hotkey(i) for i in range(10)]
 
     @property
     def _map_widget(self) -> MapWidget:
