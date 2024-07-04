@@ -11,6 +11,9 @@ class PuzzleGenerator:
     @staticmethod
     def __prepare_gate_at(rm: MyRandom, circuit_space: int, gate: Instruction, qubit_count: List[int],
                           qubits: List[int], qubit: int) -> bool:
+        """
+        :returns: True if gate was successfully prepared, False otherwise
+        """
         gate_qubits = qubits.copy()
         assert qubit in gate_qubits, f"Invalid arguments: qubit={qubit} not in qubits={qubits}!"
         gate_qubits.remove(qubit)
@@ -20,6 +23,9 @@ class PuzzleGenerator:
             qubits.remove(qubit)
 
         if gate.use_qubit(qubit):
+            if len(qubits) <= 0:
+                Logger.instance().error(f"Not enough qubits provided to prepare gate {gate.name()}!", from_pycui=False)
+                return False
             # don't remove here because removal happens in the next recursion step (because we need to pass a qubit
             #  that is still in qubits for the very first call)
             next_qubit = rm.get_element(gate_qubits, remove=False, msg="BossFactory_selectQubit")
