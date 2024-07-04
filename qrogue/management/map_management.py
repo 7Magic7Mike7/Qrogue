@@ -281,10 +281,11 @@ class MapManager:
         self.__level_timer = cur_datetime()
 
     def load_first_uncleared_map(self) -> None:
+        seed = self.__rm.get_seed("MapManager.load_first_uncleared_map()")
         if Config.test_level(ignore_debugging=False):
-            self.load_map(MapConfig.test_level(), None)
+            self.load_map(MapConfig.test_level(), None, seed)
         else:
-            self.load_map(MapConfig.first_uncleared(), None)
+            self.load_map(MapConfig.first_uncleared(), None, seed)
 
     def reload(self):
         if self.is_in_level:
