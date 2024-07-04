@@ -4,7 +4,7 @@ from typing import Callable, Any, Optional
 from qrogue.game.logic import Message as LogicalMessage
 from qrogue.game.logic.actors import Controllable, Riddle, Challenge
 from qrogue.game.logic.collectibles import Collectible as LogicalCollectible, Energy as LogicalEnergy, \
-    Score as LogicalScore, CollectibleType
+    Score as LogicalScore, Instruction, CollectibleType
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.game.world.tiles.tiles import Tile, TileCode
 from qrogue.util import Logger, ColorConfig, CommonQuestions, MapConfig, Config, CommonPopups
@@ -240,10 +240,12 @@ class Riddler(WalkTriggerTile):
 
 
 class Challenger(WalkTriggerTile):
-    def __init__(self, open_challenge_callback: Callable[[Controllable, Challenge], None], challenge: Challenge):
+    def __init__(self, open_challenge_callback: Callable[[Controllable, Challenge], None], challenge: Challenge,
+                 gate: Instruction):
         super().__init__(TileCode.Challenger)
         self.__open_challenge = open_challenge_callback
         self.__challenge = challenge
+        self.__gate = gate
         self.__is_active = True
 
     @property
@@ -256,11 +258,12 @@ class Challenger(WalkTriggerTile):
 
     def _on_walk(self, direction: Direction, controllable: Controllable) -> bool:
         if self._is_active:
+            controllable.give_collectible(self.__gate, force=True)
             self.__open_challenge(controllable, self.__challenge)
         return False
 
     def _copy(self) -> "WalkTriggerTile":
-        return Challenger(self.__open_challenge, self.__challenge)
+        return Challenger(self.__open_challenge, self.__challenge, self.__gate)
 
     def get_img(self):
         if self._is_active:

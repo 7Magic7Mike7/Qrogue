@@ -3,6 +3,7 @@ from abc import abstractmethod, ABC
 from typing import List, Callable, Optional, Dict, Tuple, Set
 
 from qrogue.game.logic import PuzzleGenerator
+from qrogue.game.logic.actors import Challenge
 from qrogue.game.logic.actors.controllables import Robot
 from qrogue.game.logic.actors.puzzles import Enemy, Target, Riddle, Boss
 from qrogue.game.logic.base import StateVector
@@ -116,7 +117,78 @@ class EnemyPuzzleFactory(EnemyFactory):
         return Enemy(self._next_id(), eid, target_stv, reward, input_=input_stv)
 
 
-class BossFactory:
+class PuzzleFactory(ABC):
+    def __init__(self, difficulty: StvDifficulty, num_of_qubits: int, circuit_space: int,
+                 available_gates: List[Instruction], next_id_callback: Optional[Callable[[], int]] = None):
+        self.__difficulty = difficulty
+        self.__num_of_qubits = num_of_qubits
+        self.__circuit_space = circuit_space
+        self.__available_gates = available_gates
+        self.__next_id = 0
+
+        if next_id_callback is None:
+            self.__next_id = 0
+
+            def _next_id() -> int:
+                val = self.__next_id
+                self.__next_id += 1
+                return val
+
+            self._next_id = _next_id
+        else:
+            self._next_id = next_id_callback
+
+    @property
+    def _difficulty(self) -> StvDifficulty:
+        return self.__difficulty
+
+    @property
+    def _num_of_qubits(self) -> int:
+        return self.__num_of_qubits
+
+    @property
+    def _circuit_space(self) -> int:
+        return self.__circuit_space
+
+    def _prepare_from_gates(self, rm: MyRandom, include_gates: List[Instruction], force_num_of_gates: bool,
+                            inverse: bool = False) -> List[Instruction]:
+        return PuzzleGenerator.prepare_from_gates(rm, self.__num_of_qubits, self.__circuit_space, self.__difficulty,
+                                                  self.__available_gates, include_gates, force_num_of_gates, inverse)
+
+    @abstractmethod
+    def produce(self, rm: MyRandom, include_gates: Optional[List[Instruction]],
+                input_gates: Optional[List[Instruction]] = None) -> Target:
+        pass
+
+
+class ChallengeFactory(PuzzleFactory):
+    @staticmethod
+    def from_robot(difficulty: StvDifficulty, robot: Robot, next_id_callback: Optional[Callable[[], int]] = None) \
+            -> "ChallengeFactory":
+        available_gates = robot.get_available_instructions()
+        return ChallengeFactory(difficulty, robot.num_of_qubits, robot.circuit_space, available_gates, next_id_callback)
+
+    @staticmethod
+    def from_difficulty_code(code: str, robot: Robot) -> "BossFactory":
+        difficulty = StvDifficulty.from_difficulty_code(code, robot.num_of_qubits, robot.circuit_space)
+        assert difficulty.level >= 0, f"Code \"{code}\" produced invalid level: {difficulty.level} >= 0 is False!"
+        return BossFactory.from_robot(difficulty, robot)
+
+    def __init__(self, difficulty: StvDifficulty, num_of_qubits: int, circuit_space: int,
+                 available_gates: List[Instruction], next_id_callback: Optional[Callable[[], int]] = None):
+        super().__init__(difficulty, num_of_qubits, circuit_space, available_gates, next_id_callback)
+
+    def produce(self, rm: MyRandom, include_gates: Optional[List[Instruction]],
+                input_gates: Optional[List[Instruction]] = None) -> Challenge:
+        assert len(include_gates) == 1, "Did not provide exactly 1 gate to include in Challenge!"
+
+        input_gates = self._prepare_from_gates(rm, include_gates, force_num_of_gates=False, inverse=True)
+        input_stv = Instruction.compute_stv(input_gates, self._num_of_qubits, inverse=True)
+        target_stv = StateVector.create_zero_state_vector(self._num_of_qubits)
+        return Challenge(self._next_id(), target_stv, Score(), len(input_gates), len(input_gates), input_=input_stv)
+
+
+class BossFactory(PuzzleFactory):
     __LEVELED_REWARD_POOLS: Dict[int, List[Collectible]] = {
         0: [gates.XGate(), gates.CXGate(), gates.HGate()],
         1: [gates.HGate(), gates.CXGate(), gates.SwapGate()],
@@ -170,24 +242,8 @@ class BossFactory:
     def __init__(self, difficulty: StvDifficulty, num_of_qubits: int, circuit_space: int,
                  available_gates: List[Instruction], reward_pool: List[Collectible],
                  next_id_callback: Optional[Callable[[], int]] = None):
-        self.__difficulty = difficulty
-        self.__num_of_qubits = num_of_qubits
-        self.__circuit_space = circuit_space
-        self.__available_gates = available_gates
+        super().__init__(difficulty, num_of_qubits, circuit_space, available_gates, next_id_callback)
         self.__reward_pool = reward_pool
-        self.__next_id = 0
-
-        if next_id_callback is None:
-            self.__next_id = 0
-
-            def _next_id() -> int:
-                val = self.__next_id
-                self.__next_id += 1
-                return val
-
-            self._next_id = _next_id
-        else:
-            self._next_id = next_id_callback
 
     def produce(self, rm: MyRandom, include_gates: Optional[List[Instruction]],
                 input_gates: Optional[List[Instruction]] = None) -> Boss:
@@ -199,28 +255,26 @@ class BossFactory:
         """
         # prepare gates to compute target_stv
         ############################
-        gates_for_target = PuzzleGenerator.prepare_from_gates(rm, self.__num_of_qubits, self.__circuit_space,
-                                                                  self.__difficulty, self.__available_gates,
-                                                                  include_gates)
+        gates_for_target = self._prepare_from_gates(rm, include_gates, force_num_of_gates=True)
         ############################
 
         # prepare input_stv either based on input_gates or difficulty
         ############################
         if input_gates is None:
             # prepare gates used for input_stv based on difficulty
-            gates_for_input = PuzzleGenerator.prepare_rotation_gates(rm, self.__num_of_qubits, self.__circuit_space,
-                                                                     self.__difficulty)
+            gates_for_input = PuzzleGenerator.prepare_rotation_gates(rm, self._num_of_qubits, self._circuit_space,
+                                                                     self._difficulty)
         else:
-            qubit_count = [0] * self.__num_of_qubits
-            qubits = list(range(self.__num_of_qubits))
+            qubit_count = [0] * self._num_of_qubits
+            qubits = list(range(self._num_of_qubits))
             # prepare gates used for input_stv based on provided input_gates
             Config.check_reachability("BossFactory.produce() with input_gates")
             gates_for_input: List[Instruction] = []
             # use the provided input gates (copy because otherwise the used gates could be changed from the outside)
             for gate in input_gates.copy():
-                if BossFactory.__prepare_gate(rm, self.__circuit_space, gate, qubit_count, qubits):
+                if BossFactory.__prepare_gate(rm, self._circuit_space, gate, qubit_count, qubits):
                     gates_for_input.append(gate)
-        input_stv = Instruction.compute_stv(gates_for_input, self.__num_of_qubits)
+        input_stv = Instruction.compute_stv(gates_for_input, self._num_of_qubits)
         ############################
 
         # generate target_stv based on selected gates and input
@@ -228,7 +282,7 @@ class BossFactory:
         # to make sure that the target can be reached from the randomly or manually generated input state,
         #  gates_for_input is prepended to gates_for_target such that the difference between target and input is solely
         #  the previously generated gates_for_target
-        target_stv = Instruction.compute_stv(gates_for_input + gates_for_target, self.__num_of_qubits)
+        target_stv = Instruction.compute_stv(gates_for_input + gates_for_target, self._num_of_qubits)
         ############################
 
         # pick a reward
@@ -236,12 +290,13 @@ class BossFactory:
         reward = rm.get_element(self.__reward_pool, msg="BossFactory_reward")
         ############################
 
-        edits = self.__difficulty.get_absolute_value(DifficultyType.BonusEditRatio, self.__num_of_qubits,
-                                                     self.__circuit_space)
+        edits = self._difficulty.get_absolute_value(DifficultyType.BonusEditRatio, self._num_of_qubits,
+                                                    self._circuit_space)
         return Boss(self._next_id(), target_stv, input_stv, reward, edits)
 
     @staticmethod
-    def __prepare_gate(rm: MyRandom, circuit_space: int, gate: Instruction, qubit_count: List[int], qubits: List[int]) -> bool:
+    def __prepare_gate(rm: MyRandom, circuit_space: int, gate: Instruction, qubit_count: List[int], qubits: List[int]) \
+            -> bool:
         # todo: qubit_count is redundant if we can only place one gate per column
         #  (implying qubit_count can never be > circuit_space if number of placed gates is <= circuit_space)
         gate_qubits = qubits.copy()

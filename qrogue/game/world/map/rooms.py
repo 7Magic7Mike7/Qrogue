@@ -9,7 +9,7 @@ from qrogue.game.logic.actors import Robot, Riddle
 from qrogue.game.logic.collectibles import Instruction
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.game.world.tiles import Enemy as EnemyTile, Tile, Floor, Decoration, Teleport, FogOfWar, Void, Invalid, \
-    Door, Wall, HallwayEntrance, Riddler, Boss, Collectible, Message as MessageTile
+    Door, Wall, HallwayEntrance, Riddler, Challenger, Boss, Collectible, Message as MessageTile
 from qrogue.util import CommonQuestions, MapConfig, Logger, CheatConfig, RandomManager
 
 
@@ -789,6 +789,15 @@ class TreasureRoom(SpecialRoom):
             super().__init__(AreaType.GateRoom, hallway, direction, Collectible(treasure, force_add=True), tile_dic)
         else:
             super().__init__(AreaType.TreasureRoom, hallway, direction, treasure, tile_dic)
+
+    def abbreviation(self) -> str:
+        return "TR"
+
+
+class ChallengeRoom(SpecialRoom):
+    def __init__(self, hallway: Hallway, direction: Direction, challenger: Challenger,
+                 tile_dic: Dict[Coordinate, Tile] = None):
+        super().__init__(AreaType.ChallengeRoom, hallway, direction, challenger, tile_dic)
 
     def abbreviation(self) -> str:
         return "TR"

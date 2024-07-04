@@ -5,13 +5,13 @@ from qrogue.game.logic.actors import Robot
 from qrogue.game.logic.collectibles import GateFactory, Key, instruction, Score, CollectibleType, \
     CollectibleFactory, Instruction
 from qrogue.game.target_difficulty import PuzzleDifficulty
-from qrogue.game.target_factory import BossFactory, EnemyFactory, EnemyPuzzleFactory
+from qrogue.game.target_factory import BossFactory, EnemyFactory, EnemyPuzzleFactory, ChallengeFactory
 from qrogue.game.world import tiles
 from qrogue.game.world.dungeon_generator.generator import DungeonGenerator
 from qrogue.game.world.dungeon_generator.wave_function_collapse import WFCManager, LearnableRoom
 from qrogue.game.world.map import CallbackPack, Hallway, Room, ExpeditionMap
-from qrogue.game.world.map.rooms import AreaType, DefinedWildRoom, EmptyRoom, SpawnRoom, BossRoom, \
-    TreasureRoom
+from qrogue.game.world.map.rooms import AreaType, DefinedWildRoom, EmptyRoom, SpawnRoom, BossRoom, TreasureRoom, \
+    ChallengeRoom
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.graphics.popups import Popup
 from qrogue.util import Logger, RandomManager, MapConfig, Config, MyRandom, StvDifficulty
@@ -26,6 +26,7 @@ class _Code(IntEnum):
     Spawn = 10
     # Shop = 40
     Riddle = 50
+    Challenge = 55
     Boss = 60
     Gate = 70
     Phantom = 80
@@ -42,7 +43,7 @@ class _Code(IntEnum):
 
     @staticmethod
     def special_rooms() -> "[_Code]":
-        return [_Code.Boss, _Code.Gate]     # todo: add Challenge as MiniBoss
+        return [_Code.Boss, _Code.Challenge]
 
     @staticmethod
     def get_priority(code: "_Code", inverse: bool) -> float:
@@ -54,7 +55,7 @@ class _Code(IntEnum):
                 return 200
             if code == _Code.Wild:
                 return 12
-            if code in [_Code.Riddle, _Code.Gate]:
+            if code in [_Code.Riddle, _Code.Challenge, _Code.Gate]:
                 return 5
         return 0
 
@@ -79,6 +80,8 @@ class _Code(IntEnum):
             return "S"
         if code == _Code.Riddle:
             return "?"
+        if code == _Code.Challenge:
+            return "!"
         if code == _Code.Boss:
             return "B"
         if code == _Code.Gate:
@@ -443,7 +446,7 @@ class RandomLayoutGenerator:
             # place the special rooms
             special_rooms = [
                 self.__place_special_room(_Code.Boss),
-                self.__place_special_room(_Code.Gate),
+                self.__place_special_room(_Code.Challenge),
             ]
 
             # create a locked hallway to spawn_pos-neighboring WildRooms if they lead to SpecialRooms
@@ -517,7 +520,7 @@ class RandomLayoutGenerator:
             for x in range(self.__width):
                 pos = Coordinate(x, y)
                 code = self.__get(pos)
-                if code in [_Code.Boss, _Code.Riddle, _Code.Gate]:
+                if code in [_Code.Boss, _Code.Challenge, _Code.Riddle, _Code.Gate]:
                     connections = self.__hallways[pos]
                     if len(connections) != 1:
                         return False
@@ -653,6 +656,7 @@ class ExpeditionGenerator(DungeonGenerator):
 
         gate_factory = GateFactory.quantum()
         boss_factory = BossFactory.from_robot(difficulty, robot)
+        challenge_factory = ChallengeFactory.from_robot(difficulty, robot)
         typed_collectible_factory: Dict[Optional[CollectibleType], CollectibleFactory] = {
             None: CollectibleFactory([Score(100)]),  # default factory
             CollectibleType.Gate: CollectibleFactory([Score(200)]),
@@ -664,9 +668,11 @@ class ExpeditionGenerator(DungeonGenerator):
                 return typed_collectible_factory[type_]
             return typed_collectible_factory[None]
 
-        gate: Instruction = gate_factory.produce(map_rm)
-        assert gate is not None and isinstance(gate, Instruction), f"Invalid product of GateFactory: \"{gate}\"!"
-        dungeon_boss = boss_factory.produce(puzzle_rm, include_gates=[gate])
+        main_gate: Instruction = gate_factory.produce(map_rm)
+        assert main_gate is not None and isinstance(main_gate, Instruction), f"Invalid product of GateFactory: " \
+                                                                             f"\"{main_gate}\"!"
+        dungeon_boss = boss_factory.produce(puzzle_rm, include_gates=[main_gate])
+        dungeon_challenge = challenge_factory.produce(puzzle_rm, include_gates=[main_gate])
 
         # Difficulties can be misleading since picking one gate can result in CX Gate which does nothing if it's the
         # only gate on a zero-state. Also picking multiple gates where one is CX has a higher probability of doing
@@ -816,10 +822,12 @@ class ExpeditionGenerator(DungeonGenerator):
                             # special rooms have exactly 1 neighbor which is already stored in direction
                             hw = room_hallways[direction]
                             if code == _Code.Gate:
-                                room = TreasureRoom(tiles.Collectible(gate, force_add=True), hw, direction)
+                                room = TreasureRoom(tiles.Collectible(main_gate, force_add=True), hw, direction)
+                            elif code == _Code.Challenge:
+                                room = ChallengeRoom(hw, direction, tiles.Challenger(self.__cbp.open_challenge,
+                                                                                     dungeon_challenge, main_gate))
                             elif code == _Code.Boss:
-                                boss = tiles.Boss(dungeon_boss, self.__cbp.start_boss_fight)
-                                room = BossRoom(hw, direction, boss)
+                                room = BossRoom(hw, direction, tiles.Boss(dungeon_boss, self.__cbp.start_boss_fight))
                         if room:
                             rooms[y][x] = room
             if spawn_room:

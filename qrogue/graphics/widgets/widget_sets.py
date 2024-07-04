@@ -1979,18 +1979,8 @@ class ChallengeWidgetSet(ReachTargetWidgetSet):
         return True
 
     def _choices_flee(self) -> bool:
-        if GameplayConfig.get_option_value(Options.energy_mode):
-            if self._robot.cur_energy > self._target.flee_energy:
-                _, _ = self._robot.decrease_energy(amount=self._target.flee_energy)
-            else:
-                CommonPopups.NotEnoughEnergyToFlee.show()
-                return False  # don't switch to details widget
-
-        self._choices.set_data(data=(
-            ["You successfully fled!"],
-            [self._continue_and_undo_callback]
-        ))
-        return True
+        CommonPopups.CannotFlee.show()
+        return False
 
 
 class BossFightWidgetSet(RiddleWidgetSet):
