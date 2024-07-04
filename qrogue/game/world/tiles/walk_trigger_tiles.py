@@ -240,12 +240,14 @@ class Riddler(WalkTriggerTile):
 
 
 class Challenger(WalkTriggerTile):
-    def __init__(self, open_challenge_callback: Callable[[Controllable, Challenge], None], challenge: Challenge,
-                 gate: Instruction):
+    def __init__(self, challenge: Challenge, gate: Instruction,
+                 open_challenge_callback: Callable[[Controllable, Challenge], None],
+                 show_message_callback: Callable[[str, str], None]):
         super().__init__(TileCode.Challenger)
-        self.__open_challenge = open_challenge_callback
         self.__challenge = challenge
         self.__gate = gate
+        self.__open_challenge = open_challenge_callback
+        self.__show_message = show_message_callback
         self.__is_active = True
 
     @property
@@ -260,10 +262,14 @@ class Challenger(WalkTriggerTile):
         if self._is_active:
             controllable.give_collectible(self.__gate, force=True)
             self.__open_challenge(controllable, self.__challenge)
+            self.__show_message("Challenge",
+                                f"You received {ColorConfig.highlight_object(self.__gate.name(), invert=True)} from "
+                                f"the {ColorConfig.highlight_object('Challenger', invert=True)}. Now show them how to "
+                                f"use it to continue!")
         return False
 
     def _copy(self) -> "WalkTriggerTile":
-        return Challenger(self.__open_challenge, self.__challenge, self.__gate)
+        return Challenger(self.__challenge, self.__gate, self.__open_challenge, self.__show_message)
 
     def get_img(self):
         if self._is_active:

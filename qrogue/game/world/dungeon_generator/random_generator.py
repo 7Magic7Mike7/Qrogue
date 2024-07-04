@@ -824,8 +824,9 @@ class ExpeditionGenerator(DungeonGenerator):
                             if code == _Code.Gate:
                                 room = TreasureRoom(tiles.Collectible(main_gate, force_add=True), hw, direction)
                             elif code == _Code.Challenge:
-                                room = ChallengeRoom(hw, direction, tiles.Challenger(self.__cbp.open_challenge,
-                                                                                     dungeon_challenge, main_gate))
+                                room = ChallengeRoom(hw, direction, tiles.Challenger(dungeon_challenge, main_gate,
+                                                                                     self.__cbp.open_challenge,
+                                                                                     Popup.generic_info))
                             elif code == _Code.Boss:
                                 room = BossRoom(hw, direction, tiles.Boss(dungeon_boss, self.__cbp.start_boss_fight))
                         if room:
