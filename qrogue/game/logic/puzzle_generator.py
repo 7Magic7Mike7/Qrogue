@@ -8,6 +8,8 @@ from qrogue.util import MyRandom, RandomManager, DifficultyType, StvDifficulty, 
 
 
 class PuzzleGenerator:
+    __MAX_TRIES = 5
+
     @staticmethod
     def __prepare_gate_at(rm: MyRandom, circuit_space: int, gate: Instruction, qubit_count: List[int],
                           qubits: List[int], qubit: int) -> bool:
@@ -112,24 +114,43 @@ class PuzzleGenerator:
                                    f"will be used.", from_pycui=False)
         ##################################
 
-        # 2) select the gates to choose for target
-        ##################################
-        if len(include_gates) + len(available_gates) <= num_of_gates:
-            # we don't have enough gates to be picky, so we choose all we can
-            selected_gates = include_gates + available_gates
-        else:
-            selected_gates = include_gates.copy()  # include_gates need to be used
-            while len(selected_gates) < num_of_gates:
-                # add random ones from available_gates to the selection
-                selected_gates.append(rm.get_element(available_gates, remove=True,
-                                                     msg="PuzzleGenerator.prepare_target()@gates_for_target"))
-        rm.shuffle_list(selected_gates)
-        ##################################
+        gate_list = []
+        prepare_rm = RandomManager.create_new(rm.get_seed("PrepareRM"))
+        for _ in range(PuzzleGenerator.__MAX_TRIES):    # try multiple times if we fail to generate a gate_list
+            l_available_gates = available_gates.copy()  # copy available_gates since we remove elements later
 
-        if force_num_of_gates:
-            return PuzzleGenerator.__prepare_nearsighted_circuit(rm, num_of_qubits, circuit_space, selected_gates, inverse)
-        else:
-            return PuzzleGenerator.__prepare_farsighted_circuit(rm, num_of_qubits, circuit_space, selected_gates, inverse)
+            # 2) select the gates to choose for target
+            ##################################
+            if len(include_gates) + len(l_available_gates) <= num_of_gates:
+                # we don't have enough gates to be picky, so we choose all we can
+                selected_gates = include_gates + l_available_gates
+            else:
+                selected_gates = include_gates.copy()  # include_gates need to be used
+                while len(selected_gates) < num_of_gates:
+                    # add random ones from available_gates to the selection
+                    selected_gates.append(rm.get_element(l_available_gates, remove=True,
+                                                         msg="PuzzleGenerator.prepare_target()@gates_for_target"))
+            rm.shuffle_list(selected_gates)
+            ##################################
+
+            # 3) prepare gate_list
+            ##################################
+            if force_num_of_gates:
+                gate_list = PuzzleGenerator.__prepare_nearsighted_circuit(prepare_rm, num_of_qubits, circuit_space,
+                                                                          selected_gates, inverse)
+                # in this case it is fine as long as we prepared at least one gate
+                if len(gate_list) > 0: break
+            else:
+                gate_list = PuzzleGenerator.__prepare_farsighted_circuit(prepare_rm, num_of_qubits, circuit_space,
+                                                                         selected_gates, inverse)
+                # in this case we need to prepare at least half the expected number of gates
+                if len(gate_list) >= len(selected_gates) / 2: break
+            ##################################
+
+            # 4) retry if needed
+            Config.check_reachability("Retry gate_list generation.")
+            prepare_rm = RandomManager.create_new(rm.get_seed("PrepareRM-while"))
+        return gate_list
 
     @staticmethod
     def __prepare_nearsighted_circuit(rm: MyRandom, num_of_qubits: int, circuit_space: int,
