@@ -1,9 +1,9 @@
 from typing import List, Tuple, Dict
 
 import qrogue.game.logic.collectibles.instruction as gates
+from qrogue.game.logic import PuzzleGenerator
 from qrogue.game.logic.base import QuantumCircuit, StateVector
 from qrogue.game.logic.collectibles import Score
-from qrogue.game.target_factory import BossFactory
 from qrogue.test import test_util
 from qrogue.util import RandomManager, StvDifficulty, DifficultyType
 from qrogue.util.util_functions import cur_datetime
@@ -13,7 +13,7 @@ def produce_puzzle(seed: int, num_of_qubits: int, circuit_space: int, difficulty
                    gate_list: List[gates.Instruction]) -> int:
     rm = RandomManager.create_new(seed)
     start_time = cur_datetime()
-    BossFactory.generate_puzzle(rm, num_of_qubits, circuit_space, difficulty, gate_list, [gates.CXGate()], [Score()])
+    PuzzleGenerator.generate_puzzle(rm, num_of_qubits, circuit_space, difficulty, gate_list, [gates.CXGate()], [Score()])
     duration = cur_datetime() - start_time
     return duration.microseconds
 
@@ -77,7 +77,7 @@ def analyze_puzzle_gen_success(num_of_seeds: int = 100, print_fails: bool = Fals
     for seed in seeds:
         rm = RandomManager.create_new(seed)
         circuit = QuantumCircuit.from_bit_num(num_of_qubits)
-        gate_list = BossFactory.prepare_target(rm, num_of_qubits, circuit_space, difficulty, available_gates, None,
+        gate_list = PuzzleGenerator.prepare_target(rm, num_of_qubits, circuit_space, difficulty, available_gates, None,
                                                force_num_of_gates=True)
         for gate in gate_list: gate.append_to(circuit)
 
