@@ -77,8 +77,8 @@ def analyze_puzzle_gen_success(num_of_seeds: int = 100, print_fails: bool = Fals
     for seed in seeds:
         rm = RandomManager.create_new(seed)
         circuit = QuantumCircuit.from_bit_num(num_of_qubits)
-        gate_list = PuzzleGenerator.prepare_target(rm, num_of_qubits, circuit_space, difficulty, available_gates, None,
-                                               force_num_of_gates=True)
+        gate_list = PuzzleGenerator.prepare_from_gates(rm, num_of_qubits, circuit_space, difficulty,
+                                                       available_gates, None, force_num_of_gates=True)
         for gate in gate_list: gate.append_to(circuit)
 
         if len(gate_list) < num_of_gates:

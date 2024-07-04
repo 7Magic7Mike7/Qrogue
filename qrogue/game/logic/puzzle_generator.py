@@ -33,7 +33,7 @@ class PuzzleGenerator:
         return True
 
     @staticmethod
-    def get_angle(rm: MyRandom, randomization_degree: int) -> float:
+    def __get_angle(rm: MyRandom, randomization_degree: int) -> float:
         if randomization_degree == 0:
             angle = rm.get(msg="PuzzleGenerator.produce()_unrestrictedAngle")
         else:  # todo: what about randomization_degree==1?
@@ -44,9 +44,9 @@ class PuzzleGenerator:
         return angle
 
     @staticmethod
-    def prepare_input(rm: MyRandom, num_of_qubits: int, circuit_space: int, difficulty: StvDifficulty) \
+    def prepare_rotation_gates(rm: MyRandom, num_of_qubits: int, circuit_space: int, difficulty: StvDifficulty) \
             -> List[Instruction]:
-        input_gates: List[Instruction] = []
+        rotation_gates: List[Instruction] = []
 
         # 1) retrieve variables
         ############################
@@ -78,28 +78,28 @@ class PuzzleGenerator:
         ############################
         for qubit in rotated_qubits:
             # find a random angle for the rotation
-            angle = PuzzleGenerator.get_angle(rm, randomization_degree)
+            angle = PuzzleGenerator.__get_angle(rm, randomization_degree)
 
             # prepare and append either an RY- or RZ-Gate
             rotate_y = rm.get_bool(msg="PuzzleGenerator.produce()_chooseRGate")
             rot_gate1 = RYGate(angle) if rotate_y else RZGate(angle)
             if PuzzleGenerator.__prepare_gate_at(rm, circuit_space, rot_gate1, qubit_count, [qubit], qubit):
-                input_gates.append(rot_gate1)
+                rotation_gates.append(rot_gate1)
 
             # append the other rotational gate if the qubit is also in rotated_qubits2 (i.e., it receives two rotations)
             if qubit in rotated_qubits2:
                 # now use RZGate if rotate_y is True (RYGate was used before), and vice versa
                 rot_gate2 = RZGate(angle) if rotate_y else RYGate(angle)
                 if PuzzleGenerator.__prepare_gate_at(rm, circuit_space, rot_gate2, qubit_count, [qubit], qubit):
-                    input_gates.append(rot_gate2)
+                    rotation_gates.append(rot_gate2)
         ############################
 
-        return input_gates
+        return rotation_gates
 
     @staticmethod
-    def prepare_target(rm: MyRandom, num_of_qubits: int, circuit_space: int, difficulty: StvDifficulty,
-                       available_gates: List[Instruction], include_gates: Optional[List[Instruction]],
-                       force_num_of_gates: bool = False, inverse: bool = False) -> List[Instruction]:
+    def prepare_from_gates(rm: MyRandom, num_of_qubits: int, circuit_space: int, difficulty: StvDifficulty,
+                           available_gates: List[Instruction], include_gates: Optional[List[Instruction]],
+                           force_num_of_gates: bool = False, inverse: bool = False) -> List[Instruction]:
         available_gates = available_gates.copy()  # copy it because we might remove elements during selection
 
         # 1) prepare variables
@@ -306,11 +306,11 @@ class PuzzleGenerator:
         trm = RandomManager.create_new(rm.get_seed())  # target rm
         rrm = RandomManager.create_new(rm.get_seed())  # reward rm
 
-        input_gates = PuzzleGenerator.prepare_input(irm, num_of_qubits, circuit_space, difficulty)
+        input_gates = PuzzleGenerator.prepare_rotation_gates(irm, num_of_qubits, circuit_space, difficulty)
         input_stv = Instruction.compute_stv(input_gates, num_of_qubits)
 
-        target_gates = PuzzleGenerator.prepare_target(trm, num_of_qubits, circuit_space, difficulty, available_gates,
-                                                  include_gates)
+        target_gates = PuzzleGenerator.prepare_from_gates(trm, num_of_qubits, circuit_space, difficulty,
+                                                          available_gates, include_gates)
         target_stv = Instruction.compute_stv(input_gates + target_gates, num_of_qubits)
 
         reward = rrm.get_element(reward_pool, msg="generate_puzzle()-reward")

@@ -199,16 +199,17 @@ class BossFactory:
         """
         # prepare gates to compute target_stv
         ############################
-        gates_for_target = PuzzleGenerator.prepare_target(rm, self.__num_of_qubits, self.__circuit_space, self.__difficulty,
-                                                      self.__available_gates, include_gates)
+        gates_for_target = PuzzleGenerator.prepare_from_gates(rm, self.__num_of_qubits, self.__circuit_space,
+                                                                  self.__difficulty, self.__available_gates,
+                                                                  include_gates)
         ############################
 
         # prepare input_stv either based on input_gates or difficulty
         ############################
         if input_gates is None:
             # prepare gates used for input_stv based on difficulty
-            gates_for_input = PuzzleGenerator.prepare_input(rm, self.__num_of_qubits, self.__circuit_space,
-                                                        self.__difficulty)
+            gates_for_input = PuzzleGenerator.prepare_rotation_gates(rm, self.__num_of_qubits, self.__circuit_space,
+                                                                     self.__difficulty)
         else:
             qubit_count = [0] * self.__num_of_qubits
             qubits = list(range(self.__num_of_qubits))
