@@ -337,7 +337,7 @@ class BossFactory:
     @staticmethod
     def prepare_target(rm: MyRandom, num_of_qubits: int, circuit_space: int, difficulty: StvDifficulty,
                        available_gates: List[Instruction], include_gates: Optional[List[Instruction]],
-                       force_num_of_gates: bool = False) -> List[Instruction]:
+                       force_num_of_gates: bool = False, inverse: bool = False) -> List[Instruction]:
         available_gates = available_gates.copy()    # copy it because we might remove elements during selection
 
         # 1) prepare variables
@@ -365,13 +365,13 @@ class BossFactory:
         ##################################
 
         if force_num_of_gates:
-            return BossFactory.__prepare_nearsighted_circuit(rm, num_of_qubits, circuit_space, selected_gates)
+            return BossFactory.__prepare_nearsighted_circuit(rm, num_of_qubits, circuit_space, selected_gates, inverse)
         else:
-            return BossFactory.__prepare_farsighted_circuit(rm, num_of_qubits, circuit_space, selected_gates)
+            return BossFactory.__prepare_farsighted_circuit(rm, num_of_qubits, circuit_space, selected_gates, inverse)
 
     @staticmethod
     def __prepare_nearsighted_circuit(rm: MyRandom, num_of_qubits: int, circuit_space: int,
-                                      selected_gates: List[Instruction]) -> List[Instruction]:
+                                      selected_gates: List[Instruction], inverse: bool = False) -> List[Instruction]:
         """
         Prepares a list of gates (representing a circuit) such that any two consecutive gates on a qubit don't cancel
         each other out. It is still possible that, e.g., the gate placed third cancels the combination of the first and
@@ -396,7 +396,7 @@ class BossFactory:
                 BossFactory.__prepare_gate_at(rm, circuit_space, cur_gate, qubit_count, qubits, qu)
 
                 real_circuit = circuits[-1]
-                new_stv = gates.Instruction.compute_stv(real_circuit.copy() + [cur_gate], num_of_qubits)
+                new_stv = gates.Instruction.compute_stv(real_circuit.copy() + [cur_gate], num_of_qubits, inverse)
 
                 # check whether new_stv is indeed new or a repeat of a previous one (meaning the gate undid an operation)
                 is_repeated = False
@@ -413,7 +413,7 @@ class BossFactory:
                     for circuit in circuits:
                         new_circuit = circuit.copy() + [cur_gate]
                         new_circuits.append(new_circuit)
-                        prev_stvs.add(gates.Instruction.compute_stv(new_circuit, num_of_qubits))
+                        prev_stvs.add(gates.Instruction.compute_stv(new_circuit, num_of_qubits, inverse))
                     circuits += new_circuits
 
                     added_gate = True
@@ -444,7 +444,7 @@ class BossFactory:
 
     @staticmethod
     def __prepare_farsighted_circuit(rm: MyRandom, num_of_qubits: int, circuit_space: int,
-                                     selected_gates: List[Instruction]) -> List[Instruction]:
+                                     selected_gates: List[Instruction], inverse: bool = False) -> List[Instruction]:
         """
         Prepares a list of gates (representing a circuit) such that gate cancels out any previously placed gates. This
         way it is not ensured that all gates in selected_gates are in the circuit, but adding one of these remaining
@@ -473,11 +473,11 @@ class BossFactory:
                 BossFactory.__prepare_gate_at(rm, circuit_space, cur_gate, qubit_count, qubits, cur_qubit)
 
                 # if stv of circuit together with cur_gate would result in a 0-state, we continue with the next qubit
-                if Instruction.compute_stv(circuit + [cur_gate], num_of_qubits).is_zero: continue
+                if Instruction.compute_stv(circuit + [cur_gate], num_of_qubits, inverse).is_zero: continue
 
                 # check if the last gate on cur_qubit is cancelled by cur_gate
                 if last_gate_dict[cur_qubit] is not None and \
-                        Instruction.compute_stv([last_gate_dict[cur_qubit], cur_gate], num_of_qubits).is_zero:
+                        Instruction.compute_stv([last_gate_dict[cur_qubit], cur_gate], num_of_qubits, inverse).is_zero:
                     continue
 
                 # circuit and cur_gate result in a new stv -> save cur_gate to circuit
