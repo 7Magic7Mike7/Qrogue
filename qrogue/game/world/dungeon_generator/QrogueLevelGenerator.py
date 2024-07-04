@@ -720,6 +720,9 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         return tiles.Riddler(self.__cbp.open_riddle, riddle)
 
     def visitChallenge_descriptor(self, ctx: QrogueDungeonParser.Challenge_descriptorContext) -> tiles.Challenger:
+        # currently Challenges only work in expeditions
+        Config.check_reachability("visitChallenge_descriptor()", raise_exception=True)
+
         min_gates = self.visit(ctx.integer(0))
         if ctx.integer(1):
             max_gates = self.visit(ctx.integer(1))
@@ -728,7 +731,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
         stv, reward, input_stv = self.visit(ctx.puzzle_parameter())
         challenge = Challenge(self._next_target_id(), stv, reward, min_gates, max_gates, input_=input_stv)
-        return tiles.Challenger(self.__cbp.open_challenge, challenge)
+        return tiles.Challenger(self.__cbp.open_challenge, challenge)   # currently incorrect signature!
 
     def visitEnergy_descriptor(self, ctx: QrogueDungeonParser.Energy_descriptorContext) -> tiles.Tile:
         amount = self.visit(ctx.integer())
