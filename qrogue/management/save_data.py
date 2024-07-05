@@ -3,7 +3,7 @@ from typing import Tuple, Optional, List, Union, Dict
 
 from antlr4 import InputStream, CommonTokenStream
 
-from qrogue.game.logic.collectibles import Instruction, InstructionManager
+from qrogue.game.logic.collectibles import InstructionManager
 from qrogue.graphics.popups import Popup
 from qrogue.management.save_grammar.SaveDataLexer import SaveDataLexer
 from qrogue.management.save_grammar.SaveDataParser import SaveDataParser
@@ -228,18 +228,23 @@ class NewSaveData:
         except:
             return False, CommonInfos.SavingFailed
 
-    def compare(self, other: "NewSaveData") -> Tuple[List[Instruction], List[str], List[Unlocks], List[Achievement]]:
+    def compare(self, other: "NewSaveData") -> Tuple[List[GateType], List[str], List[Unlocks], List[Achievement]]:
         """
         Args:
             other: the NewSaveData to compare with
         Returns:
             List of Instructions, level names, Unlocks and Achievement other has and self does not
         """
+        other_gates = other.__gates.copy()
+        self_gates = self.__gates.copy()
         gate_diff = []
-        for gate in other.__gates:
-            if gate in self.__gates: continue
-            gate_diff.append(gate)
-        gate_diff = [gate for gate in other.__gates if gate not in self.__gates]
+        # find gates that are in other_gates but not in self_gates
+        for gate_type in other_gates:
+            if gate_type in self_gates:
+                # remove gate_type from self_gates, so we can also check if the number of specific gate_types match
+                self_gates.remove(gate_type)
+                continue
+            gate_diff.append(gate_type)
 
         level_diff = []
         for level in other.__levels:
