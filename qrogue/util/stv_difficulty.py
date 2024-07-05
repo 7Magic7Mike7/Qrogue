@@ -36,11 +36,11 @@ class StvDifficulty:
     """This class is immutable."""
 
     __DIFF_VALUES: Dict[DifficultyType, List[int]] = {
-        DifficultyType.CircuitExuberance:   [0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+        DifficultyType.CircuitExuberance:   [0.7, 0.75, 0.8, 0.85, 0.9, 1.0],
         DifficultyType.QubitExuberance:     [0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
         DifficultyType.RotationExuberance:  [0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
         DifficultyType.RandomizationDegree: [  2,   4,  10,  19,  37,  0],
-        DifficultyType.BonusEditRatio:      [2.0, 1.5, 1.0, 0.6, 1.3, 0.0],
+        DifficultyType.BonusEditRatio:      [4.0, 3.3, 2.5, 1.6, 0.9, 0.3],
     }
 
     @staticmethod
