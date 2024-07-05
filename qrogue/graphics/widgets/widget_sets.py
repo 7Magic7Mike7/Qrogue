@@ -22,7 +22,7 @@ from qrogue.graphics.widgets.my_widgets import SelectionWidget, CircuitWidget, M
 from qrogue.util import CommonPopups, Config, Controls, GameplayConfig, HelpText, Logger, PathConfig, \
     Keys, UIConfig, ColorConfig, Options, PuzzleConfig, ScoreConfig, \
     get_filtered_help_texts, CommonQuestions, MapConfig, PyCuiConfig, ColorCode, split_text, MyRandom, \
-    LevelInfo, CommonInfos, LevelData, StvDifficulty
+    LevelInfo, CommonInfos, LevelData, StvDifficulty, GateType
 from qrogue.util.achievements import Unlocks
 from qrogue.util.util_functions import enum_string, cur_datetime, time_diff, open_folder
 
