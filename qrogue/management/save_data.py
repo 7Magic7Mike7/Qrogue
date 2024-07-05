@@ -8,7 +8,8 @@ from qrogue.graphics.popups import Popup
 from qrogue.management.save_grammar.SaveDataLexer import SaveDataLexer
 from qrogue.management.save_grammar.SaveDataParser import SaveDataParser
 from qrogue.management.save_grammar.SaveDataVisitor import SaveDataVisitor
-from qrogue.util import Logger, CommonInfos, LevelInfo, LevelData, Config, PathConfig, FileTypes, ParserErrorListener
+from qrogue.util import Logger, CommonInfos, LevelInfo, LevelData, Config, PathConfig, FileTypes, ParserErrorListener, \
+    GateType
 from qrogue.util.achievements import Achievement, Unlocks
 from qrogue.util.util_functions import cur_datetime, datetime2str
 
@@ -71,7 +72,7 @@ class NewSaveData:
             self.__is_fresh_save = False
 
         self.__date_time = cur_datetime()  # date and time of the latest save
-        self.__gates: List[Instruction] = []
+        self.__gates: List[GateType] = []
         self.__levels: Dict[str, LevelData] = {}  # key is a level's internal name
         self.__achievements: Dict[str, Achievement] = {}
         self.__unlocks: Dict[str, datetime] = {}
@@ -129,6 +130,10 @@ class NewSaveData:
             for unlock in LevelInfo.get_level_completion_unlocks(level_data.name, self.check_level):
                 self.unlock(unlock, date_time)
 
+            # save the gate types that were unlocked
+            for gate in LevelInfo.get_level_completion_unlocked_gates(level_data.name, self.check_level):
+                self.__gates.append(gate)
+
         return level_data
 
     def unlock(self, unlock: Union[str, Unlocks], date_time: Optional[datetime] = None):
@@ -181,7 +186,7 @@ class NewSaveData:
 
         text += f"{_SaveDataGenerator.gates_header()}\n"
         if len(self.__gates) > 0:
-            text += _SaveDataGenerator.gate_separator().join([gate.gate_type.short_name for gate in self.__gates])
+            text += _SaveDataGenerator.gate_separator().join([gate_type.short_name for gate_type in self.__gates])
             text += "\n"
 
         text += f"{_SaveDataGenerator.levels_header()}\n"
@@ -298,7 +303,7 @@ class _SaveDataGenerator(SaveDataVisitor):
         return ";"  # the general separator can be used to separate gates for improved readability
 
     def load(self, file_data) \
-            -> Tuple[datetime, List[Instruction], List[LevelData], List[Tuple[str, datetime]], List[Achievement]]:
+            -> Tuple[datetime, List[GateType], List[LevelData], List[Tuple[str, datetime]], List[Achievement]]:
         input_stream = InputStream(file_data)
         lexer = SaveDataLexer(input_stream)
         token_stream = CommonTokenStream(lexer)
@@ -333,10 +338,10 @@ class _SaveDataGenerator(SaveDataVisitor):
 
     #####################################
 
-    def visitGate(self, ctx: SaveDataParser.GateContext) -> Optional[Instruction]:
-        return InstructionManager.from_name(ctx.NAME_STD().getText())
+    def visitGate(self, ctx: SaveDataParser.GateContext) -> Optional[GateType]:
+        return InstructionManager.type_from_name(ctx.NAME_STD().getText())
 
-    def visitGates(self, ctx: SaveDataParser.GatesContext) -> List[Instruction]:
+    def visitGates(self, ctx: SaveDataParser.GatesContext) -> List[GateType]:
         gates = []
         for gate_ctx in ctx.gate():
             gate = self.visitGate(gate_ctx)
@@ -380,7 +385,7 @@ class _SaveDataGenerator(SaveDataVisitor):
     #####################################
 
     def visitStart(self, ctx: SaveDataParser.StartContext)\
-            -> Tuple[datetime, List[Instruction], List[LevelData], List[Tuple[str, datetime]], List[Achievement]]:
+            -> Tuple[datetime, List[GateType], List[LevelData], List[Tuple[str, datetime]], List[Achievement]]:
         date_time = self.visitDate_time(ctx.date_time())
         gates = self.visitGates(ctx.gates())
         levels = self.visitLevels(ctx.levels())

@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Dict, List, Optional, Callable
 
 from .achievements import Unlocks
-from .config import MapConfig, GameplayConfig, PathConfig, MapGrammarConfig, ScoreConfig
+from .config import MapConfig, GameplayConfig, PathConfig, MapGrammarConfig, ScoreConfig, GateType
 from .stv_difficulty import StvDifficulty
 from .util_functions import datetime2str
 
@@ -37,6 +37,19 @@ class LevelInfo:
         # other levels
     }
 
+    __LEVEL_COMPLETION_UNLOCKED_GATES: Dict[str, List[GateType]] = {
+        # newbie tutorials
+        "l0k0v0": [GateType.XGate],
+        "l0k0v1": [GateType.CXGate],
+        "l0k0v2": [],
+        "l0k0v3": [GateType.HGate],
+        "l0k0v4": [GateType.SGate],
+
+        # experienced tutorials are copied from newbie tutorials entered in init()
+
+        # other levels
+    }
+
     # for converting internal names to display names and vice versa
     __NAME_CONVERTER: Dict[str, str] = {}  # is filled dynamically within LevelInfo.init()
 
@@ -49,14 +62,20 @@ class LevelInfo:
                 src_name, dst_name = f"l0k{km}v{i}", f"l0k{km}v{i + 1}"
                 LevelInfo.__MAP_ORDER[km][src_name] = dst_name
 
+        def init_experienced_tutorials(target_dict: Dict[str, List]):
+            values_to_add: Dict[str, List] = {}
+            for name in target_dict:
+                if name[2:4] != "k0": continue
+                exp_name = name[:2] + "k1" + name[4:]
+                values_to_add[exp_name] = target_dict[name].copy()
+            for name in values_to_add:
+                target_dict[name] = values_to_add[name]
+
         # initialize completion unlocks for experienced tutorials
-        values_to_add: Dict[str, List[Unlocks]] = {}
-        for name in LevelInfo.__LEVEL_COMPLETION_UNLOCKS:
-            if name[2:4] != "k0": continue
-            exp_name = name[:2] + "k1" + name[4:]
-            values_to_add[exp_name] = LevelInfo.__LEVEL_COMPLETION_UNLOCKS[name].copy()
-        for name in values_to_add:
-            LevelInfo.__LEVEL_COMPLETION_UNLOCKS[name] = values_to_add[name]
+        init_experienced_tutorials(LevelInfo.__LEVEL_COMPLETION_UNLOCKS)
+
+        # initialize gate unlocks for experienced tutorials
+        init_experienced_tutorials(LevelInfo.__LEVEL_COMPLETION_UNLOCKED_GATES)
 
         # initialize __NAME_CONVERTER
         for mode in LevelInfo.__MAP_ORDER.keys():
@@ -119,9 +138,25 @@ class LevelInfo:
                 unlocks += LevelInfo.get_level_completion_unlocks(level_name, is_level_completed,
                                                                   include_previous_levels=False)
                 level_name = LevelInfo.get_prev(level_name, is_level_completed)
+            return unlocks
         else:
             if level_name in LevelInfo.__LEVEL_COMPLETION_UNLOCKS:
                 return LevelInfo.__LEVEL_COMPLETION_UNLOCKS[level_name]
+            return []
+
+    @staticmethod
+    def get_level_completion_unlocked_gates(level_name: str, is_level_completed: Callable[[str], bool],
+                                            include_previous_levels: bool = False) -> List[GateType]:
+        if include_previous_levels:
+            gates = []
+            while level_name is not None:
+                gates += LevelInfo.get_level_completion_unlocked_gates(level_name, is_level_completed,
+                                                                       include_previous_levels=False)
+                level_name = LevelInfo.get_prev(level_name, is_level_completed)
+            return gates
+        else:
+            if level_name in LevelInfo.__LEVEL_COMPLETION_UNLOCKED_GATES:
+                return LevelInfo.__LEVEL_COMPLETION_UNLOCKED_GATES[level_name]
             return []
 
     @staticmethod

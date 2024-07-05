@@ -419,10 +419,21 @@ class InstructionManager:
         return True
 
     @staticmethod
-    def from_name(name: str, ignore_gate_suffix: bool = True) -> Optional[Instruction]:
+    def from_type(gate_type: GateType) -> Instruction:
+        return InstructionManager.__GATES[gate_type].copy()
+
+    @staticmethod
+    def type_from_name(name: str, ignore_gate_suffix: bool = True) -> Optional[GateType]:
         if ignore_gate_suffix and name.lower().endswith("gate"):
             name = name[:-len("gate")]
-        for val in GateType:
-            if val.is_in_names(name):
-                return InstructionManager.__GATES[val].copy()
+        for gate_type in GateType:
+            if gate_type.is_in_names(name):
+                return gate_type
         return None
+
+    @staticmethod
+    def instruction_from_name(name: str, ignore_gate_suffix: bool = True) -> Optional[Instruction]:
+        gate_type = InstructionManager.type_from_name(name, ignore_gate_suffix)
+        if gate_type is None:
+            return None
+        return InstructionManager.from_type(gate_type)
