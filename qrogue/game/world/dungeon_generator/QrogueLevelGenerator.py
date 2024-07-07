@@ -67,9 +67,18 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             return dir_str == "West"
 
         @staticmethod
-        def get_boss(ref: QrogueDungeonParser.REFERENCE, reward: Collectible, edits: Optional[int]) \
-                -> Optional[actors.Boss]:
+        def get_boss(ref: QrogueDungeonParser.REFERENCE, reward: Collectible, edits: Optional[int],
+                     num_of_qubits: int) -> Optional[actors.Boss]:
             ref = parser_util.normalize_reference(ref.getText())
+            if ref.startswith("entanglement"):
+                qubit_info = ref[len("entanglement"):]
+                if len(qubit_info) >= 2:
+                    qubits = int(qubit_info[0]), int(qubit_info[1])
+                    # increase num_of_qubits if needed
+                    num_of_qubits = max(num_of_qubits, max(qubits[0], qubits[1]) + 1)   # +1 because we start at 0
+                else:
+                    qubits = None
+                return boss.EntanglementBoss(reward, edits, num_of_qubits, entangled_qubits=qubits)
             if ref in ["antientangle", "antientanglement"]:
                 return boss.AntiEntangleBoss(reward, edits)
             return None
@@ -821,7 +830,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             reward = self.__default_collectible_factory.produce(self.__rm)
 
         edits = self.visitInteger(ctx.integer())
-        boss_actor = QrogueLevelGenerator._StaticTemplates.get_boss(ctx.REFERENCE(0), reward, edits)
+        boss_actor = QrogueLevelGenerator._StaticTemplates.get_boss(ctx.REFERENCE(0), reward, edits,
+                                                                    self.__robot.num_of_qubits)
         if boss_actor is None:
             boss_ref = parser_util.normalize_reference(ctx.REFERENCE(0).getText())
             # check if boss is specified by a dynamic code

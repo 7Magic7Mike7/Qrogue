@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import Optional
+from typing import Optional, Tuple
 
 from qrogue.game.logic.base import StateVector
 from qrogue.game.logic.collectibles import Collectible, Instruction, instruction as gates
@@ -32,6 +32,20 @@ class Boss(Riddle, ABC):
 
     def flee_check(self) -> bool:
         return True
+
+
+class EntanglementBoss(Boss):
+    def __init__(self, reward: Collectible, edits: Optional[int] = None, num_of_qubits: Optional[int] = None,
+                 entangled_qubits: Optional[Tuple[int, int]] = None):
+        if edits is None: edits = 5
+        if num_of_qubits is None: num_of_qubits = 2
+        if entangled_qubits is None: entangled_qubits = (0, 1)
+        input_stv = StateVector.create_zero_state_vector(num_of_qubits)
+        target_stv = Instruction.compute_stv([
+            gates.HGate().setup([entangled_qubits[0]]),
+            gates.CXGate().setup([entangled_qubits[0], entangled_qubits[1]]),
+        ], num_of_qubits)
+        super().__init__(0, target_stv, input_stv, reward, edits)
 
 
 class AntiEntangleBoss(Boss):
