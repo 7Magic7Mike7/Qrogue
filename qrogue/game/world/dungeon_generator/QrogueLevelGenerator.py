@@ -51,6 +51,10 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             return ref in ['energy']
 
         @staticmethod
+        def is_collectible_gate(ref: str) -> bool:
+            return "gate" in ref
+
+        @staticmethod
         def is_dir_north(dir_str: str) -> bool:
             return dir_str == "North"
 
@@ -313,6 +317,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             pool = [pickup.Key()]
         elif QrogueLevelGenerator._StaticTemplates.is_pickup_energy(ref):
             pool = [pickup.Energy()]
+        elif QrogueLevelGenerator._StaticTemplates.is_collectible_gate(ref):
+            pool = [self.__load_gate(reference)]
         else:
             self._warning(f"Imports not yet supported: {ref}. Choosing from default_reward_factory!")
             # todo implement imports
