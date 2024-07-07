@@ -1429,7 +1429,8 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  continue_exploration_callback: Callable[[bool], None], reopen_popup: Callable[[], None],
                  check_unlocks_callback: Callable[[Union[str, Unlocks]], bool],
-                 flee_choice: str = "Flee", dynamic_input: bool = True, dynamic_target: bool = True):
+                 flee_choice: str = "Flee", dynamic_input: bool = True, dynamic_target: bool = True,
+                 enable_reset: bool = False):
         """
         :param controls: controls used by the CUI to add keys
         :param render: callback to render the CUI
@@ -1440,11 +1441,13 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         :param flee_choice: the text used to prompt the player with aborting this widget set's puzzle
         :param dynamic_input:
         :param dynamic_target:
+        :param enable_reset: whether we want to add a Reset-command or not
         """
         super().__init__(logger, root, render)
         self.__flee_choice = flee_choice
         self.__dynamic_input = dynamic_input
         self.__dynamic_target = dynamic_target
+        self.__enable_reset = enable_reset
         self._continue_exploration = lambda: continue_exploration_callback(False)
         self._continue_and_undo_callback = lambda: continue_exploration_callback(True)
         self._check_unlocks = check_unlocks_callback
@@ -1755,6 +1758,9 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         if self._check_unlocks(Unlocks.GateRemove):
             choices.append("Remove")
             callbacks.append(self.__remove)
+        if self.__enable_reset:
+            choices.append("Reset")
+            callbacks.append(self.__reset_circuit)
         if self._check_unlocks(Unlocks.PuzzleFlee):
             choices.append(self.__flee_choice)
             callbacks.append(self.__flee)  # just return True to change back to previous screen
@@ -1790,6 +1796,18 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             self.__circuit.start_gate_placement(None)
             self.render()
             return True  # focus circuit
+
+    def __reset_circuit(self) -> bool:
+        # todo: currently this does not decrease edits (for riddles), but maybe it should?
+        for pos in range(self._robot.circuit_space):
+            self.__circuit.start_gate_placement(None, pos)
+            self.__circuit.place_gate()     # placing "None" removes the gate placed at pos
+        self.__circuit.abort_placement()    # needed to remove the "eraser" before rendering
+
+        self._robot.update_statevector(input_stv=self._target.input_stv, use_energy=False, check_for_game_over=False)
+        self.__update_calculation(False)
+        self.render()
+        return False    # don't change focus
 
     def __flee(self) -> bool:
         # last selection possibility in edit is for fleeing
@@ -1928,9 +1946,9 @@ class RiddleWidgetSet(ReachTargetWidgetSet):
 
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  continue_exploration_callback: Callable[[bool], None], reopen_popup_callback: Callable[[], None],
-                 check_unlocks_callback: Callable[[str], bool]):
+                 check_unlocks_callback: Callable[[str], bool], enable_reset: bool = False):
         super().__init__(controls, render, logger, root, continue_exploration_callback, reopen_popup_callback,
-                         check_unlocks_callback, "Give Up")
+                         check_unlocks_callback, "Give Up", enable_reset=enable_reset)
 
     @property
     def _target(self) -> Riddle:
@@ -1990,7 +2008,7 @@ class BossFightWidgetSet(RiddleWidgetSet):
                  check_unlocks_callback: Callable[[str], bool], exit_level_callback: Callable[[], None],
                  proceed_to_next_level_callback: Callable[[], None]):
         super().__init__(controls, render, logger, root, continue_exploration_callback, reopen_popup_callback,
-                         check_unlocks_callback)
+                         check_unlocks_callback, enable_reset=True)
         self._exit_level = exit_level_callback
         self._proceed_to_next_level = proceed_to_next_level_callback
 
