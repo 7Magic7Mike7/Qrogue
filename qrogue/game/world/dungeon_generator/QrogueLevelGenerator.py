@@ -137,7 +137,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             return None
 
     def __init__(self, check_achievement_callback: Callable[[str], bool],
-                 trigger_event_callback: Callable[[str], None], load_map_callback: Callable[[str, Coordinate], None],
+                 trigger_event_callback: Callable[[str], None],
+                 load_map_callback: Callable[[str, Optional[Coordinate]], None],
                  show_message_callback: Callable[[str, str, Optional[bool], Optional[int]], None],
                  callback_pack: CallbackPack):
         super(QrogueLevelGenerator, self).__init__(0, 0)
@@ -281,7 +282,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             return self.visit(ctx)
         return False  # default value is "random"
 
-    def __teleport_callback(self, map_name: str, spawn_pos: Coordinate):
+    def __teleport_callback(self, map_name: str, spawn_pos: Optional[Coordinate]):
         def cb(confirm: int):
             if confirm == 0:
                 self.__load_map(map_name, spawn_pos)
