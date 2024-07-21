@@ -51,17 +51,17 @@ class LayoutGenTestCase(test_util.SingletonSetupTestCase):
 class LevelGenTestCase(test_util.SingletonSetupTestCase):
     def test_single_seed(self):
         CheatConfig.use_cheat("Illuminati")
-        robot = test_util.DummyRobot()
+        robo_props = test_util.DummyRoboProps()
         wfc_manager = WFCManager()
         wfc_manager.load()
         diff_code = "1" * StvDifficulty.degrees_of_freedom()
-        difficulty = StvDifficulty.from_difficulty_code(diff_code, robot.num_of_qubits, robot.circuit_space)
+        difficulty = StvDifficulty.from_difficulty_code(diff_code, robo_props.num_of_qubits, robo_props.circuit_space)
 
         generator = ExpeditionGenerator(wfc_manager, lambda s: True, lambda s: None, lambda: None,
                                         CallbackPack.dummy())
         map_seed = 297
         puzzle_seed = 7
-        map_, success = generator.generate(map_seed, (robot, difficulty, puzzle_seed))
+        map_, success = generator.generate(map_seed, (robo_props, difficulty, puzzle_seed))
         self.assertTrue(success, "Failed to generate.")
         self._print(map_)
 
@@ -72,11 +72,11 @@ class LevelGenTestCase(test_util.SingletonSetupTestCase):
         end_seed = 5
         failing_seeds = []
 
-        robot = test_util.DummyRobot()
+        robo_props = test_util.DummyRoboProps()
         wfc_manager = WFCManager()
         wfc_manager.load()
         diff_code = "1" * StvDifficulty.degrees_of_freedom()
-        difficulty = StvDifficulty.from_difficulty_code(diff_code, robot.num_of_qubits, robot.circuit_space)
+        difficulty = StvDifficulty.from_difficulty_code(diff_code, robo_props.num_of_qubits, robo_props.circuit_space)
 
         generator = ExpeditionGenerator(wfc_manager, lambda s: True, lambda s: None, lambda: None,
                                         CallbackPack.dummy())
@@ -84,7 +84,7 @@ class LevelGenTestCase(test_util.SingletonSetupTestCase):
         for i, map_seed in enumerate(range(start_seed, end_seed)):
             if i % 1000 == 0:
                 self._print(f"Run {i + 1}): map_seed = {map_seed}")
-            map_, success = generator.generate(map_seed, (robot, difficulty, puzzle_seed))
+            map_, success = generator.generate(map_seed, (robo_props, difficulty, puzzle_seed))
             if not success:
                 failing_seeds.append((generator, map_seed))
                 self._print(f"Failed for map_seed = {map_seed}")
@@ -185,8 +185,8 @@ class LevelGenTestCase(test_util.SingletonSetupTestCase):
         expedition_progress = 1
 
         expected_values: List[Tuple[str, int, Optional[int]]] = [
-            ("1", 12345, None),
-            ("1", 12345, 12),
+            ("0", 12345, None),
+            ("0", 12345, 12),
             ("2", 12345, None),
             ("2", 12345, 12),
             ("2", 12345, 12),
@@ -196,9 +196,9 @@ class LevelGenTestCase(test_util.SingletonSetupTestCase):
             r_diff_code, r_map_seed, r_puzzle_seed = MapManager.parse_expedition_parameters(map_name, map_seed,
                                                                                             expedition_progress)
             e_diff_code, e_map_seed, e_puzzle_seed = expected_values[i]
-            self.assertEqual(e_diff_code, r_diff_code, "Unexpected diff_code!")
-            self.assertEqual(e_map_seed, r_map_seed, "Unexpected map_seed!")
-            self.assertEqual(e_puzzle_seed, r_puzzle_seed, "Unexpected puzzle_seed!")
+            self.assertEqual(e_diff_code, r_diff_code, f"Unexpected diff_code! @{i}")
+            self.assertEqual(e_map_seed, r_map_seed, f"Unexpected map_seed! @{i}")
+            self.assertEqual(e_puzzle_seed, r_puzzle_seed, f"Unexpected puzzle_seed! @{i}")
 
 
 if __name__ == '__main__':
