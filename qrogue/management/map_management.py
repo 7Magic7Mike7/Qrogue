@@ -20,6 +20,7 @@ class MapManager:
     @staticmethod
     def parse_expedition_parameters(map_name: str, map_seed: Optional[int], expedition_progress: int) \
             -> Tuple[str, int, Optional[int]]:
+        # Example: expedition0d7p11 -> Difficulty = 0, map seed = 7, puzzle seed = 11
         # first: extract difficulty and seed information from map_name if available
         if len(map_name) > len(MapConfig.expedition_map_prefix()):
             # map_name contains additional information
