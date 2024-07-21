@@ -293,7 +293,7 @@ class MapManager:
 
     def reload(self):
         if self.is_in_level:
-            self.__load_level(self.__cur_map.internal_name, None, None)     # re-randomize level seed
+            self.__load_level(self.__cur_map.internal_name, seed=None)     # set seed None to re-randomize it
         elif self.is_in_expedition:
             exp_map: ExpeditionMap = self.__cur_map
             # use same difficulty and map_seed but re-randomize puzzle_seed

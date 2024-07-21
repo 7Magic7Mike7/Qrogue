@@ -451,7 +451,7 @@ class QrogueCUI(PyCUI):
         Thread(target=call_me).start()
 
         if level_name is not None:
-            self.__map_manager.load_map(level_name, None, None)
+            self.__map_manager.load_map(level_name)
 
         super(QrogueCUI, self).start()
         return self.__save_data
