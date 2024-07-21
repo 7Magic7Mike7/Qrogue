@@ -236,9 +236,10 @@ class LevelSelectWidgetSet(MyWidgetSet):
     def __init__(self, controls: Controls, logger: Logger, root: py_cui.PyCUI,
                  base_render_callback: Callable[[List[Renderable]], None], rm: MyRandom,
                  show_input_popup_callback: Callable[[str, int, Callable[[str], None]], None],
-                 get_available_levels_callback: Callable[[], List[LevelData]], switch_to_menu: Callable[[], None],
+                 get_available_levels_callback: Callable[[], List[LevelData]],
+                 switch_to_menu_callback: Callable[[], None],
                  start_level_callback: Callable[[Optional[int], str], None],
-                 get_expedition_progress: Callable[[], int]):
+                 get_expedition_progress_callback: Callable[[], int]):
         super().__init__(logger, root, base_render_callback)
         # select seed
         # select level (or choose Expedition)
@@ -249,7 +250,7 @@ class LevelSelectWidgetSet(MyWidgetSet):
         self.__show_input_popup = show_input_popup_callback
         self.__get_available_levels = get_available_levels_callback
         self.__start_level = start_level_callback
-        self.__get_expedition_progress = get_expedition_progress
+        self.__get_expedition_progress = get_expedition_progress_callback
 
         self.__seed = self.__rm.get_seed('init level select seed')
         self.__level: Optional[str] = None
@@ -276,7 +277,7 @@ class LevelSelectWidgetSet(MyWidgetSet):
             ("Change Gates", self.__choose_gates),
             ("Set Seed", self.__set_seed),
             ("Start Playing", self.__play_level),
-            ("Back to Menu", switch_to_menu),
+            ("Back to Menu", switch_to_menu_callback),
         ])
         col += col_span
 
