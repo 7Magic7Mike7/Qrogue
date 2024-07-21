@@ -122,6 +122,8 @@ class CommonQuestions(Enum):
     OpenUserDataFolder = (Config.system_name(), "Do you want to open the folder containing your user data with your "
                                                 "system's explorer?")
     BackToMenu = (Config.system_name(), "Do you want to return to the main menu?")
+    OverwriteCustomGates = (Config.system_name(), "Overwrite your custom gate selection and use recommended gates?",
+                            ["Yes", "No"])
 
     @staticmethod
     def proceed_summary(level_name: str, score: int, duration: int, total_score: int, callback: Callable[[int], None],

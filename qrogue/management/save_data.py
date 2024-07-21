@@ -155,6 +155,9 @@ class NewSaveData:
             return ach.score, ach.done_score
         return -1, -1
 
+    def get_gates(self) -> List[GateType]:
+        return self.__gates.copy()
+
     def to_achievements_string(self) -> str:
         # todo: improve readability
         text = ""

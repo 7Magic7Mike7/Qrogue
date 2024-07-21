@@ -626,6 +626,15 @@ class Robot(Controllable, ABC):
         """
         return self.backpack.copy_gates()
 
+    def set_available_instructions(self, gate_list: List[Instruction]) -> bool:
+        for i in range(self.backpack.used_capacity):
+            if not self.backpack.remove(self.backpack.get(i)):
+                return False
+        for gate in gate_list:
+            if not self.backpack.add(gate):
+                return False
+        return True
+
     def give_collectible(self, collectible: Collectible, force: bool = False) -> bool:
         """
         Gives collectible to this Robot.

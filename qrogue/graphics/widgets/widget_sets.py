@@ -9,7 +9,7 @@ from py_cui.widget_set import WidgetSet
 from qrogue.game.logic.actors import Enemy, Riddle, Challenge, Boss, Robot, BaseBot
 from qrogue.game.logic.actors.puzzles import Target
 from qrogue.game.logic.base import StateVector
-from qrogue.game.logic.collectibles import Collectible, instruction as gates
+from qrogue.game.logic.collectibles import Collectible, instruction as gates, Instruction, InstructionManager
 from qrogue.game.world.map import Map
 from qrogue.game.world.navigation import Direction
 from qrogue.graphics.popups import Popup
@@ -232,14 +232,66 @@ class LevelSelectWidgetSet(MyWidgetSet):
     __SEED_HEADER = "Seed: "
     __LEVEL_HEADER = "Level: "
     __CUSTOM_MAP_CODE = "custom"
+    __GATE_CONFIRM = "confirm"
+    __GATE_CANCEL = "cancel"
+
+    class _SelectedGate:
+        def __init__(self, gate_type: GateType, is_selected: bool = False):
+            self.gate_type = gate_type
+            self.__is_selected = is_selected
+            self.temp_is_selected = is_selected
+
+        @property
+        def is_selected(self) -> bool:
+            return self.__is_selected
+
+        @property
+        def name(self) -> str:
+            return self.gate_type.name
+
+        def commit(self) -> bool:
+            """
+            Returns whether this call changed the internal state or not.
+
+            :return: True if __is_selected was changed, False otherwise
+            """
+            if self.__is_selected == self.temp_is_selected:
+                return False
+            self.__is_selected = self.temp_is_selected
+            return True
+
+        def discard(self) -> bool:
+            """
+            Returns whether this call changed the internal state or not.
+
+            :return: True if temp_is_selected was changed, False otherwise
+            """
+            if self.temp_is_selected == self.__is_selected:
+                return False
+            self.temp_is_selected = self.__is_selected
+            return True
+
+        def reset(self):
+            self.__is_selected = False
+            self.temp_is_selected = False
+
+        def to_gate(self) -> Instruction:
+            return InstructionManager.from_type(self.gate_type)
+
+        #def to_display_string(self) -> str:
+        #    return f"[{'x' if self.temp_is_selected else ' '}] {self.name}"
+
+        def __str__(self) -> str:
+            return f"[{'x' if self.temp_is_selected else ' '}] {self.name}"
 
     def __init__(self, controls: Controls, logger: Logger, root: py_cui.PyCUI,
                  base_render_callback: Callable[[List[Renderable]], None], rm: MyRandom,
                  show_input_popup_callback: Callable[[str, int, Callable[[str], None]], None],
                  get_available_levels_callback: Callable[[], List[LevelData]],
                  switch_to_menu_callback: Callable[[], None],
-                 start_level_callback: Callable[[Optional[int], str], None],
-                 get_expedition_progress_callback: Callable[[], int]):
+                 start_level_callback: Callable[[str, Optional[int], Optional[List[Instruction]]], None],
+                 get_expedition_progress_callback: Callable[[], int],
+                 get_available_gates_callback: Callable[[], List[GateType]]):
         super().__init__(logger, root, base_render_callback)
         # select seed
         # select level (or choose Expedition)
@@ -251,10 +303,13 @@ class LevelSelectWidgetSet(MyWidgetSet):
         self.__get_available_levels = get_available_levels_callback
         self.__start_level = start_level_callback
         self.__get_expedition_progress = get_expedition_progress_callback
+        self.__get_available_gates = get_available_gates_callback
 
         self.__seed = self.__rm.get_seed('init level select seed')
         self.__level: Optional[str] = None
-        self.__gates: List[gates.Instruction] = []  # todo: or rather InstructionType?
+        self.__selected_gates: List[LevelSelectWidgetSet._SelectedGate] = \
+            [LevelSelectWidgetSet._SelectedGate(gate) for gate in get_available_gates_callback()]
+        self.__has_custom_gates = False
 
         row, col = 1, 4
         col_span = 2
@@ -360,8 +415,17 @@ class LevelSelectWidgetSet(MyWidgetSet):
         display_names.append("-Cancel-")
         internal_names.append(None)  # the selection-object to easily identify cancel
 
+        def overwrite(index: int):
+            if index == 0:  # Yes, reset custom gate selection to level specific selection
+                for gate in self.__selected_gates:
+                    gate.reset()
+                self.__has_custom_gates = False
+            # else:         # No, keep custom selection (i.e., do nothing)
+            Widget.move_focus(self.__choices, self)    # move focus manually since this is called from a (focused) popup
+
         def set_level(index: int) -> bool:
-            if self.__details.selected_object is None: return True  # -Cancel- was selected
+            if self.__details.selected_object is None:
+                return True  # "Cancel" was selected
 
             self.__level = self.__details.selected_object
             if self.__details.selected_object == LevelSelectWidgetSet.__CUSTOM_MAP_CODE:
@@ -376,6 +440,8 @@ class LevelSelectWidgetSet(MyWidgetSet):
             else:
                 self.__summary_level.set_data(f"{LevelSelectWidgetSet.__LEVEL_HEADER}{display_names[index]} "
                                               f"({highscores[index]}, {durations[index]})")
+                if self.__has_custom_gates:
+                    CommonQuestions.OverwriteCustomGates.ask(overwrite)
             return True
 
         self.__details.set_data(((display_names, internal_names), set_level))
@@ -384,25 +450,38 @@ class LevelSelectWidgetSet(MyWidgetSet):
         return True
 
     def __choose_gates(self) -> bool:
-        # how/where to best display the selected gates?
-        Popup.generic_info("Upcoming Feature", "Gate management not yet implemented!\n"
-                                               "For now you have to play levels with their default set of gates.")
-        return False
-        # def add_gate(index: int) -> bool:
-        #     gate = self.__details.selected_object
-        #     return False
-        #
-        # gate_objects = [gates.HGate(), gates.XGate(), ]
-        # names = [go.name() for go in gate_objects]
-        # self.__details.set_data(((names, gate_objects), add_gate))
-        # return True
+        def add_gate(index: int) -> bool:
+            if self.__details.selected_object is LevelSelectWidgetSet.__GATE_CANCEL:
+                for gate in self.__selected_gates: gate.discard()
+                return True     # "Cancel" was selected
+            if self.__details.selected_object is LevelSelectWidgetSet.__GATE_CONFIRM:
+                ret_val = [gate.commit() for gate in self.__selected_gates]
+                if sum(ret_val) > 0:    # at least one confirm() changed the state (i.e., returned True)
+                    self.__has_custom_gates = True
+                return True
+
+            sel_gate: LevelSelectWidgetSet._SelectedGate = self.__details.selected_object
+            sel_gate.temp_is_selected = not sel_gate.temp_is_selected
+
+            self.__details.update_text(str(self.__details.selected_object), index)
+            self.__details.render()
+            return False
+
+        # add all available gates plus meta options Confirm and Cancel
+        names: List[str] = [str(gate) for gate in self.__selected_gates] + ["-Confirm-", "-Cancel-"]
+        gate_objects = self.__selected_gates + [LevelSelectWidgetSet.__GATE_CONFIRM, LevelSelectWidgetSet.__GATE_CANCEL]
+        self.__details.set_data(((names, gate_objects), add_gate))
+        return True
 
     def __play_level(self) -> bool:
         if self.__level is None:
             Popup.error("No Level selected!", log_error=False)
             return False
 
-        self.__start_level(self.__seed, self.__level)
+        # filter and convert all selected gates
+        available_gates = [sg.to_gate() for sg in self.__selected_gates if sg.is_selected] if self.__has_custom_gates \
+            else None
+        self.__start_level(self.__level, self.__seed, available_gates)
         return True
 
     def get_widget_list(self) -> List[Widget]:
