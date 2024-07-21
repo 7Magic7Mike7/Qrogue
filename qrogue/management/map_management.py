@@ -2,7 +2,7 @@ import time
 from threading import Thread
 from typing import Callable, Optional, Dict, List, Tuple, Union
 
-from qrogue.game.logic.actors import Robot
+from qrogue.game.logic.actors.controllables.robot import RoboProperties
 from qrogue.game.world.dungeon_generator import ExpeditionGenerator, QrogueLevelGenerator
 from qrogue.game.world.dungeon_generator.wave_function_collapse import WFCManager
 from qrogue.game.world.map import Map, MapType, ExpeditionMap, CallbackPack
@@ -62,13 +62,12 @@ class MapManager:
 
     def __init__(self, wfc_manager: WFCManager, save_data: NewSaveData, seed: int, start_level: Callable[[Map], None],
                  start_level_transition_callback: Callable[[str, str, Callable[[], None]], None],
-                 exit_map_callback: Callable[[], None], callback_pack: CallbackPack, robot: Robot,
+                 exit_map_callback: Callable[[], None], callback_pack: CallbackPack,
                  queue_size: int = ExpeditionConfig.DEFAULT_QUEUE_SIZE):
         self.__save_data = save_data
         # no longer used code!
         self.__exit_map = exit_map_callback
         self.__cbp = callback_pack
-        self.__robot = robot
         self.__queue_size = queue_size
 
         self.__rm = RandomManager.create_new(seed)
@@ -99,13 +98,13 @@ class MapManager:
             return
 
         def fill():
-            robot = self.__robot
+            robo_props = RoboProperties()   # todo: which property values to use?
             while len(self.__expedition_queue) < self.__queue_size:
                 # todo: how to handle difficulty?
-                difficulty = StvDifficulty.from_difficulty_code("1", robot.num_of_qubits, robot.circuit_space)
+                difficulty = StvDifficulty.from_difficulty_code("1", robo_props.num_of_qubits, robo_props.circuit_space)
                 map_seed = self.__rm.get_seed("MapManager.fill()@map_seed")
                 puzzle_seed = self.__rm.get_seed("MapManager.fill()@puzzle_seed")
-                expedition, success = self.__expedition_generator.generate(map_seed, (robot, difficulty, puzzle_seed))
+                expedition, success = self.__expedition_generator.generate(map_seed, (robo_props, difficulty, puzzle_seed))
                 if success:
                     self.__expedition_queue.append(expedition)
 
@@ -145,9 +144,10 @@ class MapManager:
         rand_map_seed = self.__rm.get_seed("MapManager.__load_expedition()@map_seed")
         rand_puzzle_seed = self.__rm.get_seed("MapManager.__load_expedition()@puzzle_seed")
 
+        robo_props = RoboProperties(num_of_qubits=3, circuit_space=5)  # todo: currently these are just default values
         if isinstance(difficulty, str):
-            difficulty = StvDifficulty.from_difficulty_code(difficulty, self.__robot.num_of_qubits,
-                                                            self.__robot.circuit_space)
+            difficulty = StvDifficulty.from_difficulty_code(difficulty, robo_props.num_of_qubits,
+                                                            robo_props.circuit_space)
         if map_seed is None and self.__queue_size > 0:
             while len(self.__expedition_queue) <= 0:
                 time.sleep(Config.loading_refresh_time())
@@ -158,11 +158,10 @@ class MapManager:
         else:
             if map_seed is None: map_seed = rand_map_seed
             if puzzle_seed is None: puzzle_seed = rand_puzzle_seed
-            expedition, success = self.__expedition_generator.generate(map_seed, (self.__robot, difficulty,
+            expedition, success = self.__expedition_generator.generate(map_seed, (robo_props, difficulty,
                                                                                   puzzle_seed))
 
         if success:
-            self.__robot.reset()
             self.__cur_map = expedition
             self.__start_level(self.__cur_map)
         else:
@@ -215,8 +214,9 @@ class MapManager:
             expedition_progress = int(self.__save_data.get_progress(Achievement.CompletedExpedition)[0])
             diff_code = str(LevelInfo.get_expedition_difficulty(expedition_progress))
 
-            difficulty = StvDifficulty.from_difficulty_code(diff_code, self.__robot.num_of_qubits,
-                                                            self.__robot.circuit_space)
+            robo_props = RoboProperties()
+            difficulty = StvDifficulty.from_difficulty_code(diff_code, robo_props.num_of_qubits,
+                                                            robo_props.circuit_space)
             self.__start_level_transition(self.__cur_map.name, ExpeditionMap.to_display_name(difficulty, rand_map_seed),
                                           lambda: self.__load_expedition(difficulty, rand_map_seed, rand_puzzle_seed))
         else:

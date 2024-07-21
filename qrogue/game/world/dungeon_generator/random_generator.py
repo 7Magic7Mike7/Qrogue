@@ -1,7 +1,7 @@
 from enum import IntEnum
 from typing import Callable, Dict, Optional, Tuple, List, Any, Set
 
-from qrogue.game.logic.actors import Robot
+from qrogue.game.logic.actors.controllables.robot import RoboProperties, BaseBot
 from qrogue.game.logic.collectibles import GateFactory, Key, instruction, Score, CollectibleType, \
     CollectibleFactory, Instruction
 from qrogue.game.target_difficulty import PuzzleDifficulty
@@ -645,8 +645,10 @@ class ExpeditionGenerator(DungeonGenerator):
         self.__next_tile_id += 1
         return val
 
-    def generate(self, map_seed: int, data: Tuple[Robot, StvDifficulty, int]) -> Tuple[Optional[ExpeditionMap], bool]:
-        robot, difficulty, puzzle_seed = data
+    def generate(self, map_seed: int, data: Tuple[RoboProperties, StvDifficulty, int]) \
+            -> Tuple[Optional[ExpeditionMap], bool]:
+        robo_props, difficulty, puzzle_seed = data
+        robot = BaseBot.from_properties(robo_props, self.__cbp.game_over)
         if len(robot.get_available_instructions()) <= 0:
             for gate in ExpeditionGenerator.__DEFAULT_GATES:
                 robot.give_collectible(gate)

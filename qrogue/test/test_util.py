@@ -2,6 +2,7 @@ import unittest
 from typing import List, Callable, Any, Tuple, Optional, Dict
 
 from qrogue.game.logic.actors import BaseBot
+from qrogue.game.logic.actors.controllables.robot import RoboProperties
 from qrogue.graphics import WidgetWrapper
 from qrogue.graphics.widgets.my_widgets import SelectionWidget
 from qrogue.util import Logger, Controls, Config, PathConfig, TestConfig, CheatConfig, DifficultyType, StvDifficulty
@@ -203,6 +204,11 @@ class DummyRobot(BaseBot):
 
     def description(self, check_unlocks: Optional[Callable[[str], bool]] = None) -> str:
         return "Minimal Robot for testing non-Robot dependent code (e.g. tiles)."
+
+
+class DummyRoboProps(RoboProperties):
+    def __init__(self):
+        super().__init__(3, 5, None)
 
 
 class ExplicitStvDifficulty(StvDifficulty):

@@ -10,10 +10,27 @@ from qrogue.game.logic.actors.controllables.qubit import QubitSet, DummyQubitSet
 from qrogue.game.logic.base import StateVector, CircuitMatrix, QuantumSimulator, QuantumCircuit, UnitarySimulator
 from qrogue.game.logic.collectibles import Collectible, Instruction, Key, MultiCollectible, \
     Qubit, Energy, Score
-from qrogue.util import CheatConfig, Config, Logger, GameplayConfig, QuantumSimulationConfig, Options
+from qrogue.util import CheatConfig, Config, Logger, GameplayConfig, QuantumSimulationConfig, Options, GateType
 
 
 # from jkq import ddsim
+class RoboProperties:
+    def __init__(self, num_of_qubits: int = 3, circuit_space: int = 5, gate_list: Optional[List[GateType]] = None):
+        self.__num_of_qubits = num_of_qubits
+        self.__circuit_space = circuit_space
+        self.__gate_list = gate_list
+
+    @property
+    def num_of_qubits(self) -> int:
+        return self.__num_of_qubits
+
+    @property
+    def circuit_space(self) -> int:
+        return self.__circuit_space
+
+    @property
+    def gate_list(self) -> Optional[List[GateType]]:
+        return self.__gate_list
 
 
 class _Attributes:
@@ -690,6 +707,11 @@ class Robot(Controllable, ABC):
 
 
 class BaseBot(Robot):
+    @staticmethod
+    def from_properties(properties: RoboProperties, game_over_callback: Callable[[], None]) -> "BaseBot":
+        return BaseBot(game_over_callback, num_of_qubits=properties.num_of_qubits,
+                       circuit_space=properties.circuit_space, gates=properties.gate_list)
+
     def __init__(self, game_over_callback: Callable[[], None], num_of_qubits: int = 3,
                  gates: Optional[List[Instruction]] = None,
                  circuit_space: Optional[int] = None, backpack_space: Optional[int] = None,
