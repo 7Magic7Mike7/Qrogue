@@ -6,6 +6,8 @@ from py_cui import ColorRule
 from py_cui.widget_set import WidgetSet
 from py_cui.widgets import BlockLabel
 
+from qrogue.graphics.popups import Popup
+from qrogue.graphics.widget_base import WidgetWrapper
 from qrogue.game.logic.actors import Robot
 from qrogue.game.logic.base import StateVector, CircuitMatrix
 from qrogue.game.logic.collectibles import Instruction
@@ -13,10 +15,9 @@ from qrogue.game.world.map import Map
 from qrogue.game.world.navigation import Direction
 from qrogue.graphics.rendering import ColorRules
 from qrogue.util import Controls, Keys, Logger, Options, ColorCode, Config, ColorConfig, HudConfig, GameplayConfig, \
-    QuantumSimulationConfig, InstructionConfig
+    QuantumSimulationConfig, InstructionConfig, ErrorConfig
 from qrogue.util.util_functions import center_string, align_string, to_binary_string, int_to_fixed_len_str
 from .renderable import Renderable
-from ..widget_base import WidgetWrapper
 
 
 class MyBaseWidget(BlockLabel, WidgetWrapper):
@@ -571,6 +572,12 @@ class CircuitWidget(Widget):
                     self.render()
                     return True, None
             else:
+                if self.__place_holder_data.gate.num_of_qubits > self.__robot.num_of_qubits:
+                    Popup.error(ErrorConfig.qubit_overflow(self.__place_holder_data.gate.num_of_qubits,
+                                                           self.__robot.num_of_qubits))
+                    # return value doesn't really matter here, but we chose "True" to not continue placement
+                    return True, None
+
                 if self.__place_holder_data.place():
                     self.render()
                     return False, self.__place_holder_data.gate
