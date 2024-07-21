@@ -622,13 +622,13 @@ class ExpeditionGenerator(DungeonGenerator):
         return enemy
 
     def __init__(self, wfc_manager: WFCManager, check_achievement: Callable[[str], bool],
-                 trigger_event: Callable[[str], None], load_map_callback: Callable[[str, Optional[Coordinate]], None],
+                 trigger_event: Callable[[str], None], leave_map_callback: Callable[[], None],
                  callback_pack: CallbackPack, width: int = DungeonGenerator.WIDTH,
                  height: int = DungeonGenerator.HEIGHT):
         super(ExpeditionGenerator, self).__init__(width, height)
         self.__check_achievement = check_achievement
         self.__trigger_event = trigger_event
-        self.__load_map = load_map_callback
+        self.__leave_map = leave_map_callback
         self.__cbp = callback_pack
         self.__next_target_id = 0
         self.__next_tile_id = 0
@@ -745,7 +745,7 @@ class ExpeditionGenerator(DungeonGenerator):
                         room = None
                         if code == _Code.Spawn:
                             spawn_room = pos
-                            room = SpawnRoom(self.__load_map,
+                            room = SpawnRoom(self.__leave_map,
                                              north_hallway=room_hallways[Direction.North],
                                              east_hallway=room_hallways[Direction.East],
                                              south_hallway=room_hallways[Direction.South],

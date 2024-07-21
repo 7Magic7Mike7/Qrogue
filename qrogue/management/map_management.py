@@ -75,7 +75,7 @@ class MapManager:
         self.__start_level = start_level
         self.__start_level_transition = start_level_transition_callback
         self.__expedition_generator = ExpeditionGenerator(wfc_manager, self.__save_data.check_achievement,
-                                                          self.trigger_event, self.load_map, callback_pack)
+                                                          self.trigger_event, self.__load_back, callback_pack)
         self.__expedition_queue: List[ExpeditionMap] = []
         self.__cur_map: Optional[Map] = None
 

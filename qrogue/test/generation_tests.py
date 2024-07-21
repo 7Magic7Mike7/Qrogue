@@ -57,7 +57,7 @@ class LevelGenTestCase(test_util.SingletonSetupTestCase):
         diff_code = "1" * StvDifficulty.degrees_of_freedom()
         difficulty = StvDifficulty.from_difficulty_code(diff_code, robot.num_of_qubits, robot.circuit_space)
 
-        generator = ExpeditionGenerator(wfc_manager, lambda s: True, lambda s: None, lambda s: None,
+        generator = ExpeditionGenerator(wfc_manager, lambda s: True, lambda s: None, lambda: None,
                                         CallbackPack.dummy())
         map_seed = 297
         puzzle_seed = 7
@@ -78,7 +78,7 @@ class LevelGenTestCase(test_util.SingletonSetupTestCase):
         diff_code = "1" * StvDifficulty.degrees_of_freedom()
         difficulty = StvDifficulty.from_difficulty_code(diff_code, robot.num_of_qubits, robot.circuit_space)
 
-        generator = ExpeditionGenerator(wfc_manager, lambda s: True, lambda s: None, lambda s: None,
+        generator = ExpeditionGenerator(wfc_manager, lambda s: True, lambda s: None, lambda: None,
                                         CallbackPack.dummy())
         puzzle_seed = 7
         for i, map_seed in enumerate(range(start_seed, end_seed)):

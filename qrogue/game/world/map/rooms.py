@@ -673,7 +673,7 @@ class SpecialRoom(Room, ABC):
 
 
 class SpawnRoom(CopyAbleRoom):
-    def __init__(self, load_map_callback: Callable[[str, Optional[Coordinate]], None],
+    def __init__(self, leave_map_callback: Callable[[], None],
                  tile_dic: Dict[Coordinate, Tile] = None, north_hallway: Hallway = None, east_hallway: Hallway = None,
                  south_hallway: Hallway = None, west_hallway: Hallway = None, place_teleporter: bool = True):
         room_mid = Coordinate(Room.INNER_MID_X, Room.INNER_MID_Y)
@@ -688,7 +688,7 @@ class SpawnRoom(CopyAbleRoom):
         self.__tile_dic = tile_dic
         super(SpawnRoom, self).__init__(AreaType.SpawnRoom, Room.dic_to_tile_list(tile_dic), north_hallway,
                                         east_hallway, south_hallway, west_hallway)
-        self.__load_map = load_map_callback
+        self.__leave_map = leave_map_callback
         self.__is_done = None
 
     def abbreviation(self):
@@ -708,11 +708,11 @@ class SpawnRoom(CopyAbleRoom):
 
     def __conditional_going_back(self, confirmed: int):
         if confirmed == 0:
-            self.__load_map(MapConfig.back_map_string(), None)
+            self.__leave_map()
 
     def copy(self, hw_dic: Dict[Direction, Hallway]) -> "CopyAbleRoom":
         # don't place a teleporter because it's already in tile_dic if it should be placed
-        return SpawnRoom(self.__load_map, self.__tile_dic, hw_dic[Direction.North], hw_dic[Direction.East],
+        return SpawnRoom(self.__leave_map, self.__tile_dic, hw_dic[Direction.North], hw_dic[Direction.East],
                          hw_dic[Direction.South], hw_dic[Direction.West], place_teleporter=False)
 
 

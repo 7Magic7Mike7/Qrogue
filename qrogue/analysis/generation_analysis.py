@@ -81,7 +81,7 @@ def test_dungeon():
     wfc_manager = WFCManager()
     wfc_manager.load()
     difficulty = StvDifficulty.from_difficulty_code("1", robot.num_of_qubits, robot.circuit_space)
-    generator = ExpeditionGenerator(wfc_manager, lambda s: True, lambda s: None, lambda s: None, CallbackPack.dummy())
+    generator = ExpeditionGenerator(wfc_manager, lambda s: True, lambda s: None, lambda: None, CallbackPack.dummy())
     puzzle_seed = 7
     for i, seed in enumerate(range(start_seed, end_seed)):
         if i % 1000 == 0:

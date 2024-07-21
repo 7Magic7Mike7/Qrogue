@@ -388,9 +388,9 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
                 self.__spawn_pos = spawn_pos
             return room.copy(hw_dic)
         elif room_id == self.__SPAWN_ROOM_ID:
-            room = rooms.SpawnRoom(self.__load_map, None, hw_dic[Direction.North], hw_dic[Direction.East],
-                                   hw_dic[Direction.South], hw_dic[Direction.West],
-                                   place_teleporter=self.__meta_data.has_teleporter)
+            room = rooms.SpawnRoom(lambda: self.__load_map(MapConfig.back_map_string(), None), None,
+                                   hw_dic[Direction.North], hw_dic[Direction.East], hw_dic[Direction.South],
+                                   hw_dic[Direction.West], place_teleporter=self.__meta_data.has_teleporter)
             spawn_pos = Coordinate(x, y)
             if self.__spawn_pos is not None:
                 self._warning(f"A second SpawnRoom was defined! Ignoring the first one @{self.__spawn_pos} and "
