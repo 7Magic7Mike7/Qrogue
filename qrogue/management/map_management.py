@@ -133,7 +133,9 @@ class MapManager:
             level, success = generator.generate(seed, map_name)
             if success:
                 self.__cur_map = level
-                self.__cur_map.robot.set_available_instructions(gate_list)
+                if gate_list is not None:
+                    self.__cur_map.robot.set_available_instructions(gate_list)
+                # else: available gates were determined by the level beforehand and don't change
                 self.__start_level(self.__cur_map)
             else:
                 Popup.error(f"Failed to generate level \"{map_name}\"!", add_report_note=True)
