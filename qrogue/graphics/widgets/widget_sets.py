@@ -1721,9 +1721,13 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
         # special key to open matrix in extra popup (e.g., if CircuitMatrixWidget is too narrow to display a 8x8 matrix)
         def show_matrix_popup():
+            if not self._check_unlocks(Unlocks.ShowEquation): return
             text_mat = self.__circuit_matrix.widget.get_title()
-            headline = text_mat[:text_mat.index("\n")]
-            Popup.show_matrix(headline, text_mat[len(headline) + 1:])
+            if "\n" in text_mat:
+                headline = text_mat[:text_mat.index("\n")]
+                Popup.show_matrix(headline, text_mat[len(headline) + 1:])
+            else:
+                Logger.error(f"No \"\\n\" found in matrix: {text_mat}.", show=False, from_pycui=False)
 
         self.add_key_command(controls.get_keys(Keys.MatrixPopup), show_matrix_popup, add_to_widgets=True)
 
