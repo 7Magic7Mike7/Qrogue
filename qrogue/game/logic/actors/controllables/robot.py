@@ -284,6 +284,20 @@ class _Backpack:
         except ValueError:
             return False
 
+    def set_instructions(self, gate_list: List[Instruction]) -> bool:
+        """
+        Clears the stored Instructions and stores copies of all Instructions in gate_list.
+
+        :param gate_list: the instructions to store
+        :return: True if gates were stored correctly, False otherwise (e.g., more gates than $capacity were provided)
+        """
+        if 0 <= len(gate_list) < self.capacity:
+            self.__storage.clear()
+            for gate in gate_list:
+                self.__storage.append(gate.copy())
+            return True
+        return False
+
     def copy_gates(self) -> List[Instruction]:
         """
         Creates a new List that contains copies of all the stored gates.
@@ -627,13 +641,10 @@ class Robot(Controllable, ABC):
         return self.backpack.copy_gates()
 
     def set_available_instructions(self, gate_list: List[Instruction]) -> bool:
-        for i in range(self.backpack.used_capacity):
-            if not self.backpack.remove(self.backpack.get(i)):
-                return False
-        for gate in gate_list:
-            if not self.backpack.add(gate):
-                return False
-        return True
+        """
+        :return: True if gates were successfully set, False if an error occurred
+        """
+        return self.backpack.set_instructions(gate_list)
 
     def give_collectible(self, collectible: Collectible, force: bool = False) -> bool:
         """
