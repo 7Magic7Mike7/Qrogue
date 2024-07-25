@@ -237,17 +237,39 @@ class LevelSelectWidgetSet(MyWidgetSet):
 
     class _SelectedGate:
         def __init__(self, gate_type: GateType, is_selected: bool = False):
-            self.gate_type = gate_type
+            self.__gate_type = gate_type
             self.__is_selected = is_selected
-            self.temp_is_selected = is_selected
+            self.__temp_is_selected = is_selected
 
         @property
         def is_selected(self) -> bool:
             return self.__is_selected
 
         @property
+        def gate_type(self) -> GateType:
+            return self.__gate_type
+
+        @property
         def name(self) -> str:
-            return self.gate_type.name
+            return self.__gate_type.name
+
+        def invert_selection(self):
+            self.__temp_is_selected = not self.__temp_is_selected
+
+        def select(self, auto_commit: bool = False) -> bool:
+            """
+            Returns whether this call changed the internal state or not.
+
+            :param auto_commit: whether
+            :return: True if __is_selected was changed, False otherwise
+            """
+            # ret_val is False if temp_is_selected is already selected, and hence, nothing changed
+            ret_val = not self.__temp_is_selected
+            self.__temp_is_selected = True  # set value to True (might have been True before)
+            if auto_commit:
+                self.commit()
+            # we don't care if is_selected changed (just if temp_is_selected did) so ignore return value of commit()
+            return ret_val
 
         def commit(self) -> bool:
             """
@@ -255,9 +277,9 @@ class LevelSelectWidgetSet(MyWidgetSet):
 
             :return: True if __is_selected was changed, False otherwise
             """
-            if self.__is_selected == self.temp_is_selected:
+            if self.__is_selected == self.__temp_is_selected:
                 return False
-            self.__is_selected = self.temp_is_selected
+            self.__is_selected = self.__temp_is_selected
             return True
 
         def discard(self) -> bool:
@@ -266,14 +288,14 @@ class LevelSelectWidgetSet(MyWidgetSet):
 
             :return: True if temp_is_selected was changed, False otherwise
             """
-            if self.temp_is_selected == self.__is_selected:
+            if self.__temp_is_selected == self.__is_selected:
                 return False
-            self.temp_is_selected = self.__is_selected
+            self.__temp_is_selected = self.__is_selected
             return True
 
         def reset(self):
             self.__is_selected = False
-            self.temp_is_selected = False
+            self.__temp_is_selected = False
 
         def to_gate(self) -> Instruction:
             return InstructionManager.from_type(self.gate_type)
@@ -282,7 +304,7 @@ class LevelSelectWidgetSet(MyWidgetSet):
         #    return f"[{'x' if self.temp_is_selected else ' '}] {self.name}"
 
         def __str__(self) -> str:
-            return f"[{'x' if self.temp_is_selected else ' '}] {self.name}"
+            return f"[{'x' if self.__temp_is_selected else ' '}] {self.name}"
 
     def __init__(self, controls: Controls, logger: Logger, root: py_cui.PyCUI,
                  base_render_callback: Callable[[List[Renderable]], None], rm: MyRandom,
@@ -381,6 +403,30 @@ class LevelSelectWidgetSet(MyWidgetSet):
         self.__show_input_popup("Input Seed", ColorConfig.SEED_INPUT_POPUP_COLOR, set_seed)
         return False
 
+    def __is_level_completed(self, level_name: str) -> bool:
+        Config.check_reachability("LevelSelectWidgetSet.__is_level_completed()")
+        for level in self.__get_available_levels():
+            if level.name == self.__level:
+                return False
+            if level.name == level_name:
+                return True
+        return False
+
+    def __set_standard_gates(self, internal_level_name: Optional[str] = None):
+        if internal_level_name is None:
+            internal_level_name = self.__level
+
+        self.__has_custom_gates = False
+        gate_type_list = LevelInfo.get_level_start_gates(internal_level_name)
+        for sg in self.__selected_gates:
+            if sg.gate_type in gate_type_list:
+                # remove from list to handle multiple gates of the same type correctly
+                gate_type_list.remove(sg.gate_type)
+                # set the gate as selected (commit, so it's not just temporarily)
+                sg.select(auto_commit=True)
+            else:
+                sg.reset()  # deselects sg
+
     def __select_level(self) -> bool:
         # retrieve data of all available levels for displaying and loading
         levels_data = self.__get_available_levels()
@@ -417,9 +463,7 @@ class LevelSelectWidgetSet(MyWidgetSet):
 
         def overwrite(index: int):
             if index == 0:  # Yes, reset custom gate selection to level specific selection
-                for gate in self.__selected_gates:
-                    gate.reset()
-                self.__has_custom_gates = False
+                self.__set_standard_gates()
             # else:         # No, keep custom selection (i.e., do nothing)
             Widget.move_focus(self.__choices, self)    # move focus manually since this is called from a (focused) popup
 
@@ -442,6 +486,8 @@ class LevelSelectWidgetSet(MyWidgetSet):
                                               f"({highscores[index]}, {durations[index]})")
                 if self.__has_custom_gates:
                     CommonQuestions.OverwriteCustomGates.ask(overwrite)
+                else:
+                    self.__set_standard_gates()
             return True
 
         self.__details.set_data(((display_names, internal_names), set_level))
@@ -461,7 +507,7 @@ class LevelSelectWidgetSet(MyWidgetSet):
                 return True
 
             sel_gate: LevelSelectWidgetSet._SelectedGate = self.__details.selected_object
-            sel_gate.temp_is_selected = not sel_gate.temp_is_selected
+            sel_gate.invert_selection()
 
             self.__details.update_text(str(self.__details.selected_object), index)
             self.__details.render()
@@ -479,8 +525,7 @@ class LevelSelectWidgetSet(MyWidgetSet):
             return False
 
         # filter and convert all selected gates
-        available_gates = [sg.to_gate() for sg in self.__selected_gates if sg.is_selected] if self.__has_custom_gates \
-            else None
+        available_gates = [sg.to_gate() for sg in self.__selected_gates if sg.is_selected]
         self.__start_level(self.__level, self.__seed, available_gates)
         return True
 
