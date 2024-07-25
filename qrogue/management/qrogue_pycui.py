@@ -650,6 +650,7 @@ class QrogueCUI(PyCUI):
         self.__state_machine.change_state(QrogueCUI._State.LevelSelect, None)
 
     def _switch_to_level_select(self, data=None) -> None:
+        self.__level_select.reinit()
         self.apply_widget_set(self.__level_select)
 
     def __show_screen_check(self):
