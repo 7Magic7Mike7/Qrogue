@@ -98,7 +98,7 @@ class EnemyTargetFactory(EnemyFactory):
                     max_rerolls -= 1
 
                 if max_rerolls <= 0 and input_stv.get_diff(target_stv).is_zero:
-                    inst_text = "; ".join([str(inst) for inst in robot.get_available_instructions()])
+                    inst_text = "; ".join([str(inst) for inst in robot.instructions])
                     Logger.instance().warn(f"Couldn't re-roll input and target to be different! {inst_text}",
                                            from_pycui=False)
 

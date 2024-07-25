@@ -3,7 +3,7 @@ Author: Artner Michael
 13.06.2021
 """
 from abc import ABC
-from typing import Tuple, List, Callable, Optional
+from typing import Tuple, List, Callable, Optional, Iterator
 
 from qrogue.game.logic.actors.controllables import Controllable
 from qrogue.game.logic.actors.controllables.qubit import QubitSet, DummyQubitSet
@@ -181,13 +181,6 @@ class _Backpack:
             self.__storage: List[Instruction] = []
         self.__key_count: int = 0
 
-    def __iter__(self) -> "_BackpackIterator":
-        """
-
-        :return: an Iterator over the stored Instructions
-        """
-        return _BackpackIterator(self)
-
     @property
     def capacity(self) -> int:
         """
@@ -310,21 +303,12 @@ class _Backpack:
         return data  # [gate.copy() for gate in self.__storage]
 
 
-class _BackpackIterator:
-    """
-    Allows us to easily iterate through all the Instructions in a backpack.
-    """
+    def instruction_iterator(self) -> Iterator[Instruction]:
+        """
 
-    def __init__(self, backpack: _Backpack):
-        self.__index: int = 0
-        self.__backpack: _Backpack = backpack
-
-    def __next__(self) -> Instruction:
-        if self.__index < self.__backpack.used_capacity:
-            item = self.__backpack.get(self.__index)
-            self.__index += 1
-            return item
-        raise StopIteration
+        :return: an Iterator over the stored Instructions
+        """
+        return iter(self.__storage)
 
 
 class Robot(Controllable, ABC):
@@ -381,8 +365,22 @@ class Robot(Controllable, ABC):
             self.update_statevector(None, use_energy=False, check_for_game_over=False)
 
     @property
-    def backpack(self) -> _Backpack:
-        return self.__backpack
+    def used_capacity(self) -> int:
+        """
+        :return: how many instructions are placed on the robot's circuit
+        """
+        return self.__backpack.used_capacity
+
+    @property
+    def capacity(self) -> int:
+        """
+        :return: how many instructions can be placed on the robot's circuit
+        """
+        return self.__backpack.capacity
+
+    @property
+    def instructions(self) -> Iterator[Instruction]:
+        return self.__backpack.instruction_iterator()
 
     @property
     def state_vector(self) -> StateVector:
@@ -446,10 +444,10 @@ class Robot(Controllable, ABC):
         self.__score = 0
 
     def key_count(self) -> int:  # cannot be a property since it is an abstractmethod in Controllable
-        return self.backpack.key_count
+        return self.__backpack.key_count
 
     def use_key(self) -> bool:
-        return self.backpack.use_key()
+        return self.__backpack.use_key()
 
     def __update_circuit_space(self, new_circuit_space: int):
         old_instructions = self.__instructions.copy()
@@ -598,8 +596,8 @@ class Robot(Controllable, ABC):
         :param index: index of the Instruction in the backpack
         :return: the stored Instruction at the given index or None
         """
-        if 0 <= index < self.backpack.used_capacity:
-            return self.backpack.get(index)
+        if 0 <= index < self.__backpack.used_capacity:
+            return self.__backpack.get(index)
         return None
 
     def use_instruction(self, instruction: Instruction, position: int) -> bool:
@@ -638,13 +636,13 @@ class Robot(Controllable, ABC):
 
         :return: a List containing copies of all Instructions currently available to this Robot
         """
-        return self.backpack.copy_gates()
+        return self.__backpack.copy_gates()
 
     def set_available_instructions(self, gate_list: List[Instruction]) -> bool:
         """
         :return: True if gates were successfully set, False if an error occurred
         """
-        return self.backpack.set_instructions(gate_list)
+        return self.__backpack.set_instructions(gate_list)
 
     def give_collectible(self, collectible: Collectible, force: bool = False) -> bool:
         """
@@ -658,12 +656,12 @@ class Robot(Controllable, ABC):
             self.__score += collectible.amount
             return True
         elif isinstance(collectible, Key):
-            return self.backpack.give_key(collectible.amount)
+            return self.__backpack.give_key(collectible.amount)
         elif isinstance(collectible, Energy):
             self.__attributes.increase_energy(collectible.amount)
             return True
         elif isinstance(collectible, Instruction):
-            return self.backpack.add(collectible, force)
+            return self.__backpack.add(collectible, force)
         elif isinstance(collectible, Qubit):
             self.__attributes.add_qubits(collectible.additional_qubits)
             return True

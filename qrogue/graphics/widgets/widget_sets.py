@@ -1877,7 +1877,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
     def __init_choices(self):
         choices, objects = [], []  # Tuple[List[str], List[object]]
         callbacks: List[Callable[[], bool]] = []
-        for instruction in self._robot.backpack:
+        for instruction in self._robot.instructions:
             choices.append(instruction.selection_str())
             objects.append(instruction)
             callbacks.append(self.__choose_instruction)
