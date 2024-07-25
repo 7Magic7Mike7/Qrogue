@@ -133,8 +133,10 @@ class MapManager:
             level, success = generator.generate(seed, map_name)
             if success:
                 self.__cur_map = level
-                if gate_list is not None:
-                    self.__cur_map.robot.set_available_instructions(gate_list)
+                # if we have a valid gate_list, we try to set it and only show the error if it fails
+                if gate_list is not None and not self.__cur_map.robot.set_available_instructions(gate_list):
+                    Popup.error(f"Failed to set gates! Please make sure you don't have more than "
+                                f"{self.__cur_map.robot.backpack.capacity} gates selected.")
                 # else: available gates were determined by the level beforehand and don't change
                 self.__start_level(self.__cur_map)
             else:
