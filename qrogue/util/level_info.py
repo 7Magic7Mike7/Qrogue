@@ -50,6 +50,19 @@ class LevelInfo:
         # other levels
     }
 
+    __LEVEL_START_GATES: Dict[str, List[GateType]] = {      # todo: parse from level file instead?
+        # newbie tutorials
+        "l0k0v0": [],
+        "l0k0v1": [GateType.XGate],
+        "l0k0v2": [GateType.XGate],
+        "l0k0v3": [GateType.XGate, GateType.CXGate],
+        "l0k0v4": [GateType.XGate, GateType.CXGate, GateType.HGate],
+
+        # experienced tutorials are copied from newbie tutorials entered in init()
+
+        # other levels
+    }
+
     # for converting internal names to display names and vice versa
     __NAME_CONVERTER: Dict[str, str] = {}  # is filled dynamically within LevelInfo.init()
 
@@ -76,6 +89,9 @@ class LevelInfo:
 
         # initialize gate unlocks for experienced tutorials
         init_experienced_tutorials(LevelInfo.__LEVEL_COMPLETION_UNLOCKED_GATES)
+
+        # initialize level start gates for experienced tutorials
+        init_experienced_tutorials(LevelInfo.__LEVEL_START_GATES)
 
         # initialize __NAME_CONVERTER
         for mode in LevelInfo.__MAP_ORDER.keys():
@@ -170,6 +186,19 @@ class LevelInfo:
             if level_name in LevelInfo.__LEVEL_COMPLETION_UNLOCKED_GATES:
                 return LevelInfo.__LEVEL_COMPLETION_UNLOCKED_GATES[level_name]
             return []
+
+    @staticmethod
+    def get_level_start_gates(level_name: str) -> List[GateType]:
+        """
+        Provides a list of GateType based on which gates the player has when starting a level without special settings
+        (i.e., on the first play-through).
+
+        :param level_name: internal name of the level we want to get the starting gates for
+        :return: list of GateType corresponding to the gates the player has as the beginning of the referenced level
+        """
+        if level_name in LevelInfo.__LEVEL_START_GATES:
+            return LevelInfo.__LEVEL_START_GATES[level_name]
+        return []
 
     @staticmethod
     def convert_to_display_name(internal_name: str, allow_display_name: bool = True) -> Optional[str]:
