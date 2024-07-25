@@ -1554,6 +1554,9 @@ class NavigationWidgetSet(MapWidgetSet):
 
 class ReachTargetWidgetSet(MyWidgetSet, ABC):
     __DETAILS_COLUMNS = 4
+    __CHOICES_REMOVE_OBJECT = "remove"
+    __CHOICES_RESET_OBJECT = "reset"
+    __CHOICES_FLEE_OBJECT = "flee"
 
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  continue_exploration_callback: Callable[[bool], None], reopen_popup: Callable[[], None],
@@ -1664,9 +1667,9 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self._choices.widget.add_key_command(controls.action, use_choices)
 
         def gate_guide():
-            gates_ = self._robot.get_available_instructions()
-            if 0 <= self._choices.index < len(gates_):
-                gate = gates_[self._choices.index]
+            # check if a gate or a meta choice (e.g., cancel) is selected
+            if isinstance(self._choices.selected_object, Instruction):
+                gate = self._choices.selected_object
                 if gate.gate_type.has_other_names:
                     other_names = "\nAlso known as: " + gate.gate_type.get_other_names(" Gate, ") + " Gate"
                 else:
@@ -1886,12 +1889,15 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         # add commands
         if self._check_unlocks(Unlocks.GateRemove):
             choices.append("Remove")
+            objects.append(ReachTargetWidgetSet.__CHOICES_REMOVE_OBJECT)
             callbacks.append(self.__remove)
         if self.__enable_reset:
             choices.append("Reset")
+            objects.append(ReachTargetWidgetSet.__CHOICES_RESET_OBJECT)
             callbacks.append(self.__reset_circuit)
         if self._check_unlocks(Unlocks.PuzzleFlee):
             choices.append(self.__flee_choice)
+            objects.append(ReachTargetWidgetSet.__CHOICES_FLEE_OBJECT)
             callbacks.append(self.__flee)  # just return True to change back to previous screen
 
         self._choices.set_data(data=((choices, objects), callbacks))
