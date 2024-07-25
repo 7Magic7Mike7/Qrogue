@@ -266,6 +266,10 @@ class LevelData:
         return self.__name
 
     @property
+    def is_level(self) -> bool:
+        return self.__name.startswith(MapConfig.level_map_prefix())
+
+    @property
     def date_time(self) -> datetime:
         return self.__date_time
 
