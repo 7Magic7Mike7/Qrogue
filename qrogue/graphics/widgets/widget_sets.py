@@ -314,6 +314,10 @@ class LevelSelectWidgetSet(MyWidgetSet):
                  start_level_callback: Callable[[str, Optional[int], Optional[List[Instruction]]], None],
                  get_expedition_progress_callback: Callable[[], int],
                  get_available_gates_callback: Callable[[], List[GateType]]):
+        """
+        :param get_available_levels_callback: a Callable that returns a List of LevelData of all levels that can be
+            played (i.e., were completed before)
+        """
         super().__init__(logger, root, base_render_callback)
         # select seed
         # select level (or choose Expedition)
