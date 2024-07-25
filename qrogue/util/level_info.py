@@ -91,6 +91,12 @@ class LevelInfo:
 
     @staticmethod
     def get_next(cur_map: str, is_level_completed: Callable[[str], bool]) -> Optional[str]:
+        """
+        :param cur_map: internal name of the map we want to get the next map's internal name for
+        :param is_level_completed: Callable to find out which levels are already completed in case cur_map equals the
+                                    meta name MapConfig.first_uncleared()
+        :return: the internal name of cur_map's next map or None if there is no next map
+        """
         if cur_map == MapConfig.first_uncleared():
             next_map = LevelInfo.__MAP_ORDER[GameplayConfig.get_knowledge_mode()][cur_map]
             while is_level_completed(next_map):
@@ -107,6 +113,12 @@ class LevelInfo:
 
     @staticmethod
     def get_prev(cur_map: str, is_level_completed: Callable[[str], bool]) -> Optional[str]:
+        """
+        :param cur_map: internal name of the map we want to get the previous map's internal name for
+        :param is_level_completed: Callable to find out which levels are already completed in case cur_map equals the
+                                    meta name MapConfig.first_uncleared()
+        :return: the internal name of cur_map's previous map or None if there is no previous map
+        """
         if cur_map == MapConfig.first_uncleared():
             cur_map = LevelInfo.get_prev(LevelInfo.get_next(cur_map, is_level_completed), is_level_completed)
         # todo: implement more dynamically?
