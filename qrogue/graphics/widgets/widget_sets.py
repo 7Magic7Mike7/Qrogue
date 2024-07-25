@@ -22,7 +22,7 @@ from qrogue.graphics.widgets.my_widgets import SelectionWidget, CircuitWidget, M
 from qrogue.util import CommonPopups, Config, Controls, GameplayConfig, HelpText, Logger, PathConfig, \
     Keys, UIConfig, ColorConfig, Options, PuzzleConfig, ScoreConfig, \
     get_filtered_help_texts, CommonQuestions, MapConfig, PyCuiConfig, ColorCode, split_text, MyRandom, \
-    LevelInfo, CommonInfos, LevelData, StvDifficulty, GateType
+    LevelInfo, CommonInfos, LevelData, StvDifficulty, GateType, RandomManager
 from qrogue.util.achievements import Unlocks
 from qrogue.util.util_functions import enum_string, cur_datetime, time_diff, open_folder
 
@@ -324,18 +324,18 @@ class LevelSelectWidgetSet(MyWidgetSet):
         # select starting gates
         # start
         # back to menu
-        self.__rm = rm
+        self.__rm = RandomManager.create_new(rm.get_seed("initial seed for LevelSelectWidgetSet.__rm"))
         self.__show_input_popup = show_input_popup_callback
         self.__get_available_levels = get_available_levels_callback
         self.__start_level = start_level_callback
         self.__get_expedition_progress = get_expedition_progress_callback
         self.__get_available_gates = get_available_gates_callback
 
-        self.__seed = self.__rm.get_seed('init level select seed')
+        self.__seed = None
         self.__level: Optional[str] = None
-        self.__selected_gates: List[LevelSelectWidgetSet._SelectedGate] = \
-            [LevelSelectWidgetSet._SelectedGate(gate) for gate in get_available_gates_callback()]
+        self.__selected_gates: List[LevelSelectWidgetSet._SelectedGate] = []
         self.__has_custom_gates = False
+        self.reinit()
 
         row, col = 1, 4
         col_span = 2
@@ -378,7 +378,6 @@ class LevelSelectWidgetSet(MyWidgetSet):
             if self.__choices.use():
                 Widget.move_focus(self.__details, self)
                 self.render()
-
         self.__choices.widget.add_key_command(controls.action, use_choices)
 
         def use_details():
@@ -388,10 +387,15 @@ class LevelSelectWidgetSet(MyWidgetSet):
                 self.__highscores.render_reset()
                 self.__durations.render_reset()
                 self.render()
-
         self.__details.widget.add_key_command(controls.action, use_details)
 
-        self.__summary_seed.set_data(f"Seed: {self.__seed}")
+        self.__summary_seed.set_data(f"Seed: {'???' if self.__seed is None else str(self.__seed)}")
+
+    def reinit(self):
+        self.__seed = None
+        self.__level = None
+        self.__selected_gates = [LevelSelectWidgetSet._SelectedGate(gate) for gate in self.__get_available_gates()]
+        self.__has_custom_gates = False
 
     def __set_seed(self) -> bool:
         def set_seed(text: str):
@@ -532,7 +536,8 @@ class LevelSelectWidgetSet(MyWidgetSet):
 
         # filter and convert all selected gates
         available_gates = [sg.to_gate() for sg in self.__selected_gates if sg.is_selected]
-        self.__start_level(self.__level, self.__seed, available_gates)
+        seed = self.__seed if self.__seed is not None else self.__rm.get_seed("LevelSelect play unspecified")
+        self.__start_level(self.__level, seed, available_gates)
         return True
 
     def get_widget_list(self) -> List[Widget]:
@@ -555,8 +560,8 @@ class LevelSelectWidgetSet(MyWidgetSet):
         self.__level = None
         self.__summary_level.set_data(f"{LevelSelectWidgetSet.__LEVEL_HEADER}???")
 
-        self.__seed = self.__rm.get_seed("init LevelSelection seed for reset")
-        self.__summary_seed.set_data(f"{LevelSelectWidgetSet.__SEED_HEADER}{self.__seed}")
+        self.__seed = None
+        self.__summary_seed.set_data(f"{LevelSelectWidgetSet.__SEED_HEADER}???")
 
 
 class ScreenCheckWidgetSet(MyWidgetSet):
