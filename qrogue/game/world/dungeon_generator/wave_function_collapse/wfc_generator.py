@@ -1,13 +1,13 @@
 import json
 import math
-from typing import List, Optional, Dict, Tuple, Iterable, Any
+from typing import List, Optional, Dict, Tuple, Iterable, Any, Callable
 
 from qrogue.game.world.dungeon_generator import QrogueLevelGenerator
 from qrogue.game.world.map import LevelMap, CallbackPack
 from qrogue.game.world.map.rooms import AreaType
 from qrogue.game.world.navigation import Coordinate, Direction
-from qrogue.game.world.tiles import TileCode
-from qrogue.util import RandomManager, MapConfig, MyRandom
+from qrogue.game.world.tiles import TileCode, Tile
+from qrogue.util import RandomManager, MapConfig, MyRandom, Logger
 from qrogue.util.util_functions import my_str
 from .learnables import LearnableMap, LearnableRoom
 from .wave_function import WaveFunction
@@ -102,7 +102,8 @@ class WFCGenerator:
         return 0  # todo check which value to pick
 
     def generate(self, seed: int, width: Optional[int] = None, height: Optional[int] = None,
-                 static_entries: Optional[Dict[Coordinate, Any]] = None) -> List[List[Any]]:
+                 static_entries: Optional[Dict[Coordinate, Any]] = None,
+                 is_assignable: Optional[Callable[[Any, Any], bool]] = None) -> List[List[Any]]:
         assert self.__learner.width > 0 and self.__learner.height > 0, \
             "Cannot generate without learning from data before!"
 
@@ -134,8 +135,11 @@ class WFCGenerator:
         if static_entries is not None:
             for pos in static_entries:
                 value = static_entries[pos]
-                wave_functions[pos].force_value(value)
-                propagate_collapse(pos, value)
+                if wave_functions[pos].force_value(value, is_assignable):
+                    propagate_collapse(pos, wave_functions[pos].state)
+                else:
+                    Logger.instance().error(f"Failed to force value={value} for static entry at {pos}", show=False,
+                                            from_pycui=False)
 
         while len(entropies) > 0:
             pos = WFCGenerator.min_entropy(entropies)
@@ -195,7 +199,8 @@ class WFCLayoutGenerator(WFCGenerator):
         super(WFCLayoutGenerator, self).__init__(data=data)
 
     def generate(self, seed: int, width: Optional[int] = None, height: Optional[int] = None,
-                 static_entries: Optional[Dict[Coordinate, Any]] = None) -> List[List[AreaType]]:
+                 static_entries: Optional[Dict[Coordinate, AreaType]] = None,
+                 is_assignable: Optional[Callable[[AreaType, AreaType], bool]] = None) -> List[List[AreaType]]:
         # we need to first place a SpawnRoom as static entry
         if static_entries is None:
             static_entries = {}
@@ -205,7 +210,7 @@ class WFCLayoutGenerator(WFCGenerator):
         spawn_y = rm.get_int(0, MapConfig.map_height(), "spawn_y in WFCLayoutGenerator")
         static_entries[Coordinate(spawn_x, spawn_y)] = AreaType.SpawnRoom
 
-        return super(WFCLayoutGenerator, self).generate(seed, width, height, static_entries)
+        return super(WFCLayoutGenerator, self).generate(seed, width, height, static_entries, is_assignable)
 
 
 class WFCRoomGenerator(WFCGenerator):
@@ -266,13 +271,20 @@ class WFCRoomGenerator(WFCGenerator):
         return self.__room_type
 
     def generate(self, seed: int, width: Optional[int] = None, height: Optional[int] = None,
-                 static_entries: Optional[Dict[Coordinate, Any]] = None) -> List[List[LearnableRoom.TileData]]:
-        return super().generate(seed, width, height, static_entries)
+                 static_entries: Optional[Dict[Coordinate, Tile]] = None,
+                 is_assignable: Optional[Callable[[LearnableRoom.TileData, Tile], bool]] = None) \
+            -> List[List[LearnableRoom.TileData]]:
+        if is_assignable is None:
+            def is_assignable(key: LearnableRoom.TileData, value: Tile) -> bool:
+                return key.code == value.code
+        return super().generate(seed, width, height, static_entries, is_assignable)
 
 
 class WFCEmptyRoomGenerator(WFCGenerator):
     def generate(self, seed: Optional[int] = None, width: Optional[int] = None, height: Optional[int] = None,
-                 static_entries: Optional[Dict[Coordinate, Any]] = None) -> List[List[LearnableRoom.TileData]]:
+                 static_entries: Optional[Dict[Coordinate, Any]] = None,
+                 is_assignable: Optional[Callable[[LearnableRoom.TileData, Tile], bool]] = None) \
+            -> List[List[LearnableRoom.TileData]]:
         if width is None: width = MapConfig.room_width()
         if height is None: height = MapConfig.room_height()
         # return an empty room (only Floor tiles)
