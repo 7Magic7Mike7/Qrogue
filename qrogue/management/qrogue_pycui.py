@@ -270,7 +270,8 @@ class QrogueCUI(PyCUI):
             self.__state_machine.change_state(QrogueCUI._State.Transition, data=(texts, callback, auto_scroll))
 
         self.__map_manager = MapManager(self.__wfc_manager, self.__save_data, self.__rm.seed, self.__start_level,
-                                        start_level_transition, lambda: self._switch_to_menu(None), self.__cbp)
+                                        start_level_transition, lambda: self._switch_to_menu(None), self.__cbp,
+                                        self.__save_data.get_gates)
         ########################################
 
         self.__map_manager.fill_expedition_queue(lambda: None, no_thread=True)

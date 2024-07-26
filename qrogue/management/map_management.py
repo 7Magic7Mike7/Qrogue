@@ -11,7 +11,7 @@ from qrogue.game.world.navigation import Coordinate
 from qrogue.graphics.popups import Popup
 from qrogue.management.save_data import NewSaveData
 from qrogue.util import CommonQuestions, RandomManager, LevelInfo, Config, MapConfig, ErrorConfig, \
-    ExpeditionConfig, StvDifficulty
+    ExpeditionConfig, StvDifficulty, GateType
 from qrogue.util.achievements import Achievement
 from qrogue.util.util_functions import cur_datetime, time_diff
 
@@ -65,6 +65,7 @@ class MapManager:
     def __init__(self, wfc_manager: WFCManager, save_data: NewSaveData, seed: int, start_level: Callable[[Map], None],
                  start_level_transition_callback: Callable[[str, str, Callable[[], None]], None],
                  exit_map_callback: Callable[[], None], callback_pack: CallbackPack,
+                 get_available_gates_callback: Callable[[], List[GateType]],
                  queue_size: int = ExpeditionConfig.DEFAULT_QUEUE_SIZE):
         self.__save_data = save_data
         # no longer used code!
@@ -76,7 +77,8 @@ class MapManager:
         self.__start_level = start_level
         self.__start_level_transition = start_level_transition_callback
         self.__expedition_generator = ExpeditionGenerator(wfc_manager, self.__save_data.check_achievement,
-                                                          self.trigger_event, self.__load_back, callback_pack)
+                                                          self.trigger_event, self.__load_back,
+                                                          get_available_gates_callback, callback_pack)
         self.__expedition_queue: List[ExpeditionMap] = []
         self.__cur_map: Optional[Map] = None
 

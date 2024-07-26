@@ -491,6 +491,10 @@ class LevelSelectWidgetSet(MyWidgetSet):
                 self.__show_input_popup("Enter map code", ColorConfig.LEVEL_SELECTION_INPUT_MAP_CODE, callback)
             elif self.__details.selected_object.startswith(MapConfig.expedition_map_prefix()):
                 self.__summary_level.set_data(f"{LevelSelectWidgetSet.__LEVEL_HEADER}{display_names[index]} ")
+                if not self.__has_custom_gates:
+                    # reset selection so a random subset is chosen instead of simply the ones from the previously
+                    # selected level
+                    for sg in self.__selected_gates: sg.reset()
             else:
                 self.__summary_level.set_data(f"{LevelSelectWidgetSet.__LEVEL_HEADER}{display_names[index]} "
                                               f"({highscores[index]}, {durations[index]})")
