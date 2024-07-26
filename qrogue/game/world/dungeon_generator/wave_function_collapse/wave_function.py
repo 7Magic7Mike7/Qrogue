@@ -52,6 +52,8 @@ class WaveFunction:
             if rand_val < val:
                 self.__state = key
                 return self.__state
+        from qrogue.util import Config
+        Config.check_reachability("WaveFunction.collapse()@impossible-collapse")
         return None  # this should not be possible to happen
 
     def force_value(self, value: Any) -> bool:
