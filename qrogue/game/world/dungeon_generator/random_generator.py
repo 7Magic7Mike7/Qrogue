@@ -667,7 +667,8 @@ class ExpeditionGenerator(DungeonGenerator):
         typed_collectible_factory: Dict[Optional[CollectibleType], CollectibleFactory] = {
             None: CollectibleFactory([Score(100)]),  # default factory
             CollectibleType.Gate: CollectibleFactory([Score(200)]),
-            CollectibleType.Pickup: CollectibleFactory([Score(150)])
+            CollectibleType.Pickup: CollectibleFactory([Score(150)]),
+            CollectibleType.Key: CollectibleFactory([Key()]),   # needed for boss-key placement
         }
 
         def get_collectible_factory(type_: CollectibleType) -> CollectibleFactory:
@@ -781,15 +782,17 @@ class ExpeditionGenerator(DungeonGenerator):
                             # todo: should this be optional based on difficulty/progress (#tunneling)?
                             # fourth check if we can reach every door from every door of this room (= doors are
                             # reachable for player, implies that the previous layout reachability-check still holds)
+
+                            static_entries = {Room.mid(): tiles.Collectible(Key())} if pos == key_room_pos \
+                                else None
                             gen_tries = 0
                             while gen_tries < ExpeditionGenerator.__MAX_ROOM_GEN_TRIES:
                                 tile_matrix: List[List[LearnableRoom.TileData]] = wild_room_generator.generate(
-                                    seed=map_rm.get_seed("generating a room in ExpeditionGenerator")
+                                    seed=map_rm.get_seed("generating a room in ExpeditionGenerator"),
+                                    static_entries=static_entries
                                 )
                                 tile_list = [tile_from_tile_data(entry.code, entry.data)
                                              for row in tile_matrix for entry in row]
-                                if pos == key_room_pos:
-                                    tile_list[Room.coordinate_to_index(Room.mid())] = tiles.Collectible(Key())
 
                                 if self.correct_tile_list(tile_list, room_hallways) >= 0:
                                     break
