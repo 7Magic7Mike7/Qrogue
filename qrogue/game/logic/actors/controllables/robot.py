@@ -3,19 +3,19 @@ Author: Artner Michael
 13.06.2021
 """
 from abc import ABC
-from typing import Tuple, List, Callable, Optional, Iterator
+from typing import Tuple, List, Callable, Optional, Iterator, Union
 
 from qrogue.game.logic.actors.controllables import Controllable
 from qrogue.game.logic.actors.controllables.qubit import QubitSet, DummyQubitSet
 from qrogue.game.logic.base import StateVector, CircuitMatrix, QuantumSimulator, QuantumCircuit, UnitarySimulator
 from qrogue.game.logic.collectibles import Collectible, Instruction, Key, MultiCollectible, \
-    Qubit, Energy, Score
+    Qubit, Energy, Score, InstructionManager
 from qrogue.util import CheatConfig, Config, Logger, GameplayConfig, QuantumSimulationConfig, Options, GateType
 
 
 # from jkq import ddsim
 class RoboProperties:
-    def __init__(self, num_of_qubits: int = 3, circuit_space: int = 5, gate_list: Optional[List[GateType]] = None):
+    def __init__(self, num_of_qubits: int = 3, circuit_space: int = 5, gate_list: Optional[List[Instruction]] = None):
         self.__num_of_qubits = num_of_qubits
         self.__circuit_space = circuit_space
         self.__gate_list = gate_list
@@ -29,8 +29,9 @@ class RoboProperties:
         return self.__circuit_space
 
     @property
-    def gate_list(self) -> Optional[List[GateType]]:
-        return self.__gate_list
+    def instruction_list(self) -> Optional[List[Instruction]]:
+        if self.__gate_list is None: return None
+        return [gate.copy() for gate in self.__gate_list]
 
 
 class _Attributes:
@@ -638,11 +639,15 @@ class Robot(Controllable, ABC):
         """
         return self.__backpack.copy_gates()
 
-    def set_available_instructions(self, gate_list: List[Instruction]) -> bool:
+    def set_available_instructions(self, gates: Union[List[Instruction], List[GateType]]) -> bool:
         """
+        :param gates: either a list of GateType or Instruction that determines which Instructions are available
         :return: True if gates were successfully set, False if an error occurred
         """
-        return self.__backpack.set_instructions(gate_list)
+        if len(gates) > 0 and isinstance(gates[0], GateType):
+            gate_types: List[GateType] = gates
+            gates = [InstructionManager.from_type(gt) for gt in gate_types]
+        return self.__backpack.set_instructions(gates)
 
     def give_collectible(self, collectible: Collectible, force: bool = False) -> bool:
         """
@@ -728,7 +733,7 @@ class BaseBot(Robot):
     @staticmethod
     def from_properties(properties: RoboProperties, game_over_callback: Callable[[], None]) -> "BaseBot":
         return BaseBot(game_over_callback, num_of_qubits=properties.num_of_qubits,
-                       circuit_space=properties.circuit_space, gates=properties.gate_list)
+                       circuit_space=properties.circuit_space, gates=properties.instruction_list)
 
     def __init__(self, game_over_callback: Callable[[], None], num_of_qubits: int = 3,
                  gates: Optional[List[Instruction]] = None,
