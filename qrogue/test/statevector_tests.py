@@ -15,6 +15,7 @@ target_stv_ = Instruction.compute_stv([
     gates.HGate().setup([1]),
 ], 3)
 
+# todo: fix the described issue
 # gate_list_ = [gates.XGate(), gates.CXGate(), gates.HGate(), gates.SGate()]     # this order returns True
 gate_list_ = [gates.HGate(), gates.SGate(), gates.XGate(), gates.CXGate()]  # but this order returns False
 

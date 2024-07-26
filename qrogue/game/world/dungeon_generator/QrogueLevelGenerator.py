@@ -1160,7 +1160,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
     def visitRobot(self, ctx: QrogueDungeonParser.RobotContext) -> None:
         num_of_qubits = int(ctx.DIGIT().getText())
         gates = []
-        for ref in ctx.REFERENCE():
+        for ref in ctx.REFERENCE():     # todo: get rid of this and use NewSaveData's gates instead? but then custom levels would be harder to integrate
             if parser_util.normalize_reference(ref.getText()) == self.__ROBOT_NO_GATES:
                 continue
             gates.append(self.__load_gate(ref))  # todo what about pickups?

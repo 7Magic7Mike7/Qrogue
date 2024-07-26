@@ -38,7 +38,7 @@ class _Attributes:
     """
     A class that handles some attributes of a Robot.
     """
-
+    # todo: Overhaul whole class?
     __DEFAULT_SPACE = 5
     __DEFAULT_MAX_ENERGY = 100
     __MIN_INIT_ENERGY = 1  # during initialization neither max_energy nor cur_energy must be below this value

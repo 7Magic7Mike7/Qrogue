@@ -41,7 +41,7 @@ class MyRandom:
     def get_bool(self, msg: str = str(COUNTER)) -> bool:
         return self.get(msg=msg) < 0.5
 
-    def get_seed(self, msg: str = str(COUNTER)) -> int:
+    def get_seed(self, msg: str = str(COUNTER)) -> int: # todo: introduce class, method, location, sublocation arguments for more consisten messages?
         return self.get_int(min_=0, max_=Config.MAX_SEED, msg=msg)
 
     def get_element(self, iterable, remove: bool = False, msg: str = str(COUNTER)) -> Any:

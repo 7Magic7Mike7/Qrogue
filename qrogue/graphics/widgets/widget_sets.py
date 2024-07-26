@@ -359,6 +359,7 @@ class LevelSelectWidgetSet(MyWidgetSet):
             ("Set Seed", self.__set_seed),
             ("Start Playing", self.__play_level),
             ("Back to Menu", switch_to_menu_callback),
+            # todo: add "Set Difficulty" for more fine-grained difficulty settings and open popup if player tries to open it for a level
         ])
         col += col_span
 
