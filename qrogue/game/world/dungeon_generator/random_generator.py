@@ -765,11 +765,6 @@ class ExpeditionGenerator(DungeonGenerator):
                                 elif tile_code == tiles.TileCode.CollectibleScore:
                                     return tiles.Collectible(Score(tile_data))
                                 elif tile_code == tiles.TileCode.Collectible:
-                                    if self.__remaining_keys > 0 and not self.__room_has_key \
-                                            and map_rm.get(msg="key placement") > 0.6:
-                                        self.__remaining_keys -= 1
-                                        self.__room_has_key = True
-                                        return tiles.Collectible(Key())
                                     return tiles.Collectible(get_collectible_factory(tile_data).produce(map_rm))
                                 elif tile_code == tiles.TileCode.Wall:
                                     return tiles.Wall()
