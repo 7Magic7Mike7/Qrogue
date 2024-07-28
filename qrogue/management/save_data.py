@@ -109,7 +109,7 @@ class NewSaveData:
         if self.check_achievement(name): return True
         return False
 
-    def complete_level(self, name: str, duration: int, date_time: Optional[datetime] = None, score: int = -1) \
+    def _complete_map(self, name: str, duration: int, date_time: Optional[datetime] = None, score: int = -1) \
             -> LevelData:
         # NOTE: name might still have the "done" suffix! Use level_data.name if you need the normalized name.
         # compute date_time and duration based on current time if not provided
@@ -134,6 +134,18 @@ class NewSaveData:
             for gate in LevelInfo.get_level_completion_unlocked_gates(level_data.name, self.check_level):
                 self.__gates.append(gate)
 
+        return level_data
+
+    def complete_level(self, name: str, duration: int, date_time: Optional[datetime] = None, score: int = -1) \
+            -> LevelData:
+        return self._complete_map(name, duration, date_time, score)
+
+    def complete_expedition(self, name: str, duration: int, difficulty_level: int, gate: GateType,
+                            date_time: Optional[datetime] = None, score: int = -1) \
+            -> LevelData:
+        level_data = self._complete_map(name, duration, date_time, score)
+        self.add_to_achievement(Achievement.CompletedExpedition, difficulty_level)
+        self.__gates.append(gate)
         return level_data
 
     def unlock(self, unlock: Union[str, Unlocks], date_time: Optional[datetime] = None):

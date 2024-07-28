@@ -2,7 +2,7 @@ from typing import List, Callable, Optional
 
 from qrogue.game.logic.actors import Controllable
 from qrogue.game.world.navigation import Coordinate
-from qrogue.util import MapConfig, StvDifficulty, RandomManager
+from qrogue.util import MapConfig, StvDifficulty, RandomManager, GateType
 from .map import Map, MapType, Room, MapMetaData
 
 
@@ -35,18 +35,23 @@ class ExpeditionMap(Map):
             else: display_name += character
         return display_name + f"{difficulty.level}*{seed}"
 
-    def __init__(self, seed: int, difficulty: StvDifficulty, rooms: List[List[Optional[Room]]],
+    def __init__(self, seed: int, difficulty: StvDifficulty, main_gate: GateType, rooms: List[List[Optional[Room]]],
                  controllable: Controllable, spawn_room: Coordinate, check_achievement: Callable[[str], bool],
                  trigger_event: Callable[[str], None]):
         # expeditions don't have a description to show, so we pass an empty lambda
         meta_data = MapMetaData(ExpeditionMap.to_display_name(difficulty, seed), None, True, lambda: None)
         self.__difficulty = difficulty
+        self.__main_gate = main_gate
         super().__init__(meta_data, f"{MapConfig.expedition_map_prefix()}{difficulty.to_code()}", seed, rooms,
                          controllable, spawn_room, check_achievement, trigger_event)
 
     @property
     def difficulty(self) -> StvDifficulty:
         return self.__difficulty
+
+    @property
+    def main_gate(self) -> GateType:
+        return self.__main_gate
 
     def get_type(self) -> MapType:
         return MapType.Expedition

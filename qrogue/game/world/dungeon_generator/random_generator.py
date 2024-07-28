@@ -837,8 +837,8 @@ class ExpeditionGenerator(DungeonGenerator):
                         if room:
                             rooms[y][x] = room
             if spawn_room:
-                my_map = ExpeditionMap(map_seed, difficulty, rooms, robot, spawn_room, self.__check_achievement,
-                                       self.__trigger_event)
+                my_map = ExpeditionMap(map_seed, difficulty, main_gate.gate_type, rooms, robot, spawn_room,
+                                       self.__check_achievement, self.__trigger_event)
                 return my_map, True
             else:
                 return None, False

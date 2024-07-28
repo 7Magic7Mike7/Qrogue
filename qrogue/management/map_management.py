@@ -253,14 +253,21 @@ class MapManager:
             # self.__save_data.trigger_event(event_id)
             prev_level_data = self.__save_data.get_level_data(self.__cur_map.internal_name)
             duration, _ = time_diff(cur_datetime(), self.__level_timer)
-            new_level_data = self.__save_data.complete_level(self.__cur_map.internal_name, duration,
-                                                             score=self.__cur_map.robot.score)
 
-            if self.is_in_expedition:
+            # store progress in save_data
+            if self.is_in_level:
+                new_level_data = self.__save_data.complete_level(
+                    self.__cur_map.internal_name, duration, score=self.__cur_map.robot.score)
+            elif self.is_in_expedition:
                 assert isinstance(self.__cur_map, ExpeditionMap), \
                     f"CurMap has wrong type: \"{self.__cur_map.internal_name}\" is no ExpeditionMap!"
-                self.__save_data.add_to_achievement(Achievement.CompletedExpedition, self.__cur_map.difficulty.level)
-            self.__save_data.save(is_auto_save=True)
+                new_level_data = self.__save_data.complete_expedition(
+                    self.__cur_map.internal_name, duration, self.__cur_map.difficulty.level, self.__cur_map.main_gate,
+                    score=self.__cur_map.robot.score)
+            else:   # currently only levels and expedition can trigger done-events
+                return
+
+            self.__save_data.save(is_auto_save=True)    # persist the progress
 
             CommonQuestions.proceed_summary(self.__cur_map.name, new_level_data.score, new_level_data.duration,
                                             new_level_data.total_score, self.__proceed,
