@@ -35,6 +35,15 @@ class SaveDataListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by SaveDataParser#inventory.
+    def enterInventory(self, ctx:SaveDataParser.InventoryContext):
+        pass
+
+    # Exit a parse tree produced by SaveDataParser#inventory.
+    def exitInventory(self, ctx:SaveDataParser.InventoryContext):
+        pass
+
+
     # Enter a parse tree produced by SaveDataParser#gates.
     def enterGates(self, ctx:SaveDataParser.GatesContext):
         pass
