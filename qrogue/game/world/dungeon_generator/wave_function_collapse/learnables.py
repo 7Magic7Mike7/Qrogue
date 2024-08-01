@@ -129,8 +129,14 @@ class LearnableRoom(WFCLearnMatrix):
                 ("" if self.__data is None else
                  f"{LearnableRoom.TileData.__DATA_PREFIX}{my_str(self.__data)}{LearnableRoom.TileData.__DATA_SUFFIX}")
 
-    def __init__(self, room: rooms.Room):
+    def __init__(self, room: rooms.Room, convert_keys: bool = True):
+        """
+        :param room: the room to learn from
+        :param convert_keys: whether keys should be learned as universal collectibles or straight as keys (because
+            expeditions usually only have one boss key)
+        """
         self.__room = room
+        self.__convert_keys = convert_keys
 
     @property
     def width(self) -> int:
@@ -146,6 +152,8 @@ class LearnableRoom(WFCLearnMatrix):
 
     def at(self, x: int, y: int) -> TileData:
         tile = self.__room.at(x, y, force=True, inside_only=True)
+        if self.__convert_keys and tile.data is CollectibleType.Key:
+            return LearnableRoom.TileData(tile.code, CollectibleType.Pickup)
         return LearnableRoom.TileData(tile.code, tile.data)
 
 
