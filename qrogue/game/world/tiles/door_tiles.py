@@ -78,9 +78,6 @@ class Door(WalkTriggerTile):
                 return "-"
 
     def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
-        if CheatConfig.ignore_obstacles():
-            return True
-
         if self.__one_way_state is DoorOneWayState.Permanent or \
                 self.__one_way_state is DoorOneWayState.Temporary and not self.is_open:
             is_correct_direction = direction is self.__direction
@@ -219,9 +216,6 @@ class HallwayEntrance(Tile):
         return self.__FLOOR_IMG
 
     def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
-        if CheatConfig.ignore_obstacles():
-            return True
-
         return not self.__door_ref.is_event_locked
 
     def copy(self) -> "Tile":
