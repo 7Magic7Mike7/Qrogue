@@ -129,7 +129,8 @@ class MenuWidgetSet(MyWidgetSet):
                  quick_start_callback: Callable[[], None], start_playing_callback: Callable[[], None],
                  start_expedition_callback: Callable[[], None], stop_callback: Callable[[], None],
                  show_screen_check_callback: Callable[[], None], show_level_select_callback: Callable[[], None],
-                 check_unlocks_callback: Callable[[Union[str, Unlocks]], bool]):
+                 check_unlocks_callback: Callable[[Union[str, Unlocks]], bool],
+                 save_callback: Callable[[], Tuple[bool, CommonInfos]]):
         self.__seed = 0
         self.__quick_start_callback = quick_start_callback
         self.__start_playing_callback = start_playing_callback
@@ -138,6 +139,7 @@ class MenuWidgetSet(MyWidgetSet):
         self.__show_screen_check_callback = show_screen_check_callback
         self.__show_level_select_callback = show_level_select_callback
         self.__check_unlocks = check_unlocks_callback
+        self.__save_game = save_callback
         super().__init__(logger, root, render)
 
         width = UIConfig.WINDOW_WIDTH - UIConfig.ASCII_ART_WIDTH
@@ -167,6 +169,11 @@ class MenuWidgetSet(MyWidgetSet):
     @property
     def seed(self) -> int:
         return self.__seed  # used to test whether the simulation needs to set the MenuWidgetSet's seed
+
+    def __save(self) -> bool:
+        _, common_info = self.__save_game()
+        common_info.show()
+        return False
 
     def __qrogue_console(self):
         def open_user_data(answer: int):
@@ -198,6 +205,9 @@ class MenuWidgetSet(MyWidgetSet):
 
         choices.append("SCREEN CHECK\n")
         callbacks.append(self.__show_screen_check_callback)
+
+        choices.append("SAVE\n")
+        callbacks.append(self.__save)
 
         # choices.append("OPTIONS\n")  # for more space between the rows we add "\n"
         # callbacks.append(self.__options)

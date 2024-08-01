@@ -304,7 +304,7 @@ class QrogueCUI(PyCUI):
         self.__menu = MenuWidgetSet(self.__controls, self.__render, Logger.instance(), self,
                                     self.__map_manager.load_first_uncleared_map, self.__start_playing,
                                     self.__start_expedition, self.stop, self.__show_screen_check,
-                                    self.__show_level_select, self.__save_data.check_unlocks)
+                                    self.__show_level_select, self.__save_data.check_unlocks, self._conditional_saving)
         self.__level_select = LevelSelectWidgetSet(
             self.__controls, Logger.instance(), self, self.__render, self.__rm, self.__show_input_popup,
             self.__save_data.get_completed_levels,
