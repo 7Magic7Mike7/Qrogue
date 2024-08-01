@@ -793,6 +793,13 @@ class ExpeditionGenerator(DungeonGenerator):
                                 )
                                 tile_list = [tile_from_tile_data(entry.code, entry.data)
                                              for row in tile_matrix for entry in row]
+                                # place the Key again because static_entries can only set a universal Pickup and not
+                                #  directly a Key (since we don't want to place Keys at random positions, WFC actually
+                                #  does not learn to place Keys, hence, static_entries can only use Pickups to collapse
+                                #  the wave functions correctly)
+                                if pos == key_room_pos:
+                                    tile_list[Room.coordinate_to_index(Room.mid(), in_room=True)] = \
+                                        tiles.Collectible(Key())
 
                                 if self.correct_tile_list(tile_list, room_hallways) >= 0:
                                     break
