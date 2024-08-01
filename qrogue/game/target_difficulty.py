@@ -45,8 +45,8 @@ class ExplicitTargetDifficulty:
             stv = rm.get_element(self.__pool, msg="ExplicitTargetDiff_selectStv")
 
         if stv.num_of_qubits != robot.num_of_qubits:
-            Logger.instance().error(f"Stv (={stv}) from pool does not have correct number of qubits (="
-                                    f"{robot.num_of_qubits})!", show=False, from_pycui=False)
+            Logger.instance().warn(f"Stv (={stv}) from pool does not have correct number of qubits (="
+                                   f"{robot.num_of_qubits})!", show=False, from_pycui=False)
         return stv
 
     def produce_reward(self, rm: MyRandom) -> Optional[Collectible]:
