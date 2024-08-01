@@ -113,6 +113,7 @@ class Logger(PyCUILogger):
             self.__error_popup(str(message))
         highlighting = "\n----------------------------------\n"
         self.info(f"{highlighting}ERROR |{message}{highlighting}", from_pycui=from_pycui)
+        Config.check_reachability("Logger.error()")
 
     def throw(self, error: Union[BaseException, str]) -> None:
         if isinstance(error, str):
@@ -121,6 +122,7 @@ class Logger(PyCUILogger):
         print(error)
         self._write(f"[ERROR] {error}", None)
         self.flush()
+        Config.check_reachability("Logger.throw()")
         raise error
 
     def clear(self) -> None:
