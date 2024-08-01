@@ -11,7 +11,7 @@ class Enemy(Target):
     An Enemy is a Target with a certain chance to flee.
     """
 
-    def __init__(self, id_: int, eid: int, target: StateVector, reward: Collectible,
+    def __init__(self, id_: int, eid: int, target: StateVector, reward: Optional[Collectible],
                  input_: Optional[StateVector] = None):
         """
         Creates an Enemy-Target with a given target state vector and reward.

@@ -76,6 +76,8 @@ class EnemyTargetFactory(EnemyFactory):
             reward = self.__custom_reward_factory.produce(rm)
         elif self.__target_difficulty.has_reward_factory:
             reward = self.__target_difficulty.produce_reward(rm)
+        else:
+            reward = None
 
         target_stv = self.__target_difficulty.create_statevector(robot, rm)
         if self.__input_difficulty is None:

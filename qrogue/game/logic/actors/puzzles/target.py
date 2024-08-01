@@ -11,7 +11,7 @@ class Target(ABC):
     Base class for fight-/puzzle-targets.
     """
 
-    def __init__(self, id_: int, target: Union[StateVector, Callable[[], StateVector]], reward: Collectible,
+    def __init__(self, id_: int, target: Union[StateVector, Callable[[], StateVector]], reward: Optional[Collectible],
                  input_: Optional[Union[StateVector, Callable[[], StateVector]]] = None,
                  allow_target_input_equality: bool = False):
         """
@@ -37,7 +37,7 @@ class Target(ABC):
         else:
             self.__input: Callable[[], StateVector] = input_
 
-        self.__reward: Collectible = reward
+        self.__reward: Optional[Collectible] = reward
         self.__is_active: bool = True
         # how often the target was checked (i.e., if it was reached) - can be used to determine the rewarded score
         self.__checks: int = 0
