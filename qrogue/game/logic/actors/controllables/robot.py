@@ -303,7 +303,6 @@ class _Backpack:
             data.append(gate.copy())
         return data  # [gate.copy() for gate in self.__storage]
 
-
     def instruction_iterator(self) -> Iterator[Instruction]:
         """
 
