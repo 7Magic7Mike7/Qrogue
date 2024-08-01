@@ -419,6 +419,16 @@ class GameplayConfig:
         GameplayConfig.__KNOWLEDGE_MODE = GameplayConfig._KnowledgeMode.Experienced
 
     @staticmethod
+    def set_knowledge_mode(km: int) -> bool:
+        if km == 0:
+            GameplayConfig.set_newbie_mode()
+            return True
+        elif km == 1:
+            GameplayConfig.set_experienced_mode()
+            return True
+        return False
+
+    @staticmethod
     def get_knowledge_mode() -> int:
         return GameplayConfig.__KNOWLEDGE_MODE.value
 

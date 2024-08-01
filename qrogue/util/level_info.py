@@ -52,7 +52,7 @@ class LevelInfo:
 
     __LEVEL_START_GATES: Dict[str, List[GateType]] = {      # todo: parse from level file instead?
         # newbie tutorials
-        "l0k0v0": [],
+        "l0k0v0": [GateType.XGate],
         "l0k0v1": [GateType.XGate],
         "l0k0v2": [GateType.XGate],
         "l0k0v3": [GateType.XGate, GateType.CXGate],
@@ -106,6 +106,17 @@ class LevelInfo:
                 LevelInfo.__NAME_CONVERTER[level] = display_name
 
     @staticmethod
+    def extract_knowledge_mode(cur_map: str) -> Optional[int]:
+        if "k" in cur_map and "v" in cur_map:
+            km = cur_map[cur_map.index("k") + 1:cur_map.index("v")]
+            if km.isdigit():
+                return int(km)
+            else:
+                from qrogue.util import Config
+                Config.check_reachability("LevelInfo.extract_knowledge_mode(): invalid knowledge mode")
+        return None
+
+    @staticmethod
     def get_next(cur_map: str, is_level_completed: Callable[[str], bool]) -> Optional[str]:
         """
         :param cur_map: internal name of the map we want to get the next map's internal name for
@@ -113,16 +124,20 @@ class LevelInfo:
                                     meta name MapConfig.first_uncleared()
         :return: the internal name of cur_map's next map or None if there is no next map
         """
+        knowledge_mode = LevelInfo.extract_knowledge_mode(cur_map)
+        if knowledge_mode is None:
+            knowledge_mode = GameplayConfig.get_knowledge_mode()
+
         if cur_map == MapConfig.first_uncleared():
-            next_map = LevelInfo.__MAP_ORDER[GameplayConfig.get_knowledge_mode()][cur_map]
+            next_map = LevelInfo.__MAP_ORDER[knowledge_mode][cur_map]
             while is_level_completed(next_map):
-                if next_map in LevelInfo.__MAP_ORDER[GameplayConfig.get_knowledge_mode()]:
-                    next_map = LevelInfo.__MAP_ORDER[GameplayConfig.get_knowledge_mode()][next_map]
+                if next_map in LevelInfo.__MAP_ORDER[knowledge_mode]:
+                    next_map = LevelInfo.__MAP_ORDER[knowledge_mode][next_map]
                 else:
                     break
             return next_map
-        elif cur_map in LevelInfo.__MAP_ORDER[GameplayConfig.get_knowledge_mode()]:
-            return LevelInfo.__MAP_ORDER[GameplayConfig.get_knowledge_mode()][cur_map]
+        elif cur_map in LevelInfo.__MAP_ORDER[knowledge_mode]:
+            return LevelInfo.__MAP_ORDER[knowledge_mode][cur_map]
         elif cur_map.startswith(MapConfig.expedition_map_prefix()):
             return MapConfig.expedition_map_prefix()
         return None
@@ -137,15 +152,9 @@ class LevelInfo:
         """
         if cur_map == MapConfig.first_uncleared():
             cur_map = LevelInfo.get_prev(LevelInfo.get_next(cur_map, is_level_completed), is_level_completed)
-        # todo: implement more dynamically?
-        knowledge_mode = GameplayConfig.get_knowledge_mode()
-        if "l" in cur_map and "k" in cur_map:
-            km = cur_map[cur_map.index("l") + 1:cur_map.index("k")]
-            if km.isdigit():
-                knowledge_mode = km
-            else:
-                from qrogue.util import Config
-                Config.check_reachability("LevelInfo.get_prev(): invalid knowledge mode")
+        knowledge_mode = LevelInfo.extract_knowledge_mode(cur_map)
+        if knowledge_mode is None:
+            knowledge_mode = GameplayConfig.get_knowledge_mode()
 
         if cur_map.startswith(MapConfig.expedition_map_prefix()):
             return f"l0k{knowledge_mode}v4"  # last level
@@ -288,6 +297,18 @@ class LevelData:
     @property
     def total_score(self) -> int:
         return self.__score + self.__time_bonus
+
+    @property
+    def knowledge_mode(self) -> Optional[int]:
+        return LevelInfo.extract_knowledge_mode(self.__name)
+
+    @property
+    def level_num(self) -> Optional[int]:
+        if "v" in self.__name:
+            level_num = self.__name[self.__name.index("v")+1:]
+            if level_num.isdigit():
+                return int(level_num)
+        return None
 
     def __str__(self) -> str:
         return f"{self.__name} ({datetime2str(self.__date_time)}, {self.__duration}s, " \

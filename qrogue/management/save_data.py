@@ -9,7 +9,7 @@ from qrogue.management.save_grammar.SaveDataLexer import SaveDataLexer
 from qrogue.management.save_grammar.SaveDataParser import SaveDataParser
 from qrogue.management.save_grammar.SaveDataVisitor import SaveDataVisitor
 from qrogue.util import Logger, CommonInfos, LevelInfo, LevelData, Config, PathConfig, FileTypes, ParserErrorListener, \
-    GateType
+    GateType, GameplayConfig
 from qrogue.util.achievements import Achievement, Unlocks
 from qrogue.util.util_functions import cur_datetime, datetime2str
 
@@ -352,6 +352,10 @@ class _SaveDataGenerator(SaveDataVisitor):
     def gate_separator() -> str:
         return ";"  # the general separator can be used to separate gates for improved readability
 
+    def __init__(self):
+        self.__knowledge_mode = None
+        self.__highest_knowledge_level = -1
+
     def load(self, file_data) -> Tuple[datetime, Inventory, List[GateType], List[LevelData],
             List[Tuple[str, datetime]], List[Achievement]]:
         input_stream = InputStream(file_data)
@@ -412,7 +416,25 @@ class _SaveDataGenerator(SaveDataVisitor):
         date_time = self.visitDate_time(ctx.date_time())
         duration = self.visitDuration(ctx.duration())
         score = self.visitScore(ctx.score())
-        return LevelData(name, date_time, duration, score)
+        level_data = LevelData(name, date_time, duration, score)
+
+        # find out which knowledge mode the highest level has
+        km, ln = level_data.knowledge_mode, level_data.level_num
+        if self.__knowledge_mode is None:
+            # initialize knowledge mode regardless (could still be null if level has no knowledge mode)
+            self.__knowledge_mode = km
+        elif km is not None and ln is not None:
+            # only set it if km and ln are not None (if km is None, we don't have any information anyways, and if ln is
+            #  None we cannot compare it to the highest level anyways)
+            if km != self.__knowledge_mode and ln is not None and ln > self.__highest_knowledge_level:
+                # set new value for knowledge mode if km differs and comes from a higher level
+                self.__knowledge_mode = km
+            # store new highest level regardless of whether knowledge mode changed (if it did, we already know that ln
+            #  is greater than the current highest level, else we stay in the same mode and also want to update highest
+            #  level)
+            self.__highest_knowledge_level = max(self.__highest_knowledge_level, ln)
+
+        return level_data
 
     def visitLevels(self, ctx: SaveDataParser.LevelsContext) -> List[LevelData]:
         return [self.visitLevel(level) for level in ctx.level()]
@@ -453,4 +475,8 @@ class _SaveDataGenerator(SaveDataVisitor):
         levels = self.visitLevels(ctx.levels())
         unlocks = self.visitUnlocks(ctx.unlocks())
         achievement_list = self.visitAchievements(ctx.achievements())
+
+        if not GameplayConfig.set_knowledge_mode(self.__knowledge_mode):
+            Logger.instance().warn(f"Failed to set knowledge mode to \"{self.__knowledge_mode}\"", from_pycui=False)
+
         return date_time, inventory, gates, levels, unlocks, achievement_list
