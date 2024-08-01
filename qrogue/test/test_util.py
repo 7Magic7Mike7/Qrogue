@@ -195,17 +195,6 @@ class DummySelectionWidget(SelectionWidget):
         self._left()
 
 
-class DummyRobot(BaseBot):
-    def __init__(self):
-        super(DummyRobot, self).__init__(game_over)
-
-    def get_img(self):
-        return "D"
-
-    def description(self, check_unlocks: Optional[Callable[[str], bool]] = None) -> str:
-        return "Minimal Robot for testing non-Robot dependent code (e.g. tiles)."
-
-
 class DummyRoboProps(RoboProperties):
     def __init__(self):
         super().__init__(3, 5, None)

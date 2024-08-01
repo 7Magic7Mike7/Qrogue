@@ -354,7 +354,6 @@ class Robot(Controllable, ABC):
         # initialize based on empty circuit
         self.__instructions: List[Optional[Instruction]] = [None] * attributes.circuit_space
         # initially there is no static gate (i.e., a gate that cannot be moved and was added by a puzzle)
-        self.__static_gate: Optional[Instruction] = None
 
         if False:
             # todo: for whatever reason this code is slower than calling below method which executes a simulation...
@@ -460,21 +459,6 @@ class Robot(Controllable, ABC):
             if inst is not None and i < len(self.__instructions):
                 self.__instructions[i] = inst
 
-    def add_static_gate(self, gate: Instruction):
-        if self.__static_gate is None:
-            if gate is not None:
-                self.__static_gate = gate
-                # expand instructions and place static_gate in its middle
-                prev_circuit_space = self.circuit_space
-                self.__update_circuit_space(prev_circuit_space + 1 + prev_circuit_space)
-                self.__place_instruction(self.__static_gate, prev_circuit_space)
-        else:
-            Logger.instance().error("Static Gate was not reset!", show=False, from_pycui=False)
-
-    def reset_static_gate(self, prev_circuit_space: int):
-        self.__static_gate = None
-        self.__update_circuit_space(prev_circuit_space)
-
     def update_statevector(self, input_stv: StateVector, use_energy: bool = True, check_for_game_over: bool = True):
         """
         Compiles and simulates the current circuit and saves and returns the resulting StateVector. Can also lead to a
@@ -494,8 +478,6 @@ class Robot(Controllable, ABC):
             if inst is not None:
                 num_of_used_gates += 1
                 inst.append_to(circuit)
-        if self.__static_gate is not None:
-            self.__static_gate.append_to(circuit)
 
         amplitudes = self.__unitary_simulator.execute(circuit, decimals=QuantumSimulationConfig.DECIMALS)
         self.__circuit_matrix = CircuitMatrix(amplitudes, num_of_used_gates)
@@ -521,8 +503,6 @@ class Robot(Controllable, ABC):
         """
         # todo check if we can extend the condition with "and instruction in self.__instructions"
         if instruction and instruction.is_used():
-            if instruction is self.__static_gate: return False  # player cannot remove the static gate
-
             self.__instructions[instruction.position] = None
             self.__instruction_count -= 1
             instruction.reset(skip_qargs=skip_qargs)
@@ -553,8 +533,6 @@ class Robot(Controllable, ABC):
         if instruction.is_used():
             Logger.instance().throw(RuntimeError("Illegal state: Instruction was not removed before placing!"))
             return False
-        if self.__static_gate is not None and position == self.__static_gate.position:
-            return False  # player cannot overwrite the static gate
 
         if 0 <= position < self.circuit_space:
             if self.__instructions[position]:
@@ -577,8 +555,6 @@ class Robot(Controllable, ABC):
         :return: True if we successfully (re)moved instruction, False otherwise
         """
         if instruction.is_used() and instruction.position != position:
-            if instruction is self.__static_gate: return False  # player cannot move the static gate
-
             if 0 <= position < self.circuit_space:
                 if self.__instructions[position]:
                     self.__remove_instruction(instruction, skip_qargs=True)
