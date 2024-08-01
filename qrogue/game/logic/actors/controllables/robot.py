@@ -506,6 +506,8 @@ class Robot(Controllable, ABC):
             self.__stv = StateVector(amplitudes, num_of_used_gates=self.__instruction_count)
         else:
             self.__stv = self.__circuit_matrix.multiply(input_stv)
+            if self.__stv is None:
+                self.__stv = StateVector.create_zero_state_vector(self.num_of_qubits)
 
         if use_energy and GameplayConfig.get_option_value(Options.energy_mode):
             self.decrease_energy(amount=1)

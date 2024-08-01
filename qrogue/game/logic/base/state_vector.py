@@ -189,17 +189,20 @@ class StateVector:
 
     def get_diff(self, other: "StateVector") -> "StateVector":
         """
-        Calculates the difference of this and other, i.e. this - other, with basically normal vector subtraction rules.
+        Calculates the difference of this and other (i.e., this - other), with normal vector subtraction rules.
         To be more specific, the difference of every amplitude entry of this and other is calculated and then used to
         create a new StateVector.
         In the special case of this being smaller in size than other, this is first extended with 0s before the
-        difference is calculated the usual way.
+        difference is calculated the usual way. This ensures that the resulting StateVector has always the same size as
+        other.
+        Should other be smaller in size than this, an erroneous StateVector with all -1 amplitudes is returned instead
 
         :param other: the StateVector we want to know the difference of
-        :return: a new StateVector corresponding to this - other
+        :return: a new StateVector corresponding to this - other, with size equal to other
         """
-        assert self.size <= other.size, "Cannot calculate the difference between StateVectors of different size! " \
-                                        f"self = {self}, other = {other}"
+        Logger.instance().assertion(self.size <= other.size, "Cannot calculate the difference between StateVectors of "
+                                                             f"different sizes! self = {self}, other = {other}",
+                                    show_popup=True)
 
         if self.size == other.size:
             diff = [self.__amplitudes[i] - other.__amplitudes[i] for i in range(self.size)]
@@ -213,6 +216,8 @@ class StateVector:
             for i in range(self.size):
                 diff[i] = self.__amplitudes[i] - other.__amplitudes[i]
             return StateVector(diff)
+
+        return StateVector([-1] * other.size)
 
     def wrap_in_qubit_conf(self, index: int, space_per_value: Optional[int] = None, coloring: bool = False,
                            correct_amplitude: bool = False, show_percentage: bool = False, skip_ket: bool = False) \
