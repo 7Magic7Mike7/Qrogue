@@ -126,11 +126,11 @@ class MapConfig:
 class CheatConfig:
     # __ALL and __NONE do not toggle! They simply set or reset all "real" cheats. All other/"real" cheats are toggles.
     __ALL = "aLL"
-    __GOD_MODE = "Qod-Mode"
-    __SCARED_RABBIT = "Rabbit_Tunnel"
-    __INF_RESOURCES = "Rich"
-    __MAP_REVEAL = "Illuminati"
-    __OBSTACLE_IGNORE = "Obstacle-Iqnor"
+    __GOD_MODE = "Qod-Mode"     # puzzle checks always succeed, regardless of your circuit or additional constraints
+    __SCARED_RABBIT = "Rabbit_Tunnel"   # all non-0 enemies allways flee
+    __INF_RESOURCES = "Rich"    # you're always at max resources (keys, energy)
+    __MAP_REVEAL = "Illuminati"     # all areas are visible
+    __OBSTACLE_IGNORE = "Obstacle-Iqnor"    # obstacles are walkable
     __MESSAGE_IGNORE = "Lequsi"  # can only see messages via history (including options and help menus)
     __NONE = "n0n3"
     __CHEATS = {
