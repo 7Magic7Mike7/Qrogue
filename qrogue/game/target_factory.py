@@ -7,7 +7,7 @@ from qrogue.game.logic.actors import Challenge
 from qrogue.game.logic.actors.controllables import Robot
 from qrogue.game.logic.actors.puzzles import Enemy, Target, Riddle, Boss
 from qrogue.game.logic.base import StateVector
-from qrogue.game.logic.collectibles import Collectible, CollectibleFactory, Instruction, Energy, Score
+from qrogue.game.logic.collectibles import Collectible, CollectibleFactory, Instruction, Energy, Score, QuantumFuser
 import qrogue.game.logic.collectibles.instruction as gates
 from qrogue.game.target_difficulty import PuzzleDifficulty, ExplicitTargetDifficulty
 from qrogue.game.world.navigation import Direction
@@ -287,7 +287,7 @@ class BossFactory(PuzzleFactory):
 
         # pick a reward
         ############################
-        reward = rm.get_element(self.__reward_pool, msg="BossFactory_reward")
+        reward = QuantumFuser()     #rm.get_element(self.__reward_pool, msg="BossFactory_reward")
         ############################
 
         edits = self._difficulty.get_absolute_value(DifficultyType.BonusEditRatio, self._num_of_qubits,

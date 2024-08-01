@@ -9,7 +9,8 @@ from py_cui.widget_set import WidgetSet
 from qrogue.game.logic.actors import Enemy, Riddle, Challenge, Boss, Robot, BaseBot
 from qrogue.game.logic.actors.puzzles import Target
 from qrogue.game.logic.base import StateVector
-from qrogue.game.logic.collectibles import Collectible, instruction as gates, Instruction, InstructionManager
+from qrogue.game.logic.collectibles import Collectible, instruction as gates, Instruction, InstructionManager, \
+    CollectibleType
 from qrogue.game.world.map import Map
 from qrogue.game.world.navigation import Direction
 from qrogue.graphics.popups import Popup
@@ -2180,6 +2181,12 @@ class BossFightWidgetSet(RiddleWidgetSet):
             reward_text = ""
         else:
             reward_text = f"Your reward: {ColorConfig.highlight_object(reward.to_string())}."
+            if reward.type is CollectibleType.QuantumFuser:
+                # todo: currently the number of QuantumFusers is increased in NewSaveData.complete_expedition()
+                pass
+            else:
+                Config.check_reachability("BossFightWidgetSet._prepare_reward_message()")
+                self._robot.give_collectible(reward)
 
         def callback() -> bool:
             self._continue_exploration()    # leave the fight screen

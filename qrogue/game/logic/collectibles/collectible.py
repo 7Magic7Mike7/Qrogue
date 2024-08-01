@@ -18,6 +18,8 @@ class CollectibleType(Enum):
     Energy = 53
     Score = 54
 
+    QuantumFuser = 70
+
 
 class Collectible(ABC):
     def __init__(self, c_type: CollectibleType):
