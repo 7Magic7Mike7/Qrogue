@@ -6,6 +6,7 @@ Description = Speaker "0" prio "In this trainings environment you will start wit
 "1) You can now remove all //02Gates// from your //02Curcuit// by //05resetting// it instead of removing every gate individually."
 "2) You can now //03flee// from //02Puzzles//. This costs //02Energy// (the bigger the digit the higher the costs) but might still be worth it if you just can't find the solution or haven't found the //02Gates// needed to solve it yet. You can //05always try again// later and still get a reward."
 "With that said you now know everything you need. Check out the trainings environment as you like and then you can go back to do the exam."
+NO_TELEPORTER
 
 
 [Robot]
@@ -15,10 +16,10 @@ maxenergy = 100
 
 [Layout]
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-| ee .. __ .. ts == tr == tt .. __ .. ff |
-| 11    ..    ..    ==    ..    ..    11 |
-| ac == ab == aa 21 SR 22 ba == bb == bc |
-| ==    ==    ..    ..    ..    ==    == |
+| ga == gb == gc == gd == ge == gf == gg |
+| ==    ==    ==    ==    ==    ==    == |
+| ac == ab == aa == SR == ba == bb == bc |
+| ==    ==    ..    ==    ..    ==    == |
 | ad == ae == af == cc == bf == be == bd |
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -27,71 +28,119 @@ maxenergy = 100
 SR (Spawn):
 #############
 # _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+#############
+
+ga (Gate):
+#############
+# c c c c c #
+# c _ _ _ c #
+# c _ m _ _ #
+# c _ _ _ c #
+# c c _ c c #
+#############
+c gate *s
+m "TODO (currently S Gates)"
+
+gb (Gate):
+#############
+# c c c c c #
+# c _ _ _ c #
 # _ _ m _ _ #
-# _ t t t _ #
-# _ _ t _ _ #
-# _ _ _ _ _ #
+# c _ _ _ c #
+# c c _ c c #
 #############
-m 1 *tutTeleporter trigger *global_event_learnedAboutFleeing
-t GlobalAchievement *learnedAboutFleeing
-t teleport *back
-t GlobalAchievement *learnedAboutFleeing
-t GlobalAchievement *learnedAboutFleeing
+c gate *s
+m "TODO (currently S Gates)"
 
-tr (Wild):
+gc (Gate):
 #############
-# c o c o c #
-# _ m _ m _ #
+# c c o c c #
+# c _ m _ c #
 # _ _ _ _ _ #
-# _ m _ m _ #
-# c o _ o c #
+# c _ _ _ c #
+# c c _ c c #
 #############
-c gate *x
-m *pickupXCX
 c gate *cx
-m *pickupCXH
+c gate *cx
 c gate *x
-m *pickupX
-c gate *h
-m *pickupH
+c gate *x
+c gate *cx
+c gate *x
+c gate *cx
+c gate *x
+c gate *cx
+c gate *cx
+c gate *x
+c gate *x
+m "Here you can pick up X Gates (right) and CX Gates (left)."
 
-ts (Wild):
+gd (Gate):
 #############
-# c o c o c #
-# _ m _ m _ #
+# c c c c c #
+# c _ m _ c #
 # _ _ _ _ _ #
-# _ m _ m _ #
-# c o c o c #
+# _ _ _ _ _ #
+# c _ _ _ c #
 #############
-c gate *x
-m *pickupXCX
-c gate *cx
-m *pickupCXH
 c gate *h
-c gate *x
-m *pickupXCX
-c gate *cx
-m *pickupCXH
 c gate *h
+c gate *h
+c gate *h
+c gate *h
+c gate *h
+c gate *h
+c qubit 1
+c qubit 1
+m "Here you can pick up H Gates (top) and additional Qubit (bottom)."
 
-tt (Wild):
+ge (Gate):
 #############
-# c o c o c #
-# _ m _ m _ #
+# c c o c c #
+# c _ m _ c #
 # _ _ _ _ _ #
-# _ m _ m _ #
-# c o c o c #
+# c _ _ _ c #
+# c c _ c c #
 #############
-c gate *x
-m *pickupXCX
-c gate *cx
-m *pickupCXH
-c gate *h
-c gate *x
-m *pickupXCX
-c gate *cx
-m *pickupCXH
-c gate *h
+c gate *y
+c gate *y
+c gate *z
+c gate *z
+c gate *y
+c gate *z
+c gate *y
+c gate *z
+c gate *y
+c gate *y
+c gate *z
+c gate *z
+m "Here you can pick up Y Gates (left) and Z Gates (right)."
+
+gf (Gate):
+#############
+# c c c c c #
+# c _ _ _ c #
+# _ _ m _ _ #
+# c _ _ _ c #
+# c c _ c c #
+#############
+c gate *s
+m "TODO (currently S Gates)"
+
+gg (Gate):
+#############
+# c c c c c #
+# c _ _ _ c #
+# _ _ m _ c #
+# c _ _ _ c #
+# c c _ c c #
+#############
+c gate *s
+m "TODO (currently S Gates)"
+
 
 
 aa (Wild):
@@ -206,12 +255,13 @@ bf (Wild):
 
 cc (Wild):
 #############
-# 0 0 0 0 0 #
-# 0 0 0 0 0 #
 # _ _ _ _ _ #
-# 0 0 0 0 0 #
-# 0 0 0 0 0 #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ _ _ _ #
+# _ _ b _ _ #
 #############
+b *code2 score 5000 10
 
 ee (Wild):
 #############
