@@ -1252,7 +1252,7 @@ class PauseMenuWidgetSet(MyWidgetSet):
                  achievements_to_string_callback: Callable[[], str]):
         super().__init__(logger, root, render)
         self.__continue_callback = continue_callback
-        self.__save_callback = save_callback
+        self.__save_game = save_callback
         self.__exit_run = exit_run_callback
         self.__restart_callback = restart_callback
         self.__achievements_to_string = achievements_to_string_callback
@@ -1314,7 +1314,7 @@ class PauseMenuWidgetSet(MyWidgetSet):
         return False
 
     def __save(self) -> bool:
-        _, common_info = self.__save_callback()
+        _, common_info = self.__save_game()
         common_info.show()
         return False
 
