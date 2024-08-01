@@ -2,7 +2,7 @@ import json
 from typing import List, Dict, Union, Tuple, Optional
 
 from qrogue.game.world.map.rooms import AreaType
-from qrogue.util import PathConfig, MyRandom
+from qrogue.util import PathConfig, MyRandom, Logger
 from qrogue.util.util_functions import enum_from_string
 
 from .wfc_generator import WFCGenerator, WFCRoomGenerator
@@ -44,49 +44,60 @@ class WFCManager:
 
         PathConfig.write(file_name, data)
 
-    def load(self, file_name: Optional[str] = None):
+    def load(self, file_name: Optional[str] = None, learn_if_non_existent: Optional[bool] = None):
         if file_name is None: file_name = WFCManager.__DEFAULT_FILE
-        data = PathConfig.read(file_name, in_user_path=True)
-        line_start = 0
-        while line_start < len(data):
-            # read area type
-            line_end = data.index("\n", line_start)
-            area_type = data[line_start:line_end]
-            area_type = area_type[:-len(WFCManager.__AREA_TYPE_START)]  # remove meta suffix
-            area_type = enum_from_string(AreaType, area_type)
+        if learn_if_non_existent is None: learn_if_non_existent = True
+        try:
+            data = PathConfig.read(file_name, in_user_path=True)
+            line_start = 0
+            while line_start < len(data):
+                # read area type
+                line_end = data.index("\n", line_start)
+                area_type = data[line_start:line_end]
+                area_type = area_type[:-len(WFCManager.__AREA_TYPE_START)]  # remove meta suffix
+                area_type = enum_from_string(AreaType, area_type)
 
-            # read number of upcoming WFCGenerator data (pos and type weights)
-            line_start = line_end + 1
-            line_end = data.index("\n", line_start)
-            num_wfc_gens = int(data[line_start:line_end])
-
-            for i in range(num_wfc_gens):
+                # read number of upcoming WFCGenerator data (pos and type weights)
                 line_start = line_end + 1
-                json_start = line_start + len(WFCManager.__POS_WEIGHTS_START)
-                json_end = data.index(WFCManager.__TYPE_WEIGHTS_START, json_start)
-                json_string = data[json_start:json_end]
-                pos_weights = json.loads(json_string)
+                line_end = data.index("\n", line_start)
+                num_wfc_gens = int(data[line_start:line_end])
 
-                line_start = json_end + 1
-                json_start = line_start + len(WFCManager.__TYPE_WEIGHTS_START)
-                if i == num_wfc_gens - 1:
-                    json_end = data.index(WFCManager.__AREA_TYPE_END, json_start)
+                for i in range(num_wfc_gens):
+                    line_start = line_end + 1
+                    json_start = line_start + len(WFCManager.__POS_WEIGHTS_START)
+                    json_end = data.index(WFCManager.__TYPE_WEIGHTS_START, json_start)
                     json_string = data[json_start:json_end]
-                    line_end = json_end + len(WFCManager.__AREA_TYPE_END)
-                else:
-                    json_end = data.index(WFCManager.__POS_WEIGHTS_START, json_start)
-                    json_string = data[json_start:json_end]
-                    line_end = json_end
-                type_weights = json.loads(json_string)
+                    pos_weights = json.loads(json_string)
 
-                # convert json dicts to actual dicts (i.e., correct values instead of strings)
-                wfc_gen = WFCRoomGenerator.from_json_dicts(area_type, pos_weights, type_weights)
-                if area_type in self.__area_data:
-                    self.__area_data[area_type].append(wfc_gen)
-                else:
-                    self.__area_data[area_type] = [wfc_gen]
+                    line_start = json_end + 1
+                    json_start = line_start + len(WFCManager.__TYPE_WEIGHTS_START)
+                    if i == num_wfc_gens - 1:
+                        json_end = data.index(WFCManager.__AREA_TYPE_END, json_start)
+                        json_string = data[json_start:json_end]
+                        line_end = json_end + len(WFCManager.__AREA_TYPE_END)
+                    else:
+                        json_end = data.index(WFCManager.__POS_WEIGHTS_START, json_start)
+                        json_string = data[json_start:json_end]
+                        line_end = json_end
+                    type_weights = json.loads(json_string)
 
-            line_start = line_end + 1
+                    # convert json dicts to actual dicts (i.e., correct values instead of strings)
+                    wfc_gen = WFCRoomGenerator.from_json_dicts(area_type, pos_weights, type_weights)
+                    if area_type in self.__area_data:
+                        self.__area_data[area_type].append(wfc_gen)
+                    else:
+                        self.__area_data[area_type] = [wfc_gen]
+
+                line_start = line_end + 1
+        except FileNotFoundError as error:
+            if learn_if_non_existent:
+                # WFC has not been learned yet
+                Logger.instance().info(f"WFC file \"{file_name}\" not found. Learning and storing fresh WFC values...",
+                                       from_pycui=False)
+                self.learn()
+                self.store()
+            else:
+                raise error
 
     def get_generator(self, area_type: AreaType, selection: Union[int, MyRandom]) -> WFCRoomGenerator:
         if isinstance(selection, int):
