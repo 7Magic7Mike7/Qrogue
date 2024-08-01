@@ -4,10 +4,10 @@ from typing import Callable, Any, Optional
 from qrogue.game.logic import Message as LogicalMessage
 from qrogue.game.logic.actors import Controllable, Riddle, Challenge
 from qrogue.game.logic.collectibles import Collectible as LogicalCollectible, Energy as LogicalEnergy, \
-    Score as LogicalScore, CollectibleType
+    Score as LogicalScore, Instruction, CollectibleType
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.game.world.tiles.tiles import Tile, TileCode
-from qrogue.util import Logger, ColorConfig, CommonQuestions, MapConfig
+from qrogue.util import Logger, ColorConfig, CommonQuestions, MapConfig, Config, CommonPopups
 
 
 class WalkTriggerTile(Tile):
@@ -61,6 +61,8 @@ class WalkTriggerTile(Tile):
         self.__explanation = message
 
     def set_event(self, event_id: str):
+        if self.__event_id is not None:
+            Config.check_reachability("WalkTriggerTile.set_event()")
         self.__event_id = event_id
 
     def trigger(self, direction: Direction, controllable: Controllable, trigger_event_callback: Callable[[str], Any]) \
@@ -210,7 +212,7 @@ class Riddler(WalkTriggerTile):
     @property
     def data(self) -> Optional[int]:
         if self.__is_active:
-            return self.__riddle.attempts
+            return self.__riddle.edits
         else:
             return None
 
@@ -238,10 +240,14 @@ class Riddler(WalkTriggerTile):
 
 
 class Challenger(WalkTriggerTile):
-    def __init__(self, open_challenge_callback: Callable[[Controllable, Challenge], None], challenge: Challenge):
+    def __init__(self, challenge: Challenge, gate: Instruction,
+                 open_challenge_callback: Callable[[Controllable, Challenge], None],
+                 show_message_callback: Callable[[str, str], None]):
         super().__init__(TileCode.Challenger)
-        self.__open_challenge = open_challenge_callback
         self.__challenge = challenge
+        self.__gate = gate
+        self.__open_challenge = open_challenge_callback
+        self.__show_message = show_message_callback
         self.__is_active = True
 
     @property
@@ -254,11 +260,16 @@ class Challenger(WalkTriggerTile):
 
     def _on_walk(self, direction: Direction, controllable: Controllable) -> bool:
         if self._is_active:
+            controllable.give_collectible(self.__gate, force=True)
             self.__open_challenge(controllable, self.__challenge)
+            self.__show_message("Challenge",
+                                f"You received {ColorConfig.highlight_object(self.__gate.name(), invert=True)} from "
+                                f"the {ColorConfig.highlight_object('Challenger', invert=True)}. Now show them how to "
+                                f"use it to continue!")
         return False
 
     def _copy(self) -> "WalkTriggerTile":
-        return Challenger(self.__open_challenge, self.__challenge)
+        return Challenger(self.__challenge, self.__gate, self.__open_challenge, self.__show_message)
 
     def get_img(self):
         if self._is_active:
@@ -280,13 +291,14 @@ class Collectible(WalkTriggerTile):
 
         Collectible.__pickup_message = pickup_message
 
-    def __init__(self, collectible: LogicalCollectible, secret_type: bool = False):
+    def __init__(self, collectible: LogicalCollectible, secret_type: bool = False, force_add: bool = False):
         super().__init__(TileCode.Collectible)
         if collectible is None:
             Logger.instance().warn("Collectible is None!", from_pycui=False)
             collectible = LogicalScore()
         self.__collectible = collectible
         self.__secret_type = secret_type
+        self.__force_add = force_add
         self.__active = True
 
     @property
@@ -320,20 +332,22 @@ class Collectible(WalkTriggerTile):
 
     def _on_walk(self, direction: Direction, controllable: Controllable) -> bool:
         if self.__active:
-            if not self.has_explanation:
-                if self.__collectible.type is CollectibleType.Gate:
-                    if Collectible.__pickup_message:
-                        Collectible.__pickup_message(self.__collectible)
-                    else:
-                        Logger.instance().error("Collectible's pickup message callback is None!", show=False,
-                                                from_pycui=False)
-            controllable.give_collectible(self.__collectible)
-            self.__active = False
+            if controllable.give_collectible(self.__collectible, force=self.__force_add):
+                if not self.has_explanation:
+                    if self.__collectible.type is CollectibleType.Gate:
+                        if Collectible.__pickup_message:
+                            Collectible.__pickup_message(self.__collectible)
+                        else:
+                            Logger.instance().error("Collectible's pickup message callback is None!", show=False,
+                                                    from_pycui=False)
+                self.__active = False
+            else:
+                CommonPopups.BackpackFull.show()
             return True
         return False
 
     def _copy(self) -> "Tile":
-        return Collectible(self.__collectible)
+        return Collectible(self.__collectible, self.__secret_type, self.__force_add)
 
 
 class Energy(WalkTriggerTile):  # todo why is this extra and not Collectible?

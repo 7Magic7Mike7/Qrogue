@@ -1,9 +1,10 @@
 from datetime import datetime
 from typing import Dict, List, Optional, Callable
 
-from qrogue.util import MapConfig, GameplayConfig, PathConfig, MapGrammarConfig, ScoreConfig
-from qrogue.util.achievements import Unlocks
-from qrogue.util.util_functions import datetime2str
+from .achievements import Unlocks
+from .config import MapConfig, GameplayConfig, PathConfig, MapGrammarConfig, ScoreConfig, GateType
+from .stv_difficulty import StvDifficulty
+from .util_functions import datetime2str
 
 
 class LevelInfo:
@@ -17,11 +18,11 @@ class LevelInfo:
         #   - alternatively maps can also start with "expedition" to mark them as generated
         0: {
             MapConfig.first_uncleared(): "l0k0v0",
-            "l0k0v4": f"{MapConfig.expedition_map_prefix()}25",
+            "l0k0v4": f"{MapConfig.expedition_map_prefix()}",
         },
         1: {
             MapConfig.first_uncleared(): "l0k1v0",
-            "l0k1v4": f"{MapConfig.expedition_map_prefix()}25",
+            "l0k1v4": f"{MapConfig.expedition_map_prefix()}",
         },
     }
 
@@ -30,6 +31,32 @@ class LevelInfo:
         "l0k0v0": [Unlocks.MainMenuContinue, Unlocks.ShowEnergy, ],
         "l0k0v1": [Unlocks.ShowEquation, Unlocks.PuzzleHistory],
         "l0k0v4": [Unlocks.LevelSelection],
+
+        # experienced tutorials are copied from newbie tutorials entered in init()
+
+        # other levels
+    }
+
+    __LEVEL_COMPLETION_UNLOCKED_GATES: Dict[str, List[GateType]] = {
+        # newbie tutorials
+        "l0k0v0": [GateType.XGate],
+        "l0k0v1": [GateType.CXGate],
+        "l0k0v2": [],
+        "l0k0v3": [GateType.HGate],
+        "l0k0v4": [GateType.SGate],
+
+        # experienced tutorials are copied from newbie tutorials entered in init()
+
+        # other levels
+    }
+
+    __LEVEL_START_GATES: Dict[str, List[GateType]] = {      # todo: parse from level file instead?
+        # newbie tutorials
+        "l0k0v0": [],
+        "l0k0v1": [GateType.XGate],
+        "l0k0v2": [GateType.XGate],
+        "l0k0v3": [GateType.XGate, GateType.CXGate],
+        "l0k0v4": [GateType.XGate, GateType.CXGate, GateType.HGate],
 
         # experienced tutorials are copied from newbie tutorials entered in init()
 
@@ -48,14 +75,23 @@ class LevelInfo:
                 src_name, dst_name = f"l0k{km}v{i}", f"l0k{km}v{i + 1}"
                 LevelInfo.__MAP_ORDER[km][src_name] = dst_name
 
+        def init_experienced_tutorials(target_dict: Dict[str, List]):
+            values_to_add: Dict[str, List] = {}
+            for name in target_dict:
+                if name[2:4] != "k0": continue
+                exp_name = name[:2] + "k1" + name[4:]
+                values_to_add[exp_name] = target_dict[name].copy()
+            for name in values_to_add:
+                target_dict[name] = values_to_add[name]
+
         # initialize completion unlocks for experienced tutorials
-        values_to_add: Dict[str, List[Unlocks]] = {}
-        for name in LevelInfo.__LEVEL_COMPLETION_UNLOCKS:
-            if name[2:4] != "k0": continue
-            exp_name = name[:2] + "k1" + name[4:]
-            values_to_add[exp_name] = LevelInfo.__LEVEL_COMPLETION_UNLOCKS[name].copy()
-        for name in values_to_add:
-            LevelInfo.__LEVEL_COMPLETION_UNLOCKS[name] = values_to_add[name]
+        init_experienced_tutorials(LevelInfo.__LEVEL_COMPLETION_UNLOCKS)
+
+        # initialize gate unlocks for experienced tutorials
+        init_experienced_tutorials(LevelInfo.__LEVEL_COMPLETION_UNLOCKED_GATES)
+
+        # initialize level start gates for experienced tutorials
+        init_experienced_tutorials(LevelInfo.__LEVEL_START_GATES)
 
         # initialize __NAME_CONVERTER
         for mode in LevelInfo.__MAP_ORDER.keys():
@@ -71,6 +107,12 @@ class LevelInfo:
 
     @staticmethod
     def get_next(cur_map: str, is_level_completed: Callable[[str], bool]) -> Optional[str]:
+        """
+        :param cur_map: internal name of the map we want to get the next map's internal name for
+        :param is_level_completed: Callable to find out which levels are already completed in case cur_map equals the
+                                    meta name MapConfig.first_uncleared()
+        :return: the internal name of cur_map's next map or None if there is no next map
+        """
         if cur_map == MapConfig.first_uncleared():
             next_map = LevelInfo.__MAP_ORDER[GameplayConfig.get_knowledge_mode()][cur_map]
             while is_level_completed(next_map):
@@ -81,10 +123,18 @@ class LevelInfo:
             return next_map
         elif cur_map in LevelInfo.__MAP_ORDER[GameplayConfig.get_knowledge_mode()]:
             return LevelInfo.__MAP_ORDER[GameplayConfig.get_knowledge_mode()][cur_map]
+        elif cur_map.startswith(MapConfig.expedition_map_prefix()):
+            return MapConfig.expedition_map_prefix()
         return None
 
     @staticmethod
     def get_prev(cur_map: str, is_level_completed: Callable[[str], bool]) -> Optional[str]:
+        """
+        :param cur_map: internal name of the map we want to get the previous map's internal name for
+        :param is_level_completed: Callable to find out which levels are already completed in case cur_map equals the
+                                    meta name MapConfig.first_uncleared()
+        :return: the internal name of cur_map's previous map or None if there is no previous map
+        """
         if cur_map == MapConfig.first_uncleared():
             cur_map = LevelInfo.get_prev(LevelInfo.get_next(cur_map, is_level_completed), is_level_completed)
         # todo: implement more dynamically?
@@ -94,7 +144,8 @@ class LevelInfo:
             if km.isdigit():
                 knowledge_mode = km
             else:
-                debug_me = True
+                from qrogue.util import Config
+                Config.check_reachability("LevelInfo.get_prev(): invalid knowledge mode")
 
         if cur_map.startswith(MapConfig.expedition_map_prefix()):
             return f"l0k{knowledge_mode}v4"  # last level
@@ -115,10 +166,39 @@ class LevelInfo:
                 unlocks += LevelInfo.get_level_completion_unlocks(level_name, is_level_completed,
                                                                   include_previous_levels=False)
                 level_name = LevelInfo.get_prev(level_name, is_level_completed)
+            return unlocks
         else:
             if level_name in LevelInfo.__LEVEL_COMPLETION_UNLOCKS:
                 return LevelInfo.__LEVEL_COMPLETION_UNLOCKS[level_name]
             return []
+
+    @staticmethod
+    def get_level_completion_unlocked_gates(level_name: str, is_level_completed: Callable[[str], bool],
+                                            include_previous_levels: bool = False) -> List[GateType]:
+        if include_previous_levels:
+            gates = []
+            while level_name is not None:
+                gates += LevelInfo.get_level_completion_unlocked_gates(level_name, is_level_completed,
+                                                                       include_previous_levels=False)
+                level_name = LevelInfo.get_prev(level_name, is_level_completed)
+            return gates
+        else:
+            if level_name in LevelInfo.__LEVEL_COMPLETION_UNLOCKED_GATES:
+                return LevelInfo.__LEVEL_COMPLETION_UNLOCKED_GATES[level_name]
+            return []
+
+    @staticmethod
+    def get_level_start_gates(level_name: str) -> List[GateType]:
+        """
+        Provides a list of GateType based on which gates the player has when starting a level without special settings
+        (i.e., on the first play-through).
+
+        :param level_name: internal name of the level we want to get the starting gates for
+        :return: list of GateType corresponding to the gates the player has as the beginning of the referenced level
+        """
+        if level_name in LevelInfo.__LEVEL_START_GATES:
+            return LevelInfo.__LEVEL_START_GATES[level_name]
+        return []
 
     @staticmethod
     def convert_to_display_name(internal_name: str, allow_display_name: bool = True) -> Optional[str]:
@@ -128,6 +208,11 @@ class LevelInfo:
             internal_name: the internal name of the level we want to retrieve the display name of
             allow_display_name: whether we allow internal_name to already be a display name and return it in case it is
         """
+        if internal_name.startswith(MapConfig.expedition_map_prefix()):
+            from qrogue.util import Config
+            Config.check_reachability(f"LevelInfo.convert_to_display_name({internal_name})")
+            return f"Expedition"
+
         if internal_name in LevelInfo.__NAME_CONVERTER:
             return LevelInfo.__NAME_CONVERTER[internal_name]
 
@@ -153,6 +238,12 @@ class LevelInfo:
             return LevelInfo.convert_to_display_name(display_name, allow_display_name=False)
         return None
 
+    @staticmethod
+    def get_expedition_difficulty(expedition_progress: int) -> int:
+        # level is at least 1 and at most max_difficulty_level
+        return min(max(int(expedition_progress / 10), StvDifficulty.min_difficulty_level()),
+                   StvDifficulty.max_difficulty_level())
+
 
 class LevelData:
     def __init__(self, name: str, date_time: datetime, duration: int, score: int):
@@ -173,6 +264,10 @@ class LevelData:
 
         """
         return self.__name
+
+    @property
+    def is_level(self) -> bool:
+        return self.__name.startswith(MapConfig.level_map_prefix())
 
     @property
     def date_time(self) -> datetime:

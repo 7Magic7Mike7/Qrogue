@@ -3,12 +3,13 @@ from typing import Tuple, Optional, List, Union, Dict
 
 from antlr4 import InputStream, CommonTokenStream
 
-from qrogue.game.logic.collectibles import Instruction, InstructionManager
+from qrogue.game.logic.collectibles import InstructionManager
 from qrogue.graphics.popups import Popup
 from qrogue.management.save_grammar.SaveDataLexer import SaveDataLexer
 from qrogue.management.save_grammar.SaveDataParser import SaveDataParser
 from qrogue.management.save_grammar.SaveDataVisitor import SaveDataVisitor
-from qrogue.util import Logger, CommonInfos, LevelInfo, LevelData, Config, PathConfig, FileTypes, ParserErrorListener
+from qrogue.util import Logger, CommonInfos, LevelInfo, LevelData, Config, PathConfig, FileTypes, ParserErrorListener, \
+    GateType
 from qrogue.util.achievements import Achievement, Unlocks
 from qrogue.util.util_functions import cur_datetime, datetime2str
 
@@ -33,6 +34,7 @@ class NewSaveData:
     def empty_save_state() -> str:
         save_state = f"{_SaveDataGenerator.header()}\n"
         save_state += f"{datetime2str(cur_datetime())}\n"
+        save_state += f"{_SaveDataGenerator.inventory_header()}\n"
         save_state += f"{_SaveDataGenerator.gates_header()}\n"
         save_state += f"{_SaveDataGenerator.levels_header()}\n"
         save_state += f"{_SaveDataGenerator.unlocks_header()}\n"
@@ -71,7 +73,8 @@ class NewSaveData:
             self.__is_fresh_save = False
 
         self.__date_time = cur_datetime()  # date and time of the latest save
-        self.__gates: List[Instruction] = []
+        self.__inventory = _SaveDataGenerator.Inventory.default()
+        self.__gates: List[GateType] = []
         self.__levels: Dict[str, LevelData] = {}  # key is a level's internal name
         self.__achievements: Dict[str, Achievement] = {}
         self.__unlocks: Dict[str, datetime] = {}
@@ -79,7 +82,7 @@ class NewSaveData:
 
         if save_data is not None and len(save_data.strip()) > 0:
             generator = _SaveDataGenerator()
-            self.__date_time, gates, levels, unlocks, achievement_list = generator.load(save_data)
+            self.__date_time, self.__inventory, gates, levels, unlocks, achievement_list = generator.load(save_data)
             self.__gates = gates.copy()
             for level in levels: self.__levels[level.name] = level
             for ach in achievement_list: self.__achievements[ach.name] = ach
@@ -108,7 +111,7 @@ class NewSaveData:
         if self.check_achievement(name): return True
         return False
 
-    def complete_level(self, name: str, duration: int, date_time: Optional[datetime] = None, score: int = -1) \
+    def _complete_map(self, name: str, duration: int, date_time: Optional[datetime] = None, score: int = -1) \
             -> LevelData:
         # NOTE: name might still have the "done" suffix! Use level_data.name if you need the normalized name.
         # compute date_time and duration based on current time if not provided
@@ -129,6 +132,23 @@ class NewSaveData:
             for unlock in LevelInfo.get_level_completion_unlocks(level_data.name, self.check_level):
                 self.unlock(unlock, date_time)
 
+            # save the gate types that were unlocked
+            for gate in LevelInfo.get_level_completion_unlocked_gates(level_data.name, self.check_level):
+                self.__gates.append(gate)
+
+        return level_data
+
+    def complete_level(self, name: str, duration: int, date_time: Optional[datetime] = None, score: int = -1) \
+            -> LevelData:
+        return self._complete_map(name, duration, date_time, score)
+
+    def complete_expedition(self, name: str, duration: int, difficulty_level: int, gate: GateType,
+                            date_time: Optional[datetime] = None, score: int = -1) \
+            -> LevelData:
+        level_data = self._complete_map(name, duration, date_time, score)
+        self.add_to_achievement(Achievement.CompletedExpedition, difficulty_level)
+        self.__gates.append(gate)
+        self.__inventory.quantum_fuser += 1     # todo: will an expedition's Boss always give 1 QuantumFuser?
         return level_data
 
     def unlock(self, unlock: Union[str, Unlocks], date_time: Optional[datetime] = None):
@@ -143,6 +163,15 @@ class NewSaveData:
         if level_name in self.__levels:
             return self.__levels[level_name]
         return None
+
+    def get_progress(self, achievement: str) -> Tuple[float, float]:
+        if achievement in self.__achievements:
+            ach = self.__achievements[achievement]
+            return ach.score, ach.done_score
+        return -1, -1
+
+    def get_gates(self) -> List[GateType]:
+        return self.__gates.copy()
 
     def to_achievements_string(self) -> str:
         # todo: improve readability
@@ -173,26 +202,26 @@ class NewSaveData:
         text = f"{_SaveDataGenerator.header()}\n"
         text += f"{datetime2str(self.__date_time)}\n"
 
+        text += f"{_SaveDataGenerator.inventory_header()}\n"
+        text += f"{self.__inventory.to_string()}\n"
+
         text += f"{_SaveDataGenerator.gates_header()}\n"
-        text += _SaveDataGenerator.gate_separator().join([gate.gate_type.short_name for gate in self.__gates])
-        text += "\n"
+        if len(self.__gates) > 0:
+            text += _SaveDataGenerator.gate_separator().join([gate_type.short_name for gate_type in self.__gates])
+            text += "\n"
 
         text += f"{_SaveDataGenerator.levels_header()}\n"
-        text += "\n".join([f"{level.name} @ {datetime2str(level.date_time)} "
-                           f"{level.duration} {_SaveDataGenerator.duration_unit()} Score = {level.score}"
-                           for level in self.__levels.values()])
-        text += "\n"
+        for level in self.__levels.values():
+            text += f"{level.name} @ {datetime2str(level.date_time)} {level.duration} " \
+                    f"{_SaveDataGenerator.duration_unit()} Score = {level.score}\n"
 
         text += f"{_SaveDataGenerator.unlocks_header()}\n"
-        text += "\n".join([f"{unlock} @ {datetime2str(self.__unlocks[unlock])}"
-                           for unlock in self.__unlocks])
-        text += "\n"
+        for unlock in self.__unlocks:
+            text += f"{unlock} @ {datetime2str(self.__unlocks[unlock])}\n"
 
         text += f"{_SaveDataGenerator.achievements_header()}\n"
-        text += "\n".join([f"{ach.name} @ {datetime2str(ach.date_time)} "
-                           f"Score = {ach.score} out of {ach.done_score}"
-                           for ach in self.__achievements.values()])
-        text += "\n"
+        for ach in self.__achievements.values():
+            text += f"{ach.name} @ {datetime2str(ach.date_time)} Score = {ach.score} out of {ach.done_score}\n"
 
         return text + f"{_SaveDataGenerator.ender()}\n"
 
@@ -220,18 +249,23 @@ class NewSaveData:
         except:
             return False, CommonInfos.SavingFailed
 
-    def compare(self, other: "NewSaveData") -> Tuple[List[Instruction], List[str], List[Unlocks], List[Achievement]]:
+    def compare(self, other: "NewSaveData") -> Tuple[List[GateType], List[str], List[Unlocks], List[Achievement]]:
         """
         Args:
             other: the NewSaveData to compare with
         Returns:
             List of Instructions, level names, Unlocks and Achievement other has and self does not
         """
+        other_gates = other.__gates.copy()
+        self_gates = self.__gates.copy()
         gate_diff = []
-        for gate in other.__gates:
-            if gate in self.__gates: continue
-            gate_diff.append(gate)
-        gate_diff = [gate for gate in other.__gates if gate not in self.__gates]
+        # find gates that are in other_gates but not in self_gates
+        for gate_type in other_gates:
+            if gate_type in self_gates:
+                # remove gate_type from self_gates, so we can also check if the number of specific gate_types match
+                self_gates.remove(gate_type)
+                continue
+            gate_diff.append(gate_type)
 
         level_diff = []
         for level in other.__levels:
@@ -262,9 +296,29 @@ class NewSaveData:
 
 
 class _SaveDataGenerator(SaveDataVisitor):
+    class Inventory:
+        @staticmethod
+        def default() -> "_SaveDataGenerator.Inventory":
+            return _SaveDataGenerator.Inventory(0)
+
+        def __init__(self, quantum_fuser: int):
+            # for every gate we want to fuse, we need to pay one quantum fuser
+            # e.g., fusing HGate@q1 with CXGate@q1q0 costs two quantum fuser
+            self.quantum_fuser = quantum_fuser
+
+        def to_string(self) -> str:
+            return f"{_SaveDataGenerator.quantum_fuser()} {self.quantum_fuser}"
+
+        def __str__(self):
+            return f"Inventory({self.quantum_fuser})"
+
     @staticmethod
     def header() -> str:
         return "Qrogue<"
+
+    @staticmethod
+    def inventory_header() -> str:
+        return "[INVENTORY]"
 
     @staticmethod
     def gates_header() -> str:
@@ -291,11 +345,15 @@ class _SaveDataGenerator(SaveDataVisitor):
         return "seconds"
 
     @staticmethod
+    def quantum_fuser() -> str:
+        return "QuantumFuser"
+
+    @staticmethod
     def gate_separator() -> str:
         return ";"  # the general separator can be used to separate gates for improved readability
 
-    def load(self, file_data) \
-            -> Tuple[datetime, List[Instruction], List[LevelData], List[Tuple[str, datetime]], List[Achievement]]:
+    def load(self, file_data) -> Tuple[datetime, Inventory, List[GateType], List[LevelData],
+            List[Tuple[str, datetime]], List[Achievement]]:
         input_stream = InputStream(file_data)
         lexer = SaveDataLexer(input_stream)
         token_stream = CommonTokenStream(lexer)
@@ -330,10 +388,16 @@ class _SaveDataGenerator(SaveDataVisitor):
 
     #####################################
 
-    def visitGate(self, ctx: SaveDataParser.GateContext) -> Optional[Instruction]:
-        return InstructionManager.from_name(ctx.NAME_STD().getText())
+    def visitInventory(self, ctx: SaveDataParser.InventoryContext) -> Inventory:
+        quantum_fuser = self.visitValue(ctx.value())
+        return _SaveDataGenerator.Inventory(quantum_fuser)
 
-    def visitGates(self, ctx: SaveDataParser.GatesContext) -> List[Instruction]:
+    #####################################
+
+    def visitGate(self, ctx: SaveDataParser.GateContext) -> Optional[GateType]:
+        return InstructionManager.type_from_name(ctx.NAME_STD().getText())
+
+    def visitGates(self, ctx: SaveDataParser.GatesContext) -> List[GateType]:
         gates = []
         for gate_ctx in ctx.gate():
             gate = self.visitGate(gate_ctx)
@@ -376,11 +440,17 @@ class _SaveDataGenerator(SaveDataVisitor):
 
     #####################################
 
-    def visitStart(self, ctx: SaveDataParser.StartContext)\
-            -> Tuple[datetime, List[Instruction], List[LevelData], List[Tuple[str, datetime]], List[Achievement]]:
+    def visitStart(self, ctx: SaveDataParser.StartContext) -> Tuple[datetime, Inventory, List[GateType],
+            List[LevelData], List[Tuple[str, datetime]], List[Achievement]]:
         date_time = self.visitDate_time(ctx.date_time())
+
+        if ctx.inventory():
+            inventory = self.visitInventory(ctx.inventory())
+        else:
+            inventory = _SaveDataGenerator.Inventory.default()
+
         gates = self.visitGates(ctx.gates())
         levels = self.visitLevels(ctx.levels())
         unlocks = self.visitUnlocks(ctx.unlocks())
         achievement_list = self.visitAchievements(ctx.achievements())
-        return date_time, gates, levels, unlocks, achievement_list
+        return date_time, inventory, gates, levels, unlocks, achievement_list

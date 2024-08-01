@@ -4,13 +4,14 @@ from antlr4 import InputStream, CommonTokenStream
 from antlr4.tree.Tree import TerminalNodeImpl
 
 from qrogue.game.logic import Message
-from qrogue.game.logic.actors import Controllable, Riddle, Robot, BaseBot, Boss as BossActor
+from qrogue.game.logic import actors
+from qrogue.game.logic.actors import Controllable, Riddle, Robot, BaseBot
 from qrogue.game.logic.actors.puzzles import Challenge, boss
 from qrogue.game.logic.base import StateVector
 from qrogue.game.logic.collectibles import Collectible, MultiCollectible, pickup, Qubit, instruction, \
     Instruction, InstructionManager, CollectibleFactory, OrderedCollectibleFactory
-from qrogue.game.target_difficulty import ExplicitTargetDifficulty, ExplicitStvDifficulty
-from qrogue.game.target_factory import EnemyFactory, EnemyTargetFactory
+from qrogue.game.target_difficulty import ExplicitTargetDifficulty
+from qrogue.game.target_factory import EnemyFactory, EnemyTargetFactory, BossFactory
 from qrogue.game.world import tiles
 from qrogue.game.world.dungeon_generator import parser_util
 from qrogue.game.world.dungeon_generator.dungeon_parser.QrogueDungeonLexer import QrogueDungeonLexer
@@ -20,7 +21,7 @@ from qrogue.game.world.dungeon_generator.generator import DungeonGenerator
 from qrogue.game.world.map import CallbackPack, MapMetaData, LevelMap, rooms
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.util import Config, MapConfig, PathConfig, Logger, CommonQuestions, RandomManager, MyRandom, \
-    load_help_text, ParserErrorListener
+    load_help_text, ParserErrorListener, PuzzleGrammarConfig
 
 
 class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
@@ -50,6 +51,10 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             return ref in ['energy']
 
         @staticmethod
+        def is_collectible_gate(ref: str) -> bool:
+            return "gate" in ref
+
+        @staticmethod
         def is_dir_north(dir_str: str) -> bool:
             return dir_str == "North"
 
@@ -66,15 +71,21 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             return dir_str == "West"
 
         @staticmethod
-        def get_boss(ref: QrogueDungeonParser.REFERENCE, reward: Collectible) -> Optional[BossActor]:
+        def get_boss(ref: QrogueDungeonParser.REFERENCE, reward: Collectible, edits: Optional[int],
+                     num_of_qubits: int) -> Optional[actors.Boss]:
             ref = parser_util.normalize_reference(ref.getText())
+            if ref.startswith("entanglement"):
+                qubit_info = ref[len("entanglement"):]
+                if len(qubit_info) >= 2:
+                    qubits = int(qubit_info[0]), int(qubit_info[1])
+                    # increase num_of_qubits if needed
+                    num_of_qubits = max(num_of_qubits, max(qubits[0], qubits[1]) + 1)   # +1 because we start at 0
+                else:
+                    qubits = None
+                return boss.EntanglementBoss(reward, edits, num_of_qubits, entangled_qubits=qubits)
             if ref in ["antientangle", "antientanglement"]:
-                return boss.AntiEntangleBoss(reward)
+                return boss.AntiEntangleBoss(reward, edits)
             return None
-
-    @staticmethod
-    def __normalize_reference(reference: str) -> str:
-        return parser_util.normalize_reference(reference)
 
     @staticmethod
     def __tile_str_to_code(tile_str: str) -> tiles.TileCode:
@@ -126,7 +137,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             return None
 
     def __init__(self, check_achievement_callback: Callable[[str], bool],
-                 trigger_event_callback: Callable[[str], None], load_map_callback: Callable[[str, Coordinate], None],
+                 trigger_event_callback: Callable[[str], None],
+                 load_map_callback: Callable[[str, Optional[Coordinate]], None],
                  show_message_callback: Callable[[str, str, Optional[bool], Optional[int]], None],
                  callback_pack: CallbackPack):
         super(QrogueLevelGenerator, self).__init__(0, 0)
@@ -270,7 +282,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             return self.visit(ctx)
         return False  # default value is "random"
 
-    def __teleport_callback(self, map_name: str, spawn_pos: Coordinate):
+    def __teleport_callback(self, map_name: str, spawn_pos: Optional[Coordinate]):
         def cb(confirm: int):
             if confirm == 0:
                 self.__load_map(map_name, spawn_pos)
@@ -306,6 +318,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             pool = [pickup.Key()]
         elif QrogueLevelGenerator._StaticTemplates.is_pickup_energy(ref):
             pool = [pickup.Energy()]
+        elif QrogueLevelGenerator._StaticTemplates.is_collectible_gate(ref):
+            pool = [self.__load_gate(reference)]
         else:
             self._warning(f"Imports not yet supported: {ref}. Choosing from default_reward_factory!")
             # todo implement imports
@@ -329,7 +343,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         # remove "gate" if it was added at the end
         if ref.endswith("gate"): ref = ref[:-len("gate")]
 
-        gate = InstructionManager.from_name(ref)
+        gate = InstructionManager.instruction_from_name(ref)
         if gate is None:
             self._warning(f"Unknown gate reference: {reference}. Returning I Gate instead.")
             return instruction.IGate()
@@ -374,9 +388,9 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
                 self.__spawn_pos = spawn_pos
             return room.copy(hw_dic)
         elif room_id == self.__SPAWN_ROOM_ID:
-            room = rooms.SpawnRoom(self.__load_map, None, hw_dic[Direction.North], hw_dic[Direction.East],
-                                   hw_dic[Direction.South], hw_dic[Direction.West],
-                                   place_teleporter=self.__meta_data.has_teleporter)
+            room = rooms.SpawnRoom(lambda: self.__load_map(MapConfig.back_map_string(), None), None,
+                                   hw_dic[Direction.North], hw_dic[Direction.East], hw_dic[Direction.South],
+                                   hw_dic[Direction.West], place_teleporter=self.__meta_data.has_teleporter)
             spawn_pos = Coordinate(x, y)
             if self.__spawn_pos is not None:
                 self._warning(f"A second SpawnRoom was defined! Ignoring the first one @{self.__spawn_pos} and "
@@ -499,7 +513,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         gates: List[Instruction] = []
         for gate_spec in ctx.GATE_SPECIFIER():
             name = gate_spec.getText()[1:]
-            gate = InstructionManager.from_name(name)  # from_name already returns a copy
+            gate = InstructionManager.instruction_from_name(name)  # from_name already returns a copy
             if gate is None:
                 parser_util.error(f"Invalid gate name: {name}")
                 continue
@@ -509,7 +523,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
     def visitCircuit_gate_multi(self, ctx: QrogueDungeonParser.Circuit_gate_multiContext) -> Optional[Instruction]:
         name = ctx.GATE_SPECIFIER().getText()[1:]
-        gate = InstructionManager.from_name(name)  # from_name already returns a copy
+        gate = InstructionManager.instruction_from_name(name)  # from_name already returns a copy
         if gate is None:
             parser_util.error(f"Invalid gate name: {name}")
             return None
@@ -722,6 +736,9 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         return tiles.Riddler(self.__cbp.open_riddle, riddle)
 
     def visitChallenge_descriptor(self, ctx: QrogueDungeonParser.Challenge_descriptorContext) -> tiles.Challenger:
+        # currently Challenges only work in expeditions
+        Config.check_reachability("visitChallenge_descriptor()", raise_exception=True)
+
         min_gates = self.visit(ctx.integer(0))
         if ctx.integer(1):
             max_gates = self.visit(ctx.integer(1))
@@ -730,7 +747,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
         stv, reward, input_stv = self.visit(ctx.puzzle_parameter())
         challenge = Challenge(self._next_target_id(), stv, reward, min_gates, max_gates, input_=input_stv)
-        return tiles.Challenger(self.__cbp.open_challenge, challenge)
+        return tiles.Challenger(self.__cbp.open_challenge, challenge)   # currently incorrect signature!
 
     def visitEnergy_descriptor(self, ctx: QrogueDungeonParser.Energy_descriptorContext) -> tiles.Tile:
         amount = self.visit(ctx.integer())
@@ -805,30 +822,36 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         return tiles.Collectible(collectible)
 
     def visitBoss_descriptor(self, ctx: QrogueDungeonParser.Boss_descriptorContext) -> tiles.Boss:
-        ref_index = 1 if ctx.boss_puzzle(0) is None else 0
+        ref_index = 2 if ctx.GATE_LITERAL() else 1
+
+        # [optional] retrieve the gate that has to be part of the puzzle
+        gate = self.__load_gate(ctx.REFERENCE(1)) if ctx.GATE_LITERAL() else None
+
+        # retrieve the specified reward
         if ctx.collectible():
             reward = self.visit(ctx.collectible())
         elif ctx.REFERENCE(ref_index):
-            reward = self.__load_collectible_factory(ctx.REFERENCE()).produce(self.__rm)
+            reward = self.__load_collectible_factory(ctx.REFERENCE(ref_index)).produce(self.__rm)
         else:
             # if neither a collectible nor a reference to a reward_factory is given we use the default one
             reward = self.__default_collectible_factory.produce(self.__rm)
 
-        if ctx.boss_puzzle(0) is None:
-            boss_actor = QrogueLevelGenerator._StaticTemplates.get_boss(ctx.REFERENCE(0), reward)
-        else:
-            puzzles = []
-            for boss_puzzle in ctx.boss_puzzle():
-                puzzles.append(self.visit(boss_puzzle))
-
-            if ctx.GATE_LITERAL():
-                gates, num_qubits = self.visit(ctx.circuit_stv())
-                static_gate = instruction.CombinedGates(gates, num_qubits)
+        edits = self.visitInteger(ctx.integer())
+        boss_actor = QrogueLevelGenerator._StaticTemplates.get_boss(ctx.REFERENCE(0), reward, edits,
+                                                                    self.__robot.num_of_qubits)
+        if boss_actor is None:
+            boss_ref = parser_util.normalize_reference(ctx.REFERENCE(0).getText())
+            # check if boss is specified by a dynamic code
+            if boss_ref[:len(PuzzleGrammarConfig.boss_code())] == PuzzleGrammarConfig.boss_code():
+                code = boss_ref[len(PuzzleGrammarConfig.boss_code()):]
+                factory = BossFactory.from_difficulty_code(code, self.__robot, [reward])
             else:
-                static_gate = None
-            boss_actor = BossActor(self._next_target_id(), puzzles, reward, static_gate)
-
-        return tiles.Boss(boss_actor, self.__cbp.start_boss_fight, self.__cbp.game_over)  # todo replace game_over
+                # produce default boss
+                Logger.instance().warn(f"Could not find template for Boss \"{boss_ref}\". Using default "
+                                       f"instead.", from_pycui=False)
+                factory = BossFactory.default(self.__robot)
+            boss_actor = factory.produce(self.__rm, include_gates=[gate] if gate else None)
+        return tiles.Boss(boss_actor, self.__cbp.start_boss_fight)
 
     def visitBoss_puzzle(self, ctx: QrogueDungeonParser.Boss_puzzleContext) -> Tuple[StateVector, StateVector]:
         if ctx.REFERENCE():
@@ -890,7 +913,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
         if ctx.input_stv():
             input_stv = self.visit(ctx.input_stv())
-            input_difficulty = ExplicitStvDifficulty([input_stv])
+            input_difficulty = ExplicitTargetDifficulty([input_stv])
         else:
             input_difficulty = None
 
@@ -1137,7 +1160,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
     def visitRobot(self, ctx: QrogueDungeonParser.RobotContext) -> None:
         num_of_qubits = int(ctx.DIGIT().getText())
         gates = []
-        for ref in ctx.REFERENCE():
+        for ref in ctx.REFERENCE():     # todo: get rid of this and use NewSaveData's gates instead? but then custom levels would be harder to integrate
             if parser_util.normalize_reference(ref.getText()) == self.__ROBOT_NO_GATES:
                 continue
             gates.append(self.__load_gate(ref))  # todo what about pickups?

@@ -127,12 +127,11 @@ jj (Story):
 #############
 # o _ _ _ o #
 # _ o o o _ #
-# _ _ b _ m #
+# _ _ b _ _ #
 # _ o o o _ #
 # o _ _ _ o #
 #############
-b [ *entanglement0 input=*base00 ] gate *s tutorial *bossIntro
-m *doneMsg trigger *done
+b *entanglement01 *sgate 10 tutorial *bossIntro
 
 [Hallways]
 11 (locked; ; )
@@ -197,8 +196,6 @@ default Speaker "0"
 
 *bossMsg prio pos1 "There is only one thing left before you successfully finish the trainings program: the obligatory //05Boss Battle//." 
 
-*bossIntro prio "You already saw //02Entanglement// in same digits of a room. Now it is your turn to //03create// //02Entanglement// in your //02Circuit//!"
-
-*doneMsg "Congratulations, you're done knowing the basics! You are now ready to use your newly gained //02Gate// in your //05first expedition// of the //02Quniverse//."
+*bossIntro prio "//02Boss Puzzles// are usually not only harder to solve than normal //02Puzzles//, additionally you only have a set number of times you can edit your //02Circuit// to reach the //02Output StateVector//. Should you fail to solve the //02Boss Puzzle// within the number of possible edits shown on the top right, you're game over and have to retry the level. So we advise you to not guess blindly but really think about your circuit design." "" "This Boss challenges you to recreate the //02Entanglement// effect you already saw in same digits of a room - but now within //02Qubits// in your //02Circuit//!"
 
 >Qrogue

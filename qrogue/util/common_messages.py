@@ -72,6 +72,9 @@ class CommonPopups(Enum):
     NotEnoughEnergyToFlee = f"{CC.highlight_word('Denied')}. Fleeing {CC.highlight_word('not possible')} because it " \
                             f"would cost all of the {CC.highlight_object('Robot´s')} remaining " \
                             f"{CC.highlight_object('Energy')}."
+    CannotFlee = f"You cannot {CC.highlight_action('flee')} from {CC.highlight_object('Challenges')}!"
+    BackpackFull = f"Currently there is {CC.highlight_word('no more space')} in your backpack to hold another " \
+                   f"{CC.highlight_object('Collectible')}. Please come back as soon as you have enough space!"
 
     def __init__(self, text: str):
         self.__text = text
@@ -119,18 +122,21 @@ class CommonQuestions(Enum):
     OpenUserDataFolder = (Config.system_name(), "Do you want to open the folder containing your user data with your "
                                                 "system's explorer?")
     BackToMenu = (Config.system_name(), "Do you want to return to the main menu?")
+    OverwriteCustomGates = (Config.system_name(), "Overwrite your custom gate selection and use recommended gates?",
+                            ["Yes", "No"])
 
     @staticmethod
     def proceed_summary(level_name: str, score: int, duration: int, total_score: int, callback: Callable[[int], None],
                         prev_values: Optional[Tuple[int, int]] = None):
-        text = f"{level_name}\n" \
+        text = f"Congratulations for completing \"{level_name}\"\n" \
+               f"Your stats:\n" \
                f"Score:       {score}\n" \
                f"Duration:    {duration}s\n" \
                f"Total Score: {total_score}"
         if prev_values is not None:
-            text += f"\n\n" \
-                    f"Highscore:   {prev_values[0]}\n" \
-                    f"Duration:    {prev_values[1]}"
+            text += f"\n\nStats of best attempt:" \
+                    f"Duration:    {prev_values[1]}\n" \
+                    f"Total Score: {prev_values[0]}"
         _CallbackHandler.ask(Config.system_name(), text, callback, ["Proceed", "Stay", "Back to Main Menu"])    # todo: does stay work?
 
     def __init__(self, title: str, text: str, answers: Optional[List[str]] = None):

@@ -6,10 +6,11 @@ from typing import List, Callable, Optional, Tuple, Any, Union
 import py_cui
 from py_cui.widget_set import WidgetSet
 
-from qrogue.game.logic.actors import Boss, Enemy, Riddle, Challenge, Robot, BaseBot
+from qrogue.game.logic.actors import Enemy, Riddle, Challenge, Boss, Robot, BaseBot
 from qrogue.game.logic.actors.puzzles import Target
 from qrogue.game.logic.base import StateVector
-from qrogue.game.logic.collectibles import Collectible, instruction as gates
+from qrogue.game.logic.collectibles import Collectible, instruction as gates, Instruction, InstructionManager, \
+    CollectibleType
 from qrogue.game.world.map import Map
 from qrogue.game.world.navigation import Direction
 from qrogue.graphics.popups import Popup
@@ -22,9 +23,9 @@ from qrogue.graphics.widgets.my_widgets import SelectionWidget, CircuitWidget, M
 from qrogue.util import CommonPopups, Config, Controls, GameplayConfig, HelpText, Logger, PathConfig, \
     Keys, UIConfig, ColorConfig, Options, PuzzleConfig, ScoreConfig, \
     get_filtered_help_texts, CommonQuestions, MapConfig, PyCuiConfig, ColorCode, split_text, MyRandom, \
-    LevelInfo, CommonInfos, LevelData
+    LevelInfo, CommonInfos, LevelData, StvDifficulty, GateType, RandomManager
 from qrogue.util.achievements import Unlocks
-from qrogue.util.util_functions import enum_str, cur_datetime, time_diff, open_folder
+from qrogue.util.util_functions import enum_string, cur_datetime, time_diff, open_folder
 
 
 class MyWidgetSet(WidgetSet, Renderable, ABC):
@@ -231,26 +232,111 @@ class MenuWidgetSet(MyWidgetSet):
 class LevelSelectWidgetSet(MyWidgetSet):
     __SEED_HEADER = "Seed: "
     __LEVEL_HEADER = "Level: "
+    __CUSTOM_MAP_CODE = "custom"
+    __GATE_CONFIRM = "confirm"
+    __GATE_CANCEL = "cancel"
+
+    class _SelectedGate:
+        def __init__(self, gate_type: GateType, is_selected: bool = False):
+            self.__gate_type = gate_type
+            self.__is_selected = is_selected
+            self.__temp_is_selected = is_selected
+
+        @property
+        def is_selected(self) -> bool:
+            return self.__is_selected
+
+        @property
+        def gate_type(self) -> GateType:
+            return self.__gate_type
+
+        @property
+        def name(self) -> str:
+            return self.__gate_type.name
+
+        def invert_selection(self):
+            self.__temp_is_selected = not self.__temp_is_selected
+
+        def select(self, auto_commit: bool = False) -> bool:
+            """
+            Returns whether this call changed the internal state or not.
+
+            :param auto_commit: whether
+            :return: True if __is_selected was changed, False otherwise
+            """
+            # ret_val is False if temp_is_selected is already selected, and hence, nothing changed
+            ret_val = not self.__temp_is_selected
+            self.__temp_is_selected = True  # set value to True (might have been True before)
+            if auto_commit:
+                self.commit()
+            # we don't care if is_selected changed (just if temp_is_selected did) so ignore return value of commit()
+            return ret_val
+
+        def commit(self) -> bool:
+            """
+            Returns whether this call changed the internal state or not.
+
+            :return: True if __is_selected was changed, False otherwise
+            """
+            if self.__is_selected == self.__temp_is_selected:
+                return False
+            self.__is_selected = self.__temp_is_selected
+            return True
+
+        def discard(self) -> bool:
+            """
+            Returns whether this call changed the internal state or not.
+
+            :return: True if temp_is_selected was changed, False otherwise
+            """
+            if self.__temp_is_selected == self.__is_selected:
+                return False
+            self.__temp_is_selected = self.__is_selected
+            return True
+
+        def reset(self):
+            self.__is_selected = False
+            self.__temp_is_selected = False
+
+        def to_gate(self) -> Instruction:
+            return InstructionManager.from_type(self.gate_type)
+
+        #def to_display_string(self) -> str:
+        #    return f"[{'x' if self.temp_is_selected else ' '}] {self.name}"
+
+        def __str__(self) -> str:
+            return f"[{'x' if self.__temp_is_selected else ' '}] {self.name}"
 
     def __init__(self, controls: Controls, logger: Logger, root: py_cui.PyCUI,
                  base_render_callback: Callable[[List[Renderable]], None], rm: MyRandom,
                  show_input_popup_callback: Callable[[str, int, Callable[[str], None]], None],
-                 get_available_levels_callback: Callable[[], List[LevelData]], switch_to_menu: Callable[[], None],
-                 start_level: Callable[[Optional[int], str], None]):
+                 get_available_levels_callback: Callable[[], List[LevelData]],
+                 switch_to_menu_callback: Callable[[], None],
+                 start_level_callback: Callable[[str, Optional[int], Optional[List[Instruction]]], None],
+                 get_expedition_progress_callback: Callable[[], int],
+                 get_available_gates_callback: Callable[[], List[GateType]]):
+        """
+        :param get_available_levels_callback: a Callable that returns a List of LevelData of all levels that can be
+            played (i.e., were completed before)
+        """
         super().__init__(logger, root, base_render_callback)
         # select seed
         # select level (or choose Expedition)
         # select starting gates
         # start
         # back to menu
-        self.__rm = rm
+        self.__rm = RandomManager.create_new(rm.get_seed("initial seed for LevelSelectWidgetSet.__rm"))
         self.__show_input_popup = show_input_popup_callback
         self.__get_available_levels = get_available_levels_callback
-        self.__start_level = start_level
+        self.__start_level = start_level_callback
+        self.__get_expedition_progress = get_expedition_progress_callback
+        self.__get_available_gates = get_available_gates_callback
 
-        self.__seed = self.__rm.get_seed('init level select seed')
+        self.__seed = None
         self.__level: Optional[str] = None
-        self.__gates: List[gates.Instruction] = []  # todo: or rather InstructionType?
+        self.__selected_gates: List[LevelSelectWidgetSet._SelectedGate] = []
+        self.__has_custom_gates = False
+        self.reinit()
 
         row, col = 1, 4
         col_span = 2
@@ -273,7 +359,8 @@ class LevelSelectWidgetSet(MyWidgetSet):
             ("Change Gates", self.__choose_gates),
             ("Set Seed", self.__set_seed),
             ("Start Playing", self.__play_level),
-            ("Back to Menu", switch_to_menu),
+            ("Back to Menu", switch_to_menu_callback),
+            # todo: add "Set Difficulty" for more fine-grained difficulty settings and open popup if player tries to open it for a level
         ])
         col += col_span
 
@@ -293,7 +380,6 @@ class LevelSelectWidgetSet(MyWidgetSet):
             if self.__choices.use():
                 Widget.move_focus(self.__details, self)
                 self.render()
-
         self.__choices.widget.add_key_command(controls.action, use_choices)
 
         def use_details():
@@ -303,10 +389,15 @@ class LevelSelectWidgetSet(MyWidgetSet):
                 self.__highscores.render_reset()
                 self.__durations.render_reset()
                 self.render()
-
         self.__details.widget.add_key_command(controls.action, use_details)
 
-        self.__summary_seed.set_data(f"Seed: {self.__seed}")
+        self.__summary_seed.set_data(f"Seed: {'???' if self.__seed is None else str(self.__seed)}")
+
+    def reinit(self):
+        self.__seed = None
+        self.__level = None
+        self.__selected_gates = [LevelSelectWidgetSet._SelectedGate(gate) for gate in self.__get_available_gates()]
+        self.__has_custom_gates = False
 
     def __set_seed(self) -> bool:
         def set_seed(text: str):
@@ -322,27 +413,97 @@ class LevelSelectWidgetSet(MyWidgetSet):
         self.__show_input_popup("Input Seed", ColorConfig.SEED_INPUT_POPUP_COLOR, set_seed)
         return False
 
+    def __is_level_completed(self, level_name: str) -> bool:
+        Config.check_reachability("LevelSelectWidgetSet.__is_level_completed()")
+        for level in self.__get_available_levels():
+            if level.name == self.__level:
+                return False
+            if level.name == level_name:
+                return True
+        return False
+
+    def __set_standard_gates(self, internal_level_name: Optional[str] = None):
+        if internal_level_name is None:
+            internal_level_name = self.__level
+
+        self.__has_custom_gates = False
+        gate_type_list = LevelInfo.get_level_start_gates(internal_level_name)
+        for sg in self.__selected_gates:
+            if sg.gate_type in gate_type_list:
+                # remove from list to handle multiple gates of the same type correctly
+                gate_type_list.remove(sg.gate_type)
+                # set the gate as selected (commit, so it's not just temporarily)
+                sg.select(auto_commit=True)
+            else:
+                sg.reset()  # deselects sg
+
     def __select_level(self) -> bool:
         # retrieve data of all available levels for displaying and loading
         levels_data = self.__get_available_levels()
         internal_names, display_names = [], []
         highscores, durations = [], []
         for level_data in levels_data:
+            if not level_data.is_level: continue    # skip expeditions (they are added separately) and other non-levels
+
             internal_names.append(level_data.name)
-            display_names.append(LevelInfo.convert_to_display_name(level_data.name, True))
+            display_name = LevelInfo.convert_to_display_name(level_data.name, True)
+            if display_name is None:
+                Logger.instance().warn(f"No display name found for \"{level_data.name}\".", from_pycui=False)
+                display_names.append(f"\"{level_data.name}\"")
+            else:
+                display_names.append(display_name)
             highscores.append(f"#{level_data.total_score}")
             durations.append(f"{level_data.duration}s")
+
+        # add expeditions
+        # the next difficulty is also unlocked from the get go, so you can always challenge yourself to harder puzzles
+        max_expedition_level = min(LevelInfo.get_expedition_difficulty(self.__get_expedition_progress()) + 1,
+                                   StvDifficulty.max_difficulty_level())
+        for i in range(max_expedition_level + 1):   # +1 because max_expedition_level should be included
+            diff_code = str(i + StvDifficulty.min_difficulty_level())
+            display_names.append(f"Expedition {diff_code}")
+            internal_names.append(f"{MapConfig.expedition_map_prefix()}{diff_code}")
+
+        if Config.debugging():
+            # add custom option so the player can use custom difficulty or load levels otherwise
+            display_names.append("+Select via Map Code+")
+            internal_names.append(LevelSelectWidgetSet.__CUSTOM_MAP_CODE)
 
         # add cancel to stop selecting a level
         display_names.append("-Cancel-")
         internal_names.append(None)  # the selection-object to easily identify cancel
 
+        def overwrite(index: int):
+            if index == 0:  # Yes, reset custom gate selection to level specific selection
+                self.__set_standard_gates()
+            # else:         # No, keep custom selection (i.e., do nothing)
+            Widget.move_focus(self.__choices, self)    # move focus manually since this is called from a (focused) popup
+
         def set_level(index: int) -> bool:
-            if self.__details.selected_object is None: return True  # -Cancel- was selected
+            if self.__details.selected_object is None:
+                return True  # "Cancel" was selected
 
             self.__level = self.__details.selected_object
-            self.__summary_level.set_data(f"{LevelSelectWidgetSet.__LEVEL_HEADER}{display_names[index]} "
-                                          f"({highscores[index]}, {durations[index]})")
+            if self.__details.selected_object == LevelSelectWidgetSet.__CUSTOM_MAP_CODE:
+                def callback(map_code: str):
+                    self.__summary_level.set_data(f"Map Code: {map_code}")
+                    self.__level = map_code
+                    self.render()
+                    Widget.move_focus(self.__choices, self)
+                self.__show_input_popup("Enter map code", ColorConfig.LEVEL_SELECTION_INPUT_MAP_CODE, callback)
+            elif self.__details.selected_object.startswith(MapConfig.expedition_map_prefix()):
+                self.__summary_level.set_data(f"{LevelSelectWidgetSet.__LEVEL_HEADER}{display_names[index]} ")
+                if not self.__has_custom_gates:
+                    # reset selection so a random subset is chosen instead of simply the ones from the previously
+                    # selected level
+                    for sg in self.__selected_gates: sg.reset()
+            else:
+                self.__summary_level.set_data(f"{LevelSelectWidgetSet.__LEVEL_HEADER}{display_names[index]} "
+                                              f"({highscores[index]}, {durations[index]})")
+                if self.__has_custom_gates:
+                    CommonQuestions.OverwriteCustomGates.ask(overwrite)
+                else:
+                    self.__set_standard_gates()
             return True
 
         self.__details.set_data(((display_names, internal_names), set_level))
@@ -351,25 +512,38 @@ class LevelSelectWidgetSet(MyWidgetSet):
         return True
 
     def __choose_gates(self) -> bool:
-        # how/where to best display the selected gates?
-        Popup.generic_info("Upcoming Feature", "Gate management not yet implemented!\n"
-                                               "For now you have to play levels with their default set of gates.")
-        return False
-        # def add_gate(index: int) -> bool:
-        #     gate = self.__details.selected_object
-        #     return False
-        #
-        # gate_objects = [gates.HGate(), gates.XGate(), ]
-        # names = [go.name() for go in gate_objects]
-        # self.__details.set_data(((names, gate_objects), add_gate))
-        # return True
+        def add_gate(index: int) -> bool:
+            if self.__details.selected_object is LevelSelectWidgetSet.__GATE_CANCEL:
+                for gate in self.__selected_gates: gate.discard()
+                return True     # "Cancel" was selected
+            if self.__details.selected_object is LevelSelectWidgetSet.__GATE_CONFIRM:
+                ret_val = [gate.commit() for gate in self.__selected_gates]
+                if sum(ret_val) > 0:    # at least one confirm() changed the state (i.e., returned True)
+                    self.__has_custom_gates = True
+                return True
+
+            sel_gate: LevelSelectWidgetSet._SelectedGate = self.__details.selected_object
+            sel_gate.invert_selection()
+
+            self.__details.update_text(str(self.__details.selected_object), index)
+            self.__details.render()
+            return False
+
+        # add all available gates plus meta options Confirm and Cancel
+        names: List[str] = [str(gate) for gate in self.__selected_gates] + ["-Confirm-", "-Cancel-"]
+        gate_objects = self.__selected_gates + [LevelSelectWidgetSet.__GATE_CONFIRM, LevelSelectWidgetSet.__GATE_CANCEL]
+        self.__details.set_data(((names, gate_objects), add_gate))
+        return True
 
     def __play_level(self) -> bool:
         if self.__level is None:
             Popup.error("No Level selected!", log_error=False)
             return False
 
-        self.__start_level(self.__seed, self.__level)
+        # filter and convert all selected gates
+        available_gates = [sg.to_gate() for sg in self.__selected_gates if sg.is_selected]
+        seed = self.__seed if self.__seed is not None else self.__rm.get_seed("LevelSelect play unspecified")
+        self.__start_level(self.__level, seed, available_gates)
         return True
 
     def get_widget_list(self) -> List[Widget]:
@@ -392,8 +566,8 @@ class LevelSelectWidgetSet(MyWidgetSet):
         self.__level = None
         self.__summary_level.set_data(f"{LevelSelectWidgetSet.__LEVEL_HEADER}???")
 
-        self.__seed = self.__rm.get_seed("init LevelSelection seed for reset")
-        self.__summary_seed.set_data(f"{LevelSelectWidgetSet.__SEED_HEADER}{self.__seed}")
+        self.__seed = None
+        self.__summary_seed.set_data(f"{LevelSelectWidgetSet.__SEED_HEADER}???")
 
 
 class ScreenCheckWidgetSet(MyWidgetSet):
@@ -1135,11 +1309,11 @@ class PauseMenuWidgetSet(MyWidgetSet):
         return False
 
     def __help(self) -> bool:
-        texts = [enum_str(val, skip_type_prefix=True) for val in get_filtered_help_texts()] + [MyWidgetSet.BACK_STRING]
+        texts = [enum_string(val, skip_type_prefix=True) for val in get_filtered_help_texts()] + [MyWidgetSet.BACK_STRING]
 
         def func(val: HelpText) -> Callable[[], bool]:
             # the check for "is not None" leads to a return value of False (because we don't want to switch widgets)
-            return lambda: Popup.generic_info(enum_str(val, skip_type_prefix=True), val.text) is not None
+            return lambda: Popup.generic_info(enum_string(val, skip_type_prefix=True), val.text) is not None
 
         callbacks = [func(val) for val in get_filtered_help_texts()]
         callbacks.append(lambda: True)  # simple callback for "back"
@@ -1332,7 +1506,8 @@ class MapWidgetSet(MyWidgetSet, ABC):
 
             self.__map_widget.widget.add_key_command(controls.get_hotkey(number), set_move_counter)
 
-        [setup_hotkey(i) for i in range(10)]
+        if Config.debugging():
+            [setup_hotkey(i) for i in range(10)]
 
     @property
     def _map_widget(self) -> MapWidget:
@@ -1392,26 +1567,46 @@ class NavigationWidgetSet(MapWidgetSet):
 
 class ReachTargetWidgetSet(MyWidgetSet, ABC):
     __DETAILS_COLUMNS = 4
+    __CHOICES_REMOVE_OBJECT = "remove"
+    __CHOICES_RESET_OBJECT = "reset"
+    __CHOICES_FLEE_OBJECT = "flee"
 
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  continue_exploration_callback: Callable[[bool], None], reopen_popup: Callable[[], None],
                  check_unlocks_callback: Callable[[Union[str, Unlocks]], bool],
-                 flee_choice: str = "Flee", dynamic_input: bool = True, dynamic_target: bool = True):
+                 flee_choice: str = "Flee", dynamic_input: bool = True, dynamic_target: bool = True,
+                 enable_reset: bool = False):
+        """
+        :param controls: controls used by the CUI to add keys
+        :param render: callback to render the CUI
+        :param logger: logger for the CUI
+        :param continue_exploration_callback: callback to exit this WidgetSet and continue exploration
+        :param reopen_popup: callback to reopen popup history
+        :param check_unlocks_callback: callback to check if certain locked features were already unlocked
+        :param flee_choice: the text used to prompt the player with aborting this widget set's puzzle
+        :param dynamic_input:
+        :param dynamic_target:
+        :param enable_reset: whether we want to add a Reset-command or not
+        """
         super().__init__(logger, root, render)
         self.__flee_choice = flee_choice
         self.__dynamic_input = dynamic_input
         self.__dynamic_target = dynamic_target
+        self.__enable_reset = enable_reset
         self._continue_exploration = lambda: continue_exploration_callback(False)
         self._continue_and_undo_callback = lambda: continue_exploration_callback(True)
         self._check_unlocks = check_unlocks_callback
         self._robot: Optional[Robot] = None
-        self._target: Optional[Target] = None
+        self.__target: Optional[Target] = None
         self.__num_of_qubits = -1  # needs to be an illegal value because we definitely want to reposition all
         # dependent widgets for the first usage of this WidgetSet
         self._choices_content = None
         self._in_reward_message = False  # _choices currently displays the reward message
         self.__in_expedition = False
         self.__puzzle_timer = cur_datetime()
+
+        if not (self.__dynamic_target and self.__dynamic_input):
+            Config.check_reachability("ReachTargetWidgetSet() - dynamic target and input?", raise_exception=True)
 
         posy = 0
         posx = 0
@@ -1485,9 +1680,9 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         self._choices.widget.add_key_command(controls.action, use_choices)
 
         def gate_guide():
-            gates_ = self._robot.get_available_instructions()
-            if 0 <= self._choices.index < len(gates_):
-                gate = gates_[self._choices.index]
+            # check if a gate or a meta choice (e.g., cancel) is selected
+            if isinstance(self._choices.selected_object, Instruction):
+                gate = self._choices.selected_object
                 if gate.gate_type.has_other_names:
                     other_names = "\nAlso known as: " + gate.gate_type.get_other_names(" Gate, ") + " Gate"
                 else:
@@ -1539,9 +1734,13 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
         # special key to open matrix in extra popup (e.g., if CircuitMatrixWidget is too narrow to display a 8x8 matrix)
         def show_matrix_popup():
+            if not self._check_unlocks(Unlocks.ShowEquation): return
             text_mat = self.__circuit_matrix.widget.get_title()
-            headline = text_mat[:text_mat.index("\n")]
-            Popup.show_matrix(headline, text_mat[len(headline) + 1:])
+            if "\n" in text_mat:
+                headline = text_mat[:text_mat.index("\n")]
+                Popup.show_matrix(headline, text_mat[len(headline) + 1:])
+            else:
+                Logger.error(f"No \"\\n\" found in matrix: {text_mat}.", show=False, from_pycui=False)
 
         self.add_key_command(controls.get_keys(Keys.MatrixPopup), show_matrix_popup, add_to_widgets=True)
 
@@ -1554,6 +1753,10 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             self.__stv_robot.render_reset()
             self.__eq_widget.render_reset()
             self.__stv_target.render_reset()
+
+    @property
+    def _target(self) -> Target:
+        return self.__target
 
     @property
     def _sign_offset(self) -> str:
@@ -1613,7 +1816,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         :param tutorial_data: additional data we might need for tutorial purposes
         """
         self._robot = robot
-        self._target = target
+        self.__target = target
 
         self._reposition_widgets(robot.num_of_qubits)
 
@@ -1694,7 +1897,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
     def __init_choices(self):
         choices, objects = [], []  # Tuple[List[str], List[object]]
         callbacks: List[Callable[[], bool]] = []
-        for instruction in self._robot.backpack:
+        for instruction in self._robot.instructions:
             choices.append(instruction.selection_str())
             objects.append(instruction)
             callbacks.append(self.__choose_instruction)
@@ -1703,9 +1906,15 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         # add commands
         if self._check_unlocks(Unlocks.GateRemove):
             choices.append("Remove")
+            objects.append(ReachTargetWidgetSet.__CHOICES_REMOVE_OBJECT)
             callbacks.append(self.__remove)
+        if self.__enable_reset:
+            choices.append("Reset")
+            objects.append(ReachTargetWidgetSet.__CHOICES_RESET_OBJECT)
+            callbacks.append(self.__reset_circuit)
         if self._check_unlocks(Unlocks.PuzzleFlee):
             choices.append(self.__flee_choice)
+            objects.append(ReachTargetWidgetSet.__CHOICES_FLEE_OBJECT)
             callbacks.append(self.__flee)  # just return True to change back to previous screen
 
         self._choices.set_data(data=((choices, objects), callbacks))
@@ -1740,6 +1949,18 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             self.render()
             return True  # focus circuit
 
+    def __reset_circuit(self) -> bool:
+        # todo: currently this does not decrease edits (for riddles), but maybe it should?
+        for pos in range(self._robot.circuit_space):
+            self.__circuit.start_gate_placement(None, pos)
+            self.__circuit.place_gate()     # placing "None" removes the gate placed at pos
+        self.__circuit.abort_placement()    # needed to remove the "eraser" before rendering
+
+        self._robot.update_statevector(input_stv=self._target.input_stv, use_energy=False, check_for_game_over=False)
+        self.__update_calculation(False)
+        self.render()
+        return False    # don't change focus
+
     def __flee(self) -> bool:
         # last selection possibility in edit is for fleeing
         self._choices_flee()
@@ -1764,29 +1985,30 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             self._robot.increase_score(ScoreConfig.get_puzzle_score(self._target.checks,
                                                                     self._robot.state_vector.num_of_used_gates,
                                                                     self._target.state_vector.num_of_used_gates))
-
-            def give_reward_and_continue() -> bool:
-                if reward is not None: self._robot.give_collectible(reward)
-                self._in_reward_message = False  # undo the blocking since the success notification is over
-                self._continue_exploration()
-                return False  # stay in choices
-
             self._in_reward_message = True
-            if reward is None:
-                self._choices.set_data(data=(
-                    [f"Congratulations, you solved the {ColorConfig.highlight_object('Puzzle', invert=True)}!"],
-                    [give_reward_and_continue]
-                ))
-            else:
-                Logger.instance().assertion(isinstance(reward, Collectible),
-                                            f"Error! Reward is not a Collectible: {reward}")
-                self._choices.set_data(data=(
-                    [f"Congratulations! Your reward: {ColorConfig.highlight_object(reward.to_string())}"],
-                    [give_reward_and_continue]
-                ))
+            self._prepare_reward_message(reward)
             self._on_success()
         else:
             self._on_commit_fail()
+
+    def _prepare_reward_message(self, reward: Collectible):
+        def give_reward_and_continue() -> bool:
+            if reward is not None: self._robot.give_collectible(reward)
+            self._in_reward_message = False  # undo the blocking since the success notification is over
+            self._continue_exploration()
+            return False  # stay in choices
+
+        if reward is None:
+            self._choices.set_data(data=(
+                [f"Congratulations, you solved the {ColorConfig.highlight_object('Puzzle', invert=True)}!"],
+                [give_reward_and_continue]
+            ))
+        else:
+            Logger.instance().assertion(isinstance(reward, Collectible), f"Reward is no Collectible: {reward}")
+            self._choices.set_data(data=(
+                [f"Congratulations! Your reward: {ColorConfig.highlight_object(reward.to_string())}"],
+                [give_reward_and_continue]
+            ))
 
     def _fleeing_failed_callback(self) -> bool:
         self.__init_choices()
@@ -1871,61 +2093,32 @@ class FightWidgetSet(ReachTargetWidgetSet):
         return True
 
 
-class BossFightWidgetSet(ReachTargetWidgetSet):
-    def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
-                 continue_exploration_callback: Callable[[bool], None], reopen_popup_callback: Callable[[], None],
-                 check_unlocks_callback: Callable[[str], bool]):
-        super().__init__(controls, render, logger, root, continue_exploration_callback, reopen_popup_callback,
-                         check_unlocks_callback, dynamic_input=True, dynamic_target=True)
-        self.__prev_circuit_space = 0
-
-    def _choices_flee(self) -> bool:
-        self._choices.set_data(data=(
-            ["You fled to try again later."],
-            [self._continue_and_undo_callback]
-        ))
-        self._robot.reset_static_gate(self.__prev_circuit_space)
-        return True
-
-    def set_data(self, robot: Robot, target: Boss, tutorial_data):
-        super(BossFightWidgetSet, self).set_data(robot, target, tutorial_data)
-        self.__prev_circuit_space = robot.circuit_space
-        robot.add_static_gate(target.static_gate)
-
-        for target_stv, input_stv in target.puzzles:
-            self._save_puzzle_to_history(input_stv, target_stv)
-
-    def _on_success(self):
-        super()._on_success()
-        self._robot.reset_static_gate(self.__prev_circuit_space)
-
-    def _on_commit_fail(self) -> bool:
-        if GameplayConfig.get_option_value(Options.energy_mode):
-            self._robot.decrease_energy(PuzzleConfig.BOSS_FAIL_DAMAGE)
-        return super(BossFightWidgetSet, self)._on_commit_fail()
-
-
 class RiddleWidgetSet(ReachTargetWidgetSet):
-    __TRY_PHRASING = "edits"
+    _TRY_PHRASING = "edits"
 
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  continue_exploration_callback: Callable[[bool], None], reopen_popup_callback: Callable[[], None],
-                 check_unlocks_callback: Callable[[str], bool]):
+                 check_unlocks_callback: Callable[[str], bool], enable_reset: bool = False):
         super().__init__(controls, render, logger, root, continue_exploration_callback, reopen_popup_callback,
-                         check_unlocks_callback, "Give Up")
+                         check_unlocks_callback, "Give Up", enable_reset=enable_reset)
+
+    @property
+    def _target(self) -> Riddle:
+        # override this property to return the correct, specialised subtype of Target
+        return super()._target
 
     def set_data(self, robot: Robot, target: Riddle, tutorial_data) -> None:
         super(RiddleWidgetSet, self).set_data(robot, target, tutorial_data)
-        self._hud.set_data((robot, None, f"Remaining {RiddleWidgetSet.__TRY_PHRASING}: {target.attempts}"))
+        self._hud.set_data((robot, None, f"Remaining {RiddleWidgetSet._TRY_PHRASING}: {target.edits}"))
 
     def _on_commit_fail(self) -> bool:
         if not self._target.can_attempt:
             self._choices.set_data(data=(
-                [f"You couldn't solve the riddle within the given number of {RiddleWidgetSet.__TRY_PHRASING}. "
+                [f"You couldn't solve the riddle within the given number of {RiddleWidgetSet._TRY_PHRASING}. "
                  f"It vanished together with its reward."],
                 [self._continue_exploration]
             ))
-        self._hud.update_situational(f"Remaining {RiddleWidgetSet.__TRY_PHRASING}: {self._target.attempts}")
+        self._hud.update_situational(f"Remaining {RiddleWidgetSet._TRY_PHRASING}: {self._target.edits}")
         return True
 
     def _choices_flee(self) -> bool:
@@ -1957,15 +2150,65 @@ class ChallengeWidgetSet(ReachTargetWidgetSet):
         return True
 
     def _choices_flee(self) -> bool:
-        if GameplayConfig.get_option_value(Options.energy_mode):
-            if self._robot.cur_energy > self._target.flee_energy:
-                _, _ = self._robot.decrease_energy(amount=self._target.flee_energy)
-            else:
-                CommonPopups.NotEnoughEnergyToFlee.show()
-                return False  # don't switch to details widget
+        CommonPopups.CannotFlee.show()
+        return False
 
+
+class BossFightWidgetSet(RiddleWidgetSet):
+    def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
+                 continue_exploration_callback: Callable[[bool], None], reopen_popup_callback: Callable[[], None],
+                 check_unlocks_callback: Callable[[str], bool], exit_level_callback: Callable[[], None],
+                 proceed_to_next_level_callback: Callable[[], None]):
+        super().__init__(controls, render, logger, root, continue_exploration_callback, reopen_popup_callback,
+                         check_unlocks_callback, enable_reset=True)
+        self._exit_level = exit_level_callback
+        self._proceed_to_next_level = proceed_to_next_level_callback
+
+    def _choices_flee(self) -> bool:
         self._choices.set_data(data=(
-            ["You successfully fled!"],
+            ["You fled to try again later."],
             [self._continue_and_undo_callback]
         ))
+        return True
+
+    def set_data(self, robot: Robot, target: Boss, tutorial_data):
+        # override to make sure a Boss is passed
+        super(BossFightWidgetSet, self).set_data(robot, target, tutorial_data)
+
+    def _prepare_reward_message(self, reward: Collectible):
+        if reward is None:
+            Logger.instance().warn("No reward specified for Boss!", from_pycui=False)
+            reward_text = ""
+        else:
+            reward_text = f"Your reward: {ColorConfig.highlight_object(reward.to_string())}."
+            if reward.type is CollectibleType.QuantumFuser:
+                # todo: currently the number of QuantumFusers is increased in NewSaveData.complete_expedition()
+                pass
+            else:
+                Config.check_reachability("BossFightWidgetSet._prepare_reward_message()")
+                self._robot.give_collectible(reward)
+
+        def callback() -> bool:
+            self._continue_exploration()    # leave the fight screen
+            self._proceed_to_next_level()   # and then proceed
+            return False
+
+        self._choices.set_data(data=(
+            [f"Congratulations, you solved the {ColorConfig.highlight_object('Boss Puzzle')}!\n" + reward_text],
+            [callback]
+        ))
+
+    def _on_commit_fail(self) -> bool:
+        if GameplayConfig.get_option_value(Options.energy_mode):
+            if self._robot.decrease_energy(PuzzleConfig.BOSS_FAIL_DAMAGE)[1]:
+                pass    # todo: show message and call game_over()
+
+        if not self._target.can_attempt:
+            self._choices.set_data(data=(
+                [f"You {ColorConfig.highlight_word('could not solve')} the Boss puzzle within the given number of "
+                 f"{RiddleWidgetSet._TRY_PHRASING}.\n"
+                 f"You {ColorConfig.highlight_word('exit the level')} with your emergency kit."],
+                [self._exit_level]
+            ))
+        self._hud.update_situational(f"Remaining {RiddleWidgetSet._TRY_PHRASING}: {self._target.edits}")
         return True

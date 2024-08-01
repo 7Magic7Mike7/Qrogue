@@ -1,87 +1,16 @@
 import enum
 import math
 from abc import ABC, abstractmethod
-from typing import Iterator, Optional, Set, Dict, List, Callable
+from typing import Iterator, Optional, Dict, List, Callable
 
 import qiskit.circuit.library.standard_gates as gates
 from qiskit.circuit import Gate as QiskitGate
 
 from qrogue.game.logic.base import StateVector, CircuitMatrix, QuantumSimulator, QuantumCircuit
 from qrogue.game.logic.collectibles import Collectible, CollectibleType
-from qrogue.util import Logger
+from qrogue.util import Logger, GateType
 from qrogue.util.achievements import Unlocks
 from qrogue.util.util_functions import rad2deg
-
-
-class GateType(enum.Enum):
-    # unique by their short name
-    IGate = "I", "Identity", set(), \
-        "An I Gate or Identity Gate doesn't alter the Qubit in any way. It can be used as a placeholder."
-    XGate = "X", "Pauli X", {"Pauli-X", "NOT"}, \
-        "In the classical world an X Gate corresponds to an inverter or Not Gate.\n" \
-        "It swaps the amplitudes of |0> and |1>.\n" \
-        "In the quantum world this corresponds to a rotation of 180° along the x-axis, hence the name X Gate."
-    YGate = "Y", "Pauli Y", {"Pauli-Y"}, \
-        "A Y Gate rotates the Qubit along the y-axis by 180°."
-    ZGate = "Z", "Pauli Z", {"Pauli-Z"}, \
-        "A Z Gate rotates the Qubit along the z-axis by 180°."
-    HGate = "H", "Hadamard", set(), \
-        "The Hadamard Gate is often used to bring Qubits into Superposition."
-
-    SGate = "S", "Phase", {"P", "Phase Shift S"}, \
-        "The S Gate can change the phase of a qubit by multiplying its |1> with i (note that this does not alter " \
-        "the probability of measuring |0> or |1>!). It is equivalent to a rotation along the z-axis by 90°."
-    RYGate = "RY", "Rotational Y", {"Rot Y"}, \
-        "The RY Gate conducts a rotation along the y-axis by a certain angle. In our case the angle is 90°."
-    RZGate = "RZ", "Rotational Z", {"Rot Z", "Phase Shift Z", "Phase Flip"}, \
-        "The RZ Gate conducts a rotation along the z-axis by a certain angle. In our case the angle is 90°."
-
-    SwapGate = "SW", "Swap", set(), \
-        "As the name suggests, Swap Gates swap the amplitude between two Qubits."
-    CXGate = "CX", "Controlled X", {"CNOT", "Controlled NOT"}, \
-        "Applies an X Gate onto its second Qubit (=target) if its first Qubit (=control) is 1."
-
-    Combined = "co", "Combined", set(), \
-        "This gate is a combination of multiple gates and acts like a blackbox."
-
-    Debug = "de", "Debug", set(), "Only use for debugging!"  # used to test spacing
-
-    def __init__(self, short_name: str, full_name: str, other_names: Set[str], description: str):
-        self.__short_name = short_name
-        self.__full_name = full_name
-        self.__other_names = other_names
-        self.__description = description
-
-    @property
-    def short_name(self) -> str:
-        return self.__short_name
-
-    @property
-    def full_name(self) -> str:
-        return self.__full_name + " Gate"
-
-    @property
-    def has_other_names(self) -> bool:
-        return len(self.__other_names) > 0
-
-    @property
-    def description(self) -> str:
-        return self.__description
-
-    def is_in_names(self, name: str) -> bool:
-        names = {self.__short_name, self.__full_name}
-        for other_name in self.__other_names: names.add(other_name)
-
-        if name in names:
-            return True
-        name = name.lower()
-        for n in names:
-            if name == n.lower():
-                return True
-        return False
-
-    def get_other_names(self, separator: str = ", ") -> str:
-        return separator.join(self.__other_names)
 
 
 class Instruction(Collectible, ABC):
@@ -328,6 +257,9 @@ class RotationGate(SingleQubitGate, ABC):
     _DEFAULT_ANGLE = math.pi / 2
 
     def __init__(self, gate_type: GateType, instruction: QiskitGate, angle: float):
+        """
+        :param angle: value between 0 and PI (other values possible, but they correspond to an angle in said range)
+        """
         super().__init__(gate_type, instruction)
         self.__angle = angle
 
@@ -487,10 +419,21 @@ class InstructionManager:
         return True
 
     @staticmethod
-    def from_name(name: str, ignore_gate_suffix: bool = True) -> Optional[Instruction]:
+    def from_type(gate_type: GateType) -> Instruction:
+        return InstructionManager.__GATES[gate_type].copy()
+
+    @staticmethod
+    def type_from_name(name: str, ignore_gate_suffix: bool = True) -> Optional[GateType]:
         if ignore_gate_suffix and name.lower().endswith("gate"):
             name = name[:-len("gate")]
-        for val in GateType:
-            if val.is_in_names(name):
-                return InstructionManager.__GATES[val].copy()
+        for gate_type in GateType:
+            if gate_type.is_in_names(name):
+                return gate_type
         return None
+
+    @staticmethod
+    def instruction_from_name(name: str, ignore_gate_suffix: bool = True) -> Optional[Instruction]:
+        gate_type = InstructionManager.type_from_name(name, ignore_gate_suffix)
+        if gate_type is None:
+            return None
+        return InstructionManager.from_type(gate_type)

@@ -9,7 +9,7 @@ from qrogue.game.logic.actors import Robot, Riddle
 from qrogue.game.logic.collectibles import Instruction
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.game.world.tiles import Enemy as EnemyTile, Tile, Floor, Decoration, Teleport, FogOfWar, Void, Invalid, \
-    Door, Wall, HallwayEntrance, Riddler, Boss, Collectible, Message as MessageTile
+    Door, Wall, HallwayEntrance, Riddler, Challenger, Boss, Collectible, Message as MessageTile
 from qrogue.util import CommonQuestions, MapConfig, Logger, CheatConfig, RandomManager
 
 
@@ -276,6 +276,13 @@ class Room(Area):
             tile_list[index] = tile
             return True
         return False
+
+    @staticmethod
+    def mid(inner: bool = True) -> Coordinate:
+        if inner:
+            return Coordinate(Room.INNER_MID_X, Room.INNER_MID_Y)
+        else:
+            return Coordinate(Area.MID_X, Area.MID_Y)
 
     @staticmethod
     def coordinate_to_index(pos: Union[Coordinate, Tuple[int, int]], in_room: bool = True) -> int:
@@ -641,13 +648,17 @@ class SpecialRoom(Room, ABC):
     # todo answering thoughts after some time: If they can have multiple entrances/exits Key placement gets much harder
     # todo we could not simply place keys in non-special rooms but would also have to check if 1st key is reachable from
     # todo SpawnRoom, 2nd key from SpawnRoom and one special room, ...
-    def __init__(self, type_: AreaType, hallway: Hallway, direction: Direction, tile_dic: Dict[Coordinate, Tile]):
+    def __init__(self, type_: AreaType, hallway: Hallway, direction: Direction, special_tile: Tile,
+                 tile_dic: Optional[Dict[Coordinate, Tile]] = None):
         """
 
         :param hallway:
         :param direction: the Direction to the Hallway based on the Room's perspective
+        :param special_tile: the tile this room is dedicated to, placed in the middle
         :param tile_dic:
         """
+        if tile_dic is None: tile_dic = {}
+        tile_dic[Room.mid()] = special_tile
         tile_list = Room.dic_to_tile_list(tile_dic)
         if Hallway.is_first(direction):
             if hallway.connects_horizontally():
@@ -662,7 +673,7 @@ class SpecialRoom(Room, ABC):
 
 
 class SpawnRoom(CopyAbleRoom):
-    def __init__(self, load_map_callback: Callable[[str, Optional[Coordinate]], None],
+    def __init__(self, leave_map_callback: Callable[[], None],
                  tile_dic: Dict[Coordinate, Tile] = None, north_hallway: Hallway = None, east_hallway: Hallway = None,
                  south_hallway: Hallway = None, west_hallway: Hallway = None, place_teleporter: bool = True):
         room_mid = Coordinate(Room.INNER_MID_X, Room.INNER_MID_Y)
@@ -677,7 +688,7 @@ class SpawnRoom(CopyAbleRoom):
         self.__tile_dic = tile_dic
         super(SpawnRoom, self).__init__(AreaType.SpawnRoom, Room.dic_to_tile_list(tile_dic), north_hallway,
                                         east_hallway, south_hallway, west_hallway)
-        self.__load_map = load_map_callback
+        self.__leave_map = leave_map_callback
         self.__is_done = None
 
     def abbreviation(self):
@@ -697,11 +708,11 @@ class SpawnRoom(CopyAbleRoom):
 
     def __conditional_going_back(self, confirmed: int):
         if confirmed == 0:
-            self.__load_map(MapConfig.back_map_string(), None)
+            self.__leave_map()
 
     def copy(self, hw_dic: Dict[Direction, Hallway]) -> "CopyAbleRoom":
         # don't place a teleporter because it's already in tile_dic if it should be placed
-        return SpawnRoom(self.__load_map, self.__tile_dic, hw_dic[Direction.North], hw_dic[Direction.East],
+        return SpawnRoom(self.__leave_map, self.__tile_dic, hw_dic[Direction.North], hw_dic[Direction.East],
                          hw_dic[Direction.South], hw_dic[Direction.West], place_teleporter=False)
 
 
@@ -731,7 +742,7 @@ class WildRoom(BaseWildRoom):
         for y in range(Room.INNER_HEIGHT):
             available_positions += [Coordinate(x, y) for x in range(Room.INNER_WIDTH)]
         num_of_enemies = len(available_positions) * chance
-        if rm.get(msg="WR_enemyPlacementRounding") < 0.5:
+        if rm.get_bool(msg="WR_enemyPlacementRounding"):
             num_of_enemies = math.floor(num_of_enemies)
         else:
             num_of_enemies = math.ceil(num_of_enemies)
@@ -772,16 +783,21 @@ class DefinedWildRoom(BaseWildRoom):
 
 
 class TreasureRoom(SpecialRoom):
-    def __init__(self, treasure: Collectible, hallway: Hallway, direction: Direction,
+    def __init__(self, treasure: Union[Collectible, Instruction], hallway: Hallway, direction: Direction,
                  tile_dic: Dict[Coordinate, Tile] = None):
-        coordinate = Coordinate(Area.MID_X, Area.MID_Y)
-        if not tile_dic:
-            tile_dic = {}
-        tile_dic[coordinate] = treasure
         if isinstance(treasure, Instruction):
-            super().__init__(AreaType.GateRoom, hallway, direction, tile_dic)
+            super().__init__(AreaType.GateRoom, hallway, direction, Collectible(treasure, force_add=True), tile_dic)
         else:
-            super().__init__(AreaType.TreasureRoom, hallway, direction, tile_dic)
+            super().__init__(AreaType.TreasureRoom, hallway, direction, treasure, tile_dic)
+
+    def abbreviation(self) -> str:
+        return "TR"
+
+
+class ChallengeRoom(SpecialRoom):
+    def __init__(self, hallway: Hallway, direction: Direction, challenger: Challenger,
+                 tile_dic: Dict[Coordinate, Tile] = None):
+        super().__init__(AreaType.ChallengeRoom, hallway, direction, challenger, tile_dic)
 
     def abbreviation(self) -> str:
         return "TR"
@@ -790,8 +806,7 @@ class TreasureRoom(SpecialRoom):
 class RiddleRoom(SpecialRoom):
     def __init__(self, hallway: Hallway, direction: Direction, riddle: Riddle,
                  open_riddle_callback: Callable[[Robot, Riddle], None], tile_dic: Dict[Coordinate, Tile] = None):
-        super().__init__(AreaType.RiddleRoom, hallway, direction, tile_dic)
-        self._set_tile(Riddler(open_riddle_callback, riddle), Area.MID_X, Area.MID_Y)  # todo place in SpecialRoom?
+        super().__init__(AreaType.RiddleRoom, hallway, direction, Riddler(open_riddle_callback, riddle), tile_dic)
 
     def abbreviation(self):
         return "RR"
@@ -799,8 +814,7 @@ class RiddleRoom(SpecialRoom):
 
 class BossRoom(SpecialRoom):
     def __init__(self, hallway: Hallway, direction: Direction, boss: Boss, tile_dic: Dict[Coordinate, Tile] = None):
-        super().__init__(AreaType.BossRoom, hallway, direction, tile_dic)
-        self._set_tile(boss, x=Area.MID_X, y=Area.MID_Y)
+        super().__init__(AreaType.BossRoom, hallway, direction, boss, tile_dic)
 
     def abbreviation(self) -> str:
         return "BR"

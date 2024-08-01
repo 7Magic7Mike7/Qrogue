@@ -37,8 +37,7 @@ collectible_descriptor : 'c' ((REFERENCE integer?) | collectible) ; // id of rew
 energy_descriptor : 'e' integer ;    // amount
 
 enemy_descriptor : DIGIT (REFERENCE | stv) (REFERENCE | collectible)? input_stv? ;    // enemy, target stv (pool id or explicit), reward (pool id or explicit)
-boss_descriptor : 'b' (REFERENCE | '[' boss_puzzle (',' boss_puzzle)* ']' (GATE_LITERAL '(' circuit_stv ')')?)
-                  (REFERENCE | collectible) ;   // list of ((target, input), optional gate) or reference, and reward
+boss_descriptor : 'b' REFERENCE (GATE_LITERAL REFERENCE)? (REFERENCE | collectible) integer ;   // boss reference, optional gate that should be part of the puzzle - deprecated!, reward, number of allowed edits
 riddle_descriptor : 'r' integer puzzle_parameter ;   // attempts
 challenge_descriptor : '!' integer integer? puzzle_parameter ;  // min number of gates, max number of gates
 puzzle_parameter : (REFERENCE | stv) (REFERENCE | collectible) input_stv? ;    // stv pool id, reward pool id

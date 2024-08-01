@@ -172,12 +172,29 @@ def align_string(text: str, line_width: int, left: bool = True, character: str =
         return diff * character + text
 
 
-def enum_str(value: enum.Enum, skip_type_prefix: bool = True) -> str:
+def enum_string(value: enum.Enum, skip_type_prefix: bool = True) -> str:
     text = str(value)
-    if skip_type_prefix:
+    if skip_type_prefix and "." in text:
         index = text.index(".")
         return text[index + 1:]
     return text
+
+
+def enum_from_string(enum_type, text: str) -> Optional:
+    # remove potential AreaType-prefix
+    type_string = str(enum_type)
+    # the enum_type is written like this: "<enum '{ActualEnumName}'>"
+    if "enum" not in type_string: return None
+    type_start = type_string.index("'") + 1
+    type_end = type_string.index("'", type_start)
+    type_string = type_string[type_start:type_end]
+    if text.startswith(type_string):
+        text = text[len(type_string):]
+    # iterate through all enum values and find the one with the same name
+    for val in enum_type:
+        if val.name == text:
+            return val
+    return None
 
 
 def my_str(value: Any) -> str:
@@ -188,7 +205,7 @@ def my_str(value: Any) -> str:
     :return: string representation of the given value
     """
     if isinstance(value, enum.Enum):
-        return enum_str(value)
+        return enum_string(value)
     else:
         return str(value)
 

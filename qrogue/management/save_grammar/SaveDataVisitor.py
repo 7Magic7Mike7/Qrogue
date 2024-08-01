@@ -24,6 +24,11 @@ class SaveDataVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by SaveDataParser#inventory.
+    def visitInventory(self, ctx:SaveDataParser.InventoryContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by SaveDataParser#gates.
     def visitGates(self, ctx:SaveDataParser.GatesContext):
         return self.visitChildren(ctx)

@@ -1,4 +1,4 @@
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Callable
 
 from qrogue.util import MyRandom
 
@@ -19,6 +19,9 @@ class WaveFunction:
         return self.__state
 
     def adapt_weights(self, type_weights: Dict[Optional[Any], int]):
+        """
+        type_weights is only read, never written
+        """
         if self.is_collapsed:
             return  # no need to adapt anything
 
@@ -49,13 +52,21 @@ class WaveFunction:
             if rand_val < val:
                 self.__state = key
                 return self.__state
+        from qrogue.util import Config
+        Config.check_reachability("WaveFunction.collapse()@impossible-collapse")
         return None  # this should not be possible to happen
 
-    def force_value(self, value: Any) -> bool:
+    def force_value(self, value: Any, is_assignable: Optional[Callable[[Any, Any], bool]] = None) -> bool:
         assert not self.is_collapsed, f"Forcing an already collapsed WaveFunction to {value}!"
-        if type(value) in [type(key) for key in self.__weights.keys()]:
-            self.__state = value
-            return True
+
+        if is_assignable is None:
+            def is_assignable(key_, value_) -> bool:
+                return key_ == value_
+
+        for key in self.__weights.keys():
+            if is_assignable(key, value):
+                self.__state = key
+                return True
         return False
 
     def copy(self):

@@ -8,6 +8,7 @@ from py_cui import popups
 from py_cui.widget_set import WidgetSet
 
 from qrogue.game.logic.actors import Boss, Controllable, Enemy, Riddle, Challenge, Robot, BaseBot
+from qrogue.game.world.dungeon_generator.wave_function_collapse import WFCManager
 from qrogue.game.world.map import CallbackPack, Map
 from qrogue.game.world.navigation import Direction
 from qrogue.game.world.tiles import WalkTriggerTile, Message, Collectible
@@ -20,9 +21,10 @@ from qrogue.graphics.widgets import Renderable, BossFightWidgetSet, ExploreWidge
     ScreenCheckWidgetSet, LevelSelectWidgetSet
 from qrogue.util import common_messages, CheatConfig, Config, GameplayConfig, UIConfig, HelpText, \
     Logger, PathConfig, Controls, Keys, RandomManager, PyCuiConfig, PopupConfig, PyCuiColors, Options, \
-    CommonInfos
+    CommonInfos, MapConfig
 from qrogue.util.game_simulator import GameSimulator
 from qrogue.util.key_logger import KeyLogger, OverWorldKeyLogger, DummyKeyLogger
+from qrogue.util.achievements import Achievement
 from .map_management import MapManager
 from .save_data import NewSaveData
 
@@ -233,6 +235,8 @@ class QrogueCUI(PyCUI):
         self.set_title(f"Qrogue {Config.version()}")
         self.__controls = Controls(self._handle_key_presses)
         self.__rm = RandomManager.create_new(seed)
+        self.__wfc_manager = WFCManager()
+        self.__wfc_manager.load()
 
         def move_focus(_widget: WidgetWrapper, _widget_set: WidgetSet):
             # this check is necessary for manual widget-set switches due to the call-order (the callback happens before
@@ -265,13 +269,12 @@ class QrogueCUI(PyCUI):
             auto_scroll = self.__auto_scroll_simulation_transitions
             self.__state_machine.change_state(QrogueCUI._State.Transition, data=(texts, callback, auto_scroll))
 
-        self.__robot = BaseBot(self.__game_over)
-        self.__map_manager = MapManager(self.__save_data, self.__rm.seed, self.__start_level, start_level_transition,
-                                        lambda: self._switch_to_menu(None), self.__cbp, self.__robot)
+        self.__map_manager = MapManager(self.__wfc_manager, self.__save_data, self.__rm.seed, self.__start_level,
+                                        start_level_transition, lambda: self._switch_to_menu(None), self.__cbp,
+                                        self.__save_data.get_gates)
         ########################################
 
-        if not Config.skip_learning():
-            self.__map_manager.fill_expedition_queue(lambda: None, no_thread=True)
+        self.__map_manager.fill_expedition_queue(lambda: None, no_thread=True)
 
         Popup.update_check_achievement_function(self.__map_manager.check_level_event)
         common_messages.set_show_callback(lambda text: Popup.generic_info(Config.system_name(), text))
@@ -305,7 +308,9 @@ class QrogueCUI(PyCUI):
         self.__level_select = LevelSelectWidgetSet(
             self.__controls, Logger.instance(), self, self.__render, self.__rm, self.__show_input_popup,
             self.__save_data.get_completed_levels,
-            self._switch_to_menu, lambda map_seed, map_name: self.__map_manager.load_map(map_name, None, map_seed)
+            self._switch_to_menu,
+            lambda map_name, map_seed, gate_list: self.__map_manager.load_map(map_name, None, map_seed, gate_list),
+            lambda: int(self.__save_data.get_progress(Achievement.CompletedExpedition)[0]), self.__save_data.get_gates,
         )
         self.__screen_check = ScreenCheckWidgetSet(self.__controls, Logger.instance(), self, self.__render,
                                                    self._switch_to_menu)
@@ -319,7 +324,7 @@ class QrogueCUI(PyCUI):
         self.__training = TrainingsWidgetSet(self.__controls, self.__render, Logger.instance(), self,
                                              lambda b: None, self.__popup_history.show,
                                              self.__save_data.check_unlocks)  # todo: update signature
-        self.__workbench = WorkbenchWidgetSet(self.__controls, Logger.instance(), self, [self.__robot], self.__render,
+        self.__workbench = WorkbenchWidgetSet(self.__controls, Logger.instance(), self, [], self.__render,
                                               lambda b: None)  # todo: update signature
         self.__navigation = NavigationWidgetSet(self.__controls, self.__render, Logger.instance(), self)
 
@@ -328,7 +333,8 @@ class QrogueCUI(PyCUI):
                                       self.__popup_history.show, self.__save_data.check_unlocks)
         self.__boss_fight = BossFightWidgetSet(self.__controls, self.__render, Logger.instance(), self,
                                                self.__continue_explore, self.__popup_history.show,
-                                               self.__save_data.check_unlocks)
+                                               self.__save_data.check_unlocks, self._switch_to_menu,
+                                               lambda: self.__map_manager.trigger_event(MapConfig.done_event_id()))
         self.__riddle = RiddleWidgetSet(self.__controls, self.__render, Logger.instance(), self,
                                         self.__continue_explore, self.__popup_history.show,
                                         self.__save_data.check_unlocks)
@@ -446,7 +452,7 @@ class QrogueCUI(PyCUI):
         Thread(target=call_me).start()
 
         if level_name is not None:
-            self.__map_manager.load_map(level_name, None, None)
+            self.__map_manager.load_map(level_name)
 
         super(QrogueCUI, self).start()
         return self.__save_data
@@ -645,6 +651,7 @@ class QrogueCUI(PyCUI):
         self.__state_machine.change_state(QrogueCUI._State.LevelSelect, None)
 
     def _switch_to_level_select(self, data=None) -> None:
+        self.__level_select.reinit()
         self.apply_widget_set(self.__level_select)
 
     def __show_screen_check(self):
@@ -683,9 +690,8 @@ class QrogueCUI(PyCUI):
         self.__key_logger.reinit(level.seed, level.internal_name, self.__save_data.to_keylog_string())
         self.__ow_key_logger.level_start(level.internal_name)
 
-        if level.robot.score > 0:
-            Config.check_reachability("QrogueCUI.__start_level() score check")
-        level.robot.reset_score()  # reset the score at the start of each level
+        # reset the score at the start of each level
+        level.robot.reset_score()   # needed because the player can restart levels to try again
 
         self.__pause.set_data(level.robot, level.name, None)
         self.__state_machine.change_state(QrogueCUI._State.Explore, level)
@@ -697,8 +703,14 @@ class QrogueCUI(PyCUI):
             elif confirmed == 1:
                 self.__state_machine.change_state(QrogueCUI._State.Menu, None)
 
-        ConfirmationPopup.ask(Config.system_name(), f"Your Robot is out of energy. Emergency departure initiated.\n"
-                                                    "Do you want to retry the expedition?", callback, ["Yes", "No"])
+        if self.__map_manager.is_in_level:
+            text = "Do you want to retry the level?"
+        elif self.__map_manager.is_in_expedition:
+            text = "Do you want to retry the expedition?"
+        else:
+            text = "Do you want to retry?"
+            Logger.instance().warn("__game_over() called without being in a level or expedition", from_pycui=False)
+        ConfirmationPopup.ask(Config.system_name(), text, callback, ["Retry", "Back to Main Menu"])
 
     def __start_fight(self, robot: Robot, enemy: Enemy, direction: Direction) -> None:
         self.__state_machine.change_state(QrogueCUI._State.Fight, (robot, enemy))

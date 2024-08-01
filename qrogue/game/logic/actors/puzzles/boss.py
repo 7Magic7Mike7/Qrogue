@@ -1,92 +1,57 @@
 from abc import ABC
-from typing import Tuple, List, Optional
+from typing import Optional, Tuple
 
-from qrogue.game.logic.base import StateVector, CircuitMatrix
-from qrogue.game.logic.collectibles import Collectible, Score, Instruction, instruction as gates
+from qrogue.game.logic.base import StateVector
+from qrogue.game.logic.collectibles import Collectible, Instruction, instruction as gates
 from qrogue.util import PuzzleConfig
-from .target import Target
+from .riddle import Riddle
 
 
-class Boss(Target, ABC):
+class Boss(Riddle, ABC):
     """
     A special Enemy with specified target and reward.
     """
 
     __BOSS_ID: int = 0
+    # we have to pass a seed to Riddle(), but we don't have instability so its value doesn't matter
+    __PLACEHOLDER_SEED = 714985
 
-    def __init__(self, id_: int, puzzles: List[Tuple[StateVector, StateVector]], reward: Collectible,
-                 static_gate: Optional[Instruction] = None):
+    def __init__(self, id_: int, target: StateVector, input_: StateVector, reward: Collectible, edits: int):
         """
         Creates a boss enemy with a list of specified target and input StateVectors and a specified reward.
         :param id_: an integer unique per level to identify the target
-        :param puzzles: list of (target stv, input stv)
         :param reward: the reward for winning against the boss
-        :param static_gate: an optional gate statically placed in the middle of the robot's circuit
         """
-        self.__puzzles = puzzles
-        self.__static_gate = static_gate
         self.__index = 0
 
-        if self.__static_gate is not None:
-            for i in range(self.__static_gate.num_of_qubits):
-                self.__static_gate.use_qubit(i)
-
-        super().__init__(id_, lambda: self.__puzzles[self.__index][0], reward, lambda: self.__puzzles[self.__index][1])
+        super().__init__(id_, target, reward, Boss.__PLACEHOLDER_SEED, edits, input_, stable_probability=0)
 
     @property
     def flee_energy(self) -> int:
         return PuzzleConfig.BOSS_FLEE_ENERGY
 
-    @property
-    def index(self) -> int:
-        return self.__index
-
-    @property
-    def puzzles(self) -> List[Tuple[StateVector, StateVector]]:
-        return self.__puzzles.copy()
-
-    @property
-    def static_gate(self) -> Optional[Instruction]:
-        return self.__static_gate
-
-    def is_reached(self, state_vector: StateVector, circ_matrix: CircuitMatrix) -> Tuple[bool, Optional[Collectible]]:
-        end_index = self.__index
-        reward = None
-        while self.__index != end_index or reward is None:  # todo this way we do not see the different puzzles if the player solves it in less steps than the number of puzzles
-            res, reward = super().is_reached(state_vector, circ_matrix)
-            # return False if the current puzzle was not reached
-            if not res:
-                return False, None
-            # otherwise continue with next puzzle
-            # update index (+ start again at 0 if we would get out of bounds)
-            self.__index += 1
-            if self.__index >= len(self.__puzzles):
-                self.__index = 0
-
-        # if the loop stopped than every puzzle was solved correctly
-        return True, reward
-
-    def _on_reached(self):
-        pass
-
     def flee_check(self) -> bool:
         return True
 
 
-class DummyBoss(Boss):
-    def __init__(self):
-        # needs the player to implement a SwapGate
-        puzzles = [
-            (Instruction.compute_stv([gates.XGate().setup([0])], 2),
-             Instruction.compute_stv([gates.XGate().setup([1])], 2)),
-            (Instruction.compute_stv([gates.XGate().setup([1])], 2),
-             Instruction.compute_stv([gates.XGate().setup([0])], 2)),
-        ]
-        super(DummyBoss, self).__init__(puzzles, Score(1000))
+class EntanglementBoss(Boss):
+    def __init__(self, reward: Collectible, edits: Optional[int] = None, num_of_qubits: Optional[int] = None,
+                 entangled_qubits: Optional[Tuple[int, int]] = None):
+        if edits is None: edits = 5
+        if num_of_qubits is None: num_of_qubits = 2
+        if entangled_qubits is None: entangled_qubits = (0, 1)
+        input_stv = StateVector.create_zero_state_vector(num_of_qubits)
+        target_stv = Instruction.compute_stv([
+            gates.HGate().setup([entangled_qubits[0]]),
+            gates.CXGate().setup([entangled_qubits[0], entangled_qubits[1]]),
+        ], num_of_qubits)
+        super().__init__(0, target_stv, input_stv, reward, edits)
 
 
 class AntiEntangleBoss(Boss):
-    def __init__(self, reward: Collectible):
+    def __init__(self, reward: Collectible, edits: Optional[int] = None):
+        if edits is None: edits = 5
+
         comb_gate = gates.CombinedGates([
             gates.HGate().setup([0]), gates.CXGate().setup([0, 1]), gates.XGate().setup([0])
         ], 2, label="Anti Entanglement").setup([0, 1])
@@ -99,4 +64,4 @@ class AntiEntangleBoss(Boss):
             (target2, basis_states[2]),
             (target2, basis_states[3]),
         ]
-        super().__init__(0, puzzles, reward)
+        super().__init__(0, puzzles[0][0], puzzles[0][1], reward, edits)

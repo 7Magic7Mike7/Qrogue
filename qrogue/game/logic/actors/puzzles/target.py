@@ -106,14 +106,9 @@ class Target(ABC):
             return True, temp
         return False, None
 
-    @abstractmethod
     def _on_reached(self):
-        """
-        Is called during a successful is_reached(). Gives Subclasses the possibility to react to the internal state
-        change.
-
-        :return: None
-        """
+        # Is called during a successful is_reached(). Gives Subclasses the possibility to react to the internal state
+        # change.
         pass
 
     def __str__(self):

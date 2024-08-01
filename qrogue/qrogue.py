@@ -3,6 +3,7 @@ import sys
 from typing import Tuple, List, Optional
 
 from qrogue.game.world.dungeon_generator import QrogueLevelGenerator
+from qrogue.game.world.dungeon_generator.wave_function_collapse import WFCManager
 from qrogue.game.world.map import CallbackPack
 from qrogue.management import QrogueCUI
 from qrogue.util import Logger, Config, PyCuiConfig, PathConfig, GameplayConfig
@@ -38,6 +39,7 @@ def start_qrogue() -> int:
     __SIMULATION_FILE_ARGUMENT = ["--simulation-path", "-sp"]  # path argument
     __VALIDATE_MAP_ARGUMENT = ["--validate-map", "-vm"]  # path argument
     __PLAY_LEVEL_ARGUMENT = ["--play-level", "-pl"]  # str argument
+    __UPDATE_WFC = ["--update-wfc", "-wfc"]
 
     from_console, _ = __parse_argument(__CONSOLE_ARGUMENT)
     debugging, _ = __parse_argument(__DEBUG_ARGUMENT)
@@ -48,8 +50,11 @@ def start_qrogue() -> int:
     has_map_path, map_path = __parse_argument(__VALIDATE_MAP_ARGUMENT, has_value=True)
     _, seed = __parse_argument(__SEED_ARGUMENT, has_value=True)
     has_play_level, level2play = __parse_argument(__PLAY_LEVEL_ARGUMENT, has_value=True)
+    has_update_wfc, _ = __parse_argument(__UPDATE_WFC)
 
-    if has_map_path:
+    if has_update_wfc:
+        update_wfc()
+    elif has_map_path:
         if validate_map(map_path):
             return 0
         else:
@@ -253,3 +258,12 @@ def play_level(level_name: str, debugging: bool = False, data_folder: str = None
                   "to your save files). Using special characters in the path could also cause this error so if the "
                   "path is valid please consider using another one without special characters.")
     return return_code
+
+
+def update_wfc():
+    Logger(print)
+    wfc_manager = WFCManager()
+    wfc_manager.learn()
+    wfc_manager.store()
+    Logger.instance().info("WFC matrices updated successfully", from_pycui=False)
+    Logger.instance().flush()

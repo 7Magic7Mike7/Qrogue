@@ -3,24 +3,42 @@ Author: Artner Michael
 13.06.2021
 """
 from abc import ABC
-from typing import Tuple, List, Callable, Optional
+from typing import Tuple, List, Callable, Optional, Iterator, Union
 
 from qrogue.game.logic.actors.controllables import Controllable
 from qrogue.game.logic.actors.controllables.qubit import QubitSet, DummyQubitSet
 from qrogue.game.logic.base import StateVector, CircuitMatrix, QuantumSimulator, QuantumCircuit, UnitarySimulator
 from qrogue.game.logic.collectibles import Collectible, Instruction, Key, MultiCollectible, \
-    Qubit, Energy, Score
-from qrogue.util import CheatConfig, Config, Logger, GameplayConfig, QuantumSimulationConfig, Options
+    Qubit, Energy, Score, InstructionManager
+from qrogue.util import CheatConfig, Config, Logger, GameplayConfig, QuantumSimulationConfig, Options, GateType
 
 
 # from jkq import ddsim
+class RoboProperties:
+    def __init__(self, num_of_qubits: int = 3, circuit_space: int = 5, gate_list: Optional[List[Instruction]] = None):
+        self.__num_of_qubits = num_of_qubits
+        self.__circuit_space = circuit_space
+        self.__gate_list = gate_list
+
+    @property
+    def num_of_qubits(self) -> int:
+        return self.__num_of_qubits
+
+    @property
+    def circuit_space(self) -> int:
+        return self.__circuit_space
+
+    @property
+    def instruction_list(self) -> Optional[List[Instruction]]:
+        if self.__gate_list is None: return None
+        return [gate.copy() for gate in self.__gate_list]
 
 
 class _Attributes:
     """
     A class that handles some attributes of a Robot.
     """
-
+    # todo: Overhaul whole class?
     __DEFAULT_SPACE = 5
     __DEFAULT_MAX_ENERGY = 100
     __MIN_INIT_ENERGY = 1  # during initialization neither max_energy nor cur_energy must be below this value
@@ -143,9 +161,9 @@ class _Backpack:
     Stores Instructions, Consumables and other Collectibles for a Robot to use.
     """
 
-    __CAPACITY: int = 5  # how many Instructions the Backpack can hold at once
+    __DEFAULT_CAPACITY: int = 5  # how many Instructions the Backpack can hold at once
 
-    def __init__(self, capacity: int = __CAPACITY, content: Optional[List[Instruction]] = None):
+    def __init__(self, capacity: Optional[int] = None, content: Optional[List[Instruction]] = None):
         """
         Backpack is a storage/management class for Collectibles.
 
@@ -153,7 +171,7 @@ class _Backpack:
         :param content: list of initially stored Instructions
         """
         if capacity is None:
-            capacity = _Backpack.__CAPACITY
+            capacity = _Backpack.__DEFAULT_CAPACITY
 
         self.__capacity: int = capacity
         if content:
@@ -163,13 +181,6 @@ class _Backpack:
             self.__capacity = capacity
             self.__storage: List[Instruction] = []
         self.__key_count: int = 0
-
-    def __iter__(self) -> "_BackpackIterator":
-        """
-
-        :return: an Iterator over the stored Instructions
-        """
-        return _BackpackIterator(self)
 
     @property
     def capacity(self) -> int:
@@ -234,14 +245,15 @@ class _Backpack:
             return self.__storage[index]
         return None
 
-    def add(self, instruction: Instruction) -> bool:
+    def add(self, instruction: Instruction, force: bool = False) -> bool:
         """
         Adds an Instruction to the backpack if possible (i.e. if there is still space left).
 
         :param instruction: the Instruction to add
+        :param force: whether we force instruction to be added, defaults to False
         :return: True if there is enough capacity left to store the Instruction, False otherwise
         """
-        if self.used_capacity < self.__capacity:
+        if self.used_capacity < self.__capacity or force:
             self.__storage.append(instruction)
             return True
         return False
@@ -266,6 +278,20 @@ class _Backpack:
         except ValueError:
             return False
 
+    def set_instructions(self, gate_list: List[Instruction]) -> bool:
+        """
+        Clears the stored Instructions and stores copies of all Instructions in gate_list.
+
+        :param gate_list: the instructions to store
+        :return: True if gates were stored correctly, False otherwise (e.g., more gates than $capacity were provided)
+        """
+        if 0 <= len(gate_list) < self.capacity:
+            self.__storage.clear()
+            for gate in gate_list:
+                self.__storage.append(gate.copy())
+            return True
+        return False
+
     def copy_gates(self) -> List[Instruction]:
         """
         Creates a new List that contains copies of all the stored gates.
@@ -278,21 +304,12 @@ class _Backpack:
         return data  # [gate.copy() for gate in self.__storage]
 
 
-class _BackpackIterator:
-    """
-    Allows us to easily iterate through all the Instructions in a backpack.
-    """
+    def instruction_iterator(self) -> Iterator[Instruction]:
+        """
 
-    def __init__(self, backpack: _Backpack):
-        self.__index: int = 0
-        self.__backpack: _Backpack = backpack
-
-    def __next__(self) -> Instruction:
-        if self.__index < self.__backpack.used_capacity:
-            item = self.__backpack.get(self.__index)
-            self.__index += 1
-            return item
-        raise StopIteration
+        :return: an Iterator over the stored Instructions
+        """
+        return iter(self.__storage)
 
 
 class Robot(Controllable, ABC):
@@ -349,8 +366,22 @@ class Robot(Controllable, ABC):
             self.update_statevector(None, use_energy=False, check_for_game_over=False)
 
     @property
-    def backpack(self) -> _Backpack:
-        return self.__backpack
+    def used_capacity(self) -> int:
+        """
+        :return: how many instructions are placed on the robot's circuit
+        """
+        return self.__backpack.used_capacity
+
+    @property
+    def capacity(self) -> int:
+        """
+        :return: how many instructions can be placed on the robot's circuit
+        """
+        return self.__backpack.capacity
+
+    @property
+    def instructions(self) -> Iterator[Instruction]:
+        return self.__backpack.instruction_iterator()
 
     @property
     def state_vector(self) -> StateVector:
@@ -414,10 +445,10 @@ class Robot(Controllable, ABC):
         self.__score = 0
 
     def key_count(self) -> int:  # cannot be a property since it is an abstractmethod in Controllable
-        return self.backpack.key_count
+        return self.__backpack.key_count
 
     def use_key(self) -> bool:
-        return self.backpack.use_key()
+        return self.__backpack.use_key()
 
     def __update_circuit_space(self, new_circuit_space: int):
         old_instructions = self.__instructions.copy()
@@ -566,8 +597,8 @@ class Robot(Controllable, ABC):
         :param index: index of the Instruction in the backpack
         :return: the stored Instruction at the given index or None
         """
-        if 0 <= index < self.backpack.used_capacity:
-            return self.backpack.get(index)
+        if 0 <= index < self.__backpack.used_capacity:
+            return self.__backpack.get(index)
         return None
 
     def use_instruction(self, instruction: Instruction, position: int) -> bool:
@@ -606,30 +637,47 @@ class Robot(Controllable, ABC):
 
         :return: a List containing copies of all Instructions currently available to this Robot
         """
-        return self.backpack.copy_gates()
+        return self.__backpack.copy_gates()
 
-    def give_collectible(self, collectible: Collectible):
+    def set_available_instructions(self, gates: Union[List[Instruction], List[GateType]]) -> bool:
+        """
+        :param gates: either a list of GateType or Instruction that determines which Instructions are available
+        :return: True if gates were successfully set, False if an error occurred
+        """
+        if len(gates) > 0 and isinstance(gates[0], GateType):
+            gate_types: List[GateType] = gates
+            gates = [InstructionManager.from_type(gt) for gt in gate_types]
+        return self.__backpack.set_instructions(gates)
+
+    def give_collectible(self, collectible: Collectible, force: bool = False) -> bool:
         """
         Gives collectible to this Robot.
 
         :param collectible: the Collectible we want to give this Robot
-        :return: None
+        :param force: whether we force collectible to be added, defaults to False
+        :return: True if the collectible was given successfully, False otherwise
         """
         if isinstance(collectible, Score):
             self.__score += collectible.amount
+            return True
         elif isinstance(collectible, Key):
-            self.backpack.give_key(collectible.amount)
+            return self.__backpack.give_key(collectible.amount)
         elif isinstance(collectible, Energy):
             self.__attributes.increase_energy(collectible.amount)
+            return True
         elif isinstance(collectible, Instruction):
-            self.backpack.add(collectible)
+            return self.__backpack.add(collectible, force)
         elif isinstance(collectible, Qubit):
             self.__attributes.add_qubits(collectible.additional_qubits)
+            return True
         elif isinstance(collectible, MultiCollectible):
+            success = True
             for c in collectible.iterator():
-                self.give_collectible(c)
+                success = success and self.give_collectible(c, force)
+            return success
         else:
             Logger.instance().error(f"Received uncovered collectible: {collectible}", show=False, from_pycui=False)
+            return False
 
     def on_move(self):
         """
@@ -682,6 +730,11 @@ class Robot(Controllable, ABC):
 
 
 class BaseBot(Robot):
+    @staticmethod
+    def from_properties(properties: RoboProperties, game_over_callback: Callable[[], None]) -> "BaseBot":
+        return BaseBot(game_over_callback, num_of_qubits=properties.num_of_qubits,
+                       circuit_space=properties.circuit_space, gates=properties.instruction_list)
+
     def __init__(self, game_over_callback: Callable[[], None], num_of_qubits: int = 3,
                  gates: Optional[List[Instruction]] = None,
                  circuit_space: Optional[int] = None, backpack_space: Optional[int] = None,

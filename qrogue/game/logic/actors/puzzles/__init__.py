@@ -2,14 +2,14 @@
 import itertools
 from typing import Tuple, Optional, List
 
+from qrogue.game.logic.base import CircuitMatrix, StateVector, QuantumCircuit, UnitarySimulator
+from qrogue.game.logic.collectibles import Instruction
 from qrogue.util import QuantumSimulationConfig
 from .boss import Boss
 from .challenge import Challenge
 from .enemy import Enemy
 from .riddle import Riddle
 from .target import Target
-from ...base import CircuitMatrix, StateVector, QuantumCircuit, UnitarySimulator
-from ...collectibles import Instruction
 
 
 def is_puzzle_solvable(input_stv: StateVector, target_stv: StateVector, gate_list: List[Instruction]) \
@@ -29,7 +29,7 @@ def is_puzzle_solvable(input_stv: StateVector, target_stv: StateVector, gate_lis
 
 
 def __is_reachable_rec(simulator: UnitarySimulator, circuit: QuantumCircuit, input_stv: StateVector,
-                       target_stv: StateVector, gate_list: List["Instruction"]) \
+                       target_stv: StateVector, gate_list: List[Instruction]) \
         -> Tuple[bool, Optional[QuantumCircuit]]:
     cur_gate = gate_list.pop()
     qubits = list(itertools.permutations(range(input_stv.num_of_qubits), cur_gate.num_of_qubits))

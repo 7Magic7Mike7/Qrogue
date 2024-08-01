@@ -97,12 +97,13 @@ class Controllable(ABC):
         pass
 
     @abstractmethod
-    def give_collectible(self, collectible: Collectible):
+    def give_collectible(self, collectible: Collectible, force: bool = False) -> bool:
         """
         Gives the provided Collectible to the Controllable (e.g. adding it to its inventory).
 
         :param collectible: a Collectible to give the Controllable
-        :return: None
+        :param force: whether we force collectible to be added, defaults to False
+        :return: True if the collectible was given successfully, False otherwise
         """
         pass
 

@@ -7,7 +7,7 @@ from qrogue.game.world.dungeon_generator.wave_function_collapse.wfc_generator im
 from qrogue.game.world.map import AreaType, Area
 from qrogue.test import test_util
 from qrogue.util import MapConfig, RandomManager, TestConfig
-from qrogue.util.util_functions import enum_str
+from qrogue.util.util_functions import enum_string
 
 
 class WFCGeneratorTestCases(test_util.SingletonSetupTestCase):
@@ -18,14 +18,14 @@ class WFCGeneratorTestCases(test_util.SingletonSetupTestCase):
             text = ""
             for row in level:
                 for val in row:
-                    text += f"{enum_str(val)}  "
+                    text += f"{enum_string(val)}  "
                 text += "\n"
             self._print(text)
             self._print()
 
     def test_room_generator(self):
-        generator = WFCRoomGenerator([(level, True) for level in MapConfig.level_list()],
-                                     room_type=AreaType.WildRoom)
+        generator = WFCRoomGenerator.from_level_files([(level, True) for level in MapConfig.level_list()],
+                                                      room_type=AreaType.WildRoom)
         for i in range(7):
             room = generator.generate(7)
 

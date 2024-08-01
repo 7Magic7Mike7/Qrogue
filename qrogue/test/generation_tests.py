@@ -1,13 +1,15 @@
 import unittest
-from typing import List
+from typing import List, Tuple, Optional
 
 import test_util
 from qrogue.game.world import tiles
 from qrogue.game.world.dungeon_generator import DungeonGenerator
 from qrogue.game.world.dungeon_generator.random_generator import RandomLayoutGenerator, ExpeditionGenerator
+from qrogue.game.world.dungeon_generator.wave_function_collapse import WFCManager
 from qrogue.game.world.map import Room, Hallway, CallbackPack
 from qrogue.game.world.navigation import Direction, Coordinate
-from qrogue.util import CheatConfig
+from qrogue.management import MapManager
+from qrogue.util import CheatConfig, StvDifficulty, MapConfig
 
 
 class LayoutGenTestCase(test_util.SingletonSetupTestCase):
@@ -49,9 +51,17 @@ class LayoutGenTestCase(test_util.SingletonSetupTestCase):
 class LevelGenTestCase(test_util.SingletonSetupTestCase):
     def test_single_seed(self):
         CheatConfig.use_cheat("Illuminati")
-        generator = ExpeditionGenerator(lambda s: True, lambda s: None, lambda s: None, CallbackPack.dummy())
-        seed = 297
-        map_, success = generator.generate(seed, test_util.DummyRobot())
+        robo_props = test_util.DummyRoboProps()
+        wfc_manager = WFCManager()
+        wfc_manager.load()
+        diff_code = "1" * StvDifficulty.degrees_of_freedom()
+        difficulty = StvDifficulty.from_difficulty_code(diff_code, robo_props.num_of_qubits, robo_props.circuit_space)
+
+        generator = ExpeditionGenerator(wfc_manager, lambda s: True, lambda s: None, lambda: None,
+                                        CallbackPack.dummy())
+        map_seed = 297
+        puzzle_seed = 7
+        map_, success = generator.generate(map_seed, (robo_props, difficulty, puzzle_seed))
         self.assertTrue(success, "Failed to generate.")
         self._print(map_)
 
@@ -62,21 +72,29 @@ class LevelGenTestCase(test_util.SingletonSetupTestCase):
         end_seed = 5
         failing_seeds = []
 
-        generator = ExpeditionGenerator(lambda s: True, lambda s: None, lambda s: None, CallbackPack.dummy())
-        for i, seed in enumerate(range(start_seed, end_seed)):
+        robo_props = test_util.DummyRoboProps()
+        wfc_manager = WFCManager()
+        wfc_manager.load()
+        diff_code = "1" * StvDifficulty.degrees_of_freedom()
+        difficulty = StvDifficulty.from_difficulty_code(diff_code, robo_props.num_of_qubits, robo_props.circuit_space)
+
+        generator = ExpeditionGenerator(wfc_manager, lambda s: True, lambda s: None, lambda: None,
+                                        CallbackPack.dummy())
+        puzzle_seed = 7
+        for i, map_seed in enumerate(range(start_seed, end_seed)):
             if i % 1000 == 0:
-                self._print(f"Run {i + 1}): seed = {seed}")
-            map_, success = generator.generate(seed, test_util.DummyRobot())
+                self._print(f"Run {i + 1}): map_seed = {map_seed}")
+            map_, success = generator.generate(map_seed, (robo_props, difficulty, puzzle_seed))
             if not success:
-                failing_seeds.append((generator, seed))
-                self._print(f"Failed for seed = {seed}")
+                failing_seeds.append((generator, map_seed))
+                self._print(f"Failed for map_seed = {map_seed}")
 
         if len(failing_seeds) > 0:
             self._print("Failing Seeds:", force=True)
             seeds = []
-            for mg, seed in failing_seeds:
+            for mg, map_seed in failing_seeds:
                 self._print(mg, force=True)
-                seeds.append(seed)
+                seeds.append(map_seed)
             self._print(seeds, force=True)
             self._print(force=True)
             self.assertTrue(False, "Some seeds failed!")
@@ -152,6 +170,35 @@ class LevelGenTestCase(test_util.SingletonSetupTestCase):
         visited.sort(key=lambda c: c.x + c.y * 10)
         print(f"Visited: {[str(elem) for elem in visited]}")
         """
+
+    def test_expedition_parameters(self):
+        prefix = MapConfig.expedition_map_prefix()
+        dc_sep = MapConfig.diff_code_separator()
+        ps_sep = MapConfig.puzzle_seed_separator()
+        expeditions = [
+            (f"{prefix}12345", None),   # only map_seed provided
+            (f"{prefix}12{ps_sep}12345", None),    # no difficulty, puzzle and map seed in name
+            (f"{prefix}2", 12345),  # difficulty in name, separate map seed
+            (f"{prefix}2{dc_sep}12", 12345),  # difficulty and puzzle seed in name, separate map seed
+            (f"{prefix}2{dc_sep}12{ps_sep}12345", None),    # everything in name
+        ]
+        expedition_progress = 1
+
+        expected_values: List[Tuple[str, int, Optional[int]]] = [
+            ("0", 12345, None),
+            ("0", 12345, 12),
+            ("2", 12345, None),
+            ("2", 12345, 12),
+            ("2", 12345, 12),
+        ]
+        for i, data in enumerate(expeditions):
+            map_name, map_seed = data
+            r_diff_code, r_map_seed, r_puzzle_seed = MapManager.parse_expedition_parameters(map_name, map_seed,
+                                                                                            expedition_progress)
+            e_diff_code, e_map_seed, e_puzzle_seed = expected_values[i]
+            self.assertEqual(e_diff_code, r_diff_code, f"Unexpected diff_code! @{i}")
+            self.assertEqual(e_map_seed, r_map_seed, f"Unexpected map_seed! @{i}")
+            self.assertEqual(e_puzzle_seed, r_puzzle_seed, f"Unexpected puzzle_seed! @{i}")
 
 
 if __name__ == '__main__':

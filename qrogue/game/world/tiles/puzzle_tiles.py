@@ -1,7 +1,8 @@
 from enum import Enum
 from typing import Callable, List, Optional
 
-from qrogue.game.logic.actors import Controllable, Robot, Enemy as EnemyActor, Boss as BossActor
+from qrogue.game.logic import actors
+from qrogue.game.logic.actors import Controllable, Robot
 from qrogue.game.target_factory import EnemyFactory
 from qrogue.game.world.navigation import Direction
 from qrogue.util import RandomManager, Logger, CheatConfig, PuzzleConfig
@@ -17,8 +18,8 @@ class Enemy(WalkTriggerTile):
         DEAD = 3
         FLED = 4
 
-    def __init__(self, factory: EnemyFactory, get_entangled_tiles: Callable[[int], List[EnemyActor]],
-                 update_entangled_groups: Callable[[EnemyActor], None], seed: int, e_id: int = 0,
+    def __init__(self, factory: EnemyFactory, get_entangled_tiles: Callable[[int], List[actors.Enemy]],
+                 update_entangled_groups: Callable[[actors.Enemy], None], seed: int, e_id: int = 0,
                  tile_id_callback: Callable[[], int] = None):
         super().__init__(TileCode.Enemy)
         self.__factory = factory
@@ -33,7 +34,7 @@ class Enemy(WalkTriggerTile):
         self.__tile_id = self.__next_tile_id()
 
         self.__rm = RandomManager.create_new(seed)
-        self.__enemy: Optional[EnemyActor] = None
+        self.__enemy: Optional[actors.Enemy] = None
 
     @property
     def data(self) -> int:
@@ -53,7 +54,7 @@ class Enemy(WalkTriggerTile):
 
     def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
         if isinstance(controllable, Robot):
-            if controllable.backpack.used_capacity > 0:
+            if controllable.used_capacity > 0:     # make sure that the robot has at least one gate
                 return super(Enemy, self).is_walkable(direction, controllable)
             else:
                 # noting happens in case the robot doesn't have any gates
@@ -128,12 +129,10 @@ class Enemy(WalkTriggerTile):
 
 
 class Boss(WalkTriggerTile):
-    def __init__(self, boss: BossActor, on_walk_callback: Callable[[Robot, BossActor, Direction], None],
-                 end_level_callback: Callable[[], None]):
+    def __init__(self, boss: actors.Boss, on_walk_callback: Callable[[Robot, actors.Boss, Direction], None]):
         super().__init__(TileCode.Boss)
         self.__boss = boss
         self.__on_walk = on_walk_callback
-        self.__end_level_callback = end_level_callback  # todo: is this still used?
         self.__is_active = True
 
     @property
@@ -148,8 +147,6 @@ class Boss(WalkTriggerTile):
         if isinstance(controllable, Robot):
             if self._is_active:
                 self.__on_walk(controllable, self.__boss, direction)
-            # else:
-            #    self.__end_level_callback()
             return True
         else:
             Logger.instance().error(f"Non-Robot walked on Boss! controllable = {controllable}", show=False,
@@ -163,5 +160,5 @@ class Boss(WalkTriggerTile):
             return self._invisible
 
     def _copy(self) -> "Tile":
-        # Bosses should not be duplicated in a level anyway, so it doesn't matter if we reference the same BossActor
-        return Boss(self.__boss, self.__on_walk, self.__end_level_callback)
+        # Bosses should not be duplicated in a level anyway, so it doesn't matter if we reference the same actors.Boss
+        return Boss(self.__boss, self.__on_walk)

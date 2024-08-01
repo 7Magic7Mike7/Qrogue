@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, List
+from typing import Any, Dict, Optional, List, Iterator
 
 from qrogue.game.world.dungeon_generator.wave_function_collapse import WFCLearnMatrix
 from qrogue.game.world.navigation import Coordinate, Direction
@@ -10,7 +10,62 @@ class WFCLearner:
         self.__pos_weights = pos_weights
         self.__type_weights = type_weights
 
+        self.__width = -1
+        self.__height = -1
+        for coor in self.__pos_weights:
+            if coor.x > self.__width:
+                self.__width = coor.x
+            if coor.y > self.__height:
+                self.__height = coor.y
+
+        # increment width and height since coordinates start at 0
+        self.__width += 1
+        self.__height += 1
+        # if pos_weights was empty, width and height are now 0
+
+    @property
+    def width(self) -> int:
+        return self.__width
+
+    @property
+    def height(self) -> int:
+        return self.__height
+
+    @property
+    def positions(self) -> Iterator[Coordinate]:
+        return iter(self.__pos_weights.keys())
+
+    @property
+    def types(self) -> Iterator[Optional[Any]]:
+        return iter(self.__type_weights.keys())
+
+    def pos_weights(self, pos: Coordinate) -> Dict[Any, int]:
+        if pos in self.__pos_weights:
+            return self.__pos_weights[pos].copy()
+        return {}
+
+    def type_weights(self, type_: Optional[Any]):
+        if type_ in self.__type_weights:
+            return self.__type_weights[type_].copy()
+        return {}
+
     def learn(self, matrix: WFCLearnMatrix):
+        if self.__width > 0:
+            if matrix.width != self.__width:
+                from qrogue.util import Config
+                Config.check_reachability("WFCLearner.learn() inequal width")
+                # todo: Log error?
+        else:
+            self.__width = matrix.width
+
+        if self.__height > 0:
+            if matrix.height != self.__height:
+                from qrogue.util import Config
+                Config.check_reachability("WFCLearner.learn() inequal height")
+                # todo: Log error?
+        else:
+            self.__height = matrix.height
+
         for x in range(matrix.width):
             for y in range(matrix.height):
                 value = matrix.at(x, y)

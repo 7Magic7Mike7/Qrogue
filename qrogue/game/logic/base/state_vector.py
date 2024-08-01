@@ -238,6 +238,16 @@ class StateVector:
             text += "\n"
         return text
 
+    def __hash__(self):
+        mult = 11
+        hash_sum = 0
+        for amplitude in self.__amplitudes:
+            hash_sum += hash(amplitude.imag) * mult
+            mult = mult * 2 + 1
+            hash_sum += hash(amplitude.real) * mult
+            mult = mult * 2 + 1
+        return hash_sum
+
     def __eq__(self, other) -> bool:  # TODO currently not even in use!
         if type(other) is type(self):
             return self.__amplitudes == other.__amplitudes

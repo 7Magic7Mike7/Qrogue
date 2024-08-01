@@ -22,6 +22,11 @@ class ErrorConfig:
                             "If this error still occurs but you're sure that the corresponding file is present:"
 
     @staticmethod
+    def qubit_overflow(actual_qubits: int, available_qubits: int) -> str:
+        return f"Cannot place a gate with {actual_qubits} qubits on a circuit with only {available_qubits} qubit!\n" \
+               f"Please press \"Cancel\" to abort placement."
+
+    @staticmethod
     def raise_deletion_exception():
         """
         Raises a common exception to indicate that this is old code that needs to be removed and worked around.
