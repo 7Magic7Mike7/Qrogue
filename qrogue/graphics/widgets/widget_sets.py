@@ -97,6 +97,13 @@ class MyWidgetSet(WidgetSet, Renderable, ABC):
         self._logger.info('Adding widget {} w/ ID {} of type {}'.format(title, id, str(type(new_widget))))
         return new_widget
 
+    def add_block_label_by_dimension(self, title: str, dimensions: UIConfig.Dimensions, center: bool = True) \
+            -> MyBaseWidget:
+        return self.add_block_label(title, center=center,
+                                    row=dimensions.margin_top, column=dimensions.margin_left,
+                                    row_span=dimensions.height, column_span=dimensions.width,
+                                    padx=dimensions.pad_x, pady=dimensions.pad_y)
+
     def add_key_command(self, keys: List[int], command: Callable[[], Any], add_to_widgets: bool = False,
                         overwrite: bool = True, overwrite_widgets: Optional[bool] = None) -> Any:
         if overwrite_widgets is None:
@@ -129,6 +136,7 @@ class MenuWidgetSet(MyWidgetSet):
                  quick_start_callback: Callable[[], None], start_playing_callback: Callable[[], None],
                  start_expedition_callback: Callable[[], None], stop_callback: Callable[[], None],
                  show_screen_check_callback: Callable[[], None], show_level_select_callback: Callable[[], None],
+                 show_workbench_callback: Callable[[], None],
                  check_unlocks_callback: Callable[[Union[str, Unlocks]], bool],
                  save_callback: Callable[[], Tuple[bool, CommonInfos]]):
         self.__seed = 0
@@ -138,6 +146,7 @@ class MenuWidgetSet(MyWidgetSet):
         self.__stop_callback = stop_callback
         self.__show_screen_check_callback = show_screen_check_callback
         self.__show_level_select_callback = show_level_select_callback
+        self.__show_workbench_callback = show_workbench_callback
         self.__check_unlocks = check_unlocks_callback
         self.__save_game = save_callback
         super().__init__(logger, root, render)
@@ -199,6 +208,10 @@ class MenuWidgetSet(MyWidgetSet):
         if self.__check_unlocks(Unlocks.LevelSelection):
             choices.append("SELECT LEVEL\n")
             callbacks.append(self.__show_level_select_callback)
+
+        if True or self.__check_unlocks(Unlocks.Workbench):
+            choices.append("WORKBENCH\n")
+            callbacks.append(self.__show_workbench_callback)
 
         # choices.append("START AN EXPEDITION\n")
         # callbacks.append(self.__start_expedition)
@@ -1412,71 +1425,41 @@ class PauseMenuWidgetSet(MyWidgetSet):
         self.__description.render_reset(reset_text=False)
 
 
-class WorkbenchWidgetSet(MyWidgetSet):  # todo: overhaul or remove
-    def __init__(self, controls: Controls, logger, root: py_cui.PyCUI, available_robots: List[Robot],
-                 render: Callable[[List[Renderable]], None], continue_callback: Callable[[], None]):
-        self.__continue = continue_callback
-        self.__available_robots = available_robots
-        super().__init__(logger, root, render)
+class WorkbenchWidgetSet(MyWidgetSet):
+    def __init__(self, logger, root: py_cui.PyCUI, base_render_callback: Callable[[List[Renderable]], None],
+                 controls: Controls, open_fusion_circuit_callback: Callable[[], None]):
+        super().__init__(logger, root, base_render_callback)
 
-        robot_selection = self.add_block_label('Robot Selection', 0, 0, row_span=UIConfig.WINDOW_HEIGHT, center=False)
-        self.__robot_selection = SelectionWidget(robot_selection, controls, stay_selected=True)
-        self.__robot_selection.set_data((
-            [robot.name for robot in self.__available_robots] + [MyWidgetSet.BACK_STRING],
-            [self.__details]
-        ))
+        resource_info = self.add_block_label_by_dimension('Resources', UIConfig.WB_RESOURCES_DIMS)
+        resource_info.toggle_border()
+        self.__resources = SimpleWidget(resource_info)
 
-        robot_details = self.add_block_label('Robot Details', 0, 1, 3, 4, center=True)
-        self.__robot_info = SimpleWidget(robot_details)
+        action_selection = self.add_block_label_by_dimension('Actions', UIConfig.WB_ACTIONS_DIMS)
+        action_selection.toggle_border()
+        self.__choices = SelectionWidget(action_selection, controls, stay_selected=True)
 
-        available_upgrades = self.add_block_label('Upgrades', 4, 1, 2, 2, center=True)
-        self.__available_upgrades = SelectionWidget(available_upgrades, controls, 4, is_second=True,
-                                                    stay_selected=False)
+        gate_selection = self.add_block_label_by_dimension('Gates', UIConfig.WB_GATES_DIMS)
+        gate_selection.toggle_border()
+        self.__details = SelectionWidget(gate_selection, controls, columns=3, is_second=True)
 
-        # init action key commands
-        def use_selection():
-            if self.__robot_selection.use():
-                Widget.move_focus(self.__available_upgrades, self)
-                self.__robot_selection.render()
-                self.__available_upgrades.render()
-
-        self.__robot_selection.widget.add_key_command(controls.action, use_selection)
-
-        def use_upgrades():
-            if self.__available_upgrades.use():
-                Widget.move_focus(self.__robot_selection, self)
-                self.render()
-
-        self.__available_upgrades.widget.add_key_command(controls.action, use_upgrades)
+        info_widget = self.add_block_label_by_dimension('Infos', UIConfig.WB_INFOS_DIMS, center=True)
+        info_widget.toggle_border()
+        self.__info = SimpleWidget(info_widget)
 
     def get_widget_list(self) -> List[Widget]:
         return [
-            self.__robot_selection,
-            self.__robot_info,
-            self.__available_upgrades,
+            self.__choices,
+            self.__details,
+            self.__info,
         ]
 
     def get_main_widget(self) -> WidgetWrapper:
-        return self.__robot_selection.widget
+        return self.__choices.widget
 
     def reset(self) -> None:
-        pass
-
-    def __details(self, index: int) -> bool:
-        if self.__save_data:  # todo fix
-            robot = None  # self.__save_data.get_robot(index)
-            if robot:
-                self.__robot_info.set_data(robot.description())
-                self.__available_upgrades.set_data(data=(
-                    ["Test", "Fuel"],
-                    [self.__upgrade],
-                ))
-            else:
-                self.__continue()
-        return True
-
-    def __upgrade(self, index: int) -> bool:
-        return True
+        self.__choices.render_reset()
+        self.__details.render_reset()
+        self.__info.render_reset()
 
 
 class MapWidgetSet(MyWidgetSet, ABC):

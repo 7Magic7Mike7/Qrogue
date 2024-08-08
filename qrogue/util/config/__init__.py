@@ -10,3 +10,4 @@ from .test_config import TestConfig
 from .visual_config import ColorCode, ColorConfig, HudConfig, PopupConfig, UIConfig, split_text
 
 GameplayConfig.init_options()
+UIConfig.init()

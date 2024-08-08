@@ -1,6 +1,6 @@
 import enum
 import math
-from typing import Optional, Tuple, List, Callable
+from typing import Optional, Tuple, List, Callable, Dict
 
 from qrogue.util.config.py_cui_config import PyCuiColors
 
@@ -323,9 +323,167 @@ class PopupConfig:
 
 
 class UIConfig:
+    class Dimensions:
+        @staticmethod
+        def __from_margins(margin_left: int, margin_top: int, center_x: bool = True, center_y: bool = False,
+                           pad_x: Optional[int] = None, pad_y: Optional[int] = None):
+            # NOT FULLY WORKING I THINK
+            if margin_left < 0 and not center_x:
+                width = UIConfig.WINDOW_WIDTH + margin_left
+                margin_left = 0     # it's 0 since we place it from the right
+            else:
+                # if margin_left > 0: nothing changes; else we want to center anyways and can place from the left
+                margin_left = abs(margin_left)
+                width = UIConfig.WINDOW_WIDTH - margin_left
+                if center_x: width -= margin_left  # subtract an additional time for the other side
+
+            if margin_top < 0 and not center_y:
+                height = UIConfig.WINDOW_HEIGHT + margin_top
+                margin_top = 0
+            else:
+                abs_margin_top = abs(margin_top)
+                height = UIConfig.WINDOW_HEIGHT-abs_margin_top
+                if center_y: height -= abs_margin_top   # subtract an additional time for the other side
+
+            return UIConfig.Dimensions(width, height, margin_left, margin_top, pad_x, pad_y)
+
+        def __init__(self, width: int, height: int, margin_left: Optional[int] = None, margin_top: Optional[int] = None,
+                     pad_x: Optional[int] = None, pad_y: Optional[int] = None):
+            # check for 0 and relative 0 if using negative values
+            assert width not in (0, -UIConfig.WINDOW_WIDTH), f"Width ({width}) must not be equivalent to 0!"
+            assert height not in (0, -UIConfig.WINDOW_HEIGHT), f"Height ({height}) must not be equivalent to 0!"
+            assert abs(width) <= UIConfig.WINDOW_WIDTH, f"Width ({width}) is out of bounds!"
+            assert abs(height) <= UIConfig.WINDOW_HEIGHT, f"Height ({height}) is out of bounds!"
+
+            # negative values are interpreted as relative to max dimensions
+            if width < 0: width = UIConfig.WINDOW_WIDTH + width
+            if height < 0: height = UIConfig.WINDOW_HEIGHT + height
+
+            if margin_left is None: margin_left = 0
+            if margin_top is None: margin_top = 0
+
+            # negative margins are interpreted as absolute values from right instead of left or bottom instead of top
+            if margin_left < 0: margin_left = UIConfig.WINDOW_WIDTH + margin_left
+            if margin_top < 0: margin_top = UIConfig.WINDOW_HEIGHT + margin_top
+
+            assert width + margin_left <= UIConfig.WINDOW_WIDTH, f"Invalid width or margin_left: {width} + " \
+                                                                 f"{margin_left} <= {UIConfig.WINDOW_WIDTH} is False!"
+            assert height + margin_top <= UIConfig.WINDOW_HEIGHT, f"Invalid height or margin_top: {height} + " \
+                                                                  f"{margin_top} <= {UIConfig.WINDOW_HEIGHT} is False!"
+
+            # default values used from WidgetSet.add_block_label()
+            if pad_x is None: pad_x = 1
+            if pad_y is None: pad_y = 0
+
+            self.__width = width
+            self.__height = height
+            self.__margin_left = margin_left
+            self.__margin_top = margin_top
+            self.__pad_x = pad_x
+            self.__pad_y = pad_y
+
+        @property
+        def width(self) -> int:
+            return self.__width
+
+        @property
+        def height(self) -> int:
+            return self.__height
+
+        @property
+        def margin_left(self) -> int:
+            return self.__margin_left
+
+        @property
+        def margin_top(self) -> int:
+            return self.__margin_top
+
+        @property
+        def pad_x(self) -> int:
+            return self.__pad_x
+
+        @property
+        def pad_y(self) -> int:
+            return self.__pad_y
+
+        # implied properties
+        @property
+        def left(self) -> int:
+            return self.__margin_left
+
+        @property
+        def top(self) -> int:
+            return self.__margin_top
+
+        @property
+        def right(self) -> int:
+            return self.__margin_left + self.__width
+
+        @property
+        def bottom(self) -> int:
+            return self.__margin_top + self.__height
+
+        def center(self, horizontal: bool = False, vertical: bool = False) -> "UIConfig.Dimensions":
+            width, height, margin_left, margin_top, pad_x, pad_y = self
+            if horizontal:
+                margin_left = int((UIConfig.WINDOW_WIDTH - width) / 2)
+            if vertical:
+                margin_top = int((UIConfig.WINDOW_HEIGHT - height) / 2)
+            return UIConfig.Dimensions(width, height, margin_left, margin_top, pad_x, pad_y)
+
+        def align_horizontal(self, left: bool) -> "UIConfig.Dimensions":
+            width, height, _, margin_top, pad_x, pad_y = self
+            margin_left = 0 if left else UIConfig.WINDOW_WIDTH - width
+            return UIConfig.Dimensions(width, height, margin_left, margin_top, pad_x, pad_y)
+
+        def align_vertical(self, top: bool) -> "UIConfig.Dimensions":
+            width, height, margin_left, _, pad_x, pad_y = self
+            margin_top = 0 if top else UIConfig.WINDOW_HEIGHT - height
+            return UIConfig.Dimensions(width, height, margin_left, margin_top, pad_x, pad_y)
+
+        def from_base(self, new_values: Dict[str, int]):
+            width, height, margin_left, margin_top, pad_x, pad_y = self
+            if 'width' in new_values: width = new_values['width']
+            if 'height' in new_values: height = new_values['height']
+
+            # allow aliases for margins
+            if 'margin_left' in new_values: margin_left = new_values['margin_left']
+            if 'margin_x' in new_values: margin_left = new_values['margin_x']
+            if 'margin_top' in new_values: margin_top = new_values['margin_top']
+            if 'margin_y' in new_values: margin_top = new_values['margin_y']
+
+            if 'pad_x' in new_values: pad_x = new_values['pad_x']
+            if 'pad_y' in new_values: pad_y = new_values['pad_y']
+            return UIConfig.Dimensions(width, height, margin_left, margin_top, pad_x, pad_y)
+
+        def relative(self, add_values: Dict[str, int]):
+            width, height, margin_left, margin_top, pad_x, pad_y = self
+            if 'width' in add_values: width += add_values['width']
+            if 'height' in add_values: height += add_values['height']
+
+            # allow aliases for margins
+            if 'margin_left' in add_values: margin_left += add_values['margin_left']
+            if 'margin_x' in add_values: margin_left += add_values['margin_x']
+            if 'margin_top' in add_values: margin_top += add_values['margin_top']
+            if 'margin_y' in add_values: margin_top += add_values['margin_y']
+
+            if 'pad_x' in add_values: pad_x += add_values['pad_x']
+            if 'pad_y' in add_values: pad_y += add_values['pad_y']
+            return UIConfig.Dimensions(width, height, margin_left, margin_top, pad_x, pad_y)
+
+        def __iter__(self):
+            return iter(
+                (self.__width, self.__height, self.__margin_left, self.__margin_top, self.__pad_x, self.__pad_y)
+            )
+
+        def __str__(self):
+            return f"WS-Dims(size={self.__width}x{self.__height}|margin={self.__margin_left},{self.__margin_top}|" \
+                   f"pad:{self.__pad_x},{self.__pad_y})"
+
     # measures are in PyCUI rows and columns, not characters!
     WINDOW_WIDTH = 17
     WINDOW_HEIGHT = 10
+    WINDOW_DIMS: Optional[Dimensions] = None
 
     HUD_HEIGHT = 1
     HUD_WIDTH = math.floor(WINDOW_WIDTH / 2)
@@ -354,6 +512,44 @@ class UIConfig:
     LEVEL_SELECT_MAIN_HEIGHT = 5
     LEVEL_SELECT_CHOICES_WIDTH = 3
     LEVEL_SELECT_DETAILS_WIDTH = 7
+
+    WB_MARGIN_X = 1
+    WB_ACTIONS_WIDTH = 2
+    WB_INFO_HEIGHT = 2
+
+    WB_RESOURCES_DIMS: Optional[Dimensions] = None
+    WB_ACTIONS_DIMS: Optional[Dimensions] = None
+    WB_GATES_DIMS: Optional[Dimensions] = None
+    WB_INFOS_DIMS: Optional[Dimensions] = None
+
+    @staticmethod
+    def init():
+        UIConfig.WINDOW_DIMS = UIConfig.Dimensions(width=UIConfig.WINDOW_WIDTH, height=UIConfig.WINDOW_HEIGHT)
+        UIConfig._init_workbench()
+
+    @staticmethod
+    def _init_workbench():
+        # first store the dimensions in local variables for better readability
+        global_margin_x = 1
+        res = UIConfig.Dimensions(-2*global_margin_x, 2).center(horizontal=True).align_vertical(top=True)
+        infos = UIConfig.Dimensions(-2*global_margin_x, 2).center(horizontal=True).align_vertical(top=False)
+
+        # fill actions and gates height-wise in between res and infos
+        actions = UIConfig.Dimensions(3, -(res.height + infos.height), global_margin_x, res.bottom)
+        gates = UIConfig.Dimensions(-(actions.right + global_margin_x), actions.height, actions.right,
+                                    actions.margin_top)
+
+        # now set the values of the global variables
+        UIConfig.WB_RESOURCES_DIMS = res
+        UIConfig.WB_ACTIONS_DIMS = actions
+        UIConfig.WB_GATES_DIMS = gates
+        UIConfig.WB_INFOS_DIMS = infos
+
+    @staticmethod
+    def wb_info_dims() -> Dimensions:
+        return UIConfig.Dimensions(-2, 2).center(horizontal=True).align_vertical(top=False)
+        #return UIConfig.Dimensions(UIConfig.WINDOW_WIDTH-2, 2, 1, -2)
+        #return UIConfig.Dimensions.from_margins(1, -2)
 
     @staticmethod
     def stv_height(num_of_qubits: int) -> int:

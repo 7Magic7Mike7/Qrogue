@@ -304,7 +304,8 @@ class QrogueCUI(PyCUI):
         self.__menu = MenuWidgetSet(self.__controls, self.__render, Logger.instance(), self,
                                     self.__map_manager.load_first_uncleared_map, self.__start_playing,
                                     self.__start_expedition, self.stop, self.__show_screen_check,
-                                    self.__show_level_select, self.__save_data.check_unlocks, self._conditional_saving)
+                                    self.__show_level_select, self.__show_workbench, self.__save_data.check_unlocks,
+                                    self._conditional_saving)
         self.__level_select = LevelSelectWidgetSet(
             self.__controls, Logger.instance(), self, self.__render, self.__rm, self.__show_input_popup,
             self.__save_data.get_completed_levels,
@@ -324,8 +325,7 @@ class QrogueCUI(PyCUI):
         self.__training = TrainingsWidgetSet(self.__controls, self.__render, Logger.instance(), self,
                                              lambda b: None, self.__popup_history.show,
                                              self.__save_data.check_unlocks)  # todo: update signature
-        self.__workbench = WorkbenchWidgetSet(self.__controls, Logger.instance(), self, [], self.__render,
-                                              lambda b: None)  # todo: update signature
+        self.__workbench = WorkbenchWidgetSet(Logger.instance(), self, self.__render, self.__controls, lambda: None)
         self.__navigation = NavigationWidgetSet(self.__controls, self.__render, Logger.instance(), self)
 
         self.__explore = ExploreWidgetSet(self.__controls, self.__render, Logger.instance(), self)
@@ -672,8 +672,8 @@ class QrogueCUI(PyCUI):
             self.__training.set_data(robot, enemy, False)
         self.apply_widget_set(self.__training)
 
-    def __use_workbench(self, direction: Direction, controllable: Controllable):
-        self.__state_machine.change_state(QrogueCUI._State.Workbench, self.__save_data)
+    def __show_workbench(self):
+        self.__state_machine.change_state(QrogueCUI._State.Workbench, None)
 
     def _switch_to_workbench(self, _=None):
         # no data parameter needed
