@@ -360,7 +360,7 @@ class CXGate(DoubleQubitGate):
 
 ####### Combined Gates #######
 
-class CombinedGates(Instruction):
+class CombinedGate(Instruction):
     def __init__(self, instructions: List[Instruction], needed_qubits: int, label: Optional[str] = None):
         if label is None: label = "BlackBox"
         circuit = QuantumCircuit.from_register(needed_qubits)
