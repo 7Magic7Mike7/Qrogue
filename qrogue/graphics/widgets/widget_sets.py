@@ -554,7 +554,8 @@ class LevelSelectWidgetSet(MyWidgetSet):
 
         # add all available gates plus meta options Confirm and Cancel
         names: List[str] = [str(gate) for gate in self.__selected_gates] + ["-Confirm-", "-Cancel-"]
-        gate_objects = self.__selected_gates + [LevelSelectWidgetSet.__GATE_CONFIRM, LevelSelectWidgetSet.__GATE_CANCEL]
+        gate_objects: List[Union[LevelSelectWidgetSet._SelectedGate, str]] = \
+            self.__selected_gates + [LevelSelectWidgetSet.__GATE_CONFIRM, LevelSelectWidgetSet.__GATE_CANCEL]
         self.__details.set_data(((names, gate_objects), add_gate))
         return True
 
