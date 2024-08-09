@@ -143,6 +143,16 @@ class CircuitMatrix:
 
         return CircuitMatrix.matrix_to_string(self.__matrix, self.num_of_qubits, space_per_value)
 
+    def __eq__(self, other):
+        if not isinstance(other, CircuitMatrix): return False
+        if other.size != self.size: return False
+
+        for y in range(self.size):
+            for x in range(self.size):
+                if other.__matrix[y][x] != self.__matrix[y][x]:
+                    return False
+        return True
+
     def __str__(self) -> str:
         text = "CircuitMatrix("
         for row in self.__matrix:
