@@ -393,7 +393,7 @@ class HudWidget(Widget):
 
 
 class CircuitWidget(Widget):
-    class PlaceHolderData:
+    class _PlaceHolderData:
         def __init__(self, gate: Optional[Instruction], pos: int = -1, qubit: int = 0):
             self.gate = gate
             self.pos = pos
@@ -435,7 +435,7 @@ class CircuitWidget(Widget):
         self.__robot: Optional[Robot] = None
         self.__input: Optional[StateVector] = None
         self.__target: Optional[StateVector] = None
-        self.__place_holder_data: Optional[CircuitWidget.PlaceHolderData] = None
+        self.__place_holder_data: Optional[CircuitWidget._PlaceHolderData] = None
 
         widget.add_key_command(controls.get_keys(Keys.SelectionUp), self.__move_up)
         widget.add_key_command(controls.get_keys(Keys.SelectionRight), self.__move_right)
@@ -519,7 +519,7 @@ class CircuitWidget(Widget):
             # todo
 
     def start_gate_placement(self, gate: Optional[Instruction], pos: int = -1, qubit: int = 0):
-        self.__place_holder_data = self.PlaceHolderData(gate, pos, qubit)
+        self.__place_holder_data = self._PlaceHolderData(gate, pos, qubit)
         if pos < 0 or self.__robot.circuit_space <= pos:
             # if we're currently not removing a gate and implicit removal is allowed we can definitely start at any
             # position
