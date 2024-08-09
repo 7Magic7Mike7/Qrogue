@@ -72,7 +72,7 @@ class CircuitMatrix:
         self.__num_of_used_gates = num_of_used_gates
 
         if not verify_circuit_matrix(matrix, QuantumSimulationConfig.TOLERANCE):
-            debug = True
+            Config.check_reachability("CircuitMatrix.verfiy_circuit_matrix()")
 
     @property
     def size(self) -> int:
