@@ -1,16 +1,16 @@
 import enum
 import math
 from abc import ABC, abstractmethod
-from typing import Iterator, Optional, Dict, List, Callable
+from typing import Iterator, Optional, Dict, List, Callable, Tuple
 
 import qiskit.circuit.library.standard_gates as gates
 from qiskit.circuit import Gate as QiskitGate
 
-from qrogue.game.logic.base import StateVector, CircuitMatrix, QuantumSimulator, QuantumCircuit
+from qrogue.game.logic.base import StateVector, CircuitMatrix, QuantumSimulator, QuantumCircuit, UnitarySimulator
 from qrogue.game.logic.collectibles import Collectible, CollectibleType
-from qrogue.util import Logger, GateType
+from qrogue.util import Logger, GateType, QuantumSimulationConfig, InstructionConfig, ColorConfig, ColorCode
 from qrogue.util.achievements import Unlocks
-from qrogue.util.util_functions import rad2deg
+from qrogue.util.util_functions import rad2deg, center_string, to_binary_string
 
 
 class Instruction(Collectible, ABC):
@@ -27,6 +27,77 @@ class Instruction(Collectible, ABC):
         simulator = QuantumSimulator()
         amplitudes = simulator.run(circuit, do_transpile=True)
         return StateVector(amplitudes, num_of_used_gates=len(instructions))
+
+    @staticmethod
+    def __circuit_input_value(qubit: int, state_vectors: Optional[Tuple[StateVector, StateVector, StateVector]]):
+        if state_vectors is not None:
+            input_stv, output_stv, target_stv = state_vectors
+            if input_stv is not None and input_stv.is_classical \
+                    and target_stv is not None and target_stv.is_classical \
+                    and output_stv.is_classical:  # robot.state_vector cannot be None
+                index = input_stv.to_value().index(1)  # find where the amplitude is 1
+                # get the respective qubit values but in lsb, so we can use $qubit directly as index
+                values = to_binary_string(index, input_stv.num_of_qubits, msb=False)
+                return f"= {values[qubit]} "
+        return ""
+
+    @staticmethod
+    def __circuit_output_value(qubit: int, state_vectors: Optional[Tuple[StateVector, StateVector, StateVector]]) -> str:
+        if state_vectors is not None:
+            input_stv, output_stv, target_stv = state_vectors
+            if input_stv is not None and input_stv.is_classical \
+                    and target_stv is not None and target_stv.is_classical \
+                    and output_stv.is_classical:  # robot.state_vector cannot be None
+                index = output_stv.to_value().index(1)  # find where the amplitude is 1
+                # get the respective qubit values but in lsb, so we can use $qubit directly as index
+                out_values = to_binary_string(index, output_stv.num_of_qubits, msb=False)
+                index = target_stv.to_value().index(1)
+                target_values = to_binary_string(index, target_stv.num_of_qubits, msb=False)
+                is_correct = out_values[qubit] == target_values[qubit]
+                equality = ColorConfig.colorize(ColorCode.PUZZLE_CORRECT_AMPLITUDE if is_correct
+                                                else ColorCode.PUZZLE_WRONG_AMPLITUDE,
+                                                '=' + ('=' if is_correct else '/') + '=')
+                return f"= {out_values[qubit]}| {equality} <{target_values[qubit]}|"
+        return "|"
+
+    @staticmethod
+    def circuit_to_string(num_of_qubits: int, circuit_space: int, instructions: Dict[int, "Instruction"],
+                          preview: Optional[Tuple[Optional["Instruction"], int, int]] = None,
+                          state_vectors: Optional[Tuple[StateVector, StateVector, StateVector]] = None) -> str:
+        """
+        :param num_of_qubits: how many rows (i.e., qubits) the circuit has
+        :param circuit_space: how many columns (i.e., places for instructions)
+        :param instructions: all positions within the circuit where an Instruction is placed
+        :param preview: optionally describes a gate that is not yet placed onto the circuit
+        :param state_vectors: a tuple consisting of an Input-, Output- and Target-StateVector to potentially show a
+            qubit's (classical) value
+        :return: a string representing the described circuit
+        """
+        entry = "-" * (3 + InstructionConfig.MAX_ABBREVIATION_LEN + 3)
+        rows = [[entry] * circuit_space for _ in range(num_of_qubits)]
+        for i, inst in instructions.items():
+            for q in inst.qargs_iter():
+                inst_str = center_string(inst.abbreviation(q), InstructionConfig.MAX_ABBREVIATION_LEN)
+                rows[q][i] = f"--{{{inst_str}}}--"
+
+        if preview is not None:
+            inst, pos, qubit = preview
+            if inst is None:
+                rows[qubit][pos] = "--/   /--"
+            else:
+                for q in inst.qargs_iter():
+                    rows[q][pos] = f"--{{{inst.abbreviation(q)}}}--"
+                rows[qubit][pos] = f"-- {inst.abbreviation(qubit)} --"
+
+        # every line consists of ket-pre- and -suffix with the entries (empty or instruction) separated by +
+        lines = [f"| q{q} {Instruction.__circuit_input_value(q, state_vectors)}>" + "+".join(rows[q])
+                 + f"< q'{q} {Instruction.__circuit_output_value(q, state_vectors)}" for q in range(num_of_qubits)]
+        lines.reverse()  # place qubits from top to bottom, high to low index
+
+        # for some reason the whitespace in front is needed to center the text correctly
+        lines[0] = "In " + lines[0] + " Out"
+        line_width = len(lines[0])
+        return "\n".join([center_string(line, line_width, uneven_left=False) for line in lines])
 
     def __init__(self, gate_type: GateType, instruction: QiskitGate, needed_qubits: int):
         super().__init__(CollectibleType.Gate)
@@ -365,17 +436,33 @@ class CombinedGate(Instruction):
         if label is None: label = "BlackBox"
         circuit = QuantumCircuit.from_register(needed_qubits)
         for inst in instructions: inst.append_to(circuit)
-        instruction = circuit.to_gate(label=label)
+        gate = circuit.to_gate(label=label)
 
-        super().__init__(GateType.Combined, instruction, needed_qubits)
-        self.__instruction = instruction
-        self.__inst_list = instructions
+        super().__init__(GateType.Combined, gate, needed_qubits)
+        self.__gate = gate
+        self.__instructions = instructions
+
+        inst_dict: Dict[int, Instruction] = {}
+        for i, inst in enumerate(instructions): inst_dict[i] = inst
+        self.__circ_repr = Instruction.circuit_to_string(needed_qubits, len(instructions), inst_dict)
+
+        amplitudes = UnitarySimulator().execute(circuit, decimals=QuantumSimulationConfig.DECIMALS)
+        self.__matrix = CircuitMatrix(amplitudes, len(instructions))
 
     def abbreviation(self, qubit: int = 0):
         return " ? "
 
+    def _matrix_string(self) -> str:
+        return self.__matrix.to_string()
+
+    def description(self, check_unlocks: Optional[Callable[[str], bool]] = None) -> str:
+        desc = super().description(check_unlocks)
+        desc += "\nUnderlying Circuit:\n"
+        desc += self.__circ_repr
+        return desc
+
     def copy(self) -> "Instruction":
-        return CombinedGates(self.__inst_list, self.__instruction.num_qubits, self.__instruction.label)
+        return CombinedGate(self.__instructions, self.__gate.num_qubits, self.__gate.label)
 
 
 ####### Gates for internal use only #######
