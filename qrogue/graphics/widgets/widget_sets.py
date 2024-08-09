@@ -33,6 +33,78 @@ class MyWidgetSet(WidgetSet, Renderable, ABC):
     Class that handles different sets of widgets, so we can easily switch between different screens.
     """
 
+    class _SelectedGate:
+        """
+        Wrapper-class to easily handle selection of gates in widget sets.
+        """
+
+        def __init__(self, gate_type: GateType, is_selected: bool = False):
+            self.__gate_type = gate_type
+            self.__is_selected = is_selected
+            self.__temp_is_selected = is_selected
+
+        @property
+        def is_selected(self) -> bool:
+            return self.__is_selected
+
+        @property
+        def gate_type(self) -> GateType:
+            return self.__gate_type
+
+        @property
+        def name(self) -> str:
+            return self.__gate_type.name
+
+        def invert_selection(self):
+            self.__temp_is_selected = not self.__temp_is_selected
+
+        def select(self, auto_commit: bool = False) -> bool:
+            """
+            Returns whether this call changed the internal state or not.
+
+            :param auto_commit: whether
+            :return: True if __is_selected was changed, False otherwise
+            """
+            # ret_val is False if temp_is_selected is already selected, and hence, nothing changed
+            ret_val = not self.__temp_is_selected
+            self.__temp_is_selected = True  # set value to True (might have been True before)
+            if auto_commit:
+                self.commit()
+            # we don't care if is_selected changed (just if temp_is_selected did) so ignore return value of commit()
+            return ret_val
+
+        def commit(self) -> bool:
+            """
+            Returns whether this call changed the internal state or not.
+
+            :return: True if __is_selected was changed, False otherwise
+            """
+            if self.__is_selected == self.__temp_is_selected:
+                return False
+            self.__is_selected = self.__temp_is_selected
+            return True
+
+        def discard(self) -> bool:
+            """
+            Returns whether this call changed the internal state or not.
+
+            :return: True if temp_is_selected was changed, False otherwise
+            """
+            if self.__temp_is_selected == self.__is_selected:
+                return False
+            self.__temp_is_selected = self.__is_selected
+            return True
+
+        def reset(self):
+            self.__is_selected = False
+            self.__temp_is_selected = False
+
+        def to_gate(self) -> Instruction:
+            return InstructionManager.from_type(self.gate_type)
+
+        def __str__(self) -> str:
+            return f"[{'x' if self.__temp_is_selected else ' '}] {self.name}"
+
     @staticmethod
     def create_hud_row(widget_set: "MyWidgetSet") -> HudWidget:
         hud = widget_set.add_block_label('HUD', 0, 0, row_span=UIConfig.HUD_HEIGHT, column_span=UIConfig.HUD_WIDTH,
@@ -258,77 +330,6 @@ class LevelSelectWidgetSet(MyWidgetSet):
     __CUSTOM_MAP_CODE = "custom"
     __GATE_CONFIRM = "confirm"
     __GATE_CANCEL = "cancel"
-
-    class _SelectedGate:
-        def __init__(self, gate_type: GateType, is_selected: bool = False):
-            self.__gate_type = gate_type
-            self.__is_selected = is_selected
-            self.__temp_is_selected = is_selected
-
-        @property
-        def is_selected(self) -> bool:
-            return self.__is_selected
-
-        @property
-        def gate_type(self) -> GateType:
-            return self.__gate_type
-
-        @property
-        def name(self) -> str:
-            return self.__gate_type.name
-
-        def invert_selection(self):
-            self.__temp_is_selected = not self.__temp_is_selected
-
-        def select(self, auto_commit: bool = False) -> bool:
-            """
-            Returns whether this call changed the internal state or not.
-
-            :param auto_commit: whether
-            :return: True if __is_selected was changed, False otherwise
-            """
-            # ret_val is False if temp_is_selected is already selected, and hence, nothing changed
-            ret_val = not self.__temp_is_selected
-            self.__temp_is_selected = True  # set value to True (might have been True before)
-            if auto_commit:
-                self.commit()
-            # we don't care if is_selected changed (just if temp_is_selected did) so ignore return value of commit()
-            return ret_val
-
-        def commit(self) -> bool:
-            """
-            Returns whether this call changed the internal state or not.
-
-            :return: True if __is_selected was changed, False otherwise
-            """
-            if self.__is_selected == self.__temp_is_selected:
-                return False
-            self.__is_selected = self.__temp_is_selected
-            return True
-
-        def discard(self) -> bool:
-            """
-            Returns whether this call changed the internal state or not.
-
-            :return: True if temp_is_selected was changed, False otherwise
-            """
-            if self.__temp_is_selected == self.__is_selected:
-                return False
-            self.__temp_is_selected = self.__is_selected
-            return True
-
-        def reset(self):
-            self.__is_selected = False
-            self.__temp_is_selected = False
-
-        def to_gate(self) -> Instruction:
-            return InstructionManager.from_type(self.gate_type)
-
-        #def to_display_string(self) -> str:
-        #    return f"[{'x' if self.temp_is_selected else ' '}] {self.name}"
-
-        def __str__(self) -> str:
-            return f"[{'x' if self.__temp_is_selected else ' '}] {self.name}"
 
     def __init__(self, controls: Controls, logger: Logger, root: py_cui.PyCUI,
                  base_render_callback: Callable[[List[Renderable]], None], rm: MyRandom,
