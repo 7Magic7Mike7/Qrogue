@@ -1430,9 +1430,16 @@ class PauseMenuWidgetSet(MyWidgetSet):
 
 
 class WorkbenchWidgetSet(MyWidgetSet):
+    __GATE_CONFIRM = "confirm"
+    __GATE_CANCEL = "cancel"
+
     def __init__(self, logger, root: py_cui.PyCUI, base_render_callback: Callable[[List[Renderable]], None],
-                 controls: Controls, open_fusion_circuit_callback: Callable[[], None]):
+                 controls: Controls, get_available_gates_callback: Callable[[], List[Instruction]],
+                 switch_to_menu_callback: Callable[[], None],
+                 open_fusion_circuit_callback: Callable[[], None]):
         super().__init__(logger, root, base_render_callback)
+
+        self.__get_available_gates = get_available_gates_callback
 
         resource_info = self.add_block_label_by_dimension('Resources', UIConfig.WB_RESOURCES_DIMS)
         resource_info.toggle_border()
@@ -1441,6 +1448,11 @@ class WorkbenchWidgetSet(MyWidgetSet):
         action_selection = self.add_block_label_by_dimension('Actions', UIConfig.WB_ACTIONS_DIMS)
         action_selection.toggle_border()
         self.__choices = SelectionWidget(action_selection, controls, stay_selected=True)
+        self.__choices.set_data([
+            (("Extract", self.__extract), self.__choose_gates),
+            (("Fuse", self.__fuse), self.__choose_gates),
+            (("Back to Menu", None), switch_to_menu_callback),
+        ])
 
         gate_selection = self.add_block_label_by_dimension('Gates', UIConfig.WB_GATES_DIMS)
         gate_selection.toggle_border()
@@ -1449,6 +1461,51 @@ class WorkbenchWidgetSet(MyWidgetSet):
         info_widget = self.add_block_label_by_dimension('Infos', UIConfig.WB_INFOS_DIMS, center=True)
         info_widget.toggle_border()
         self.__info = SimpleWidget(info_widget)
+
+        def use_choices():
+            if self.__choices.use():
+                Widget.move_focus(self.__details, self)
+                self.render()
+        self.__choices.widget.add_key_command(controls.action, use_choices)
+
+        def use_details():
+            if self.__details.use():
+                Widget.move_focus(self.__choices, self)
+                self.__details.render_reset()
+                self.render()
+        self.__details.widget.add_key_command(controls.action, use_details)
+
+    def __choose_gates(self) -> bool:
+        selectable_gates = [MyWidgetSet._SelectedGate(gate) for gate in self.__get_available_gates()]
+
+        def select_gate(index: int) -> bool:
+            if self.__details.selected_object is WorkbenchWidgetSet.__GATE_CANCEL:
+                return True  # "Cancel" was selected
+            if self.__details.selected_object is WorkbenchWidgetSet.__GATE_CONFIRM:
+                selected_gates = [sg.to_gate() for sg in selectable_gates if sg.is_selected]
+                self.__choices.selected_object(selected_gates)    # either executes extract() or fuse()
+                return True
+
+            sel_gate: MyWidgetSet._SelectedGate = self.__details.selected_object
+            sel_gate.invert_selection(auto_commit=True)
+
+            self.__details.update_text(str(self.__details.selected_object), index)
+            self.__details.render()
+            return False
+
+        # add all available gates plus meta options Confirm and Cancel
+        names: List[str] = [str(gate) for gate in selectable_gates] + ["-Confirm-", "-Cancel-"]
+        meta_objects = [WorkbenchWidgetSet.__GATE_CONFIRM, WorkbenchWidgetSet.__GATE_CANCEL]
+        self.__details.set_data(((names, selectable_gates + meta_objects), select_gate))
+        return True
+
+    def __extract(self, selected_gates: List[Instruction]):
+        # todo: do task
+        return
+
+    def __fuse(self, selected_gates: List[Instruction]):
+        # todo: do task
+        return
 
     def get_widget_list(self) -> List[Widget]:
         return [

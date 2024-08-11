@@ -324,7 +324,8 @@ class QrogueCUI(PyCUI):
         self.__training = TrainingsWidgetSet(self.__controls, self.__render, Logger.instance(), self,
                                              lambda b: None, self.__popup_history.show,
                                              self.__save_data.check_unlocks)  # todo: update signature
-        self.__workbench = WorkbenchWidgetSet(Logger.instance(), self, self.__render, self.__controls, lambda: None)
+        self.__workbench = WorkbenchWidgetSet(Logger.instance(), self, self.__render, self.__controls,
+                                              self.__save_data.get_gates, self._switch_to_menu, lambda: None)
         self.__navigation = NavigationWidgetSet(self.__controls, self.__render, Logger.instance(), self)
 
         self.__explore = ExploreWidgetSet(self.__controls, self.__render, Logger.instance(), self)
