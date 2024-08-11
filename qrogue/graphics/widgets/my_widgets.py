@@ -926,24 +926,35 @@ class SelectionWidget(Widget):
                 self.__choices[index] = text
 
     def set_data(self, data: Union[
-        Tuple[
-            Union[List[str], Tuple[List[str], List[Any]]],
-            Union[List[Callable[[], Optional[bool]]], Callable[[int], Optional[bool]]]
-        ],
-        List[Tuple[Union[str, Tuple[str, Any]], Callable[[], Optional[bool]]]]
+        Tuple[List[str], List[Callable[[], Optional[bool]]]],
+        Tuple[List[str], List[Callable[[int], Optional[bool]]]],
+        Tuple[Tuple[List[str], List[Any]], List[Callable[[], Optional[bool]]]],
+        Tuple[Tuple[List[str], List[Any]], Callable[[int], Optional[bool]]],
+        List[Tuple[str, Callable[[], Optional[bool]]]],
+        List[Tuple[Tuple[str, Any], Callable[[], Optional[bool]]]],
     ]) -> None:
         """
         Arguments:
-            data: selection text and corresponding action callback either as
+            data: selection text (optionally also selection objects) and corresponding action callback either as
 
-                1) List of str (=texts), List of callback() or callback(index)  (=actions),
+                1) Tuple: List of str (=texts), List of Callable() (=actions),
+                    E.g.: ([text1, text2], [action1(), action2()])
 
-                2) List of (str, Any) (=tuples of text and object connected to the text),
-                    List of callback() or callback(index)  (=actions)
+                2) Tuple: List of str (=texts), List of Callable(index) (=action),
+                    E.g.: ([text1, text2], [action(i)])
 
-                3) List of (str, callback) (=tuples of text and corresponding action)
+                3) Tuple: Tuple of (List of str (=texts), List of Any (=objects)), List of Callable() (=actions),
+                    E.g.: (([text1, text2], [obj1, obj2]), [action1, action2])
 
-                4) List of ((str, Any), callback) (=tuples of (text, object) and corresponding action
+                4) Tuple: Tuple of (List of str (=texts), List of Any (=objects)), Callable(index) (=action),
+                    E.g.: (([text1, text2], [obj1, obj2]), action(i))
+
+                5) List: Tuple of (str (=text), Callable() (=action)),
+                    E.g.: [(text1, action1), (text2, action2)]
+
+                6) List: Tuple of (Tuple of (str (=text), Any (=object)), Callable() (=action)),
+                    E.g.: [((text1, obj1), action1), ((text2, obj2), action2)]
+
         """
         assert len(data) >= 1, "set_data() called with empty data!"
 
@@ -953,7 +964,12 @@ class SelectionWidget(Widget):
             self.__choices = []
             self.__callbacks = []
             for elem in data:
-                self.__choices.append(elem[0])
+                if isinstance(elem[0], tuple):
+                    text, obj = elem[0]
+                    self.__choices.append(text)
+                    self.__choice_objects.append(obj)
+                else:
+                    self.__choices.append(elem[0])
                 self.__callbacks.append(elem[1])
         else:
             self.__choices, callbacks = data
