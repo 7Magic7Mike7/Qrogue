@@ -55,8 +55,10 @@ class MyWidgetSet(WidgetSet, Renderable, ABC):
         def name(self) -> str:
             return self.__gate.gate_type.name
 
-        def invert_selection(self):
+        def invert_selection(self, auto_commit: bool = False):
             self.__temp_is_selected = not self.__temp_is_selected
+            if auto_commit:
+                self.commit()
 
         def select(self, auto_commit: bool = False) -> bool:
             """
