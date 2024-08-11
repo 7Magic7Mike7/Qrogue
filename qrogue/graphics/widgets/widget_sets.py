@@ -33,7 +33,7 @@ class MyWidgetSet(WidgetSet, Renderable, ABC):
     Class that handles different sets of widgets, so we can easily switch between different screens.
     """
 
-    class _SelectedGate:
+    class _SelectableGate:
         """
         Wrapper-class to easily handle selection of gates in widget sets.
         """
@@ -360,7 +360,7 @@ class LevelSelectWidgetSet(MyWidgetSet):
 
         self.__seed = None
         self.__level: Optional[str] = None
-        self.__selected_gates: List[LevelSelectWidgetSet._SelectedGate] = []
+        self.__selectable_gates: List[LevelSelectWidgetSet._SelectableGate] = []
         self.__has_custom_gates = False
         self.reinit()
 
@@ -422,7 +422,7 @@ class LevelSelectWidgetSet(MyWidgetSet):
     def reinit(self):
         self.__seed = None
         self.__level = None
-        self.__selected_gates = [LevelSelectWidgetSet._SelectedGate(gate) for gate in self.__get_available_gates()]
+        self.__selectable_gates = [LevelSelectWidgetSet._SelectableGate(gate) for gate in self.__get_available_gates()]
         self.__has_custom_gates = False
 
     def __set_seed(self) -> bool:
@@ -454,7 +454,7 @@ class LevelSelectWidgetSet(MyWidgetSet):
 
         self.__has_custom_gates = False
         gate_type_list = LevelInfo.get_level_start_gates(internal_level_name)
-        for sg in self.__selected_gates:
+        for sg in self.__selectable_gates:
             if sg.gate_type in gate_type_list:
                 # remove from list to handle multiple gates of the same type correctly
                 gate_type_list.remove(sg.gate_type)
@@ -522,7 +522,7 @@ class LevelSelectWidgetSet(MyWidgetSet):
                 if not self.__has_custom_gates:
                     # reset selection so a random subset is chosen instead of simply the ones from the previously
                     # selected level
-                    for sg in self.__selected_gates: sg.reset()
+                    for sg in self.__selectable_gates: sg.reset()
             else:
                 self.__summary_level.set_data(f"{LevelSelectWidgetSet.__LEVEL_HEADER}{display_names[index]} "
                                               f"({highscores[index]}, {durations[index]})")
@@ -540,15 +540,15 @@ class LevelSelectWidgetSet(MyWidgetSet):
     def __choose_gates(self) -> bool:
         def add_gate(index: int) -> bool:
             if self.__details.selected_object is LevelSelectWidgetSet.__GATE_CANCEL:
-                for gate in self.__selected_gates: gate.discard()
+                for sg in self.__selectable_gates: sg.discard()
                 return True     # "Cancel" was selected
             if self.__details.selected_object is LevelSelectWidgetSet.__GATE_CONFIRM:
-                ret_val = [gate.commit() for gate in self.__selected_gates]
+                ret_val = [sg.commit() for sg in self.__selectable_gates]
                 if sum(ret_val) > 0:    # at least one confirm() changed the state (i.e., returned True)
                     self.__has_custom_gates = True
                 return True
 
-            sel_gate: LevelSelectWidgetSet._SelectedGate = self.__details.selected_object
+            sel_gate: LevelSelectWidgetSet._SelectableGate = self.__details.selected_object
             sel_gate.invert_selection()
 
             self.__details.update_text(str(self.__details.selected_object), index)
@@ -556,9 +556,9 @@ class LevelSelectWidgetSet(MyWidgetSet):
             return False
 
         # add all available gates plus meta options Confirm and Cancel
-        names: List[str] = [str(gate) for gate in self.__selected_gates] + ["-Confirm-", "-Cancel-"]
-        gate_objects: List[Union[LevelSelectWidgetSet._SelectedGate, str]] = \
-            self.__selected_gates + [LevelSelectWidgetSet.__GATE_CONFIRM, LevelSelectWidgetSet.__GATE_CANCEL]
+        names: List[str] = [str(sg) for sg in self.__selectable_gates] + ["-Confirm-", "-Cancel-"]
+        gate_objects: List[Union[LevelSelectWidgetSet._SelectableGate, str]] = \
+            self.__selectable_gates + [LevelSelectWidgetSet.__GATE_CONFIRM, LevelSelectWidgetSet.__GATE_CANCEL]
         self.__details.set_data(((names, gate_objects), add_gate))
         return True
 
@@ -568,10 +568,10 @@ class LevelSelectWidgetSet(MyWidgetSet):
             return False
 
         # filter and convert all selected gates
-        available_gates = [sg.to_gate() for sg in self.__selected_gates if sg.is_selected]
-        for gate in available_gates: gate.reset()   # make sure that all gates are reset to avoid unexpected behaviour
+        selected_gates = [sg.to_gate() for sg in self.__selectable_gates if sg.is_selected]
+        for gate in selected_gates: gate.reset()   # make sure that all gates are reset to avoid unexpected behaviour
         seed = self.__seed if self.__seed is not None else self.__rm.get_seed("LevelSelect play unspecified")
-        self.__start_level(self.__level, seed, available_gates)
+        self.__start_level(self.__level, seed, selected_gates)
         return True
 
     def get_widget_list(self) -> List[Widget]:
@@ -1480,7 +1480,7 @@ class WorkbenchWidgetSet(MyWidgetSet):
         self.__details.widget.add_key_command(controls.action, use_details)
 
     def __choose_gates(self) -> bool:
-        selectable_gates = [MyWidgetSet._SelectedGate(gate) for gate in self.__get_original_gates()]
+        selectable_gates = [MyWidgetSet._SelectableGate(gate) for gate in self.__get_original_gates()]
 
         def select_gate(index: int) -> bool:
             if self.__details.selected_object is WorkbenchWidgetSet.__GATE_CANCEL:
@@ -1490,7 +1490,7 @@ class WorkbenchWidgetSet(MyWidgetSet):
                 self.__choices.selected_object(selected_gates)    # either executes decompose() or fuse()
                 return True
 
-            sel_gate: MyWidgetSet._SelectedGate = self.__details.selected_object
+            sel_gate: MyWidgetSet._SelectableGate = self.__details.selected_object
             sel_gate.invert_selection(auto_commit=True)
 
             self.__details.update_text(str(self.__details.selected_object), index)
