@@ -623,14 +623,14 @@ class ExpeditionGenerator(DungeonGenerator):
 
     def __init__(self, wfc_manager: WFCManager, check_achievement: Callable[[str], bool],
                  trigger_event: Callable[[str], None], leave_map_callback: Callable[[], None],
-                 get_available_gates_callback: Callable[[], List[GateType]],
+                 get_available_gates_callback: Callable[[], List[Instruction]],
                  callback_pack: CallbackPack, width: int = DungeonGenerator.WIDTH,
                  height: int = DungeonGenerator.HEIGHT):
         super(ExpeditionGenerator, self).__init__(width, height)
         self.__check_achievement = check_achievement
         self.__trigger_event = trigger_event
         self.__leave_map = leave_map_callback
-        self.__get_available_gate_types = get_available_gates_callback
+        self.__get_available_gates = get_available_gates_callback
         self.__cbp = callback_pack
         self.__next_target_id = 0
         self.__next_tile_id = 0
@@ -652,11 +652,11 @@ class ExpeditionGenerator(DungeonGenerator):
         robo_props, difficulty, puzzle_seed = data
         robot = BaseBot.from_properties(robo_props, self.__cbp.game_over)
         if robot.used_capacity <= 0:
-            gate_types = self.__get_available_gate_types()
+            gates = self.__get_available_gates()
             rand_gate_selector = RandomManager.create_new(puzzle_seed)
-            rand_gate_selector.shuffle_list(gate_types)
+            rand_gate_selector.shuffle_list(gates)
             for i in range(4):  # todo: use value from difficulty instead of 4
-                robot.give_collectible(InstructionManager.from_type(gate_types[i]))
+                robot.give_collectible(gates[i])
 
         map_rm = RandomManager.create_new(map_seed)         # used for layout, rooms (tile placement), collectibles
         puzzle_rm = RandomManager.create_new(puzzle_seed)   # used for all puzzles

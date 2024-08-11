@@ -38,8 +38,8 @@ class MyWidgetSet(WidgetSet, Renderable, ABC):
         Wrapper-class to easily handle selection of gates in widget sets.
         """
 
-        def __init__(self, gate_type: GateType, is_selected: bool = False):
-            self.__gate_type = gate_type
+        def __init__(self, gate: Instruction, is_selected: bool = False):
+            self.__gate = gate
             self.__is_selected = is_selected
             self.__temp_is_selected = is_selected
 
@@ -49,11 +49,11 @@ class MyWidgetSet(WidgetSet, Renderable, ABC):
 
         @property
         def gate_type(self) -> GateType:
-            return self.__gate_type
+            return self.__gate.gate_type
 
         @property
         def name(self) -> str:
-            return self.__gate_type.name
+            return self.__gate.gate_type.name
 
         def invert_selection(self):
             self.__temp_is_selected = not self.__temp_is_selected
@@ -338,7 +338,7 @@ class LevelSelectWidgetSet(MyWidgetSet):
                  switch_to_menu_callback: Callable[[], None],
                  start_level_callback: Callable[[str, Optional[int], Optional[List[Instruction]]], None],
                  get_expedition_progress_callback: Callable[[], int],
-                 get_available_gates_callback: Callable[[], List[GateType]]):
+                 get_available_gates_callback: Callable[[], List[Instruction]]):
         """
         :param get_available_levels_callback: a Callable that returns a List of LevelData of all levels that can be
             played (i.e., were completed before)

@@ -3,7 +3,7 @@ from typing import Tuple, Optional, List, Union, Dict
 
 from antlr4 import InputStream, CommonTokenStream
 
-from qrogue.game.logic.collectibles import InstructionManager
+from qrogue.game.logic.collectibles import InstructionManager, Instruction
 from qrogue.graphics.popups import Popup
 from qrogue.management.save_grammar.SaveDataLexer import SaveDataLexer
 from qrogue.management.save_grammar.SaveDataParser import SaveDataParser
@@ -74,7 +74,7 @@ class NewSaveData:
 
         self.__date_time = cur_datetime()  # date and time of the latest save
         self.__inventory = _SaveDataGenerator.Inventory.default()
-        self.__gates: List[GateType] = []
+        self.__gates: List[Instruction] = []
         self.__levels: Dict[str, LevelData] = {}  # key is a level's internal name
         self.__achievements: Dict[str, Achievement] = {}
         self.__unlocks: Dict[str, datetime] = {}
@@ -132,9 +132,9 @@ class NewSaveData:
             for unlock in LevelInfo.get_level_completion_unlocks(level_data.name, self.check_level):
                 self.unlock(unlock, date_time)
 
-            # save the gate types that were unlocked
-            for gate in LevelInfo.get_level_completion_unlocked_gates(level_data.name, self.check_level):
-                self.__gates.append(gate)
+            # save the Instructions corresponding to the gate types that were unlocked
+            for gate_type in LevelInfo.get_level_completion_unlocked_gates(level_data.name, self.check_level):
+                self.__gates.append(InstructionManager.from_type(gate_type))
 
         return level_data
 
@@ -142,12 +142,12 @@ class NewSaveData:
             -> LevelData:
         return self._complete_map(name, duration, date_time, score)
 
-    def complete_expedition(self, name: str, duration: int, difficulty_level: int, gate: GateType,
+    def complete_expedition(self, name: str, duration: int, difficulty_level: int, gate_type: GateType,
                             date_time: Optional[datetime] = None, score: int = -1) \
             -> LevelData:
         level_data = self._complete_map(name, duration, date_time, score)
         self.add_to_achievement(Achievement.CompletedExpedition, difficulty_level)
-        self.__gates.append(gate)
+        self.__gates.append(InstructionManager.from_type(gate_type))
         self.__inventory.quantum_fuser += 1     # todo: will an expedition's Boss always give 1 QuantumFuser?
         return level_data
 
@@ -170,8 +170,8 @@ class NewSaveData:
             return ach.score, ach.done_score
         return -1, -1
 
-    def get_gates(self) -> List[GateType]:
-        return self.__gates.copy()
+    def get_gates(self) -> List[Instruction]:
+        return self.__gates.copy()  # todo: this way the gates can be manipulated from the outside - bad?
 
     def to_achievements_string(self) -> str:
         # todo: improve readability
@@ -207,7 +207,7 @@ class NewSaveData:
 
         text += f"{_SaveDataGenerator.gates_header()}\n"
         if len(self.__gates) > 0:
-            text += _SaveDataGenerator.gate_separator().join([gate_type.short_name for gate_type in self.__gates])
+            text += _SaveDataGenerator.gate_separator().join([gate.gate_type.short_name for gate in self.__gates])
             text += "\n"
 
         text += f"{_SaveDataGenerator.levels_header()}\n"
@@ -249,7 +249,7 @@ class NewSaveData:
         except:
             return False, CommonInfos.SavingFailed
 
-    def compare(self, other: "NewSaveData") -> Tuple[List[GateType], List[str], List[Unlocks], List[Achievement]]:
+    def compare(self, other: "NewSaveData") -> Tuple[List[Instruction], List[str], List[Unlocks], List[Achievement]]:
         """
         Args:
             other: the NewSaveData to compare with
@@ -260,12 +260,12 @@ class NewSaveData:
         self_gates = self.__gates.copy()
         gate_diff = []
         # find gates that are in other_gates but not in self_gates
-        for gate_type in other_gates:
-            if gate_type in self_gates:
-                # remove gate_type from self_gates, so we can also check if the number of specific gate_types match
-                self_gates.remove(gate_type)
+        for gate in other_gates:
+            if gate in self_gates:
+                # remove gate from self_gates, so we can also check if the number of specific gate_types match
+                self_gates.remove(gate)
                 continue
-            gate_diff.append(gate_type)
+            gate_diff.append(gate.copy())   # append a copy so the outside cannot manipulate the actual gate
 
         level_diff = []
         for level in other.__levels:
@@ -356,7 +356,7 @@ class _SaveDataGenerator(SaveDataVisitor):
         self.__knowledge_mode = None
         self.__highest_knowledge_level = -1
 
-    def load(self, file_data) -> Tuple[datetime, Inventory, List[GateType], List[LevelData],
+    def load(self, file_data) -> Tuple[datetime, Inventory, List[Instruction], List[LevelData],
             List[Tuple[str, datetime]], List[Achievement]]:
         input_stream = InputStream(file_data)
         lexer = SaveDataLexer(input_stream)
@@ -398,10 +398,11 @@ class _SaveDataGenerator(SaveDataVisitor):
 
     #####################################
 
-    def visitGate(self, ctx: SaveDataParser.GateContext) -> Optional[GateType]:
-        return InstructionManager.type_from_name(ctx.NAME_STD().getText())
+    def visitGate(self, ctx: SaveDataParser.GateContext) -> Optional[Instruction]:
+        gate_type = InstructionManager.type_from_name(ctx.NAME_STD().getText())
+        return InstructionManager.from_type(gate_type)    # todo: implement loading of CombinedGates
 
-    def visitGates(self, ctx: SaveDataParser.GatesContext) -> List[GateType]:
+    def visitGates(self, ctx: SaveDataParser.GatesContext) -> List[Instruction]:
         gates = []
         for gate_ctx in ctx.gate():
             gate = self.visitGate(gate_ctx)
@@ -462,7 +463,7 @@ class _SaveDataGenerator(SaveDataVisitor):
 
     #####################################
 
-    def visitStart(self, ctx: SaveDataParser.StartContext) -> Tuple[datetime, Inventory, List[GateType],
+    def visitStart(self, ctx: SaveDataParser.StartContext) -> Tuple[datetime, Inventory, List[Instruction],
             List[LevelData], List[Tuple[str, datetime]], List[Achievement]]:
         date_time = self.visitDate_time(ctx.date_time())
 

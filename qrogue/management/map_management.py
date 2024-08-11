@@ -65,7 +65,6 @@ class MapManager:
     def __init__(self, wfc_manager: WFCManager, save_data: NewSaveData, seed: int, start_level: Callable[[Map], None],
                  start_level_transition_callback: Callable[[str, str, Callable[[], None]], None],
                  exit_map_callback: Callable[[], None], callback_pack: CallbackPack,
-                 get_available_gates_callback: Callable[[], List[GateType]],
                  queue_size: int = ExpeditionConfig.DEFAULT_QUEUE_SIZE):
         self.__save_data = save_data
         # no longer used code!
@@ -78,7 +77,7 @@ class MapManager:
         self.__start_level_transition = start_level_transition_callback
         self.__expedition_generator = ExpeditionGenerator(wfc_manager, self.__save_data.check_achievement,
                                                           self.trigger_event, self.__load_back,
-                                                          get_available_gates_callback, callback_pack)
+                                                          save_data.get_gates, callback_pack)  # todo: pass ExpeditionGenerator as argument?
         self.__expedition_queue: List[ExpeditionMap] = []
         self.__cur_map: Optional[Map] = None
 
