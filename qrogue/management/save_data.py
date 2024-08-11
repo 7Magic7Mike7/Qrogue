@@ -171,7 +171,25 @@ class NewSaveData:
         return -1, -1
 
     def get_gates(self) -> List[Instruction]:
-        return self.__gates.copy()  # todo: this way the gates can be manipulated from the outside - bad?
+        return [gate.copy() for gate in self.__gates]
+
+    def get_original_gates(self) -> List[Instruction]:
+        return self.__gates.copy()
+
+    def decompose_gate(self, gate: Instruction) -> bool:
+        if gate in self.__gates:
+            self.__gates.remove(gate)
+            self.__inventory.quantum_fuser += 1     # decomposing a gate gives 1 QuantumFuser
+            self.__has_unsaved_changes = True
+            return True
+        return False
+
+    def add_gate(self, gate: Instruction):
+        # copy and reset the new gate
+        gate = gate.copy()
+        gate.reset()
+        self.__gates.append(gate)
+        self.__has_unsaved_changes = True
 
     def to_achievements_string(self) -> str:
         # todo: improve readability

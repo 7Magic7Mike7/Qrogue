@@ -102,7 +102,7 @@ class MyWidgetSet(WidgetSet, Renderable, ABC):
             self.__temp_is_selected = False
 
         def to_gate(self) -> Instruction:
-            return InstructionManager.from_type(self.gate_type)
+            return self.__gate
 
         def __str__(self) -> str:
             return f"[{'x' if self.__temp_is_selected else ' '}] {self.name}"
@@ -569,6 +569,7 @@ class LevelSelectWidgetSet(MyWidgetSet):
 
         # filter and convert all selected gates
         available_gates = [sg.to_gate() for sg in self.__selected_gates if sg.is_selected]
+        for gate in available_gates: gate.reset()   # make sure that all gates are reset to avoid unexpected behaviour
         seed = self.__seed if self.__seed is not None else self.__rm.get_seed("LevelSelect play unspecified")
         self.__start_level(self.__level, seed, available_gates)
         return True
@@ -1434,12 +1435,15 @@ class WorkbenchWidgetSet(MyWidgetSet):
     __GATE_CANCEL = "cancel"
 
     def __init__(self, logger, root: py_cui.PyCUI, base_render_callback: Callable[[List[Renderable]], None],
-                 controls: Controls, get_available_gates_callback: Callable[[], List[Instruction]],
-                 switch_to_menu_callback: Callable[[], None],
+                 controls: Controls, get_original_gates_callback: Callable[[], List[Instruction]],
+                 store_gate_callback: Callable[[Instruction], None],
+                 decompose_gate_callback: Callable[[Instruction], bool], switch_to_menu_callback: Callable[[], None],
                  open_fusion_circuit_callback: Callable[[], None]):
         super().__init__(logger, root, base_render_callback)
 
-        self.__get_available_gates = get_available_gates_callback
+        self.__get_original_gates = get_original_gates_callback
+        self.__store_gate = store_gate_callback
+        self.__decompose_gate = decompose_gate_callback
 
         resource_info = self.add_block_label_by_dimension('Resources', UIConfig.WB_RESOURCES_DIMS)
         resource_info.toggle_border()
@@ -1449,7 +1453,7 @@ class WorkbenchWidgetSet(MyWidgetSet):
         action_selection.toggle_border()
         self.__choices = SelectionWidget(action_selection, controls, stay_selected=True)
         self.__choices.set_data([
-            (("Extract", self.__extract), self.__choose_gates),
+            (("Decompose", self.__decompose), self.__choose_gates),
             (("Fuse", self.__fuse), self.__choose_gates),
             (("Back to Menu", None), switch_to_menu_callback),
         ])
@@ -1476,14 +1480,14 @@ class WorkbenchWidgetSet(MyWidgetSet):
         self.__details.widget.add_key_command(controls.action, use_details)
 
     def __choose_gates(self) -> bool:
-        selectable_gates = [MyWidgetSet._SelectedGate(gate) for gate in self.__get_available_gates()]
+        selectable_gates = [MyWidgetSet._SelectedGate(gate) for gate in self.__get_original_gates()]
 
         def select_gate(index: int) -> bool:
             if self.__details.selected_object is WorkbenchWidgetSet.__GATE_CANCEL:
                 return True  # "Cancel" was selected
             if self.__details.selected_object is WorkbenchWidgetSet.__GATE_CONFIRM:
                 selected_gates = [sg.to_gate() for sg in selectable_gates if sg.is_selected]
-                self.__choices.selected_object(selected_gates)    # either executes extract() or fuse()
+                self.__choices.selected_object(selected_gates)    # either executes decompose() or fuse()
                 return True
 
             sel_gate: MyWidgetSet._SelectedGate = self.__details.selected_object
@@ -1499,11 +1503,17 @@ class WorkbenchWidgetSet(MyWidgetSet):
         self.__details.set_data(((names, selectable_gates + meta_objects), select_gate))
         return True
 
-    def __extract(self, selected_gates: List[Instruction]):
-        # todo: do task
+    def __decompose(self, gate_list: List[Instruction]):
+        failed_gates = []
+        for gate in gate_list:
+            if not self.__decompose_gate(gate):
+                failed_gates.append(gate)
+        if len(failed_gates) > 0:
+            Popup.error(f"Failed for the following gates: {', '.join([gate.name() for gate in failed_gates])}. Please "
+                        f"try again. Should this error proceed to occur: ", add_report_note=True)
         return
 
-    def __fuse(self, selected_gates: List[Instruction]):
+    def __fuse(self, gate_list: List[Instruction]):
         # todo: do task
         return
 
