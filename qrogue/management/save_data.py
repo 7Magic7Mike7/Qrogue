@@ -176,12 +176,20 @@ class NewSaveData:
     def get_original_gates(self) -> List[Instruction]:
         return self.__gates.copy()
 
-    def decompose_gate(self, gate: Instruction) -> bool:
-        if gate in self.__gates:
-            self.__gates.remove(gate)
-            self.__inventory.quantum_fuser += 1     # decomposing a gate gives 1 QuantumFuser
-            self.__has_unsaved_changes = True
-            return True
+    def decompose(self, gates: Union[Instruction, List[Instruction]]) -> bool:
+        if isinstance(gates, Instruction):
+            if gates in self.__gates:
+                self.__gates.remove(gates)
+                self.__inventory.quantum_fuser += 1     # decomposing a gate gives 1 QuantumFuser
+                self.__has_unsaved_changes = True
+                return True
+        else:
+            # check if all gates we want to decompose are indeed among our gates
+            if False not in [gate in self.__gates for gate in gates]:
+                for gate in gates: self.__gates.remove(gate)
+                self.__inventory.quantum_fuser += len(gates)
+                self.__has_unsaved_changes = True
+                return True
         return False
 
     def add_gate(self, gate: Instruction):

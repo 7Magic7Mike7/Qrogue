@@ -1438,12 +1438,13 @@ class WorkbenchWidgetSet(MyWidgetSet):
                  controls: Controls, get_original_gates_callback: Callable[[], List[Instruction]],
                  store_gate_callback: Callable[[Instruction], None],
                  decompose_gate_callback: Callable[[Instruction], bool], switch_to_menu_callback: Callable[[], None],
-                 open_fusion_circuit_callback: Callable[[], None]):
+                 show_fusion_circuit_callback: Callable[[List[Instruction]], None]):
         super().__init__(logger, root, base_render_callback)
 
         self.__get_original_gates = get_original_gates_callback
         self.__store_gate = store_gate_callback
         self.__decompose_gate = decompose_gate_callback
+        self.__show_fusion_circuit = show_fusion_circuit_callback
 
         resource_info = self.add_block_label_by_dimension('Resources', UIConfig.WB_RESOURCES_DIMS)
         resource_info.toggle_border()
@@ -1514,7 +1515,7 @@ class WorkbenchWidgetSet(MyWidgetSet):
         return
 
     def __fuse(self, gate_list: List[Instruction]):
-        # todo: do task
+        self.__show_fusion_circuit(gate_list)
         return
 
     def get_widget_list(self) -> List[Widget]:
@@ -2275,4 +2276,51 @@ class BossFightWidgetSet(RiddleWidgetSet):
                 [self._exit_level]
             ))
         self._hud.update_situational(f"Remaining {RiddleWidgetSet._TRY_PHRASING}: {self._target.edits}")
+        return True
+
+
+class FusionCircuitWidgetSet(ReachTargetWidgetSet):
+    def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
+                 continue_exploration_callback: Callable[[bool], None], reopen_popup: Callable[[], None],
+                 check_unlocks_callback: Callable[[Union[str, Unlocks]], bool],
+                 store_gate_callback: Callable[[Instruction], None],
+                 decompose_gates_callback: Callable[[List[Instruction]], bool],
+                 show_input_popup_callback: Callable[[str, int, Callable[[str], None]], None],
+                 return_to_workbench_callback: Callable[[], None]):
+        super().__init__(controls, render, logger, root, continue_exploration_callback, reopen_popup,
+                         check_unlocks_callback, flee_choice="Fuse", enable_reset=True)
+        self.__store_gate = store_gate_callback
+        self.__decompose_gates = decompose_gates_callback
+        self.__show_input_popup = show_input_popup_callback
+        self.__return_to_workbench = return_to_workbench_callback
+
+    def set_data(self, robot: Robot, target: Target, tutorial_data: Any) -> None:
+        super().set_data(robot, target, tutorial_data)
+
+    def _on_commit_fail(self) -> bool:
+        pass    # do nothing since there is neither failing nor winning
+
+    def __name_gate(self):
+        def store(name: str):
+            used_gates = [gate for gate in self._robot.instructions if gate.position is not None]
+            combined_gate = gates.CombinedGate(used_gates, self._robot.num_of_qubits, name)
+            self.__store_gate(combined_gate)
+            self.__return_to_workbench()
+        self.__show_input_popup("Name your new Gate", ColorConfig.FUSION_CIRCUIT_NAMING_COLOR, store)
+
+    def _choices_flee(self) -> bool:
+        used_gates = [gate for gate in self._robot.instructions if gate.position is not None]
+
+        if self.__decompose_gates(used_gates):
+            self._choices.set_data(data=(
+                [f"Successfully fused the placed gates to a new Combined Gate.\nConfirm to enter a name for it."],
+                [self.__name_gate]
+            ))
+        else:
+            Popup.error("Illegal State! It seems like the game tried to fuse a gate you do not possess.",
+                        add_report_note=True)
+            self._choices.set_data(data=(
+                [f"Failed to fuse the placed gates :(\nPlease save and restart the game."],
+                [self._fleeing_failed_callback]
+            ))
         return True
