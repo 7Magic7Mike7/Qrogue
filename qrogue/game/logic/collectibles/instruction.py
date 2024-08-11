@@ -462,7 +462,9 @@ class CombinedGate(Instruction):
         return desc
 
     def copy(self) -> "Instruction":
-        return CombinedGate(self.__instructions, self.__gate.num_qubits, self.__gate.label)
+        # copy the instructions to not accidentally alter the positioning of the underlying Instructions
+        instructions = [inst.copy() for inst in self.__instructions]
+        return CombinedGate(instructions, self.__gate.num_qubits, self.__gate.label)
 
 
 ####### Gates for internal use only #######
