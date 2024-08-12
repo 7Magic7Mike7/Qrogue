@@ -436,7 +436,31 @@ class CXGate(DoubleQubitGate):
 
 class CombinedGate(Instruction):
     def __init__(self, instructions: List[Instruction], needed_qubits: int, label: Optional[str] = None):
+        Logger.instance().assertion(len(instructions) > 0, "Tried to create CombinedGate without instructions!")
+
         if label is None: label = "BlackBox"
+
+        # order instructions based on their position property or position in the list if the property is None
+        ##################################################
+        cur_pos = 0
+        inst_dict: Dict[int, List[Instruction]] = {}
+        for i, inst in enumerate(instructions):
+            if inst.position is not None:
+                cur_pos = inst.position     # update current position
+            # else: inst has no valid position, so we place it directly after the last valid/current position
+            # append inst
+            if cur_pos in inst_dict:
+                inst_dict[cur_pos].append(inst)
+            else:
+                inst_dict[cur_pos] = [inst]
+
+        instructions = []
+        sorted_keys = list(inst_dict.keys())
+        sorted_keys.sort()
+        for pos in sorted_keys:
+            instructions += inst_dict[pos]
+        ##################################################
+
         circuit = QuantumCircuit.from_register(needed_qubits)
         for inst in instructions: inst.append_to(circuit)
         gate = circuit.to_gate(label=label)
