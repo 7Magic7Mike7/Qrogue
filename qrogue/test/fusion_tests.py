@@ -47,6 +47,19 @@ class FusionTestCase(SingletonSetupTestCase):
 
         self.assertEqual(seq_matrix, comb_matrix)
 
+    def test_reverse_order_fusion(self):
+        unitary_simulator = UnitarySimulator()
+        num_of_qubits = 2
+        gate1 = CXGate().setup([0, 1], position=1)
+        gate2 = HGate().setup([0], position=0)
+
+        comb_gate = CombinedGate([gate1, gate2], num_of_qubits, label="Test").setup([0, 1])
+
+        seq_matrix = self.__compute(num_of_qubits, [gate2, gate1], unitary_simulator)
+        comb_matrix = self.__compute(num_of_qubits, [comb_gate], unitary_simulator)
+
+        self.assertEqual(seq_matrix, comb_matrix)
+
     def test_description(self):
         exp_desc = """This gate is a combination of multiple gates fused into one.
 
