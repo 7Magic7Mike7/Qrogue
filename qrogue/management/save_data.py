@@ -233,7 +233,7 @@ class NewSaveData:
 
         text += f"{_SaveDataGenerator.gates_header()}\n"
         if len(self.__gates) > 0:
-            text += _SaveDataGenerator.gate_separator().join([gate.gate_type.short_name for gate in self.__gates])
+            text += _SaveDataGenerator.gate_separator().join([gate.to_save_string() for gate in self.__gates])
             text += "\n"
 
         text += f"{_SaveDataGenerator.levels_header()}\n"

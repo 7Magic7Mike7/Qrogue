@@ -239,6 +239,9 @@ class Instruction(Collectible, ABC):
         self._qargs.pop()  # undo setting the next qubit because we only wanted to pretend that we did
         return preview
 
+    def to_save_string(self) -> str:
+        return self.__type.short_name
+
     def to_string(self):
         return self.name()
 
@@ -460,6 +463,12 @@ class CombinedGate(Instruction):
         desc += "\nUnderlying Circuit:\n"
         desc += self.__circ_repr
         return desc
+
+    def to_save_string(self) -> str:
+        # e.g.: combined{H(0),CX(0,1)}
+        text = [f"{inst.to_save_string()}({','.join([str(q) for q in inst.qargs_iter()])})"
+                for inst in self.__instructions]
+        return "combined{" + ",".join(text) + "}"
 
     def copy(self) -> "Instruction":
         # copy the instructions to not accidentally alter the positioning of the underlying Instructions
