@@ -216,6 +216,9 @@ class Instruction(Collectible, ABC):
     def copy(self) -> "Instruction":
         pass
 
+    def _deep_copy(self) -> "Instruction":
+        return self.copy().setup(self._qargs, self._cargs, self.__position)
+
     def selection_str(self) -> str:
         # Gate (qX, qY, ?, ...)
         text = f"{self.__type.name} ("
@@ -496,7 +499,7 @@ class CombinedGate(Instruction):
 
     def copy(self) -> "Instruction":
         # copy the instructions to not accidentally alter the positioning of the underlying Instructions
-        instructions = [inst.copy() for inst in self.__instructions]
+        instructions = [inst._deep_copy() for inst in self.__instructions]
         return CombinedGate(instructions, self.__gate.num_qubits, self.__gate.label)
 
 
