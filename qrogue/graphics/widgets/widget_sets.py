@@ -1752,8 +1752,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                     other_names = "\nAlso known as: " + gate.gate_type.get_other_names(" Gate, ") + " Gate"
                 else:
                     other_names = ""
-                Popup.generic_info(gate.gate_type.full_name, f"Short name: {gate.gate_type.short_name} Gate\n" +
-                                   gate.description(self._check_unlocks) + other_names)
+                Popup.generic_info(gate.name(), gate.description(self._check_unlocks) + other_names)
             else:
                 reopen_popup()  # open popup history
 

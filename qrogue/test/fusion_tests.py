@@ -61,7 +61,8 @@ class FusionTestCase(SingletonSetupTestCase):
         self.assertEqual(seq_matrix, comb_matrix)
 
     def test_description(self):
-        exp_desc = """This gate is a combination of multiple gates fused into one.
+        exp_desc = """Abbreviation: Q0
+This gate is a combination of multiple gates fused into one.
 
 Matrix:
       |00>   |01>   |10>   |11>  
