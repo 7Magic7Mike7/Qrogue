@@ -620,7 +620,7 @@ class GateType(enum.Enum):
     CXGate = "CX", "Controlled X", {"CNOT", "Controlled NOT"}, \
         "Applies an X Gate onto its second Qubit (=target) if its first Qubit (=control) is 1."
 
-    Combined = "co", "Combined", set(), \
+    Combined = "Q", "Qombined", set(), \
         "This gate is a combination of multiple gates fused into one."
 
     Debug = "de", "Debug", set(), "Only use for debugging!"  # used to test spacing
