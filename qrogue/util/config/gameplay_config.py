@@ -127,6 +127,7 @@ class CheatConfig:
     # __ALL and __NONE do not toggle! They simply set or reset all "real" cheats. All other/"real" cheats are toggles.
     __ALL = "aLL"
     __GOD_MODE = "Qod-Mode"     # puzzle checks always succeed, regardless of your circuit or additional constraints
+    __INF_EDITS = "Supertry"    # riddles (e.g., boss puzzles) allow for infinite many edits
     __SCARED_RABBIT = "Rabbit_Tunnel"   # all non-0 enemies allways flee
     __INF_RESOURCES = "Rich"    # you're always at max resources (keys, energy)
     __MAP_REVEAL = "Illuminati"     # all areas are visible
@@ -135,6 +136,7 @@ class CheatConfig:
     __NONE = "n0n3"
     __CHEATS = {
         __GOD_MODE: False,
+        __INF_EDITS: False,
         __SCARED_RABBIT: False,
         __INF_RESOURCES: False,
         __MAP_REVEAL: False,
@@ -167,6 +169,10 @@ class CheatConfig:
     @staticmethod
     def in_god_mode() -> bool:
         return CheatConfig.__CHEATS[CheatConfig.__GOD_MODE]
+
+    @staticmethod
+    def has_infinite_edits() -> bool:
+        return CheatConfig.__CHEATS[CheatConfig.__INF_EDITS]
 
     @staticmethod
     def is_scared_rabbit() -> bool:
