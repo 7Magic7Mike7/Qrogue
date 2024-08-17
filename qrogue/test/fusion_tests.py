@@ -60,6 +60,18 @@ class FusionTestCase(SingletonSetupTestCase):
 
         self.assertEqual(seq_matrix, comb_matrix)
 
+    def test_name(self):
+        name = "Test"
+        exp_name = name + " Gate"
+
+        comb_gate1 = CombinedGate([HGate().setup([0])], 1, label=name)              # no "Gate" suffix
+        comb_gate2 = CombinedGate([HGate().setup([0])], 1, label=exp_name)          # "Gate" suffix with whitespace
+        comb_gate3 = CombinedGate([HGate().setup([0])], 1, label=name + "Gate")     # "Gate" suffix without whitespace
+
+        self.assertEqual(exp_name, comb_gate1.name())
+        self.assertEqual(exp_name, comb_gate2.name())
+        self.assertEqual(exp_name, comb_gate3.name())
+
     def test_description(self):
         exp_desc = """Abbreviation: Q0
 This gate is a combination of multiple gates fused into one.

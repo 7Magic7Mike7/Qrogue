@@ -458,6 +458,8 @@ class CombinedGate(Instruction):
         Logger.instance().assertion(len(instructions) > 0, "Tried to create CombinedGate without instructions!")
 
         if label is None: label = "BlackBox"
+        if label.endswith("Gate"): label = label[:-len("Gate")]
+        label = label.strip()   # remove leftover whitespaces
 
         self.__id = CombinedGate._next_id() if _id is None else _id
 
