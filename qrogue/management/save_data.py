@@ -4,6 +4,7 @@ from typing import Tuple, Optional, List, Union, Dict
 from antlr4 import InputStream, CommonTokenStream
 
 from qrogue.game.logic.collectibles import InstructionManager, Instruction
+from qrogue.game.logic.collectibles.instruction import CombinedGate
 from qrogue.graphics.popups import Popup
 from qrogue.management.save_grammar.SaveDataLexer import SaveDataLexer
 from qrogue.management.save_grammar.SaveDataParser import SaveDataParser
@@ -424,9 +425,29 @@ class _SaveDataGenerator(SaveDataVisitor):
 
     #####################################
 
+    def visitBackground_gate(self, ctx: SaveDataParser.Background_gateContext) -> Optional[Instruction]:
+        gate = InstructionManager.instruction_from_name(ctx.NAME_STD().getText())
+        if gate is None: return None
+
+        qubits = [self.visitValue(val) for val in ctx.value()]
+        gate.setup(qubits)
+        return gate
+
+    def visitCombined_gate(self, ctx: SaveDataParser.Combined_gateContext) -> Optional[Instruction]:
+        name = ctx.TEXT().getText()[1:-1]   # remove leading and trailing quotation mark
+        num_of_qubits = self.visitValue(ctx.value())
+
+        gate_list = [self.visitBackground_gate(bg_ctx) for bg_ctx in ctx.background_gate()]
+        if None in gate_list:
+            Logger.instance().error(f"Failed to load a background gate of CombinedGate \"{name}\"")
+            return None
+        return CombinedGate(gate_list, num_of_qubits, name)
+
     def visitGate(self, ctx: SaveDataParser.GateContext) -> Optional[Instruction]:
-        gate_type = InstructionManager.type_from_name(ctx.NAME_STD().getText())
-        return InstructionManager.from_type(gate_type)    # todo: implement loading of CombinedGates
+        if ctx.combined_gate() is None:
+            return InstructionManager.instruction_from_name(ctx.NAME_STD().getText())
+        else:
+            return self.visitCombined_gate(ctx.combined_gate())
 
     def visitGates(self, ctx: SaveDataParser.GatesContext) -> List[Instruction]:
         gates = []

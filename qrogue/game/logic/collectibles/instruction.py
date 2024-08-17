@@ -8,7 +8,8 @@ from qiskit.circuit import Gate as QiskitGate
 
 from qrogue.game.logic.base import StateVector, CircuitMatrix, QuantumSimulator, QuantumCircuit, UnitarySimulator
 from qrogue.game.logic.collectibles import Collectible, CollectibleType
-from qrogue.util import Logger, GateType, QuantumSimulationConfig, InstructionConfig, ColorConfig, ColorCode
+from qrogue.util import Logger, GateType, QuantumSimulationConfig, InstructionConfig, ColorConfig, ColorCode, \
+    SaveGrammarConfig
 from qrogue.util.achievements import Unlocks
 from qrogue.util.util_functions import rad2deg, center_string, to_binary_string
 
@@ -492,10 +493,11 @@ class CombinedGate(Instruction):
         return desc
 
     def to_save_string(self) -> str:
-        # e.g.: combined{H(0),CX(0,1)}
+        # e.g.: combined{"Bell" 2: H(0),CX(0,1)}
         text = [f"{inst.to_save_string()}({','.join([str(q) for q in inst.qargs_iter()])})"
                 for inst in self.__instructions]
-        return "combined{" + ",".join(text) + "}"
+        return f"{SaveGrammarConfig.combined_prefix()}{{\"{self.__gate.label}\" {self.num_of_qubits}: " \
+               f"{','.join(text)}}}"
 
     def copy(self) -> "Instruction":
         # copy the instructions to not accidentally alter the positioning of the underlying Instructions

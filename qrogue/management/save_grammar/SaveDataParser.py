@@ -10,44 +10,56 @@ else:
 
 def serializedATN():
     return [
-        4,1,45,124,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,
+        4,1,51,157,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,
         6,2,7,7,7,2,8,7,8,2,9,7,9,2,10,7,10,2,11,7,11,2,12,7,12,2,13,7,13,
-        2,14,7,14,2,15,7,15,1,0,1,0,1,0,3,0,36,8,0,1,0,1,0,1,0,1,0,1,0,1,
-        0,1,1,1,1,1,1,1,2,1,2,1,2,1,3,1,3,1,3,1,3,1,4,1,4,5,4,56,8,4,10,
-        4,12,4,59,9,4,1,5,1,5,1,6,1,6,5,6,65,8,6,10,6,12,6,68,9,6,1,7,1,
-        7,1,7,1,7,1,7,1,7,1,8,1,8,1,8,1,8,1,9,1,9,1,10,1,10,5,10,84,8,10,
-        10,10,12,10,87,9,10,1,11,1,11,1,11,1,11,1,12,1,12,5,12,95,8,12,10,
-        12,12,12,98,9,12,1,13,1,13,1,13,1,13,1,13,1,13,1,13,1,13,1,14,1,
-        14,1,15,3,15,111,8,15,1,15,1,15,1,15,3,15,116,8,15,1,15,1,15,3,15,
-        120,8,15,3,15,122,8,15,1,15,0,0,16,0,2,4,6,8,10,12,14,16,18,20,22,
-        24,26,28,30,0,1,2,0,30,31,40,40,116,0,32,1,0,0,0,2,43,1,0,0,0,4,
-        46,1,0,0,0,6,49,1,0,0,0,8,53,1,0,0,0,10,60,1,0,0,0,12,62,1,0,0,0,
-        14,69,1,0,0,0,16,75,1,0,0,0,18,79,1,0,0,0,20,81,1,0,0,0,22,88,1,
-        0,0,0,24,92,1,0,0,0,26,99,1,0,0,0,28,107,1,0,0,0,30,110,1,0,0,0,
-        32,33,5,22,0,0,33,35,3,2,1,0,34,36,3,6,3,0,35,34,1,0,0,0,35,36,1,
-        0,0,0,36,37,1,0,0,0,37,38,3,8,4,0,38,39,3,12,6,0,39,40,3,20,10,0,
-        40,41,3,24,12,0,41,42,5,23,0,0,42,1,1,0,0,0,43,44,5,13,0,0,44,45,
-        5,14,0,0,45,3,1,0,0,0,46,47,3,18,9,0,47,48,5,12,0,0,48,5,1,0,0,0,
-        49,50,5,6,0,0,50,51,5,11,0,0,51,52,3,18,9,0,52,7,1,0,0,0,53,57,5,
-        7,0,0,54,56,3,10,5,0,55,54,1,0,0,0,56,59,1,0,0,0,57,55,1,0,0,0,57,
-        58,1,0,0,0,58,9,1,0,0,0,59,57,1,0,0,0,60,61,5,16,0,0,61,11,1,0,0,
-        0,62,66,5,8,0,0,63,65,3,14,7,0,64,63,1,0,0,0,65,68,1,0,0,0,66,64,
-        1,0,0,0,66,67,1,0,0,0,67,13,1,0,0,0,68,66,1,0,0,0,69,70,5,18,0,0,
-        70,71,5,1,0,0,71,72,3,2,1,0,72,73,3,4,2,0,73,74,3,16,8,0,74,15,1,
-        0,0,0,75,76,5,2,0,0,76,77,5,3,0,0,77,78,3,18,9,0,78,17,1,0,0,0,79,
-        80,5,15,0,0,80,19,1,0,0,0,81,85,5,9,0,0,82,84,3,22,11,0,83,82,1,
-        0,0,0,84,87,1,0,0,0,85,83,1,0,0,0,85,86,1,0,0,0,86,21,1,0,0,0,87,
-        85,1,0,0,0,88,89,5,16,0,0,89,90,5,1,0,0,90,91,3,2,1,0,91,23,1,0,
-        0,0,92,96,5,10,0,0,93,95,3,26,13,0,94,93,1,0,0,0,95,98,1,0,0,0,96,
-        94,1,0,0,0,96,97,1,0,0,0,97,25,1,0,0,0,98,96,1,0,0,0,99,100,5,16,
-        0,0,100,101,5,1,0,0,101,102,3,2,1,0,102,103,3,16,8,0,103,104,5,4,
-        0,0,104,105,5,5,0,0,105,106,3,18,9,0,106,27,1,0,0,0,107,108,7,0,
-        0,0,108,29,1,0,0,0,109,111,5,34,0,0,110,109,1,0,0,0,110,111,1,0,
-        0,0,111,121,1,0,0,0,112,122,5,33,0,0,113,116,3,28,14,0,114,116,5,
-        32,0,0,115,113,1,0,0,0,115,114,1,0,0,0,116,119,1,0,0,0,117,118,5,
-        34,0,0,118,120,5,33,0,0,119,117,1,0,0,0,119,120,1,0,0,0,120,122,
-        1,0,0,0,121,112,1,0,0,0,121,115,1,0,0,0,122,31,1,0,0,0,9,35,57,66,
-        85,96,110,115,119,121
+        2,14,7,14,2,15,7,15,2,16,7,16,2,17,7,17,1,0,1,0,1,0,3,0,40,8,0,1,
+        0,1,0,1,0,1,0,1,0,1,0,1,1,1,1,1,1,1,2,1,2,1,2,1,3,1,3,1,3,1,3,1,
+        4,1,4,5,4,60,8,4,10,4,12,4,63,9,4,1,5,1,5,1,5,3,5,68,8,5,1,6,1,6,
+        1,6,1,6,1,6,1,6,1,6,5,6,77,8,6,10,6,12,6,80,9,6,1,6,1,6,1,7,1,7,
+        1,7,1,7,1,7,5,7,89,8,7,10,7,12,7,92,9,7,1,7,1,7,1,8,1,8,5,8,98,8,
+        8,10,8,12,8,101,9,8,1,9,1,9,1,9,1,9,1,9,1,9,1,10,1,10,1,10,1,10,
+        1,11,1,11,1,12,1,12,5,12,117,8,12,10,12,12,12,120,9,12,1,13,1,13,
+        1,13,1,13,1,14,1,14,5,14,128,8,14,10,14,12,14,131,9,14,1,15,1,15,
+        1,15,1,15,1,15,1,15,1,15,1,15,1,16,1,16,1,17,3,17,144,8,17,1,17,
+        1,17,1,17,3,17,149,8,17,1,17,1,17,3,17,153,8,17,3,17,155,8,17,1,
+        17,0,0,18,0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,0,1,2,
+        0,36,37,46,46,150,0,36,1,0,0,0,2,47,1,0,0,0,4,50,1,0,0,0,6,53,1,
+        0,0,0,8,57,1,0,0,0,10,67,1,0,0,0,12,69,1,0,0,0,14,83,1,0,0,0,16,
+        95,1,0,0,0,18,102,1,0,0,0,20,108,1,0,0,0,22,112,1,0,0,0,24,114,1,
+        0,0,0,26,121,1,0,0,0,28,125,1,0,0,0,30,132,1,0,0,0,32,140,1,0,0,
+        0,34,143,1,0,0,0,36,37,5,28,0,0,37,39,3,2,1,0,38,40,3,6,3,0,39,38,
+        1,0,0,0,39,40,1,0,0,0,40,41,1,0,0,0,41,42,3,8,4,0,42,43,3,16,8,0,
+        43,44,3,24,12,0,44,45,3,28,14,0,45,46,5,29,0,0,46,1,1,0,0,0,47,48,
+        5,19,0,0,48,49,5,20,0,0,49,3,1,0,0,0,50,51,3,22,11,0,51,52,5,17,
+        0,0,52,5,1,0,0,0,53,54,5,11,0,0,54,55,5,16,0,0,55,56,3,22,11,0,56,
+        7,1,0,0,0,57,61,5,12,0,0,58,60,3,10,5,0,59,58,1,0,0,0,60,63,1,0,
+        0,0,61,59,1,0,0,0,61,62,1,0,0,0,62,9,1,0,0,0,63,61,1,0,0,0,64,68,
+        5,22,0,0,65,66,5,18,0,0,66,68,3,12,6,0,67,64,1,0,0,0,67,65,1,0,0,
+        0,68,11,1,0,0,0,69,70,5,1,0,0,70,71,5,44,0,0,71,72,3,22,11,0,72,
+        73,5,2,0,0,73,78,3,14,7,0,74,75,5,32,0,0,75,77,3,14,7,0,76,74,1,
+        0,0,0,77,80,1,0,0,0,78,76,1,0,0,0,78,79,1,0,0,0,79,81,1,0,0,0,80,
+        78,1,0,0,0,81,82,5,3,0,0,82,13,1,0,0,0,83,84,5,22,0,0,84,85,5,4,
+        0,0,85,90,3,22,11,0,86,87,5,32,0,0,87,89,3,22,11,0,88,86,1,0,0,0,
+        89,92,1,0,0,0,90,88,1,0,0,0,90,91,1,0,0,0,91,93,1,0,0,0,92,90,1,
+        0,0,0,93,94,5,5,0,0,94,15,1,0,0,0,95,99,5,13,0,0,96,98,3,18,9,0,
+        97,96,1,0,0,0,98,101,1,0,0,0,99,97,1,0,0,0,99,100,1,0,0,0,100,17,
+        1,0,0,0,101,99,1,0,0,0,102,103,5,24,0,0,103,104,5,6,0,0,104,105,
+        3,2,1,0,105,106,3,4,2,0,106,107,3,20,10,0,107,19,1,0,0,0,108,109,
+        5,7,0,0,109,110,5,8,0,0,110,111,3,22,11,0,111,21,1,0,0,0,112,113,
+        5,21,0,0,113,23,1,0,0,0,114,118,5,14,0,0,115,117,3,26,13,0,116,115,
+        1,0,0,0,117,120,1,0,0,0,118,116,1,0,0,0,118,119,1,0,0,0,119,25,1,
+        0,0,0,120,118,1,0,0,0,121,122,5,22,0,0,122,123,5,6,0,0,123,124,3,
+        2,1,0,124,27,1,0,0,0,125,129,5,15,0,0,126,128,3,30,15,0,127,126,
+        1,0,0,0,128,131,1,0,0,0,129,127,1,0,0,0,129,130,1,0,0,0,130,29,1,
+        0,0,0,131,129,1,0,0,0,132,133,5,22,0,0,133,134,5,6,0,0,134,135,3,
+        2,1,0,135,136,3,20,10,0,136,137,5,9,0,0,137,138,5,10,0,0,138,139,
+        3,22,11,0,139,31,1,0,0,0,140,141,7,0,0,0,141,33,1,0,0,0,142,144,
+        5,40,0,0,143,142,1,0,0,0,143,144,1,0,0,0,144,154,1,0,0,0,145,155,
+        5,39,0,0,146,149,3,32,16,0,147,149,5,38,0,0,148,146,1,0,0,0,148,
+        147,1,0,0,0,149,152,1,0,0,0,150,151,5,40,0,0,151,153,5,39,0,0,152,
+        150,1,0,0,0,152,153,1,0,0,0,153,155,1,0,0,0,154,145,1,0,0,0,154,
+        148,1,0,0,0,155,35,1,0,0,0,12,39,61,67,78,90,99,118,129,143,148,
+        152,154
     ]
 
 class SaveDataParser ( Parser ):
@@ -60,26 +72,28 @@ class SaveDataParser ( Parser ):
 
     sharedContextCache = PredictionContextCache()
 
-    literalNames = [ "<INVALID>", "'@'", "'Score'", "'='", "'out'", "'of'", 
-                     "'[INVENTORY]'", "'[GATES]'", "'[LEVELS]'", "'[UNLOCKS]'", 
-                     "'[ACHIEVEMENTS]'", "'QuantumFuser'", "'seconds'", 
+    literalNames = [ "<INVALID>", "'{'", "':'", "'}'", "'('", "')'", "'@'", 
+                     "'Score'", "'='", "'out'", "'of'", "'[INVENTORY]'", 
+                     "'[GATES]'", "'[LEVELS]'", "'[UNLOCKS]'", "'[ACHIEVEMENTS]'", 
+                     "'QuantumFuser'", "'seconds'", "'combined'", "<INVALID>", 
                      "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
-                     "<INVALID>", "<INVALID>", "<INVALID>", "'tutorial'", 
-                     "'trigger'", "'Qrogue<'", "'>Qrogue'", "'~'", "'|'", 
-                     "','", "'#'", "'..'", "'__'" ]
+                     "<INVALID>", "<INVALID>", "'tutorial'", "'trigger'", 
+                     "'Qrogue<'", "'>Qrogue'", "'~'", "'|'", "','", "'#'", 
+                     "'..'", "'__'" ]
 
     symbolicNames = [ "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
-                      "<INVALID>", "<INVALID>", "INVENTORY_HEADER", "GATES_HEADER", 
-                      "LEVELS_HEADER", "UNLOCKS_HEADER", "ACHIEVEMENTS_HEADER", 
-                      "QUANTUM_FUSER", "DURATION_UNIT", "DATE", "TIME", 
-                      "VALUE", "NAME_STD", "NAME_SYMBOL", "NAME_SPECIAL", 
-                      "DIRECTION", "TUTORIAL_LITERAL", "TRIGGER_LITERAL", 
-                      "HEADER", "ENDER", "HORIZONTAL_SEPARATOR", "VERTICAL_SEPARATOR", 
-                      "LIST_SEPARATOR", "WALL", "EMPTY_HALLWAY", "EMPTY_ROOM", 
-                      "DIGIT", "INTEGER", "FLOAT", "IMAG_NUMBER", "SIGN", 
-                      "CHARACTER_LOW", "CHARACTER_UP", "CHARACTER", "TEXT", 
-                      "ROOM_ID", "HALLWAY_ID", "REFERENCE", "WS", "UNIVERSAL_SEPARATOR", 
-                      "COMMENT", "LINE_COMMENT" ]
+                      "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                      "<INVALID>", "<INVALID>", "<INVALID>", "INVENTORY_HEADER", 
+                      "GATES_HEADER", "LEVELS_HEADER", "UNLOCKS_HEADER", 
+                      "ACHIEVEMENTS_HEADER", "QUANTUM_FUSER", "DURATION_UNIT", 
+                      "COMBINED_GATE", "DATE", "TIME", "VALUE", "NAME_STD", 
+                      "NAME_SYMBOL", "NAME_SPECIAL", "DIRECTION", "TUTORIAL_LITERAL", 
+                      "TRIGGER_LITERAL", "HEADER", "ENDER", "HORIZONTAL_SEPARATOR", 
+                      "VERTICAL_SEPARATOR", "LIST_SEPARATOR", "WALL", "EMPTY_HALLWAY", 
+                      "EMPTY_ROOM", "DIGIT", "INTEGER", "FLOAT", "IMAG_NUMBER", 
+                      "SIGN", "CHARACTER_LOW", "CHARACTER_UP", "CHARACTER", 
+                      "TEXT", "ROOM_ID", "HALLWAY_ID", "REFERENCE", "WS", 
+                      "UNIVERSAL_SEPARATOR", "COMMENT", "LINE_COMMENT" ]
 
     RULE_start = 0
     RULE_date_time = 1
@@ -87,20 +101,23 @@ class SaveDataParser ( Parser ):
     RULE_inventory = 3
     RULE_gates = 4
     RULE_gate = 5
-    RULE_levels = 6
-    RULE_level = 7
-    RULE_score = 8
-    RULE_value = 9
-    RULE_unlocks = 10
-    RULE_unlock = 11
-    RULE_achievements = 12
-    RULE_achievement = 13
-    RULE_integer = 14
-    RULE_complex_number = 15
+    RULE_combined_gate = 6
+    RULE_background_gate = 7
+    RULE_levels = 8
+    RULE_level = 9
+    RULE_score = 10
+    RULE_value = 11
+    RULE_unlocks = 12
+    RULE_unlock = 13
+    RULE_achievements = 14
+    RULE_achievement = 15
+    RULE_integer = 16
+    RULE_complex_number = 17
 
     ruleNames =  [ "start", "date_time", "duration", "inventory", "gates", 
-                   "gate", "levels", "level", "score", "value", "unlocks", 
-                   "unlock", "achievements", "achievement", "integer", "complex_number" ]
+                   "gate", "combined_gate", "background_gate", "levels", 
+                   "level", "score", "value", "unlocks", "unlock", "achievements", 
+                   "achievement", "integer", "complex_number" ]
 
     EOF = Token.EOF
     T__0=1
@@ -108,46 +125,52 @@ class SaveDataParser ( Parser ):
     T__2=3
     T__3=4
     T__4=5
-    INVENTORY_HEADER=6
-    GATES_HEADER=7
-    LEVELS_HEADER=8
-    UNLOCKS_HEADER=9
-    ACHIEVEMENTS_HEADER=10
-    QUANTUM_FUSER=11
-    DURATION_UNIT=12
-    DATE=13
-    TIME=14
-    VALUE=15
-    NAME_STD=16
-    NAME_SYMBOL=17
-    NAME_SPECIAL=18
-    DIRECTION=19
-    TUTORIAL_LITERAL=20
-    TRIGGER_LITERAL=21
-    HEADER=22
-    ENDER=23
-    HORIZONTAL_SEPARATOR=24
-    VERTICAL_SEPARATOR=25
-    LIST_SEPARATOR=26
-    WALL=27
-    EMPTY_HALLWAY=28
-    EMPTY_ROOM=29
-    DIGIT=30
-    INTEGER=31
-    FLOAT=32
-    IMAG_NUMBER=33
-    SIGN=34
-    CHARACTER_LOW=35
-    CHARACTER_UP=36
-    CHARACTER=37
-    TEXT=38
-    ROOM_ID=39
-    HALLWAY_ID=40
-    REFERENCE=41
-    WS=42
-    UNIVERSAL_SEPARATOR=43
-    COMMENT=44
-    LINE_COMMENT=45
+    T__5=6
+    T__6=7
+    T__7=8
+    T__8=9
+    T__9=10
+    INVENTORY_HEADER=11
+    GATES_HEADER=12
+    LEVELS_HEADER=13
+    UNLOCKS_HEADER=14
+    ACHIEVEMENTS_HEADER=15
+    QUANTUM_FUSER=16
+    DURATION_UNIT=17
+    COMBINED_GATE=18
+    DATE=19
+    TIME=20
+    VALUE=21
+    NAME_STD=22
+    NAME_SYMBOL=23
+    NAME_SPECIAL=24
+    DIRECTION=25
+    TUTORIAL_LITERAL=26
+    TRIGGER_LITERAL=27
+    HEADER=28
+    ENDER=29
+    HORIZONTAL_SEPARATOR=30
+    VERTICAL_SEPARATOR=31
+    LIST_SEPARATOR=32
+    WALL=33
+    EMPTY_HALLWAY=34
+    EMPTY_ROOM=35
+    DIGIT=36
+    INTEGER=37
+    FLOAT=38
+    IMAG_NUMBER=39
+    SIGN=40
+    CHARACTER_LOW=41
+    CHARACTER_UP=42
+    CHARACTER=43
+    TEXT=44
+    ROOM_ID=45
+    HALLWAY_ID=46
+    REFERENCE=47
+    WS=48
+    UNIVERSAL_SEPARATOR=49
+    COMMENT=50
+    LINE_COMMENT=51
 
     def __init__(self, input:TokenStream, output:TextIO = sys.stdout):
         super().__init__(input, output)
@@ -222,27 +245,27 @@ class SaveDataParser ( Parser ):
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 32
+            self.state = 36
             self.match(SaveDataParser.HEADER)
-            self.state = 33
+            self.state = 37
             self.date_time()
-            self.state = 35
+            self.state = 39
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            if _la==6:
-                self.state = 34
+            if _la==11:
+                self.state = 38
                 self.inventory()
 
 
-            self.state = 37
-            self.gates()
-            self.state = 38
-            self.levels()
-            self.state = 39
-            self.unlocks()
-            self.state = 40
-            self.achievements()
             self.state = 41
+            self.gates()
+            self.state = 42
+            self.levels()
+            self.state = 43
+            self.unlocks()
+            self.state = 44
+            self.achievements()
+            self.state = 45
             self.match(SaveDataParser.ENDER)
         except RecognitionException as re:
             localctx.exception = re
@@ -292,9 +315,9 @@ class SaveDataParser ( Parser ):
         self.enterRule(localctx, 2, self.RULE_date_time)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 43
+            self.state = 47
             self.match(SaveDataParser.DATE)
-            self.state = 44
+            self.state = 48
             self.match(SaveDataParser.TIME)
         except RecognitionException as re:
             localctx.exception = re
@@ -345,9 +368,9 @@ class SaveDataParser ( Parser ):
         self.enterRule(localctx, 4, self.RULE_duration)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 46
+            self.state = 50
             self.value()
-            self.state = 47
+            self.state = 51
             self.match(SaveDataParser.DURATION_UNIT)
         except RecognitionException as re:
             localctx.exception = re
@@ -401,11 +424,11 @@ class SaveDataParser ( Parser ):
         self.enterRule(localctx, 6, self.RULE_inventory)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 49
+            self.state = 53
             self.match(SaveDataParser.INVENTORY_HEADER)
-            self.state = 50
+            self.state = 54
             self.match(SaveDataParser.QUANTUM_FUSER)
-            self.state = 51
+            self.state = 55
             self.value()
         except RecognitionException as re:
             localctx.exception = re
@@ -460,15 +483,15 @@ class SaveDataParser ( Parser ):
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 53
-            self.match(SaveDataParser.GATES_HEADER)
             self.state = 57
+            self.match(SaveDataParser.GATES_HEADER)
+            self.state = 61
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            while _la==16:
-                self.state = 54
+            while _la==18 or _la==22:
+                self.state = 58
                 self.gate()
-                self.state = 59
+                self.state = 63
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
 
@@ -490,6 +513,13 @@ class SaveDataParser ( Parser ):
 
         def NAME_STD(self):
             return self.getToken(SaveDataParser.NAME_STD, 0)
+
+        def COMBINED_GATE(self):
+            return self.getToken(SaveDataParser.COMBINED_GATE, 0)
+
+        def combined_gate(self):
+            return self.getTypedRuleContext(SaveDataParser.Combined_gateContext,0)
+
 
         def getRuleIndex(self):
             return SaveDataParser.RULE_gate
@@ -516,9 +546,190 @@ class SaveDataParser ( Parser ):
         localctx = SaveDataParser.GateContext(self, self._ctx, self.state)
         self.enterRule(localctx, 10, self.RULE_gate)
         try:
+            self.state = 67
+            self._errHandler.sync(self)
+            token = self._input.LA(1)
+            if token in [22]:
+                self.enterOuterAlt(localctx, 1)
+                self.state = 64
+                self.match(SaveDataParser.NAME_STD)
+                pass
+            elif token in [18]:
+                self.enterOuterAlt(localctx, 2)
+                self.state = 65
+                self.match(SaveDataParser.COMBINED_GATE)
+                self.state = 66
+                self.combined_gate()
+                pass
+            else:
+                raise NoViableAltException(self)
+
+        except RecognitionException as re:
+            localctx.exception = re
+            self._errHandler.reportError(self, re)
+            self._errHandler.recover(self, re)
+        finally:
+            self.exitRule()
+        return localctx
+
+
+    class Combined_gateContext(ParserRuleContext):
+        __slots__ = 'parser'
+
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
+            self.parser = parser
+
+        def TEXT(self):
+            return self.getToken(SaveDataParser.TEXT, 0)
+
+        def value(self):
+            return self.getTypedRuleContext(SaveDataParser.ValueContext,0)
+
+
+        def background_gate(self, i:int=None):
+            if i is None:
+                return self.getTypedRuleContexts(SaveDataParser.Background_gateContext)
+            else:
+                return self.getTypedRuleContext(SaveDataParser.Background_gateContext,i)
+
+
+        def LIST_SEPARATOR(self, i:int=None):
+            if i is None:
+                return self.getTokens(SaveDataParser.LIST_SEPARATOR)
+            else:
+                return self.getToken(SaveDataParser.LIST_SEPARATOR, i)
+
+        def getRuleIndex(self):
+            return SaveDataParser.RULE_combined_gate
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterCombined_gate" ):
+                listener.enterCombined_gate(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitCombined_gate" ):
+                listener.exitCombined_gate(self)
+
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitCombined_gate" ):
+                return visitor.visitCombined_gate(self)
+            else:
+                return visitor.visitChildren(self)
+
+
+
+
+    def combined_gate(self):
+
+        localctx = SaveDataParser.Combined_gateContext(self, self._ctx, self.state)
+        self.enterRule(localctx, 12, self.RULE_combined_gate)
+        self._la = 0 # Token type
+        try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 60
+            self.state = 69
+            self.match(SaveDataParser.T__0)
+            self.state = 70
+            self.match(SaveDataParser.TEXT)
+            self.state = 71
+            self.value()
+            self.state = 72
+            self.match(SaveDataParser.T__1)
+            self.state = 73
+            self.background_gate()
+            self.state = 78
+            self._errHandler.sync(self)
+            _la = self._input.LA(1)
+            while _la==32:
+                self.state = 74
+                self.match(SaveDataParser.LIST_SEPARATOR)
+                self.state = 75
+                self.background_gate()
+                self.state = 80
+                self._errHandler.sync(self)
+                _la = self._input.LA(1)
+
+            self.state = 81
+            self.match(SaveDataParser.T__2)
+        except RecognitionException as re:
+            localctx.exception = re
+            self._errHandler.reportError(self, re)
+            self._errHandler.recover(self, re)
+        finally:
+            self.exitRule()
+        return localctx
+
+
+    class Background_gateContext(ParserRuleContext):
+        __slots__ = 'parser'
+
+        def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
+            super().__init__(parent, invokingState)
+            self.parser = parser
+
+        def NAME_STD(self):
+            return self.getToken(SaveDataParser.NAME_STD, 0)
+
+        def value(self, i:int=None):
+            if i is None:
+                return self.getTypedRuleContexts(SaveDataParser.ValueContext)
+            else:
+                return self.getTypedRuleContext(SaveDataParser.ValueContext,i)
+
+
+        def LIST_SEPARATOR(self, i:int=None):
+            if i is None:
+                return self.getTokens(SaveDataParser.LIST_SEPARATOR)
+            else:
+                return self.getToken(SaveDataParser.LIST_SEPARATOR, i)
+
+        def getRuleIndex(self):
+            return SaveDataParser.RULE_background_gate
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterBackground_gate" ):
+                listener.enterBackground_gate(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitBackground_gate" ):
+                listener.exitBackground_gate(self)
+
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitBackground_gate" ):
+                return visitor.visitBackground_gate(self)
+            else:
+                return visitor.visitChildren(self)
+
+
+
+
+    def background_gate(self):
+
+        localctx = SaveDataParser.Background_gateContext(self, self._ctx, self.state)
+        self.enterRule(localctx, 14, self.RULE_background_gate)
+        self._la = 0 # Token type
+        try:
+            self.enterOuterAlt(localctx, 1)
+            self.state = 83
             self.match(SaveDataParser.NAME_STD)
+            self.state = 84
+            self.match(SaveDataParser.T__3)
+            self.state = 85
+            self.value()
+            self.state = 90
+            self._errHandler.sync(self)
+            _la = self._input.LA(1)
+            while _la==32:
+                self.state = 86
+                self.match(SaveDataParser.LIST_SEPARATOR)
+                self.state = 87
+                self.value()
+                self.state = 92
+                self._errHandler.sync(self)
+                _la = self._input.LA(1)
+
+            self.state = 93
+            self.match(SaveDataParser.T__4)
         except RecognitionException as re:
             localctx.exception = re
             self._errHandler.reportError(self, re)
@@ -568,19 +779,19 @@ class SaveDataParser ( Parser ):
     def levels(self):
 
         localctx = SaveDataParser.LevelsContext(self, self._ctx, self.state)
-        self.enterRule(localctx, 12, self.RULE_levels)
+        self.enterRule(localctx, 16, self.RULE_levels)
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 62
+            self.state = 95
             self.match(SaveDataParser.LEVELS_HEADER)
-            self.state = 66
+            self.state = 99
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            while _la==18:
-                self.state = 63
+            while _la==24:
+                self.state = 96
                 self.level()
-                self.state = 68
+                self.state = 101
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
 
@@ -638,18 +849,18 @@ class SaveDataParser ( Parser ):
     def level(self):
 
         localctx = SaveDataParser.LevelContext(self, self._ctx, self.state)
-        self.enterRule(localctx, 14, self.RULE_level)
+        self.enterRule(localctx, 18, self.RULE_level)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 69
+            self.state = 102
             self.match(SaveDataParser.NAME_SPECIAL)
-            self.state = 70
-            self.match(SaveDataParser.T__0)
-            self.state = 71
+            self.state = 103
+            self.match(SaveDataParser.T__5)
+            self.state = 104
             self.date_time()
-            self.state = 72
+            self.state = 105
             self.duration()
-            self.state = 73
+            self.state = 106
             self.score()
         except RecognitionException as re:
             localctx.exception = re
@@ -694,14 +905,14 @@ class SaveDataParser ( Parser ):
     def score(self):
 
         localctx = SaveDataParser.ScoreContext(self, self._ctx, self.state)
-        self.enterRule(localctx, 16, self.RULE_score)
+        self.enterRule(localctx, 20, self.RULE_score)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 75
-            self.match(SaveDataParser.T__1)
-            self.state = 76
-            self.match(SaveDataParser.T__2)
-            self.state = 77
+            self.state = 108
+            self.match(SaveDataParser.T__6)
+            self.state = 109
+            self.match(SaveDataParser.T__7)
+            self.state = 110
             self.value()
         except RecognitionException as re:
             localctx.exception = re
@@ -745,10 +956,10 @@ class SaveDataParser ( Parser ):
     def value(self):
 
         localctx = SaveDataParser.ValueContext(self, self._ctx, self.state)
-        self.enterRule(localctx, 18, self.RULE_value)
+        self.enterRule(localctx, 22, self.RULE_value)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 79
+            self.state = 112
             self.match(SaveDataParser.VALUE)
         except RecognitionException as re:
             localctx.exception = re
@@ -799,19 +1010,19 @@ class SaveDataParser ( Parser ):
     def unlocks(self):
 
         localctx = SaveDataParser.UnlocksContext(self, self._ctx, self.state)
-        self.enterRule(localctx, 20, self.RULE_unlocks)
+        self.enterRule(localctx, 24, self.RULE_unlocks)
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 81
+            self.state = 114
             self.match(SaveDataParser.UNLOCKS_HEADER)
-            self.state = 85
+            self.state = 118
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            while _la==16:
-                self.state = 82
+            while _la==22:
+                self.state = 115
                 self.unlock()
-                self.state = 87
+                self.state = 120
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
 
@@ -861,14 +1072,14 @@ class SaveDataParser ( Parser ):
     def unlock(self):
 
         localctx = SaveDataParser.UnlockContext(self, self._ctx, self.state)
-        self.enterRule(localctx, 22, self.RULE_unlock)
+        self.enterRule(localctx, 26, self.RULE_unlock)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 88
+            self.state = 121
             self.match(SaveDataParser.NAME_STD)
-            self.state = 89
-            self.match(SaveDataParser.T__0)
-            self.state = 90
+            self.state = 122
+            self.match(SaveDataParser.T__5)
+            self.state = 123
             self.date_time()
         except RecognitionException as re:
             localctx.exception = re
@@ -919,19 +1130,19 @@ class SaveDataParser ( Parser ):
     def achievements(self):
 
         localctx = SaveDataParser.AchievementsContext(self, self._ctx, self.state)
-        self.enterRule(localctx, 24, self.RULE_achievements)
+        self.enterRule(localctx, 28, self.RULE_achievements)
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 92
+            self.state = 125
             self.match(SaveDataParser.ACHIEVEMENTS_HEADER)
-            self.state = 96
+            self.state = 129
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            while _la==16:
-                self.state = 93
+            while _la==22:
+                self.state = 126
                 self.achievement()
-                self.state = 98
+                self.state = 131
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
 
@@ -989,22 +1200,22 @@ class SaveDataParser ( Parser ):
     def achievement(self):
 
         localctx = SaveDataParser.AchievementContext(self, self._ctx, self.state)
-        self.enterRule(localctx, 26, self.RULE_achievement)
+        self.enterRule(localctx, 30, self.RULE_achievement)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 99
+            self.state = 132
             self.match(SaveDataParser.NAME_STD)
-            self.state = 100
-            self.match(SaveDataParser.T__0)
-            self.state = 101
+            self.state = 133
+            self.match(SaveDataParser.T__5)
+            self.state = 134
             self.date_time()
-            self.state = 102
+            self.state = 135
             self.score()
-            self.state = 103
-            self.match(SaveDataParser.T__3)
-            self.state = 104
-            self.match(SaveDataParser.T__4)
-            self.state = 105
+            self.state = 136
+            self.match(SaveDataParser.T__8)
+            self.state = 137
+            self.match(SaveDataParser.T__9)
+            self.state = 138
             self.value()
         except RecognitionException as re:
             localctx.exception = re
@@ -1054,13 +1265,13 @@ class SaveDataParser ( Parser ):
     def integer(self):
 
         localctx = SaveDataParser.IntegerContext(self, self._ctx, self.state)
-        self.enterRule(localctx, 28, self.RULE_integer)
+        self.enterRule(localctx, 32, self.RULE_integer)
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 107
+            self.state = 140
             _la = self._input.LA(1)
-            if not((((_la) & ~0x3f) == 0 and ((1 << _la) & 1102732853248) != 0)):
+            if not((((_la) & ~0x3f) == 0 and ((1 << _la) & 70574902607872) != 0)):
                 self._errHandler.recoverInline(self)
             else:
                 self._errHandler.reportMatch(self)
@@ -1120,47 +1331,47 @@ class SaveDataParser ( Parser ):
     def complex_number(self):
 
         localctx = SaveDataParser.Complex_numberContext(self, self._ctx, self.state)
-        self.enterRule(localctx, 30, self.RULE_complex_number)
+        self.enterRule(localctx, 34, self.RULE_complex_number)
         self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 110
+            self.state = 143
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            if _la==34:
-                self.state = 109
+            if _la==40:
+                self.state = 142
                 self.match(SaveDataParser.SIGN)
 
 
-            self.state = 121
+            self.state = 154
             self._errHandler.sync(self)
             token = self._input.LA(1)
-            if token in [33]:
-                self.state = 112
+            if token in [39]:
+                self.state = 145
                 self.match(SaveDataParser.IMAG_NUMBER)
                 pass
-            elif token in [30, 31, 32, 40]:
-                self.state = 115
+            elif token in [36, 37, 38, 46]:
+                self.state = 148
                 self._errHandler.sync(self)
                 token = self._input.LA(1)
-                if token in [30, 31, 40]:
-                    self.state = 113
+                if token in [36, 37, 46]:
+                    self.state = 146
                     self.integer()
                     pass
-                elif token in [32]:
-                    self.state = 114
+                elif token in [38]:
+                    self.state = 147
                     self.match(SaveDataParser.FLOAT)
                     pass
                 else:
                     raise NoViableAltException(self)
 
-                self.state = 119
+                self.state = 152
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
-                if _la==34:
-                    self.state = 117
+                if _la==40:
+                    self.state = 150
                     self.match(SaveDataParser.SIGN)
-                    self.state = 118
+                    self.state = 151
                     self.match(SaveDataParser.IMAG_NUMBER)
 
 

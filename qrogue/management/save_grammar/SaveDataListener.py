@@ -62,6 +62,24 @@ class SaveDataListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by SaveDataParser#combined_gate.
+    def enterCombined_gate(self, ctx:SaveDataParser.Combined_gateContext):
+        pass
+
+    # Exit a parse tree produced by SaveDataParser#combined_gate.
+    def exitCombined_gate(self, ctx:SaveDataParser.Combined_gateContext):
+        pass
+
+
+    # Enter a parse tree produced by SaveDataParser#background_gate.
+    def enterBackground_gate(self, ctx:SaveDataParser.Background_gateContext):
+        pass
+
+    # Exit a parse tree produced by SaveDataParser#background_gate.
+    def exitBackground_gate(self, ctx:SaveDataParser.Background_gateContext):
+        pass
+
+
     # Enter a parse tree produced by SaveDataParser#levels.
     def enterLevels(self, ctx:SaveDataParser.LevelsContext):
         pass

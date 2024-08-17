@@ -10,7 +10,9 @@ duration : value DURATION_UNIT ;
 inventory : INVENTORY_HEADER QUANTUM_FUSER value ;
 
 gates : GATES_HEADER gate* ;
-gate : NAME_STD ;   // maybe add "amount" later
+gate : NAME_STD | COMBINED_GATE combined_gate ;   // maybe add "amount" later
+combined_gate : '{' TEXT value ':' background_gate (',' background_gate)* '}' ;
+background_gate : NAME_STD '(' value (',' value)* ')' ;     // gate name (qubits)
 
 levels : LEVELS_HEADER level* ;
 level : NAME_SPECIAL '@' date_time duration score ;
@@ -31,6 +33,7 @@ ACHIEVEMENTS_HEADER : '[ACHIEVEMENTS]' ;
 
 QUANTUM_FUSER : 'QuantumFuser' ;
 DURATION_UNIT : 'seconds' ;
+COMBINED_GATE : 'combined' ;
 
 DATE : DIGIT DIGIT 'd' DIGIT DIGIT 'm' DIGIT DIGIT DIGIT DIGIT 'y' ;
 TIME : DIGIT DIGIT ':' DIGIT DIGIT ':' DIGIT DIGIT ;
