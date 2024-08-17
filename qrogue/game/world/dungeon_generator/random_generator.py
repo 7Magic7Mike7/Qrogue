@@ -655,7 +655,7 @@ class ExpeditionGenerator(DungeonGenerator):
             gates = self.__get_available_gates()
             rand_gate_selector = RandomManager.create_new(puzzle_seed)
             rand_gate_selector.shuffle_list(gates)
-            for i in range(4):  # todo: use value from difficulty instead of 4
+            for i in range(min(4, len(gates))):  # todo: use value from difficulty instead of 4
                 robot.give_collectible(gates[i])
 
         map_rm = RandomManager.create_new(map_seed)         # used for layout, rooms (tile placement), collectibles
