@@ -451,6 +451,27 @@ class CombinedGate(Instruction):
     __NEXT_ID = 0
 
     @staticmethod
+    def validate_instructions(instructions: List[Instruction]) -> int:
+        """
+        Exit codes:
+            - 0 = valid
+            - 1 = not enough Instructions
+            - 2 = contains a CombinedGate
+
+        :param instructions: list of Instructions used to build a CombinedGate
+        :return: 0 if instructions are valid, other values depending on which part was invalid
+        """
+        if len(instructions) <= 0: return 1
+        for inst in instructions:
+            if inst.gate_type is GateType.Combined:
+                return 2
+        return 0
+
+    @staticmethod
+    def instructions_criteria() -> str:
+        return "A CombinedGate is not allowed to be built from another CombinedGate."
+
+    @staticmethod
     def validate_gate_name(name: str) -> int:
         """
         Exit codes:
@@ -486,8 +507,10 @@ class CombinedGate(Instruction):
 
     def __init__(self, instructions: List[Instruction], needed_qubits: int, name: Optional[str] = None,
                  _id: Optional[int] = None):
-        Logger.instance().assertion(len(instructions) > 0, "Tried to create CombinedGate without instructions!")
-        Logger.instance().assertion(CombinedGate.validate_gate_name(name) == 0, f"Name \"{name}\" is not valid!")
+        inst_validation = CombinedGate.validate_instructions(instructions)
+        name_validation = CombinedGate.validate_gate_name(name)
+        Logger.instance().assertion(inst_validation == 0, f"Instructions are not valid: exit code {inst_validation}")
+        Logger.instance().assertion(name_validation == 0, f"Name \"{name}\" is not valid: exit code {name_validation}")
 
         if name is None: name = "BlackBox"
         if name.endswith("Gate"): name = name[:-len("Gate")]

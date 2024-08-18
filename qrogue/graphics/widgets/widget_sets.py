@@ -130,6 +130,14 @@ class MyWidgetSet(WidgetSet, Renderable, ABC):
 
         return HudWidget(MyMultiWidget(widgets))
 
+    @staticmethod
+    def show_gate_guide(gate: Instruction, show: Callable[[str, str], None], check_unlocks: Callable[[str], bool]):
+        if gate.gate_type.has_other_names:
+            other_names = "\nAlso known as: " + gate.gate_type.get_other_names(" Gate, ") + " Gate"
+        else:
+            other_names = ""
+        show(gate.name(), gate.description(check_unlocks) + other_names)
+
     BACK_STRING = "-Back-"
 
     def __init__(self, logger, root: py_cui.PyCUI, base_render_callback: Callable[[List[Renderable]], None]):
@@ -1437,13 +1445,15 @@ class WorkbenchWidgetSet(MyWidgetSet):
     def __init__(self, logger, root: py_cui.PyCUI, base_render_callback: Callable[[List[Renderable]], None],
                  controls: Controls, get_original_gates_callback: Callable[[], List[Instruction]],
                  store_gate_callback: Callable[[Instruction], None],
-                 decompose_gate_callback: Callable[[Instruction], bool], switch_to_menu_callback: Callable[[], None],
+                 decompose_gate_callback: Callable[[Instruction], bool], check_unlocks_callback: Callable[[str], bool],
+                 switch_to_menu_callback: Callable[[], None],
                  show_fusion_circuit_callback: Callable[[List[Instruction]], None]):
         super().__init__(logger, root, base_render_callback)
 
         self.__get_original_gates = get_original_gates_callback
         self.__store_gate = store_gate_callback
         self.__decompose_gate = decompose_gate_callback
+        self.__check_unlocks_callback = check_unlocks_callback
         self.__show_fusion_circuit = show_fusion_circuit_callback
 
         resource_info = self.add_block_label_by_dimension('Resources', UIConfig.WB_RESOURCES_DIMS)
@@ -1479,6 +1489,13 @@ class WorkbenchWidgetSet(MyWidgetSet):
                 self.__details.render_reset()
                 self.render()
         self.__details.widget.add_key_command(controls.action, use_details)
+
+        def gate_guide():
+            # check if a gate or a meta choice (e.g., cancel) is selected
+            if isinstance(self.__details.selected_object, MyWidgetSet._SelectableGate):
+                MyWidgetSet.show_gate_guide(self.__details.selected_object.to_gate(), Popup.generic_info,
+                                            self.__check_unlocks_callback)
+        self.__details.widget.add_key_command(controls.get_keys(Keys.Help), gate_guide)
 
     def __choose_gates(self) -> bool:
         selectable_gates = [MyWidgetSet._SelectableGate(gate) for gate in self.__get_original_gates()]
@@ -1747,12 +1764,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         def gate_guide():
             # check if a gate or a meta choice (e.g., cancel) is selected
             if isinstance(self._choices.selected_object, Instruction):
-                gate = self._choices.selected_object
-                if gate.gate_type.has_other_names:
-                    other_names = "\nAlso known as: " + gate.gate_type.get_other_names(" Gate, ") + " Gate"
-                else:
-                    other_names = ""
-                Popup.generic_info(gate.name(), gate.description(self._check_unlocks) + other_names)
+                MyWidgetSet.show_gate_guide(self._choices.selected_object, Popup.generic_info, self._check_unlocks)
             else:
                 reopen_popup()  # open popup history
 
@@ -2319,28 +2331,39 @@ class FusionCircuitWidgetSet(ReachTargetWidgetSet):
                 elif validation_result == 4:
                     failed_criteria = f"equal to the name of a base gate ({InstructionManager.gate_names(False)})"
                 Popup.system_says(f"Failed to create a new CombinedGate with name \"{name}\" for the following reason: "
-                                  f"{failed_criteria}\n\nPlease consider naming rules and try again:\n"
+                                  f"{failed_criteria}.\n\nPlease consider naming rules and try again:\n"
                                   f"{', '.join(gates.CombinedGate.gate_name_criteria())}")
                 self._choices.update_text(f"Please press [Confirm] to try a new name.\n"
                                           f"{gates.CombinedGate.gate_name_criteria()}", 0)
         self.__show_input_popup("Name your new Gate", ColorConfig.FUSION_CIRCUIT_NAMING_COLOR, store)
 
     def _choices_flee(self) -> bool:
-        used_gates = [gate for gate in self._robot.instructions if gate.position is not None]
+        return self.__fuse_gates()
 
-        if len(used_gates) <= 0:
-            Popup.error("You need to place at least one Gate to fuse the circuit into a new CombinedGate",
-                        log_error=False)
-        elif self.__decompose_gates(used_gates):
-            self._choices.set_data(data=(
-                [f"Now please press [Confirm] to enter a name.\n{gates.CombinedGate.gate_name_criteria()}"],
-                [self.__name_gate]
-            ))
+    def __fuse_gates(self) -> bool:
+        used_gates = [gate for gate in self._robot.instructions if gate.position is not None]
+        validation_result = gates.CombinedGate.validate_instructions(used_gates)
+
+        if validation_result == 0:
+            if self.__decompose_gates(used_gates):
+                self._choices.set_data(data=(
+                    [f"Now please press [Confirm] to enter a name.\n{gates.CombinedGate.gate_name_criteria()}"],
+                    [self.__name_gate]
+                ))
+            else:
+                Popup.error("Illegal State! It seems like the game tried to fuse a gate you do not possess.",
+                            add_report_note=True)
+                self._choices.set_data(data=(
+                    [f"Failed to fuse the placed gates :(\nPlease save and restart the game."],
+                    [self._fleeing_failed_callback]
+                ))
         else:
-            Popup.error("Illegal State! It seems like the game tried to fuse a gate you do not possess.",
-                        add_report_note=True)
-            self._choices.set_data(data=(
-                [f"Failed to fuse the placed gates :(\nPlease save and restart the game."],
-                [self._fleeing_failed_callback]
-            ))
+            failed_criteria = "-unknown criteria-"
+            if validation_result == 1:
+                failed_criteria = "not enough gates (place at least 1)"
+            elif validation_result == 2:
+                failed_criteria = "must not use a CombinedGate for fusion"
+            Popup.system_says(f"Failed to fuse circuit for the following reason: {failed_criteria}.\n\n"
+                              f"Please consider these rules and try again:\n"
+                              f"{gates.CombinedGate.instructions_criteria()}")
         return True

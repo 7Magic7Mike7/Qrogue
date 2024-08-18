@@ -332,8 +332,8 @@ class QrogueCUI(PyCUI):
                                              self.__save_data.check_unlocks)  # todo: update signature
         self.__workbench = WorkbenchWidgetSet(Logger.instance(), self, self.__render, self.__controls,
                                               self.__save_data.get_original_gates, self.__save_data.add_gate,
-                                              self.__save_data.decompose, self._switch_to_menu,
-                                              self.__show_fusion_circuit)
+                                              self.__save_data.decompose, self.__save_data.check_unlocks,
+                                              self._switch_to_menu, self.__show_fusion_circuit)
         self.__fusion_circuit = FusionCircuitWidgetSet(self.__controls, self.__render, Logger.instance(), self,
                                                        self.__continue_explore, self.__popup_history.show,
                                                        self.__save_data.check_unlocks, self.__save_data.add_gate,
