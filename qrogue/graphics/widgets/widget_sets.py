@@ -2301,18 +2301,37 @@ class FusionCircuitWidgetSet(ReachTargetWidgetSet):
 
     def __name_gate(self):
         def store(name: str):
-            used_gates = [gate for gate in self._robot.instructions if gate.position is not None]
-            combined_gate = gates.CombinedGate(used_gates, self._robot.num_of_qubits, name)
-            self.__store_gate(combined_gate)
-            self.__return_to_workbench()
+            validation_result = gates.CombinedGate.validate_gate_name(name)
+            if validation_result == 0:
+                used_gates = [gate for gate in self._robot.instructions if gate.position is not None]
+                combined_gate = gates.CombinedGate(used_gates, self._robot.num_of_qubits, name)
+                self.__store_gate(combined_gate)
+                Popup.system_says(f"Successfully fused the circuit to a new CombinedGate named \"{name}\"!")
+                self.__return_to_workbench()
+            else:
+                failed_criteria = "-unknown criteria-"
+                if validation_result == 1:
+                    failed_criteria = "not enough characters"
+                elif validation_result == 2:
+                    failed_criteria = "too many characters"
+                elif validation_result == 3:
+                    failed_criteria = "contains at least one illegal (i.e., non-letter) character"
+                Popup.system_says(f"Failed to create a new CombinedGate with name \"{name}\" for the following reason: "
+                                  f"{failed_criteria}\n\nPlease consider naming rules and try again:\n"
+                                  f"{gates.CombinedGate.gate_name_criteria()}")
+                self._choices.update_text(f"Please press [Confirm] to try a new name.\n"
+                                          f"{gates.CombinedGate.gate_name_criteria()}", 0)
         self.__show_input_popup("Name your new Gate", ColorConfig.FUSION_CIRCUIT_NAMING_COLOR, store)
 
     def _choices_flee(self) -> bool:
         used_gates = [gate for gate in self._robot.instructions if gate.position is not None]
 
-        if self.__decompose_gates(used_gates):
+        if len(used_gates) <= 0:
+            Popup.error("You need to place at least one Gate to fuse the circuit into a new CombinedGate",
+                        log_error=False)
+        elif self.__decompose_gates(used_gates):
             self._choices.set_data(data=(
-                [f"Successfully fused the placed gates to a new Combined Gate.\nConfirm to enter a name for it."],
+                [f"Now please press [Confirm] to enter a name.\n{gates.CombinedGate.gate_name_criteria()}"],
                 [self.__name_gate]
             ))
         else:

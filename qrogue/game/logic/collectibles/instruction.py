@@ -445,7 +445,34 @@ class CXGate(DoubleQubitGate):
 ####### Combined Gates #######
 
 class CombinedGate(Instruction):
+    __NAME_MAX_CHARACTERS = 7
+    __NAME_MIN_CHARACTERS = 1
     __NEXT_ID = 0
+
+    @staticmethod
+    def validate_gate_name(name: str) -> int:
+        """
+        Exit codes:
+            - 0 = valid
+            - 1 = not enough characters
+            - 2 = too many characters
+            - 3 = contains an illegal (i.e., non-letter) character
+
+        :param name: the name to validate
+        :return: 0 if name is valid, other values depending on which part was invalid
+        """
+        # check for correct number of letters
+        if len(name) < CombinedGate.__NAME_MIN_CHARACTERS: return 1
+        if len(name) > CombinedGate.__NAME_MAX_CHARACTERS: return 2
+        # check if name only consists of letters
+        if not name.isalpha(): return 3
+        # all criteria fulfilled
+        return 0
+
+    @staticmethod
+    def gate_name_criteria() -> str:
+        return f"The name needs to consist of {CombinedGate.__NAME_MIN_CHARACTERS} to " \
+               f"{CombinedGate.__NAME_MAX_CHARACTERS} letters (no numbers or other characters allowed)."
 
     @staticmethod
     def _next_id() -> int:
@@ -456,6 +483,7 @@ class CombinedGate(Instruction):
     def __init__(self, instructions: List[Instruction], needed_qubits: int, name: Optional[str] = None,
                  _id: Optional[int] = None):
         Logger.instance().assertion(len(instructions) > 0, "Tried to create CombinedGate without instructions!")
+        Logger.instance().assertion(CombinedGate.validate_gate_name(name) == 0, f"Name \"{name}\" is not valid!")
 
         if name is None: name = "BlackBox"
         if name.endswith("Gate"): name = name[:-len("Gate")]
