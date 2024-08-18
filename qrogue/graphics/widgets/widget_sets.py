@@ -1469,8 +1469,8 @@ class WorkbenchWidgetSet(MyWidgetSet):
         action_selection.toggle_border()
         self.__choices = SelectionWidget(action_selection, controls, stay_selected=True)
         self.__choices.set_data([
-            (("Decompose", self.__decompose), self.__choose_gates),
             (("Fuse", self.__fuse), self.__choose_gates),
+            (("Decompose", self.__decompose), self.__choose_gates),
             (("Back to Menu", None), switch_to_menu_callback),
         ])
 
