@@ -8,6 +8,7 @@ from qrogue.util import QuantumSimulationConfig
 from .boss import Boss
 from .challenge import Challenge
 from .enemy import Enemy
+from .fusion_target import FusionTarget
 from .riddle import Riddle
 from .target import Target
 

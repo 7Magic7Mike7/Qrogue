@@ -52,9 +52,9 @@ class AntiEntangleBoss(Boss):
     def __init__(self, reward: Collectible, edits: Optional[int] = None):
         if edits is None: edits = 5
 
-        comb_gate = gates.CombinedGates([
+        comb_gate = gates.CombinedGate([
             gates.HGate().setup([0]), gates.CXGate().setup([0, 1]), gates.XGate().setup([0])
-        ], 2, label="Anti Entanglement").setup([0, 1])
+        ], 2, name="Anti Entanglement").setup([0, 1])
         target1 = Instruction.compute_stv([comb_gate], 2)
         target2 = Instruction.compute_stv([comb_gate, gates.XGate().setup([0])], 2)
         basis_states = StateVector.create_basis_states(num_of_qubits=2)

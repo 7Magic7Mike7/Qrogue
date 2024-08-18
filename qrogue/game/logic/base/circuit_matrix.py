@@ -72,7 +72,7 @@ class CircuitMatrix:
         self.__num_of_used_gates = num_of_used_gates
 
         if not verify_circuit_matrix(matrix, QuantumSimulationConfig.TOLERANCE):
-            debug = True
+            Config.check_reachability("CircuitMatrix.verfiy_circuit_matrix()")
 
     @property
     def size(self) -> int:
@@ -142,6 +142,16 @@ class CircuitMatrix:
                 space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER
 
         return CircuitMatrix.matrix_to_string(self.__matrix, self.num_of_qubits, space_per_value)
+
+    def __eq__(self, other):
+        if not isinstance(other, CircuitMatrix): return False
+        if other.size != self.size: return False
+
+        for y in range(self.size):
+            for x in range(self.size):
+                if other.__matrix[y][x] != self.__matrix[y][x]:
+                    return False
+        return True
 
     def __str__(self) -> str:
         text = "CircuitMatrix("

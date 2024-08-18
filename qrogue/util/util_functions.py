@@ -225,6 +225,21 @@ def int_to_fixed_len_str(value: int, length: int) -> str:
     return f"{{0:0{length}d}}".format(value)
 
 
+def num_to_letter(num: int, start_uppercase: bool = True) -> str:
+    if num < 0: return "?"
+
+    if num < 26:
+        # below 26 means we can start normally (either uppercase at @ or lowercase at `
+        start_char = "@" if start_uppercase else "`"
+    else:
+        # above 26 (and below 52, else it will be normalized below) means we have to start with the other case
+        num -= 26
+        start_char = "`" if start_uppercase else "@"
+
+    num = num % 26  # normalize to one of the 26 letters
+    return chr(ord(start_char) + num)
+
+
 def open_folder(path: str):
     import os
     import platform

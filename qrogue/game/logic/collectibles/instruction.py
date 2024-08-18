@@ -1,16 +1,17 @@
 import enum
 import math
 from abc import ABC, abstractmethod
-from typing import Iterator, Optional, Dict, List, Callable
+from typing import Iterator, Optional, Dict, List, Callable, Tuple
 
 import qiskit.circuit.library.standard_gates as gates
 from qiskit.circuit import Gate as QiskitGate
 
-from qrogue.game.logic.base import StateVector, CircuitMatrix, QuantumSimulator, QuantumCircuit
+from qrogue.game.logic.base import StateVector, CircuitMatrix, QuantumSimulator, QuantumCircuit, UnitarySimulator
 from qrogue.game.logic.collectibles import Collectible, CollectibleType
-from qrogue.util import Logger, GateType
+from qrogue.util import Logger, GateType, QuantumSimulationConfig, InstructionConfig, ColorConfig, ColorCode, \
+    SaveGrammarConfig
 from qrogue.util.achievements import Unlocks
-from qrogue.util.util_functions import rad2deg
+from qrogue.util.util_functions import rad2deg, center_string, to_binary_string, num_to_letter
 
 
 class Instruction(Collectible, ABC):
@@ -27,6 +28,77 @@ class Instruction(Collectible, ABC):
         simulator = QuantumSimulator()
         amplitudes = simulator.run(circuit, do_transpile=True)
         return StateVector(amplitudes, num_of_used_gates=len(instructions))
+
+    @staticmethod
+    def __circuit_input_value(qubit: int, state_vectors: Optional[Tuple[StateVector, StateVector, StateVector]]):
+        if state_vectors is not None:
+            input_stv, output_stv, target_stv = state_vectors
+            if input_stv is not None and input_stv.is_classical \
+                    and target_stv is not None and target_stv.is_classical \
+                    and output_stv.is_classical:  # robot.state_vector cannot be None
+                index = input_stv.to_value().index(1)  # find where the amplitude is 1
+                # get the respective qubit values but in lsb, so we can use $qubit directly as index
+                values = to_binary_string(index, input_stv.num_of_qubits, msb=False)
+                return f"= {values[qubit]} "
+        return ""
+
+    @staticmethod
+    def __circuit_output_value(qubit: int, state_vectors: Optional[Tuple[StateVector, StateVector, StateVector]]) -> str:
+        if state_vectors is not None:
+            input_stv, output_stv, target_stv = state_vectors
+            if input_stv is not None and input_stv.is_classical \
+                    and target_stv is not None and target_stv.is_classical \
+                    and output_stv.is_classical:  # robot.state_vector cannot be None
+                index = output_stv.to_value().index(1)  # find where the amplitude is 1
+                # get the respective qubit values but in lsb, so we can use $qubit directly as index
+                out_values = to_binary_string(index, output_stv.num_of_qubits, msb=False)
+                index = target_stv.to_value().index(1)
+                target_values = to_binary_string(index, target_stv.num_of_qubits, msb=False)
+                is_correct = out_values[qubit] == target_values[qubit]
+                equality = ColorConfig.colorize(ColorCode.PUZZLE_CORRECT_AMPLITUDE if is_correct
+                                                else ColorCode.PUZZLE_WRONG_AMPLITUDE,
+                                                '=' + ('=' if is_correct else '/') + '=')
+                return f"= {out_values[qubit]}| {equality} <{target_values[qubit]}|"
+        return "|"
+
+    @staticmethod
+    def circuit_to_string(num_of_qubits: int, circuit_space: int, instructions: Dict[int, "Instruction"],
+                          preview: Optional[Tuple[Optional["Instruction"], int, int]] = None,
+                          state_vectors: Optional[Tuple[StateVector, StateVector, StateVector]] = None) -> str:
+        """
+        :param num_of_qubits: how many rows (i.e., qubits) the circuit has
+        :param circuit_space: how many columns (i.e., places for instructions)
+        :param instructions: all positions within the circuit where an Instruction is placed
+        :param preview: optionally describes a gate that is not yet placed onto the circuit
+        :param state_vectors: a tuple consisting of an Input-, Output- and Target-StateVector to potentially show a
+            qubit's (classical) value
+        :return: a string representing the described circuit
+        """
+        entry = "-" * (3 + InstructionConfig.MAX_ABBREVIATION_LEN + 3)
+        rows = [[entry] * circuit_space for _ in range(num_of_qubits)]
+        for i, inst in instructions.items():
+            for q in inst.qargs_iter():
+                inst_str = center_string(inst.abbreviation(q), InstructionConfig.MAX_ABBREVIATION_LEN)
+                rows[q][i] = f"--{{{inst_str}}}--"
+
+        if preview is not None:
+            inst, pos, qubit = preview
+            if inst is None:
+                rows[qubit][pos] = "--/   /--"
+            else:
+                for q in inst.qargs_iter():
+                    rows[q][pos] = f"--{{{inst.abbreviation(q)}}}--"
+                rows[qubit][pos] = f"-- {inst.abbreviation(qubit)} --"
+
+        # every line consists of ket-pre- and -suffix with the entries (empty or instruction) separated by +
+        lines = [f"| q{q} {Instruction.__circuit_input_value(q, state_vectors)}>" + "+".join(rows[q])
+                 + f"< q'{q} {Instruction.__circuit_output_value(q, state_vectors)}" for q in range(num_of_qubits)]
+        lines.reverse()  # place qubits from top to bottom, high to low index
+
+        # for some reason the whitespace in front is needed to center the text correctly
+        lines[0] = "In " + lines[0] + " Out"
+        line_width = len(lines[0])
+        return "\n".join([center_string(line, line_width, uneven_left=False) for line in lines])
 
     def __init__(self, gate_type: GateType, instruction: QiskitGate, needed_qubits: int):
         super().__init__(CollectibleType.Gate)
@@ -124,17 +196,20 @@ class Instruction(Collectible, ABC):
         if 0 <= index < len(self._qargs):
             return self._qargs[index]
 
-    def name(self) -> str:
-        return f"{self.__type.short_name} Gate"
+    def name(self, include_suffix: Optional[bool] = None) -> str:
+        if include_suffix is None: include_suffix = True
+        return f"{self.__type.short_name}{' Gate' if include_suffix else ''}"
 
     def description(self, check_unlocks: Optional[Callable[[str], bool]] = None) -> str:
+        desc = f"Full name: {self.gate_type.full_name}\n"
+        desc += f"Abbreviation: {self.abbreviation(qubit=None).strip()}\n"
+        desc += self.__type.description
         if check_unlocks is not None and check_unlocks(Unlocks.ShowEquation.ach_name):
-            return self.__type.description + "\n\nMatrix:\n" + self._matrix_string()
-        else:
-            return self.__type.description
+            desc += "\n\nMatrix:\n" + self._matrix_string()
+        return desc
 
     @abstractmethod
-    def abbreviation(self, qubit: int = 0):
+    def abbreviation(self, qubit: Optional[int] = None) -> str:
         pass
 
     def _matrix_string(self) -> str:
@@ -145,9 +220,12 @@ class Instruction(Collectible, ABC):
     def copy(self) -> "Instruction":
         pass
 
+    def _deep_copy(self) -> "Instruction":
+        return self.copy().setup(self._qargs, self._cargs, self.__position)
+
     def selection_str(self) -> str:
         # Gate (qX, qY, ?, ...)
-        text = f"{self.__type.name} ("
+        text = f"{self.name()} ("
         for i in range(self.num_of_qubits - 1):
             if i < len(self._qargs):
                 text += f"q{self._qargs[i]}, "
@@ -167,6 +245,9 @@ class Instruction(Collectible, ABC):
         preview = self.selection_str()
         self._qargs.pop()  # undo setting the next qubit because we only wanted to pretend that we did
         return preview
+
+    def to_save_string(self) -> str:
+        return self.__type.short_name
 
     def to_string(self):
         return self.name()
@@ -191,7 +272,7 @@ class IGate(SingleQubitGate):
     def __init__(self):
         super().__init__(GateType.IGate, gates.IGate())
 
-    def abbreviation(self, qubit: int = 0):
+    def abbreviation(self, qubit: Optional[int] = None):
         return "I"
 
     def copy(self) -> "Instruction":
@@ -202,7 +283,7 @@ class XGate(SingleQubitGate):
     def __init__(self):
         super(XGate, self).__init__(GateType.XGate, gates.XGate())
 
-    def abbreviation(self, qubit: int = 0):
+    def abbreviation(self, qubit: Optional[int] = None):
         return " X "
 
     def copy(self) -> "Instruction":
@@ -213,7 +294,7 @@ class YGate(SingleQubitGate):
     def __init__(self):
         super(YGate, self).__init__(GateType.YGate, gates.YGate())
 
-    def abbreviation(self, qubit: int = 0):
+    def abbreviation(self, qubit: Optional[int] = None):
         return " Y "
 
     def copy(self) -> "Instruction":
@@ -224,7 +305,7 @@ class ZGate(SingleQubitGate):
     def __init__(self):
         super(ZGate, self).__init__(GateType.ZGate, gates.ZGate())
 
-    def abbreviation(self, qubit: int = 0):
+    def abbreviation(self, qubit: Optional[int] = None):
         return " Z "
 
     def copy(self) -> "Instruction":
@@ -235,7 +316,7 @@ class HGate(SingleQubitGate):
     def __init__(self):
         super().__init__(GateType.HGate, gates.HGate())
 
-    def abbreviation(self, qubit: int = 0):
+    def abbreviation(self, qubit: Optional[int] = None):
         return " H "
 
     def copy(self) -> "Instruction":
@@ -246,7 +327,7 @@ class SGate(SingleQubitGate):
     def __init__(self):
         super().__init__(GateType.SGate, gates.SGate())
 
-    def abbreviation(self, qubit: int = 0):
+    def abbreviation(self, qubit: Optional[int] = None):
         return " S "
 
     def copy(self) -> "Instruction":
@@ -287,7 +368,7 @@ class RYGate(RotationGate):
     def __init__(self, angle: float = RotationGate._DEFAULT_ANGLE):
         super().__init__(GateType.RYGate, gates.RYGate(theta=angle), angle)
 
-    def abbreviation(self, qubit: int = 0):
+    def abbreviation(self, qubit: Optional[int] = None):
         return " RY"
 
     def copy(self) -> "Instruction":
@@ -298,7 +379,7 @@ class RZGate(RotationGate):
     def __init__(self, angle: float = RotationGate._DEFAULT_ANGLE):
         super().__init__(GateType.RZGate, gates.RZGate(phi=angle), angle)
 
-    def abbreviation(self, qubit: int = 0):
+    def abbreviation(self, qubit: Optional[int] = None):
         return " RZ"
 
     def copy(self) -> "Instruction":
@@ -309,8 +390,10 @@ class RZGate(RotationGate):
 
 
 class MultiQubitGate(Instruction, ABC):
-    def abbreviation(self, qubit: int = 0):
-        if qubit in self._qargs:
+    def abbreviation(self, qubit: Optional[int] = None):
+        if qubit is None:
+            index = None
+        elif qubit in self._qargs:
             index = self._qargs.index(qubit)
         else:
             # during placement, we need an abbreviation for the next qubit
@@ -318,7 +401,7 @@ class MultiQubitGate(Instruction, ABC):
         return self._internal_abbreviation(index)
 
     @abstractmethod
-    def _internal_abbreviation(self, index: int):
+    def _internal_abbreviation(self, index: Optional[int]) -> str:
         pass
 
 
@@ -334,11 +417,11 @@ class SwapGate(DoubleQubitGate):
     def __init__(self):
         super().__init__(GateType.SwapGate, gates.SwapGate())
 
-    def _internal_abbreviation(self, index: int) -> str:
-        if index == 0:
-            return "SW0"
-        elif index == 1:
-            return "SW1"
+    def _internal_abbreviation(self, index: Optional[int]) -> str:
+        if index is None:
+            return "SW "
+        else:
+            return f"SW{index}"
 
     def copy(self) -> "Instruction":
         return SwapGate()
@@ -348,8 +431,10 @@ class CXGate(DoubleQubitGate):
     def __init__(self):
         super().__init__(GateType.CXGate, gates.CXGate())
 
-    def _internal_abbreviation(self, index: int) -> str:
-        if index == 0:
+    def _internal_abbreviation(self, index: Optional[int]) -> str:
+        if index is None:
+            return "C/X"
+        elif index == 0:
             return " C "
         elif index == 1:
             return " X "
@@ -360,22 +445,146 @@ class CXGate(DoubleQubitGate):
 
 ####### Combined Gates #######
 
-class CombinedGates(Instruction):
-    def __init__(self, instructions: List[Instruction], needed_qubits: int, label: Optional[str] = None):
-        if label is None: label = "BlackBox"
+class CombinedGate(Instruction):
+    __NAME_MAX_CHARACTERS = 7
+    __NAME_MIN_CHARACTERS = 1
+    __NEXT_ID = 0
+
+    @staticmethod
+    def validate_instructions(instructions: List[Instruction]) -> int:
+        """
+        Exit codes:
+            - 0 = valid
+            - 1 = not enough Instructions
+            - 2 = contains a CombinedGate
+
+        :param instructions: list of Instructions used to build a CombinedGate
+        :return: 0 if instructions are valid, other values depending on which part was invalid
+        """
+        if len(instructions) <= 0: return 1
+        for inst in instructions:
+            if inst.gate_type is GateType.Combined:
+                return 2
+        return 0
+
+    @staticmethod
+    def instructions_criteria() -> str:
+        return "A CombinedGate is not allowed to be built from another CombinedGate."
+
+    @staticmethod
+    def validate_gate_name(name: str) -> int:
+        """
+        Exit codes:
+            - 0 = valid
+            - 1 = not enough characters
+            - 2 = too many characters
+            - 3 = contains an illegal (i.e., non-letter) character
+            - 4 = equal to the name of a base gate
+
+        :param name: the name to validate
+        :return: 0 if name is valid, other values depending on which part was invalid
+        """
+        # check for correct number of letters
+        if len(name) < CombinedGate.__NAME_MIN_CHARACTERS: return 1
+        if len(name) > CombinedGate.__NAME_MAX_CHARACTERS: return 2
+        # check if name only consists of letters
+        if not name.isalpha(): return 3
+        if name in InstructionManager.gate_names(include_suffix=False): return 4
+        # all criteria fulfilled
+        return 0
+
+    @staticmethod
+    def gate_name_criteria() -> str:
+        return f"The name needs to consist of {CombinedGate.__NAME_MIN_CHARACTERS} to " \
+               f"{CombinedGate.__NAME_MAX_CHARACTERS} letters (no numbers or other characters allowed). You don't " \
+               f"have to add a \"Gate\"-suffix, the game will do this automatically where needed."
+
+    @staticmethod
+    def _next_id() -> int:
+        next_id = CombinedGate.__NEXT_ID
+        CombinedGate.__NEXT_ID += 1
+        return next_id
+
+    def __init__(self, instructions: List[Instruction], needed_qubits: int, name: Optional[str] = None,
+                 _id: Optional[int] = None):
+        inst_validation = CombinedGate.validate_instructions(instructions)
+        name_validation = CombinedGate.validate_gate_name(name)
+        Logger.instance().assertion(inst_validation == 0, f"Instructions are not valid: exit code {inst_validation}")
+        Logger.instance().assertion(name_validation == 0, f"Name \"{name}\" is not valid: exit code {name_validation}")
+
+        if name is None: name = "BlackBox"
+        if name.endswith("Gate"): name = name[:-len("Gate")]
+        name = name.strip()   # remove leftover whitespaces
+
+        self.__id = CombinedGate._next_id() if _id is None else _id
+
+        # order instructions based on their position property or position in the list if the property is None
+        ##################################################
+        cur_pos = 0
+        inst_dict: Dict[int, List[Instruction]] = {}
+        for i, inst in enumerate(instructions):
+            if inst.position is not None:
+                cur_pos = inst.position     # update current position
+            # else: inst has no valid position, so we place it directly after the last valid/current position
+            # append inst
+            if cur_pos in inst_dict:
+                inst_dict[cur_pos].append(inst)
+            else:
+                inst_dict[cur_pos] = [inst]
+
+        instructions = []
+        sorted_keys = list(inst_dict.keys())
+        sorted_keys.sort()
+        for pos in sorted_keys:
+            instructions += inst_dict[pos]
+        ##################################################
+
         circuit = QuantumCircuit.from_register(needed_qubits)
         for inst in instructions: inst.append_to(circuit)
-        instruction = circuit.to_gate(label=label)
+        gate = circuit.to_gate(label=name)
 
-        super().__init__(GateType.Combined, instruction, needed_qubits)
-        self.__instruction = instruction
-        self.__inst_list = instructions
+        super().__init__(GateType.Combined, gate, needed_qubits)
+        self.__gate = gate
+        self.__instructions = instructions
 
-    def abbreviation(self, qubit: int = 0):
-        return " ? "
+        inst_dict: Dict[int, Instruction] = {}
+        for i, inst in enumerate(instructions): inst_dict[i] = inst
+        self.__circ_repr = Instruction.circuit_to_string(needed_qubits, len(instructions), inst_dict)
+
+        amplitudes = UnitarySimulator().execute(circuit, decimals=QuantumSimulationConfig.DECIMALS)
+        self.__matrix = CircuitMatrix(amplitudes, len(instructions))
+
+    def name(self, include_suffix: Optional[bool] = None) -> str:
+        if include_suffix is None: include_suffix = True
+        return f"{self.__gate.label}{' Gate' if include_suffix else ''}"
+
+    def abbreviation(self, qubit: Optional[int] = None):
+        qubit = "" if qubit is None else str(qubit)
+        id_str = str(self.__id) if self.__id < 10 else num_to_letter(self.__id - 10, start_uppercase=True)
+        return f"{GateType.Combined.short_name[0]}{id_str}{qubit}"
+
+    def _matrix_string(self) -> str:
+        return self.__matrix.to_string()
+
+    def description(self, check_unlocks: Optional[Callable[[str], bool]] = None) -> str:
+        desc = super().description(check_unlocks)
+        # remove the first line ("Full name:") because it's meaningless for CombinedGates with custom names
+        desc = desc[desc.index("\n")+1:]
+        desc += "\nUnderlying Circuit:\n"
+        desc += self.__circ_repr
+        return desc
+
+    def to_save_string(self) -> str:
+        # e.g.: combined{"Bell" 2: H(0),CX(0,1)}
+        text = [f"{inst.to_save_string()}({','.join([str(q) for q in inst.qargs_iter()])})"
+                for inst in self.__instructions]
+        return f"{SaveGrammarConfig.combined_prefix()}{{\"{self.__gate.label}\" {self.num_of_qubits}: " \
+               f"{','.join(text)}}}"
 
     def copy(self) -> "Instruction":
-        return CombinedGates(self.__inst_list, self.__instruction.num_qubits, self.__instruction.label)
+        # copy the instructions to not accidentally alter the positioning of the underlying Instructions
+        instructions = [inst._deep_copy() for inst in self.__instructions]
+        return CombinedGate(instructions, self.__gate.num_qubits, self.__gate.label, self.__id)
 
 
 ####### Gates for internal use only #######
@@ -384,7 +593,7 @@ class DebugGate(SingleQubitGate):
     def __init__(self):
         super().__init__(GateType.Debug, gates.RZGate(phi=2.5))
 
-    def abbreviation(self, qubit: int = 0):
+    def abbreviation(self, qubit: Optional[int] = None):
         return "deb"
 
     def copy(self) -> "Instruction":
@@ -417,6 +626,10 @@ class InstructionManager:
             if val is GateType.Combined: continue  # todo: properly implement for Combined? Or do we have to skip them?
             assert val in InstructionManager.__GATES, f"{val} not defined in InstructionManager.__GATES!"
         return True
+
+    @staticmethod
+    def gate_names(include_suffix: Optional[bool] = None) -> List[str]:
+        return [gate.name(include_suffix) for gate in InstructionManager.__GATES.values()]
 
     @staticmethod
     def from_type(gate_type: GateType) -> Instruction:

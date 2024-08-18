@@ -6,7 +6,7 @@ from .widget_sets import MenuWidgetSet, TransitionWidgetSet, PauseMenuWidgetSet,
     ScreenCheckWidgetSet, LevelSelectWidgetSet
 from .widget_sets import MyWidgetSet
 from .widget_sets import ReachTargetWidgetSet, TrainingsWidgetSet, FightWidgetSet, BossFightWidgetSet, \
-    RiddleWidgetSet, ChallengeWidgetSet
+    RiddleWidgetSet, ChallengeWidgetSet, FusionCircuitWidgetSet
 
 # importing
 # +game.logic.actors

@@ -33,6 +33,80 @@ class MyWidgetSet(WidgetSet, Renderable, ABC):
     Class that handles different sets of widgets, so we can easily switch between different screens.
     """
 
+    class _SelectableGate:
+        """
+        Wrapper-class to easily handle selection of gates in widget sets.
+        """
+
+        def __init__(self, gate: Instruction, is_selected: bool = False):
+            self.__gate = gate
+            self.__is_selected = is_selected
+            self.__temp_is_selected = is_selected
+
+        @property
+        def is_selected(self) -> bool:
+            return self.__is_selected
+
+        @property
+        def gate_type(self) -> GateType:
+            return self.__gate.gate_type
+
+        @property
+        def name(self) -> str:
+            return self.__gate.name()
+
+        def invert_selection(self, auto_commit: bool = False):
+            self.__temp_is_selected = not self.__temp_is_selected
+            if auto_commit:
+                self.commit()
+
+        def select(self, auto_commit: bool = False) -> bool:
+            """
+            Returns whether this call changed the internal state or not.
+
+            :param auto_commit: whether
+            :return: True if __is_selected was changed, False otherwise
+            """
+            # ret_val is False if temp_is_selected is already selected, and hence, nothing changed
+            ret_val = not self.__temp_is_selected
+            self.__temp_is_selected = True  # set value to True (might have been True before)
+            if auto_commit:
+                self.commit()
+            # we don't care if is_selected changed (just if temp_is_selected did) so ignore return value of commit()
+            return ret_val
+
+        def commit(self) -> bool:
+            """
+            Returns whether this call changed the internal state or not.
+
+            :return: True if __is_selected was changed, False otherwise
+            """
+            if self.__is_selected == self.__temp_is_selected:
+                return False
+            self.__is_selected = self.__temp_is_selected
+            return True
+
+        def discard(self) -> bool:
+            """
+            Returns whether this call changed the internal state or not.
+
+            :return: True if temp_is_selected was changed, False otherwise
+            """
+            if self.__temp_is_selected == self.__is_selected:
+                return False
+            self.__temp_is_selected = self.__is_selected
+            return True
+
+        def reset(self):
+            self.__is_selected = False
+            self.__temp_is_selected = False
+
+        def to_gate(self) -> Instruction:
+            return self.__gate
+
+        def __str__(self) -> str:
+            return f"[{'x' if self.__temp_is_selected else ' '}] {self.name}"
+
     @staticmethod
     def create_hud_row(widget_set: "MyWidgetSet") -> HudWidget:
         hud = widget_set.add_block_label('HUD', 0, 0, row_span=UIConfig.HUD_HEIGHT, column_span=UIConfig.HUD_WIDTH,
@@ -56,9 +130,18 @@ class MyWidgetSet(WidgetSet, Renderable, ABC):
 
         return HudWidget(MyMultiWidget(widgets))
 
+    @staticmethod
+    def show_gate_guide(gate: Instruction, show: Callable[[str, str], None], check_unlocks: Callable[[str], bool]):
+        if gate.gate_type.has_other_names:
+            other_names = "\nAlso known as: " + gate.gate_type.get_other_names(" Gate, ") + " Gate"
+        else:
+            other_names = ""
+        show(gate.name(), gate.description(check_unlocks) + other_names)
+
     BACK_STRING = "-Back-"
 
     def __init__(self, logger, root: py_cui.PyCUI, base_render_callback: Callable[[List[Renderable]], None]):
+        # todo: make its super-calls consistent with parameter order!
         super().__init__(UIConfig.WINDOW_HEIGHT, UIConfig.WINDOW_WIDTH, logger, root)
         self.__base_render = base_render_callback
 
@@ -97,6 +180,13 @@ class MyWidgetSet(WidgetSet, Renderable, ABC):
         self._logger.info('Adding widget {} w/ ID {} of type {}'.format(title, id, str(type(new_widget))))
         return new_widget
 
+    def add_block_label_by_dimension(self, title: str, dimensions: UIConfig.Dimensions, center: bool = True) \
+            -> MyBaseWidget:
+        return self.add_block_label(title, center=center,
+                                    row=dimensions.margin_top, column=dimensions.margin_left,
+                                    row_span=dimensions.height, column_span=dimensions.width,
+                                    padx=dimensions.pad_x, pady=dimensions.pad_y)
+
     def add_key_command(self, keys: List[int], command: Callable[[], Any], add_to_widgets: bool = False,
                         overwrite: bool = True, overwrite_widgets: Optional[bool] = None) -> Any:
         if overwrite_widgets is None:
@@ -129,6 +219,7 @@ class MenuWidgetSet(MyWidgetSet):
                  quick_start_callback: Callable[[], None], start_playing_callback: Callable[[], None],
                  start_expedition_callback: Callable[[], None], stop_callback: Callable[[], None],
                  show_screen_check_callback: Callable[[], None], show_level_select_callback: Callable[[], None],
+                 show_workbench_callback: Callable[[], None],
                  check_unlocks_callback: Callable[[Union[str, Unlocks]], bool],
                  save_callback: Callable[[], Tuple[bool, CommonInfos]]):
         self.__seed = 0
@@ -138,6 +229,7 @@ class MenuWidgetSet(MyWidgetSet):
         self.__stop_callback = stop_callback
         self.__show_screen_check_callback = show_screen_check_callback
         self.__show_level_select_callback = show_level_select_callback
+        self.__show_workbench_callback = show_workbench_callback
         self.__check_unlocks = check_unlocks_callback
         self.__save_game = save_callback
         super().__init__(logger, root, render)
@@ -200,6 +292,10 @@ class MenuWidgetSet(MyWidgetSet):
             choices.append("SELECT LEVEL\n")
             callbacks.append(self.__show_level_select_callback)
 
+        if self.__check_unlocks(Unlocks.Workbench):
+            choices.append("WORKBENCH\n")
+            callbacks.append(self.__show_workbench_callback)
+
         # choices.append("START AN EXPEDITION\n")
         # callbacks.append(self.__start_expedition)
 
@@ -246,77 +342,6 @@ class LevelSelectWidgetSet(MyWidgetSet):
     __GATE_CONFIRM = "confirm"
     __GATE_CANCEL = "cancel"
 
-    class _SelectedGate:
-        def __init__(self, gate_type: GateType, is_selected: bool = False):
-            self.__gate_type = gate_type
-            self.__is_selected = is_selected
-            self.__temp_is_selected = is_selected
-
-        @property
-        def is_selected(self) -> bool:
-            return self.__is_selected
-
-        @property
-        def gate_type(self) -> GateType:
-            return self.__gate_type
-
-        @property
-        def name(self) -> str:
-            return self.__gate_type.name
-
-        def invert_selection(self):
-            self.__temp_is_selected = not self.__temp_is_selected
-
-        def select(self, auto_commit: bool = False) -> bool:
-            """
-            Returns whether this call changed the internal state or not.
-
-            :param auto_commit: whether
-            :return: True if __is_selected was changed, False otherwise
-            """
-            # ret_val is False if temp_is_selected is already selected, and hence, nothing changed
-            ret_val = not self.__temp_is_selected
-            self.__temp_is_selected = True  # set value to True (might have been True before)
-            if auto_commit:
-                self.commit()
-            # we don't care if is_selected changed (just if temp_is_selected did) so ignore return value of commit()
-            return ret_val
-
-        def commit(self) -> bool:
-            """
-            Returns whether this call changed the internal state or not.
-
-            :return: True if __is_selected was changed, False otherwise
-            """
-            if self.__is_selected == self.__temp_is_selected:
-                return False
-            self.__is_selected = self.__temp_is_selected
-            return True
-
-        def discard(self) -> bool:
-            """
-            Returns whether this call changed the internal state or not.
-
-            :return: True if temp_is_selected was changed, False otherwise
-            """
-            if self.__temp_is_selected == self.__is_selected:
-                return False
-            self.__temp_is_selected = self.__is_selected
-            return True
-
-        def reset(self):
-            self.__is_selected = False
-            self.__temp_is_selected = False
-
-        def to_gate(self) -> Instruction:
-            return InstructionManager.from_type(self.gate_type)
-
-        #def to_display_string(self) -> str:
-        #    return f"[{'x' if self.temp_is_selected else ' '}] {self.name}"
-
-        def __str__(self) -> str:
-            return f"[{'x' if self.__temp_is_selected else ' '}] {self.name}"
-
     def __init__(self, controls: Controls, logger: Logger, root: py_cui.PyCUI,
                  base_render_callback: Callable[[List[Renderable]], None], rm: MyRandom,
                  show_input_popup_callback: Callable[[str, int, Callable[[str], None]], None],
@@ -324,7 +349,7 @@ class LevelSelectWidgetSet(MyWidgetSet):
                  switch_to_menu_callback: Callable[[], None],
                  start_level_callback: Callable[[str, Optional[int], Optional[List[Instruction]]], None],
                  get_expedition_progress_callback: Callable[[], int],
-                 get_available_gates_callback: Callable[[], List[GateType]]):
+                 get_available_gates_callback: Callable[[], List[Instruction]]):
         """
         :param get_available_levels_callback: a Callable that returns a List of LevelData of all levels that can be
             played (i.e., were completed before)
@@ -344,7 +369,7 @@ class LevelSelectWidgetSet(MyWidgetSet):
 
         self.__seed = None
         self.__level: Optional[str] = None
-        self.__selected_gates: List[LevelSelectWidgetSet._SelectedGate] = []
+        self.__selectable_gates: List[LevelSelectWidgetSet._SelectableGate] = []
         self.__has_custom_gates = False
         self.reinit()
 
@@ -406,7 +431,7 @@ class LevelSelectWidgetSet(MyWidgetSet):
     def reinit(self):
         self.__seed = None
         self.__level = None
-        self.__selected_gates = [LevelSelectWidgetSet._SelectedGate(gate) for gate in self.__get_available_gates()]
+        self.__selectable_gates = [LevelSelectWidgetSet._SelectableGate(gate) for gate in self.__get_available_gates()]
         self.__has_custom_gates = False
 
     def __set_seed(self) -> bool:
@@ -438,7 +463,7 @@ class LevelSelectWidgetSet(MyWidgetSet):
 
         self.__has_custom_gates = False
         gate_type_list = LevelInfo.get_level_start_gates(internal_level_name)
-        for sg in self.__selected_gates:
+        for sg in self.__selectable_gates:
             if sg.gate_type in gate_type_list:
                 # remove from list to handle multiple gates of the same type correctly
                 gate_type_list.remove(sg.gate_type)
@@ -506,7 +531,7 @@ class LevelSelectWidgetSet(MyWidgetSet):
                 if not self.__has_custom_gates:
                     # reset selection so a random subset is chosen instead of simply the ones from the previously
                     # selected level
-                    for sg in self.__selected_gates: sg.reset()
+                    for sg in self.__selectable_gates: sg.reset()
             else:
                 self.__summary_level.set_data(f"{LevelSelectWidgetSet.__LEVEL_HEADER}{display_names[index]} "
                                               f"({highscores[index]}, {durations[index]})")
@@ -524,15 +549,15 @@ class LevelSelectWidgetSet(MyWidgetSet):
     def __choose_gates(self) -> bool:
         def add_gate(index: int) -> bool:
             if self.__details.selected_object is LevelSelectWidgetSet.__GATE_CANCEL:
-                for gate in self.__selected_gates: gate.discard()
+                for sg in self.__selectable_gates: sg.discard()
                 return True     # "Cancel" was selected
             if self.__details.selected_object is LevelSelectWidgetSet.__GATE_CONFIRM:
-                ret_val = [gate.commit() for gate in self.__selected_gates]
+                ret_val = [sg.commit() for sg in self.__selectable_gates]
                 if sum(ret_val) > 0:    # at least one confirm() changed the state (i.e., returned True)
                     self.__has_custom_gates = True
                 return True
 
-            sel_gate: LevelSelectWidgetSet._SelectedGate = self.__details.selected_object
+            sel_gate: LevelSelectWidgetSet._SelectableGate = self.__details.selected_object
             sel_gate.invert_selection()
 
             self.__details.update_text(str(self.__details.selected_object), index)
@@ -540,8 +565,9 @@ class LevelSelectWidgetSet(MyWidgetSet):
             return False
 
         # add all available gates plus meta options Confirm and Cancel
-        names: List[str] = [str(gate) for gate in self.__selected_gates] + ["-Confirm-", "-Cancel-"]
-        gate_objects = self.__selected_gates + [LevelSelectWidgetSet.__GATE_CONFIRM, LevelSelectWidgetSet.__GATE_CANCEL]
+        names: List[str] = [str(sg) for sg in self.__selectable_gates] + ["-Confirm-", "-Cancel-"]
+        gate_objects: List[Union[LevelSelectWidgetSet._SelectableGate, str]] = \
+            self.__selectable_gates + [LevelSelectWidgetSet.__GATE_CONFIRM, LevelSelectWidgetSet.__GATE_CANCEL]
         self.__details.set_data(((names, gate_objects), add_gate))
         return True
 
@@ -550,10 +576,15 @@ class LevelSelectWidgetSet(MyWidgetSet):
             Popup.error("No Level selected!", log_error=False)
             return False
 
-        # filter and convert all selected gates
-        available_gates = [sg.to_gate() for sg in self.__selected_gates if sg.is_selected]
+        if self.__has_custom_gates:
+            # filter and convert all selected gates
+            selected_gates = [sg.to_gate() for sg in self.__selectable_gates if sg.is_selected]
+            for gate in selected_gates: gate.reset()  # make sure that all gates are reset to avoid unexpected behaviour
+        else:
+            # setting selected_gates to None starts the level with the gates specified in the level's file
+            selected_gates = None
         seed = self.__seed if self.__seed is not None else self.__rm.get_seed("LevelSelect play unspecified")
-        self.__start_level(self.__level, seed, available_gates)
+        self.__start_level(self.__level, seed, selected_gates)
         return True
 
     def get_widget_list(self) -> List[Widget]:
@@ -1412,71 +1443,117 @@ class PauseMenuWidgetSet(MyWidgetSet):
         self.__description.render_reset(reset_text=False)
 
 
-class WorkbenchWidgetSet(MyWidgetSet):  # todo: overhaul or remove
-    def __init__(self, controls: Controls, logger, root: py_cui.PyCUI, available_robots: List[Robot],
-                 render: Callable[[List[Renderable]], None], continue_callback: Callable[[], None]):
-        self.__continue = continue_callback
-        self.__available_robots = available_robots
-        super().__init__(logger, root, render)
+class WorkbenchWidgetSet(MyWidgetSet):
+    __GATE_CONFIRM = "confirm"
+    __GATE_CANCEL = "cancel"
 
-        robot_selection = self.add_block_label('Robot Selection', 0, 0, row_span=UIConfig.WINDOW_HEIGHT, center=False)
-        self.__robot_selection = SelectionWidget(robot_selection, controls, stay_selected=True)
-        self.__robot_selection.set_data((
-            [robot.name for robot in self.__available_robots] + [MyWidgetSet.BACK_STRING],
-            [self.__details]
-        ))
+    def __init__(self, logger, root: py_cui.PyCUI, base_render_callback: Callable[[List[Renderable]], None],
+                 controls: Controls, get_original_gates_callback: Callable[[], List[Instruction]],
+                 store_gate_callback: Callable[[Instruction], None],
+                 decompose_gate_callback: Callable[[Instruction], bool], check_unlocks_callback: Callable[[str], bool],
+                 switch_to_menu_callback: Callable[[], None],
+                 show_fusion_circuit_callback: Callable[[List[Instruction]], None]):
+        super().__init__(logger, root, base_render_callback)
 
-        robot_details = self.add_block_label('Robot Details', 0, 1, 3, 4, center=True)
-        self.__robot_info = SimpleWidget(robot_details)
+        self.__get_original_gates = get_original_gates_callback
+        self.__store_gate = store_gate_callback
+        self.__decompose_gate = decompose_gate_callback
+        self.__check_unlocks_callback = check_unlocks_callback
+        self.__show_fusion_circuit = show_fusion_circuit_callback
 
-        available_upgrades = self.add_block_label('Upgrades', 4, 1, 2, 2, center=True)
-        self.__available_upgrades = SelectionWidget(available_upgrades, controls, 4, is_second=True,
-                                                    stay_selected=False)
+        resource_info = self.add_block_label_by_dimension('Resources', UIConfig.WB_RESOURCES_DIMS)
+        resource_info.toggle_border()
+        self.__resources = SimpleWidget(resource_info)
 
-        # init action key commands
-        def use_selection():
-            if self.__robot_selection.use():
-                Widget.move_focus(self.__available_upgrades, self)
-                self.__robot_selection.render()
-                self.__available_upgrades.render()
+        action_selection = self.add_block_label_by_dimension('Actions', UIConfig.WB_ACTIONS_DIMS)
+        action_selection.toggle_border()
+        self.__choices = SelectionWidget(action_selection, controls, stay_selected=True)
+        self.__choices.set_data([
+            (("Fuse", self.__fuse), self.__choose_gates),
+            (("Decompose", self.__decompose), self.__choose_gates),
+            (("Back to Menu", None), switch_to_menu_callback),
+        ])
 
-        self.__robot_selection.widget.add_key_command(controls.action, use_selection)
+        gate_selection = self.add_block_label_by_dimension('Gates', UIConfig.WB_GATES_DIMS)
+        gate_selection.toggle_border()
+        self.__details = SelectionWidget(gate_selection, controls, columns=3, is_second=True)
 
-        def use_upgrades():
-            if self.__available_upgrades.use():
-                Widget.move_focus(self.__robot_selection, self)
+        info_widget = self.add_block_label_by_dimension('Infos', UIConfig.WB_INFOS_DIMS, center=True)
+        info_widget.toggle_border()
+        self.__info = SimpleWidget(info_widget)
+
+        def use_choices():
+            if self.__choices.use():
+                Widget.move_focus(self.__details, self)
                 self.render()
+        self.__choices.widget.add_key_command(controls.action, use_choices)
 
-        self.__available_upgrades.widget.add_key_command(controls.action, use_upgrades)
+        def use_details():
+            if self.__details.use():
+                Widget.move_focus(self.__choices, self)
+                self.__details.render_reset()
+                self.render()
+        self.__details.widget.add_key_command(controls.action, use_details)
+
+        def gate_guide():
+            # check if a gate or a meta choice (e.g., cancel) is selected
+            if isinstance(self.__details.selected_object, MyWidgetSet._SelectableGate):
+                MyWidgetSet.show_gate_guide(self.__details.selected_object.to_gate(), Popup.generic_info,
+                                            self.__check_unlocks_callback)
+        self.__details.widget.add_key_command(controls.get_keys(Keys.Help), gate_guide)
+
+    def __choose_gates(self) -> bool:
+        selectable_gates = [MyWidgetSet._SelectableGate(gate) for gate in self.__get_original_gates()]
+
+        def select_gate(index: int) -> bool:
+            if self.__details.selected_object is WorkbenchWidgetSet.__GATE_CANCEL:
+                return True  # "Cancel" was selected
+            if self.__details.selected_object is WorkbenchWidgetSet.__GATE_CONFIRM:
+                selected_gates = [sg.to_gate() for sg in selectable_gates if sg.is_selected]
+                self.__choices.selected_object(selected_gates)    # either executes decompose() or fuse()
+                return True
+
+            sel_gate: MyWidgetSet._SelectableGate = self.__details.selected_object
+            sel_gate.invert_selection(auto_commit=True)
+
+            self.__details.update_text(str(self.__details.selected_object), index)
+            self.__details.render()
+            return False
+
+        # add all available gates plus meta options Confirm and Cancel
+        names: List[str] = [str(gate) for gate in selectable_gates] + ["-Confirm-", "-Cancel-"]
+        meta_objects = [WorkbenchWidgetSet.__GATE_CONFIRM, WorkbenchWidgetSet.__GATE_CANCEL]
+        self.__details.set_data(((names, selectable_gates + meta_objects), select_gate))
+        return True
+
+    def __decompose(self, gate_list: List[Instruction]):
+        failed_gates = []
+        for gate in gate_list:
+            if not self.__decompose_gate(gate):
+                failed_gates.append(gate)
+        if len(failed_gates) > 0:
+            Popup.error(f"Failed for the following gates: {', '.join([gate.name() for gate in failed_gates])}. Please "
+                        f"try again. Should this error proceed to occur: ", add_report_note=True)
+        return
+
+    def __fuse(self, gate_list: List[Instruction]):
+        self.__show_fusion_circuit(gate_list)
+        return
 
     def get_widget_list(self) -> List[Widget]:
         return [
-            self.__robot_selection,
-            self.__robot_info,
-            self.__available_upgrades,
+            self.__choices,
+            self.__details,
+            self.__info,
         ]
 
     def get_main_widget(self) -> WidgetWrapper:
-        return self.__robot_selection.widget
+        return self.__choices.widget
 
     def reset(self) -> None:
-        pass
-
-    def __details(self, index: int) -> bool:
-        if self.__save_data:  # todo fix
-            robot = None  # self.__save_data.get_robot(index)
-            if robot:
-                self.__robot_info.set_data(robot.description())
-                self.__available_upgrades.set_data(data=(
-                    ["Test", "Fuel"],
-                    [self.__upgrade],
-                ))
-            else:
-                self.__continue()
-        return True
-
-    def __upgrade(self, index: int) -> bool:
-        return True
+        self.__choices.render_reset()
+        self.__details.render_reset()
+        self.__info.render_reset()
 
 
 class MapWidgetSet(MyWidgetSet, ABC):
@@ -1692,13 +1769,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         def gate_guide():
             # check if a gate or a meta choice (e.g., cancel) is selected
             if isinstance(self._choices.selected_object, Instruction):
-                gate = self._choices.selected_object
-                if gate.gate_type.has_other_names:
-                    other_names = "\nAlso known as: " + gate.gate_type.get_other_names(" Gate, ") + " Gate"
-                else:
-                    other_names = ""
-                Popup.generic_info(gate.gate_type.full_name, f"Short name: {gate.gate_type.short_name} Gate\n" +
-                                   gate.description(self._check_unlocks) + other_names)
+                MyWidgetSet.show_gate_guide(self._choices.selected_object, Popup.generic_info, self._check_unlocks)
             else:
                 reopen_popup()  # open popup history
 
@@ -2221,4 +2292,83 @@ class BossFightWidgetSet(RiddleWidgetSet):
                 [self._exit_level]
             ))
         self._hud.update_situational(f"Remaining {RiddleWidgetSet._TRY_PHRASING}: {self._target.edits}")
+        return True
+
+
+class FusionCircuitWidgetSet(ReachTargetWidgetSet):
+    def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
+                 continue_exploration_callback: Callable[[bool], None], reopen_popup: Callable[[], None],
+                 check_unlocks_callback: Callable[[Union[str, Unlocks]], bool],
+                 store_gate_callback: Callable[[Instruction], None],
+                 decompose_gates_callback: Callable[[List[Instruction]], bool],
+                 show_input_popup_callback: Callable[[str, int, Callable[[str], None]], None],
+                 return_to_workbench_callback: Callable[[], None]):
+        super().__init__(controls, render, logger, root, continue_exploration_callback, reopen_popup,
+                         check_unlocks_callback, flee_choice="Fuse", enable_reset=True)
+        self.__store_gate = store_gate_callback
+        self.__decompose_gates = decompose_gates_callback
+        self.__show_input_popup = show_input_popup_callback
+        self.__return_to_workbench = return_to_workbench_callback
+
+    def set_data(self, robot: Robot, target: Target, tutorial_data: Any) -> None:
+        super().set_data(robot, target, tutorial_data)
+
+    def _on_commit_fail(self) -> bool:
+        pass    # do nothing since there is neither failing nor winning
+
+    def __name_gate(self):
+        def store(name: str):
+            validation_result = gates.CombinedGate.validate_gate_name(name)
+            if validation_result == 0:
+                used_gates = [gate for gate in self._robot.instructions if gate.position is not None]
+                combined_gate = gates.CombinedGate(used_gates, self._robot.num_of_qubits, name)
+                self.__store_gate(combined_gate)
+                Popup.system_says(f"Successfully fused the circuit to a new CombinedGate named \"{name}\"!")
+                self.__return_to_workbench()
+            else:
+                failed_criteria = "-unknown criteria-"
+                if validation_result == 1:
+                    failed_criteria = "not enough characters"
+                elif validation_result == 2:
+                    failed_criteria = "too many characters"
+                elif validation_result == 3:
+                    failed_criteria = "contains at least one illegal (i.e., non-letter) character"
+                elif validation_result == 4:
+                    failed_criteria = f"equal to the name of a base gate ({InstructionManager.gate_names(False)})"
+                Popup.system_says(f"Failed to create a new CombinedGate with name \"{name}\" for the following reason: "
+                                  f"{failed_criteria}.\n\nPlease consider naming rules and try again:\n"
+                                  f"{', '.join(gates.CombinedGate.gate_name_criteria())}")
+                self._choices.update_text(f"Please press [Confirm] to try a new name.\n"
+                                          f"{gates.CombinedGate.gate_name_criteria()}", 0)
+        self.__show_input_popup("Name your new Gate", ColorConfig.FUSION_CIRCUIT_NAMING_COLOR, store)
+
+    def _choices_flee(self) -> bool:
+        return self.__fuse_gates()
+
+    def __fuse_gates(self) -> bool:
+        used_gates = [gate for gate in self._robot.instructions if gate.position is not None]
+        validation_result = gates.CombinedGate.validate_instructions(used_gates)
+
+        if validation_result == 0:
+            if self.__decompose_gates(used_gates):
+                self._choices.set_data(data=(
+                    [f"Now please press [Confirm] to enter a name.\n{gates.CombinedGate.gate_name_criteria()}"],
+                    [self.__name_gate]
+                ))
+            else:
+                Popup.error("Illegal State! It seems like the game tried to fuse a gate you do not possess.",
+                            add_report_note=True)
+                self._choices.set_data(data=(
+                    [f"Failed to fuse the placed gates :(\nPlease save and restart the game."],
+                    [self._fleeing_failed_callback]
+                ))
+        else:
+            failed_criteria = "-unknown criteria-"
+            if validation_result == 1:
+                failed_criteria = "not enough gates (place at least 1)"
+            elif validation_result == 2:
+                failed_criteria = "must not use a CombinedGate for fusion"
+            Popup.system_says(f"Failed to fuse circuit for the following reason: {failed_criteria}.\n\n"
+                              f"Please consider these rules and try again:\n"
+                              f"{gates.CombinedGate.instructions_criteria()}")
         return True

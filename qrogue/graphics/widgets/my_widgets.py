@@ -1,6 +1,6 @@
 import math
 from abc import ABC, abstractmethod
-from typing import List, Any, Callable, Tuple, Optional, Dict, Union
+from typing import List, Any, Callable, Tuple, Optional, Dict, Union, Iterator
 
 from py_cui import ColorRule
 from py_cui.widget_set import WidgetSet
@@ -393,7 +393,7 @@ class HudWidget(Widget):
 
 
 class CircuitWidget(Widget):
-    class PlaceHolderData:
+    class _PlaceHolderData:
         def __init__(self, gate: Optional[Instruction], pos: int = -1, qubit: int = 0):
             self.gate = gate
             self.pos = pos
@@ -427,12 +427,15 @@ class CircuitWidget(Widget):
                 return True
             return False
 
+        def __iter__(self) -> Iterator[Union[Optional[Instruction], int, int]]:
+            return iter((self.gate, self.pos, self.qubit))
+
     def __init__(self, widget: WidgetWrapper, controls: Controls):
         super().__init__(widget)
         self.__robot: Optional[Robot] = None
         self.__input: Optional[StateVector] = None
         self.__target: Optional[StateVector] = None
-        self.__place_holder_data: Optional[CircuitWidget.PlaceHolderData] = None
+        self.__place_holder_data: Optional[CircuitWidget._PlaceHolderData] = None
 
         widget.add_key_command(controls.get_keys(Keys.SelectionUp), self.__move_up)
         widget.add_key_command(controls.get_keys(Keys.SelectionRight), self.__move_right)
@@ -441,34 +444,6 @@ class CircuitWidget(Widget):
 
         widget.activate_individual_coloring()
         ColorRules.apply_circuit_rules(widget)
-
-    def __circuit_input_value(self, qubit: int) -> str:
-        if self.__input is not None and self.__input.is_classical \
-                and self.__target is not None and self.__target.is_classical \
-                and self.__robot.state_vector.is_classical:  # robot.state_vector cannot be None
-            index = self.__input.to_value().index(1)  # find where the amplitude is 1
-            # get the respective qubit values but in lsb, so we can use $qubit directly as index
-            values = to_binary_string(index, self.__input.num_of_qubits, msb=False)
-            return f"= {values[qubit]} "
-        else:
-            return ""
-
-    def __circuit_output_value(self, qubit: int) -> str:
-        if self.__input is not None and self.__input.is_classical \
-                and self.__target is not None and self.__target.is_classical \
-                and self.__robot.state_vector.is_classical:  # robot.state_vector cannot be None
-            index = self.__robot.state_vector.to_value().index(1)  # find where the amplitude is 1
-            # get the respective qubit values but in lsb, so we can use $qubit directly as index
-            out_values = to_binary_string(index, self.__robot.state_vector.num_of_qubits, msb=False)
-            index = self.__target.to_value().index(1)
-            target_values = to_binary_string(index, self.__target.num_of_qubits, msb=False)
-            is_correct = out_values[qubit] == target_values[qubit]
-            equality = ColorConfig.colorize(ColorCode.PUZZLE_CORRECT_AMPLITUDE if is_correct
-                                            else ColorCode.PUZZLE_WRONG_AMPLITUDE,
-                                            '=' + ('=' if is_correct else '/') + '=')
-            return f"= {out_values[qubit]}| {equality} <{target_values[qubit]}|"
-        else:
-            return "|"
 
     def __change_position(self, right: bool) -> bool:
         def go_right(position: int) -> Optional[int]:
@@ -544,7 +519,7 @@ class CircuitWidget(Widget):
             # todo
 
     def start_gate_placement(self, gate: Optional[Instruction], pos: int = -1, qubit: int = 0):
-        self.__place_holder_data = self.PlaceHolderData(gate, pos, qubit)
+        self.__place_holder_data = self._PlaceHolderData(gate, pos, qubit)
         if pos < 0 or self.__robot.circuit_space <= pos:
             # if we're currently not removing a gate and implicit removal is allowed we can definitely start at any
             # position
@@ -597,40 +572,13 @@ class CircuitWidget(Widget):
 
     def render(self) -> None:
         if self.__robot is not None:
-            entry = "-" * (3 + InstructionConfig.MAX_ABBREVIATION_LEN + 3)
-            rows = [[entry] * self.__robot.circuit_space for _ in range(self.__robot.num_of_qubits)]
-            for i in range(self.__robot.circuit_space):
-                inst = self.__robot.gate_used_at(i)
-                if inst:
-                    for q in inst.qargs_iter():
-                        inst_str = center_string(inst.abbreviation(q), InstructionConfig.MAX_ABBREVIATION_LEN)
-                        rows[q][i] = f"--{{{inst_str}}}--"
-
-            if self.__place_holder_data:
-                gate = self.__place_holder_data.gate
-                pos = self.__place_holder_data.pos
-                qubit = self.__place_holder_data.qubit
-                if gate is None:
-                    rows[qubit][pos] = "--/   /--"
-                else:
-                    for q in gate.qargs_iter():
-                        rows[q][pos] = f"--{{{gate.abbreviation(q)}}}--"
-                    rows[qubit][pos] = f"-- {gate.abbreviation(qubit)} --"
-
-            circ_str = " In "  # for some reason the whitespace in front is needed to center the text correctly
-            # place qubits from top to bottom, high to low index
-            for q in range(len(rows) - 1, -1, -1):
-                circ_str += f"| q{q} {self.__circuit_input_value(q)}>"
-                row = rows[q]
-                for i in range(len(row)):
-                    circ_str += row[i]
-                    if i < len(row) - 1:
-                        circ_str += "+"
-                circ_str += f"< q'{q} {self.__circuit_output_value(q)}"
-                if q == len(rows) - 1:
-                    circ_str += " Out"
-                circ_str += "\n"
-
+            gates: Dict[int, Instruction] = {}
+            for gate in self.__robot.instructions:
+                if gate.position is not None:
+                    gates[gate.position] = gate
+            circ_str = Instruction.circuit_to_string(self.__robot.num_of_qubits, self.__robot.circuit_space, gates,
+                                                     self.__place_holder_data,
+                                                     (self.__input, self.__robot.state_vector, self.__target))
             self.widget.set_title(circ_str)
 
     def render_reset(self) -> None:
@@ -978,24 +926,35 @@ class SelectionWidget(Widget):
                 self.__choices[index] = text
 
     def set_data(self, data: Union[
-        Tuple[
-            Union[List[str], Tuple[List[str], List[Any]]],
-            Union[List[Callable[[], Optional[bool]]], Callable[[int], Optional[bool]]]
-        ],
-        List[Tuple[Union[str, Tuple[str, Any]], Callable[[], Optional[bool]]]]
+        Tuple[List[str], List[Callable[[], Optional[bool]]]],
+        Tuple[List[str], List[Callable[[int], Optional[bool]]]],
+        Tuple[Tuple[List[str], List[Any]], List[Callable[[], Optional[bool]]]],
+        Tuple[Tuple[List[str], List[Any]], Callable[[int], Optional[bool]]],
+        List[Tuple[str, Callable[[], Optional[bool]]]],
+        List[Tuple[Tuple[str, Any], Callable[[], Optional[bool]]]],
     ]) -> None:
         """
         Arguments:
-            data: selection text and corresponding action callback either as
+            data: selection text (optionally also selection objects) and corresponding action callback either as
 
-                1) List of str (=texts), List of callback() or callback(index)  (=actions),
+                1) Tuple: List of str (=texts), List of Callable() (=actions),
+                    E.g.: ([text1, text2], [action1(), action2()])
 
-                2) List of (str, Any) (=tuples of text and object connected to the text),
-                    List of callback() or callback(index)  (=actions)
+                2) Tuple: List of str (=texts), List of Callable(index) (=action),
+                    E.g.: ([text1, text2], [action(i)])
 
-                3) List of (str, callback) (=tuples of text and corresponding action)
+                3) Tuple: Tuple of (List of str (=texts), List of Any (=objects)), List of Callable() (=actions),
+                    E.g.: (([text1, text2], [obj1, obj2]), [action1, action2])
 
-                4) List of ((str, Any), callback) (=tuples of (text, object) and corresponding action
+                4) Tuple: Tuple of (List of str (=texts), List of Any (=objects)), Callable(index) (=action),
+                    E.g.: (([text1, text2], [obj1, obj2]), action(i))
+
+                5) List: Tuple of (str (=text), Callable() (=action)),
+                    E.g.: [(text1, action1), (text2, action2)]
+
+                6) List: Tuple of (Tuple of (str (=text), Any (=object)), Callable() (=action)),
+                    E.g.: [((text1, obj1), action1), ((text2, obj2), action2)]
+
         """
         assert len(data) >= 1, "set_data() called with empty data!"
 
@@ -1005,7 +964,12 @@ class SelectionWidget(Widget):
             self.__choices = []
             self.__callbacks = []
             for elem in data:
-                self.__choices.append(elem[0])
+                if isinstance(elem[0], tuple):
+                    text, obj = elem[0]
+                    self.__choices.append(text)
+                    self.__choice_objects.append(obj)
+                else:
+                    self.__choices.append(elem[0])
                 self.__callbacks.append(elem[1])
         else:
             self.__choices, callbacks = data

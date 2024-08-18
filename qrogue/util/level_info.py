@@ -30,7 +30,7 @@ class LevelInfo:
         # newbie tutorials
         "l0k0v0": [Unlocks.MainMenuContinue, Unlocks.ShowEnergy, ],
         "l0k0v1": [Unlocks.ShowEquation, Unlocks.PuzzleHistory],
-        "l0k0v4": [Unlocks.LevelSelection],
+        "l0k0v4": [Unlocks.LevelSelection, Unlocks.Workbench],
 
         # experienced tutorials are copied from newbie tutorials entered in init()
 

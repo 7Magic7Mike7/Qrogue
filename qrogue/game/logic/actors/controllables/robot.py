@@ -750,3 +750,16 @@ class LukeBot(Robot):
 
     def description(self) -> str:
         return "The loyal Robot you start with. A true all-rounder - take good care of it!"
+
+
+class FusionBot(Robot):
+    def __init__(self, num_of_qubits: int, gates: List[Instruction]):
+        attributes = _Attributes(DummyQubitSet(num_of_qubits), len(gates))
+        backpack = _Backpack(len(gates), gates)
+        super().__init__("FusionBot", attributes, backpack, lambda: None)
+
+    def get_img(self):
+        return "F"
+
+    def description(self) -> str:
+        return "A Robot used to fuse gates."

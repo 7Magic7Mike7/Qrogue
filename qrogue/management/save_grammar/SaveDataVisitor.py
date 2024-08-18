@@ -39,6 +39,16 @@ class SaveDataVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by SaveDataParser#combined_gate.
+    def visitCombined_gate(self, ctx:SaveDataParser.Combined_gateContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SaveDataParser#background_gate.
+    def visitBackground_gate(self, ctx:SaveDataParser.Background_gateContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by SaveDataParser#levels.
     def visitLevels(self, ctx:SaveDataParser.LevelsContext):
         return self.visitChildren(ctx)

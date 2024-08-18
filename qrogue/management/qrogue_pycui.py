@@ -7,7 +7,9 @@ from py_cui import PyCUI
 from py_cui import popups
 from py_cui.widget_set import WidgetSet
 
-from qrogue.game.logic.actors import Boss, Controllable, Enemy, Riddle, Challenge, Robot, BaseBot
+from qrogue.game.logic.actors import Boss, Controllable, Enemy, Riddle, Challenge, Robot, FusionBot
+from qrogue.game.logic.actors.puzzles import FusionTarget
+from qrogue.game.logic.collectibles import Instruction
 from qrogue.game.world.dungeon_generator.wave_function_collapse import WFCManager
 from qrogue.game.world.map import CallbackPack, Map
 from qrogue.game.world.navigation import Direction
@@ -18,7 +20,7 @@ from qrogue.graphics.rendering import MultiColorRenderer
 from qrogue.graphics.widgets import Renderable, BossFightWidgetSet, ExploreWidgetSet, \
     FightWidgetSet, MenuWidgetSet, MyWidgetSet, NavigationWidgetSet, PauseMenuWidgetSet, RiddleWidgetSet, \
     ChallengeWidgetSet, WorkbenchWidgetSet, TrainingsWidgetSet, Widget, TransitionWidgetSet, \
-    ScreenCheckWidgetSet, LevelSelectWidgetSet
+    ScreenCheckWidgetSet, LevelSelectWidgetSet, FusionCircuitWidgetSet
 from qrogue.util import common_messages, CheatConfig, Config, GameplayConfig, UIConfig, HelpText, \
     Logger, PathConfig, Controls, Keys, RandomManager, PyCuiConfig, PopupConfig, PyCuiColors, Options, \
     CommonInfos, MapConfig
@@ -52,6 +54,8 @@ class QrogueCUI(PyCUI):
         Transition = 12  # for atmospheric transitions and elements
         ScreenCheck = 13  # a menu to check dimensions and color of the screen/terminal the game is played
         LevelSelect = 14
+
+        FusionCircuit = 25
 
     class _StateMachine:
         def __init__(self, renderer: "QrogueCUI"):
@@ -92,6 +96,8 @@ class QrogueCUI(PyCUI):
                 self.__renderer._switch_to_training(data)
             elif self.__cur_state == QrogueCUI._State.Workbench:
                 self.__renderer._switch_to_workbench(data)
+            elif self.__cur_state == QrogueCUI._State.FusionCircuit:
+                self.__renderer._switch_to_fusion_circuit(data)
 
             elif self.__cur_state == QrogueCUI._State.Transition:
                 self.__renderer._switch_to_transition(data)
@@ -270,8 +276,7 @@ class QrogueCUI(PyCUI):
             self.__state_machine.change_state(QrogueCUI._State.Transition, data=(texts, callback, auto_scroll))
 
         self.__map_manager = MapManager(self.__wfc_manager, self.__save_data, self.__rm.seed, self.__start_level,
-                                        start_level_transition, lambda: self._switch_to_menu(None), self.__cbp,
-                                        self.__save_data.get_gates)
+                                        start_level_transition, lambda: self._switch_to_menu(None), self.__cbp)
         ########################################
 
         self.__map_manager.fill_expedition_queue(lambda: None, no_thread=True)
@@ -304,7 +309,8 @@ class QrogueCUI(PyCUI):
         self.__menu = MenuWidgetSet(self.__controls, self.__render, Logger.instance(), self,
                                     self.__map_manager.load_first_uncleared_map, self.__start_playing,
                                     self.__start_expedition, self.stop, self.__show_screen_check,
-                                    self.__show_level_select, self.__save_data.check_unlocks, self._conditional_saving)
+                                    self.__show_level_select, self.__show_workbench, self.__save_data.check_unlocks,
+                                    self._conditional_saving)
         self.__level_select = LevelSelectWidgetSet(
             self.__controls, Logger.instance(), self, self.__render, self.__rm, self.__show_input_popup,
             self.__save_data.get_completed_levels,
@@ -324,8 +330,16 @@ class QrogueCUI(PyCUI):
         self.__training = TrainingsWidgetSet(self.__controls, self.__render, Logger.instance(), self,
                                              lambda b: None, self.__popup_history.show,
                                              self.__save_data.check_unlocks)  # todo: update signature
-        self.__workbench = WorkbenchWidgetSet(self.__controls, Logger.instance(), self, [], self.__render,
-                                              lambda b: None)  # todo: update signature
+        self.__workbench = WorkbenchWidgetSet(Logger.instance(), self, self.__render, self.__controls,
+                                              self.__save_data.get_original_gates, self.__save_data.add_gate,
+                                              self.__save_data.decompose, self.__save_data.check_unlocks,
+                                              self._switch_to_menu, self.__show_fusion_circuit)
+        self.__fusion_circuit = FusionCircuitWidgetSet(self.__controls, self.__render, Logger.instance(), self,
+                                                       self.__continue_explore, self.__popup_history.show,
+                                                       self.__save_data.check_unlocks, self.__save_data.add_gate,
+                                                       self.__save_data.decompose, self.__show_input_popup,
+                                                       self.__show_workbench)
+
         self.__navigation = NavigationWidgetSet(self.__controls, self.__render, Logger.instance(), self)
 
         self.__explore = ExploreWidgetSet(self.__controls, self.__render, Logger.instance(), self)
@@ -344,7 +358,7 @@ class QrogueCUI(PyCUI):
 
         widget_sets: List[MyWidgetSet] = [self.__training, self.__navigation, self.__explore,
                                           self.__fight, self.__boss_fight, self.__riddle, self.__challenge,
-                                          self.__workbench]
+                                          self.__workbench, self.__fusion_circuit]
         # INIT KEYS
         # add the general keys to everything except Transition, Menu and Pause
         for widget_set in widget_sets:
@@ -672,12 +686,19 @@ class QrogueCUI(PyCUI):
             self.__training.set_data(robot, enemy, False)
         self.apply_widget_set(self.__training)
 
-    def __use_workbench(self, direction: Direction, controllable: Controllable):
-        self.__state_machine.change_state(QrogueCUI._State.Workbench, self.__save_data)
+    def __show_workbench(self):
+        self.__state_machine.change_state(QrogueCUI._State.Workbench, None)
 
     def _switch_to_workbench(self, _=None):
         # no data parameter needed
         self.apply_widget_set(self.__workbench)
+
+    def __show_fusion_circuit(self, gate_list: List[Instruction]):
+        self.__state_machine.change_state(QrogueCUI._State.FusionCircuit, gate_list)
+
+    def _switch_to_fusion_circuit(self, gate_list: List[Instruction]):
+        self.__fusion_circuit.set_data(FusionBot(2, gate_list), FusionTarget(2), None)
+        self.apply_widget_set(self.__fusion_circuit)
 
     def __start_level(self, level: Map) -> None:
         Logger.instance().info(f"Starting level {level.internal_name} with seed={level.seed}.", from_pycui=False)

@@ -2,7 +2,7 @@ from typing import Tuple, Optional
 
 from qrogue.game.logic.base import StateVector, CircuitMatrix
 from qrogue.game.logic.collectibles import Collectible
-from qrogue.util import RandomManager
+from qrogue.util import RandomManager, CheatConfig
 from .target import Target
 
 
@@ -35,7 +35,7 @@ class Riddle(Target):
 
     @property
     def can_attempt(self) -> bool:
-        if self.edits > 0:
+        if self.edits > 0 or CheatConfig.has_infinite_edits():
             self.__can_attempt = True
         else:
             self.__can_attempt = self.__rm.get() < self.__stable_probability
