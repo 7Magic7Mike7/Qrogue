@@ -27,7 +27,7 @@ class FusionTestCase(SingletonSetupTestCase):
         gate1 = XGate().setup([0])
         gate2 = HGate().setup([0])
 
-        comb_gate = CombinedGate([gate1, gate2], num_of_qubits, label="Test").setup([0])
+        comb_gate = CombinedGate([gate1, gate2], num_of_qubits, name="Test").setup([0])
 
         seq_matrix = self.__compute(num_of_qubits, [gate1, gate2], unitary_simulator)
         comb_matrix = self.__compute(num_of_qubits, [comb_gate], unitary_simulator)
@@ -40,7 +40,7 @@ class FusionTestCase(SingletonSetupTestCase):
         gate1 = HGate().setup([0])
         gate2 = CXGate().setup([0, 1])
 
-        comb_gate = CombinedGate([gate1, gate2], num_of_qubits, label="Test").setup([0, 1])
+        comb_gate = CombinedGate([gate1, gate2], num_of_qubits, name="Test").setup([0, 1])
 
         seq_matrix = self.__compute(num_of_qubits, [gate1, gate2], unitary_simulator)
         comb_matrix = self.__compute(num_of_qubits, [comb_gate], unitary_simulator)
@@ -53,7 +53,7 @@ class FusionTestCase(SingletonSetupTestCase):
         gate1 = CXGate().setup([0, 1], position=1)
         gate2 = HGate().setup([0], position=0)
 
-        comb_gate = CombinedGate([gate1, gate2], num_of_qubits, label="Test").setup([0, 1])
+        comb_gate = CombinedGate([gate1, gate2], num_of_qubits, name="Test").setup([0, 1])
 
         seq_matrix = self.__compute(num_of_qubits, [gate2, gate1], unitary_simulator)
         comb_matrix = self.__compute(num_of_qubits, [comb_gate], unitary_simulator)
@@ -64,9 +64,9 @@ class FusionTestCase(SingletonSetupTestCase):
         name = "Test"
         exp_name = name + " Gate"
 
-        comb_gate1 = CombinedGate([HGate().setup([0])], 1, label=name)              # no "Gate" suffix
-        comb_gate2 = CombinedGate([HGate().setup([0])], 1, label=exp_name)          # "Gate" suffix with whitespace
-        comb_gate3 = CombinedGate([HGate().setup([0])], 1, label=name + "Gate")     # "Gate" suffix without whitespace
+        comb_gate1 = CombinedGate([HGate().setup([0])], 1, name=name)              # no "Gate" suffix
+        comb_gate2 = CombinedGate([HGate().setup([0])], 1, name=exp_name)          # "Gate" suffix with whitespace
+        comb_gate3 = CombinedGate([HGate().setup([0])], 1, name=name + "Gate")     # "Gate" suffix without whitespace
 
         self.assertEqual(exp_name, comb_gate1.name())
         self.assertEqual(exp_name, comb_gate2.name())
@@ -90,7 +90,7 @@ In | q1 >---------+--{ X }--< q'1 | Out
         num_of_qubits = 2
         gate1 = HGate().setup([0])
         gate2 = CXGate().setup([0, 1])
-        comb_gate = CombinedGate([gate1, gate2], num_of_qubits, label="Test").setup([0, 1])
+        comb_gate = CombinedGate([gate1, gate2], num_of_qubits, name="Test").setup([0, 1])
 
         self.assertEqual(exp_desc, comb_gate.description(lambda unlock: True))
 

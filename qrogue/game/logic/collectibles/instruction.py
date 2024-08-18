@@ -453,13 +453,13 @@ class CombinedGate(Instruction):
         CombinedGate.__NEXT_ID += 1
         return next_id
 
-    def __init__(self, instructions: List[Instruction], needed_qubits: int, label: Optional[str] = None,
+    def __init__(self, instructions: List[Instruction], needed_qubits: int, name: Optional[str] = None,
                  _id: Optional[int] = None):
         Logger.instance().assertion(len(instructions) > 0, "Tried to create CombinedGate without instructions!")
 
-        if label is None: label = "BlackBox"
-        if label.endswith("Gate"): label = label[:-len("Gate")]
-        label = label.strip()   # remove leftover whitespaces
+        if name is None: name = "BlackBox"
+        if name.endswith("Gate"): name = name[:-len("Gate")]
+        name = name.strip()   # remove leftover whitespaces
 
         self.__id = CombinedGate._next_id() if _id is None else _id
 
@@ -486,7 +486,7 @@ class CombinedGate(Instruction):
 
         circuit = QuantumCircuit.from_register(needed_qubits)
         for inst in instructions: inst.append_to(circuit)
-        gate = circuit.to_gate(label=label)
+        gate = circuit.to_gate(label=name)
 
         super().__init__(GateType.Combined, gate, needed_qubits)
         self.__gate = gate
