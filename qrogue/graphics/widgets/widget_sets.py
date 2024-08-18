@@ -575,9 +575,13 @@ class LevelSelectWidgetSet(MyWidgetSet):
             Popup.error("No Level selected!", log_error=False)
             return False
 
-        # filter and convert all selected gates
-        selected_gates = [sg.to_gate() for sg in self.__selectable_gates if sg.is_selected]
-        for gate in selected_gates: gate.reset()   # make sure that all gates are reset to avoid unexpected behaviour
+        if self.__has_custom_gates:
+            # filter and convert all selected gates
+            selected_gates = [sg.to_gate() for sg in self.__selectable_gates if sg.is_selected]
+            for gate in selected_gates: gate.reset()  # make sure that all gates are reset to avoid unexpected behaviour
+        else:
+            # setting selected_gates to None starts the level with the gates specified in the level's file
+            selected_gates = None
         seed = self.__seed if self.__seed is not None else self.__rm.get_seed("LevelSelect play unspecified")
         self.__start_level(self.__level, seed, selected_gates)
         return True
