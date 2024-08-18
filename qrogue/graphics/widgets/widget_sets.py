@@ -292,7 +292,7 @@ class MenuWidgetSet(MyWidgetSet):
             choices.append("SELECT LEVEL\n")
             callbacks.append(self.__show_level_select_callback)
 
-        if True or self.__check_unlocks(Unlocks.Workbench):
+        if self.__check_unlocks(Unlocks.Workbench):
             choices.append("WORKBENCH\n")
             callbacks.append(self.__show_workbench_callback)
 
