@@ -196,8 +196,9 @@ class Instruction(Collectible, ABC):
         if 0 <= index < len(self._qargs):
             return self._qargs[index]
 
-    def name(self) -> str:
-        return f"{self.__type.short_name} Gate"
+    def name(self, include_suffix: Optional[bool] = None) -> str:
+        if include_suffix is None: include_suffix = True
+        return f"{self.__type.short_name}{' Gate' if include_suffix else ''}"
 
     def description(self, check_unlocks: Optional[Callable[[str], bool]] = None) -> str:
         desc = f"Full name: {self.gate_type.full_name}\n"
@@ -527,8 +528,9 @@ class CombinedGate(Instruction):
         amplitudes = UnitarySimulator().execute(circuit, decimals=QuantumSimulationConfig.DECIMALS)
         self.__matrix = CircuitMatrix(amplitudes, len(instructions))
 
-    def name(self) -> str:
-        return f"{self.__gate.label} Gate"
+    def name(self, include_suffix: Optional[bool] = None) -> str:
+        if include_suffix is None: include_suffix = True
+        return f"{self.__gate.label}{' Gate' if include_suffix else ''}"
 
     def abbreviation(self, qubit: Optional[int] = None):
         qubit = "" if qubit is None else str(qubit)
