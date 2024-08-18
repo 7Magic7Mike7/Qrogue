@@ -473,7 +473,8 @@ class CombinedGate(Instruction):
     @staticmethod
     def gate_name_criteria() -> str:
         return f"The name needs to consist of {CombinedGate.__NAME_MIN_CHARACTERS} to " \
-               f"{CombinedGate.__NAME_MAX_CHARACTERS} letters (no numbers or other characters allowed)."
+               f"{CombinedGate.__NAME_MAX_CHARACTERS} letters (no numbers or other characters allowed). You don't " \
+               f"have to add a \"Gate\"-suffix, the game will do this automatically where needed."
 
     @staticmethod
     def _next_id() -> int:
