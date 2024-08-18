@@ -2316,9 +2316,11 @@ class FusionCircuitWidgetSet(ReachTargetWidgetSet):
                     failed_criteria = "too many characters"
                 elif validation_result == 3:
                     failed_criteria = "contains at least one illegal (i.e., non-letter) character"
+                elif validation_result == 4:
+                    failed_criteria = f"equal to the name of a base gate ({InstructionManager.gate_names(False)})"
                 Popup.system_says(f"Failed to create a new CombinedGate with name \"{name}\" for the following reason: "
                                   f"{failed_criteria}\n\nPlease consider naming rules and try again:\n"
-                                  f"{gates.CombinedGate.gate_name_criteria()}")
+                                  f"{', '.join(gates.CombinedGate.gate_name_criteria())}")
                 self._choices.update_text(f"Please press [Confirm] to try a new name.\n"
                                           f"{gates.CombinedGate.gate_name_criteria()}", 0)
         self.__show_input_popup("Name your new Gate", ColorConfig.FUSION_CIRCUIT_NAMING_COLOR, store)

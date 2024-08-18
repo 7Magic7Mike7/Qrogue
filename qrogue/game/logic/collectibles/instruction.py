@@ -458,6 +458,7 @@ class CombinedGate(Instruction):
             - 1 = not enough characters
             - 2 = too many characters
             - 3 = contains an illegal (i.e., non-letter) character
+            - 4 = equal to the name of a base gate
 
         :param name: the name to validate
         :return: 0 if name is valid, other values depending on which part was invalid
@@ -467,6 +468,7 @@ class CombinedGate(Instruction):
         if len(name) > CombinedGate.__NAME_MAX_CHARACTERS: return 2
         # check if name only consists of letters
         if not name.isalpha(): return 3
+        if name in InstructionManager.gate_names(include_suffix=False): return 4
         # all criteria fulfilled
         return 0
 
@@ -601,6 +603,10 @@ class InstructionManager:
             if val is GateType.Combined: continue  # todo: properly implement for Combined? Or do we have to skip them?
             assert val in InstructionManager.__GATES, f"{val} not defined in InstructionManager.__GATES!"
         return True
+
+    @staticmethod
+    def gate_names(include_suffix: Optional[bool] = None) -> List[str]:
+        return [gate.name(include_suffix) for gate in InstructionManager.__GATES.values()]
 
     @staticmethod
     def from_type(gate_type: GateType) -> Instruction:
