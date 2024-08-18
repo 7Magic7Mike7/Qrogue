@@ -141,6 +141,7 @@ class MyWidgetSet(WidgetSet, Renderable, ABC):
     BACK_STRING = "-Back-"
 
     def __init__(self, logger, root: py_cui.PyCUI, base_render_callback: Callable[[List[Renderable]], None]):
+        # todo: make its super-calls consistent with parameter order!
         super().__init__(UIConfig.WINDOW_HEIGHT, UIConfig.WINDOW_WIDTH, logger, root)
         self.__base_render = base_render_callback
 
