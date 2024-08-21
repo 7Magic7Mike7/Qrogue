@@ -407,10 +407,10 @@ class GameplayConfig:
         return [(option, next_) for option in needed_options]
 
     @staticmethod
-    def get_option_value(option: Options, convert: bool = True) -> Any:
+    def get_option_value(option: Options, convert: bool = True, ignore_test_config: bool = False) -> Any:
         cur_index = GameplayConfig.__OPTIONS[option]
         if convert:
-            if option is Options.simulation_key_pause and TestConfig.is_active():
+            if option is Options.simulation_key_pause and TestConfig.is_active() and not ignore_test_config:
                 return TestConfig.key_pause()
             return option.convert(cur_index)
         else:
