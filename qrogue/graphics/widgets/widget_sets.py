@@ -1903,7 +1903,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
         # from a code readers perspective the reset would make more sense in switch_to_fight() etc. but then we would
         # have to add it to multiple locations and have the risk of forgetting to add it for new ReachTargetWidgetSets
-        if GameplayConfig.auto_reset_circuit():
+        if GameplayConfig.get_option_value(Options.auto_reset_circuit):
             robot.reset_circuit()
 
         self._hud.set_data((robot, None, None))  # don't overwrite the current map name

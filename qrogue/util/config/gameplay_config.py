@@ -286,18 +286,6 @@ class GameplayConfig:
     def get_option_value(option: Options, convert: Optional[bool] = None, ignore_test_config: Optional[bool] = None):
         return OptionsManager.get_option_value(option, convert, ignore_test_config)
 
-    @staticmethod
-    def auto_save() -> bool:
-        return OptionsManager.get_option_value(Options.auto_save, convert=True)
-
-    @staticmethod
-    def auto_reset_circuit() -> bool:
-        return OptionsManager.get_option_value(Options.auto_reset_circuit, convert=True)
-
-    @staticmethod
-    def log_keys() -> bool:
-        return OptionsManager.get_option_value(Options.log_keys, convert=True)
-
 
 class PuzzleConfig:
     BOSS_FLEE_ENERGY = 10
