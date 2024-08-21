@@ -3,12 +3,13 @@ import unittest
 
 from qrogue.game.logic.collectibles import InstructionManager
 from qrogue.game.target_factory import BossFactory
-from qrogue.util import PathConfig, StvDifficulty
+from qrogue.util import PathConfig, StvDifficulty, OptionsManager
 from qrogue.util.util_functions import cur_datetime, int_to_fixed_len_str, time_diff
 
 
 class ValidationTests(unittest.TestCase):
     def test_validate(self):
+        self.assertTrue(OptionsManager.validate(), "OptionsManager is invalid!")
         self.assertTrue(InstructionManager.validate(), "InstructionManager is invalid!")
         self.assertTrue(StvDifficulty.validate(), "StvDifficulty is invalid!")
         self.assertTrue(BossFactory.validate(), "BossFactory is invalid!")

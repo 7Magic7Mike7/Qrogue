@@ -1,7 +1,7 @@
 from typing import Tuple, Optional
 
 from qrogue.util import Logger
-from qrogue.util.config import PathConfig, GameplayConfig, Config, ColorConfig, FileTypes
+from qrogue.util.config import PathConfig, OptionsManager, Config, ColorConfig, FileTypes
 from qrogue.util.controls import Controls, Keys
 
 
@@ -55,7 +55,7 @@ class GameSimulator:
                     + len(Config.CONFIG_HEAD()) + 1  # start at the first line after CONFIG_HEAD
             end = self.__cur_chunk.index(bytes("\n\n", GameSimulator.__ENCODING), start)
             config = str(self.__cur_chunk[start:end], GameSimulator.__ENCODING)
-            GameplayConfig.from_log_text(config)
+            OptionsManager.from_text(config)
 
             # todo: use constants instead of these strings
             start = self.__cur_chunk.index(bytes("Qrogue<", GameSimulator.__ENCODING), end)
@@ -151,7 +151,7 @@ class GameSimulator:
             str_repr += self.__version + "\n"
             str_repr += str(self.__seed) + "\n"
             str_repr += str(self.__time) + "\n"
-            str_repr += GameplayConfig.to_file_text() + "\n"
+            str_repr += OptionsManager.to_string() + "\n"
 
         if skip_raw_keys and skip_logical_keys:
             return str_repr

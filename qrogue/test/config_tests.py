@@ -2,7 +2,7 @@ import unittest
 from typing import Dict, Any
 
 from qrogue.test.test_util import SingletonSetupTestCase
-from qrogue.util import GameplayConfig, Options
+from qrogue.util import GameplayConfig, Options, OptionsManager
 
 
 class MyOptionsTest(SingletonSetupTestCase):
@@ -83,7 +83,7 @@ Auto reset history=1
         options_text = MyOptionsTest._default_options_text()
         options_values = MyOptionsTest._default_option_values()
 
-        self.assertTrue(GameplayConfig.from_log_text(options_text), "Failed to load GameplayConfig")
+        self.assertTrue(OptionsManager.from_text(options_text), "Failed to load GameplayConfig")
 
         for option in Options:
             exp_val = options_values[option]

@@ -23,7 +23,7 @@ from qrogue.graphics.widgets.my_widgets import SelectionWidget, CircuitWidget, M
 from qrogue.util import CommonPopups, Config, Controls, GameplayConfig, HelpText, Logger, PathConfig, \
     Keys, UIConfig, ColorConfig, Options, PuzzleConfig, ScoreConfig, \
     get_filtered_help_texts, CommonQuestions, MapConfig, PyCuiConfig, ColorCode, split_text, MyRandom, \
-    LevelInfo, CommonInfos, LevelData, StvDifficulty, GateType, RandomManager
+    LevelInfo, CommonInfos, LevelData, StvDifficulty, GateType, RandomManager, OptionsManager
 from qrogue.util.achievements import Unlocks
 from qrogue.util.util_functions import enum_string, cur_datetime, time_diff, open_folder
 
@@ -332,7 +332,7 @@ class MenuWidgetSet(MyWidgetSet):
         self.__selection.render_reset()
 
     def __options(self) -> None:
-        Popup.generic_info("Gameplay Config", GameplayConfig.to_file_text())
+        Popup.generic_info("Options", OptionsManager.to_string())
 
 
 class LevelSelectWidgetSet(MyWidgetSet):
@@ -1368,7 +1368,7 @@ class PauseMenuWidgetSet(MyWidgetSet):
 
     def __options(self) -> bool:
         # hide most options for tutorial's sake
-        options = GameplayConfig.get_options()  # [Options.allow_implicit_removal, Options.allow_multi_move])
+        options = OptionsManager.get_options()  # [Options.allow_implicit_removal, Options.allow_multi_move])
         texts = []
         for op_tup in options:
             op, _ = op_tup
@@ -1411,7 +1411,7 @@ class PauseMenuWidgetSet(MyWidgetSet):
     def __options_text(self, index: int = 0) -> bool:
         if index == 0:
             path = PathConfig.user_data_path(Config.game_config_file())
-            Popup.generic_info(f"Configuration located at {path}", GameplayConfig.to_file_text())
+            Popup.generic_info(f"Configuration located at {path}", OptionsManager.to_string())
             return False
         else:
             return True
