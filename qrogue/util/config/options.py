@@ -46,7 +46,7 @@ class OptionsType(Enum):
         step_size = range_ / steps
 
         def get(index: int) -> str:
-            val = min_ + step_size * index
+            val = round(min_ + step_size * index, ndigits=3)
             return str(val)
 
         return get, float
