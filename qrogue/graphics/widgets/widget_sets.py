@@ -1277,6 +1277,10 @@ class TransitionWidgetSet(MyWidgetSet):
 
 
 class PauseMenuWidgetSet(MyWidgetSet):
+    __OPTIONS_OBJ = "options"
+    __SAVE_OBJ = "save"
+    __CANCEL_OBJ = "cancel"
+
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  continue_callback: Callable[[], None], save_callback: Callable[[], Tuple[bool, CommonInfos]],
                  exit_run_callback: Callable[[], None], restart_callback: Callable[[], None],
@@ -1295,19 +1299,26 @@ class PauseMenuWidgetSet(MyWidgetSet):
         self.__choices = SelectionWidget(choices, controls, stay_selected=True)
 
         self.__choices.set_data([
-            ("Continue", self.__continue),
-            ("Restart", self.__restart),
-            ("Save", self.__save),
-            ("Manual", self.__help),
-            # ("Achievements", self.__achievements),
-            ("Options", self.__options),
-            ("Exit", self.__exit),
+            (("Continue", None), self.__continue),
+            (("Restart", None), self.__restart),
+            (("Save", None), self.__save),
+            (("Manual", None), self.__help),
+            # (("Achievements", None), self.__achievements),
+            (("Options", PauseMenuWidgetSet.__OPTIONS_OBJ), self.__options),
+            (("Exit", None), self.__exit),
         ])
 
+        def _update_options_text(key: Keys):
+            if key in Keys.selection_keys() and self.__choices.selected_object is PauseMenuWidgetSet.__OPTIONS_OBJ:
+                if isinstance(self.__details.selected_object[0], Options):
+                    self.__description.set_data(self.__details.selected_object[0].description)
+                else:
+                    self.__description.set_data("")
+                self.__description.render()
         details = self.add_block_label('Details', UIConfig.HUD_HEIGHT, UIConfig.PAUSE_CHOICES_WIDTH,
                                        row_span=UIConfig.WINDOW_HEIGHT - UIConfig.HUD_HEIGHT,
                                        column_span=UIConfig.WINDOW_WIDTH - UIConfig.PAUSE_CHOICES_WIDTH, center=True)
-        self.__details = SelectionWidget(details, controls, is_second=True)
+        self.__details = SelectionWidget(details, controls, is_second=True, on_key_press=_update_options_text)
 
         description = self.add_block_label('Description', UIConfig.WINDOW_HEIGHT - UIConfig.PAUSE_DESCRIPTION_HEIGHT,
                                            UIConfig.PAUSE_CHOICES_WIDTH, row_span=UIConfig.PAUSE_DESCRIPTION_HEIGHT,
@@ -1322,11 +1333,13 @@ class PauseMenuWidgetSet(MyWidgetSet):
                 Widget.move_focus(self.__details, self)
                 self.__choices.render()
                 self.__details.render()
+                self.__description.render()
 
         self.__choices.widget.add_key_command(controls.action, use_choices)
 
         def use_details():
             if self.__details.use():
+                self.__description.set_data(HelpText.Pause.text)    # reset details' changes to description
                 self.__focus_choices()
 
         self.__details.widget.add_key_command(controls.action, use_details)
@@ -1368,24 +1381,12 @@ class PauseMenuWidgetSet(MyWidgetSet):
 
     def __options(self) -> bool:
         # hide most options for tutorial's sake
-        options = OptionsManager.get_options()  # [Options.allow_implicit_removal, Options.allow_multi_move])
-        texts = []
-        for op_tup in options:
-            op, _ = op_tup
-            texts.append(f"{op.name}: {GameplayConfig.get_option_value(op, convert=False)}")
+        options = OptionsManager.get_options([Options.auto_save, Options.log_keys, Options.allow_implicit_removal])
+        texts = [f"{option.name}: {GameplayConfig.get_option_value(option, convert=False)}"
+                 for option, _ in options]
 
         def callback(index: int) -> bool:
-            if 0 <= index < len(options):
-                option, next_ = options[index]
-                new_title = f"{option.name}: {next_(option)}"
-                self.__details.update_text(new_title, index)
-                self.__details.render()
-                self.__description.set_data(option.description)
-                self.__description.render()
-                return False  # don't change widget focus
-
-            if index == len(options):
-                # save was selected
+            if self.__details.selected_object[0] is PauseMenuWidgetSet.__SAVE_OBJ:
                 if Config.save_gameplay_config():
                     # we cannot go back directly since we want to inform the user that saving was successful
                     # therefore we go back after closing the Popup
@@ -1394,27 +1395,29 @@ class PauseMenuWidgetSet(MyWidgetSet):
                 else:
                     CommonInfos.OptionsNotSaved.show()
                 return False
-            else:
+            elif self.__details.selected_object[0] is PauseMenuWidgetSet.__CANCEL_OBJ:
                 # reset changes
                 try:
                     Config.load_gameplay_config()  # todo error message or is the file exception good enough?
                 except FileNotFoundError as error:
                     Logger.instance().throw(error)
-                return True  # index out of range and no special case -> go back
+                return True     # return to choices
+            else:
+                option, next_ = self.__details.selected_object
+                new_title = f"{option.name}: {next_(option)}"
+                self.__details.update_text(new_title, index)
+                self.__details.render()
+                self.__description.set_data(option.description)
+                self.__description.render()
+                return False  # don't change widget focus
 
         self.__details.set_data(data=(
-            texts + ["-Save-", MyWidgetSet.BACK_STRING],
+            (texts + ["-Save-", MyWidgetSet.BACK_STRING],
+             options + [(PauseMenuWidgetSet.__SAVE_OBJ, None), (PauseMenuWidgetSet.__CANCEL_OBJ, None)]),
             [callback]
         ))
+        self.__description.set_data(options[0][0].description)  # initialize description with first option
         return True
-
-    def __options_text(self, index: int = 0) -> bool:
-        if index == 0:
-            path = PathConfig.user_data_path(Config.game_config_file())
-            Popup.generic_info(f"Configuration located at {path}", OptionsManager.to_string())
-            return False
-        else:
-            return True
 
     def __exit(self) -> bool:
         self.__exit_run()
