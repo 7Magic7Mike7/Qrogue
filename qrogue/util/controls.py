@@ -120,6 +120,13 @@ class Keys(IntEnum):
         return Keys.selection_keys() + [Keys.Action, Keys.Cancel]
 
     @staticmethod
+    def hotkey(index: int) -> "Keys":
+        hotkeys = Keys.hotkeys()
+        if 0 <= index < len(hotkeys):
+            return hotkeys[index]
+        return Keys.Invalid
+
+    @staticmethod
     def hotkeys() -> "List[Keys]":
         return [Keys.HotKey0, Keys.HotKey1, Keys.HotKey2, Keys.HotKey3, Keys.HotKey4, Keys.HotKey5, Keys.HotKey6,
                 Keys.HotKey7, Keys.HotKey8, Keys.HotKey9]
