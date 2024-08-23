@@ -821,6 +821,13 @@ class SelectionWidget(Widget):
     __SEPARATOR = " " * len(__SELECTION_MARKER)
 
     @staticmethod
+    def cancel_obj() -> Any:
+        """
+        A selection object that can be used globally to indicate a "Cancel" choice
+        """
+        return "-cancel-"
+
+    @staticmethod
     def wrap_in_hotkey_str(options: List[str]) -> List[str]:
         if len(options) <= 1:
             return options  # no explicit hotkeys if there are not multiple options

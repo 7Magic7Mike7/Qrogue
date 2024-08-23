@@ -340,7 +340,6 @@ class LevelSelectWidgetSet(MyWidgetSet):
     __LEVEL_HEADER = "Level: "
     __CUSTOM_MAP_CODE = "custom"
     __GATE_CONFIRM = "confirm"
-    __GATE_CANCEL = "cancel"
 
     def __init__(self, controls: Controls, logger: Logger, root: py_cui.PyCUI,
                  base_render_callback: Callable[[List[Renderable]], None], rm: MyRandom,
@@ -506,7 +505,7 @@ class LevelSelectWidgetSet(MyWidgetSet):
 
         # add cancel to stop selecting a level
         display_names.append("-Cancel-")
-        internal_names.append(None)  # the selection-object to easily identify cancel
+        internal_names.append(SelectionWidget.cancel_obj())
 
         def overwrite(index: int):
             if index == 0:  # Yes, reset custom gate selection to level specific selection
@@ -515,7 +514,7 @@ class LevelSelectWidgetSet(MyWidgetSet):
             Widget.move_focus(self.__choices, self)    # move focus manually since this is called from a (focused) popup
 
         def set_level(index: int) -> bool:
-            if self.__details.selected_object is None:
+            if self.__details.selected_object is SelectionWidget.cancel_obj():
                 return True  # "Cancel" was selected
 
             self.__level = self.__details.selected_object
@@ -548,7 +547,7 @@ class LevelSelectWidgetSet(MyWidgetSet):
 
     def __choose_gates(self) -> bool:
         def add_gate(index: int) -> bool:
-            if self.__details.selected_object is LevelSelectWidgetSet.__GATE_CANCEL:
+            if self.__details.selected_object is SelectionWidget.cancel_obj():
                 for sg in self.__selectable_gates: sg.discard()
                 return True     # "Cancel" was selected
             if self.__details.selected_object is LevelSelectWidgetSet.__GATE_CONFIRM:
@@ -567,7 +566,7 @@ class LevelSelectWidgetSet(MyWidgetSet):
         # add all available gates plus meta options Confirm and Cancel
         names: List[str] = [str(sg) for sg in self.__selectable_gates] + ["-Confirm-", "-Cancel-"]
         gate_objects: List[Union[LevelSelectWidgetSet._SelectableGate, str]] = \
-            self.__selectable_gates + [LevelSelectWidgetSet.__GATE_CONFIRM, LevelSelectWidgetSet.__GATE_CANCEL]
+            self.__selectable_gates + [LevelSelectWidgetSet.__GATE_CONFIRM, SelectionWidget.cancel_obj()]
         self.__details.set_data(((names, gate_objects), add_gate))
         return True
 
@@ -1279,7 +1278,6 @@ class TransitionWidgetSet(MyWidgetSet):
 class PauseMenuWidgetSet(MyWidgetSet):
     __OPTIONS_OBJ = "options"
     __SAVE_OBJ = "save"
-    __CANCEL_OBJ = "cancel"
 
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  continue_callback: Callable[[], None], save_callback: Callable[[], Tuple[bool, CommonInfos]],
@@ -1395,7 +1393,7 @@ class PauseMenuWidgetSet(MyWidgetSet):
                 else:
                     CommonInfos.OptionsNotSaved.show()
                 return False
-            elif self.__details.selected_object[0] is PauseMenuWidgetSet.__CANCEL_OBJ:
+            elif self.__details.selected_object[0] is SelectionWidget.cancel_obj():
                 # reset changes
                 try:
                     Config.load_gameplay_config()  # todo error message or is the file exception good enough?
@@ -1413,7 +1411,7 @@ class PauseMenuWidgetSet(MyWidgetSet):
 
         self.__details.set_data(data=(
             (texts + ["-Save-", MyWidgetSet.BACK_STRING],
-             options + [(PauseMenuWidgetSet.__SAVE_OBJ, None), (PauseMenuWidgetSet.__CANCEL_OBJ, None)]),
+             options + [(PauseMenuWidgetSet.__SAVE_OBJ, None), (SelectionWidget.cancel_obj(), None)]),
             [callback]
         ))
         self.__description.set_data(options[0][0].description)  # initialize description with first option
@@ -1448,7 +1446,6 @@ class PauseMenuWidgetSet(MyWidgetSet):
 
 class WorkbenchWidgetSet(MyWidgetSet):
     __GATE_CONFIRM = "confirm"
-    __GATE_CANCEL = "cancel"
 
     def __init__(self, logger, root: py_cui.PyCUI, base_render_callback: Callable[[List[Renderable]], None],
                  controls: Controls, get_original_gates_callback: Callable[[], List[Instruction]],
@@ -1509,7 +1506,7 @@ class WorkbenchWidgetSet(MyWidgetSet):
         selectable_gates = [MyWidgetSet._SelectableGate(gate) for gate in self.__get_original_gates()]
 
         def select_gate(index: int) -> bool:
-            if self.__details.selected_object is WorkbenchWidgetSet.__GATE_CANCEL:
+            if self.__details.selected_object is SelectionWidget.cancel_obj():
                 return True  # "Cancel" was selected
             if self.__details.selected_object is WorkbenchWidgetSet.__GATE_CONFIRM:
                 selected_gates = [sg.to_gate() for sg in selectable_gates if sg.is_selected]
@@ -1525,7 +1522,7 @@ class WorkbenchWidgetSet(MyWidgetSet):
 
         # add all available gates plus meta options Confirm and Cancel
         names: List[str] = [str(gate) for gate in selectable_gates] + ["-Confirm-", "-Cancel-"]
-        meta_objects = [WorkbenchWidgetSet.__GATE_CONFIRM, WorkbenchWidgetSet.__GATE_CANCEL]
+        meta_objects = [WorkbenchWidgetSet.__GATE_CONFIRM, SelectionWidget.cancel_obj()]
         self.__details.set_data(((names, selectable_gates + meta_objects), select_gate))
         return True
 
