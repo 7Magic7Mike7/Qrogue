@@ -1147,10 +1147,8 @@ class SelectionWidget(Widget):
                                                    f"Text of choices: {self.__choices}"))
             ret = self.__callbacks[self.__index]()
         self.__on_key_press(Keys.Action)
-        if ret is None:  # move focus if nothing is returned
-            return True
-        else:
-            return ret
+        # return True for None to also move focus if nothing is returned
+        return True if ret is None else ret
 
 
 class HistoricWrapperWidget:
