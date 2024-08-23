@@ -1669,6 +1669,9 @@ class NavigationWidgetSet(MapWidgetSet):
 
 class ReachTargetWidgetSet(MyWidgetSet, ABC):
     __DETAILS_COLUMNS = 4
+    __COMPLETED_PUZZLE_HISTORY_TEXT = f"{ColorConfig.highlight_object('Puzzle', invert=True)} was " \
+                                      f"{ColorConfig.highlight_action('solved', invert=True)}\n" \
+                                      f"you're currently viewing its history"
     __CHOICES_REMOVE_OBJECT = "remove"
     __CHOICES_RESET_OBJECT = "reset"
     __CHOICES_FLEE_OBJECT = "flee"
@@ -1817,11 +1820,16 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         # initialized first for the hidden render()-call to succeed
         def travel_history(forth: bool) -> Callable[[], None]:
             def func():
-                if GameplayConfig.get_option_value(Options.enable_puzzle_history, convert=True):
-                    # block functionality if we are displaying the reward message or are not focused on _choices
-                    # (e.g., are manipulating the circuit)
-                    if self._choices.widget.is_selected() and not self._in_reward_message:
-                        self.__history_widget.travel(forth, render=True)
+                # first check if we can travel through the puzzle's history
+                if not GameplayConfig.get_option_value(Options.enable_puzzle_history, convert=True): return
+                if not self._choices.widget.is_selected(): return
+
+                if self._in_reward_message:
+                    # update choices' text to avoid confusion when reading the success message in a non-solved
+                    #  (historic) puzzle state
+                    self._choices.update_text(ReachTargetWidgetSet.__COMPLETED_PUZZLE_HISTORY_TEXT, 0)
+                    self._choices.render()
+                self.__history_widget.travel(forth, render=True)
 
             return func
 
@@ -2096,7 +2104,8 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
         if reward is None:
             self._choices.set_data(data=(
-                [f"Congratulations, you solved the {ColorConfig.highlight_object('Puzzle', invert=True)}!"],
+                [f"Congratulations, you {ColorConfig.highlight_action('solved', invert=True)} the "
+                 f"{ColorConfig.highlight_object('Puzzle', invert=True)}!"],
                 [give_reward_and_continue]
             ))
         else:
