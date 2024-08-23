@@ -845,13 +845,15 @@ class SelectionWidget(Widget):
         return text.startswith(f"[{index}] ")
 
     def __init__(self, widget: WidgetWrapper, controls: Controls, columns: int = 1, is_second: bool = False,
-                 stay_selected: bool = False, on_key_press: Optional[Callable[[Keys], None]] = None):
+                 stay_selected: bool = False, add_cancel_key: bool = True,
+                 on_key_press: Optional[Callable[[Keys], None]] = None):
         """
         :param widget: the underlying widget
         :param controls: used Controls for key mapping
         :param columns: in how many columns the choices should be represented
         :param is_second: whether this SelectionWidget has a first "main" SelectionWidget that controls its content
         :param stay_selected: whether the selected choice should stay when focusing another widget or not
+        :param add_cancel_key: whether a cancel functionality should be added (only works if there is a cancel_obj!)
         :param on_key_press: a method that is called after (i.e., the SelectionWidgets internal state already changed)
             a selection-changing key or action is pressed
         """
@@ -875,6 +877,9 @@ class SelectionWidget(Widget):
         self.widget.add_key_command(controls.get_keys(Keys.SelectionRight), self._right)
         self.widget.add_key_command(controls.get_keys(Keys.SelectionDown), self._down)
         self.widget.add_key_command(controls.get_keys(Keys.SelectionLeft), self._left)
+
+        if add_cancel_key:
+            self.widget.add_key_command(controls.get_keys(Keys.Cancel), self.__jump_to_cancel, overwrite=False)
 
         # sadly cannot use a loop here because of how lambda expressions work the index would be the same for all calls
         # instead we use a list of indices to still be flexible without changing much code
@@ -1123,6 +1128,17 @@ class SelectionWidget(Widget):
         # only call if the key press changes something (e.g. more than 1 choice)
         self.__on_key_press(Keys.SelectionLeft)
         self.render()
+
+    def __jump_to_cancel(self):
+        # try to find cancel_obj to jump to its index
+        if len(self.__choice_objects) <= 0: return  # there is no cancel_obj
+
+        # go from back to front because usually cancel is one of the last choices
+        for i in range(self.num_of_choices, -1, -1):
+            if len(self.__choice_objects) <= i: continue    # still out of bounds
+            if self.__choice_objects[i] is SelectionWidget.cancel_obj():
+                # we found cancel_obj
+                self.__jump_to_index(i)
 
     def __jump_to_index(self, index: int):
         if index < 0:

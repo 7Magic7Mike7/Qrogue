@@ -279,37 +279,47 @@ class MenuWidgetSet(MyWidgetSet):
 
     def __update_selection(self):
         choices = []
+        objects = []
         callbacks = []
         if self.__check_unlocks(Unlocks.MainMenuContinue):
             choices.append("CONTINUE JOURNEY\n")
+            objects.append(None)
             callbacks.append(self.__quick_start_callback)
 
         else:
             choices.append("START YOUR JOURNEY\n")
+            objects.append(None)
             callbacks.append(self.__start_playing_callback)
 
         if self.__check_unlocks(Unlocks.LevelSelection):
             choices.append("SELECT LEVEL\n")
+            objects.append(None)
             callbacks.append(self.__show_level_select_callback)
 
         if self.__check_unlocks(Unlocks.Workbench):
             choices.append("WORKBENCH\n")
+            objects.append(None)
             callbacks.append(self.__show_workbench_callback)
 
         # choices.append("START AN EXPEDITION\n")
         # callbacks.append(self.__start_expedition)
 
         choices.append("SCREEN CHECK\n")
+        objects.append(None)
         callbacks.append(self.__show_screen_check_callback)
 
         choices.append("SAVE\n")
+        objects.append(None)
         callbacks.append(self.__save)
 
         # choices.append("OPTIONS\n")  # for more space between the rows we add "\n"
         # callbacks.append(self.__options)
+
         choices.append("EXIT\n")
+        objects.append(SelectionWidget.cancel_obj())
         callbacks.append(self.__stop_callback)
-        self.__selection.set_data(data=(choices, callbacks))
+
+        self.__selection.set_data(data=((choices, objects), callbacks))
 
     def set_data(self, new_seed: int):
         self.__update_selection()
@@ -1303,7 +1313,7 @@ class PauseMenuWidgetSet(MyWidgetSet):
             (("Manual", None), self.__help),
             # (("Achievements", None), self.__achievements),
             (("Options", PauseMenuWidgetSet.__OPTIONS_OBJ), self.__options),
-            (("Exit", None), self.__exit),
+            (("Exit", SelectionWidget.cancel_obj()), self.__exit),
         ])
 
         def _update_options_text(key: Keys):
@@ -1361,16 +1371,21 @@ class PauseMenuWidgetSet(MyWidgetSet):
         return False
 
     def __help(self) -> bool:
-        texts = [enum_string(val, skip_type_prefix=True) for val in get_filtered_help_texts()] + [MyWidgetSet.BACK_STRING]
+        objects = get_filtered_help_texts()
+        texts = [enum_string(val, skip_type_prefix=True) for val in objects] + [MyWidgetSet.BACK_STRING]
+        objects.append(SelectionWidget.cancel_obj())
 
-        def func(val: HelpText) -> Callable[[], bool]:
-            # the check for "is not None" leads to a return value of False (because we don't want to switch widgets)
-            return lambda: Popup.generic_info(enum_string(val, skip_type_prefix=True), val.text) is not None
+        def callback(_: int):
+            val = self.__details.selected_object
+            if self.__details.selected_object is SelectionWidget.cancel_obj():
+                return True     # change focused widget
+            elif isinstance(val, HelpText):
+                Popup.generic_info(enum_string(val, skip_type_prefix=True), val.text)
+                return False
+            Config.check_reachability("PauseMenuWidgetSet.__help().callback()_unhandled selection object")
+            return False
 
-        callbacks = [func(val) for val in get_filtered_help_texts()]
-        callbacks.append(lambda: True)  # simple callback for "back"
-
-        self.__details.set_data(data=(texts, callbacks))
+        self.__details.set_data(data=((texts, objects), callback))
         return True
 
     def __achievements(self) -> bool:
@@ -1995,14 +2010,14 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             callbacks.append(self.__reset_circuit)
         if self._check_unlocks(Unlocks.PuzzleFlee):
             choices.append(self.__flee_choice)
-            objects.append(ReachTargetWidgetSet.__CHOICES_FLEE_OBJECT)
+            objects.append(SelectionWidget.cancel_obj())    # fleeing is the cancel option of a fight
             callbacks.append(self.__flee)  # just return True to change back to previous screen
 
         self._choices.set_data(data=((choices, objects), callbacks))
 
     def __choose_instruction(self) -> bool:
         cur_instruction = self._choices.selected_object
-        if cur_instruction is not None:
+        if isinstance(cur_instruction, Instruction):
             if cur_instruction.is_used():
                 # move the instruction
                 pos = cur_instruction.position
