@@ -184,7 +184,7 @@ class Controls:
         [_PK_DOWN] + _SK_DOWN,
         [_PK_LEFT] + _SK_LEFT,
         # popups: 8 - 13
-        [_PK_CONFIRM] + _SK_CONFIRM,  #[KEY_ESCAPE],     # KEY_ESCAPE is not allowed to be at the first position because then the simulator would stop itself
+        [_PK_CONFIRM] + _SK_CONFIRM + [_PK_CANCEL] + _SK_CANCEL,  # close
         [_PK_UP] + _SK_UP,
         [_PK_DOWN] + _SK_DOWN,
         [_PK_RIGHT] + _SK_RIGHT,
