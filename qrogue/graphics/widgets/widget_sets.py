@@ -1836,7 +1836,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                 headline = text_mat[:text_mat.index("\n")]
                 Popup.show_matrix(headline, text_mat[len(headline) + 1:])
             else:
-                Logger.error(f"No \"\\n\" found in matrix: {text_mat}.", show=False, from_pycui=False)
+                Logger.instance().error(f"No \"\\n\" found in matrix: {text_mat}.", show=False, from_pycui=False)
 
         self.add_key_command(controls.get_keys(Keys.MatrixPopup), show_matrix_popup, add_to_widgets=True)
 
