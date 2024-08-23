@@ -1674,7 +1674,6 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                                       f"you're currently viewing its history"
     __CHOICES_REMOVE_OBJECT = "remove"
     __CHOICES_RESET_OBJECT = "reset"
-    __CHOICES_FLEE_OBJECT = "flee"
 
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  continue_exploration_callback: Callable[[bool], None], reopen_popup: Callable[[], None],
