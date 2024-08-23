@@ -3,7 +3,8 @@ import os
 import qiskit  # imported to check its version
 
 from qrogue.util.util_functions import cur_datetime
-from .gameplay_config import CheatConfig, GameplayConfig
+from .gameplay_config import CheatConfig
+from .options import OptionsManager
 from .path_config import PathConfig
 from .test_config import TestConfig
 
@@ -99,7 +100,7 @@ class Config:  # todo make singleton and handle access to other configs?
         head = f"{Config.__HEADER}{Config.version()}\n"
         head += f"{Config.__SEED_HEAD}{seed}\n"
         head += f"{Config.__TIME_HEAD}{now_str}\n\n"
-        head += f"{Config.__CONFIG_HEAD}\n{GameplayConfig.to_file_text()}\n"
+        head += f"{Config.__CONFIG_HEAD}\n{OptionsManager.to_string()}\n"
         return head
 
     @staticmethod
@@ -149,7 +150,7 @@ class Config:  # todo make singleton and handle access to other configs?
         if not os.path.exists(path):
             text = ""
             text += Config.__GAMEPLAY_HEAD
-            text += GameplayConfig.to_file_text()
+            text += OptionsManager.to_string()
             with open(path, "x") as file:
                 file.write(text)
 
@@ -168,7 +169,7 @@ class Config:  # todo make singleton and handle access to other configs?
         try:
             content = PathConfig.read(Config.game_config_file(), in_user_path=True)
             gameplay_start = content.index(Config.__GAMEPLAY_HEAD) + len(Config.__GAMEPLAY_HEAD)
-            if GameplayConfig.from_log_text(content[gameplay_start:len(content)]):
+            if OptionsManager.from_text(content[gameplay_start:len(content)]):
                 return True
         except FileNotFoundError:
             raise FileNotFoundError("Could not load the game's config file!")
@@ -176,7 +177,7 @@ class Config:  # todo make singleton and handle access to other configs?
 
     @staticmethod
     def save_gameplay_config() -> bool:
-        text = f"{Config.__GAMEPLAY_HEAD}\n{GameplayConfig.to_file_text()}\n"
+        text = f"{Config.__GAMEPLAY_HEAD}\n{OptionsManager.to_string()}\n"
         PathConfig.write(Config.game_config_file(), text, in_user_path=True, may_exist=True, append=False)
         return True
 

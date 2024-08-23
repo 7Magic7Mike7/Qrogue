@@ -6,7 +6,7 @@ from qrogue.game.world.dungeon_generator import QrogueLevelGenerator
 from qrogue.game.world.dungeon_generator.wave_function_collapse import WFCManager
 from qrogue.game.world.map import CallbackPack
 from qrogue.management import QrogueCUI
-from qrogue.util import Logger, Config, PyCuiConfig, PathConfig, GameplayConfig
+from qrogue.util import Logger, Config, PyCuiConfig, PathConfig, GameplayConfig, Options
 
 
 def __init_singletons(seed: int):
@@ -114,7 +114,7 @@ def start_game(from_console: bool = False, debugging: bool = False, test_level: 
             sys.exit(1)
 
         # flush after the player stopped playing
-        if GameplayConfig.auto_save():
+        if GameplayConfig.get_option_value(Options.auto_save):
             success, message = save_data.save()  # todo: save at a different location?
             if success:
                 print("[Qrogue] Successfully saved the game!")
@@ -163,7 +163,7 @@ def simulate_game(simulation_path: str, from_console: bool = False, debugging: b
             sys.exit(1)
 
         # flush after the player stopped playing
-        if GameplayConfig.auto_save():  # todo: save at a different location?
+        if GameplayConfig.get_option_value(Options.auto_save):  # todo: save at a different location?
             success, message = save_data.save()
             if success:
                 print("[Qrogue] Successfully saved the game!")

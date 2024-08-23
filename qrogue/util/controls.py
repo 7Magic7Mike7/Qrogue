@@ -120,6 +120,13 @@ class Keys(IntEnum):
         return Keys.selection_keys() + [Keys.Action, Keys.Cancel]
 
     @staticmethod
+    def hotkey(index: int) -> "Keys":
+        hotkeys = Keys.hotkeys()
+        if 0 <= index < len(hotkeys):
+            return hotkeys[index]
+        return Keys.Invalid
+
+    @staticmethod
     def hotkeys() -> "List[Keys]":
         return [Keys.HotKey0, Keys.HotKey1, Keys.HotKey2, Keys.HotKey3, Keys.HotKey4, Keys.HotKey5, Keys.HotKey6,
                 Keys.HotKey7, Keys.HotKey8, Keys.HotKey9]
@@ -177,7 +184,7 @@ class Controls:
         [_PK_DOWN] + _SK_DOWN,
         [_PK_LEFT] + _SK_LEFT,
         # popups: 8 - 13
-        [_PK_CONFIRM] + _SK_CONFIRM,  #[KEY_ESCAPE],     # KEY_ESCAPE is not allowed to be at the first position because then the simulator would stop itself
+        [_PK_CONFIRM] + _SK_CONFIRM + [_PK_CANCEL] + _SK_CANCEL,  # close
         [_PK_UP] + _SK_UP,
         [_PK_DOWN] + _SK_DOWN,
         [_PK_RIGHT] + _SK_RIGHT,

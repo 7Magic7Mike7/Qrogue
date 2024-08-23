@@ -549,7 +549,7 @@ class QrogueCUI(PyCUI):
                 if key_pressed == PyCuiConfig.KEY_ESCAPE:
                     pass  # ignore ESC because this makes you leave the CUI
                 else:
-                    if GameplayConfig.log_keys() and not self.is_simulating:
+                    if GameplayConfig.get_option_value(Options.log_keys) and not self.is_simulating:
                         self.__key_logger.log(self.__controls, key_pressed)
                         self.__ow_key_logger.log(self.__controls, key_pressed)
                     super(QrogueCUI, self)._handle_key_presses(key_pressed)

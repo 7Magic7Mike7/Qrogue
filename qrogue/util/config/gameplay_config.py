@@ -1,8 +1,8 @@
 import enum
-from enum import Enum
-from typing import Callable, Tuple, List, Dict, Any, Optional, Set
+from typing import Callable, Tuple, List, Set, Optional
 
 from qrogue.util.util_functions import open_folder
+from .options import OptionsManager, Options
 from .path_config import PathConfig
 from .test_config import TestConfig
 from .visual_config import PopupConfig, PyCuiColors
@@ -245,176 +245,12 @@ class CheatConfig:
         return CheatConfig.__use_cheat(code)
 
 
-def _get_boolean_callback() -> Tuple[Callable[[int], str], Callable[[str], bool]]:
-    def get(index: int) -> str:
-        if index % 2 == 1:
-            return "yes"
-        else:
-            return "no"
-
-    def convert(value: str) -> bool:
-        if value.lower() == "yes":
-            return True
-        else:
-            return False
-
-    return get, convert
-
-
-def _get_float_callback(min_: float, max_: float, steps: int) -> Tuple[Callable[[int], str], Callable[[str], float]]:
-    assert min_ < max_
-    assert steps > 0
-    range_ = max_ - min_
-    step_size = range_ / steps
-
-    def get(index: int) -> str:
-        val = min_ + step_size * index
-        return str(val)
-
-    return get, float
-
-
-class Options(Enum):
-    energy_mode = ("Energy Mode", _get_boolean_callback(), 2, 0,
-                   "In energy mode every change to your circuit costs energy. You loose if your Robot is out of "
-                   "energy.")
-
-    auto_save = ("Auto Save", _get_boolean_callback(), 2, 1,
-                 "Whether to automatically save the game on exit or not.")
-    auto_reset_circuit = ("Auto Reset Circuit", _get_boolean_callback(), 2, 1,
-                          "Automatically reset your Circuit to a clean state at the beginning of a Puzzle, Riddle, "
-                          "etc.")
-    log_keys = ("Log Keys", _get_boolean_callback(), 2, 1,
-                "Stores all keys you pressed in a .qrkl-file so one can replay them (e.g. for analysing a bug)")
-
-    gameplay_key_pause = ("Gameplay Key Pause", _get_float_callback(0.1, 1.0, 9), 9, 0,
-                          "How long to wait before we process the next input during gameplay.")
-    simulation_key_pause = ("Simulation Key Pause", _get_float_callback(0.05, 1.0, 19), 19, 3,
-                            "How long to wait before we process the next input during simulation.")
-
-    show_ket_notation = ("Show Ket-Notation", _get_boolean_callback(), 2, 1,
-                         "Whether to display ket-notation for state vectors and circuit matrix or not.")
-    allow_implicit_removal = ("Allow implicit Removal", _get_boolean_callback(), 2, 0,
-                              "Allows you to place a gate on an occupied spot, removing the occupying gate in the "
-                              "process.")
-    allow_multi_move = ("Allow multi move", _get_boolean_callback(), 2, 1,
-                        "Allows you to move multiple tiles at once by pressing a number followed by a direction.")
-    auto_skip_text_animation = ("Auto skip text animation", _get_boolean_callback(), 2, 0,
-                                "During some special scene transitions there will be some animated text describing "
-                                "what happened in-between story sections. Skipping this means that the whole text "
-                                "will be shown at once.")
-    enable_puzzle_history = ("Enable puzzle history", _get_boolean_callback(), 2, 1,
-                             "Whether you can navigate through your circuit's history or not while solving a puzzle.")
-    auto_reset_history = ("Auto reset history", _get_boolean_callback(), 2, 1,
-                          "Whether the puzzle history should automatically jump to the present (= last changes) when "
-                          "you navigate through menus.\nNote: Confirming to edit the circuit always resets history.")
-
-    def __init__(self, name: str, get_value: Tuple[Callable[[int], str], Callable[[str], Any]], num_of_values: int,
-                 default_index: int, description: str):
-        self.__name = name
-        self.__get_value, self.__convert_value = get_value
-        self.__num_of_values = num_of_values
-        self.__default_index = default_index
-        self.__description = description
-
-    @property
-    def name(self) -> str:
-        return self.__name
-
-    @property
-    def num_of_values(self) -> int:
-        return self.__num_of_values
-
-    @property
-    def default_index(self) -> int:
-        return self.__default_index
-
-    @property
-    def description(self) -> str:
-        return self.__description
-
-    def get_value(self, cur_index: int) -> str:
-        return self.__get_value(cur_index)
-
-    def convert(self, cur_index: int) -> Any:
-        value = self.get_value(cur_index)
-        return self.__convert_value(value)
-
-
 class GameplayConfig:
     class _KnowledgeMode(enum.Enum):
         Newbie = 0
         Experienced = 1
 
-    __KEY_VALUE_SEPARATOR = "="
-    __OPTIONS: Dict[Options, int] = {}
-
     __KNOWLEDGE_MODE: _KnowledgeMode = _KnowledgeMode.Newbie
-
-    @staticmethod
-    def init_options():
-        for val in Options:
-            GameplayConfig.__OPTIONS[val] = val.default_index
-
-    @staticmethod
-    def get_options(needed_options: Optional[List[Options]] = None) -> List[Tuple[Options, Callable[[Options], str]]]:
-        """
-
-        :return: list of [Option, Function to proceed to next value] for all gameplay config options
-        """
-        if needed_options is None:
-            needed_options = GameplayConfig.__OPTIONS
-
-        def next_(option: Options) -> str:
-            # first increment the current index
-            next_index = GameplayConfig.__OPTIONS[option] + 1
-            if next_index >= option.num_of_values:
-                next_index = 0
-            GameplayConfig.__OPTIONS[option] = next_index
-            # then return the corresponding new value
-            return option.get_value(next_index)
-
-        return [(option, next_) for option in needed_options]
-
-    @staticmethod
-    def get_option_value(option: Options, convert: bool = True) -> Any:
-        cur_index = GameplayConfig.__OPTIONS[option]
-        if convert:
-            if Options.simulation_key_pause and TestConfig.is_active():
-                return TestConfig.key_pause()
-            return option.convert(cur_index)
-        else:
-            return option.get_value(cur_index)
-
-    @staticmethod
-    def to_file_text() -> str:
-        text = ""
-        for option in GameplayConfig.__OPTIONS:
-            cur_index = GameplayConfig.__OPTIONS[option]
-            text += f"{option.name}{GameplayConfig.__KEY_VALUE_SEPARATOR}{cur_index}"
-            text += "\n"
-        return text
-
-    @staticmethod
-    def from_log_text(log_text: str) -> bool:
-        def normalize(text: str) -> str:
-            return text.lower().strip(" ")
-
-        for line in log_text.splitlines():
-            if len(line.strip(" ")) == 0:
-                continue
-            try:
-                name, index = line.split(GameplayConfig.__KEY_VALUE_SEPARATOR)
-                name = normalize(name)
-                for val in Options.__members__.values():
-                    if normalize(val.name) == name:  # compare the normalized names
-                        GameplayConfig.__OPTIONS[val] = int(index)
-                        break
-            except IndexError:
-                return False
-            except KeyError:
-                return False
-        return True
 
     @staticmethod
     def set_newbie_mode():
@@ -447,16 +283,8 @@ class GameplayConfig:
         return GameplayConfig.__KNOWLEDGE_MODE == GameplayConfig._KnowledgeMode.Experienced
 
     @staticmethod
-    def auto_save() -> bool:
-        return GameplayConfig.get_option_value(Options.auto_save, convert=True)
-
-    @staticmethod
-    def auto_reset_circuit() -> bool:
-        return GameplayConfig.get_option_value(Options.auto_reset_circuit, convert=True)
-
-    @staticmethod
-    def log_keys() -> bool:
-        return GameplayConfig.get_option_value(Options.log_keys, convert=True)
+    def get_option_value(option: Options, convert: Optional[bool] = None, ignore_test_config: Optional[bool] = None):
+        return OptionsManager.get_option_value(option, convert, ignore_test_config)
 
 
 class PuzzleConfig:

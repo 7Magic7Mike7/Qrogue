@@ -821,6 +821,13 @@ class SelectionWidget(Widget):
     __SEPARATOR = " " * len(__SELECTION_MARKER)
 
     @staticmethod
+    def cancel_obj() -> Any:
+        """
+        A selection object that can be used globally to indicate a "Cancel" choice
+        """
+        return "-cancel-"
+
+    @staticmethod
     def wrap_in_hotkey_str(options: List[str]) -> List[str]:
         if len(options) <= 1:
             return options  # no explicit hotkeys if there are not multiple options
@@ -838,7 +845,18 @@ class SelectionWidget(Widget):
         return text.startswith(f"[{index}] ")
 
     def __init__(self, widget: WidgetWrapper, controls: Controls, columns: int = 1, is_second: bool = False,
-                 stay_selected: bool = False, on_key_press: Optional[Callable[[Keys], None]] = None):
+                 stay_selected: bool = False, add_cancel_key: bool = True,
+                 on_key_press: Optional[Callable[[Keys], None]] = None):
+        """
+        :param widget: the underlying widget
+        :param controls: used Controls for key mapping
+        :param columns: in how many columns the choices should be represented
+        :param is_second: whether this SelectionWidget has a first "main" SelectionWidget that controls its content
+        :param stay_selected: whether the selected choice should stay when focusing another widget or not
+        :param add_cancel_key: whether a cancel functionality should be added (only works if there is a cancel_obj!)
+        :param on_key_press: a method that is called after (i.e., the SelectionWidgets internal state already changed)
+            a selection-changing key or action is pressed
+        """
         super(SelectionWidget, self).__init__(widget)
         self.__columns = columns
         self.__is_second = is_second
@@ -859,6 +877,9 @@ class SelectionWidget(Widget):
         self.widget.add_key_command(controls.get_keys(Keys.SelectionRight), self._right)
         self.widget.add_key_command(controls.get_keys(Keys.SelectionDown), self._down)
         self.widget.add_key_command(controls.get_keys(Keys.SelectionLeft), self._left)
+
+        if add_cancel_key:
+            self.widget.add_key_command(controls.get_keys(Keys.Cancel), self.__jump_to_cancel, overwrite=False)
 
         # sadly cannot use a loop here because of how lambda expressions work the index would be the same for all calls
         # instead we use a list of indices to still be flexible without changing much code
@@ -1043,8 +1064,6 @@ class SelectionWidget(Widget):
     def _up(self) -> None:
         if self.num_of_choices <= 1:
             return
-        # only call if the key press changes something (e.g. more than 1 choice)
-        self.__on_key_press(Keys.SelectionUp)
         if self.num_of_choices <= self.__columns or self.__columns == 1:
             self.__single_prev()
         else:
@@ -1055,13 +1074,13 @@ class SelectionWidget(Widget):
                                    self.num_of_choices - 1)
             else:
                 self.__index -= self.__columns
+        # only call if the key press changes something (e.g. more than 1 choice)
+        self.__on_key_press(Keys.SelectionUp)
         self.render()
 
     def _right(self) -> None:
         if self.num_of_choices <= 1:
             return
-        # only call if the key press changes something (e.g. more than 1 choice)
-        self.__on_key_press(Keys.SelectionRight)
         if self.__columns == 1 or self.num_of_choices <= self.__columns:
             self.__single_next()
         else:
@@ -1073,13 +1092,13 @@ class SelectionWidget(Widget):
                 self.__index -= (self.__columns - 1)
             else:
                 self.__index += 1
+        # only call if the key press changes something (e.g. more than 1 choice)
+        self.__on_key_press(Keys.SelectionRight)
         self.render()
 
     def _down(self) -> None:
         if self.num_of_choices <= 1:
             return
-        # only call if the key press changes something (e.g. more than 1 choice)
-        self.__on_key_press(Keys.SelectionDown)
         if self.num_of_choices <= self.__columns or self.__columns == 1:
             self.__single_next()
         else:
@@ -1088,13 +1107,13 @@ class SelectionWidget(Widget):
                 self.__index = self.__index % self.__columns
             else:
                 self.__index = min(self.__index + self.__columns, self.num_of_choices - 1)
+        # only call if the key press changes something (e.g. more than 1 choice)
+        self.__on_key_press(Keys.SelectionDown)
         self.render()
 
     def _left(self) -> None:
         if self.num_of_choices <= 1:
             return
-        # only call if the key press changes something (e.g. more than 1 choice)
-        self.__on_key_press(Keys.SelectionLeft)
         if self.__columns == 1 or self.num_of_choices <= self.__columns:
             self.__single_prev()
         else:
@@ -1106,24 +1125,35 @@ class SelectionWidget(Widget):
                 self.__index += self.__columns - 1
             else:
                 self.__index -= 1
+        # only call if the key press changes something (e.g. more than 1 choice)
+        self.__on_key_press(Keys.SelectionLeft)
         self.render()
 
+    def __jump_to_cancel(self):
+        # try to find cancel_obj to jump to its index
+        if len(self.__choice_objects) <= 0: return  # there is no cancel_obj
+
+        # go from back to front because usually cancel is one of the last choices
+        for i in range(self.num_of_choices, -1, -1):
+            if len(self.__choice_objects) <= i: continue    # still out of bounds
+            if self.__choice_objects[i] is SelectionWidget.cancel_obj():
+                # we found cancel_obj
+                self.__jump_to_index(i)
+
     def __jump_to_index(self, index: int):
-        self.__on_key_press(Keys.hotkeys()[
-                                index])  # todo implement more efficiently? On the other hand hotkeys are not that important maybe
         if index < 0:
             self.__index = 0
         elif self.num_of_choices <= index:
             self.__index = self.num_of_choices - 1
         else:
             self.__index = index
+        self.__on_key_press(Keys.hotkey(index))
         self.render()
 
     def use(self) -> bool:
         """
         :return: True if the focus should move, False if the focus should stay in this SelectionWidget
         """
-        self.__on_key_press(Keys.Action)
         # if only one callback is given, it needs the index as parameter
         if len(self.__callbacks) == 1 and self.num_of_choices > 1:
             ret = self.__callbacks[0](self.__index)
@@ -1132,10 +1162,9 @@ class SelectionWidget(Widget):
                 Logger.instance().throw(IndexError(f"Invalid index = {self.__index} for {self.__callbacks}. "
                                                    f"Text of choices: {self.__choices}"))
             ret = self.__callbacks[self.__index]()
-        if ret is None:  # move focus if nothing is returned
-            return True
-        else:
-            return ret
+        self.__on_key_press(Keys.Action)
+        # return True for None to also move focus if nothing is returned
+        return True if ret is None else ret
 
 
 class HistoricWrapperWidget:

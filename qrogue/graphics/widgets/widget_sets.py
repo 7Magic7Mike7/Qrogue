@@ -23,7 +23,7 @@ from qrogue.graphics.widgets.my_widgets import SelectionWidget, CircuitWidget, M
 from qrogue.util import CommonPopups, Config, Controls, GameplayConfig, HelpText, Logger, PathConfig, \
     Keys, UIConfig, ColorConfig, Options, PuzzleConfig, ScoreConfig, \
     get_filtered_help_texts, CommonQuestions, MapConfig, PyCuiConfig, ColorCode, split_text, MyRandom, \
-    LevelInfo, CommonInfos, LevelData, StvDifficulty, GateType, RandomManager
+    LevelInfo, CommonInfos, LevelData, StvDifficulty, GateType, RandomManager, OptionsManager
 from qrogue.util.achievements import Unlocks
 from qrogue.util.util_functions import enum_string, cur_datetime, time_diff, open_folder
 
@@ -279,37 +279,47 @@ class MenuWidgetSet(MyWidgetSet):
 
     def __update_selection(self):
         choices = []
+        objects = []
         callbacks = []
         if self.__check_unlocks(Unlocks.MainMenuContinue):
             choices.append("CONTINUE JOURNEY\n")
+            objects.append(None)
             callbacks.append(self.__quick_start_callback)
 
         else:
             choices.append("START YOUR JOURNEY\n")
+            objects.append(None)
             callbacks.append(self.__start_playing_callback)
 
         if self.__check_unlocks(Unlocks.LevelSelection):
             choices.append("SELECT LEVEL\n")
+            objects.append(None)
             callbacks.append(self.__show_level_select_callback)
 
         if self.__check_unlocks(Unlocks.Workbench):
             choices.append("WORKBENCH\n")
+            objects.append(None)
             callbacks.append(self.__show_workbench_callback)
 
         # choices.append("START AN EXPEDITION\n")
         # callbacks.append(self.__start_expedition)
 
         choices.append("SCREEN CHECK\n")
+        objects.append(None)
         callbacks.append(self.__show_screen_check_callback)
 
         choices.append("SAVE\n")
+        objects.append(None)
         callbacks.append(self.__save)
 
         # choices.append("OPTIONS\n")  # for more space between the rows we add "\n"
         # callbacks.append(self.__options)
+
         choices.append("EXIT\n")
+        objects.append(SelectionWidget.cancel_obj())
         callbacks.append(self.__stop_callback)
-        self.__selection.set_data(data=(choices, callbacks))
+
+        self.__selection.set_data(data=((choices, objects), callbacks))
 
     def set_data(self, new_seed: int):
         self.__update_selection()
@@ -332,7 +342,7 @@ class MenuWidgetSet(MyWidgetSet):
         self.__selection.render_reset()
 
     def __options(self) -> None:
-        Popup.generic_info("Gameplay Config", GameplayConfig.to_file_text())
+        Popup.generic_info("Options", OptionsManager.to_string())
 
 
 class LevelSelectWidgetSet(MyWidgetSet):
@@ -340,7 +350,6 @@ class LevelSelectWidgetSet(MyWidgetSet):
     __LEVEL_HEADER = "Level: "
     __CUSTOM_MAP_CODE = "custom"
     __GATE_CONFIRM = "confirm"
-    __GATE_CANCEL = "cancel"
 
     def __init__(self, controls: Controls, logger: Logger, root: py_cui.PyCUI,
                  base_render_callback: Callable[[List[Renderable]], None], rm: MyRandom,
@@ -506,7 +515,7 @@ class LevelSelectWidgetSet(MyWidgetSet):
 
         # add cancel to stop selecting a level
         display_names.append("-Cancel-")
-        internal_names.append(None)  # the selection-object to easily identify cancel
+        internal_names.append(SelectionWidget.cancel_obj())
 
         def overwrite(index: int):
             if index == 0:  # Yes, reset custom gate selection to level specific selection
@@ -515,7 +524,7 @@ class LevelSelectWidgetSet(MyWidgetSet):
             Widget.move_focus(self.__choices, self)    # move focus manually since this is called from a (focused) popup
 
         def set_level(index: int) -> bool:
-            if self.__details.selected_object is None:
+            if self.__details.selected_object is SelectionWidget.cancel_obj():
                 return True  # "Cancel" was selected
 
             self.__level = self.__details.selected_object
@@ -548,7 +557,7 @@ class LevelSelectWidgetSet(MyWidgetSet):
 
     def __choose_gates(self) -> bool:
         def add_gate(index: int) -> bool:
-            if self.__details.selected_object is LevelSelectWidgetSet.__GATE_CANCEL:
+            if self.__details.selected_object is SelectionWidget.cancel_obj():
                 for sg in self.__selectable_gates: sg.discard()
                 return True     # "Cancel" was selected
             if self.__details.selected_object is LevelSelectWidgetSet.__GATE_CONFIRM:
@@ -567,7 +576,7 @@ class LevelSelectWidgetSet(MyWidgetSet):
         # add all available gates plus meta options Confirm and Cancel
         names: List[str] = [str(sg) for sg in self.__selectable_gates] + ["-Confirm-", "-Cancel-"]
         gate_objects: List[Union[LevelSelectWidgetSet._SelectableGate, str]] = \
-            self.__selectable_gates + [LevelSelectWidgetSet.__GATE_CONFIRM, LevelSelectWidgetSet.__GATE_CANCEL]
+            self.__selectable_gates + [LevelSelectWidgetSet.__GATE_CONFIRM, SelectionWidget.cancel_obj()]
         self.__details.set_data(((names, gate_objects), add_gate))
         return True
 
@@ -1277,6 +1286,9 @@ class TransitionWidgetSet(MyWidgetSet):
 
 
 class PauseMenuWidgetSet(MyWidgetSet):
+    __OPTIONS_OBJ = "options"
+    __SAVE_OBJ = "save"
+
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  continue_callback: Callable[[], None], save_callback: Callable[[], Tuple[bool, CommonInfos]],
                  exit_run_callback: Callable[[], None], restart_callback: Callable[[], None],
@@ -1295,19 +1307,26 @@ class PauseMenuWidgetSet(MyWidgetSet):
         self.__choices = SelectionWidget(choices, controls, stay_selected=True)
 
         self.__choices.set_data([
-            ("Continue", self.__continue),
-            ("Restart", self.__restart),
-            ("Save", self.__save),
-            ("Manual", self.__help),
-            # ("Achievements", self.__achievements),
-            ("Options", self.__options),
-            ("Exit", self.__exit),
+            (("Continue", None), self.__continue),
+            (("Restart", None), self.__restart),
+            (("Save", None), self.__save),
+            (("Manual", None), self.__help),
+            # (("Achievements", None), self.__achievements),
+            (("Options", PauseMenuWidgetSet.__OPTIONS_OBJ), self.__options),
+            (("Exit", SelectionWidget.cancel_obj()), self.__exit),
         ])
 
+        def _update_options_text(key: Keys):
+            if key in Keys.selection_keys() and self.__choices.selected_object is PauseMenuWidgetSet.__OPTIONS_OBJ:
+                if isinstance(self.__details.selected_object[0], Options):
+                    self.__description.set_data(self.__details.selected_object[0].description)
+                else:
+                    self.__description.set_data("")
+                self.__description.render()
         details = self.add_block_label('Details', UIConfig.HUD_HEIGHT, UIConfig.PAUSE_CHOICES_WIDTH,
                                        row_span=UIConfig.WINDOW_HEIGHT - UIConfig.HUD_HEIGHT,
                                        column_span=UIConfig.WINDOW_WIDTH - UIConfig.PAUSE_CHOICES_WIDTH, center=True)
-        self.__details = SelectionWidget(details, controls, is_second=True)
+        self.__details = SelectionWidget(details, controls, is_second=True, on_key_press=_update_options_text)
 
         description = self.add_block_label('Description', UIConfig.WINDOW_HEIGHT - UIConfig.PAUSE_DESCRIPTION_HEIGHT,
                                            UIConfig.PAUSE_CHOICES_WIDTH, row_span=UIConfig.PAUSE_DESCRIPTION_HEIGHT,
@@ -1322,11 +1341,13 @@ class PauseMenuWidgetSet(MyWidgetSet):
                 Widget.move_focus(self.__details, self)
                 self.__choices.render()
                 self.__details.render()
+                self.__description.render()
 
         self.__choices.widget.add_key_command(controls.action, use_choices)
 
         def use_details():
             if self.__details.use():
+                self.__description.set_data(HelpText.Pause.text)    # reset details' changes to description
                 self.__focus_choices()
 
         self.__details.widget.add_key_command(controls.action, use_details)
@@ -1350,16 +1371,21 @@ class PauseMenuWidgetSet(MyWidgetSet):
         return False
 
     def __help(self) -> bool:
-        texts = [enum_string(val, skip_type_prefix=True) for val in get_filtered_help_texts()] + [MyWidgetSet.BACK_STRING]
+        objects = get_filtered_help_texts()
+        texts = [enum_string(val, skip_type_prefix=True) for val in objects] + [MyWidgetSet.BACK_STRING]
+        objects.append(SelectionWidget.cancel_obj())
 
-        def func(val: HelpText) -> Callable[[], bool]:
-            # the check for "is not None" leads to a return value of False (because we don't want to switch widgets)
-            return lambda: Popup.generic_info(enum_string(val, skip_type_prefix=True), val.text) is not None
+        def callback(_: int):
+            val = self.__details.selected_object
+            if self.__details.selected_object is SelectionWidget.cancel_obj():
+                return True     # change focused widget
+            elif isinstance(val, HelpText):
+                Popup.generic_info(enum_string(val, skip_type_prefix=True), val.text)
+                return False
+            Config.check_reachability("PauseMenuWidgetSet.__help().callback()_unhandled selection object")
+            return False
 
-        callbacks = [func(val) for val in get_filtered_help_texts()]
-        callbacks.append(lambda: True)  # simple callback for "back"
-
-        self.__details.set_data(data=(texts, callbacks))
+        self.__details.set_data(data=((texts, objects), callback))
         return True
 
     def __achievements(self) -> bool:
@@ -1368,24 +1394,12 @@ class PauseMenuWidgetSet(MyWidgetSet):
 
     def __options(self) -> bool:
         # hide most options for tutorial's sake
-        options = GameplayConfig.get_options()  # [Options.allow_implicit_removal, Options.allow_multi_move])
-        texts = []
-        for op_tup in options:
-            op, _ = op_tup
-            texts.append(f"{op.name}: {GameplayConfig.get_option_value(op, convert=False)}")
+        options = OptionsManager.get_options([Options.auto_save, Options.log_keys, Options.allow_implicit_removal])
+        texts = [f"{option.name}: {GameplayConfig.get_option_value(option, convert=False)}"
+                 for option, _ in options]
 
         def callback(index: int) -> bool:
-            if 0 <= index < len(options):
-                option, next_ = options[index]
-                new_title = f"{option.name}: {next_(option)}"
-                self.__details.update_text(new_title, index)
-                self.__details.render()
-                self.__description.set_data(option.description)
-                self.__description.render()
-                return False  # don't change widget focus
-
-            if index == len(options):
-                # save was selected
+            if self.__details.selected_object[0] is PauseMenuWidgetSet.__SAVE_OBJ:
                 if Config.save_gameplay_config():
                     # we cannot go back directly since we want to inform the user that saving was successful
                     # therefore we go back after closing the Popup
@@ -1394,27 +1408,29 @@ class PauseMenuWidgetSet(MyWidgetSet):
                 else:
                     CommonInfos.OptionsNotSaved.show()
                 return False
-            else:
+            elif self.__details.selected_object[0] is SelectionWidget.cancel_obj():
                 # reset changes
                 try:
                     Config.load_gameplay_config()  # todo error message or is the file exception good enough?
                 except FileNotFoundError as error:
                     Logger.instance().throw(error)
-                return True  # index out of range and no special case -> go back
+                return True     # return to choices
+            else:
+                option, next_ = self.__details.selected_object
+                new_title = f"{option.name}: {next_(option)}"
+                self.__details.update_text(new_title, index)
+                self.__details.render()
+                self.__description.set_data(option.description)
+                self.__description.render()
+                return False  # don't change widget focus
 
         self.__details.set_data(data=(
-            texts + ["-Save-", MyWidgetSet.BACK_STRING],
+            (texts + ["-Save-", MyWidgetSet.BACK_STRING],
+             options + [(PauseMenuWidgetSet.__SAVE_OBJ, None), (SelectionWidget.cancel_obj(), None)]),
             [callback]
         ))
+        self.__description.set_data(options[0][0].description)  # initialize description with first option
         return True
-
-    def __options_text(self, index: int = 0) -> bool:
-        if index == 0:
-            path = PathConfig.user_data_path(Config.game_config_file())
-            Popup.generic_info(f"Configuration located at {path}", GameplayConfig.to_file_text())
-            return False
-        else:
-            return True
 
     def __exit(self) -> bool:
         self.__exit_run()
@@ -1445,7 +1461,6 @@ class PauseMenuWidgetSet(MyWidgetSet):
 
 class WorkbenchWidgetSet(MyWidgetSet):
     __GATE_CONFIRM = "confirm"
-    __GATE_CANCEL = "cancel"
 
     def __init__(self, logger, root: py_cui.PyCUI, base_render_callback: Callable[[List[Renderable]], None],
                  controls: Controls, get_original_gates_callback: Callable[[], List[Instruction]],
@@ -1506,7 +1521,7 @@ class WorkbenchWidgetSet(MyWidgetSet):
         selectable_gates = [MyWidgetSet._SelectableGate(gate) for gate in self.__get_original_gates()]
 
         def select_gate(index: int) -> bool:
-            if self.__details.selected_object is WorkbenchWidgetSet.__GATE_CANCEL:
+            if self.__details.selected_object is SelectionWidget.cancel_obj():
                 return True  # "Cancel" was selected
             if self.__details.selected_object is WorkbenchWidgetSet.__GATE_CONFIRM:
                 selected_gates = [sg.to_gate() for sg in selectable_gates if sg.is_selected]
@@ -1522,7 +1537,7 @@ class WorkbenchWidgetSet(MyWidgetSet):
 
         # add all available gates plus meta options Confirm and Cancel
         names: List[str] = [str(gate) for gate in selectable_gates] + ["-Confirm-", "-Cancel-"]
-        meta_objects = [WorkbenchWidgetSet.__GATE_CONFIRM, WorkbenchWidgetSet.__GATE_CANCEL]
+        meta_objects = [WorkbenchWidgetSet.__GATE_CONFIRM, SelectionWidget.cancel_obj()]
         self.__details.set_data(((names, selectable_gates + meta_objects), select_gate))
         return True
 
@@ -1903,7 +1918,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
 
         # from a code readers perspective the reset would make more sense in switch_to_fight() etc. but then we would
         # have to add it to multiple locations and have the risk of forgetting to add it for new ReachTargetWidgetSets
-        if GameplayConfig.auto_reset_circuit():
+        if GameplayConfig.get_option_value(Options.auto_reset_circuit):
             robot.reset_circuit()
 
         self._hud.set_data((robot, None, None))  # don't overwrite the current map name
@@ -1995,14 +2010,14 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             callbacks.append(self.__reset_circuit)
         if self._check_unlocks(Unlocks.PuzzleFlee):
             choices.append(self.__flee_choice)
-            objects.append(ReachTargetWidgetSet.__CHOICES_FLEE_OBJECT)
+            objects.append(SelectionWidget.cancel_obj())    # fleeing is the cancel option of a fight
             callbacks.append(self.__flee)  # just return True to change back to previous screen
 
         self._choices.set_data(data=((choices, objects), callbacks))
 
     def __choose_instruction(self) -> bool:
         cur_instruction = self._choices.selected_object
-        if cur_instruction is not None:
+        if isinstance(cur_instruction, Instruction):
             if cur_instruction.is_used():
                 # move the instruction
                 pos = cur_instruction.position
