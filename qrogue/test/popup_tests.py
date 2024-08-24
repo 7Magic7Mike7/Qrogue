@@ -7,7 +7,7 @@ from qrogue.test import test_util
 from qrogue.util import split_text, ColorConfig
 
 
-class MyTestCase(unittest.TestCase):
+class MyPopupTests(unittest.TestCase):
     @staticmethod
     def _get_large_level_text() -> str:
         return "\n".join([
