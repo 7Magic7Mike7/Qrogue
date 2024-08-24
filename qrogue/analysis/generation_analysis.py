@@ -2,6 +2,7 @@ import time
 from typing import Optional, Any, List
 
 from qrogue.game.logic.actors.controllables.robot import RoboProperties
+from qrogue.game.logic.collectibles.instruction import XGate
 from qrogue.game.world.dungeon_generator import DungeonGenerator
 from qrogue.game.world.dungeon_generator.random_generator import RandomLayoutGenerator, ExpeditionGenerator
 from qrogue.game.world.dungeon_generator.wave_function_collapse import WFCManager
@@ -81,7 +82,8 @@ def test_dungeon():
     wfc_manager = WFCManager()
     wfc_manager.load()
     difficulty = StvDifficulty.from_difficulty_code("1", robo_props.num_of_qubits, robo_props.circuit_space)
-    generator = ExpeditionGenerator(wfc_manager, lambda s: True, lambda s: None, lambda: None, CallbackPack.dummy())
+    generator = ExpeditionGenerator(wfc_manager, lambda s: True, lambda s: None, lambda: None,
+                                    lambda: [XGate()], CallbackPack.dummy())
     puzzle_seed = 7
     for i, seed in enumerate(range(start_seed, end_seed)):
         if i % 1000 == 0:

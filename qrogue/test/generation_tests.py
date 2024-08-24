@@ -2,6 +2,7 @@ import unittest
 from typing import List, Tuple, Optional
 
 import test_util
+from qrogue.game.logic.collectibles.instruction import HGate
 from qrogue.game.world import tiles
 from qrogue.game.world.dungeon_generator import DungeonGenerator
 from qrogue.game.world.dungeon_generator.random_generator import RandomLayoutGenerator, ExpeditionGenerator
@@ -49,16 +50,20 @@ class LayoutGenTestCase(test_util.SingletonSetupTestCase):
 
 
 class LevelGenTestCase(test_util.SingletonSetupTestCase):
+    @staticmethod
+    def __create_expedition_generator() -> ExpeditionGenerator:
+        wfc_manager = WFCManager()
+        wfc_manager.load()
+        return ExpeditionGenerator(wfc_manager, lambda s: True, lambda s: None, lambda: None, lambda: [HGate()],
+                                        CallbackPack.dummy())
+
     def test_single_seed(self):
         CheatConfig.use_cheat("Illuminati")
         robo_props = test_util.DummyRoboProps()
-        wfc_manager = WFCManager()
-        wfc_manager.load()
         diff_code = "1" * StvDifficulty.degrees_of_freedom()
         difficulty = StvDifficulty.from_difficulty_code(diff_code, robo_props.num_of_qubits, robo_props.circuit_space)
 
-        generator = ExpeditionGenerator(wfc_manager, lambda s: True, lambda s: None, lambda: None,
-                                        CallbackPack.dummy())
+        generator = self.__create_expedition_generator()
         map_seed = 297
         puzzle_seed = 7
         map_, success = generator.generate(map_seed, (robo_props, difficulty, puzzle_seed))
@@ -73,13 +78,10 @@ class LevelGenTestCase(test_util.SingletonSetupTestCase):
         failing_seeds = []
 
         robo_props = test_util.DummyRoboProps()
-        wfc_manager = WFCManager()
-        wfc_manager.load()
         diff_code = "1" * StvDifficulty.degrees_of_freedom()
         difficulty = StvDifficulty.from_difficulty_code(diff_code, robo_props.num_of_qubits, robo_props.circuit_space)
 
-        generator = ExpeditionGenerator(wfc_manager, lambda s: True, lambda s: None, lambda: None,
-                                        CallbackPack.dummy())
+        generator = self.__create_expedition_generator()
         puzzle_seed = 7
         for i, map_seed in enumerate(range(start_seed, end_seed)):
             if i % 1000 == 0:
