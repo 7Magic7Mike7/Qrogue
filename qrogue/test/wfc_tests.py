@@ -92,7 +92,7 @@ class WaveFunctionTestCase(test_util.SingletonSetupTestCase):
     def test_force_value(self):
         rm = RandomManager.create_new(TestConfig.test_seed())
 
-        wave = WaveFunction({1: 3, 2: 4})
+        wave = WaveFunction({1: 3, 2: 4, 7: 1})
         self.assertTrue(wave.force_value(7), "Failed to force integer value onto integer WaveFunction!")
 
         wave = WaveFunction({1: 3, 2: 4})
