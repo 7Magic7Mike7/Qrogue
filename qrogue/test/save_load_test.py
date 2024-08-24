@@ -19,6 +19,8 @@ class SaveDataOverhaulTests(test_util.SingletonSetupTestCase):
         new_save_data = "\n".join([
             "Qrogue<",
             "19d01m2024y 04:16:55",
+            "[INVENTORY]",
+            "QuantumFuser 0",
             "[GATES]",
             "X;H;CX",
             "[LEVELS]",
@@ -39,6 +41,8 @@ class SaveDataOverhaulTests(test_util.SingletonSetupTestCase):
         new_save_data = "\n".join([
             "Qrogue<",
             "14d03m2024y 15:47:37",
+            "[INVENTORY]",
+            "QuantumFuser 0",
             "[GATES]",
             "[LEVELS]",
             "l0k0v0 @ 14d03m2024y 15:49:03 74 seconds Score = 0",

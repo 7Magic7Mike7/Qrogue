@@ -36,6 +36,7 @@ class NewSaveData:
         save_state = f"{_SaveDataGenerator.header()}\n"
         save_state += f"{datetime2str(cur_datetime())}\n"
         save_state += f"{_SaveDataGenerator.inventory_header()}\n"
+        save_state += f"{_SaveDataGenerator.quantum_fuser()} 0\n"
         save_state += f"{_SaveDataGenerator.gates_header()}\n"
         save_state += f"{_SaveDataGenerator.levels_header()}\n"
         save_state += f"{_SaveDataGenerator.unlocks_header()}\n"
