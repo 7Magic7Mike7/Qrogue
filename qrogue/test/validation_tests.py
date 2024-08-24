@@ -150,9 +150,8 @@ class ValidationTests(unittest.TestCase):
         except:
             print("Cannot check version of antlr4. Please use 'pip list' and check yourself.")
 
-        if versioning_incorrect:
-            print("Please consider using supported versions for Python and modules because otherwise the game likely "
-                  "won't work.")
+        self.assertFalse(versioning_incorrect, "Please consider using supported versions for Python and modules "
+                                               "because otherwise the game likely won't work.")
 
 
 if __name__ == '__main__':
