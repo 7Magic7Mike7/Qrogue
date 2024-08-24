@@ -1100,6 +1100,7 @@ class TransitionWidgetSet(MyWidgetSet):
         widget = self.add_block_label("Confirm", UIConfig.TRANSITION_SCREEN_ROW + UIConfig.TRANSITION_SCREEN_HEIGHT + 1,
                                       UIConfig.TRANSITION_SCREEN_COL, row_span=1,
                                       column_span=UIConfig.TRANSITION_SCREEN_WIDTH, center=True)
+        ColorRules.apply_transition_rules(widget)
         self.__confirm = SimpleWidget(widget)
 
         if Config.debugging():
@@ -1165,11 +1166,11 @@ class TransitionWidgetSet(MyWidgetSet):
             if confirm:
                 self._stop_timer()
                 if transition_end:
-                    self.__confirm.set_data("Press [Confirm] to continue playing.")
+                    self.__confirm.set_data(f"Press [Confirm] to continue playing.")
                 else:
-                    self.__confirm.set_data("Press [Confirm] to start next text section.")
+                    self.__confirm.set_data(f"Press [Confirm] to start next text section.")
             else:
-                self.__confirm.set_data("Press [Cancel] to skip to next text.")
+                self.__confirm.set_data(f"Press Cancel to skip to next text.")
             self.__wait_for_confirmation = confirm
             self.__confirm.render()
 
