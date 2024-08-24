@@ -3,11 +3,30 @@ import unittest
 
 from qrogue.game.logic.collectibles import InstructionManager
 from qrogue.game.target_factory import BossFactory
-from qrogue.util import PathConfig, StvDifficulty, OptionsManager
+from qrogue.util import PathConfig, StvDifficulty, OptionsManager, FileTypes
 from qrogue.util.util_functions import cur_datetime, int_to_fixed_len_str, time_diff
 
 
 class ValidationTests(unittest.TestCase):
+    @staticmethod
+    def filter_logs(file_name: str):
+        file_path = PathConfig.user_data_path(os.path.join("logs", file_name + FileTypes.Log.value))
+        filtered_path = PathConfig.user_data_path(os.path.join("logs", "filtered.qrlog"))
+
+        with open(file_path, 'rt') as log_file:
+            with open(filtered_path, "wt") as filtered_file:
+                for line in log_file:
+                    if line.startswith("{PyCUI}"):
+                        continue
+
+                    if "Starting puzzle" in line:
+                        filtered_file.write("\n\n")
+
+                    filtered_file.write(line)
+
+                    if "Finished level" in line:
+                        filtered_file.write("\n\n\n\n\n")
+
     def test_validate(self):
         self.assertTrue(OptionsManager.validate(), "OptionsManager is invalid!")
         self.assertTrue(InstructionManager.validate(), "InstructionManager is invalid!")
@@ -56,24 +75,6 @@ class ValidationTests(unittest.TestCase):
         """
 
         print("; ".join([str(inst) for inst in [1, 2, 3, 4, 5]]))
-
-    def test_filtering(self):
-        file_path = PathConfig.user_data_path(os.path.join("logs", "28092023_113726_seed479093" + ".qrlog"))
-        filtered_path = PathConfig.user_data_path(os.path.join("logs", "filtered.qrlog"))
-
-        with open(file_path, 'rt') as log_file:
-            with open(filtered_path, "wt") as filtered_file:
-                for line in log_file:
-                    if line.startswith("{PyCUI}"):
-                        continue
-
-                    if "Starting puzzle" in line:
-                        filtered_file.write("\n\n")
-
-                    filtered_file.write(line)
-
-                    if "Finished level" in line:
-                        filtered_file.write("\n\n\n\n\n")
 
     def test_versioning(self):
         from importlib.metadata import version
