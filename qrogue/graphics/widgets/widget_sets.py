@@ -969,6 +969,12 @@ class ScreenCheckWidgetSet(MyWidgetSet):
 
 
 class TransitionWidgetSet(MyWidgetSet):
+    __TEXT_CONTINUATION = "Press [Confirm] to continue playing."
+    __TEXT_NEXT_SECTION = "Press [Confirm] to start next text section."
+    __TEXT_SKIP = "Press [Cancel] to skip to next text."
+    __TEXT_AUTO_CONTINUE = "Continuing automatically as soon as text is rendered completely"
+    __TEXT_WAITING = "waiting for the background task to finish"
+
     class TextScroll:
         __DEFAULT_TEXT_DELAY = 0.01  # 0 can lead to messed up render order, so we just use a very small number
         _SLOW = 1.0
@@ -1087,6 +1093,8 @@ class TransitionWidgetSet(MyWidgetSet):
         self.__timer: Optional[Timer] = None
         self.__wait_for_confirmation = False
         self.__auto_scroll = False
+        # wait with continuation (maybe with confirmation) until we're explicitely told to continue
+        self.__wait_with_continuation = False
 
         widget = self.add_block_label("Text", UIConfig.TRANSITION_SCREEN_ROW, UIConfig.TRANSITION_SCREEN_COL,
                                       row_span=UIConfig.TRANSITION_SCREEN_HEIGHT,
@@ -1160,16 +1168,19 @@ class TransitionWidgetSet(MyWidgetSet):
 
     def __update_confirm_text(self, confirm: bool, transition_end: bool = False):
         if self.__auto_scroll:
-            self.__confirm.set_data("Continuing automatically as soon as text is rendered completely")
+            self.__confirm.set_data(self.__TEXT_AUTO_CONTINUE)
         else:
             if confirm:
                 self._stop_timer()
                 if transition_end:
-                    self.__confirm.set_data("Press [Confirm] to continue playing.")
+                    if self.__wait_with_continuation:
+                        self.__confirm.set_data(self.__TEXT_WAITING)
+                    else:
+                        self.__confirm.set_data(self.__TEXT_CONTINUATION)
                 else:
-                    self.__confirm.set_data("Press [Confirm] to start next text section.")
+                    self.__confirm.set_data(self.__TEXT_NEXT_SECTION)
             else:
-                self.__confirm.set_data("Press [Cancel] to skip to next text.")
+                self.__confirm.set_data(self.__TEXT_SKIP)
             self.__wait_for_confirmation = confirm
             self.__confirm.render()
 
@@ -1189,7 +1200,8 @@ class TransitionWidgetSet(MyWidgetSet):
                 self.__render_text_scroll()
 
             elif self.__continue is not None:
-                self.__continue()
+                if not self.__wait_with_continuation:
+                    self.__continue()
 
     def __next_text(self):
         if self.__wait_for_confirmation:
@@ -1218,7 +1230,8 @@ class TransitionWidgetSet(MyWidgetSet):
                 self.__update_confirm_text(confirm=True, transition_end=True)
 
         elif self.__continue is not None:
-            self.__continue()
+            if not self.__wait_with_continuation:
+                self.__continue()
 
     def __render_text_scroll(self):
         # check is necessary due to multiple threads working with __index
@@ -1256,12 +1269,13 @@ class TransitionWidgetSet(MyWidgetSet):
             self.__update_screen(next_char)
 
     def set_data(self, text_scrolls: List[TextScroll], continue_callback: Callable[[], None],
-                 auto_scroll: bool = False):
+                 auto_scroll: bool = False, wait_with_continuation: bool = False):
         assert len(text_scrolls) > 0, "Empty list of texts provided!"
 
         self.__text_scrolls = text_scrolls
         self.__continue = continue_callback
         self.__auto_scroll = auto_scroll
+        self.__wait_with_continuation = wait_with_continuation
 
         # no locks required since there are no additional threads at this point
         self.__display_text = ""
@@ -1270,6 +1284,15 @@ class TransitionWidgetSet(MyWidgetSet):
         self.__update_confirm_text(confirm=False)
         self.__timer = Timer(self._cur_text_scroll.text_delay, self.__render_text_scroll)
         self.__timer.start()
+
+    def complete_waiting(self) -> bool:
+        if self.__wait_with_continuation:
+            self.__wait_with_continuation = False
+            # somehow this does not display the new text - maybe because the next widgetset is already active?
+            self.__confirm.set_data(self.__TEXT_CONTINUATION)
+            self.render()
+            return True
+        return False
 
     def get_widget_list(self) -> List[Widget]:
         return [

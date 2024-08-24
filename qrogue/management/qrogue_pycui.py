@@ -273,7 +273,13 @@ class QrogueCUI(PyCUI):
                 TransitionWidgetSet.TextScroll.medium(f"..."),
             ]
             auto_scroll = self.__auto_scroll_simulation_transitions
-            self.__state_machine.change_state(QrogueCUI._State.Transition, data=(texts, callback, auto_scroll))
+
+            def call_me():
+                callback()
+                while not self.__transition.complete_waiting():
+                    time.sleep(0.1)
+            Thread(target=call_me).start()
+            self.__state_machine.change_state(QrogueCUI._State.Transition, data=(texts, callback, auto_scroll, True))
 
         self.__map_manager = MapManager(self.__wfc_manager, self.__save_data, self.__rm.seed, self.__start_level,
                                         start_level_transition, lambda: self._switch_to_menu(None), self.__cbp)
@@ -804,13 +810,16 @@ class QrogueCUI(PyCUI):
 
         self.__state_machine.change_state(QrogueCUI._State.Transition, (text_scrolls, callback))
 
-    def _switch_to_transition(self, data) -> None:
+    def _switch_to_transition(self, data: Tuple) -> None:
         if len(data) == 2:
             texts, continue_ = data
             self.__transition.set_data(texts, continue_)
-        else:
+        elif len(data) == 3:
             texts, continue_, auto_scroll = data
             self.__transition.set_data(texts, continue_, auto_scroll)
+        else:
+            texts, continue_, auto_scroll, wait_with_continuation, = data
+            self.__transition.set_data(texts, continue_, auto_scroll, wait_with_continuation)
         self.apply_widget_set(self.__transition)
 
     def __render(self, renderables: Optional[List[Renderable]]):
