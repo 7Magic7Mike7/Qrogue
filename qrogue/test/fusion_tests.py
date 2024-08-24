@@ -18,9 +18,6 @@ class FusionTestCase(SingletonSetupTestCase):
         amplitudes = unitary_simulator.execute(circuit, decimals=QuantumSimulationConfig.DECIMALS)
         return CircuitMatrix(amplitudes, num_of_used_gates)
 
-    def test_something(self):
-        self.assertEqual(True, False)  # add assertion here
-
     def test_single_qubit_fusion(self):
         unitary_simulator = UnitarySimulator()
         num_of_qubits = 1
@@ -61,16 +58,18 @@ class FusionTestCase(SingletonSetupTestCase):
         self.assertEqual(seq_matrix, comb_matrix)
 
     def test_name(self):
-        name = "Test"
+        name = "Tes"
         exp_name = name + " Gate"
 
         comb_gate1 = CombinedGate([HGate().setup([0])], 1, name=name)              # no "Gate" suffix
-        comb_gate2 = CombinedGate([HGate().setup([0])], 1, name=exp_name)          # "Gate" suffix with whitespace
-        comb_gate3 = CombinedGate([HGate().setup([0])], 1, name=name + "Gate")     # "Gate" suffix without whitespace
-
+        comb_gate2 = CombinedGate([HGate().setup([0])], 1, name=name + "Gate")     # "Gate" suffix without whitespace
         self.assertEqual(exp_name, comb_gate1.name())
         self.assertEqual(exp_name, comb_gate2.name())
-        self.assertEqual(exp_name, comb_gate3.name())
+
+        self.assertEqual(1, CombinedGate.validate_gate_name(""), "Failed to check for not enough characters")
+        self.assertEqual(2, CombinedGate.validate_gate_name("TestGate"), "Failed to check for too many characters")
+        self.assertEqual(3, CombinedGate.validate_gate_name("Te Gate"), "Failed to check for illegal characters")
+        self.assertEqual(4, CombinedGate.validate_gate_name("X"), "Failed to check for equivalence to base gates")
 
     def test_description(self):
         exp_desc = """Abbreviation: Q0
