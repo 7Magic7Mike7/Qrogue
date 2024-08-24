@@ -18,6 +18,11 @@ class GameSimulator:
 
     __ENCODING = "utf-8"
     __BUFFER_SIZE = 1024
+    __VERSION_END = "\n"
+    __SEED_END = "\n"
+    __SAVE_DATA_START = "Qrogue<"
+    __SAVE_DATA_END = ">Qrogue"
+    __CONFIG_END = __SAVE_DATA_START
 
     def __init__(self, path: str, in_keylog_folder: bool = True):
         if not path.endswith(FileTypes.KeyLog.value):
@@ -40,12 +45,14 @@ class GameSimulator:
         # change the config so we can reproduce the run (e.g. different auto reset would destroy the simulation)
         if self.__cur_chunk[second_line + 1:].startswith(bytes(Config.HEADER(), GameSimulator.__ENCODING)):
             version_start = second_line + len(Config.HEADER())
-            version_end = self.__cur_chunk.index(bytes("\n", GameSimulator.__ENCODING), version_start)
+            version_end = self.__cur_chunk.index(bytes(self.__VERSION_END, GameSimulator.__ENCODING), version_start)
             self.__version = str(self.__cur_chunk[version_start:version_end], GameSimulator.__ENCODING)
+
             seed_start = self.__cur_chunk.index(bytes(Config.SEED_HEAD(), GameSimulator.__ENCODING), version_end) \
                          + len(Config.SEED_HEAD())
-            seed_end = self.__cur_chunk.index(bytes("\n", GameSimulator.__ENCODING), seed_start)
+            seed_end = self.__cur_chunk.index(bytes(self.__SEED_END, GameSimulator.__ENCODING), seed_start)
             self.__seed = int(self.__cur_chunk[seed_start:seed_end])
+
             time_start = self.__cur_chunk.index(bytes(Config.TIME_HEAD(), GameSimulator.__ENCODING), seed_end) \
                          + len(Config.TIME_HEAD())
             time_end = self.__cur_chunk.index(bytes("\n", GameSimulator.__ENCODING), time_start)
@@ -53,16 +60,17 @@ class GameSimulator:
 
             start = self.__cur_chunk.index(bytes(Config.CONFIG_HEAD(), GameSimulator.__ENCODING), seed_end) \
                     + len(Config.CONFIG_HEAD()) + 1  # start at the first line after CONFIG_HEAD
-            end = self.__cur_chunk.index(bytes("\n\n", GameSimulator.__ENCODING), start)
+            end = self.__cur_chunk.index(bytes(self.__CONFIG_END, GameSimulator.__ENCODING), start)
             config = str(self.__cur_chunk[start:end], GameSimulator.__ENCODING)
             OptionsManager.from_text(config)
 
             # todo: use constants instead of these strings
-            start = self.__cur_chunk.index(bytes("Qrogue<", GameSimulator.__ENCODING), end)
+            start = self.__cur_chunk.index(bytes(self.__SAVE_DATA_START, GameSimulator.__ENCODING), end)
             if start < 0:
                 self.__save_state = None
             else:
-                end = self.__cur_chunk.index(bytes(">Qrogue", GameSimulator.__ENCODING), start) + len(">Qrogue")
+                end = self.__cur_chunk.index(bytes(self.__SAVE_DATA_END, GameSimulator.__ENCODING), start) \
+                      + len(self.__SAVE_DATA_END)
                 self.__save_state = str(self.__cur_chunk[start:end], GameSimulator.__ENCODING)
 
             # continue at the \n at the end of the save state because in next_key() we start with going to the next position
