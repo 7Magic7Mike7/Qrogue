@@ -428,6 +428,9 @@ class GateType(enum.Enum):
         "In the classical world an X Gate corresponds to an inverter or Not Gate.\n" \
         "It swaps the amplitudes of |0> and |1>.\n" \
         "In the quantum world this corresponds to a rotation of 180° along the x-axis, hence the name X Gate."
+    SXGate = "SX", "Square Root X", {"Sqrt X"}, \
+        "An SX Gate is the square root of an X Gate. This means multiplying two SX Gates (i.e., placing them in " \
+        "series) results in an X Gate. Therefore, it corresponds to a rotation of 90° along the x-axis."
     YGate = "Y", "Pauli Y", {"Pauli-Y"}, \
         "A Y Gate rotates the Qubit along the y-axis by 180°."
     ZGate = "Z", "Pauli Z", {"Pauli-Z"}, \
@@ -447,6 +450,12 @@ class GateType(enum.Enum):
         "As the name suggests, Swap Gates swap the amplitude between two Qubits."
     CXGate = "CX", "Controlled X", {"CNOT", "Controlled NOT"}, \
         "Applies an X Gate onto its second Qubit (=target) if its first Qubit (=control) is 1."
+    CYGate = "CY", "Controlled Y", set(), \
+        "Applies a Y Gate onto its second Qubit (=target) if its first Qubit (=control) is 1."
+    CZGate = "CZ", "Controlled Z", set(), \
+        "Applies a Z Gate onto its second Qubit (=target) if its first Qubit (=control) is 1."
+    CHGate = "CH", "Controlled H", {"Controlled Hadamard"}, \
+        "Apples an H Gate onto its second Qubit (=target) if its first Qubit (=control) is 1."
 
     Combined = "Q", "Qombined", set(), \
         "This gate is a combination of multiple gates fused into one."

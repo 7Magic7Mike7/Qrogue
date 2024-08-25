@@ -290,6 +290,17 @@ class XGate(SingleQubitGate):
         return XGate()
 
 
+class SXGate(SingleQubitGate):
+    def __init__(self):
+        super(SXGate, self).__init__(GateType.SXGate, gates.SXGate())
+
+    def abbreviation(self, qubit: Optional[int] = None):
+        return "SX "
+
+    def copy(self) -> "Instruction":
+        return SXGate()
+
+
 class YGate(SingleQubitGate):
     def __init__(self):
         super(YGate, self).__init__(GateType.YGate, gates.YGate())
@@ -441,6 +452,54 @@ class CXGate(DoubleQubitGate):
 
     def copy(self) -> "Instruction":
         return CXGate()
+
+
+class CYGate(DoubleQubitGate):
+    def __init__(self):
+        super().__init__(GateType.CYGate, gates.CYGate())
+
+    def _internal_abbreviation(self, index: Optional[int]) -> str:
+        if index is None:
+            return "C/Y"
+        elif index == 0:
+            return " C "
+        elif index == 1:
+            return " Y "
+
+    def copy(self) -> "Instruction":
+        return CYGate()
+
+
+class CZGate(DoubleQubitGate):
+    def __init__(self):
+        super().__init__(GateType.CZGate, gates.CZGate())
+
+    def _internal_abbreviation(self, index: Optional[int]) -> str:
+        if index is None:
+            return "C/Z"
+        elif index == 0:
+            return " C "
+        elif index == 1:
+            return " Z "
+
+    def copy(self) -> "Instruction":
+        return CZGate()
+
+
+class CHGate(DoubleQubitGate):
+    def __init__(self):
+        super().__init__(GateType.CHGate, gates.CHGate())
+
+    def _internal_abbreviation(self, index: Optional[int]) -> str:
+        if index is None:
+            return "C/H"
+        elif index == 0:
+            return " C "
+        elif index == 1:
+            return " H "
+
+    def copy(self) -> "Instruction":
+        return CHGate()
 
 
 ####### Combined Gates #######
@@ -605,6 +664,7 @@ class InstructionManager:
         GateType.IGate: IGate(),
 
         GateType.XGate: XGate(),
+        GateType.SXGate: SGate(),
         GateType.YGate: YGate(),
         GateType.ZGate: ZGate(),
 
@@ -616,6 +676,9 @@ class InstructionManager:
 
         GateType.SwapGate: SwapGate(),
         GateType.CXGate: CXGate(),
+        GateType.CYGate: CYGate(),
+        GateType.CZGate: CZGate(),
+        GateType.CHGate: CHGate(),
 
         GateType.Debug: DebugGate(),
     }
