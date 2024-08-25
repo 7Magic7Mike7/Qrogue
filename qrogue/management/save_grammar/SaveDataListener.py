@@ -1,6 +1,6 @@
-# Generated from D:/Workspaces/pycharm-workspace/Qrogue/qrogue/management/save_grammar\SaveData.g4 by ANTLR 4.12.0
+# Generated from D:/Workspaces/pycharm-workspace/Qrogue/qrogue/management/save_grammar/SaveData.g4 by ANTLR 4.13.1
 from antlr4 import *
-if __name__ is not None and "." in __name__:
+if "." in __name__:
     from .SaveDataParser import SaveDataParser
 else:
     from SaveDataParser import SaveDataParser

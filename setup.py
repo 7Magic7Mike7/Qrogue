@@ -51,7 +51,7 @@ setup(
 		'numpy==1.22.3',
 		'qiskit==0.34.2',
 		'qiskit-aer==0.12.2',
-		'antlr4-python3-runtime==4.12',
+		'antlr4-python3-runtime==4.13.2',
 	],
 	classifiers=[
 		'Development Status :: 3 - Alpha',  # Chose either "3 - Alpha", "4 - Beta" or "5 - Production/Stable"
