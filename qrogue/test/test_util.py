@@ -1,7 +1,6 @@
 import unittest
 from typing import List, Callable, Any, Tuple, Optional, Dict
 
-from qrogue.game.logic.actors import BaseBot
 from qrogue.game.logic.actors.controllables.robot import RoboProperties
 from qrogue.graphics import WidgetWrapper
 from qrogue.graphics.widgets.my_widgets import SelectionWidget

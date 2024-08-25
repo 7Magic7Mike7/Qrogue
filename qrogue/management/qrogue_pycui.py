@@ -7,7 +7,7 @@ from py_cui import PyCUI
 from py_cui import popups
 from py_cui.widget_set import WidgetSet
 
-from qrogue.game.logic.actors import Boss, Controllable, Enemy, Riddle, Challenge, Robot, FusionBot
+from qrogue.game.logic.actors import Boss, Enemy, Riddle, Challenge, Robot, FusionBot
 from qrogue.game.logic.actors.puzzles import FusionTarget
 from qrogue.game.logic.collectibles import Instruction
 from qrogue.game.world.dungeon_generator.wave_function_collapse import WFCManager
@@ -24,9 +24,9 @@ from qrogue.graphics.widgets import Renderable, BossFightWidgetSet, ExploreWidge
 from qrogue.util import common_messages, CheatConfig, Config, GameplayConfig, UIConfig, HelpText, \
     Logger, PathConfig, Controls, Keys, RandomManager, PyCuiConfig, PopupConfig, PyCuiColors, Options, \
     CommonInfos, MapConfig
+from qrogue.util.achievements import Achievement
 from qrogue.util.game_simulator import GameSimulator
 from qrogue.util.key_logger import KeyLogger, OverWorldKeyLogger, DummyKeyLogger
-from qrogue.util.achievements import Achievement
 from .map_management import MapManager
 from .save_data import NewSaveData
 

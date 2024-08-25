@@ -1,17 +1,16 @@
-import math
 from abc import abstractmethod, ABC
-from typing import List, Callable, Optional, Dict, Tuple, Set
+from typing import List, Callable, Optional, Dict
 
+import qrogue.game.logic.collectibles.instruction as gates
 from qrogue.game.logic import PuzzleGenerator
 from qrogue.game.logic.actors import Challenge
 from qrogue.game.logic.actors.controllables import Robot
-from qrogue.game.logic.actors.puzzles import Enemy, Target, Riddle, Boss
+from qrogue.game.logic.actors.puzzles import Enemy, Target, Boss
 from qrogue.game.logic.base import StateVector
-from qrogue.game.logic.collectibles import Collectible, CollectibleFactory, Instruction, Energy, Score, QuantumFuser
-import qrogue.game.logic.collectibles.instruction as gates
+from qrogue.game.logic.collectibles import Collectible, CollectibleFactory, Instruction, Score, QuantumFuser
 from qrogue.game.target_difficulty import PuzzleDifficulty, ExplicitTargetDifficulty
 from qrogue.game.world.navigation import Direction
-from qrogue.util import Logger, MyRandom, Config, StvDifficulty, DifficultyType, RandomManager
+from qrogue.util import Logger, MyRandom, Config, StvDifficulty, DifficultyType
 
 
 class EnemyFactory(ABC):

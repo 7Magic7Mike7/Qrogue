@@ -11,7 +11,7 @@ from qrogue.game.world.navigation import Coordinate
 from qrogue.graphics.popups import Popup
 from qrogue.management.save_data import NewSaveData
 from qrogue.util import CommonQuestions, RandomManager, LevelInfo, Config, MapConfig, ErrorConfig, \
-    ExpeditionConfig, StvDifficulty, GateType
+    ExpeditionConfig, StvDifficulty
 from qrogue.util.achievements import Achievement
 from qrogue.util.util_functions import cur_datetime, time_diff
 

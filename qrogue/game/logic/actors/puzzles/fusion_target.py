@@ -2,7 +2,6 @@ from typing import Tuple, Optional
 
 from qrogue.game.logic.base import StateVector, CircuitMatrix
 from qrogue.game.logic.collectibles import Collectible
-
 from .target import Target
 
 

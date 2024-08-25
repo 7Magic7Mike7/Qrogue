@@ -1,5 +1,4 @@
 
-from .test_util import *
 from .config_tests import MyOptionsTest
 from .control_tests import ControlTests
 from .fusion_tests import FusionTestCase
@@ -9,6 +8,7 @@ from .popup_tests import MyPopupTests
 from .puzzle_generation_tests import ManuelPuzzleGenTestCase
 from .random_tests import MyRandomTests
 from .save_load_test import SaveDataOverhaulTests
+from .test_util import *
 from .validation_tests import ValidationTests
 from .wfc_tests import WFCGeneratorTestCases, WaveFunctionTestCase
 

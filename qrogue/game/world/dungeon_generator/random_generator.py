@@ -3,7 +3,7 @@ from typing import Callable, Dict, Optional, Tuple, List, Any, Set
 
 from qrogue.game.logic.actors.controllables.robot import RoboProperties, BaseBot
 from qrogue.game.logic.collectibles import GateFactory, Key, instruction, Score, CollectibleType, \
-    CollectibleFactory, Instruction, InstructionManager
+    CollectibleFactory, Instruction
 from qrogue.game.target_difficulty import PuzzleDifficulty
 from qrogue.game.target_factory import BossFactory, EnemyFactory, EnemyPuzzleFactory, ChallengeFactory
 from qrogue.game.world import tiles
@@ -14,7 +14,7 @@ from qrogue.game.world.map.rooms import AreaType, DefinedWildRoom, EmptyRoom, Sp
     ChallengeRoom
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.graphics.popups import Popup
-from qrogue.util import Logger, RandomManager, MapConfig, Config, MyRandom, StvDifficulty, GateType
+from qrogue.util import Logger, RandomManager, MyRandom, StvDifficulty
 
 
 class _Code(IntEnum):

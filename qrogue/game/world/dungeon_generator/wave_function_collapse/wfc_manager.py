@@ -4,7 +4,6 @@ from typing import List, Dict, Union, Tuple, Optional
 from qrogue.game.world.map.rooms import AreaType
 from qrogue.util import PathConfig, MyRandom, Logger
 from qrogue.util.util_functions import enum_from_string
-
 from .wfc_generator import WFCGenerator, WFCRoomGenerator
 
 
