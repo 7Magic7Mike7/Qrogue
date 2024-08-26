@@ -89,7 +89,7 @@ class MyRandom:
         """
         Shuffles in place.
         """
-        random.shuffle(list_, lambda: self.get())
+        self.__random.shuffle(list_)
 
 
 class RandomManager:
