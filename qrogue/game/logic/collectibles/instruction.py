@@ -503,7 +503,7 @@ class CHGate(DoubleQubitGate):
 
 ####### Combined Gates #######
 
-class CombinedGate(Instruction):
+class CombinedGate(MultiQubitGate):
     __NAME_MAX_CHARACTERS = 7
     __NAME_MIN_CHARACTERS = 1
     __NEXT_ID = 0
@@ -616,10 +616,10 @@ class CombinedGate(Instruction):
         if include_suffix is None: include_suffix = True
         return f"{self.__gate.label}{' Gate' if include_suffix else ''}"
 
-    def abbreviation(self, qubit: Optional[int] = None):
-        qubit = "" if qubit is None else str(qubit)
+    def _internal_abbreviation(self, index: Optional[int] = None):
+        index = "" if index is None else str(index)
         id_str = str(self.__id) if self.__id < 10 else num_to_letter(self.__id - 10, start_uppercase=True)
-        return f"{GateType.Combined.short_name[0]}{id_str}{qubit}"
+        return f"{GateType.Combined.short_name[0]}{id_str}{index}"
 
     def _matrix_string(self) -> str:
         return self.__matrix.to_string()
