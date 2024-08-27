@@ -42,7 +42,7 @@ setup(
 	long_description=README,
 	long_description_content_type="text/markdown",
 	author='Michael Artner',
-	author_email='michael.artner@jku.at',
+	author_email='michael.artner@hotmail.de',
 	url='https://github.com/7Magic7Mike7/Qrogue',
 	download_url='https://github.com/7Magic7Mike7/Qrogue/releases/tag/0.7.0.5',  # link to Release on GitHub
 	keywords=['Quantum Computing', 'Gamification', 'Video Game', 'PyCUI'],
