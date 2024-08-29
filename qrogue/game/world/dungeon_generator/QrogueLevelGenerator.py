@@ -10,6 +10,7 @@ from qrogue.game.logic.actors.puzzles import Challenge, boss
 from qrogue.game.logic.base import StateVector
 from qrogue.game.logic.collectibles import Collectible, MultiCollectible, pickup, Qubit, instruction, \
     Instruction, InstructionManager, CollectibleFactory, OrderedCollectibleFactory
+from qrogue.game.logic.collectibles.instruction import HGate
 from qrogue.game.target_difficulty import ExplicitTargetDifficulty
 from qrogue.game.target_factory import EnemyFactory, EnemyTargetFactory, BossFactory
 from qrogue.game.world import tiles
@@ -736,18 +737,26 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         return tiles.Riddler(self.__cbp.open_riddle, riddle)
 
     def visitChallenge_descriptor(self, ctx: QrogueDungeonParser.Challenge_descriptorContext) -> tiles.Challenger:
-        # currently Challenges only work in expeditions
-        Config.check_reachability("visitChallenge_descriptor()", raise_exception=True)
-
         min_gates = self.visit(ctx.integer(0))
         if ctx.integer(1):
             max_gates = self.visit(ctx.integer(1))
         else:
             max_gates = min_gates
 
-        stv, reward, input_stv = self.visit(ctx.puzzle_parameter())
-        challenge = Challenge(self._next_target_id(), stv, reward, min_gates, max_gates, input_=input_stv)
-        return tiles.Challenger(self.__cbp.open_challenge, challenge)   # currently incorrect signature!
+        stv, special_gate, input_stv = self.visitPuzzle_parameter(ctx.puzzle_parameter())
+        if input_stv is None:
+            # Challenges usually use 0-state targets and non-0 inputs
+            input_stv = stv
+            stv = StateVector.create_zero_state_vector(stv.num_of_qubits)
+            Logger.instance().warn("LevelGenerator found Challenge with 0-state input and non-0 target. Swapping these "
+                                   "two for a more consistent Challenge experience.", from_pycui=False)
+        if not isinstance(special_gate, Instruction):
+            Logger.instance().error("LevelGenerator found Challenge with no gate reward! Using HGate instead.",
+                                    from_pycui=False)
+            special_gate = HGate()
+
+        challenge = Challenge(self._next_target_id(), stv, pickup.Score(), min_gates, max_gates, input_=input_stv)
+        return tiles.Challenger(challenge, special_gate, self.__cbp.open_challenge, self.__show_message)
 
     def visitEnergy_descriptor(self, ctx: QrogueDungeonParser.Energy_descriptorContext) -> tiles.Tile:
         amount = self.visit(ctx.integer())
