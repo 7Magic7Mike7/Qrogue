@@ -1680,7 +1680,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                  continue_exploration_callback: Callable[[bool], None], reopen_popup: Callable[[], None],
                  check_unlocks_callback: Callable[[Union[str, Unlocks]], bool],
                  flee_choice: str = "Flee", dynamic_input: bool = True, dynamic_target: bool = True,
-                 enable_reset: bool = False):
+                 enable_reset: Optional[bool] = None):
         """
         :param controls: controls used by the CUI to add keys
         :param render: callback to render the CUI
@@ -1691,7 +1691,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         :param flee_choice: the text used to prompt the player with aborting this widget set's puzzle
         :param dynamic_input:
         :param dynamic_target:
-        :param enable_reset: whether we want to add a Reset-command or not
+        :param enable_reset: whether we want to add a Reset-command or not (None considers the corresponding unlock)
         """
         super().__init__(logger, root, render)
         self.__flee_choice = flee_choice
@@ -2012,7 +2012,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             choices.append("Remove")
             objects.append(ReachTargetWidgetSet.__CHOICES_REMOVE_OBJECT)
             callbacks.append(self.__remove)
-        if self.__enable_reset:
+        if self.__enable_reset is True or self.__enable_reset is None and self._check_unlocks(Unlocks.CircuitReset):
             choices.append("Reset")
             objects.append(ReachTargetWidgetSet.__CHOICES_RESET_OBJECT)
             callbacks.append(self.__reset_circuit)
@@ -2203,7 +2203,7 @@ class RiddleWidgetSet(ReachTargetWidgetSet):
 
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  continue_exploration_callback: Callable[[bool], None], reopen_popup_callback: Callable[[], None],
-                 check_unlocks_callback: Callable[[str], bool], enable_reset: bool = False):
+                 check_unlocks_callback: Callable[[str], bool], enable_reset: Optional[bool] = None):
         super().__init__(controls, render, logger, root, continue_exploration_callback, reopen_popup_callback,
                          check_unlocks_callback, "Give Up", enable_reset=enable_reset)
 
