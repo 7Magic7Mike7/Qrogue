@@ -1,6 +1,6 @@
 Qrogue<
 Name = "Lesson 5: Intrisically Interconnected"
-Description = Speaker "0" prio "In the final lesson we will talk about a quantum concept //05Einstein// described as //05'spooky action at a distance'//. If you're not familiar with this quote: no reason to actually be afraid! It's only mind-blowing."
+Description = Speaker "0" prio "In this lesson we will talk about the last missing quantum concept //05Einstein// described as //05'spooky action at a distance'//. If you're not familiar with this quote: no reason to actually be afraid! It's only mind-blowing."
 NO_TELEPORTER
 
 // Introduced Concepts:
@@ -131,7 +131,7 @@ jj (Story):
 # _ o o o _ #
 # o _ _ _ o #
 #############
-b *entanglement01 *sgate 10 tutorial *bossIntro
+b *entanglement01 score 1000 10 tutorial *bossIntro
 
 [Hallways]
 11 (locked; ; )
