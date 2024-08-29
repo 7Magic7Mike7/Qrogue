@@ -23,6 +23,7 @@ class Unlocks(enum.Enum):
     ProceedChoice = (90, "ProceedChoice")   # unlocked after all Tutorial levels (right before Exam)    # todo: should be available as soon as Level Selection is available
     LevelSelection = (91, "LevelSelection")
     Workbench = (92, "Workbench")
+    Expeditions = (93, "Expeditions")
 
     def __init__(self, id_: int, name: str):
         self.__id = id_

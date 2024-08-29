@@ -8,6 +8,8 @@ from .util_functions import datetime2str
 
 
 class LevelInfo:
+    __LAST_LEVEL_NUM = 6
+
     __MAP_ORDER: Dict[int, Dict[str, str]] = {
         # map names:
         #   - the first character determines if it's a level ("l") or world ("w")
@@ -18,11 +20,11 @@ class LevelInfo:
         #   - alternatively maps can also start with "expedition" to mark them as generated
         0: {
             MapConfig.first_uncleared(): "l0k0v0",
-            "l0k0v4": f"{MapConfig.expedition_map_prefix()}",
+            "l0k0v6": f"{MapConfig.expedition_map_prefix()}",
         },
         1: {
             MapConfig.first_uncleared(): "l0k1v0",
-            "l0k1v4": f"{MapConfig.expedition_map_prefix()}",
+            "l0k1v6": f"{MapConfig.expedition_map_prefix()}",
         },
     }
 
@@ -30,7 +32,9 @@ class LevelInfo:
         # newbie tutorials
         "l0k0v0": [Unlocks.MainMenuContinue, Unlocks.ShowEnergy, ],
         "l0k0v1": [Unlocks.ShowEquation, Unlocks.PuzzleHistory],
-        "l0k0v4": [Unlocks.LevelSelection, Unlocks.Workbench],
+        "l0k0v4": [Unlocks.CircuitReset],
+        "l0k0v5": [Unlocks.LevelSelection],
+        "l0k0v6": [Unlocks.Workbench, Unlocks.Expeditions],
 
         # experienced tutorials are copied from newbie tutorials entered in init()
 
@@ -43,7 +47,9 @@ class LevelInfo:
         "l0k0v1": [GateType.CXGate],
         "l0k0v2": [],
         "l0k0v3": [GateType.HGate],
-        "l0k0v4": [GateType.SGate],
+        "l0k0v4": [],
+        "l0kv05": [GateType.SGate],
+        "l0kv06": [GateType.YGate],
 
         # experienced tutorials are copied from newbie tutorials entered in init()
 
@@ -57,6 +63,8 @@ class LevelInfo:
         "l0k0v2": [GateType.XGate],
         "l0k0v3": [GateType.XGate, GateType.CXGate],
         "l0k0v4": [GateType.XGate, GateType.CXGate, GateType.HGate],
+        "l0k0v5": [GateType.XGate, GateType.CXGate, GateType.HGate],
+        "l0k0v6": [GateType.XGate, GateType.CXGate, GateType.HGate, GateType.YGate],
 
         # experienced tutorials are copied from newbie tutorials entered in init()
 
@@ -69,8 +77,8 @@ class LevelInfo:
     @staticmethod
     def init():
         # initialize map order in-between tutorials
-        start, end = 0, 3
-        for i in range(start, end + 1):
+        # the last level will lead to an expedition, so it's okay that i will never be equal to __LAST_LEVEL_NUM
+        for i in range(0, LevelInfo.__LAST_LEVEL_NUM):
             for km in [0, 1]:
                 src_name, dst_name = f"l0k{km}v{i}", f"l0k{km}v{i + 1}"
                 LevelInfo.__MAP_ORDER[km][src_name] = dst_name
