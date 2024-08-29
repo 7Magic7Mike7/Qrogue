@@ -263,9 +263,9 @@ class Challenger(WalkTriggerTile):
             controllable.give_collectible(self.__gate, force=True)
             self.__open_challenge(controllable, self.__challenge)
             self.__show_message("Challenge",
-                                f"You received {ColorConfig.highlight_object(self.__gate.name(), invert=True)} from "
-                                f"the {ColorConfig.highlight_object('Challenger', invert=True)}. Now show them how to "
-                                f"use it to continue!")
+                                f"You received {ColorConfig.highlight_object(self.__gate.name())} from "
+                                f"the {ColorConfig.highlight_object('Miniboss')}. Now demonstrate how to use it to "
+                                f"continue!")
         return False
 
     def _copy(self) -> "WalkTriggerTile":

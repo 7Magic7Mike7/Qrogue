@@ -439,7 +439,7 @@ class GateType(enum.Enum):
         "The Hadamard Gate is often used to bring Qubits into Superposition."
 
     SGate = "S", "Phase", {"P", "Phase Shift S"}, \
-        "The S Gate can change the phase of a qubit by multiplying its |1> with i (note that this does not alter " \
+        "The S Gate can change the phase of a qubit by multiplying its |1> with j (note that this does not alter " \
         "the probability of measuring |0> or |1>!). It is equivalent to a rotation along the z-axis by 90°."
     RYGate = "RY", "Rotational Y", {"Rot Y"}, \
         "The RY Gate conducts a rotation along the y-axis by a certain angle. In our case the angle is 90°."

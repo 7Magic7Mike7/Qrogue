@@ -72,7 +72,7 @@ class CommonPopups(Enum):
     NotEnoughEnergyToFlee = f"{CC.highlight_word('Denied')}. Fleeing {CC.highlight_word('not possible')} because it " \
                             f"would cost all of the {CC.highlight_object('Robot´s')} remaining " \
                             f"{CC.highlight_object('Energy')}."
-    CannotFlee = f"You cannot {CC.highlight_action('flee')} from {CC.highlight_object('Challenges')}!"
+    CannotFlee = f"You cannot {CC.highlight_action('flee')} from {CC.highlight_object('Minibosses')}!"
     BackpackFull = f"Currently there is {CC.highlight_word('no more space')} in your backpack to hold another " \
                    f"{CC.highlight_object('Collectible')}. Please come back as soon as you have enough space!"
 
