@@ -75,7 +75,7 @@ class Options(Enum):
     allow_implicit_removal = ("Allow implicit Removal", OptionsType.Bool, None, 2, 0,
                               "Allows you to place a gate on an occupied spot, removing the occupying gate in the "
                               "process.")
-    allow_multi_move = ("Allow multi move", OptionsType.Bool, None, 2, 1,
+    allow_multi_move = ("Allow multi move", OptionsType.Bool, None, 2, 0,
                         "Allows you to move multiple tiles at once by pressing a number followed by a direction.")
     auto_skip_text_animation = ("Auto skip text animation", OptionsType.Bool, None, 2, 0,
                                 "During some special scene transitions there will be some animated text describing "
