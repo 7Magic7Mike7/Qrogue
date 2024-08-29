@@ -9,7 +9,8 @@ start  :    HEADER meta
             ENDER;
 
 meta :  ('Name' '=' TEXT)?
-        ('Description' '=' (message_body | REFERENCE))?
+        (INTRO_MSG '=' (message_body | REFERENCE))?
+        (END_MSG '=' (message_body | REFERENCE))?
         (NO_TELEPORTER | WITH_TELEPORTER)?
         SHOW_INDIV_QUBITS? ;
 
@@ -74,6 +75,8 @@ SR_TELEPORTER : (('spawnroom' | 'SPAWNROOM' | 'sr' | 'SR' )'_'?)?  ('teleporter'
 NO_TELEPORTER : ('exclude' | 'EXCLUDE' | 'no' | 'NO') '_'? SR_TELEPORTER ;
 WITH_TELEPORTER : ('include' | 'INCLUDE' | 'with' | 'WITH') '_'? SR_TELEPORTER ;
 SHOW_INDIV_QUBITS : ('show' | 'SHOW') '_'? ('individual' | 'indiv' | 'INDIVIDUAL' | 'INDIV') '_'? ('qubits' | 'QUBITS') ;
+INTRO_MSG : 'Description' ;
+END_MSG : 'Closing' ;
 
 // headlines (encapsulated in '[' ']')
 ROBOT : '[Robot]' ;

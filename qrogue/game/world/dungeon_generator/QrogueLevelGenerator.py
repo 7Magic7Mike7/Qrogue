@@ -1197,19 +1197,30 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
     ##### Meta area #####
 
     def visitMeta(self, ctx: QrogueDungeonParser.MetaContext) -> MapMetaData:
-        if ctx.TEXT():
-            name = parser_util.text_to_str(ctx)
-        else:
-            name = None
-        if ctx.message_body():
-            title, priority, position, msg = parser_util.parse_message_body(ctx.message_body(), self.__default_speaker)
-            message = Message.create_with_title("_map_description", title, msg, priority, position)
-        elif ctx.REFERENCE():
-            message = self.__load_message(ctx.REFERENCE())
-        else:
-            message = None
-        return MapMetaData(name, message, ctx.NO_TELEPORTER() is None, self.__show_description,
-                           ctx.SHOW_INDIV_QUBITS() is not None)
+        name = parser_util.text_to_str(ctx) if ctx.TEXT() else None
+
+        # parse optional intro and end message
+        body_index, ref_index = 0, 0
+        intro_msg, end_msg = None, None
+        if ctx.INTRO_MSG():
+            if ctx.message_body(body_index):
+                title, priority, position, msg = parser_util.parse_message_body(ctx.message_body(body_index),
+                                                                                self.__default_speaker)
+                intro_msg = Message.create_with_title("_map_description", title, msg, priority, position)
+                body_index += 1
+            elif ctx.REFERENCE(ref_index):
+                intro_msg = self.__load_message(ctx.REFERENCE(ref_index))
+                ref_index += 1
+        if ctx.END_MSG():
+            if ctx.message_body(body_index):
+                title, priority, position, msg = parser_util.parse_message_body(ctx.message_body(body_index),
+                                                                                self.__default_speaker)
+                end_msg = Message.create_with_title("_map_ending", title, msg, priority, position)
+            elif ctx.REFERENCE(ref_index):
+                end_msg = self.__load_message(ctx.REFERENCE(ref_index))
+
+        return MapMetaData(name, intro_msg, ctx.NO_TELEPORTER() is None, self.__show_description,
+                           ctx.SHOW_INDIV_QUBITS() is not None, end_msg)
 
     ##### Start area #####
 

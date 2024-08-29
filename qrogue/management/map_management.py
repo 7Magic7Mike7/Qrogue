@@ -2,6 +2,7 @@ import time
 from threading import Thread
 from typing import Callable, Optional, Dict, List, Tuple, Union
 
+from qrogue.game.logic import Message
 from qrogue.game.logic.actors.controllables.robot import RoboProperties
 from qrogue.game.logic.collectibles import Instruction
 from qrogue.game.world.dungeon_generator import ExpeditionGenerator, QrogueLevelGenerator
@@ -268,10 +269,16 @@ class MapManager:
 
             self.__save_data.save(is_auto_save=True)    # persist the progress
 
-            CommonQuestions.proceed_summary(self.__cur_map.name, new_level_data.score, new_level_data.duration,
-                                            new_level_data.total_score, self.__proceed,
-                                            None if prev_level_data is None
-                                            else (prev_level_data.total_score, prev_level_data.duration))
+            def show_end_message(end_message: Optional[Message]):
+                def _show_proceed_summary():
+                    CommonQuestions.proceed_summary(self.__cur_map.name, new_level_data.score, new_level_data.duration,
+                                                    new_level_data.total_score, self.__proceed,
+                                                    None if prev_level_data is None
+                                                    else (prev_level_data.total_score, prev_level_data.duration))
+                # either show the end message followed by the summary or just the summary
+                if end_message is None: _show_proceed_summary()
+                else: Popup.from_message_trigger(end_message, _show_proceed_summary)
+            self.__cur_map.end(show_end_message)
 
         elif event_id.lower().startswith(MapConfig.unlock_prefix()):
             self.__save_data.unlock(event_id[len(MapConfig.unlock_prefix()):])

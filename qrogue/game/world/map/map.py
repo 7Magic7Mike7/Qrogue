@@ -18,15 +18,38 @@ class MapType(enum.Enum):
 
 class MapMetaData:
     def __init__(self, name: Optional[str], description: Optional[Message], has_teleporter: bool,
-                 show_description: Callable[[], None], show_individual_qubits: bool = False):
-        self.name = name
-        self.description = description
-        self.has_teleporter = has_teleporter
+                 show_description: Callable[[], None], show_individual_qubits: bool = False,
+                 end_message: Optional[Message] = None):
+        self.__name = name
+        self.__description = description
+        self.__has_teleporter = has_teleporter
         self.__show_description = show_description
-        self.show_individual_qubits = show_individual_qubits
+        self.__show_individual_qubits = show_individual_qubits
+        self.__end_message = end_message
 
-    def show_description(self):
-        self.__show_description()
+    @property
+    def name(self) -> Optional[str]:
+        return self.__name
+
+    @property
+    def description(self) -> Optional[Message]:
+        return self.__description
+
+    @property
+    def has_teleporter(self) -> bool:
+        return self.__has_teleporter
+
+    @property
+    def show_description(self) -> Callable:
+        return self.__show_description
+
+    @property
+    def show_individual_qubits(self) -> bool:
+        return self.__show_individual_qubits
+
+    @property
+    def end_message(self) -> Optional[Message]:
+        return self.__end_message
 
 
 class BaseMap(ABC):
@@ -258,6 +281,9 @@ class Map(BaseMap, ABC):
 
     def start(self):
         self._meta_data.show_description()
+
+    def end(self, show_message: Callable[[Optional[Message]], None]):
+        show_message(self._meta_data.end_message)
 
     def move(self, direction: Direction) -> bool:
         """
