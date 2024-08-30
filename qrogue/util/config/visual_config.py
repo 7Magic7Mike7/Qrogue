@@ -145,69 +145,94 @@ class ColorConfig:
         return f"{ColorConfig.TEXT_HIGHLIGHT}{color_code}{text}{ColorConfig.TEXT_HIGHLIGHT}"
 
     @staticmethod
-    def highlight_tile(tile: str, invert: bool = False) -> str:
+    def highlight_tile(tile: str, invert: Optional[bool] = None) -> str:
         """
         Highlights tile strings.
         :param tile: a string to highlight as tile
-        :param invert: whether to use the normal or inverted background colors
+        :param invert: whether to use the normal (default) or inverted background colors
         :return:
         """
-        if invert:
-            return ColorConfig.colorize(ColorCode.INV_TILE_HIGHLIGHT, tile)
-        else:
-            return ColorConfig.colorize(ColorCode.TILE_HIGHLIGHT, tile)
+        if invert is None: invert = False
+        return ColorConfig.colorize(ColorCode.INV_TILE_HIGHLIGHT if invert else ColorCode.TILE_HIGHLIGHT, tile)
 
     @staticmethod
-    def highlight_object(obj: str, invert: bool = False) -> str:
+    def ht(tile: str, invert: Optional[bool] = None) -> str:
         """
-        Highlights something directly gameplay related. I.e. things you encounter in the game.
+        Shortcut for ColorConfig.highlight_tile().
+        """
+        return ColorConfig.highlight_tile(tile, invert)
+
+    @staticmethod
+    def highlight_object(obj: str, invert: Optional[bool] = None) -> str:
+        """
+        Highlights something directly gameplay related. I.e., things you encounter in the game.
         :param obj: a string to highlight as object
-        :param invert: whether to use the normal or inverted background colors
+        :param invert: whether to use the normal (default) or inverted background colors
         :return:
         """
-        if invert:
-            return ColorConfig.colorize(ColorCode.INV_OBJECT_HIGHLIGHT, obj)
-        else:
-            return ColorConfig.colorize(ColorCode.OBJECT_HIGHLIGHT, obj)
+        if invert is None: invert = False
+        return ColorConfig.colorize(ColorCode.INV_OBJECT_HIGHLIGHT if invert else ColorCode.OBJECT_HIGHLIGHT, obj)
 
     @staticmethod
-    def highlight_action(action: str, invert: bool = False) -> str:
+    def ho(obj: str, invert: Optional[bool] = None) -> str:
+        """
+        Shortcut for ColorConfig.highlight_object().
+        """
+        return ColorConfig.highlight_object(obj, invert)
+
+    @staticmethod
+    def highlight_action(action: str, invert: Optional[bool] = None) -> str:
         """
         Highlights action words that explain what you can do in the game.
         :param action: a string to highlight as action
-        :param invert: whether to use the normal or inverted background colors
+        :param invert: whether to use the normal (default) or inverted background colors
         :return:
         """
-        if invert:
-            return ColorConfig.colorize(ColorCode.INV_ACTION_HIGHLIGHT, action)
-        else:
-            return ColorConfig.colorize(ColorCode.ACTION_HIGHLIGHT, action)
+        if invert is None: invert = False
+        return ColorConfig.colorize(ColorCode.INV_ACTION_HIGHLIGHT if invert else ColorCode.ACTION_HIGHLIGHT, action)
 
     @staticmethod
-    def highlight_key(key: str, invert: bool = False) -> str:
+    def ha(action: str, invert: Optional[bool] = None) -> str:
+        """
+        Shortcut for ColorConfig.highlight_action().
+        """
+        return ColorConfig.highlight_action(action, invert)
+
+    @staticmethod
+    def highlight_key(key: str, invert: Optional[bool] = None) -> str:
         """
         Highlights a keyboard input.
         :param key: a string to highlight as key
-        :param invert: whether to use the normal or inverted background colors
+        :param invert: whether to use the normal (default) or inverted background colors
         :return:
         """
-        if invert:
-            return ColorConfig.colorize(ColorCode.INV_KEY_HIGHLIGHT, key)
-        else:
-            return ColorConfig.colorize(ColorCode.KEY_HIGHLIGHT, key)
+        if invert is None: invert = False
+        return ColorConfig.colorize(ColorCode.INV_KEY_HIGHLIGHT if invert else ColorCode.KEY_HIGHLIGHT, key)
 
     @staticmethod
-    def highlight_word(word: str, invert: bool = False) -> str:
+    def hk(key: str, invert: Optional[bool] = None) -> str:
+        """
+        Shortcut for ColorConfig.highlight_key().
+        """
+        return ColorConfig.highlight_key(key, invert)
+
+    @staticmethod
+    def highlight_word(word: str, invert: Optional[bool] = None) -> str:
         """
         Highlights miscellaneous words that should be highlighted.
         :param word: a string to highlight as important word
-        :param invert: whether to use the normal or inverted background colors
+        :param invert: whether to use the normal (default) or inverted background colors
         :return:
         """
-        if invert:
-            return ColorConfig.colorize(ColorCode.INV_WORD_HIGHLIGHT, word)
-        else:
-            return ColorConfig.colorize(ColorCode.WORD_HIGHLIGHT, word)
+        if invert is None: invert = False
+        return ColorConfig.colorize(ColorCode.INV_WORD_HIGHLIGHT if invert else ColorCode.WORD_HIGHLIGHT, word)
+
+    @staticmethod
+    def hw(word: str, invert: Optional[bool] = None) -> str:
+        """
+        Shortcut for ColorConfig.highlight_word().
+        """
+        return ColorConfig.highlight_word(word, invert)
 
     @staticmethod
     def get(char: str) -> int:
