@@ -25,7 +25,7 @@ from qrogue.util import CommonPopups, Config, Controls, GameplayConfig, HelpText
     get_filtered_help_texts, CommonQuestions, MapConfig, PyCuiConfig, ColorCode, split_text, MyRandom, \
     LevelInfo, CommonInfos, LevelData, StvDifficulty, GateType, RandomManager, OptionsManager, InstructionConfig
 from qrogue.util.achievements import Unlocks
-from qrogue.util.util_functions import enum_string, cur_datetime, time_diff, open_folder, align_string
+from qrogue.util.util_functions import enum_string, cur_datetime, time_diff, open_folder, align_lines
 
 
 class MyWidgetSet(WidgetSet, Renderable, ABC):
@@ -1472,24 +1472,16 @@ class WorkbenchWidgetSet(MyWidgetSet):
 
     @staticmethod
     def workbench_info() -> str:
-        # 1) make sure all info lines are centered
+        prefixes = ["Fuse", "Decompose", "\n"]
+        separators = [" - "] * 2
+        # last separator is one whitespace more because its prefix "\n" is not displayed in the same line
+        separators.append(" " * (len(separators[0]) + 1))
         lines = [
             "Select Gates to fuse into a new CombinedGate in exchange for some of your QuantumFusers", # fuse
             "Select Gates to destroy in exchange for additional QuantumFusers",     # decompose
             "Press [Help] to show the full description",     # help
         ]
-        max_line_width = max([len(line) for line in lines])
-        lines = [align_string(line, max_line_width) for line in lines]
-
-        # make sure their prefixes are extended such that the first character of each info is placed in the same column
-        prefixes = ["Fuse", "Decompose", "\n"]
-        max_line_width = max([len(prefix) for prefix in prefixes])
-        prefixes = [align_string(prefix, max_line_width) for prefix in prefixes]
-
-        # combine prefixes with separators and the info lines
-        separators = [" - ", " - ", "   "]
-        lines = [prefixes[i] + separators[i] + lines[i] for i in range(len(lines))]
-        return "\n".join(lines)
+        return "\n".join(align_lines(lines, prefixes, separators, left=True))
 
     def __init__(self, logger, root: py_cui.PyCUI, base_render_callback: Callable[[List[Renderable]], None],
                  controls: Controls, num_quantum_fusers_callback: Callable[[], int],

@@ -1,7 +1,7 @@
 import datetime
 import enum
 import math
-from typing import Optional, Any, Tuple
+from typing import Optional, Any, Tuple, List
 
 import numpy as np
 
@@ -170,6 +170,27 @@ def align_string(text: str, line_width: int, left: bool = True, character: str =
         return text + diff * character
     else:
         return diff * character + text
+
+
+def align_lines(lines: List[str], titles: List[str], separators: List[str],
+                left: bool = True, character: str = __DEFAULT_CHARACTER) -> List[str]:
+    assert len(lines) == len(titles) == len(separators), \
+        f"Lengths are different: {len(lines)} =?= {len(titles)} =?= {len(separators)}"
+
+    # 1) align the lines
+    max_line_width = max([len(line) for line in lines])
+    lines = [align_string(line, max_line_width, left, character) for line in lines]
+
+    # 2) align the titles with corresponding space between their lines
+    # make sure the titles are extended such that the first/last character is placed in the same column
+    max_line_width = max([len(title) for title in titles])
+    titles = [align_string(title, max_line_width, left, character) for title in titles]
+
+    # 3) combine titles with separators and lines
+    if left:
+        return [titles[i] + separators[i] + lines[i] for i in range(len(lines))]
+    else:
+        return [lines[i] + separators[i] + titles[i] for i in range(len(lines))]
 
 
 def enum_string(value: enum.Enum, skip_type_prefix: bool = True) -> str:
