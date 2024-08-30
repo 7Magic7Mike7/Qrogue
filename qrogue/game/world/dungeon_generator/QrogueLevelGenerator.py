@@ -755,7 +755,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
                                     from_pycui=False)
             special_gate = HGate()
 
-        challenge = Challenge(self._next_target_id(), stv, pickup.Score(), min_gates, max_gates, input_=input_stv)
+        # don't specify reward to use the default one
+        challenge = Challenge(self._next_target_id(), stv, min_gates, max_gates, input_=input_stv)
         return tiles.Challenger(challenge, special_gate, self.__cbp.open_challenge, self.__show_message)
 
     def visitEnergy_descriptor(self, ctx: QrogueDungeonParser.Energy_descriptorContext) -> tiles.Tile:

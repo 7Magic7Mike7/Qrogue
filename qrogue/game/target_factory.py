@@ -186,7 +186,8 @@ class ChallengeFactory(PuzzleFactory):
         input_gates = self._prepare_from_gates(rm, include_gates, force_num_of_gates=False, inverse=True)
         input_stv = Instruction.compute_stv(input_gates, self._num_of_qubits, inverse=True)
         target_stv = StateVector.create_zero_state_vector(self._num_of_qubits)
-        return Challenge(self._next_id(), target_stv, Score(), len(input_gates), len(input_gates), input_=input_stv)
+        # don't specify reward to use the default one
+        return Challenge(self._next_id(), target_stv, len(input_gates), len(input_gates), input_=input_stv)
 
 
 class BossFactory(PuzzleFactory):
