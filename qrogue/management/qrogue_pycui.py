@@ -24,7 +24,7 @@ from qrogue.graphics.widgets import Renderable, BossFightWidgetSet, ExploreWidge
 from qrogue.util import common_messages, CheatConfig, Config, GameplayConfig, UIConfig, HelpText, \
     Logger, PathConfig, Controls, Keys, RandomManager, PyCuiConfig, PopupConfig, PyCuiColors, Options, \
     CommonInfos, MapConfig
-from qrogue.util.achievements import Achievement
+from qrogue.util.achievements import Achievement, Unlocks
 from qrogue.util.game_simulator import GameSimulator
 from qrogue.util.key_logger import KeyLogger, OverWorldKeyLogger, DummyKeyLogger
 from .map_management import MapManager
@@ -332,6 +332,7 @@ class QrogueCUI(PyCUI):
                                              lambda b: None, self.__popup_history.show,
                                              self.__save_data.check_unlocks)  # todo: update signature
         self.__workbench = WorkbenchWidgetSet(Logger.instance(), self, self.__render, self.__controls,
+                                               lambda: self.__save_data.num_quantum_fusers,
                                               self.__save_data.get_original_gates, self.__save_data.add_gate,
                                               self.__save_data.decompose, self.__save_data.check_unlocks,
                                               self._switch_to_menu, self.__show_fusion_circuit)
@@ -694,7 +695,11 @@ class QrogueCUI(PyCUI):
 
     def _switch_to_workbench(self, _=None):
         # no data parameter needed
+        self.__workbench.reinit()
         self.apply_widget_set(self.__workbench)
+        if not self.__save_data.check_unlocks(Unlocks.VisitedWorkbench):
+            Popup.show_help(HelpText.Workbench)
+            self.__save_data.unlock(Unlocks.VisitedWorkbench)
 
     def __show_fusion_circuit(self, gate_list: List[Instruction]):
         self.__state_machine.change_state(QrogueCUI._State.FusionCircuit, gate_list)

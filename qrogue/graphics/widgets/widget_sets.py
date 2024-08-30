@@ -25,7 +25,7 @@ from qrogue.util import CommonPopups, Config, Controls, GameplayConfig, HelpText
     get_filtered_help_texts, CommonQuestions, MapConfig, PyCuiConfig, ColorCode, split_text, MyRandom, \
     LevelInfo, CommonInfos, LevelData, StvDifficulty, GateType, RandomManager, OptionsManager, InstructionConfig
 from qrogue.util.achievements import Unlocks
-from qrogue.util.util_functions import enum_string, cur_datetime, time_diff, open_folder
+from qrogue.util.util_functions import enum_string, cur_datetime, time_diff, open_folder, align_string
 
 
 class MyWidgetSet(WidgetSet, Renderable, ABC):
@@ -1466,8 +1466,34 @@ class PauseMenuWidgetSet(MyWidgetSet):
 class WorkbenchWidgetSet(MyWidgetSet):
     __GATE_CONFIRM = "confirm"
 
+    @staticmethod
+    def resources_text(num_quantum_fusers: int) -> str:
+        return f"Available Quantum Fusers: {num_quantum_fusers}"
+
+    @staticmethod
+    def workbench_info() -> str:
+        # 1) make sure all info lines are centered
+        lines = [
+            "Select Gates to fuse into a new CombinedGate in exchange for some of your QuantumFusers", # fuse
+            "Select Gates to destroy in exchange for additional QuantumFusers",     # decompose
+            "Press [Help] to show the full description",     # help
+        ]
+        max_line_width = max([len(line) for line in lines])
+        lines = [align_string(line, max_line_width) for line in lines]
+
+        # make sure their prefixes are extended such that the first character of each info is placed in the same column
+        prefixes = ["Fuse", "Decompose", "\n"]
+        max_line_width = max([len(prefix) for prefix in prefixes])
+        prefixes = [align_string(prefix, max_line_width) for prefix in prefixes]
+
+        # combine prefixes with separators and the info lines
+        separators = [" - ", " - ", "   "]
+        lines = [prefixes[i] + separators[i] + lines[i] for i in range(len(lines))]
+        return "\n".join(lines)
+
     def __init__(self, logger, root: py_cui.PyCUI, base_render_callback: Callable[[List[Renderable]], None],
-                 controls: Controls, get_original_gates_callback: Callable[[], List[Instruction]],
+                 controls: Controls, num_quantum_fusers_callback: Callable[[], int],
+                 get_original_gates_callback: Callable[[], List[Instruction]],
                  store_gate_callback: Callable[[Instruction], None],
                  decompose_gate_callback: Callable[[Instruction], bool], check_unlocks_callback: Callable[[str], bool],
                  switch_to_menu_callback: Callable[[], None],
@@ -1475,6 +1501,7 @@ class WorkbenchWidgetSet(MyWidgetSet):
         super().__init__(logger, root, base_render_callback)
 
         self.__get_original_gates = get_original_gates_callback
+        self.__num_quantum_fusers = num_quantum_fusers_callback
         self.__store_gate = store_gate_callback
         self.__decompose_gate = decompose_gate_callback
         self.__check_unlocks_callback = check_unlocks_callback
@@ -1492,6 +1519,7 @@ class WorkbenchWidgetSet(MyWidgetSet):
             (("Decompose", self.__decompose), self.__choose_gates),
             (("Back to Menu", None), switch_to_menu_callback),
         ])
+        self.__choices.widget.add_key_command(controls.get_keys(Keys.Help), lambda: Popup.show_help(HelpText.Workbench))
 
         gate_selection = self.add_block_label_by_dimension('Gates', UIConfig.WB_GATES_DIMS)
         gate_selection.toggle_border()
@@ -1520,6 +1548,12 @@ class WorkbenchWidgetSet(MyWidgetSet):
                 MyWidgetSet.show_gate_guide(self.__details.selected_object.to_gate(), Popup.generic_info,
                                             self.__check_unlocks_callback)
         self.__details.widget.add_key_command(controls.get_keys(Keys.Help), gate_guide)
+
+        self.reinit()
+
+    def reinit(self):
+        self.__resources.set_data(self.resources_text(self.__num_quantum_fusers()))
+        self.__info.set_data(self.workbench_info())
 
     def __choose_gates(self) -> bool:
         selectable_gates = [MyWidgetSet._SelectableGate(gate) for gate in self.__get_original_gates()]
@@ -1553,6 +1587,7 @@ class WorkbenchWidgetSet(MyWidgetSet):
         if len(failed_gates) > 0:
             Popup.error(f"Failed for the following gates: {', '.join([gate.name() for gate in failed_gates])}. Please "
                         f"try again. Should this error proceed to occur: ", add_report_note=True)
+        self.reinit()   # update QuantumFusers
         return
 
     def __fuse(self, gate_list: List[Instruction]):
@@ -1563,6 +1598,7 @@ class WorkbenchWidgetSet(MyWidgetSet):
         return [
             self.__choices,
             self.__details,
+            self.__resources,
             self.__info,
         ]
 
@@ -1572,7 +1608,6 @@ class WorkbenchWidgetSet(MyWidgetSet):
     def reset(self) -> None:
         self.__choices.render_reset()
         self.__details.render_reset()
-        self.__info.render_reset()
 
 
 class MapWidgetSet(MyWidgetSet, ABC):

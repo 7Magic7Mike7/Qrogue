@@ -327,10 +327,9 @@ class HelpText(Enum):  # todo: import Controls to replace static key-mentions wi
 
     Workbench = ("Workbench",
         f"The {CC.hw('Workbench Screen')} allows you to {CC.hw('customize')} your available {CC.ho('Gates')}. You can "
-        f"{CC.ha('decompose')} {CC.ho('Gates')} in exchange for {CC.ho('QuantumFusers')} or "
-        f"{CC.ha('fuse')} {CC.ho('Gates')} into a new {CC.ho('CombinedGate')} in exchange for said "
-        f"{CC.ho('QuantumFusers')}. Beware that both of these actions {CC.hw('destroy')} the original "
-        f"{CC.ho('Gates')}!\n"
+        f"{CC.ha('fuse')} {CC.ho('Gates')} into a new {CC.ho('CombinedGate')} in exchange for {CC.ho('QuantumFusers')} "
+        f"or {CC.ha('decompose')} {CC.ho('Gates')} to receive more of said {CC.ho('QuantumFusers')}. Beware that both "
+        f"of these actions {CC.hw('destroy')} the original {CC.ho('Gates')}!\n"
         f"For {CC.ha('fusing')}, you first select the {CC.ho('Gates')} you'd like to {CC.ha('fuse')}, and then place them "
         f"however you want in a {CC.hw('Circuit')} - just like you do when solving a {CC.ho('Puzzle')}. The "
         f"{CC.hw('Fusion')} will cost {CC.hw('1')} {CC.ho('QuantumFuser')} for every {CC.ho('Gate')} used. In the end, "

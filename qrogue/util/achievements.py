@@ -25,6 +25,9 @@ class Unlocks(enum.Enum):
     Workbench = (92, "Workbench")
     Expeditions = (93, "Expeditions")
 
+    # internal events
+    VisitedWorkbench = (1_001, "VisitedWorkbench")
+
     def __init__(self, id_: int, name: str):
         self.__id = id_
         self.__name = name
