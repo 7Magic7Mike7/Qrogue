@@ -1373,7 +1373,7 @@ class PauseMenuWidgetSet(MyWidgetSet):
 
     def __help(self) -> bool:
         objects = get_filtered_help_texts()
-        texts = [enum_string(val, skip_type_prefix=True) for val in objects] + [MyWidgetSet.BACK_STRING]
+        texts = [val.name for val in objects] + [MyWidgetSet.BACK_STRING]
         objects.append(SelectionWidget.cancel_obj())
 
         def callback(_: int):
@@ -1381,7 +1381,7 @@ class PauseMenuWidgetSet(MyWidgetSet):
             if self.__details.selected_object is SelectionWidget.cancel_obj():
                 return True     # change focused widget
             elif isinstance(val, HelpText):
-                Popup.generic_info(enum_string(val, skip_type_prefix=True), val.text)
+                Popup.generic_info(val.name, val.text)
                 return False
             Config.check_reachability("PauseMenuWidgetSet.__help().callback()_unhandled selection object")
             return False

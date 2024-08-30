@@ -169,22 +169,23 @@ class _HL:
 
 
 class HelpText(Enum):  # todo: import Controls to replace static key-mentions with dynamic ones?
-    Controls = f"Move                  -   {_HL.navigation_keys}\n" \
-               f"Navigate menus        -   {_HL.navigation_keys}\n" \
-               f"Confirm               -   {_HL.action_keys}\n" \
-               f"Cancel/Back           -   {_HL.cancel_keys}\n" \
-               f"Scroll in message     -   {_HL.navigation_keys}\n" \
-               f"Close message         -   {_HL.action_keys}\n" \
-               f"Reopen last message   -   {_HL.help_keys}\n" \
-               f"Pause                 -   {_HL.pause_keys}\n" \
-               f"Selection shortcuts   -   {_HL.shortcuts}\n" \
-               "\n" \
-               f"[Should you ever get stuck try to open the pause menu with {_HL.pause_keys} and then select continue. " \
-               f"This way the game refocuses and renders again. In case this still doesn't help or doesn't even work you " \
-               f"can force-quit the game by pressing {_HL.shutdown_keys}. This will still save everything so it is the " \
-               "preferred option over simply closing the window!]"  # let's not mention ESC since it could lead to bugs
+    Controls = ("Controls",
+        f"Move                  -   {_HL.navigation_keys}\n" \
+        f"Navigate menus        -   {_HL.navigation_keys}\n" \
+        f"Confirm               -   {_HL.action_keys}\n" \
+        f"Cancel/Back           -   {_HL.cancel_keys}\n" \
+        f"Scroll in message     -   {_HL.navigation_keys}\n" \
+        f"Close message         -   {_HL.action_keys}\n" \
+        f"Reopen last message   -   {_HL.help_keys}\n" \
+        f"Pause                 -   {_HL.pause_keys}\n" \
+        f"Selection shortcuts   -   {_HL.shortcuts}\n" \
+        "\n" \
+        f"[Should you ever get stuck try to open the pause menu with {_HL.pause_keys} and then select continue. " \
+        f"This way the game refocuses and renders again. In case this still doesn't help or doesn't even work you " \
+        f"can force-quit the game by pressing {_HL.shutdown_keys}. This will still save everything so it is the " \
+        "preferred option over simply closing the window!]")  # let's not mention ESC since it could lead to bugs
 
-    Fight = \
+    Fight = ("Puzzles",
         f"Basically {_HL.quantum_computing} is just a lot of complex-valued {_HL.mat_vec_mul}:\n" \
         f"{_HL.circuit_matrix} * {_HL.input_stv} = {_HL.output_stv}\n" \
         f"Your goal is to make the latter {_HL.equal} to the {_HL.target_stv}. While the input and target state " \
@@ -194,9 +195,9 @@ class HelpText(Enum):  # todo: import Controls to replace static key-mentions wi
         f"Afterwards use {_HL.action_keys} to confirm the placement. This will update both {_HL.circuit_matrix} " \
         f"and {_HL.output_stv} accordingly. Green numbers in {_HL.output_stv} indicate correct and red incorrect " \
         f"values. Once the whole vector is green, {_HL.output_stv} and {_HL.target_stv} are equal and the " \
-        f"{_HL.puzzle} is solved."
+        f"{_HL.puzzle} is solved.")
 
-    Ket = \
+    Ket = ("Ket-Notation",
         f"The {_HL.ket1_symbol}-notation you can see {_HL.around} the {_HL.state_vectors} and {_HL.circuit_matrix} " \
         f"is called {_HL.ket_notation}. It describes to which {_HL.qubit_configuration} the values correspond to. For " \
         f"example {_HL.ket_symbol_stv01} at ~Target~ means that the target qubit's {_HL.zero_state} should have an " \
@@ -209,9 +210,9 @@ class HelpText(Enum):  # todo: import Controls to replace static key-mentions wi
         f"It implies that both {_HL.qubit_configurations} |00> and |01> have an amplitude of 0.707 and therefore " \
         f"correspond to a probability of abs(0.707)^2 = 0.5 = 50%. Since we write the most significant qubit first, " \
         f"this implies that q1=0 is always true and only q0's value comes down to a coin flip.\n" \
-        f"In general {_HL.ket_notation} looks like this: |qn...q1q0>, where n is the number of qubits - 1."
+        f"In general {_HL.ket_notation} looks like this: |qn...q1q0>, where n is the number of qubits - 1.")
 
-    ParallelGates = \
+    ParallelGates = ("Gates in parallel",
         f"Single qubit {_HL.gates} (e.g., X Gate) correspond to {_HL.matrix_2x2} which describe how the {_HL.gate} " \
         f"{_HL.transforms} the two possible inputs (0 and 1). However, {_HL.circuit} with {_HL.two} {_HL.qubits} " \
         f"have {_HL.four} possible inputs (00, 01, 10 and 11) and therefore have to correspond to {_HL.matrix_4x4}. " \
@@ -235,9 +236,9 @@ class HelpText(Enum):  # todo: import Controls to replace static key-mentions wi
         f"The order is important as {CC.highlight_word('putting X into I')} results in a different matrix than " \
         f"{CC.highlight_word('putting I into X')}. But if you look at your {_HL.circuit} you can always go from " \
         f"{CC.highlight_word('top to bottom')}. Just use the {CC.highlight_word('top most')} {_HL.gate} as base and " \
-        f"{CC.highlight_word('put the lower')} one(s) into it."
+        f"{CC.highlight_word('put the lower')} one(s) into it.")
 
-    SerialGates = \
+    SerialGates = ("Gates in series",
         f"Applying two {_HL.gates} in series is as easy as {CC.highlight_word('multiplying')} two matrices.\n" \
         f"Let's consider an {_HL.gate_x} at q0 followed by a {_HL.gate_cx} at q0 (=control), q1 (=target). So we " \
         f"compute a {_HL.matrix_4x4} for the {_HL.gate_x} (see {_HL.kronecker} and then " \
@@ -256,10 +257,10 @@ class HelpText(Enum):  # todo: import Controls to replace static key-mentions wi
         f"to be {CC.highlight_word('multiplied')} from {CC.highlight_word('right to left')}. But in the " \
         f"{_HL.mat_vec_mul} the {_HL.input_stv} is on the right side while for the {_HL.circuit} the input is on the " \
         f"left. Therefore in both cases simply the gate/matrix {CC.highlight_word('closer')} to the input is " \
-        f"considered first."
+        f"considered first.")
 
     # todo: the split after "collapse to" seems to think that |00> refers to a color code, hence adding // without closing //?
-    Amplitudes = \
+    Amplitudes = ("Amplitudes",
         f"Let's consider the following {_HL.state_vector}:\n" \
         "|00>  0.707  \n" \
         "|01>  0.707  \n" \
@@ -275,30 +276,30 @@ class HelpText(Enum):  # todo: import Controls to replace static key-mentions wi
         f"{CC.highlight_word('squared absolute values')} of a {CC.highlight_object('Quantum StateVector')} also need " \
         f"to be 1.\n" \
         f"In general {_HL.quantum_state}s are described by {CC.highlight_word('complex values')} so unlike in the " \
-        f"example above it is very important to not forget to apply the absolute operator before squaring."
+        f"example above it is very important to not forget to apply the absolute operator before squaring.")
 
-    Riddle = \
+    Riddle = ("Riddles",
         f"{_HL.riddles} are very similar to {_HL.puzzles}, yet a bit different. They also shows you a " \
         f"{_HL.target_state} you need to {_HL.reach} to solve it but you {_HL.cannot} {_HL.try_} it " \
         f"{_HL.arbitrary} {_HL.often}. They have predefined {_HL.number_of_times} you can {_HL.edit} your " \
         f"{_HL.circuit} before they get {_HL.unstable}. Unstable {_HL.riddles} have a 50% chance to {_HL.vanish} " \
-        f"together with their {_HL.reward} whenever you update your {_HL.circuit}."
+        f"together with their {_HL.reward} whenever you update your {_HL.circuit}.")
 
-    Challenge = \
-        "TODO"
+    Challenge = ("Minibosses",
+        "TODO")
 
-    BossFight = \
+    BossFight = ("Bosses",
         f"Now it's getting {_HL.serious}! You are fighting against {_HL.bell}. For the {_HL.state} you need to reach " \
         f"to defeat Bell your two {_HL.qubits} will always have to be the same: either {_HL.both0} or {_HL.both1}.\n" \
         f"This is called {_HL.entanglement}.\n\n" \
-        "Good luck!"  # todo make more generic
+        "Good luck!")  # todo make more generic
 
-    Game = \
+    Game = ("About the Game",
         f"QRogue is a game about {_HL.quantum_computing}. You will explore " \
         f"Levels and Expeditions and solve {_HL.puzzles} with the help of {_HL.quantum_gates} to reach even " \
-        f"farther places of the universe.\n"
+        f"farther places of the quniverse.\n")
 
-    Pause = \
+    Pause = ("Pause Menu",
         "In the Pause Menu you can do several things:\n" \
         f"{_HL.continue_} - Leave the Pause Menu and continue where you stopped.\n" \
         f"{_HL.restart} - Restart the current level.\n" \
@@ -306,16 +307,22 @@ class HelpText(Enum):  # todo: import Controls to replace static key-mentions wi
         f"{_HL.help_} - If you ever feel stuck and don't remember how certain stuff in the game works open " \
         f"the manual and we will try to help you.\n" \
         f"{_HL.options} - Configure some options of the game, like font size or coloring.\n" \
-        f"{_HL.exit_} - Exit the current level."
+        f"{_HL.exit_} - Exit the current level.")
 
-    Options = "7"
-    Welcome = Game + \
-              "\nBut before you can explore the universe you have to complete a trainings program.\n" \
-              f"Now close this dialog by pressing {_HL.action_keys}. Select {_HL.start_journey} with " \
-              f"{_HL.navigation_keys} and confirm your selection with {_HL.action_keys} to begin!"
+    Options = ("Options", "7")
+    Welcome = ("Welcome",
+        Game[1] + \
+        "\nBut before you can explore the universe you have to complete a trainings program.\n" \
+        f"Now close this dialog by pressing {_HL.action_keys}. Select {_HL.start_journey} with " \
+        f"{_HL.navigation_keys} and confirm your selection with {_HL.action_keys} to begin!")
 
-    def __init__(self, text: str):
+    def __init__(self, name: str, text: str):
+        self.__name = name
         self.__text = text
+
+    @property
+    def name(self) -> str:
+        return self.__name
 
     @property
     def text(self) -> str:
