@@ -175,6 +175,15 @@ class OptionsManager:
             return option.get_value(cur_index)
 
     @staticmethod
+    def set_option_value(option: Options, value: Any) -> bool:
+        try:
+            index = OptionsManager._get_closest_index(option, value)
+            OptionsManager.__OPTIONS[option] = index
+            return True
+        except:
+            return False
+
+    @staticmethod
     def to_string() -> str:
         lines = [f"{option.name}{OptionsManager.__SEPARATOR}{option.convert(OptionsManager.__OPTIONS[option])}"
                  for option in OptionsManager.__OPTIONS]
