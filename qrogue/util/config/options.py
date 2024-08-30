@@ -193,7 +193,7 @@ class OptionsManager:
     def _get_closest_index(option: Options, value: Any) -> int:
         if option.type is OptionsType.Bool:
             if isinstance(value, str):
-                return 1 if value.lower().strip() in ["yes", "1"] else 0
+                return 1 if value.lower().strip() in ["true", "yes", "1"] else 0
             else:
                 return 1 if value == 1 else 0
 
