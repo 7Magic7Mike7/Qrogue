@@ -149,15 +149,8 @@ class OptionsManager:
             OptionsManager.__OPTIONS[val] = val.default_index
 
     @staticmethod
-    def get_options(needed_options: Optional[List[Options]] = None) -> List[Tuple[Options, Callable[[Options], str]]]:
-        """
-
-        :return: list of [Option, Function to proceed to next value] for all gameplay config options
-        """
-        if needed_options is None:
-            needed_options = OptionsManager.__OPTIONS
-
-        def next_(option: Options) -> str:
+    def get_options_next_callback(option: Options) -> Callable[[], str]:
+        def next_() -> str:
             # first increment the current index
             next_index = OptionsManager.__OPTIONS[option] + 1
             if next_index >= option.num_of_values:
@@ -165,8 +158,7 @@ class OptionsManager:
             OptionsManager.__OPTIONS[option] = next_index
             # then return the corresponding new value
             return option.get_value(next_index)
-
-        return [(option, next_) for option in needed_options]
+        return next_
 
     @staticmethod
     def get_option_value(option: Options, convert: Optional[bool] = None, ignore_test_config: Optional[bool] = None) \

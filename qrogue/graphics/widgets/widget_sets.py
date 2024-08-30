@@ -1319,8 +1319,8 @@ class PauseMenuWidgetSet(MyWidgetSet):
 
         def _update_options_text(key: Keys):
             if key in Keys.selection_keys() and self.__choices.selected_object is PauseMenuWidgetSet.__OPTIONS_OBJ:
-                if isinstance(self.__details.selected_object[0], Options):
-                    self.__description.set_data(self.__details.selected_object[0].description)
+                if isinstance(self.__details.selected_object, Options):
+                    self.__description.set_data(self.__details.selected_object.description)
                 else:
                     self.__description.set_data("")
                 self.__description.render()
@@ -1395,12 +1395,11 @@ class PauseMenuWidgetSet(MyWidgetSet):
 
     def __options(self) -> bool:
         # hide most options for tutorial's sake
-        options = OptionsManager.get_options([Options.auto_save, Options.log_keys, Options.allow_implicit_removal])
-        texts = [f"{option.name}: {GameplayConfig.get_option_value(option, convert=False)}"
-                 for option, _ in options]
+        options = [Options.auto_save, Options.log_keys, Options.allow_implicit_removal]
+        texts = [f"{option.name}: {GameplayConfig.get_option_value(option, convert=False)}" for option in options]
 
         def callback(index: int) -> bool:
-            if self.__details.selected_object[0] is PauseMenuWidgetSet.__SAVE_OBJ:
+            if self.__details.selected_object is PauseMenuWidgetSet.__SAVE_OBJ:
                 if Config.save_gameplay_config():
                     # we cannot go back directly since we want to inform the user that saving was successful
                     # therefore we go back after closing the Popup
@@ -1409,7 +1408,7 @@ class PauseMenuWidgetSet(MyWidgetSet):
                 else:
                     CommonInfos.OptionsNotSaved.show()
                 return False
-            elif self.__details.selected_object[0] is SelectionWidget.cancel_obj():
+            elif self.__details.selected_object is SelectionWidget.cancel_obj():
                 # reset changes
                 try:
                     Config.load_gameplay_config()  # todo error message or is the file exception good enough?
@@ -1417,8 +1416,9 @@ class PauseMenuWidgetSet(MyWidgetSet):
                     Logger.instance().throw(error)
                 return True     # return to choices
             else:
-                option, next_ = self.__details.selected_object
-                new_title = f"{option.name}: {next_(option)}"
+                option = self.__details.selected_object
+                next_ = OptionsManager.get_options_next_callback(option)
+                new_title = f"{option.name}: {next_()}"
                 self.__details.update_text(new_title, index)
                 self.__details.render()
                 self.__description.set_data(option.description)
@@ -1427,10 +1427,10 @@ class PauseMenuWidgetSet(MyWidgetSet):
 
         self.__details.set_data(data=(
             (texts + ["-Save-", MyWidgetSet.BACK_STRING],
-             options + [(PauseMenuWidgetSet.__SAVE_OBJ, None), (SelectionWidget.cancel_obj(), None)]),
+             options + [PauseMenuWidgetSet.__SAVE_OBJ, SelectionWidget.cancel_obj()]),
             [callback]
         ))
-        self.__description.set_data(options[0][0].description)  # initialize description with first option
+        self.__description.set_data(options[0].description)  # initialize description with first option
         return True
 
     def __exit(self) -> bool:
