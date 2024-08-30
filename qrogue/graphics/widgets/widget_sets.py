@@ -358,7 +358,8 @@ class LevelSelectWidgetSet(MyWidgetSet):
                  switch_to_menu_callback: Callable[[], None],
                  start_level_callback: Callable[[str, Optional[int], Optional[List[Instruction]]], None],
                  get_expedition_progress_callback: Callable[[], int],
-                 get_available_gates_callback: Callable[[], List[Instruction]]):
+                 get_available_gates_callback: Callable[[], List[Instruction]],
+                 check_unlocks_callback: Callable[[Unlocks], bool]):
         """
         :param get_available_levels_callback: a Callable that returns a List of LevelData of all levels that can be
             played (i.e., were completed before)
@@ -375,6 +376,7 @@ class LevelSelectWidgetSet(MyWidgetSet):
         self.__start_level = start_level_callback
         self.__get_expedition_progress = get_expedition_progress_callback
         self.__get_available_gates = get_available_gates_callback
+        self.__check_unlocks = check_unlocks_callback
 
         self.__seed = None
         self.__level: Optional[str] = None
@@ -499,14 +501,15 @@ class LevelSelectWidgetSet(MyWidgetSet):
             highscores.append(f"#{level_data.total_score}")
             durations.append(f"{level_data.duration}s")
 
-        # add expeditions
-        # the next difficulty is also unlocked from the get go, so you can always challenge yourself to harder puzzles
-        max_expedition_level = min(LevelInfo.get_expedition_difficulty(self.__get_expedition_progress()) + 1,
-                                   StvDifficulty.max_difficulty_level())
-        for i in range(max_expedition_level + 1):   # +1 because max_expedition_level should be included
-            diff_code = str(i + StvDifficulty.min_difficulty_level())
-            display_names.append(f"Expedition {diff_code}")
-            internal_names.append(f"{MapConfig.expedition_map_prefix()}{diff_code}")
+        if self.__check_unlocks(Unlocks.Expeditions):
+            # add expeditions
+            # the next difficulty is also unlocked from the get go, so you can always challenge yourself
+            max_expedition_level = min(LevelInfo.get_expedition_difficulty(self.__get_expedition_progress()) + 1,
+                                       StvDifficulty.max_difficulty_level())
+            for i in range(max_expedition_level + 1):   # +1 because max_expedition_level should be included
+                diff_code = str(i + StvDifficulty.min_difficulty_level())
+                display_names.append(f"Expedition {diff_code}")
+                internal_names.append(f"{MapConfig.expedition_map_prefix()}{diff_code}")
 
         if Config.debugging():
             # add custom option so the player can use custom difficulty or load levels otherwise

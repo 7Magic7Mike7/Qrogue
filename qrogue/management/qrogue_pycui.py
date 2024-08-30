@@ -317,6 +317,7 @@ class QrogueCUI(PyCUI):
             self._switch_to_menu,
             lambda map_name, map_seed, gate_list: self.__map_manager.load_map(map_name, None, map_seed, gate_list),
             lambda: int(self.__save_data.get_progress(Achievement.CompletedExpedition)[0]), self.__save_data.get_gates,
+            self.__save_data.check_unlocks
         )
         self.__screen_check = ScreenCheckWidgetSet(self.__controls, Logger.instance(), self, self.__render,
                                                    self._switch_to_menu)
