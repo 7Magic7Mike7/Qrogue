@@ -504,8 +504,6 @@ class CHGate(DoubleQubitGate):
 ####### Combined Gates #######
 
 class CombinedGate(MultiQubitGate):
-    __NAME_MAX_CHARACTERS = 7
-    __NAME_MIN_CHARACTERS = 1
     __NEXT_ID = 0
 
     @staticmethod
@@ -543,8 +541,8 @@ class CombinedGate(MultiQubitGate):
         :return: 0 if name is valid, other values depending on which part was invalid
         """
         # check for correct number of letters
-        if len(name) < CombinedGate.__NAME_MIN_CHARACTERS: return 1
-        if len(name) > CombinedGate.__NAME_MAX_CHARACTERS: return 2
+        if len(name) < InstructionConfig.COMB_GATE_NAME_MIN_CHARACTERS: return 1
+        if len(name) > InstructionConfig.COMB_GATE_NAME_MAX_CHARACTERS: return 2
         # check if name only consists of letters
         if not name.isalpha(): return 3
         if name in InstructionManager.gate_names(include_suffix=False): return 4
@@ -553,9 +551,9 @@ class CombinedGate(MultiQubitGate):
 
     @staticmethod
     def gate_name_criteria() -> str:
-        return f"The name needs to consist of {CombinedGate.__NAME_MIN_CHARACTERS} to " \
-               f"{CombinedGate.__NAME_MAX_CHARACTERS} letters (no numbers or other characters allowed). You don't " \
-               f"have to add a \"Gate\"-suffix, the game will do this automatically where needed."
+        return f"The name needs to consist of {InstructionConfig.COMB_GATE_NAME_MIN_CHARACTERS} to " \
+               f"{InstructionConfig.COMB_GATE_NAME_MAX_CHARACTERS} letters (no numbers or other characters allowed). " \
+               f"You don't have to add a \"Gate\"-suffix, the game will do this automatically where needed."
 
     @staticmethod
     def _next_id() -> int:

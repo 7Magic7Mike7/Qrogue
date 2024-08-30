@@ -418,6 +418,8 @@ class QuantumSimulationConfig:
 
 class InstructionConfig:
     MAX_ABBREVIATION_LEN = 3
+    COMB_GATE_NAME_MIN_CHARACTERS = 1
+    COMB_GATE_NAME_MAX_CHARACTERS = 7
 
 
 class GateType(enum.Enum):
