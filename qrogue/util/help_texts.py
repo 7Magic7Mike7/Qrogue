@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Optional, List
 
-from qrogue.util.config import ColorConfig as CC
+from qrogue.util.config import ColorConfig as CC, InstructionConfig
 
 
 class _HL:
@@ -316,6 +316,32 @@ class HelpText(Enum):  # todo: import Controls to replace static key-mentions wi
         f"Now close this dialog by pressing {_HL.action_keys}. Select {_HL.start_journey} with " \
         f"{_HL.navigation_keys} and confirm your selection with {_HL.action_keys} to begin!")
 
+    LevelSelection = ("Level Selection",
+        f"The {CC.hw('Level Selection Screen')} allows you to {CC.ha('revisit')} already completed {CC.hw('Lessons')} "
+        f"and go on {CC.hw('specific')} {CC.hw('Expeditions')}. Additionally, you can choose which {CC.ho('Gates')} "
+        f"you want to bring along "
+        f"for more {CC.hw('experimental freedom')}.\n"
+        f"{CC.hw('Beware')} that some {CC.hw('Lessons')} will need {CC.hw('certain')} {CC.ho('Gates')} to be completable. But unless you "
+        f"purposefully customize the gate selection, you don't have to worry about it. Finally, you can also specify a "
+        f"{CC.hw('seed')} to reduce the randomness of the selected {CC.hw('Level')}.")
+
+    Workbench = ("Workbench",
+        f"The {CC.hw('Workbench Screen')} allows you to {CC.hw('customize')} your available {CC.ho('Gates')}. You can "
+        f"{CC.ha('decompose')} {CC.ho('Gates')} in exchange for {CC.ho('QuantumFusers')} or "
+        f"{CC.ha('fuse')} {CC.ho('Gates')} into a new {CC.ho('CombinedGate')} in exchange for said "
+        f"{CC.ho('QuantumFusers')}. Beware that both of these actions {CC.hw('destroy')} the original "
+        f"{CC.ho('Gates')}!\n"
+        f"For {CC.ha('fusing')}, you first select the {CC.ho('Gates')} you'd like to {CC.ha('fuse')}, and then place them "
+        f"however you want in a {CC.hw('Circuit')} - just like you do when solving a {CC.ho('Puzzle')}. The "
+        f"{CC.hw('Fusion')} will cost {CC.hw('1')} {CC.ho('QuantumFuser')} for every {CC.ho('Gate')} used. In the end, "
+        f"you can give your new {CC.ho('CombinedGate')} a name for easier recognition.\n"
+        f"The {CC.hw('naming rules')} are as follows:\n"
+        f"  1) Use between {CC.hw(str(InstructionConfig.COMB_GATE_NAME_MIN_CHARACTERS))} and "
+        f"{CC.hw(str(InstructionConfig.COMB_GATE_NAME_MAX_CHARACTERS))} characters\n"
+        f"  2) Only use {CC.hw('letters')} (i.e., no numbers, whitespaces or special characters)\n"
+        f"  3) Must not equal the name of any {CC.hw('Base Gates')} (i.e., any non-CombinedGate in the game)\n"
+        f"Lastly, a {CC.ho('CombinedGate')} must {CC.hw('not contain')} any other {CC.ho('CombinedGate')}.")
+
     def __init__(self, name: str, text: str):
         self.__name = name
         self.__text = text
@@ -336,6 +362,7 @@ def get_filtered_help_texts() -> List[HelpText]:
         # HelpText.Pause,
         HelpText.Fight, HelpText.Ket, HelpText.ParallelGates, HelpText.SerialGates, HelpText.Amplitudes,
         # HelpText.Riddle, #HelpText.Challenge,
+        HelpText.LevelSelection, HelpText.Workbench,
     ]
 
 
