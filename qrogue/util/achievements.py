@@ -27,6 +27,7 @@ class Unlocks(enum.Enum):
 
     # internal events
     VisitedWorkbench = (1_001, "VisitedWorkbench")
+    VisitedLevelSelection = (1_002, "VisitedLevelSelection")
 
     def __init__(self, id_: int, name: str):
         self.__id = id_

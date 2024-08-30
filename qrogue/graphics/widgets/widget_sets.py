@@ -351,6 +351,20 @@ class LevelSelectWidgetSet(MyWidgetSet):
     __CUSTOM_MAP_CODE = "custom"
     __GATE_CONFIRM = "confirm"
 
+    @staticmethod
+    def info_text() -> str:
+        prefixes = ["Select Level", "Change Gates", "Set Seed", "Start Playing", ""]
+        separators = [" - "] * (len(prefixes) - 1)
+        separators.append(" " * len(separators[0]))
+        lines = [
+            "select the lesson or expedition you want to play",     # select level
+            "customize which gates you want to play the level with (some lessons are impossible without certain gates)",     # change gates
+            "set the seed you want to use for randomizing certain puzzles (also the level's layout for expeditions)",     # set seed
+            "play the selected level with the specified configuration (random seed and default gates if not further customized)",     # start playing
+            "Press [Help] to show the full description",     # help
+        ]
+        return "\n".join(align_lines(lines, prefixes, separators, left=True))
+
     def __init__(self, controls: Controls, logger: Logger, root: py_cui.PyCUI,
                  base_render_callback: Callable[[List[Renderable]], None], rm: MyRandom,
                  show_input_popup_callback: Callable[[str, int, Callable[[str], None]], None],
@@ -384,9 +398,9 @@ class LevelSelectWidgetSet(MyWidgetSet):
         self.__has_custom_gates = False
         self.reinit()
 
-        row, col = 1, 4
-        col_span = 2
-        summary_seed = self.add_block_label('Seed', row, col, column_span=col_span, center=False)
+        row, col = UIConfig.LEVEL_SELECT_SUMMARY_Y, UIConfig.LEVEL_SELECT_SUMMARY_X
+        col_span = UIConfig.LEVEL_SELECT_SUMMARY_SEED_WIDTH
+        summary_seed = self.add_block_label('Seed', row, col, 1, col_span, center=False)
         ColorRules.apply_level_selection_seed_rules(summary_seed)
         self.__summary_seed = SimpleWidget(summary_seed, f"{LevelSelectWidgetSet.__SEED_HEADER}???")
         col += col_span
@@ -408,6 +422,8 @@ class LevelSelectWidgetSet(MyWidgetSet):
             ("Back to Menu", switch_to_menu_callback),
             # todo: add "Set Difficulty" for more fine-grained difficulty settings and open popup if player tries to open it for a level
         ])
+        self.__choices.widget.add_key_command(controls.get_keys(Keys.Help),
+                                              lambda: Popup.show_help(HelpText.LevelSelection))
         col += col_span
 
         col_span = UIConfig.LEVEL_SELECT_DETAILS_WIDTH
@@ -421,6 +437,13 @@ class LevelSelectWidgetSet(MyWidgetSet):
         durations = self.add_block_label('Durations', row, col, row_span=row_span, column_span=1, center=False)
         self.__durations = SimpleWidget(durations)
         col += 1
+
+        row, col = UIConfig.LEVEL_SELECT_MAIN_Y + UIConfig.LEVEL_SELECT_MAIN_HEIGHT, UIConfig.LEVEL_SELECT_MAIN_X
+        row_span = UIConfig.WINDOW_HEIGHT - UIConfig.LEVEL_SELECT_MAIN_Y - UIConfig.LEVEL_SELECT_MAIN_HEIGHT
+        col_span = UIConfig.WINDOW_WIDTH - 2 * col  # 2*col for better centering
+        info_widget = self.add_block_label('Info', row, col, row_span, col_span, center=True)
+        self.__info = SimpleWidget(info_widget)
+        self.__info.set_data(self.info_text())
 
         def use_choices():
             if self.__choices.use():
@@ -607,6 +630,7 @@ class LevelSelectWidgetSet(MyWidgetSet):
             self.__details,
             self.__highscores,
             self.__durations,
+            self.__info,
         ]
 
     def get_main_widget(self) -> WidgetWrapper:

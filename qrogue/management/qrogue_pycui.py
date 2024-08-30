@@ -668,9 +668,12 @@ class QrogueCUI(PyCUI):
     def __show_level_select(self):
         self.__state_machine.change_state(QrogueCUI._State.LevelSelect, None)
 
-    def _switch_to_level_select(self, data=None) -> None:
+    def _switch_to_level_select(self, _=None) -> None:
         self.__level_select.reinit()
         self.apply_widget_set(self.__level_select)
+        if not self.__save_data.check_unlocks(Unlocks.VisitedLevelSelection):
+            Popup.show_help(HelpText.LevelSelection)
+            self.__save_data.unlock(Unlocks.VisitedLevelSelection)
 
     def __show_screen_check(self):
         self.__state_machine.change_state(QrogueCUI._State.ScreenCheck, None)
