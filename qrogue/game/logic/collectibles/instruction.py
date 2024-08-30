@@ -1,6 +1,6 @@
 import math
 from abc import ABC, abstractmethod
-from typing import Iterator, Optional, Dict, List, Callable, Tuple
+from typing import Iterator, Optional, Dict, List, Callable, Tuple, Any
 
 import qiskit.circuit.library.standard_gates as gates
 from qiskit.circuit import Gate as QiskitGate
@@ -507,21 +507,30 @@ class CombinedGate(MultiQubitGate):
     __NEXT_ID = 0
 
     @staticmethod
-    def validate_instructions(instructions: List[Instruction]) -> int:
+    def validate_instructions(instructions: List[Instruction], num_quantum_fusers: Optional[int] = None) -> \
+            Tuple[int, Any]:
         """
         Exit codes:
             - 0 = valid
-            - 1 = not enough Instructions
-            - 2 = contains a CombinedGate
+            - 1 = not enough Instructions, returns number of given instructions
+            - 2 = too many Instructions, returns number of given instructions
+            - 3 = not enough QuantumFusers, returns number of needed QuantumFusers
+            - 4 = contains a CombinedGate, returns name of CombinedGate
+            - 5 = an Instruction is not set up, returns name of Instruction
 
         :param instructions: list of Instructions used to build a CombinedGate
-        :return: 0 if instructions are valid, other values depending on which part was invalid
+        :param num_quantum_fusers: optional parameter to check whether we have enough quantum fusers
+        :return: (0, None) if instructions are valid, other values depending on which part was invalid
         """
-        if len(instructions) <= 0: return 1
+        if len(instructions) < InstructionConfig.COMB_GATE_MIN_GATE_NUM: return 1, len(instructions)
+        if len(instructions) > InstructionConfig.COMB_GATE_MAX_GATE_NUM: return 2, len(instructions)
+        if num_quantum_fusers is not None and len(instructions) > num_quantum_fusers: return 3, len(instructions)
         for inst in instructions:
             if inst.gate_type is GateType.Combined:
-                return 2
-        return 0
+                return 4, inst.name()
+            if inst.no_qubits_specified:
+                return 5, inst.name()
+        return 0, None
 
     @staticmethod
     def instructions_criteria() -> str:
@@ -565,7 +574,8 @@ class CombinedGate(MultiQubitGate):
                  _id: Optional[int] = None):
         inst_validation = CombinedGate.validate_instructions(instructions)
         name_validation = CombinedGate.validate_gate_name(name)
-        Logger.instance().assertion(inst_validation == 0, f"Instructions are not valid: exit code {inst_validation}")
+        Logger.instance().assertion(inst_validation[0] == 0, f"Instructions are not valid: "
+                                                             f"exit code={inst_validation}, data={inst_validation[1]}")
         Logger.instance().assertion(name_validation == 0, f"Name \"{name}\" is not valid: exit code {name_validation}")
 
         if name is None: name = "BlackBox"

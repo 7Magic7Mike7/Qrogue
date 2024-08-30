@@ -420,6 +420,8 @@ class InstructionConfig:
     MAX_ABBREVIATION_LEN = 3
     COMB_GATE_NAME_MIN_CHARACTERS = 1
     COMB_GATE_NAME_MAX_CHARACTERS = 7
+    COMB_GATE_MIN_GATE_NUM = 1
+    COMB_GATE_MAX_GATE_NUM = 10
 
 
 class GateType(enum.Enum):

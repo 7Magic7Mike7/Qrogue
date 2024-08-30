@@ -336,7 +336,9 @@ class QrogueCUI(PyCUI):
                                               self._switch_to_menu, self.__show_fusion_circuit)
         self.__fusion_circuit = FusionCircuitWidgetSet(self.__controls, self.__render, Logger.instance(), self,
                                                        self.__continue_explore, self.__popup_history.show,
-                                                       self.__save_data.check_unlocks, self.__save_data.add_gate,
+                                                       self.__save_data.check_unlocks,
+                                                       lambda: self.__save_data.num_quantum_fusers,
+                                                       self.__save_data.add_gate,
                                                        self.__save_data.decompose, self.__show_input_popup,
                                                        self.__show_workbench)
 

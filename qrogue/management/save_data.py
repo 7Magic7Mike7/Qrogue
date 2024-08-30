@@ -97,6 +97,10 @@ class NewSaveData:
     def is_fresh_save(self) -> bool:
         return self.__is_fresh_save
 
+    @property
+    def num_quantum_fusers(self) -> int:
+        return self.__inventory.quantum_fuser
+
     def check_level(self, internal_name: str) -> bool:
         return internal_name in self.__levels
 

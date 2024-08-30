@@ -2,7 +2,7 @@ import unittest
 
 from qrogue.game.logic.collectibles.instruction import *
 from qrogue.test.test_util import SingletonSetupTestCase
-from qrogue.util import QuantumSimulationConfig
+from qrogue.util import QuantumSimulationConfig, OptionsManager, Options
 
 
 class FusionTestCase(SingletonSetupTestCase):
@@ -58,6 +58,13 @@ class FusionTestCase(SingletonSetupTestCase):
         self.assertEqual(seq_matrix, comb_matrix)
 
     def test_name(self):
+        self.assertTrue(InstructionConfig.COMB_GATE_NAME_MIN_CHARACTERS > 0,
+                        f"Minimum number of characters={InstructionConfig.COMB_GATE_MIN_GATE_NUM} is not > 0!")
+        self.assertTrue(
+            InstructionConfig.COMB_GATE_NAME_MAX_CHARACTERS >= InstructionConfig.COMB_GATE_NAME_MIN_CHARACTERS,
+            f"Maximum number of gates={InstructionConfig.COMB_GATE_NAME_MAX_CHARACTERS} is smaller than "
+            f"minimum number of gates={InstructionConfig.COMB_GATE_NAME_MIN_CHARACTERS}!")
+
         name = "Tes"
         exp_name = name + " Gate"
 
@@ -70,6 +77,45 @@ class FusionTestCase(SingletonSetupTestCase):
         self.assertEqual(2, CombinedGate.validate_gate_name("TestGate"), "Failed to check for too many characters")
         self.assertEqual(3, CombinedGate.validate_gate_name("Te Gate"), "Failed to check for illegal characters")
         self.assertEqual(4, CombinedGate.validate_gate_name("X"), "Failed to check for equivalence to base gates")
+
+    def test_instructions(self):
+        self.assertTrue(InstructionConfig.COMB_GATE_MIN_GATE_NUM > 0,
+                        f"Minimum number of gates={InstructionConfig.COMB_GATE_MIN_GATE_NUM} is not > 0!")
+        self.assertTrue(InstructionConfig.COMB_GATE_MAX_GATE_NUM >= InstructionConfig.COMB_GATE_MIN_GATE_NUM,
+                        f"Maximum number of gates={InstructionConfig.COMB_GATE_MAX_GATE_NUM} is smaller than "
+                        f"minimum number of gates={InstructionConfig.COMB_GATE_MIN_GATE_NUM}!")
+
+        # check min and max number of gates
+        gate_list = [XGate()] * (InstructionConfig.COMB_GATE_MIN_GATE_NUM - 1)
+        exit_code, exit_data = CombinedGate.validate_instructions(gate_list)
+        self.assertEqual(1, exit_code, "Failed to recognize that not enough gates were provided.")
+        gate_list = [HGate()] * (InstructionConfig.COMB_GATE_MAX_GATE_NUM + 1)
+        exit_code, exit_data = CombinedGate.validate_instructions(gate_list)
+        self.assertEqual(2, exit_code, "Failed to recognize that too many gates were provided.")
+
+        # check number of QuantumFusers
+        gate_list = [HGate()] * InstructionConfig.COMB_GATE_MAX_GATE_NUM
+        exit_code, exit_data = CombinedGate.validate_instructions(gate_list, InstructionConfig.COMB_GATE_MAX_GATE_NUM-1)
+        self.assertEqual(3, exit_code, "Failed to recognize that not enough QuantumFusers are available.")
+
+        gate_list = [HGate()]
+        exit_code, exit_data = CombinedGate.validate_instructions(gate_list, 0)
+        self.assertEqual(3, exit_code, "Failed to recognize that not enough QuantumFusers are available.")
+
+        # check fusing a CombinedGate
+        gate_list = [CombinedGate([HGate().setup([0]), CXGate().setup([0, 1])], 2, name="Test")]
+        exit_code, exit_data = CombinedGate.validate_instructions(gate_list)
+        self.assertEqual(4, exit_code, "Failed to recognize that a CombinedGate was fused.")
+
+        # check for setup
+        gate_list = [HGate()] * InstructionConfig.COMB_GATE_MIN_GATE_NUM
+        exit_code, exit_data = CombinedGate.validate_instructions(gate_list)
+        self.assertEqual(5, exit_code, "Failed to recognize that an Instruction was not setup.")
+
+        # check for success
+        gate_list = [HGate().setup([0])] * InstructionConfig.COMB_GATE_MIN_GATE_NUM
+        exit_code, exit_data = CombinedGate.validate_instructions(gate_list)
+        self.assertEqual(0, exit_code, "Failed to recognize valid instructions.")
 
     def test_description(self):
         exp_desc = """Abbreviation: Q0
@@ -85,6 +131,8 @@ Matrix:
 Underlying Circuit:
 In | q1 >---------+--{ X }--< q'1 | Out
    | q0 >--{ H }--+--{ C }--< q'0 |    """
+        self.assertTrue(OptionsManager.set_option_value(Options.show_ket_notation, True),
+                        "Failed to activate ket-notation.")
 
         num_of_qubits = 2
         gate1 = HGate().setup([0])

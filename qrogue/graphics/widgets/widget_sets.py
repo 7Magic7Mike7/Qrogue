@@ -23,7 +23,7 @@ from qrogue.graphics.widgets.my_widgets import SelectionWidget, CircuitWidget, M
 from qrogue.util import CommonPopups, Config, Controls, GameplayConfig, HelpText, Logger, PathConfig, \
     Keys, UIConfig, ColorConfig, Options, PuzzleConfig, ScoreConfig, \
     get_filtered_help_texts, CommonQuestions, MapConfig, PyCuiConfig, ColorCode, split_text, MyRandom, \
-    LevelInfo, CommonInfos, LevelData, StvDifficulty, GateType, RandomManager, OptionsManager
+    LevelInfo, CommonInfos, LevelData, StvDifficulty, GateType, RandomManager, OptionsManager, InstructionConfig
 from qrogue.util.achievements import Unlocks
 from qrogue.util.util_functions import enum_string, cur_datetime, time_diff, open_folder
 
@@ -2323,12 +2323,14 @@ class FusionCircuitWidgetSet(ReachTargetWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  continue_exploration_callback: Callable[[bool], None], reopen_popup: Callable[[], None],
                  check_unlocks_callback: Callable[[Union[str, Unlocks]], bool],
+                 num_quantum_fusers_callback: Callable[[], int],
                  store_gate_callback: Callable[[Instruction], None],
                  decompose_gates_callback: Callable[[List[Instruction]], bool],
                  show_input_popup_callback: Callable[[str, int, Callable[[str], None]], None],
                  return_to_workbench_callback: Callable[[], None]):
         super().__init__(controls, render, logger, root, continue_exploration_callback, reopen_popup,
                          check_unlocks_callback, flee_choice="Fuse", enable_reset=True)
+        self.__num_quantum_fusers = num_quantum_fusers_callback
         self.__store_gate = store_gate_callback
         self.__decompose_gates = decompose_gates_callback
         self.__show_input_popup = show_input_popup_callback
@@ -2371,7 +2373,8 @@ class FusionCircuitWidgetSet(ReachTargetWidgetSet):
 
     def __fuse_gates(self) -> bool:
         used_gates = [gate for gate in self._robot.instructions if gate.position is not None]
-        validation_result = gates.CombinedGate.validate_instructions(used_gates)
+        num_quantum_fusers = self.__num_quantum_fusers()
+        validation_result, validation_data = gates.CombinedGate.validate_instructions(used_gates, num_quantum_fusers)
 
         if validation_result == 0:
             if self.__decompose_gates(used_gates):
@@ -2389,9 +2392,13 @@ class FusionCircuitWidgetSet(ReachTargetWidgetSet):
         else:
             failed_criteria = "-unknown criteria-"
             if validation_result == 1:
-                failed_criteria = "not enough gates (place at least 1)"
+                failed_criteria = f"not enough Gates (place at least {InstructionConfig.COMB_GATE_MIN_GATE_NUM})"
             elif validation_result == 2:
-                failed_criteria = "must not use a CombinedGate for fusion"
+                failed_criteria = f"too many Gates (place at most {InstructionConfig.COMB_GATE_MAX_GATE_NUM})"
+            elif validation_result == 3:
+                failed_criteria = f"need {validation_data} QuantumFusers but only got {num_quantum_fusers}"
+            elif validation_result == 4:
+                failed_criteria = f"must not use a CombinedGate (\"{validation_data}\") for fusion"
             Popup.system_says(f"Failed to fuse circuit for the following reason: {failed_criteria}.\n\n"
                               f"Please consider these rules and try again:\n"
                               f"{gates.CombinedGate.instructions_criteria()}")
