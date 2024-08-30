@@ -2,7 +2,7 @@ from enum import IntEnum
 from typing import Callable, Optional, List, Tuple
 
 from qrogue.game.logic import Message
-from qrogue.util import Config, PopupConfig, Logger
+from qrogue.util import Config, PopupConfig, Logger, HelpText
 
 
 class Popup:
@@ -106,6 +106,10 @@ class Popup:
         if pos is None:
             pos = Popup.__DEFAULT_POS
         Popup.message(title, text, reopen=reopen, pos=pos, importance=PopupConfig.Importance.Info)
+
+    @staticmethod
+    def show_help(help_text: HelpText):
+        Popup.generic_info(help_text.name, help_text.text)
 
     @staticmethod
     def error(text: str, reopen: Optional[bool] = None, pos: Optional[int] = None, overwrite: bool = True,

@@ -1384,7 +1384,7 @@ class PauseMenuWidgetSet(MyWidgetSet):
             if self.__details.selected_object is SelectionWidget.cancel_obj():
                 return True     # change focused widget
             elif isinstance(val, HelpText):
-                Popup.generic_info(val.name, val.text)
+                Popup.show_help(val)
                 return False
             Config.check_reachability("PauseMenuWidgetSet.__help().callback()_unhandled selection object")
             return False
