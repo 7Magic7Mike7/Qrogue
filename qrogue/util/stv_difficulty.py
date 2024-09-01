@@ -16,6 +16,13 @@ class DifficultyType(enum.Enum):
     # how many additional edits are given based on used gates, values >= 0
     BonusEditRatio = ("Bonus Edit Ratio", 1.1)
 
+    # how many gates are at least needed to pick from during stv generation
+    MinAvailableGates = "Minimum Available Gates", 1
+    # how many unique gates are at least needed to pick form during stv generation
+    MinGateVariety = "Minimum Gate Variety", 1
+    # minimum difficulty sum among all available gates for stv generation
+    MinGateDifficulty = "Minimum Gate Difficulty Sum", 1
+
     def __init__(self, name: str, level_ratio: float):
         self.__name = name
         self.__level_ratio = level_ratio  # how much this difficulty type affects the overall difficulty level
@@ -36,11 +43,16 @@ class StvDifficulty:
     """This class is immutable."""
 
     __DIFF_VALUES: Dict[DifficultyType, List[int]] = {
+        # during generation
         DifficultyType.CircuitExuberance:   [0.7, 0.75, 0.8, 0.85, 0.9, 1.0],
         DifficultyType.QubitExuberance:     [0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
         DifficultyType.RotationExuberance:  [0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
         DifficultyType.RandomizationDegree: [  2,   4,  10,  19,  37,  0],
         DifficultyType.BonusEditRatio:      [4.0, 3.3, 2.5, 1.6, 0.9, 0.3],
+        # pre generation (i.e., preparation)
+        DifficultyType.MinAvailableGates:   [  1,   3,   4,   5,   6,   8],
+        DifficultyType.MinGateVariety:      [  1,   2,   3,   4,   5,   7],
+        DifficultyType.MinGateDifficulty:   [  0,   5,  10,  15,  20,  30],
     }
 
     @staticmethod
@@ -103,6 +115,11 @@ class StvDifficulty:
         if diff_type is DifficultyType.BonusEditRatio:
             return int(rel_val * StvDifficulty._compute_absolute_value(DifficultyType.CircuitExuberance, diff_dict,
                                                                        num_of_qubits, circuit_space, fallback_value))
+
+        # the following DifficultyTypes only have absolute values, so no need for additional computations
+        if diff_type in [DifficultyType.MinAvailableGates, DifficultyType.MinGateVariety,
+                         DifficultyType.MinGateDifficulty]:
+            return int(diff_dict[diff_type])
         raise NotImplementedError(f"No absolute value computation implemented for {enum_string(diff_type)}")
 
     """

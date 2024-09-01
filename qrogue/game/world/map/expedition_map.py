@@ -1,8 +1,9 @@
-from typing import List, Callable, Optional
+from typing import List, Callable, Optional, Any, Tuple
 
 from qrogue.game.logic.actors import Controllable
+from qrogue.game.logic.collectibles import Instruction
 from qrogue.game.world.navigation import Coordinate
-from qrogue.util import MapConfig, StvDifficulty, RandomManager, GateType
+from qrogue.util import MapConfig, StvDifficulty, RandomManager, GateType, DifficultyType
 from .map import Map, MapType, Room, MapMetaData
 
 
@@ -34,6 +35,37 @@ class ExpeditionMap(Map):
             if i == 0: display_name += character.upper()
             else: display_name += character
         return display_name + f"{difficulty.level}*{seed}"
+
+    @staticmethod
+    def validate_gates_for_difficulty(difficulty: StvDifficulty, gates: List[Instruction]) -> Tuple[int, Any]:
+        """
+        Return codes:
+            - 0 = valid
+            - 1 = not enough gates, returns (needed number of gates, actual number of gates)
+            - 2 = not enough unique gates, returns (needed number of unique gates, actual unique gates)
+            - 3 = gates are not difficult enough, returns (needed difficulty sum, actual difficulty sum)
+
+        :param difficulty: the StvDifficulty to validate for
+        :param gates: a list of Instructions we want to validate
+        :return: (0, None) if gates are valid for the given difficulty, other values depending on what is invalid
+
+        """
+        needed_num_of_gates = difficulty.get_absolute_value(DifficultyType.MinAvailableGates, 0, 0)
+        num_of_gates = len(gates)
+        if num_of_gates < needed_num_of_gates:
+            return 1, (needed_num_of_gates, num_of_gates)
+
+        needed_unique_gates = difficulty.get_absolute_value(DifficultyType.MinGateVariety, 0, 0)
+        unique_gates = set(gates)
+        if len(unique_gates) < needed_unique_gates:
+            return 2, (needed_unique_gates, unique_gates)
+
+        needed_diff_sum = difficulty.get_absolute_value(DifficultyType.MinGateDifficulty, 0, 0)
+        difficulty_sum = sum([gate.difficulty for gate in gates])
+        if difficulty_sum < needed_diff_sum:
+            return 3, (needed_diff_sum, difficulty_sum)
+
+        return 0, None
 
     def __init__(self, seed: int, difficulty: StvDifficulty, main_gate: GateType, rooms: List[List[Optional[Room]]],
                  controllable: Controllable, spawn_room: Coordinate, check_achievement: Callable[[str], bool],

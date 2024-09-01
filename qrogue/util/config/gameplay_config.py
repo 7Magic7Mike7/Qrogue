@@ -426,50 +426,51 @@ class InstructionConfig:
 
 class GateType(enum.Enum):
     # unique by their short name
-    IGate = "I", "Identity", set(), \
+    IGate = "I", "Identity", set(), 0, \
         "An I Gate or Identity Gate doesn't alter the Qubit in any way. It can be used as a placeholder."
-    XGate = "X", "Pauli X", {"Pauli-X", "NOT"}, \
+    XGate = "X", "Pauli X", {"Pauli-X", "NOT"}, 1, \
         "In the classical world an X Gate corresponds to an inverter or Not Gate.\n" \
         "It swaps the amplitudes of |0> and |1>.\n" \
         "In the quantum world this corresponds to a rotation of 180° along the x-axis, hence the name X Gate."
-    SXGate = "SX", "Square Root X", {"Sqrt X"}, \
+    SXGate = "SX", "Square Root X", {"Sqrt X"}, 4, \
         "An SX Gate is the square root of an X Gate. This means multiplying two SX Gates (i.e., placing them in " \
         "series) results in an X Gate. Therefore, it corresponds to a rotation of 90° along the x-axis."
-    YGate = "Y", "Pauli Y", {"Pauli-Y"}, \
+    YGate = "Y", "Pauli Y", {"Pauli-Y"}, 4, \
         "A Y Gate rotates the Qubit along the y-axis by 180°."
-    ZGate = "Z", "Pauli Z", {"Pauli-Z"}, \
+    ZGate = "Z", "Pauli Z", {"Pauli-Z"}, 4, \
         "A Z Gate rotates the Qubit along the z-axis by 180°."
-    HGate = "H", "Hadamard", set(), \
+    HGate = "H", "Hadamard", set(), 2, \
         "The Hadamard Gate is often used to bring Qubits into Superposition."
 
-    SGate = "S", "Phase", {"P", "Phase Shift S"}, \
+    SGate = "S", "Phase", {"P", "Phase Shift S"}, 3, \
         "The S Gate can change the phase of a qubit by multiplying its |1> with j (note that this does not alter " \
         "the probability of measuring |0> or |1>!). It is equivalent to a rotation along the z-axis by 90°."
-    RYGate = "RY", "Rotational Y", {"Rot Y"}, \
+    RYGate = "RY", "Rotational Y", {"Rot Y"}, 4, \
         "The RY Gate conducts a rotation along the y-axis by a certain angle. In our case the angle is 90°."
-    RZGate = "RZ", "Rotational Z", {"Rot Z", "Phase Shift Z", "Phase Flip"}, \
+    RZGate = "RZ", "Rotational Z", {"Rot Z", "Phase Shift Z", "Phase Flip"}, 3, \
         "The RZ Gate conducts a rotation along the z-axis by a certain angle. In our case the angle is 90°."
 
-    SwapGate = "SW", "Swap", set(), \
+    SwapGate = "SW", "Swap", set(), 1, \
         "As the name suggests, Swap Gates swap the amplitude between two Qubits."
-    CXGate = "CX", "Controlled X", {"CNOT", "Controlled NOT"}, \
+    CXGate = "CX", "Controlled X", {"CNOT", "Controlled NOT"}, 1, \
         "Applies an X Gate onto its second Qubit (=target) if its first Qubit (=control) is 1."
-    CYGate = "CY", "Controlled Y", set(), \
+    CYGate = "CY", "Controlled Y", set(), 4, \
         "Applies a Y Gate onto its second Qubit (=target) if its first Qubit (=control) is 1."
-    CZGate = "CZ", "Controlled Z", set(), \
+    CZGate = "CZ", "Controlled Z", set(), 4, \
         "Applies a Z Gate onto its second Qubit (=target) if its first Qubit (=control) is 1."
-    CHGate = "CH", "Controlled H", {"Controlled Hadamard"}, \
+    CHGate = "CH", "Controlled H", {"Controlled Hadamard"}, 3, \
         "Apples an H Gate onto its second Qubit (=target) if its first Qubit (=control) is 1."
 
-    Combined = "Q", "Qombined", set(), \
+    Combined = "Q", "Qombined", set(), 0, \
         "This gate is a combination of multiple gates fused into one."
 
-    Debug = "de", "Debug", set(), "Only use for debugging!"  # used to test spacing
+    Debug = "de", "Debug", set(), 0, "Only use for debugging!"  # used to test spacing
 
-    def __init__(self, short_name: str, full_name: str, other_names: Set[str], description: str):
+    def __init__(self, short_name: str, full_name: str, other_names: Set[str], difficulty: int, description: str):
         self.__short_name = short_name
         self.__full_name = full_name
         self.__other_names = other_names
+        self.__difficulty = difficulty  # how difficult it is to use this gate
         self.__description = description
 
     @property
@@ -483,6 +484,10 @@ class GateType(enum.Enum):
     @property
     def has_other_names(self) -> bool:
         return len(self.__other_names) > 0
+
+    @property
+    def difficulty(self) -> int:
+        return self.__difficulty
 
     @property
     def description(self) -> str:

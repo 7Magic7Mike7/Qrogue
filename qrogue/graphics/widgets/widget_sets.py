@@ -11,7 +11,7 @@ from qrogue.game.logic.actors.puzzles import Target
 from qrogue.game.logic.base import StateVector
 from qrogue.game.logic.collectibles import Collectible, instruction as gates, Instruction, InstructionManager, \
     CollectibleType
-from qrogue.game.world.map import Map
+from qrogue.game.world.map import Map, ExpeditionMap
 from qrogue.game.world.navigation import Direction
 from qrogue.graphics.popups import Popup
 from qrogue.graphics.rendering import ColorRules
@@ -396,6 +396,7 @@ class LevelSelectWidgetSet(MyWidgetSet):
         self.__level: Optional[str] = None
         self.__selectable_gates: List[LevelSelectWidgetSet._SelectableGate] = []
         self.__has_custom_gates = False
+        self.__expedition_difficulty: Optional[str] = None
         self.reinit()
 
         row, col = UIConfig.LEVEL_SELECT_SUMMARY_Y, UIConfig.LEVEL_SELECT_SUMMARY_X
@@ -531,6 +532,11 @@ class LevelSelectWidgetSet(MyWidgetSet):
                                        StvDifficulty.max_difficulty_level())
             for i in range(max_expedition_level + 1):   # +1 because max_expedition_level should be included
                 diff_code = str(i + StvDifficulty.min_difficulty_level())
+                if ExpeditionMap.validate_gates_for_difficulty(StvDifficulty.from_difficulty_code(diff_code),
+                                                               self.__get_available_gates())[0] != 0:
+                    # stop if our available gates don't fulfill the difficulty's criteria (automatically also
+                    #  doesn't fulfill next difficulty's criteria)
+                    break
                 display_names.append(f"Expedition {diff_code}")
                 internal_names.append(f"{MapConfig.expedition_map_prefix()}{diff_code}")
 
@@ -553,15 +559,19 @@ class LevelSelectWidgetSet(MyWidgetSet):
             if self.__details.selected_object is SelectionWidget.cancel_obj():
                 return True  # "Cancel" was selected
 
+            self.__expedition_difficulty = None
             self.__level = self.__details.selected_object
             if self.__details.selected_object == LevelSelectWidgetSet.__CUSTOM_MAP_CODE:
                 def callback(map_code: str):
                     self.__summary_level.set_data(f"Map Code: {map_code}")
                     self.__level = map_code
+                    if map_code.startswith(MapConfig.expedition_map_prefix()):
+                        self.__expedition_difficulty = map_code[len(MapConfig.expedition_map_prefix()):]
                     self.render()
                     Widget.move_focus(self.__choices, self)
                 self.__show_input_popup("Enter map code", ColorConfig.LEVEL_SELECTION_INPUT_MAP_CODE, callback)
             elif self.__details.selected_object.startswith(MapConfig.expedition_map_prefix()):
+                self.__expedition_difficulty = self.__details.selected_object[len(MapConfig.expedition_map_prefix()):]
                 self.__summary_level.set_data(f"{LevelSelectWidgetSet.__LEVEL_HEADER}{display_names[index]} ")
                 if not self.__has_custom_gates:
                     # reset selection so a random subset is chosen instead of simply the ones from the previously
@@ -615,6 +625,22 @@ class LevelSelectWidgetSet(MyWidgetSet):
             # filter and convert all selected gates
             selected_gates = [sg.to_gate() for sg in self.__selectable_gates if sg.is_selected]
             for gate in selected_gates: gate.reset()  # make sure that all gates are reset to avoid unexpected behaviour
+
+            val_code, val_data = ExpeditionMap.validate_gates_for_difficulty(
+                StvDifficulty.from_difficulty_code(self.__expedition_difficulty), selected_gates)
+            if val_code != 0:
+                failed_criteria = "-unknown criteria-"
+                if val_code == 1:
+                    failed_criteria = f"not enough gates ({val_data[0]} needed, but only {val_data[1]} selected)"
+                elif val_code == 2:
+                    failed_criteria = f"not enough unique gates ({val_data[0]} needed, but only {val_data[1]} selected)"
+                elif val_code == 3:
+                    failed_criteria = f"selected gates are not difficult enough (sum of {val_data[0]} needed, but " \
+                                      f"only {val_data[1]} provided by selected gates)"
+                Popup.system_says(f"Your custom gate selection does not meet your selected difficulty for the "
+                                  f"following reason: {failed_criteria}.\n\nPlease select a lower difficulty or "
+                                  f"different/additional gates.")
+                return False
         else:
             # setting selected_gates to None starts the level with the gates specified in the level's file
             selected_gates = None

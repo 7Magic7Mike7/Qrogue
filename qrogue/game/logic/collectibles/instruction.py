@@ -124,6 +124,15 @@ class Instruction(Collectible, ABC):
     def no_qubits_specified(self) -> bool:
         return len(self._qargs) <= 0
 
+    @property
+    def difficulty(self) -> int:
+        """
+        Describes how difficulty it is to use this Instruction (higher number = higher difficulty).
+
+        :return: positive integer
+        """
+        return self.__type.difficulty
+
     def can_use_qubit(self, qubit: int) -> bool:
         return qubit not in self._qargs
 
@@ -583,6 +592,8 @@ class CombinedGate(MultiQubitGate):
         name = name.strip()   # remove leftover whitespaces
 
         self.__id = CombinedGate._next_id() if _id is None else _id
+        # calculate difficulty based on the most difficult instruction used plus how many other instructions are used
+        self.__difficulty = max([inst.difficulty for inst in instructions]) + len(instructions) - 1
 
         # order instructions based on their position property or position in the list if the property is None
         ##################################################
@@ -619,6 +630,10 @@ class CombinedGate(MultiQubitGate):
 
         amplitudes = UnitarySimulator().execute(circuit, decimals=QuantumSimulationConfig.DECIMALS)
         self.__matrix = CircuitMatrix(amplitudes, len(instructions))
+
+    @property
+    def difficulty(self) -> int:
+        return self.__difficulty
 
     def name(self, include_suffix: Optional[bool] = None) -> str:
         if include_suffix is None: include_suffix = True

@@ -14,7 +14,7 @@ from qrogue.game.world.map.rooms import AreaType, DefinedWildRoom, EmptyRoom, Sp
     ChallengeRoom
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.graphics.popups import Popup
-from qrogue.util import Logger, RandomManager, MyRandom, StvDifficulty
+from qrogue.util import Logger, RandomManager, MyRandom, StvDifficulty, GateType, DifficultyType
 
 
 class _Code(IntEnum):
@@ -598,6 +598,58 @@ class ExpeditionGenerator(DungeonGenerator):
     __INVALID_WEIGHT = 1_000_000
     __DEFAULT_GATES = [instruction.HGate(), instruction.SGate(), instruction.XGate(), instruction.CXGate()]
 
+    @staticmethod
+    def get_random_gates(available_gates: List[Instruction], difficulty: StvDifficulty, seed: int) \
+            -> List[Instruction]:
+        """
+        :param available_gates: a list of Instructions to choose from; manipulated in-place, so make sure to pass a copy
+                                if the list is needed elsewhere
+        :param difficulty: the difficulty defines how many Instructions are picked and their needed difficulty score
+        :param seed: determines the randomness of picked Instructions
+        :returns: a list of randomly picked Instructions adhering to the given StvDifficulty
+        """
+        rm = RandomManager.create_new(seed)
+
+        def validate(unique_only: bool = False) -> bool:
+            val_variety = num_unique_gates >= difficulty.get_absolute_value(DifficultyType.MinGateVariety, 0, 0)
+            if unique_only: return val_variety
+
+            val_length = len(gate_list) >= difficulty.get_absolute_value(DifficultyType.MinAvailableGates, 0, 0)
+            val_sum = diff_sum >= difficulty.get_absolute_value(DifficultyType.MinGateDifficulty, 0, 0)
+            return val_variety and val_length and val_sum
+
+        gate_list = []
+        gate_types = set()
+        num_unique_gates = 0    # cannot simply check size of gate_types because of CombinedGates
+        non_unique_gates = []
+        diff_sum = 0
+        # first make sure to pick enough unique gates
+        while len(available_gates) > 0 and not validate(unique_only=True):
+            gate: Instruction = rm.get_element(available_gates, remove=True)
+            if gate.gate_type in gate_types:
+                non_unique_gates.append(gate)   # save for potential picks later
+                continue
+            # don't add the type of Combined to the set because usually CombinedGates are not the equal, even though
+            #  they share the same GateType (and we don't care enough for the rare case where they are equal)
+            if gate.type is not GateType.Combined:
+                gate_types.add(gate.gate_type)
+
+            gate_list.append(gate)
+            num_unique_gates += 1
+            diff_sum += gate.difficulty
+
+        # add back the non-unique gates to be pick-able again
+        available_gates += non_unique_gates
+
+        # now make sure to fulfill the remaining criteria
+        while len(available_gates) > 0 and not validate():
+            # now we can just pick random gates and add them until we fulfill all criteria
+            gate: Instruction = rm.get_element(available_gates, remove=True)
+            gate_list.append(gate)
+            num_unique_gates += 1
+            diff_sum += gate.difficulty
+        return gate_list
+
     def __create_enemy(self, enemy_seed: int, enemy_id: int, room_pos: Coordinate, enemy_factory: EnemyFactory,
                        enemy_groups_by_room: Dict[Coordinate, Dict[int, List[tiles.Enemy]]]) -> tiles.Enemy:
         enemy: Optional[tiles.Enemy] = None
@@ -649,14 +701,30 @@ class ExpeditionGenerator(DungeonGenerator):
 
     def generate(self, map_seed: int, data: Tuple[RoboProperties, StvDifficulty, int]) \
             -> Tuple[Optional[ExpeditionMap], bool]:
+        """
+        Data tuple consists of:
+            - RoboProperties to determine the number of qubits, circuit space and available gates
+            - StvDifficulty to determine the difficulty of generated puzzles
+            - puzzle seed to determine the randomness of generated puzzles
+
+        :param map_seed: the seed used to create the layout of the ExpeditionMap
+        :param data: a tuple describing puzzle generation
+        :returns: the generated ExpeditionMap and True if generation was successful, None and False otherwise
+        """
         robo_props, difficulty, puzzle_seed = data
         robot = BaseBot.from_properties(robo_props, self.__cbp.game_over)
         if robot.used_capacity <= 0:
-            gates = self.__get_available_gates()
-            rand_gate_selector = RandomManager.create_new(puzzle_seed)
-            rand_gate_selector.shuffle_list(gates)
-            for i in range(min(4, len(gates))):  # todo: use value from difficulty instead of 4
-                robot.give_collectible(gates[i])
+            # choose a random subset of globally available gates based on difficulty
+            for gate in self.get_random_gates(self.__get_available_gates(), difficulty, puzzle_seed):
+                robot.give_collectible(gate)
+        else:
+            # check validity of gates available to the robot
+            val_code, val_data = ExpeditionMap.validate_gates_for_difficulty(difficulty,
+                                                                             robot.get_available_instructions())
+            if val_code != 0:
+                Logger.instance().error("Failed to generate ExpeditionMap based on the given RoboProperties and "
+                                        f"StvDifficulty: code={val_code}, data={val_data}", False, from_pycui=False)
+                return None, False
 
         map_rm = RandomManager.create_new(map_seed)         # used for layout, rooms (tile placement), collectibles
         puzzle_rm = RandomManager.create_new(puzzle_seed)   # used for all puzzles

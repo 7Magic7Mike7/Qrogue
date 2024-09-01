@@ -2,12 +2,13 @@ import unittest
 from typing import List, Tuple, Optional
 
 import test_util
-from qrogue.game.logic.collectibles.instruction import HGate
+from qrogue.game.logic.actors.controllables.robot import RoboProperties
+from qrogue.game.logic.collectibles import instruction as gates
 from qrogue.game.world import tiles
 from qrogue.game.world.dungeon_generator import DungeonGenerator
 from qrogue.game.world.dungeon_generator.random_generator import RandomLayoutGenerator, ExpeditionGenerator
 from qrogue.game.world.dungeon_generator.wave_function_collapse import WFCManager
-from qrogue.game.world.map import Room, Hallway, CallbackPack
+from qrogue.game.world.map import Room, Hallway, CallbackPack, ExpeditionMap
 from qrogue.game.world.navigation import Direction, Coordinate
 from qrogue.management import MapManager
 from qrogue.util import CheatConfig, StvDifficulty, MapConfig
@@ -201,6 +202,39 @@ class LevelGenTestCase(test_util.SingletonSetupTestCase):
             self.assertEqual(e_diff_code, r_diff_code, f"Unexpected diff_code! @{i}")
             self.assertEqual(e_map_seed, r_map_seed, f"Unexpected map_seed! @{i}")
             self.assertEqual(e_puzzle_seed, r_puzzle_seed, f"Unexpected puzzle_seed! @{i}")
+
+    def test_robo_props(self):
+        generator = self.__create_expedition_generator()
+        difficulty = StvDifficulty.from_difficulty_code("2")
+
+        robo_props = RoboProperties(2, 5, [gates.XGate()])
+        _, success = generator.generate(map_seed=7, data=(robo_props, difficulty, 7))
+        self.assertFalse(success, "Failed to recognize illegal gates for the given difficulty")
+
+        robo_props = RoboProperties(2, 5, [gates.XGate(), gates.SGate(), gates.HGate(), gates.RYGate()])
+        _, success = generator.generate(map_seed=7, data=(robo_props, difficulty, 7))
+        self.assertTrue(success, "Failed to recognize legal gates for the given difficulty")
+
+    def test_random_gate_subset_selection(self):
+        difficulty = StvDifficulty.from_difficulty_code("2")
+        # this list of Instruction over-fulfills the criteria
+        available_gates = [gates.XGate(), gates.XGate(), gates.SGate(), gates.HGate(), gates.HGate(), gates.RYGate(),
+                           gates.RZGate()]
+        picked_gates = ExpeditionGenerator.get_random_gates(available_gates.copy(), difficulty, 7)
+        val_code, val_data = ExpeditionMap.validate_gates_for_difficulty(difficulty, picked_gates)
+        self.assertEqual(0, val_code, f"Failed to pick a valid subset: code={val_code}, data={val_data}")
+
+        # this list of Instructions exactly-fulfills the criteria
+        available_gates = [gates.SGate(), gates.SGate(), gates.HGate(), gates.RYGate()]
+        picked_gates = ExpeditionGenerator.get_random_gates(available_gates.copy(), difficulty, 7)
+        val_code, val_data = ExpeditionMap.validate_gates_for_difficulty(difficulty, picked_gates)
+        self.assertEqual(0, val_code, f"Failed to pick a valid subset: code={val_code}, data={val_data}")
+
+        # this list of Instructions exactly-fulfills the unique-criteria but has many dupes to choose from
+        available_gates = [gates.HGate(), gates.RYGate()] + [gates.SGate()] * 12
+        picked_gates = ExpeditionGenerator.get_random_gates(available_gates.copy(), difficulty, 7)
+        val_code, val_data = ExpeditionMap.validate_gates_for_difficulty(difficulty, picked_gates)
+        self.assertEqual(0, val_code, f"Failed to pick a valid subset: code={val_code}, data={val_data}")
 
 
 if __name__ == '__main__':
