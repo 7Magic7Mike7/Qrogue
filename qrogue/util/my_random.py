@@ -44,37 +44,37 @@ class MyRandom:
     def get_seed(self, msg: str = str(COUNTER)) -> int: # todo: introduce class, method, location, sublocation arguments for more consisten messages?
         return self.get_int(min_=0, max_=Config.MAX_SEED, msg=msg)
 
-    def get_element(self, iterable, remove: bool = False, msg: str = str(COUNTER)) -> Any:
-        if len(iterable) == 0:
+    def get_element(self, list_: List[Any], remove: bool = False, msg: str = str(COUNTER)) -> Any:
+        if len(list_) == 0:
             return None
-        index = self.get_int(min_=0, max_=len(iterable), msg=msg)
-        elem = iterable[index]
+        index = self.get_int(min_=0, max_=len(list_), msg=msg)
+        elem = list_[index]
         if remove:
             try:
-                iterable.pop(index)
+                list_.pop(index)
             except ValueError:
-                Logger.instance().error(f"{iterable} doesn't contain {elem}", show=False, from_pycui=False)
+                Logger.instance().error(f"{list_} doesn't contain {elem}", show=False, from_pycui=False)
         return elem
 
-    def get_element_prioritized(self, iterable, priorities: List[float], msg: str = str(COUNTER)) -> Any:
-        if len(iterable) == 0:
+    def get_element_prioritized(self, list_: List[Any], priorities: List[float], msg: str = str(COUNTER)) -> Any:
+        if len(list_) == 0:
             return None
         if len(priorities) == 0:
-            return self.get_element(iterable, msg=msg)
+            return self.get_element(list_, msg=msg)
         try:
             prio_sum = sum(priorities)
         except:
             Logger.instance().error("No valid priorities provided! Returning a random element to avoid crashing.",
                                     show=False, from_pycui=False)
-            return self.get_element(iterable, remove=False, msg=msg)
+            return self.get_element(list_, remove=False, msg=msg)
         # elements without a given priority will be less than the minimum given priority by the number of prioritized
         # elements divided by the number of all elements, e.g. [1, 2, 1], 4 elements -> 3/4
-        unknown_prio = min(priorities) * len(priorities) / len(iterable)
+        unknown_prio = min(priorities) * len(priorities) / len(list_)
 
         val = self.get(msg=msg)
         cur_val = 0.0
         index = 0
-        for elem in iterable:
+        for elem in list_:
             if index < len(priorities):
                 cur_val += priorities[index] / prio_sum
             else:
