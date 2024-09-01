@@ -59,8 +59,13 @@ class MyRandom:
     def get_element_prioritized(self, list_: List[Any], priorities: List[float], msg: str = str(COUNTER)) -> Any:
         if len(list_) == 0:
             return None
+        if len(list_) == 1:
+            return list_[0]
         if len(priorities) == 0:
             return self.get_element(list_, msg=msg)
+        if len(priorities) > len(list_):
+            # crop priorities if too many values were given
+            priorities = priorities[:len(list_)]
         try:
             prio_sum = sum(priorities)
         except:
