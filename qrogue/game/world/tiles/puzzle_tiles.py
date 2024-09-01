@@ -18,14 +18,17 @@ class Enemy(WalkTriggerTile):
         DEAD = 3
         FLED = 4
 
-    def __init__(self, factory: EnemyFactory, get_entangled_tiles: Callable[[int], List[actors.Enemy]],
-                 update_entangled_groups: Callable[[actors.Enemy], None], seed: int, e_id: int = 0,
+    def __init__(self, e_id: int, factory: EnemyFactory,
+                 start_fight_callback: Callable[[Robot, "Enemy", Direction], None],
+                 get_entangled_tiles_callback: Callable[[int], List[actors.Enemy]],
+                 update_entangled_groups_callback: Callable[[actors.Enemy], None], seed: int,
                  tile_id_callback: Callable[[], int] = None):
         super().__init__(TileCode.Enemy)
+        self.__rm = RandomManager.create_new(seed)
         self.__factory = factory
-        self.__state = Enemy._EnemyState.UNDECIDED
-        self.__get_entangled_tiles = get_entangled_tiles
-        self.__update_entangled_groups = update_entangled_groups
+        self.__start_fight = start_fight_callback
+        self.__get_entangled_tiles = get_entangled_tiles_callback
+        self.__update_entangled_groups = update_entangled_groups_callback
         self.__id = e_id
         if tile_id_callback is None:
             self.__next_tile_id = lambda: -1
@@ -33,7 +36,7 @@ class Enemy(WalkTriggerTile):
             self.__next_tile_id = tile_id_callback
         self.__tile_id = self.__next_tile_id()
 
-        self.__rm = RandomManager.create_new(seed)
+        self.__state = Enemy._EnemyState.UNDECIDED
         self.__enemy: Optional[actors.Enemy] = None
 
     @property
@@ -113,14 +116,18 @@ class Enemy(WalkTriggerTile):
     def __fight(self, robot: Robot, direction: Direction):
         Logger.instance().info(f"Starting fight with #{self.__tile_id}", from_pycui=False)
         if self.__enemy is None:
-            # the higher the amplitude the easier it should be to flee
-            self.__enemy = self.__factory.produce(robot, self.__rm, self.__id)
-        self.__factory.start(robot, self.__enemy, direction)
+            if self.__factory.robot_based():
+                # old signature based on robot (still needed for LevelMaps)
+                self.__enemy = self.__factory.produce_enemy(self.__rm, self.__id, robot)
+            else:
+                # new signature based on StvDifficulty (needed for ExpeditionMaps)
+                self.__enemy = self.__factory.produce_enemy(self.__rm, self.__id, (None, None))
+        self.__start_fight(robot, self.__enemy, direction)
 
     def _copy(self) -> "Tile":
         # todo: check if this should be an *exact* copy including same seeds or not
-        enemy = Enemy(self.__factory, self.__get_entangled_tiles, self.__update_entangled_groups, self.__rm.seed,
-                      self.__id, tile_id_callback=self.__next_tile_id)
+        enemy = Enemy(self.__id, self.__factory, self.__start_fight, self.__get_entangled_tiles,
+                      self.__update_entangled_groups, self.__rm.seed, tile_id_callback=self.__next_tile_id)
         self.__update_entangled_groups(enemy)
         return enemy
 

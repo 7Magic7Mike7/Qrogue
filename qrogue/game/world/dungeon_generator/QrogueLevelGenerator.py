@@ -250,8 +250,9 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         tile_code = QrogueLevelGenerator.__tile_str_to_code(tile_str)
         if tile_code is tiles.TileCode.Enemy:
             enemy_id = int(tile_str)
-            enemy = tiles.Enemy(self.__default_enemy_factory, get_entangled_enemies, update_entangled_groups,
-                                self.__rm.get_seed("creating default Enemy"), enemy_id, self._next_tile_id)
+            enemy = tiles.Enemy(enemy_id, self.__default_enemy_factory, self.__cbp.start_fight,
+                                get_entangled_enemies, update_entangled_groups,
+                                self.__rm.get_seed("creating default Enemy"), self._next_tile_id)
             if enemy_id not in enemy_dic:
                 enemy_dic[enemy_id] = []
             enemy_dic[enemy_id].append(enemy)
@@ -613,7 +614,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
             diff_id, target_difficulty = self.visit(stv_pool)
             self.__target_difficulties[diff_id] = target_difficulty
         self.__default_target_difficulty = self.visit(ctx.default_stv_pool())
-        self.__default_enemy_factory = EnemyTargetFactory(self.__cbp.start_fight, self.__default_target_difficulty, 1,
+        self.__default_enemy_factory = EnemyTargetFactory(self.__default_target_difficulty,
                                                           next_id_callback=self._next_target_id)
 
     ##### Hallway area #####
@@ -927,14 +928,14 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         else:
             input_difficulty = None
 
-        enemy_factory = EnemyTargetFactory(self.__cbp.start_fight, difficulty, 1, input_difficulty,
-                                           next_id_callback=self._next_target_id)
+        enemy_factory = EnemyTargetFactory(difficulty, input_difficulty, next_id_callback=self._next_target_id)
         if reward_factory:  # if a reward pool was specified we use it
             enemy_factory.set_custom_reward_factory(reward_factory)
         # else we use the default one either of the loaded difficulty or it already is default_collectible_factory
 
-        enemy = tiles.Enemy(enemy_factory, get_entangled_tiles, update_entangled_room_groups,
-                            self.__rm.get_seed("creating defined Enemy"), enemy_id, self._next_tile_id)
+        enemy = tiles.Enemy(enemy_id, enemy_factory, self.__cbp.start_fight, get_entangled_tiles,
+                            update_entangled_room_groups, self.__rm.get_seed("creating defined Enemy"),
+                            self._next_tile_id)
         #   update_entangled_room_groups(enemy) # by commenting this the original (copied from) tile is not in the list
         return enemy
 

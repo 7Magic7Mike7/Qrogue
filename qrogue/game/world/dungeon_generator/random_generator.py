@@ -4,8 +4,7 @@ from typing import Callable, Dict, Optional, Tuple, List, Any, Set
 from qrogue.game.logic.actors.controllables.robot import RoboProperties, BaseBot
 from qrogue.game.logic.collectibles import GateFactory, Key, instruction, Score, CollectibleType, \
     CollectibleFactory, Instruction
-from qrogue.game.target_difficulty import PuzzleDifficulty
-from qrogue.game.target_factory import BossFactory, EnemyFactory, EnemyPuzzleFactory, ChallengeFactory
+from qrogue.game.target_factory import BossFactory, NewEnemyFactory, ChallengeFactory
 from qrogue.game.world import tiles
 from qrogue.game.world.dungeon_generator.generator import DungeonGenerator
 from qrogue.game.world.dungeon_generator.wave_function_collapse import WFCManager, LearnableRoom
@@ -650,7 +649,7 @@ class ExpeditionGenerator(DungeonGenerator):
             diff_sum += gate.difficulty
         return gate_list
 
-    def __create_enemy(self, enemy_seed: int, enemy_id: int, room_pos: Coordinate, enemy_factory: EnemyFactory,
+    def __create_enemy(self, enemy_seed: int, enemy_id: int, room_pos: Coordinate, enemy_factory: NewEnemyFactory,
                        enemy_groups_by_room: Dict[Coordinate, Dict[int, List[tiles.Enemy]]]) -> tiles.Enemy:
         enemy: Optional[tiles.Enemy] = None
 
@@ -668,8 +667,8 @@ class ExpeditionGenerator(DungeonGenerator):
                 enemy_groups_by_room[room_pos][enemy_id] = []
             enemy_groups_by_room[room_pos][enemy_id].append(new_enemy)
 
-        enemy = tiles.Enemy(enemy_factory, get_entangled_tiles, update_entangled_room_groups, enemy_seed, enemy_id,
-                            self._next_tile_id)
+        enemy = tiles.Enemy(enemy_id, enemy_factory, self.__cbp.start_fight, get_entangled_tiles,
+                            update_entangled_room_groups, enemy_seed, self._next_tile_id)
         update_entangled_room_groups(enemy)
         return enemy
 
@@ -754,10 +753,9 @@ class ExpeditionGenerator(DungeonGenerator):
         # only gate on a zero-state. Also picking multiple gates where one is CX has a higher probability of doing
         # nothing the more qubits we have.
         enemy_factories = [
-            EnemyPuzzleFactory(self.__cbp.start_fight, self._next_target_id, PuzzleDifficulty(1, 3)),
-            EnemyPuzzleFactory(self.__cbp.start_fight, self._next_target_id, PuzzleDifficulty(2, 2)),
-            EnemyPuzzleFactory(self.__cbp.start_fight, self._next_target_id, PuzzleDifficulty(2, 3)),
-            EnemyPuzzleFactory(self.__cbp.start_fight, self._next_target_id, PuzzleDifficulty(1, 2)),
+            # todo: don't use full difficulty, but different slightly easier difficulties
+            NewEnemyFactory(difficulty, robot.num_of_qubits, robot.circuit_space, robot.get_available_instructions),
+            NewEnemyFactory(difficulty, robot.num_of_qubits, robot.circuit_space, robot.get_available_instructions),
         ]
         # factories are picked room-wise
         enemy_factory_priorities = [0.25, 0.35, 0.3, 0.1]
