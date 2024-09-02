@@ -13,7 +13,7 @@ from qrogue.game.world.map.rooms import AreaType, DefinedWildRoom, EmptyRoom, Sp
     ChallengeRoom
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.graphics.popups import Popup
-from qrogue.util import Logger, RandomManager, MyRandom, StvDifficulty, GateType, DifficultyType
+from qrogue.util import Logger, RandomManager, MyRandom, StvDifficulty, GateType, DifficultyType, ExpeditionConfig
 
 
 class _Code(IntEnum):
@@ -595,7 +595,6 @@ class ExpeditionGenerator(DungeonGenerator):
     __MAX_ROOM_GEN_TRIES = 10
     __BLOCKING_WEIGHT = 2
     __INVALID_WEIGHT = 1_000_000
-    __DEFAULT_GATES = [instruction.HGate(), instruction.SGate(), instruction.XGate(), instruction.CXGate()]
 
     @staticmethod
     def get_random_gates(available_gates: List[Instruction], difficulty: StvDifficulty, seed: int) \
@@ -647,6 +646,16 @@ class ExpeditionGenerator(DungeonGenerator):
             gate_list.append(gate)
             num_unique_gates += 1
             diff_sum += gate.difficulty
+
+        # try to add more gates on top if possible to make it more exciting
+        if len(available_gates) > 0:
+            # regardless of difficulty, try to add one more for good measure
+            gate_list.append(rm.get_element(available_gates, remove=True))
+
+            # for lower difficulties, add more until we have an (optional) minimum number to make it more exciting
+            while len(gate_list) < ExpeditionConfig.MIN_NUM_OF_GATES_GOAL and len(available_gates) > 0:
+                gate_list.append(rm.get_element(available_gates, remove=True))
+
         return gate_list
 
     def __create_enemy(self, enemy_seed: int, enemy_id: int, room_pos: Coordinate, enemy_factory: NewEnemyFactory,
@@ -749,17 +758,47 @@ class ExpeditionGenerator(DungeonGenerator):
         dungeon_boss = boss_factory.produce(puzzle_rm, include_gates=[main_gate])
         dungeon_challenge = challenge_factory.produce(puzzle_rm, include_gates=[main_gate])
 
-        # Difficulties can be misleading since picking one gate can result in CX Gate which does nothing if it's the
-        # only gate on a zero-state. Also picking multiple gates where one is CX has a higher probability of doing
-        # nothing the more qubits we have.
-        enemy_factories = [
-            # todo: don't use full difficulty, but different slightly easier difficulties
-            NewEnemyFactory(difficulty, robot.num_of_qubits, robot.circuit_space, robot.get_available_instructions),
-            NewEnemyFactory(difficulty, robot.num_of_qubits, robot.circuit_space, robot.get_available_instructions),
-        ]
+        #####################################################################################################
+        # create a variety of enemy factories for normal puzzle generation
         # factories are picked room-wise
-        enemy_factory_priorities = [0.25, 0.35, 0.3, 0.1]
+        enemy_factories = [
+            # plain and simple: one level less CircuitExuberance, 0-state inputs
+            NewEnemyFactory(difficulty.create_relative({
+                DifficultyType.CircuitExuberance: -1,
+            }), robot.num_of_qubits, robot.circuit_space, robot.get_available_instructions, False),
+            # less CircuitExuberance and QubitExuberance, but rotated inputs
+            NewEnemyFactory(difficulty.create_relative({
+                DifficultyType.CircuitExuberance: -1, DifficultyType.QubitExuberance: -1
+            }), robot.num_of_qubits, robot.circuit_space, robot.get_available_instructions, True),
+            # use XGate on inputs - based on QubitExuberance, it should be possible to apply XGate to every qubit
+            NewEnemyFactory(difficulty.create_relative({
+                DifficultyType.CircuitExuberance: -1,
+            }), robot.num_of_qubits, robot.circuit_space, robot.get_available_instructions,
+                [instruction.XGate()] * robot.num_of_qubits),
+            # use HGate on inputs
+            NewEnemyFactory(difficulty.create_relative({
+                DifficultyType.CircuitExuberance: -1, DifficultyType.QubitExuberance: -1
+            }), robot.num_of_qubits, robot.circuit_space, robot.get_available_instructions,
+                [instruction.HGate()] * robot.num_of_qubits),
+        ]
+        enemy_factory_priorities = [0.25, 0.1, 0.35, 0.3]
+        # add more factories (varying in input stvs) for higher difficulties
+        if difficulty.level > 2:
+            # use SGate on inputs
+            enemy_factories.append(NewEnemyFactory(difficulty.create_relative({
+                DifficultyType.CircuitExuberance: -1, DifficultyType.QubitExuberance: -1
+            }), robot.num_of_qubits, robot.circuit_space, robot.get_available_instructions,
+                [instruction.SGate()] * robot.num_of_qubits))
+            enemy_factory_priorities.append(0.2)
+        if difficulty.level > 3:
+            # use SGate on inputs
+            enemy_factories.append(NewEnemyFactory(difficulty.create_relative({
+                DifficultyType.CircuitExuberance: -1, DifficultyType.QubitExuberance: -1
+            }), robot.num_of_qubits, robot.circuit_space, robot.get_available_instructions,
+                [instruction.YGate()] * robot.num_of_qubits))
+            enemy_factory_priorities.append(0.3)
         enemy_groups_by_room = {}
+        #####################################################################################################
 
         rooms: List[List[Optional[Room]]] = [[None for _ in range(self.width)] for _ in range(self.height)]
         spawn_room = None

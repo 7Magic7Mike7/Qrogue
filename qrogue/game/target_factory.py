@@ -151,6 +151,9 @@ class PuzzleFactory(ABC):
     def _circuit_space(self) -> int:
         return self.__circuit_space
 
+    def _get_available_gates(self) -> List[Instruction]:
+        return self.__get_available_gates()
+
     def _prepare_from_gates(self, rm: MyRandom, include_gates: List[Instruction], force_num_of_gates: bool,
                             inverse: bool = False) -> List[Instruction]:
         return PuzzleGenerator.prepare_from_gates(rm, self.__num_of_qubits, self.__circuit_space, self.__difficulty,
@@ -166,9 +169,15 @@ class PuzzleFactory(ABC):
 class NewEnemyFactory(PuzzleFactory, EnemyFactory):
     def __init__(self, difficulty: StvDifficulty, num_of_qubits: int, circuit_space,
                  get_available_gates_callback: Callable[[], List[Instruction]],
-                 reward_pool: Optional[List[Optional[Collectible]]] = None,
+                 input_data: Union[bool, List[Instruction]], reward_pool: Optional[List[Optional[Collectible]]] = None,
                  next_id_callback: Optional[Callable[[], int]] = None):
         super().__init__(difficulty, num_of_qubits, circuit_space, get_available_gates_callback, next_id_callback)
+        if isinstance(input_data, bool):
+            self.__rotate_input = input_data
+            self.__input_gates = None
+        else:
+            self.__rotate_input = False
+            self.__input_gates = input_data
         self.__reward_pool = reward_pool
 
     def robot_based(self) -> bool:
@@ -190,12 +199,29 @@ class NewEnemyFactory(PuzzleFactory, EnemyFactory):
                 input_gates: Optional[List[Instruction]] = None, eid: Optional[int] = None) -> Enemy:
         eid = 0 if eid is None else eid
 
-        gate_list = self._prepare_from_gates(rm, include_gates, force_num_of_gates=False)
-        target_stv = Instruction.compute_stv(gate_list, self._num_of_qubits)
+        # Note (0.1.09.24): include_gates and input_gates seem to be None for all calls
 
+        # prepare gates for stv computation
+        if input_gates is not None or self.__input_gates is not None:
+            # just use the provided gates
+            gates_for_input = \
+                PuzzleGenerator.prepare_single_layer_gates(rm, self._num_of_qubits, self._circuit_space,
+                                                           self._difficulty, self.__input_gates.copy())
+        elif self.__rotate_input:
+            # use a random rotation
+            gates_for_input = PuzzleGenerator.prepare_rotation_gates(rm, self._num_of_qubits, self._circuit_space,
+                                                                     self._difficulty)
+        else:
+            # use no create a 0-state stv
+            gates_for_input = []
+        gates_for_target = self._prepare_from_gates(rm, include_gates, force_num_of_gates=False)
+
+        target_stv = Instruction.compute_stv(gates_for_input + gates_for_target, self._num_of_qubits)
+        input_stv = Instruction.compute_stv(gates_for_input, self._num_of_qubits, inverse=True)
         reward = None if self.__reward_pool is None \
             else rm.get_element(self.__reward_pool, msg="EnemyFactory.produce()@reward")
-        return Enemy(self._next_id(), eid, target_stv, reward)
+
+        return Enemy(self._next_id(), eid, target_stv, reward, input_stv)
 
 
 class ChallengeFactory(PuzzleFactory):

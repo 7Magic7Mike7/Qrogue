@@ -511,4 +511,5 @@ class GateType(enum.Enum):
 
 class ExpeditionConfig:
     DEFAULT_QUEUE_SIZE = 0
-    DEFAULT_DIFFICULTY = 2
+    MIN_DIFFICULTY = 1          # minimum difficulty level used for Expeditions
+    MIN_NUM_OF_GATES_GOAL = 3   # minimum number of gates we try to pick for non-custom expeditions
