@@ -1,7 +1,8 @@
 from enum import Enum
-from typing import Optional, List
+from typing import Optional, List, Callable
 
 from qrogue.util.config import ColorConfig as CC, InstructionConfig
+from .achievements import Unlocks
 
 
 class _HL:
@@ -367,15 +368,19 @@ class HelpText(Enum):  # todo: import Controls to replace static key-mentions wi
         return self.__text
 
 
-def get_filtered_help_texts() -> List[HelpText]:
-    return [
-        HelpText.Game,
-        HelpText.Controls,
-        # HelpText.Pause,
-        HelpText.Fight, HelpText.Ket, HelpText.ParallelGates, HelpText.SerialGates, HelpText.Amplitudes,
-        HelpText.Challenge, HelpText.BossFight,
-        HelpText.LevelSelection, HelpText.Workbench,
-    ]
+def get_filtered_help_texts(check_unlocks: Callable[[Unlocks], bool]) -> List[HelpText]:
+    texts = [HelpText.Game, HelpText.Controls]
+    if check_unlocks(Unlocks.ShowEquation):
+        texts += [HelpText.Fight, HelpText.Ket, HelpText.ParallelGates, HelpText.SerialGates, HelpText.Amplitudes]
+    if check_unlocks(Unlocks.MiniBoss):
+        texts.append(HelpText.Challenge)
+    if check_unlocks(Unlocks.Boss):
+        texts.append(HelpText.BossFight)
+    if check_unlocks(Unlocks.LevelSelection):
+        texts.append(HelpText.LevelSelection)
+    if check_unlocks(Unlocks.Workbench):
+        texts.append(HelpText.Workbench)
+    return texts
 
 
 def load_help_text(type_: str) -> Optional[str]:

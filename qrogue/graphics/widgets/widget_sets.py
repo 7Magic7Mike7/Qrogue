@@ -1348,13 +1348,15 @@ class PauseMenuWidgetSet(MyWidgetSet):
     def __init__(self, controls: Controls, render: Callable[[List[Renderable]], None], logger, root: py_cui.PyCUI,
                  continue_callback: Callable[[], None], save_callback: Callable[[], Tuple[bool, CommonInfos]],
                  exit_run_callback: Callable[[], None], restart_callback: Callable[[], None],
-                 achievements_to_string_callback: Callable[[], str]):
+                 achievements_to_string_callback: Callable[[], str],
+                 check_unlocks_callback: Callable[[Unlocks], bool]):
         super().__init__(logger, root, render)
         self.__continue_callback = continue_callback
         self.__save_game = save_callback
         self.__exit_run = exit_run_callback
         self.__restart_callback = restart_callback
         self.__achievements_to_string = achievements_to_string_callback
+        self.__check_unlocks = check_unlocks_callback
 
         self.__hud = MyWidgetSet.create_hud_row(self)
 
@@ -1427,7 +1429,7 @@ class PauseMenuWidgetSet(MyWidgetSet):
         return False
 
     def __help(self) -> bool:
-        objects = get_filtered_help_texts()
+        objects = get_filtered_help_texts(self.__check_unlocks)
         texts = [val.name for val in objects] + [MyWidgetSet.BACK_STRING]
         objects.append(SelectionWidget.cancel_obj())
 
