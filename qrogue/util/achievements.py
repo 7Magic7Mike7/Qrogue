@@ -24,6 +24,8 @@ class Unlocks(enum.Enum):
     LevelSelection = (91, "LevelSelection")
     Workbench = (92, "Workbench")
     Expeditions = (93, "Expeditions")
+    Boss = (94, "BossFight")
+    MiniBoss = (95, "MiniBossFight")
 
     # internal events
     VisitedWorkbench = (1_001, "VisitedWorkbench")

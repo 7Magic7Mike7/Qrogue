@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Dict, List, Optional, Callable
 
 from .achievements import Unlocks
-from .config import MapConfig, GameplayConfig, PathConfig, MapGrammarConfig, ScoreConfig, GateType
+from .config import ExpeditionConfig, MapConfig, GameplayConfig, PathConfig, MapGrammarConfig, ScoreConfig, GateType
 from .stv_difficulty import StvDifficulty
 from .util_functions import datetime2str
 
@@ -32,8 +32,8 @@ class LevelInfo:
         # newbie tutorials
         "l0k0v0": [Unlocks.MainMenuContinue, Unlocks.ShowEnergy, ],
         "l0k0v1": [Unlocks.ShowEquation, Unlocks.PuzzleHistory],
-        "l0k0v4": [Unlocks.CircuitReset],
-        "l0k0v5": [Unlocks.LevelSelection],
+        "l0k0v4": [Unlocks.CircuitReset, Unlocks.Boss],
+        "l0k0v5": [Unlocks.LevelSelection, Unlocks.MiniBoss],
         "l0k0v6": [Unlocks.Workbench, Unlocks.Expeditions],
 
         # experienced tutorials are copied from newbie tutorials entered in init()
@@ -257,8 +257,8 @@ class LevelInfo:
 
     @staticmethod
     def get_expedition_difficulty(expedition_progress: int) -> int:
-        # level is at least 1 and at most max_difficulty_level
-        return min(max(int(expedition_progress / 10), StvDifficulty.min_difficulty_level()),
+        # level is at least MIN_DIFFICULTY and at most max_difficulty_level
+        return min(max(int(expedition_progress / 10), ExpeditionConfig.MIN_DIFFICULTY),
                    StvDifficulty.max_difficulty_level())
 
 

@@ -325,7 +325,8 @@ class QrogueCUI(PyCUI):
                                                 self.set_refresh_timeout)
         self.__pause = PauseMenuWidgetSet(self.__controls, self.__render, Logger.instance(), self,
                                           self.__general_continue, self._conditional_saving, self._switch_to_menu,
-                                          self.__map_manager.reload, self.__save_data.to_achievements_string)
+                                          self.__map_manager.reload, self.__save_data.to_achievements_string,
+                                          self.__save_data.check_unlocks)
         self.__pause.set_data(None, "Qrogue", None)
 
         self.__training = TrainingsWidgetSet(self.__controls, self.__render, Logger.instance(), self,

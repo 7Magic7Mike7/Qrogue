@@ -1,12 +1,17 @@
 from enum import Enum
-from typing import Optional, List
+from typing import Optional, List, Callable
 
 from qrogue.util.config import ColorConfig as CC, InstructionConfig
+from .achievements import Unlocks
 
 
 class _HL:
+    indent = "  "
+
     # objects
     boss = CC.highlight_object("Boss")
+    boss_s = CC.highlight_object("Boss's")
+    bosses = CC.highlight_object("Bosses")
     circuit = CC.highlight_object("Circuit")
     circuit_matrix = CC.highlight_object("Circuit Matrix")
     collec = CC.highlight_object("Collectibles")
@@ -23,8 +28,10 @@ class _HL:
     key = CC.highlight_object("Key")
     keys = CC.highlight_object("Keys")
 
+    mini_boss = CC.highlight_object("MiniBoss")
     output_stv = CC.highlight_object("Output State Vector")
     puzzle = CC.highlight_object("Puzzle")
+    puzzle_s = CC.highlight_object("Puzzle's")
     puzzles = CC.highlight_object("Puzzles")
     quantum_circuit = CC.highlight_object("Quantum Circuit")
     quantum_gates = CC.highlight_object("Quantum Gates")
@@ -158,14 +165,9 @@ class _HL:
     shutdown_keys = CC.highlight_key("CTRL+Q") + " followed by " + CC.highlight_key("Q")
 
     # tiles
-    door_tile = CC.highlight_tile("-")
-    level_decoration_tile = CC.highlight_tile("L")
-    level2_decoration_tile = CC.highlight_tile("L - 2")
-    msg_tile = CC.highlight_tile(".")
-    navigation_tile = CC.highlight_tile("N")
-    quickstart_tile = CC.highlight_tile("Q")
-    robb_tile = CC.highlight_tile("R")
-    teleport_tile = CC.highlight_tile("t")
+    tile_boss = CC.highlight_tile('B')
+    tile_enemy0 = CC.highlight_tile('0')
+    tile_mini_boss = CC.highlight_tile('!')
 
 
 class HelpText(Enum):  # todo: import Controls to replace static key-mentions with dynamic ones?
@@ -286,13 +288,25 @@ class HelpText(Enum):  # todo: import Controls to replace static key-mentions wi
         f"together with their {_HL.reward} whenever you update your {_HL.circuit}.")
 
     Challenge = ("Minibosses",
-        "TODO")
+        f"A {_HL.mini_boss} is represented by {_HL.tile_mini_boss} and appears in every {CC.hw('expedition')} and some "
+        f"{CC.hw('lessons')}. It has certain properties that {CC.hw('distinguish')} it from a normal {_HL.enemy} or "
+        f"{_HL.boss}:\n"
+        f"{_HL.indent}1) It will give you a {CC.hw('new')} {_HL.gate} upon challenging it, which you will need to "
+        f"{CC.ha('solve')} its {_HL.puzzle}.\n"
+        f"{_HL.indent}2) It will only accept your solution if you used a {CC.hw('specified number')} of {_HL.gates}.\n"
+        f"{_HL.indent}3) You will {CC.hw('not')} be able to {_HL.flee} from it.\n"
+        f"{_HL.indent}4) While its {_HL.puzzle_s} {_HL.target_state} will be a {_HL.zero_state}, the {_HL.input_stv} "
+        f"will be {CC.hw('non-zero')}, so you have to kind of think backwards.\n")
 
     BossFight = ("Bosses",
-        f"Now it's getting {_HL.serious}! You are fighting against {_HL.bell}. For the {_HL.state} you need to reach " \
-        f"to defeat Bell your two {_HL.qubits} will always have to be the same: either {_HL.both0} or {_HL.both1}.\n" \
-        f"This is called {_HL.entanglement}.\n\n" \
-        "Good luck!")  # todo make more generic
+        f"A {_HL.boss} is represented by {_HL.tile_boss} and appears in every {CC.hw('expedition')} and some "
+        f"{CC.hw('lessons')}. It not only has a {CC.hw('harder')} {_HL.puzzle} than a normal {_HL.enemy} or "
+        f"{_HL.mini_boss}, but also additional properties:\n"
+        f"{_HL.indent}1) There is a {CC.hw('specified number')} of times you can {_HL.edit} your {_HL.circuit} to "
+        f"solve the {_HL.boss_s} {_HL.puzzle}. Should you fail to reach the {_HL.output_stv} before the number of "
+        f"remaining edits reaches 0, you lose and have to restart the {CC.hw('level')}. So we advise to not guess "
+        f"blindly but really think about your {CC.hw('circuit design')}.\n"
+        f"{_HL.indent}2) Harder {_HL.bosses} will have {CC.hw('randomized')} {_HL.input_stv}\n")
 
     Game = ("About the Game",
         f"QRogue is a game about {_HL.quantum_computing}. You will explore " \
@@ -335,10 +349,10 @@ class HelpText(Enum):  # todo: import Controls to replace static key-mentions wi
         f"{CC.hw('Fusion')} will cost {CC.hw('1')} {CC.ho('QuantumFuser')} for every {CC.ho('Gate')} used. In the end, "
         f"you can give your new {CC.ho('CombinedGate')} a name for easier recognition.\n"
         f"The {CC.hw('naming rules')} are as follows:\n"
-        f"  1) Use between {CC.hw(str(InstructionConfig.COMB_GATE_NAME_MIN_CHARACTERS))} and "
+        f"{_HL.indent}1) Use between {CC.hw(str(InstructionConfig.COMB_GATE_NAME_MIN_CHARACTERS))} and "
         f"{CC.hw(str(InstructionConfig.COMB_GATE_NAME_MAX_CHARACTERS))} characters\n"
-        f"  2) Only use {CC.hw('letters')} (i.e., no numbers, whitespaces or special characters)\n"
-        f"  3) Must not equal the name of any {CC.hw('Base Gates')} (i.e., any non-CombinedGate in the game)\n"
+        f"{_HL.indent}2) Only use {CC.hw('letters')} (i.e., no numbers, whitespaces or special characters)\n"
+        f"{_HL.indent}3) Must not equal the name of any {CC.hw('Base Gates')} (i.e., any non-CombinedGate in the game)\n"
         f"Lastly, a {CC.ho('CombinedGate')} must {CC.hw('not contain')} any other {CC.ho('CombinedGate')}.")
 
     def __init__(self, name: str, text: str):
@@ -354,15 +368,19 @@ class HelpText(Enum):  # todo: import Controls to replace static key-mentions wi
         return self.__text
 
 
-def get_filtered_help_texts() -> List[HelpText]:
-    return [
-        HelpText.Game,
-        HelpText.Controls,
-        # HelpText.Pause,
-        HelpText.Fight, HelpText.Ket, HelpText.ParallelGates, HelpText.SerialGates, HelpText.Amplitudes,
-        # HelpText.Riddle, #HelpText.Challenge,
-        HelpText.LevelSelection, HelpText.Workbench,
-    ]
+def get_filtered_help_texts(check_unlocks: Callable[[Unlocks], bool]) -> List[HelpText]:
+    texts = [HelpText.Game, HelpText.Controls]
+    if check_unlocks(Unlocks.ShowEquation):
+        texts += [HelpText.Fight, HelpText.Ket, HelpText.ParallelGates, HelpText.SerialGates, HelpText.Amplitudes]
+    if check_unlocks(Unlocks.MiniBoss):
+        texts.append(HelpText.Challenge)
+    if check_unlocks(Unlocks.Boss):
+        texts.append(HelpText.BossFight)
+    if check_unlocks(Unlocks.LevelSelection):
+        texts.append(HelpText.LevelSelection)
+    if check_unlocks(Unlocks.Workbench):
+        texts.append(HelpText.Workbench)
+    return texts
 
 
 def load_help_text(type_: str) -> Optional[str]:

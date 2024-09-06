@@ -46,6 +46,41 @@ class PuzzleGenerator:
         return angle
 
     @staticmethod
+    def prepare_single_layer_gates(rm: MyRandom, num_of_qubits: int, circuit_space: int, difficulty: StvDifficulty,
+                                   available_gates: List[Instruction]) -> List[Instruction]:
+        """
+        Prepares at most one single-qubit gate per qubit.
+
+        :param rm: determines randomness
+        :param num_of_qubits: how many qubits can be used to place gates on
+        :param circuit_space: the maximum number of gates that can be placed in the circuit
+        :param difficulty: determines absolute value of QubitExuberance, and hence, how many gates we try to prepare
+                            relative to num_of_qubits
+        :param available_gates: the gates available for preparation
+        :returns: list of prepared (i.e., ready to compute a StateVector) gates
+        """
+        gate_list = []
+        # 1) extract difficulty value
+        num_of_single_layer_qubits = difficulty.get_absolute_value(DifficultyType.QubitExuberance, num_of_qubits,
+                                                                   circuit_space)
+        # 2) decide on which qubits we apply a single gate
+        qubit_count = [0] * num_of_qubits
+        qubits = list(range(num_of_qubits))
+        single_layer_qubits = [rm.get_element(qubits, remove=True) for _ in range(num_of_single_layer_qubits)]
+
+        # 3) filter for single qubit gates
+        filtered_gates = [gate for gate in available_gates if gate.num_of_qubits == 1]
+
+        # 4) apply single qubit gates to the selected qubits
+        for qubit in single_layer_qubits:
+            if len(filtered_gates) <= 0: break
+            gate = rm.get_element(filtered_gates, remove=True)
+            if PuzzleGenerator.__prepare_gate_at(rm, circuit_space, gate, qubit_count, [qubit], qubit):
+                gate_list.append(gate)
+
+        return gate_list
+
+    @staticmethod
     def prepare_rotation_gates(rm: MyRandom, num_of_qubits: int, circuit_space: int, difficulty: StvDifficulty) \
             -> List[Instruction]:
         rotation_gates: List[Instruction] = []

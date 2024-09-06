@@ -1,5 +1,5 @@
 from abc import abstractmethod, ABC
-from typing import List, Callable, Optional, Dict
+from typing import List, Callable, Optional, Dict, Union, Tuple
 
 import qrogue.game.logic.collectibles.instruction as gates
 from qrogue.game.logic import PuzzleGenerator
@@ -7,17 +7,45 @@ from qrogue.game.logic.actors import Challenge
 from qrogue.game.logic.actors.controllables import Robot
 from qrogue.game.logic.actors.puzzles import Enemy, Target, Boss
 from qrogue.game.logic.base import StateVector
-from qrogue.game.logic.collectibles import Collectible, CollectibleFactory, Instruction, Score, QuantumFuser
-from qrogue.game.target_difficulty import PuzzleDifficulty, ExplicitTargetDifficulty
-from qrogue.game.world.navigation import Direction
+from qrogue.game.logic.collectibles import Collectible, CollectibleFactory, Instruction, QuantumFuser
+from qrogue.game.target_difficulty import ExplicitTargetDifficulty
 from qrogue.util import Logger, MyRandom, Config, StvDifficulty, DifficultyType
 
 
 class EnemyFactory(ABC):
-    def __init__(self, start_fight_callback: Callable[[Robot, Enemy, Direction], None],
-                 next_id_callback: Optional[Callable[[], int]] = None):
-        self.__start_fight = start_fight_callback
+    @staticmethod
+    def _fallback_enemy(id_: Optional[int], eid: Optional[int], num_of_qubits: Optional[int],
+                        reward: Optional[Collectible], input_stv: Optional[StateVector] = None) -> Enemy:
+        if id_ is None: id_ = -1
+        if eid is None: eid = 0
+        if num_of_qubits is None: num_of_qubits = 2
+        return Enemy(id_, eid, StateVector.create_zero_state_vector(num_of_qubits), reward, input_stv)
 
+    @abstractmethod
+    def robot_based(self) -> bool:
+        pass
+
+    @abstractmethod
+    def produce_enemy(self, rm: MyRandom, eid: int,
+                      data: Union[Robot, Tuple[Optional[List[Instruction]], Optional[List[Instruction]]]]) -> Enemy:
+        pass
+
+
+class EnemyTargetFactory(EnemyFactory):
+    """
+    This class produces enemies (actors) with a certain difficulty.
+    It is used by enemy tiles to trigger a fight.
+    """
+
+    def __init__(self, target_difficulty: ExplicitTargetDifficulty,
+                 input_difficulty: Optional[ExplicitTargetDifficulty] = None,
+                 next_id_callback: Optional[Callable[[], int]] = None):
+        """
+
+        :param target_difficulty: difficulty of the enemy target we produce
+        :param input_difficulty: difficulty of the input we produce
+        """
+        super().__init__()
         if next_id_callback is None:
             self.__next_id = 0
 
@@ -29,46 +57,24 @@ class EnemyFactory(ABC):
             self._next_id = _next_id
         else:
             self._next_id = next_id_callback
-
-    @abstractmethod
-    def produce(self, robot: Robot, rm: MyRandom, eid: int) -> Enemy:
-        pass
-
-    def start(self, robot: Robot, enemy: Enemy, direction: Direction):
-        self.__start_fight(robot, enemy, direction)
-
-
-class EnemyTargetFactory(EnemyFactory):
-    """
-    This class produces enemies (actors) with a certain difficulty.
-    It is used by enemy tiles to trigger a fight.
-    """
-
-    def __init__(self, start_fight_callback: Callable[[Robot, Enemy, Direction], None],
-                 target_difficulty: ExplicitTargetDifficulty, default_flee_chance: float = 0.5,
-                 input_difficulty: Optional[ExplicitTargetDifficulty] = None,
-                 next_id_callback: Optional[Callable[[], int]] = None):
-        """
-
-        :param target_difficulty: difficulty of the enemy target we produce
-        :param input_difficulty: difficulty of the input we produce
-        """
-        super(EnemyTargetFactory, self).__init__(start_fight_callback, next_id_callback)
         self.__target_difficulty = target_difficulty
-        self.__default_flee_chance = default_flee_chance
         self.__input_difficulty = input_difficulty
         self.__custom_reward_factory = None
+
+    def robot_based(self) -> bool:
+        return True
 
     def set_custom_reward_factory(self, factory: CollectibleFactory):
         self.__custom_reward_factory = factory
 
-    def produce(self, robot: Robot, rm: MyRandom, eid: int) -> Enemy:
+    def produce_enemy(self, rm: MyRandom, eid: int,
+                      data: Union[Robot, Tuple[Optional[List[Instruction]], Optional[List[Instruction]]]]) -> Enemy:
         """
         Creates an enemy based on the number of qubits the provided robot has.
 
-        :param robot:
         :param rm:
         :param eid: id in [0, 9] to calculate certain properties
+        :param data: Robot
         :return: a freshly created enemy
         """
         if self.__custom_reward_factory:
@@ -78,53 +84,47 @@ class EnemyTargetFactory(EnemyFactory):
         else:
             reward = None
 
-        target_stv = self.__target_difficulty.create_statevector(robot, rm)
-        if self.__input_difficulty is None:
-            input_stv = None
-        else:
-            max_rerolls = 10
-            input_stv = self.__input_difficulty.create_statevector(robot, rm)
-
-            while input_stv.get_diff(target_stv).is_zero and max_rerolls > 0:
-                input_stv = self.__input_difficulty.create_statevector(robot, rm)
-                max_rerolls -= 1
-
-            # if max_rerolls > 0 we know that the loop above terminated because the vectors are not the same -> done
-            if max_rerolls <= 0 and input_stv.get_diff(target_stv).is_zero:
-                # try re-rolling the target
+        if isinstance(data, Robot):
+            robot: Robot = data
+            target_stv = self.__target_difficulty.create_statevector(robot, rm)
+            if self.__input_difficulty is None:
+                input_stv = None
+            else:
                 max_rerolls = 10
-                target_stv = self.__target_difficulty.create_statevector(robot, rm)
+                input_stv = self.__input_difficulty.create_statevector(robot, rm)
+
                 while input_stv.get_diff(target_stv).is_zero and max_rerolls > 0:
-                    target_stv = self.__target_difficulty.create_statevector(robot, rm)
+                    input_stv = self.__input_difficulty.create_statevector(robot, rm)
                     max_rerolls -= 1
 
+                # if max_rerolls > 0 we know that the loop above terminated because the vectors are not the same -> done
                 if max_rerolls <= 0 and input_stv.get_diff(target_stv).is_zero:
-                    inst_text = "; ".join([str(inst) for inst in robot.instructions])
-                    Logger.instance().warn(f"Couldn't re-roll input and target to be different! {inst_text}",
-                                           from_pycui=False)
+                    # try re-rolling the target
+                    max_rerolls = 10
+                    target_stv = self.__target_difficulty.create_statevector(robot, rm)
+                    while input_stv.get_diff(target_stv).is_zero and max_rerolls > 0:
+                        target_stv = self.__target_difficulty.create_statevector(robot, rm)
+                        max_rerolls -= 1
 
-        return Enemy(self._next_id(), eid, target_stv, reward, input_=input_stv)
+                    if max_rerolls <= 0 and input_stv.get_diff(target_stv).is_zero:
+                        inst_text = "; ".join([str(inst) for inst in robot.instructions])
+                        Logger.instance().warn(f"Couldn't re-roll input and target to be different! {inst_text}",
+                                               from_pycui=False)
+            return Enemy(self._next_id(), eid, target_stv, reward, input_=input_stv)
 
-
-class EnemyPuzzleFactory(EnemyFactory):
-    def __init__(self, start_fight_callback: Callable[[Robot, Enemy, Direction], None],
-                 next_id_callback: Optional[Callable[[], int]], difficulty: PuzzleDifficulty):
-        super().__init__(start_fight_callback, next_id_callback)
-        self.__difficulty = difficulty
-
-    def produce(self, robot: Robot, rm: MyRandom, eid: int) -> Enemy:
-        input_stv, target_stv = self.__difficulty.produce(robot, rm)
-        reward = Score(100)
-        return Enemy(self._next_id(), eid, target_stv, reward, input_=input_stv)
+        Config.check_reachability("EnemyTargetFactory.produce_enemy(Tuple)")
+        Logger.instance().error(f"Invalid parameter data! Expected Robot but got \"{type(data)}\"")
+        return EnemyFactory._fallback_enemy(self._next_id(), eid, None, reward)
 
 
 class PuzzleFactory(ABC):
     def __init__(self, difficulty: StvDifficulty, num_of_qubits: int, circuit_space: int,
-                 available_gates: List[Instruction], next_id_callback: Optional[Callable[[], int]] = None):
+                 get_available_gates_callback: Callable[[], List[Instruction]],
+                 next_id_callback: Optional[Callable[[], int]] = None):
         self.__difficulty = difficulty
         self.__num_of_qubits = num_of_qubits
         self.__circuit_space = circuit_space
-        self.__available_gates = available_gates
+        self.__get_available_gates = get_available_gates_callback
         self.__next_id = 0
 
         if next_id_callback is None:
@@ -151,15 +151,77 @@ class PuzzleFactory(ABC):
     def _circuit_space(self) -> int:
         return self.__circuit_space
 
+    def _get_available_gates(self) -> List[Instruction]:
+        return self.__get_available_gates()
+
     def _prepare_from_gates(self, rm: MyRandom, include_gates: List[Instruction], force_num_of_gates: bool,
                             inverse: bool = False) -> List[Instruction]:
         return PuzzleGenerator.prepare_from_gates(rm, self.__num_of_qubits, self.__circuit_space, self.__difficulty,
-                                                  self.__available_gates, include_gates, force_num_of_gates, inverse)
+                                                  self.__get_available_gates(), include_gates, force_num_of_gates,
+                                                  inverse)
 
     @abstractmethod
     def produce(self, rm: MyRandom, include_gates: Optional[List[Instruction]],
                 input_gates: Optional[List[Instruction]] = None) -> Target:
         pass
+
+
+class NewEnemyFactory(PuzzleFactory, EnemyFactory):
+    def __init__(self, difficulty: StvDifficulty, num_of_qubits: int, circuit_space,
+                 get_available_gates_callback: Callable[[], List[Instruction]],
+                 input_data: Union[bool, List[Instruction]], reward_pool: Optional[List[Optional[Collectible]]] = None,
+                 next_id_callback: Optional[Callable[[], int]] = None):
+        super().__init__(difficulty, num_of_qubits, circuit_space, get_available_gates_callback, next_id_callback)
+        if isinstance(input_data, bool):
+            self.__rotate_input = input_data
+            self.__input_gates = None
+        else:
+            self.__rotate_input = False
+            self.__input_gates = input_data
+        self.__reward_pool = reward_pool
+
+    def robot_based(self) -> bool:
+        return False
+
+    def produce_enemy(self, rm: MyRandom, eid: int,
+                      data: Union[Robot, Tuple[Optional[List[Instruction]], Optional[List[Instruction]]]]) -> Enemy:
+        if isinstance(data, Tuple):
+            include_gates, input_gates = data
+            return self.produce(rm, include_gates, input_gates, eid)
+
+        Config.check_reachability("NewEnemyFactory.produce_enemy(Robot)")
+        Logger.instance().error(f"Invalid parameter data! Expected Tuple[List[Instruction], List[Instruction] but got "
+                                f"\"{type(data)}\"")
+        robot: Robot = data
+        return EnemyFactory._fallback_enemy(None, eid, robot.num_of_qubits, None)
+
+    def produce(self, rm: MyRandom, include_gates: Optional[List[Instruction]],
+                input_gates: Optional[List[Instruction]] = None, eid: Optional[int] = None) -> Enemy:
+        eid = 0 if eid is None else eid
+
+        # Note (0.1.09.24): include_gates and input_gates seem to be None for all calls
+
+        # prepare gates for stv computation
+        if input_gates is not None or self.__input_gates is not None:
+            # just use the provided gates
+            gates_for_input = \
+                PuzzleGenerator.prepare_single_layer_gates(rm, self._num_of_qubits, self._circuit_space,
+                                                           self._difficulty, self.__input_gates.copy())
+        elif self.__rotate_input:
+            # use a random rotation
+            gates_for_input = PuzzleGenerator.prepare_rotation_gates(rm, self._num_of_qubits, self._circuit_space,
+                                                                     self._difficulty)
+        else:
+            # use no create a 0-state stv
+            gates_for_input = []
+        gates_for_target = self._prepare_from_gates(rm, include_gates, force_num_of_gates=False)
+
+        target_stv = Instruction.compute_stv(gates_for_input + gates_for_target, self._num_of_qubits)
+        input_stv = Instruction.compute_stv(gates_for_input, self._num_of_qubits, inverse=True)
+        reward = None if self.__reward_pool is None \
+            else rm.get_element(self.__reward_pool, msg="EnemyFactory.produce()@reward")
+
+        return Enemy(self._next_id(), eid, target_stv, reward, input_stv)
 
 
 class ChallengeFactory(PuzzleFactory):
@@ -177,7 +239,7 @@ class ChallengeFactory(PuzzleFactory):
 
     def __init__(self, difficulty: StvDifficulty, num_of_qubits: int, circuit_space: int,
                  available_gates: List[Instruction], next_id_callback: Optional[Callable[[], int]] = None):
-        super().__init__(difficulty, num_of_qubits, circuit_space, available_gates, next_id_callback)
+        super().__init__(difficulty, num_of_qubits, circuit_space, lambda: available_gates, next_id_callback)
 
     def produce(self, rm: MyRandom, include_gates: Optional[List[Instruction]],
                 input_gates: Optional[List[Instruction]] = None) -> Challenge:
@@ -244,7 +306,7 @@ class BossFactory(PuzzleFactory):
     def __init__(self, difficulty: StvDifficulty, num_of_qubits: int, circuit_space: int,
                  available_gates: List[Instruction], reward_pool: List[Collectible],
                  next_id_callback: Optional[Callable[[], int]] = None):
-        super().__init__(difficulty, num_of_qubits, circuit_space, available_gates, next_id_callback)
+        super().__init__(difficulty, num_of_qubits, circuit_space, lambda: available_gates, next_id_callback)
         self.__reward_pool = reward_pool
 
     def produce(self, rm: MyRandom, include_gates: Optional[List[Instruction]],

@@ -44,15 +44,15 @@ class StvDifficulty:
 
     __DIFF_VALUES: Dict[DifficultyType, List[int]] = {
         # during generation
-        DifficultyType.CircuitExuberance:   [0.7, 0.75, 0.8, 0.85, 0.9, 1.0],
-        DifficultyType.QubitExuberance:     [0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
-        DifficultyType.RotationExuberance:  [0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
-        DifficultyType.RandomizationDegree: [  2,   4,  10,  19,  37,  0],
-        DifficultyType.BonusEditRatio:      [4.0, 3.3, 2.5, 1.6, 0.9, 0.3],
+        DifficultyType.CircuitExuberance:   [0.7, 0.7, 0.75, 0.8, 0.85, 0.9, 1.0],
+        DifficultyType.QubitExuberance:     [0.5, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+        DifficultyType.RotationExuberance:  [0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+        DifficultyType.RandomizationDegree: [  2,  2,   4,  10,  19,  37,  0],
+        DifficultyType.BonusEditRatio:      [5.0, 4.0, 3.3, 2.5, 1.6, 0.9, 0.3],
         # pre generation (i.e., preparation)
-        DifficultyType.MinAvailableGates:   [  1,   3,   4,   5,   6,   8],
-        DifficultyType.MinGateVariety:      [  1,   2,   3,   4,   5,   7],
-        DifficultyType.MinGateDifficulty:   [  0,   5,  10,  15,  20,  30],
+        DifficultyType.MinAvailableGates:   [  1,   1,   3,   4,   5,   6,   8],
+        DifficultyType.MinGateVariety:      [  1,   1,   2,   3,   4,   5,   7],
+        DifficultyType.MinGateDifficulty:   [  0,   1,   5,  10,  15,  20,  30],
     }
 
     @staticmethod
@@ -196,6 +196,14 @@ class StvDifficulty:
             abs_diff_dict[diff_type] = StvDifficulty._compute_absolute_value(diff_type, rel_diff_dict, num_of_qubits,
                                                                              circuit_space, fallback_value)
         return abs_diff_dict
+
+    def create_relative(self, add_levels: Dict[DifficultyType, int]) -> "StvDifficulty":
+        level_values = self.__level_values.copy()
+        for diff_type in add_levels:
+            new_level = level_values[diff_type] + add_levels[diff_type]
+            level_values[diff_type] = max(min(new_level, StvDifficulty.max_difficulty_level()),
+                                          StvDifficulty.min_difficulty_level())
+        return StvDifficulty(level_values)
 
     def to_code(self) -> str:
         return "".join([str(self.get_level(diff_type)) for diff_type in DifficultyType])
