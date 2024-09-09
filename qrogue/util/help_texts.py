@@ -171,7 +171,7 @@ class _HL:
 
 
 class HelpText(Enum):  # todo: import Controls to replace static key-mentions with dynamic ones?
-    Controls = ("Controls",
+    Controls = ("controls", "Controls",
         f"Move                  -   {_HL.navigation_keys}\n" \
         f"Navigate menus        -   {_HL.navigation_keys}\n" \
         f"Confirm               -   {_HL.action_keys}\n" \
@@ -187,7 +187,7 @@ class HelpText(Enum):  # todo: import Controls to replace static key-mentions wi
         f"can force-quit the game by pressing {_HL.shutdown_keys}. This will still save everything so it is the " \
         "preferred option over simply closing the window!]")  # let's not mention ESC since it could lead to bugs
 
-    Fight = ("Puzzles",
+    Fight = ("fight", "Puzzles",
         f"Basically {_HL.quantum_computing} is just a lot of complex-valued {_HL.mat_vec_mul}:\n" \
         f"{_HL.circuit_matrix} * {_HL.input_stv} = {_HL.output_stv}\n" \
         f"Your goal is to make the latter {_HL.equal} to the {_HL.target_stv}. While the input and target state " \
@@ -199,7 +199,7 @@ class HelpText(Enum):  # todo: import Controls to replace static key-mentions wi
         f"values. Once the whole vector is green, {_HL.output_stv} and {_HL.target_stv} are equal and the " \
         f"{_HL.puzzle} is solved.")
 
-    Ket = ("Ket-Notation",
+    Ket = ("ket", "Ket-Notation",
         f"The {_HL.ket1_symbol}-notation you can see {_HL.around} the {_HL.state_vectors} and {_HL.circuit_matrix} " \
         f"is called {_HL.ket_notation}. It describes to which {_HL.qubit_configuration} the values correspond to. For " \
         f"example {_HL.ket_symbol_stv01} at ~Target~ means that the target qubit's {_HL.zero_state} should have an " \
@@ -214,7 +214,7 @@ class HelpText(Enum):  # todo: import Controls to replace static key-mentions wi
         f"this implies that q1=0 is always true and only q0's value comes down to a coin flip.\n" \
         f"In general {_HL.ket_notation} looks like this: |qn...q1q0>, where n is the number of qubits - 1.")
 
-    ParallelGates = ("Gates in parallel",
+    ParallelGates = ("parallelgates", "Gates in parallel",
         f"Single qubit {_HL.gates} (e.g., X Gate) correspond to {_HL.matrix_2x2} which describe how the {_HL.gate} " \
         f"{_HL.transforms} the two possible inputs (0 and 1). However, {_HL.circuit} with {_HL.two} {_HL.qubits} " \
         f"have {_HL.four} possible inputs (00, 01, 10 and 11) and therefore have to correspond to {_HL.matrix_4x4}. " \
@@ -240,7 +240,7 @@ class HelpText(Enum):  # todo: import Controls to replace static key-mentions wi
         f"{CC.highlight_word('top to bottom')}. Just use the {CC.highlight_word('top most')} {_HL.gate} as base and " \
         f"{CC.highlight_word('put the lower')} one(s) into it.")
 
-    SerialGates = ("Gates in series",
+    SerialGates = ("serialgates", "Gates in series",
         f"Applying two {_HL.gates} in series is as easy as {CC.highlight_word('multiplying')} two matrices.\n" \
         f"Let's consider an {_HL.gate_x} at q0 followed by a {_HL.gate_cx} at q0 (=control), q1 (=target). So we " \
         f"compute a {_HL.matrix_4x4} for the {_HL.gate_x} (see {_HL.kronecker} and then " \
@@ -262,7 +262,7 @@ class HelpText(Enum):  # todo: import Controls to replace static key-mentions wi
         f"considered first.")
 
     # todo: the split after "collapse to" seems to think that |00> refers to a color code, hence adding // without closing //?
-    Amplitudes = ("Amplitudes",
+    Amplitudes = ("amplitudes", "Amplitudes",
         f"Let's consider the following {_HL.state_vector}:\n" \
         "|00>  0.707  \n" \
         "|01>  0.707  \n" \
@@ -280,14 +280,14 @@ class HelpText(Enum):  # todo: import Controls to replace static key-mentions wi
         f"In general {_HL.quantum_state}s are described by {CC.highlight_word('complex values')} so unlike in the " \
         f"example above it is very important to not forget to apply the absolute operator before squaring.")
 
-    Riddle = ("Riddles",
+    Riddle = ("ridlle", "Riddles",
         f"{_HL.riddles} are very similar to {_HL.puzzles}, yet a bit different. They also shows you a " \
         f"{_HL.target_state} you need to {_HL.reach} to solve it but you {_HL.cannot} {_HL.try_} it " \
         f"{_HL.arbitrary} {_HL.often}. They have predefined {_HL.number_of_times} you can {_HL.edit} your " \
         f"{_HL.circuit} before they get {_HL.unstable}. Unstable {_HL.riddles} have a 50% chance to {_HL.vanish} " \
         f"together with their {_HL.reward} whenever you update your {_HL.circuit}.")
 
-    Challenge = ("Minibosses",
+    Challenge = ("challenge", "Minibosses",
         f"A {_HL.mini_boss} is represented by {_HL.tile_mini_boss} and appears in every {CC.hw('expedition')} and some "
         f"{CC.hw('lessons')}. It has certain properties that {CC.hw('distinguish')} it from a normal {_HL.enemy} or "
         f"{_HL.boss}:\n"
@@ -298,7 +298,7 @@ class HelpText(Enum):  # todo: import Controls to replace static key-mentions wi
         f"{_HL.indent}4) While its {_HL.puzzle_s} {_HL.target_state} will be a {_HL.zero_state}, the {_HL.input_stv} "
         f"will be {CC.hw('non-zero')}, so you have to kind of think backwards.\n")
 
-    BossFight = ("Bosses",
+    BossFight = ("boss", "Bosses",
         f"A {_HL.boss} is represented by {_HL.tile_boss} and appears in every {CC.hw('expedition')} and some "
         f"{CC.hw('lessons')}. It not only has a {CC.hw('harder')} {_HL.puzzle} than a normal {_HL.enemy} or "
         f"{_HL.mini_boss}, but also additional properties:\n"
@@ -308,12 +308,12 @@ class HelpText(Enum):  # todo: import Controls to replace static key-mentions wi
         f"blindly but really think about your {CC.hw('circuit design')}.\n"
         f"{_HL.indent}2) Harder {_HL.bosses} will have {CC.hw('randomized')} {_HL.input_stv}\n")
 
-    Game = ("About the Game",
+    Game = ("game", "About the Game",
         f"QRogue is a game about {_HL.quantum_computing}. You will explore " \
         f"Levels and Expeditions and solve {_HL.puzzles} with the help of {_HL.quantum_gates} to reach even " \
         f"farther places of the quniverse.\n")
 
-    Pause = ("Pause Menu",
+    Pause = ("pause", "Pause Menu",
         "In the Pause Menu you can do several things:\n" \
         f"{_HL.continue_} - Leave the Pause Menu and continue where you stopped.\n" \
         f"{_HL.restart} - Restart the current level.\n" \
@@ -323,14 +323,14 @@ class HelpText(Enum):  # todo: import Controls to replace static key-mentions wi
         f"{_HL.options} - Configure some options of the game, like font size or coloring.\n" \
         f"{_HL.exit_} - Exit the current level.")
 
-    Options = ("Options", "7")
-    Welcome = ("Welcome",
-        Game[1] + \
+    Options = ("options", "Options", "7")   # todo
+    Welcome = ("welcome", "Welcome",
+        Game[2] + \
         "\nBut before you can explore the universe you have to complete a trainings program.\n" \
         f"Now close this dialog by pressing {_HL.action_keys}. Select {_HL.start_journey} with " \
         f"{_HL.navigation_keys} and confirm your selection with {_HL.action_keys} to begin!")
 
-    LevelSelection = ("Level Selection",
+    LevelSelection = ("levelselection", "Level Selection",
         f"The {CC.hw('Level Selection Screen')} allows you to {CC.ha('revisit')} already completed {CC.hw('Lessons')} "
         f"and go on {CC.hw('specific')} {CC.hw('Expeditions')}. Additionally, you can choose which {CC.ho('Gates')} "
         f"you want to bring along "
@@ -339,7 +339,7 @@ class HelpText(Enum):  # todo: import Controls to replace static key-mentions wi
         f"purposefully customize the gate selection, you don't have to worry about it. Finally, you can also specify a "
         f"{CC.hw('seed')} to reduce the randomness of the selected {CC.hw('Level')}.")
 
-    Workbench = ("Workbench",
+    Workbench = ("workbench", "Workbench",
         f"The {CC.hw('Workbench Screen')} allows you to {CC.hw('customize')} your available {CC.ho('Gates')}. You can "
         f"{CC.ha('fuse')} {CC.ho('Gates')} into a new {CC.ho('CombinedGate')} in exchange for {CC.ho('QuantumFusers')} "
         f"or {CC.ha('decompose')} {CC.ho('Gates')} to receive more of said {CC.ho('QuantumFusers')}. Beware that both "
@@ -355,9 +355,14 @@ class HelpText(Enum):  # todo: import Controls to replace static key-mentions wi
         f"{_HL.indent}3) Must not equal the name of any {CC.hw('Base Gates')} (i.e., any non-CombinedGate in the game)\n"
         f"Lastly, a {CC.ho('CombinedGate')} must {CC.hw('not contain')} any other {CC.ho('CombinedGate')}.")
 
-    def __init__(self, name: str, text: str):
+    def __init__(self, id_: str, name: str, text: str):
+        self.__id = id_
         self.__name = name
         self.__text = text
+
+    @property
+    def id(self) -> str:
+        return self.__id
 
     @property
     def name(self) -> str:
@@ -385,6 +390,6 @@ def get_filtered_help_texts(check_unlocks: Callable[[Unlocks], bool]) -> List[He
 
 def load_help_text(type_: str) -> Optional[str]:
     for key in HelpText:
-        if key.name.lower() == type_.lower():
+        if key.id.lower() == type_.lower():
             return key.text
     return None
