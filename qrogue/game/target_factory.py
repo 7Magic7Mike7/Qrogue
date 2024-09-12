@@ -217,7 +217,9 @@ class NewEnemyFactory(PuzzleFactory, EnemyFactory):
         gates_for_target = self._prepare_from_gates(rm, include_gates, force_num_of_gates=False)
 
         target_stv = Instruction.compute_stv(gates_for_input + gates_for_target, self._num_of_qubits)
-        input_stv = Instruction.compute_stv(gates_for_input, self._num_of_qubits, inverse=True)
+        # don't reverse this StV because the used gates are used as-is in target_stv and don't have to be "countered"
+        #  (i.e., reversed by the player)
+        input_stv = Instruction.compute_stv(gates_for_input, self._num_of_qubits, inverse=False)
         reward = None if self.__reward_pool is None \
             else rm.get_element(self.__reward_pool, msg="EnemyFactory.produce()@reward")
 
