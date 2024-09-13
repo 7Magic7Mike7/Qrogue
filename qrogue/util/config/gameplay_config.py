@@ -66,7 +66,7 @@ class MapConfig:
         return "back"
 
     @staticmethod
-    def level_map_prefix() -> str:
+    def lesson_map_prefix() -> str:
         return "l"
 
     @staticmethod

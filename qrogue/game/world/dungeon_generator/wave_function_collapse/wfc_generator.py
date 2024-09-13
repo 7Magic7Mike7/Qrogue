@@ -3,7 +3,7 @@ import math
 from typing import List, Optional, Dict, Tuple, Iterable, Any, Callable
 
 from qrogue.game.world.dungeon_generator import QrogueLevelGenerator
-from qrogue.game.world.map import LevelMap, CallbackPack
+from qrogue.game.world.map import LessonMap, CallbackPack
 from qrogue.game.world.map.rooms import AreaType
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.game.world.tiles import TileCode, Tile
@@ -170,7 +170,7 @@ class WFCGenerator:
         return self.to_string(self.__learner.types)
 
 
-def load_level(file_name: str, in_dungeon_folder: bool) -> Optional[LevelMap]:
+def load_level(file_name: str, in_dungeon_folder: bool) -> Optional[LessonMap]:
     static_seed = 7  # seed does not matter since we are only interested in learning placements
     generator = QrogueLevelGenerator(lambda s: True, lambda s: None, lambda s, c: None, lambda s0, s1: None,
                                      CallbackPack.dummy())

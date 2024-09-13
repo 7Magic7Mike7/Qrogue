@@ -5,7 +5,7 @@ from qrogue.game.world.navigation import Coordinate
 from .map import Map, MapType, Room, MapMetaData
 
 
-class LevelMap(Map):
+class LessonMap(Map):
     def __init__(self, meta_data: MapMetaData, file_name: str, seed: int, rooms: List[List[Optional[Room]]],
                  robot: Robot, spawn_room: Coordinate, check_achievement_callback: Callable[[str], bool],
                  trigger_event_callback: Callable[[str], None]):

@@ -514,7 +514,7 @@ class LevelSelectWidgetSet(MyWidgetSet):
         internal_names, display_names = [], []
         highscores, durations = [], []
         for level_data in levels_data:
-            if not level_data.is_level: continue    # skip expeditions (they are added separately) and other non-levels
+            if not level_data.is_lesson: continue    # skip expeditions (they are added separately) and other non-levels
 
             internal_names.append(level_data.name)
             display_name = LevelInfo.convert_to_display_name(level_data.name, True)

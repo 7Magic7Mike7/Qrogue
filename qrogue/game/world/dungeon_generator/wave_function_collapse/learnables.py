@@ -3,7 +3,7 @@ from typing import Any, Dict, Optional
 
 from qrogue.game.logic.collectibles import CollectibleType
 from qrogue.game.world import tiles
-from qrogue.game.world.map import rooms, LevelMap
+from qrogue.game.world.map import rooms, LessonMap
 from qrogue.game.world.navigation import Coordinate
 from qrogue.util import Logger
 from qrogue.util.util_functions import my_str, enum_from_string
@@ -37,7 +37,7 @@ class WFCLearnMatrix(ABC):
 
 
 class LearnableMap(WFCLearnMatrix):
-    def __init__(self, level_map: LevelMap):
+    def __init__(self, level_map: LessonMap):
         self.__level_map = level_map
 
     @property

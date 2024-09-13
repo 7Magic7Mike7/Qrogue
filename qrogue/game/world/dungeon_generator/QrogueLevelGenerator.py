@@ -19,7 +19,7 @@ from qrogue.game.world.dungeon_generator.dungeon_parser.QrogueDungeonLexer impor
 from qrogue.game.world.dungeon_generator.dungeon_parser.QrogueDungeonParser import QrogueDungeonParser
 from qrogue.game.world.dungeon_generator.dungeon_parser.QrogueDungeonVisitor import QrogueDungeonVisitor
 from qrogue.game.world.dungeon_generator.generator import DungeonGenerator
-from qrogue.game.world.map import CallbackPack, MapMetaData, LevelMap, rooms
+from qrogue.game.world.map import CallbackPack, MapMetaData, LessonMap, rooms
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.util import Config, MapConfig, PathConfig, Logger, CommonQuestions, RandomManager, MyRandom, \
     load_help_text, ParserErrorListener, PuzzleGrammarConfig
@@ -151,7 +151,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         self.__meta_data = MapMetaData(None, None, True, self.__show_description)
 
         self.__warnings = 0
-        self.__level: Optional[LevelMap] = None
+        self.__level: Optional[LessonMap] = None
         self.__robot: Optional[Robot] = None
         # todo: update visibility of QrogueLevelGenerator to no one can accidentally call a visit-method with uninitialized __rm
         self.__rm: Optional[MyRandom] = None  # is only used to randomize rewards and puzzles, placements are static
@@ -198,7 +198,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         parser_util.warning(text, f"{level_name}{loc_details}")
         self.__warnings += 1
 
-    def generate(self, seed: int, file_path: str, in_dungeon_folder: bool = True) -> Tuple[Optional[LevelMap], bool]:
+    def generate(self, seed: int, file_path: str, in_dungeon_folder: bool = True) -> Tuple[Optional[LessonMap], bool]:
         self.__rm = RandomManager.create_new(seed)
         map_data = PathConfig.read_level(file_path, in_dungeon_folder)
 
@@ -226,8 +226,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         if self.__spawn_pos is None:
             raise SyntaxError("No SpawnRoom provided! Make sure to place 'SR' in the layout and if you defined a "
                               "custom SpawnRoom make sure to tag it as (Spawn).")
-        self.__level = LevelMap(meta_data, file_path, seed, room_matrix, self.__robot, self.__spawn_pos,
-                                self.__check_achievement, self.__trigger_event)
+        self.__level = LessonMap(meta_data, file_path, seed, room_matrix, self.__robot, self.__spawn_pos,
+                                 self.__check_achievement, self.__trigger_event)
         return self.__level, True
 
     def _add_hallway(self, room1: Coordinate, room2: Coordinate, door: tiles.Door):

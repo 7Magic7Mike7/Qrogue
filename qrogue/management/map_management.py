@@ -195,7 +195,7 @@ class MapManager:
         elif map_name.lower() == MapConfig.back_map_string():
             self.__load_back()
 
-        elif map_name.lower().startswith(MapConfig.level_map_prefix()):
+        elif map_name.lower().startswith(MapConfig.lesson_map_prefix()):
             self.__load_level(map_name, spawn_room, seed, gate_list)
 
         elif map_name.lower().startswith(MapConfig.expedition_map_prefix()):
