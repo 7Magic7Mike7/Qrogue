@@ -1,373 +1,322 @@
 import time
 from threading import Thread
-from typing import Callable, Optional, Dict, List
+from typing import Callable, Optional, Dict, List, Tuple, Union
 
-from qrogue.game.world.dungeon_generator import ExpeditionGenerator, QrogueLevelGenerator, QrogueWorldGenerator
-from qrogue.game.world.map import Map, WorldMap, MapType, ExpeditionMap
+from qrogue.game.logic import Message
+from qrogue.game.logic.actors.controllables.robot import RoboProperties
+from qrogue.game.logic.collectibles import Instruction
+from qrogue.game.world.dungeon_generator import ExpeditionGenerator, QrogueLevelGenerator
+from qrogue.game.world.dungeon_generator.wave_function_collapse import WFCManager
+from qrogue.game.world.map import Map, MapType, ExpeditionMap, CallbackPack
 from qrogue.game.world.navigation import Coordinate
 from qrogue.graphics.popups import Popup
-from qrogue.util import CommonQuestions, Logger, MapConfig, achievements, RandomManager, Config, TestConfig, \
-    ErrorConfig, PathConfig
-
-from qrogue.management.save_data import SaveData
-from qrogue.util.achievements import Unlocks, AchievementManager
-from qrogue.util.config.gameplay_config import ExpeditionConfig, GameplayConfig
-from qrogue.util.util_functions import open_folder
-
-__MAP_ORDER: Dict[int, Dict[str, str]] = {
-    # map names:
-    #   - the first character determines if it's a level ("l") or world ("w")
-    #   - the second character determines to which world the map belongs to
-    #   - the third character determines if the level differs based on knowledge mode, followed by the corresponding
-    #     digit of the knowledge mode
-    #   - last digit for levels is used to order the levels (only for structure, not used in game logic)
-    #   - alternatively maps can also start with "expedition" to mark them as generated
-    0: {
-        #MapConfig.spaceship(): MapConfig.intro_level(),
-        MapConfig.first_uncleared(): "l0k0v0",
-        "l0k0v0": "l0k0v1",
-        "l0k0v1": "l0k0v2",
-        "l0k0v2": "l0k0v3",
-        "l0k0v3": "l0k0v4",
-        "l0k0v4": f"{MapConfig.expedition_map_prefix()}25",
-        "l0training": "w0",
-        "l0exam": MapConfig.spaceship(),
-        "w0": MapConfig.spaceship(),
-
-        MapConfig.hub_world(): "l0v0",
-    },
-    1: {
-        MapConfig.first_uncleared(): "l0k1v0",
-        "l0k1v0": "l0k1v1",
-        "l0k1v1": "l0k1v2",
-        "l0k1v2": "l0k1v3",
-        "l0k1v3": "l0k1v4",
-        "l0k1v4": f"{MapConfig.expedition_map_prefix()}25",
-    },
-}
-
-
-def get_next(cur_map: str) -> Optional[str]:
-    if cur_map == MapConfig.first_uncleared():
-        next_map = __MAP_ORDER[GameplayConfig.get_knowledge_mode()][cur_map]
-        while SaveData.instance().achievement_manager.check_achievement(next_map):
-            if next_map in __MAP_ORDER[GameplayConfig.get_knowledge_mode()]:
-                next_map = __MAP_ORDER[GameplayConfig.get_knowledge_mode()][next_map]
-            else:
-                break
-        return next_map
-    elif cur_map in __MAP_ORDER[GameplayConfig.get_knowledge_mode()]:
-        return __MAP_ORDER[GameplayConfig.get_knowledge_mode()][cur_map]
-    return None
+from qrogue.management.save_data import NewSaveData
+from qrogue.util import CommonQuestions, RandomManager, LevelInfo, Config, MapConfig, ErrorConfig, \
+    ExpeditionConfig, StvDifficulty
+from qrogue.util.achievements import Achievement
+from qrogue.util.util_functions import cur_datetime, time_diff
 
 
 class MapManager:
-    __instance = None
-    __QUEUE_SIZE = 0
-
     @staticmethod
-    def instance() -> "MapManager":
-        if MapManager.__instance is None:
-            Logger.instance().throw(Exception(ErrorConfig.singleton_no_init("MapManager")))
-        return MapManager.__instance
+    def parse_expedition_parameters(map_name: str, map_seed: Optional[int], expedition_progress: int) \
+            -> Tuple[str, int, Optional[int]]:
+        # Example: expedition0d7p11 -> Difficulty = 0, map seed = 7, puzzle seed = 11
+        # first: extract difficulty and seed information from map_name if available
+        if len(map_name) > len(MapConfig.expedition_map_prefix()):
+            # map_name contains additional information
+            info = map_name[len(MapConfig.expedition_map_prefix()):]
 
-    @staticmethod
-    def reset():
-        if TestConfig.is_active():
-            MapManager.__instance = None
+            def parse_seed_info(_seed_info: str) -> Tuple[Optional[int], int]:
+                # seed info is either solely for map_seed or for both type of seeds
+                if MapConfig.puzzle_seed_separator() in _seed_info:
+                    # info_seed contains information about both seeds
+                    _info_puzzle, _info_map = _seed_info.split(MapConfig.puzzle_seed_separator())
+                    return int(_info_puzzle), int(_info_map)
+                else:
+                    # _seed_info only contains information about map_seed
+                    return None, int(_seed_info)
+
+            if MapConfig.diff_code_separator() in info:
+                diff_code, info_seed = info.split(MapConfig.diff_code_separator())
+                # info contains both difficulty and seed information
+                if map_seed is None or MapConfig.puzzle_seed_separator() in info_seed:
+                    puzzle_seed, map_seed = parse_seed_info(info_seed)
+                else:
+                    # seed info is solely for puzzle_seed
+                    puzzle_seed = int(info_seed)
+            elif map_seed is None:
+                # there is no difficulty code, just seed information (map_seed is implicitly None due to 1st if)
+                expedition_progress = int(expedition_progress)
+                diff_code = str(LevelInfo.get_expedition_difficulty(expedition_progress))
+                puzzle_seed, map_seed = parse_seed_info(info)
+                Config.check_reachability("load_map(): expedition without seed")
+            else:
+                # a map_seed was provided and there is no diff_code separator -> info is solely for diff_code
+                diff_code = info
+                puzzle_seed = None
         else:
-            raise TestConfig.StateException(ErrorConfig.singleton_reset("MapManager"))
+            # no additional information given, hence, we use default values
+            diff_code = str(LevelInfo.get_expedition_difficulty(expedition_progress))
+            puzzle_seed = None
 
-    def __init__(self, seed: int, show_world: Callable[[Optional[WorldMap]], None],
-                 start_level: Callable[[int, Map], None],
-                 show_input_popup: Callable[[str, int, Callable[[str], None]], None]):
-        if MapManager.__instance is not None:
-            Logger.instance().throw(Exception(ErrorConfig.singleton("MapManager")))
-        else:
-            self.__show_input_popup = show_input_popup  # title: str, color: int, callback: Callable[[str], None]
+        assert map_seed is not None, "MapSeed is None after parsing expedition arguments!"
+        return diff_code, map_seed, puzzle_seed
 
-            self.__base_seed = seed
-            self.__rm = RandomManager.create_new(seed)
-            self.__show_world = show_world
-            self.__start_level = start_level
-            self.__world_memory: Dict[str, WorldMap] = {}
-            self.__expedition_generator = ExpeditionGenerator(seed,
-                                                              SaveData.instance().achievement_manager.check_achievement,
-                                                              self.__trigger_event, self.load_map)
-            self.__expedition_queue: List[ExpeditionMap] = []
+    def __init__(self, wfc_manager: WFCManager, save_data: NewSaveData, seed: int, start_level: Callable[[Map], None],
+                 start_level_transition_callback: Callable[[str, str, Callable[[], None]], None],
+                 exit_map_callback: Callable[[], None], callback_pack: CallbackPack,
+                 queue_size: int = ExpeditionConfig.DEFAULT_QUEUE_SIZE):
+        self.__save_data = save_data
+        # no longer used code!
+        self.__exit_map = exit_map_callback
+        self.__cbp = callback_pack
+        self.__queue_size = queue_size
 
-            generator = QrogueWorldGenerator(seed, SaveData.instance().player,
-                                             SaveData.instance().achievement_manager.check_achievement,
-                                             SaveData.instance().achievement_manager.add_to_achievement,
-                                             self.load_map, Popup.npc_says)
-            hub_world, success = generator.generate(MapConfig.hub_world())
-            if not success:
-                Logger.instance().throw(RuntimeError("Unable to build hub world! Please download again and make sure "
-                                                     "to not edit game data."))
-            self.__world_memory[MapConfig.hub_world()] = hub_world
-            self.__cur_map: Map = hub_world
-            self.__in_level = False
+        self.__rm = RandomManager.create_new(seed)
+        self.__start_level = start_level
+        self.__start_level_transition = start_level_transition_callback
+        self.__expedition_generator = ExpeditionGenerator(wfc_manager, self.__save_data.check_achievement,
+                                                          self.trigger_event, self.__load_back,
+                                                          save_data.get_gates, callback_pack)  # todo: pass ExpeditionGenerator as argument?
+        self.__expedition_queue: List[ExpeditionMap] = []
+        self.__cur_map: Optional[Map] = None
 
-            MapManager.__instance = self
+        self.__level_timer = cur_datetime()
+        self.__temp_level_event_storage: Dict[str, Tuple[int, int]] = {}  # event name -> score, done_score
 
     @property
-    def __hub_world(self) -> WorldMap:
-        return self.__get_world(MapConfig.hub_world())
+    def is_in_level(self) -> bool:
+        return self.__cur_map is not None and self.__cur_map.get_type() is MapType.Level
 
     @property
-    def in_hub_world(self) -> bool:
-        return self.__cur_map is self.__hub_world
-
-    @property
-    def in_tutorial_world(self) -> bool:
-        return self.__get_world(self.__cur_map.internal_name).internal_name == MapConfig.tutorial_world()
-
-    @property
-    def in_level(self) -> bool:
-        return self.__cur_map.get_type() is MapType.Level
-
-    @property
-    def in_expedition(self) -> bool:
-        return self.__cur_map.get_type() is MapType.Expedition
+    def is_in_expedition(self) -> bool:
+        return self.__cur_map is not None and self.__cur_map.get_type() is MapType.Expedition
 
     @property
     def show_individual_qubits(self) -> bool:
         return self.__cur_map.show_individual_qubits
 
-    def __show_spaceship(self):
-        self.__show_world(None)
-
     def fill_expedition_queue(self, callback: Optional[Callable[[], None]] = None, no_thread: bool = False):
-        if len(self.__expedition_queue) >= MapManager.__QUEUE_SIZE:
+        if len(self.__expedition_queue) >= self.__queue_size:
             return
 
         def fill():
-            robot = SaveData.instance().get_robot(0)
-            while len(self.__expedition_queue) < MapManager.__QUEUE_SIZE:
-                expedition, success = self.__expedition_generator.generate((robot, self.__rm.get_seed()))
+            # todo: how to handle difficulty?
+            difficulty = StvDifficulty.from_difficulty_code("1")
+            robo_props = RoboProperties.from_difficulty_level(difficulty.level)
+            while len(self.__expedition_queue) < self.__queue_size:
+                map_seed = self.__rm.get_seed("MapManager.fill()@map_seed")
+                puzzle_seed = self.__rm.get_seed("MapManager.fill()@puzzle_seed")
+                expedition, success = self.__expedition_generator.generate(map_seed,
+                                                                           (robo_props, difficulty, puzzle_seed))
                 if success:
                     self.__expedition_queue.append(expedition)
 
             if callback is not None:
                 callback()
+
         if no_thread:
             fill()
         else:
             Thread(target=fill, args=(), daemon=True).start()
 
-    def __load_world(self, world_name: str) -> Optional[WorldMap]:
-        """
-        Loads the world either from memory or generates it from its file. In case of generation the world's achievement
-        score will also be corrected.
+    def __load_level(self, map_name: str, spawn_room: Optional[Coordinate] = None, seed: Optional[int] = None,
+                     gate_list: Optional[List[Instruction]] = None):
+        # generate a random seed for all paths since the randomizer state should not depend on whether we passed a seed
+        # manually (e.g., during debugging) or not
+        rand_seed = self.__rm.get_seed("MapManager.__load_level()@seedForLevel")
+        if seed is None: seed = rand_seed
 
-        :param world_name: internal name of the world to load
-        :return: a WorldMap corresponding to the provided name or None if it could not be generated
-        """
-        if world_name in self.__world_memory:
-            return self.__world_memory[world_name]
+        # todo maybe levels should be able to have arbitrary names except "w..." or "e..." or "back" or "next"?
+        check_achievement = self.__save_data.check_achievement
+        generator = QrogueLevelGenerator(check_achievement, self.trigger_event, self.load_map, Popup.npc_says,
+                                         self.__cbp)
+        try:
+            level, success = generator.generate(seed, map_name)
+            if success:
+                self.__cur_map = level
+                # if we have a valid gate_list, we try to set it and only show the error if it fails
+                if gate_list is not None and not self.__cur_map.robot.set_available_instructions(gate_list):
+                    Popup.error(f"Failed to set gates! Please make sure you don't have more than "
+                                f"{self.__cur_map.robot.capacity} gates selected.")
+                # else: available gates were determined by the level beforehand and don't change
+                self.__start_level(self.__cur_map)
+            else:
+                Popup.error(f"Failed to generate level \"{map_name}\"!", add_report_note=True)
+        except FileNotFoundError:
+            Popup.error(ErrorConfig.invalid_map(map_name, f"Level-file for \"{map_name}\" was not found! "),
+                        add_report_note=True)
 
-        generator = QrogueWorldGenerator(self.__base_seed, SaveData.instance().player,
-                                         SaveData.instance().achievement_manager.check_achievement,
-                                         SaveData.instance().achievement_manager.add_to_achievement,
-                                         self.load_map, Popup.npc_says)
-        world, success = generator.generate(world_name)
-        if success:
-            level_counter = 0
-            for level in world.mandatory_level_iterator():
-                if SaveData.instance().achievement_manager.check_achievement(level):
-                    level_counter += 1
-            SaveData.instance().achievement_manager.correct_world_progress(world.internal_name, level_counter,
-                                                                           world.num_of_mandatory_levels)
-            self.__world_memory[world_name] = world
-            return world
+    def __load_expedition(self, difficulty: Union[StvDifficulty, str], map_seed: Optional[int] = None,
+                          puzzle_seed: Optional[int] = None, gate_list: Optional[List[Instruction]] = None) -> None:
+        # generate random seeds for all paths since the randomizer state should not depend on whether we passed a seed
+        # manually (e.g., during debugging) or not
+        rand_map_seed = self.__rm.get_seed("MapManager.__load_expedition()@map_seed")
+        rand_puzzle_seed = self.__rm.get_seed("MapManager.__load_expedition()@puzzle_seed")
+
+        if isinstance(difficulty, str):
+            difficulty = StvDifficulty.from_difficulty_code(difficulty)
+        robo_props = RoboProperties.from_difficulty_level(difficulty.level, gate_list)
+
+        if map_seed is None and self.__queue_size > 0:
+            while len(self.__expedition_queue) <= 0:
+                time.sleep(Config.loading_refresh_time())
+            success = True
+            expedition = self.__expedition_queue.pop(0)
+            self.fill_expedition_queue()  # todo: how to handle difficulty? dictionary?
+            Config.check_reachability("post queue filling")
         else:
-            return None
+            if map_seed is None: map_seed = rand_map_seed
+            if puzzle_seed is None: puzzle_seed = rand_puzzle_seed
+            expedition, success = self.__expedition_generator.generate(map_seed, (robo_props, difficulty,
+                                                                                  puzzle_seed))
 
-    def __get_world(self, level_name: str) -> WorldMap:
-        if level_name[0] == "l" and level_name[1].isdigit():
-            world_name = "w" + level_name[1]
-            world = self.__load_world(world_name)
-            if world is None:
-                Logger.instance().error(f"Error! Unable to build map \"{world_name}\". Returning to HubWorld",
-                                        from_pycui=False)
-            else:
-                return world
-        return self.__world_memory[MapConfig.hub_world()]
+        if success:
+            self.__cur_map = expedition
+            self.__start_level(self.__cur_map)
+        else:
+            Popup.error(f"Failed to create an expedition for seed = {map_seed}. Please try again with a different "
+                        f"seed or restart the game. Should the error keep occurring:", add_report_note=True)
 
-    def __load_map(self, map_name: str, room: Optional[Coordinate], map_seed: Optional[int] = None):
+    def load_map(self, map_name: str, spawn_room: Optional[Coordinate] = None, seed: Optional[int] = None,
+                 gate_list: Optional[List[Instruction]] = None):
         if map_name == MapConfig.first_uncleared():
-            next_map = get_next(MapConfig.spaceship())
+            next_map = LevelInfo.get_next(MapConfig.first_uncleared(), self.__save_data.check_level)
             if next_map is None:
-                self.__load_map(MapConfig.hub_world(), room, map_seed)
+                Popup.error(f"Failed to find the next map of \"{map_name}\". Please restart and try again.\n"
+                            f"If this error still occurs but you're sure that the corresponding file is present:",
+                            add_report_note=True)
             else:
-                self.__load_map(next_map, room, map_seed)
+                self.load_map(next_map, spawn_room, seed, gate_list)
 
-        elif map_name == MapConfig.spaceship():
-            self.__show_spaceship()
+        elif map_name.lower() == MapConfig.next_map_string():
+            self.__load_next()
 
-        elif map_name in self.__world_memory:
-            self.__cur_map = self.__world_memory[map_name]
-            self.__in_level = False
-            self.__show_world(self.__cur_map)
+        elif map_name.lower() == MapConfig.back_map_string():
+            self.__load_back()
 
-        elif map_name.lower().startswith(MapConfig.world_map_prefix()):
-            try:
-                world = self.__load_world(map_name)
-                if world is not None:
-                    self.__cur_map = world
-                    self.__in_level = False
-                    self.__show_world(self.__cur_map)
-                else:
-                    Logger.instance().error(f"Could not load world \"{map_name}\"!", from_pycui=False)
-            except FileNotFoundError:
-                Logger.instance().error(f"Failed to open the specified world-file: {map_name}", from_pycui=False)
-
-        elif map_name.lower().startswith(MapConfig.level_map_prefix()):
-            if map_seed is None:
-                map_seed = self.__rm.get_seed(msg="MapMngr_seedForLevel")
-
-            # todo maybe levels should be able to have arbitrary names except "w..." or "e..." or "back" or "next"?
-            check_achievement = SaveData.instance().achievement_manager.check_achievement
-            generator = QrogueLevelGenerator(map_seed, check_achievement, self.__trigger_event, self.load_map,
-                                             Popup.npc_says)
-            try:
-                level, success = generator.generate(map_name)
-                if success:
-                    self.__get_world(level.internal_name)
-                    self.__cur_map = level
-                    self.__in_level = True
-                    self.__start_level(map_seed, self.__cur_map)
-                else:
-                    Logger.instance().error(f"Could not load level \"{map_name}\"!", from_pycui=False)
-            except FileNotFoundError:
-                Logger.instance().error(f"Failed to open the specified level-file: {map_name}", from_pycui=False)
+        elif map_name.lower().startswith(MapConfig.lesson_map_prefix()):
+            self.__load_level(map_name, spawn_room, seed, gate_list)
 
         elif map_name.lower().startswith(MapConfig.expedition_map_prefix()):
-            if len(map_name) > len(MapConfig.expedition_map_prefix()):
-                # difficulty = int(map_name[len(MapConfig.expedition_map_prefix()):])
-                map_seed = int(map_name[len(MapConfig.expedition_map_prefix()):])
-            else:
-                # difficulty = ExpeditionConfig.DEFAULT_DIFFICULTY
-                map_seed = None
+            expedition_progress = int(self.__save_data.get_progress(Achievement.CompletedExpedition)[0])
+            diff_code, map_seed, puzzle_seed = MapManager.parse_expedition_parameters(map_name, seed,
+                                                                                      expedition_progress)
+            # load expedition
+            self.__load_expedition(diff_code, map_seed, puzzle_seed, gate_list)
 
-            robot = SaveData.instance().get_robot(0)
-            if map_seed is None and MapManager.__QUEUE_SIZE > 0:
-                while len(self.__expedition_queue) <= 0:
-                    time.sleep(Config.loading_refresh_time())
-                success = True
-                expedition = self.__expedition_queue.pop(0)
-                self.fill_expedition_queue()
-            else:
-                if map_seed is None:
-                    map_seed = self.__rm.get_seed()
-                expedition, success = self.__expedition_generator.generate((robot, map_seed))
-
-                # todo remove for non-user study versions!
-                def time_out_popup():
-                    # color 15 is black over white
-                    self.__show_input_popup("Your time is over. Please tell the researcher.", 15, open_explorer)
-
-                def open_explorer(text: str):
-                    if text.lower() == "open":
-                        open_folder(PathConfig.user_data_path())
-                    else:
-                        time_out_popup()
-
-                def timed_expedition():
-                    time.sleep(5*60)    # 5 minutes timer
-                    time_out_popup()
-
-                Thread(target=timed_expedition, args=(), daemon=True).start()
-
-            if success:
-                robot.reset()
-                self.__cur_map = expedition
-                self.__in_level = True
-                self.__start_level(map_seed, self.__cur_map)
-            else:
-                Logger.instance().error(f"Could not create expedition with seed = {map_seed}", from_pycui=False)
-
-        elif map_name == MapConfig.back_map_string():
-            self.__load_back()
         else:
-            Logger.instance().error(f"Invalid map to load: {map_name}", from_pycui=False)
+            Popup.error(ErrorConfig.invalid_map(map_name), add_report_note=True)
 
     def __load_next(self):
-        next_map = get_next(self.__cur_map.internal_name)
-        if next_map:
-            self.__load_map(next_map, None, None)
+        # generate random seeds for all paths since the randomizer state should not depend on whether we passed a seed
+        # manually (e.g., during debugging) or not
+        rand_map_seed = self.__rm.get_seed("MapManager.load_next()@expedition>map_seed")
+        rand_puzzle_seed = self.__rm.get_seed("MapManager.load_next()@expedition>puzzle_seed")
+
+        next_map = LevelInfo.get_next(self.__cur_map.internal_name, self.__save_data.check_level)
+        if next_map is None:
+            error_text = ErrorConfig.invalid_map(self.__cur_map.name, f"Failed to load next map after "
+                                                                      f"\"{self.__cur_map.name}\". ")
+            Popup.error(error_text, add_report_note=True)
+
+        elif next_map.startswith(MapConfig.expedition_map_prefix()):
+            # create difficulty code based on expedition progress
+            expedition_progress = int(self.__save_data.get_progress(Achievement.CompletedExpedition)[0])
+            diff_code = str(LevelInfo.get_expedition_difficulty(expedition_progress))
+
+            difficulty = StvDifficulty.from_difficulty_code(diff_code)
+            self.__start_level_transition(self.__cur_map.name, ExpeditionMap.to_display_name(difficulty, rand_map_seed),
+                                          lambda: self.__load_expedition(difficulty, rand_map_seed, rand_puzzle_seed))
         else:
-            world = self.__get_world(self.__cur_map.internal_name)
-            self.__show_world(world)
+            self.__start_level_transition(self.__cur_map.name, LevelInfo.convert_to_display_name(next_map),
+                                          lambda: self.load_map(next_map, None, rand_map_seed))
 
     def __load_back(self):
-        if self.__cur_map.get_type() == MapType.Expedition:
-            self.__show_spaceship()     # todo for now every expedition returns to the spaceship
-        elif self.__in_level:
-            # if we are currently in a level we return to the current world
-            self.__in_level = False
-            self.__show_world(self.__get_world(self.__cur_map.internal_name))
-        elif self.__cur_map is self.__hub_world or \
-                not AchievementManager.instance().check_unlocks(Unlocks.FreeNavigation):
-            # we return to the default world if we are currently in the hub-world or haven't unlocked it yet
-            self.__show_world(None)
-        else:
-            # if we are currently in a world we return to the hub-world
-            self.__cur_map = self.__hub_world
-            self.__in_level = False
-            self.__show_world(self.__cur_map)
+        self.__exit_map()
 
     def __proceed(self, confirmed: int = 0):
+        # not defined inside trigger_event() since it doesn't depend on any internal state of trigger_event() and,
+        #  therefore, it's unnecessary to create __proceed again for every trigger_event()-call
         if confirmed == 0:
             self.__load_next()
         elif confirmed == 1:
-            pass    # stay
+            pass  # stay
         elif confirmed == 2:
             self.__load_back()
 
-    def __trigger_event(self, event_id: str):
+    def trigger_event(self, event_id: str):
         if event_id.lower() == MapConfig.done_event_id():
-            event_id = MapConfig.specific_done_event_id(self.__cur_map.internal_name)
-            SaveData.instance().achievement_manager.trigger_event(event_id)
+            # event_id = MapConfig.specific_done_event_id(self.__cur_map.internal_name)
+            # self.__save_data.trigger_event(event_id)
+            prev_level_data = self.__save_data.get_level_data(self.__cur_map.internal_name)
+            duration, _ = time_diff(cur_datetime(), self.__level_timer)
 
-            if self.__cur_map.get_type() is MapType.World:
-                SaveData.instance().achievement_manager.finished_world(self.__cur_map.internal_name)
-            elif self.__cur_map.get_type() is MapType.Level:
-                if SaveData.instance().achievement_manager.finished_level(self.__cur_map.internal_name,
-                                                                          self.__cur_map.name):
-                    SaveData.instance().save(is_auto_save=True)     # auto save   # todo update system after user study?
-                    # if the level was not finished before, we may increase the score of the world's achievement
-                    world = self.__get_world(self.__cur_map.internal_name)
-                    if world.is_mandatory_level(self.__cur_map.internal_name):
-                        SaveData.instance().achievement_manager.add_to_achievement(world.internal_name, 1.0)
+            # store progress in save_data
+            if self.is_in_level:
+                new_level_data = self.__save_data.complete_level(
+                    self.__cur_map.internal_name, duration, score=self.__cur_map.robot.score)
+            elif self.is_in_expedition:
+                assert isinstance(self.__cur_map, ExpeditionMap), \
+                    f"CurMap has wrong type: \"{self.__cur_map.internal_name}\" is no ExpeditionMap!"
+                new_level_data = self.__save_data.complete_expedition(
+                    self.__cur_map.internal_name, duration, self.__cur_map.difficulty.level, self.__cur_map.main_gate,
+                    score=self.__cur_map.robot.score)
+            else:   # currently only levels and expedition can trigger done-events
+                return
 
-            elif self.__cur_map.get_type() is MapType.Expedition:
-                SaveData.instance().achievement_manager.add_to_achievement(achievements.CompletedExpedition, 1)
+            self.__save_data.save(is_auto_save=True)    # persist the progress
 
-            if AchievementManager.instance().check_unlocks(Unlocks.ProceedChoice):
-                CommonQuestions.ProceedToNextMap.ask(self.__proceed)
+            def show_end_message(end_message: Optional[Message]):
+                def _show_proceed_summary():
+                    CommonQuestions.proceed_summary(self.__cur_map.name, new_level_data.score, new_level_data.duration,
+                                                    new_level_data.total_score, self.__proceed,
+                                                    None if prev_level_data is None
+                                                    else (prev_level_data.total_score, prev_level_data.duration))
+                # either show the end message followed by the summary or just the summary
+                if end_message is None: _show_proceed_summary()
+                else: Popup.from_message_trigger(end_message, _show_proceed_summary)
+            self.__cur_map.end(show_end_message)
+
+        elif event_id.lower().startswith(MapConfig.unlock_prefix()):
+            self.__save_data.unlock(event_id[len(MapConfig.unlock_prefix()):])
+        else:
+            if event_id in self.__temp_level_event_storage:  # todo: is score needed? a simple flag might be better
+                event_score, event_done_score = self.__temp_level_event_storage[event_id]
+                if event_score < event_done_score:
+                    Config.check_reachability("MapManager.trigger_event() for existing event")
+                    self.__temp_level_event_storage[event_id] = event_score + 1, event_done_score
             else:
-                self.__proceed()
-        else:
-            SaveData.instance().achievement_manager.trigger_event(event_id)
+                self.__temp_level_event_storage[event_id] = 1, 1
 
-    def load_map(self, map_name: str, spawn_room: Optional[Coordinate], map_seed: Optional[int] = None):
-        if map_name.lower() == MapConfig.next_map_string():
-            self.__load_next()
-        elif map_name.lower() == MapConfig.back_map_string():
-            self.__load_back()
-        else:
-            self.__load_map(map_name, spawn_room, map_seed)
+    def check_level_event(self, event: str) -> bool:
+        """
+        Used for popups to correctly display event-based messages.
+        """
+        if event in self.__temp_level_event_storage:
+            score, done_score = self.__temp_level_event_storage[event]
+            return score >= done_score
+        return False
+
+    def on_level_start(self):
+        self.__temp_level_event_storage.clear()
+        self.__level_timer = cur_datetime()
 
     def load_first_uncleared_map(self) -> None:
+        seed = self.__rm.get_seed("MapManager.load_first_uncleared_map()")
         if Config.test_level(ignore_debugging=False):
-            self.__load_map(MapConfig.test_level(), None)
+            self.load_map(MapConfig.test_level(), None, seed)
         else:
-            map_name = get_next(MapConfig.first_uncleared())
-            self.__load_map(map_name, None)
-
-    def load_expedition(self, seed: Optional[int] = None) -> None:
-        self.__load_map(MapConfig.expedition_map_prefix(), None, seed)
+            self.load_map(MapConfig.first_uncleared(), None, seed)
 
     def reload(self):
-        self.__load_map(self.__cur_map.internal_name, None, self.__cur_map.seed)
+        if self.is_in_level:
+            self.__load_level(self.__cur_map.internal_name, seed=None)     # set seed None to re-randomize it
+        elif self.is_in_expedition:
+            exp_map: ExpeditionMap = self.__cur_map
+            # use same difficulty and map_seed but re-randomize puzzle_seed
+            self.__load_expedition(exp_map.difficulty, exp_map.seed, None)
+        else:
+            Popup.error(f"Can only reload levels and expeditions, but the current map "
+                        f"\"{self.__cur_map.internal_name}\" is neither. Please exit the map.", add_report_note=True)

@@ -1,30 +1,24 @@
-import math
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Iterator, List
+from typing import Iterator, List, Callable, Optional
 
 
 class CollectibleType(Enum):
-    Consumable = 1      # currently unused
-    ActiveItem = 3      # currently unused
-    PassiveItem = 4     # currently unused
+    # Consumable = 1      # currently unused
+    ActiveItem = 3  # currently unused
+    PassiveItem = 4  # currently unused
 
-    Multi = 0   # wraps multiple collectibles
+    Multi = 0  # wraps multiple collectibles
     Gate = 2
     Qubit = 6
 
     Pickup = 5  # for undefined pickups
     Key = 51
-    Coin = 52
+    # Coin = 52
     Energy = 53
     Score = 54
 
-
-def type_str(c_type: CollectibleType) -> str:
-    if c_type is CollectibleType.Gate:
-        return " Gate"
-    else:
-        return ""
+    QuantumFuser = 70
 
 
 class Collectible(ABC):
@@ -40,11 +34,7 @@ class Collectible(ABC):
         pass
 
     @abstractmethod
-    def description(self) -> str:
-        pass
-
-    @abstractmethod
-    def default_price(self) -> int:
+    def description(self, check_unlocks: Optional[Callable[[str], bool]] = None) -> str:
         pass
 
     @abstractmethod
@@ -62,17 +52,11 @@ class MultiCollectible(Collectible):
     def name(self) -> str:
         return "Collectible Pack"
 
-    def description(self) -> str:
+    def description(self, check_unlocks: Optional[Callable[[str], bool]] = None) -> str:
         desc = "Contains multiple Collectibles:"
         for collectible in self.__content:
             desc += "\n  - " + collectible.name()
         return desc
-
-    def default_price(self) -> int:
-        price = 0
-        for collectible in self.__content:
-            price += collectible.default_price()
-        return math.ceil(price * MultiCollectible.PRICE_MULT)
 
     def to_string(self) -> str:
         text = "Multi ["
@@ -82,25 +66,3 @@ class MultiCollectible(Collectible):
 
     def iterator(self) -> Iterator[Collectible]:
         return iter(self.__content)
-
-
-class ShopItem:
-    def __init__(self, collectible: Collectible, price: int = -1):
-        self.__collectible = collectible
-        if price < 0:
-            price = collectible.default_price()
-        self.__price = price
-
-    @property
-    def collectible(self) -> Collectible:
-        return self.__collectible
-
-    @property
-    def price(self) -> int:
-        return self.__price
-
-    def to_string(self) -> str:
-        return f"{self.collectible}, {self.price}$"
-
-    def __str__(self):
-        return self.to_string()

@@ -1,13 +1,14 @@
 import datetime
 import enum
 import math
+from typing import Optional, Any, Tuple, List
+
 import numpy as np
-from typing import Optional, Any, Tuple
 
 __DEFAULT_CHARACTER = " "
 
 
-def cur_datetime() -> datetime:
+def cur_datetime() -> datetime.datetime:
     return datetime.datetime.now()
 
 
@@ -15,6 +16,10 @@ def time_diff(time1: datetime, time2: datetime) -> Tuple[int, str]:
     # '2023-09-20 20:55:54.036295'
     diff = abs(time1 - time2)
     return diff.seconds, diff
+
+
+def datetime2str(date_time: datetime) -> str:
+    return date_time.strftime('%dd%mm%Yy %H:%M:%S')
 
 
 def is_power_of_2(n: int):
@@ -73,7 +78,7 @@ def complex2string(val: complex, decimals: int) -> str:
             text = f"{real}{imag}j"
     # skip "-" in front if the text starts with "-0" and the value is actually 0 (so no more comma)
     if text.startswith("-0") and (len(text) == 2 or len(text) > 2 and text[2] != "."):
-        text = text[1:]  # I think this can never happen since we throw away 0 real- or imag-parts
+        text = text[1:]  # I think this can never happen since we throw away 0 real- or imag-parts  # IT CAN HAPPEN!
     return text
 
 
@@ -99,9 +104,35 @@ def to_binary_string(num: int, digits: Optional[int] = None, msb: bool = True) -
         elif digits < 0 and num <= 0:
             break
     if msb:
-        return str_rep[::-1]    # reverse the string
+        return str_rep[::-1]  # reverse the string
     else:
         return str_rep
+
+
+def compute_centering(text: str, line_width: int, uneven_left: bool = True, character: str = __DEFAULT_CHARACTER) \
+        -> Tuple[str, str]:
+    """
+    Computes a prefix and suffix for the given text in such a way that it is as centered as possible in a line with the
+    given width. This prefix and suffix will consist only of the given character (repeated for centering). If the number
+    of characters to add is uneven (i.e. number of prepended and appended characters cannot be the same) the flag
+    uneven_left decides whether to prepend (= left, default) or append (= right) should be bigger.
+
+    :param text: the text to center in the line
+    :param line_width: width of the line the text should be centered in
+    :param uneven_left: whether to prepend or append one character more in case of imbalance, defaults to True
+    :param character: the character to add, defaults to whitespace " "
+    :return: prefix, suffix, such that text is centered
+    """
+    if line_width <= len(text):
+        return "", ""
+    diff = line_width - len(text)
+    half1 = int(diff / 2)
+    half2 = diff - half1
+
+    if uneven_left:
+        return half2 * character, half1 * character
+    else:
+        return half1 * character, half2 * character
 
 
 def center_string(text: str, line_width: int, uneven_left: bool = True, character: str = __DEFAULT_CHARACTER) -> str:
@@ -117,16 +148,8 @@ def center_string(text: str, line_width: int, uneven_left: bool = True, characte
     :param character: the character to add, defaults to whitespace " "
     :return: centered version of text
     """
-    if line_width <= len(text):
-        return text
-    diff = line_width - len(text)
-    half1 = int(diff / 2)
-    half2 = diff - half1
-
-    if uneven_left:
-        return half2 * character + text + half1 * character
-    else:
-        return half1 * character + text + half2 * character
+    prefix, suffix = compute_centering(text, line_width, uneven_left, character)
+    return prefix + text + suffix
 
 
 def align_string(text: str, line_width: int, left: bool = True, character: str = __DEFAULT_CHARACTER) -> str:
@@ -149,12 +172,50 @@ def align_string(text: str, line_width: int, left: bool = True, character: str =
         return diff * character + text
 
 
-def enum_str(value: enum.Enum, skip_type_prefix: bool = True) -> str:
+def align_lines(lines: List[str], titles: List[str], separators: List[str],
+                left: bool = True, character: str = __DEFAULT_CHARACTER) -> List[str]:
+    assert len(lines) == len(titles) == len(separators), \
+        f"Lengths are different: {len(lines)} =?= {len(titles)} =?= {len(separators)}"
+
+    # 1) align the lines
+    max_line_width = max([len(line) for line in lines])
+    lines = [align_string(line, max_line_width, left, character) for line in lines]
+
+    # 2) align the titles with corresponding space between their lines
+    # make sure the titles are extended such that the first/last character is placed in the same column
+    max_line_width = max([len(title) for title in titles])
+    titles = [align_string(title, max_line_width, left, character) for title in titles]
+
+    # 3) combine titles with separators and lines
+    if left:
+        return [titles[i] + separators[i] + lines[i] for i in range(len(lines))]
+    else:
+        return [lines[i] + separators[i] + titles[i] for i in range(len(lines))]
+
+
+def enum_string(value: enum.Enum, skip_type_prefix: bool = True) -> str:
     text = str(value)
-    if skip_type_prefix:
+    if skip_type_prefix and "." in text:
         index = text.index(".")
         return text[index + 1:]
     return text
+
+
+def enum_from_string(enum_type, text: str) -> Optional:
+    # remove potential AreaType-prefix
+    type_string = str(enum_type)
+    # the enum_type is written like this: "<enum '{ActualEnumName}'>"
+    if "enum" not in type_string: return None
+    type_start = type_string.index("'") + 1
+    type_end = type_string.index("'", type_start)
+    type_string = type_string[type_start:type_end]
+    if text.startswith(type_string):
+        text = text[len(type_string):]
+    # iterate through all enum values and find the one with the same name
+    for val in enum_type:
+        if val.name == text:
+            return val
+    return None
 
 
 def my_str(value: Any) -> str:
@@ -165,7 +226,7 @@ def my_str(value: Any) -> str:
     :return: string representation of the given value
     """
     if isinstance(value, enum.Enum):
-        return enum_str(value)
+        return enum_string(value)
     else:
         return str(value)
 
@@ -185,15 +246,33 @@ def int_to_fixed_len_str(value: int, length: int) -> str:
     return f"{{0:0{length}d}}".format(value)
 
 
+def num_to_letter(num: int, start_uppercase: bool = True) -> str:
+    if num < 0: return "?"
+
+    if num < 26:
+        # below 26 means we can start normally (either uppercase at @ or lowercase at `
+        start_char = "@" if start_uppercase else "`"
+    else:
+        # above 26 (and below 52, else it will be normalized below) means we have to start with the other case
+        num -= 26
+        start_char = "`" if start_uppercase else "@"
+
+    num = num % 26  # normalize to one of the 26 letters
+    return chr(ord(start_char) + num)
+
+
 def open_folder(path: str):
     import os
     import platform
     import subprocess
 
-    # todo test for non-Windows
-    if platform.system() == "Windows":
-        os.startfile(path)
-    elif platform.system() == "Darwin":
-        subprocess.Popen(["open", path])
-    else:
-        subprocess.Popen(["xdg-open", path])
+    try:
+        # worked on Windows, Ubuntu and macOS
+        if platform.system() == "Windows":
+            os.startfile(path)
+        elif platform.system() == "Darwin":
+            subprocess.Popen(["open", path])
+        else:
+            subprocess.Popen(["xdg-open", path])
+    except Exception as ex:
+        raise ex

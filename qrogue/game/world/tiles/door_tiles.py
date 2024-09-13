@@ -3,9 +3,9 @@ from typing import Callable, Tuple, Optional
 
 from qrogue.game.logic.actors import Controllable, Robot
 from qrogue.game.world.navigation import Direction
-from qrogue.util import CommonPopups, Logger, CheatConfig
-
-from qrogue.game.world.tiles import Invalid, TileCode, Tile, Wall, Floor, WalkTriggerTile
+from qrogue.util import CommonPopups, Logger
+from .tiles import Invalid, TileCode, Tile, Wall, Floor
+from .walk_trigger_tiles import WalkTriggerTile
 
 
 class DoorOpenState(Enum):
@@ -41,7 +41,7 @@ class Door(WalkTriggerTile):
         self.__one_way_state = one_way_state
         self.__entanglement_state = entanglement_state
         self.__event_check = event_check
-        self.__check_entanglement_lock_callback = None
+        self.__check_entanglement_lock: Optional[Callable[[], None]] = None
 
     @property
     def data(self) -> Tuple[Optional[DoorOpenState], Optional[DoorOneWayState], Optional[DoorEntanglementState]]:
@@ -50,8 +50,8 @@ class Door(WalkTriggerTile):
             return DoorOpenState.Open, DoorOneWayState.NoOneWay, DoorEntanglementState.NotEntangled
         return self.__open_state, self.__one_way_state, self.__entanglement_state
 
-    def set_entanglement(self, check_entanglement_lock: Callable[[], None]):
-        self.__check_entanglement_lock_callback = check_entanglement_lock
+    def set_entanglement(self, check_entanglement_lock_callback: Callable[[], None]):
+        self.__check_entanglement_lock = check_entanglement_lock_callback
         self.__entanglement_state = DoorEntanglementState.Undecided
 
     def get_img(self):
@@ -78,9 +78,6 @@ class Door(WalkTriggerTile):
                 return "-"
 
     def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
-        if CheatConfig.ignore_obstacles():
-            return True
-
         if self.__one_way_state is DoorOneWayState.Permanent or \
                 self.__one_way_state is DoorOneWayState.Temporary and not self.is_open:
             is_correct_direction = direction is self.__direction
@@ -121,9 +118,10 @@ class Door(WalkTriggerTile):
             if isinstance(controllable, Robot):
                 if not controllable.use_key():
                     Logger.instance().error(f"Error! Walked on a door without having enough keys!\n#keys="
-                                            f"{controllable.key_count()}, dir={direction}", from_pycui=False)
+                                            f"{controllable.key_count()}, dir={direction}", show=False,
+                                            from_pycui=False)
             else:
-                Logger.instance().error(f"Error! Non-Robot walked through a locked door: {controllable}",
+                Logger.instance().error(f"Error! Non-Robot walked through a locked door: {controllable}", show=False,
                                         from_pycui=False)
         self.__open_state = DoorOpenState.Open
         return True
@@ -147,11 +145,11 @@ class Door(WalkTriggerTile):
     @property
     def is_entanglement_locked(self) -> bool:
         if self.__entanglement_state is DoorEntanglementState.NotEntangled or \
-                self.__check_entanglement_lock_callback is None:
+                self.__check_entanglement_lock is None:
             return False
 
         if self.__entanglement_state is DoorEntanglementState.Undecided:
-            if self.__check_entanglement_lock_callback():
+            if self.__check_entanglement_lock():
                 self.__entanglement_state = DoorEntanglementState.Locked
             else:
                 self.__entanglement_state = DoorEntanglementState.Unlocked
@@ -169,7 +167,7 @@ class Door(WalkTriggerTile):
 
         if self.__event_check is None:
             Logger.instance().error("Tried to enter event-locked door with event_check still uninitialized!",
-                                    from_pycui=False)
+                                    show=False, from_pycui=False)
             self.__open_state = DoorOpenState.Closed
             return True
         if self.__event_check():
@@ -179,7 +177,7 @@ class Door(WalkTriggerTile):
 
     def _copy(self) -> "Tile":
         door = Door(self.__direction, self.__open_state, self.__one_way_state, self.__event_check)
-        door.set_entanglement(self.__check_entanglement_lock_callback)
+        door.set_entanglement(self.__check_entanglement_lock)
         return door
 
     def copy_and_adapt(self, new_direction: Direction, reset_one_way: bool = False) -> "Door":
@@ -200,7 +198,7 @@ class Door(WalkTriggerTile):
         door = Door(new_direction, self.__open_state, one_way_state, self.__event_check)
         door.set_explanation(self._explanation)
         door.set_event(self._event_id)
-        door.set_entanglement(self.__check_entanglement_lock_callback)
+        door.set_entanglement(self.__check_entanglement_lock)
         return door
 
 
@@ -218,9 +216,6 @@ class HallwayEntrance(Tile):
         return self.__FLOOR_IMG
 
     def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
-        if CheatConfig.ignore_obstacles():
-            return True
-
         return not self.__door_ref.is_event_locked
 
     def copy(self) -> "Tile":

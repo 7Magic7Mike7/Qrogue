@@ -1,28 +1,6 @@
 from py_cui.renderer import Renderer
 
-from qrogue.game.world.tiles import Tile
-from qrogue.util import ColorConfig, Logger, ErrorConfig
-
-
-class TileRenderer:
-    __instance = None
-
-    @staticmethod
-    def instance() -> "TileRenderer":
-        if TileRenderer.__instance is None:
-            TileRenderer()
-        return TileRenderer.__instance
-
-    def __init__(self):
-        """ Virtually private constructor. """
-        if TileRenderer.__instance is not None:
-            Logger.instance().throw(Exception(ErrorConfig.singleton("TileRenderer")))
-        else:
-            TileRenderer.__instance = self
-
-    @staticmethod
-    def render(tile: Tile):
-        return tile.get_img()
+from qrogue.util import ColorConfig, Logger
 
 
 class Fragment:
@@ -100,7 +78,7 @@ class FragmentStorage:
             if prev.end != cur.start:
                 formatted_frags.append([self.__og_text[prev.end:cur.start], self.__og_color])
             prev = cur
-        formatted_frags.append(prev.format())   # append the last color
+        formatted_frags.append(prev.format())  # append the last color
         # append the text after the last color
         if prev.end != len(self.__og_text):
             formatted_frags.append([self.__og_text[prev.end:], self.__og_color])
@@ -112,7 +90,7 @@ class FragmentStorage:
 
 
 class MultiColorRenderer(Renderer):
-    def __init__(self, root, stdscr, logger):
+    def __init__(self, root, stdscr, logger: Logger):
         super().__init__(root, stdscr, logger)
 
     def _get_render_text(self, ui_element, line, centered, bordered, selected, start_pos):
@@ -137,23 +115,22 @@ class MultiColorRenderer(Renderer):
             The text shortened to fit within given space
         """
 
-        padx, _       = ui_element.get_padding()
-        _, width      = ui_element.get_absolute_dimensions()
+        padx, _ = ui_element.get_padding()
+        _, width = ui_element.get_absolute_dimensions()
 
         render_text_length = width - (2 * padx)
         # this line is the only difference to the original (super) function
-        render_text_length += ColorConfig.count_meta_characters(line, render_text_length, self._logger)
+        render_text_length += ColorConfig.count_meta_characters(
+            line, render_text_length, lambda err: self._logger.error(err, show=False, from_pycui=False))
 
         if bordered:
             render_text_length = render_text_length - 4
 
         if len(line) - start_pos < render_text_length:
             if centered:
-                render_text = '{}'.format(  line[start_pos:].center(render_text_length,
-                                            ' '))
+                render_text = '{}'.format(line[start_pos:].center(render_text_length, ' '))
             else:
-                render_text = '{}{}'.format(line[start_pos:],
-                                            ' ' * (render_text_length - len(line[start_pos:])))
+                render_text = '{}{}'.format(line[start_pos:], ' ' * (render_text_length - len(line[start_pos:])))
         else:
             render_text = line[start_pos:start_pos + render_text_length]
 

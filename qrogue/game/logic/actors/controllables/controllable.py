@@ -10,7 +10,6 @@ class ControllableType(enum.Enum):
     Specifies the different types of Controllable for automatic processing (e.g. for color rules).
     """
 
-    Player = "M"        # todo add name to constructor?
     Luke = "L"
     Test = "T"
     Base = "Q"
@@ -21,7 +20,7 @@ class ControllableType(enum.Enum):
 
         :return: list of all ControllableTypes
         """
-        return [ControllableType.Player, ControllableType.Luke, ControllableType.Test, ControllableType.Base]
+        return [ControllableType.Luke, ControllableType.Test, ControllableType.Base]
 
     def __init__(self, abbreviation: str):
         """
@@ -98,11 +97,15 @@ class Controllable(ABC):
         pass
 
     @abstractmethod
-    def give_collectible(self, collectible: Collectible):
+    def give_collectible(self, collectible: Collectible, force: bool = False) -> bool:
         """
         Gives the provided Collectible to the Controllable (e.g. adding it to its inventory).
 
         :param collectible: a Collectible to give the Controllable
-        :return: None
+        :param force: whether we force collectible to be added, defaults to False
+        :return: True if the collectible was given successfully, False otherwise
         """
         pass
+
+    def __str__(self) -> str:
+        return f"{self.name} [\"{self.description()}\"]"

@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 from typing import Tuple, Optional, Union, Callable
 
 from qrogue.game.logic.base import StateVector, CircuitMatrix
@@ -11,7 +11,7 @@ class Target(ABC):
     Base class for fight-/puzzle-targets.
     """
 
-    def __init__(self, id_: int, target: Union[StateVector, Callable[[], StateVector]], reward: Collectible,
+    def __init__(self, id_: int, target: Union[StateVector, Callable[[], StateVector]], reward: Optional[Collectible],
                  input_: Optional[Union[StateVector, Callable[[], StateVector]]] = None,
                  allow_target_input_equality: bool = False):
         """
@@ -25,19 +25,19 @@ class Target(ABC):
         """
         self.__id = id_
         if isinstance(target, StateVector):
-            self.__target: Callable[[], StateVector] = lambda : target
+            self.__target: Callable[[], StateVector] = lambda: target
         else:
             self.__target: Callable[[], StateVector] = target
 
         if input_ is None:
             base_stv = StateVector.create_zero_state_vector(target.num_of_qubits)
-            self.__input = lambda : base_stv
+            self.__input = lambda: base_stv
         elif isinstance(input_, StateVector):
-            self.__input: Callable[[], StateVector] = lambda : input_
+            self.__input: Callable[[], StateVector] = lambda: input_
         else:
             self.__input: Callable[[], StateVector] = input_
 
-        self.__reward: Collectible = reward
+        self.__reward: Optional[Collectible] = reward
         self.__is_active: bool = True
         # how often the target was checked (i.e., if it was reached) - can be used to determine the rewarded score
         self.__checks: int = 0
@@ -106,14 +106,9 @@ class Target(ABC):
             return True, temp
         return False, None
 
-    @abstractmethod
     def _on_reached(self):
-        """
-        Is called during a successful is_reached(). Gives Subclasses the possibility to react to the internal state
-        change.
-
-        :return: None
-        """
+        # Is called during a successful is_reached(). Gives Subclasses the possibility to react to the internal state
+        # change.
         pass
 
     def __str__(self):

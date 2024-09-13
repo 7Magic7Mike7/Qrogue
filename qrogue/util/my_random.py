@@ -1,7 +1,7 @@
+import random
 from random import Random
-from typing import List, Any, Optional
+from typing import List, Any
 
-from qrogue.util import TestConfig, ErrorConfig
 from qrogue.util.config import Config
 from qrogue.util.logger import Logger
 
@@ -12,10 +12,14 @@ class MyRandom:
     __Next_Id: int = 0
 
     def __init__(self, seed: int):
-        seed = seed % Config.MAX_SEED
+        self.__seed = seed % Config.MAX_SEED
         self.__random: Random = Random(seed)
         self.__id: int = MyRandom.__Next_Id
         MyRandom.__Next_Id += 1
+
+    @property
+    def seed(self) -> int:
+        return self.__seed
 
     def get(self, min_: float = 0.0, max_: float = 1.0, msg: str = ""):
         MyRandom.COUNTER += 1
@@ -34,41 +38,48 @@ class MyRandom:
         """
         return min_ + int(self.get(msg=msg) * (max_ - min_))
 
-    def get_seed(self, msg: str = str(COUNTER)) -> int:
+    def get_bool(self, msg: str = str(COUNTER)) -> bool:
+        return self.get(msg=msg) < 0.5
+
+    def get_seed(self, msg: str = str(COUNTER)) -> int: # todo: introduce class, method, location, sublocation arguments for more consisten messages?
         return self.get_int(min_=0, max_=Config.MAX_SEED, msg=msg)
 
-    def get_element(self, iterable, remove: bool = False, msg: str = str(COUNTER)) -> Any:
-        if len(iterable) == 0:
+    def get_element(self, list_: List[Any], remove: bool = False, msg: str = str(COUNTER)) -> Any:
+        if len(list_) == 0:
             return None
-        index = self.get_int(min_=0, max_=len(iterable), msg=msg)
-        elem = iterable[index]
+        index = self.get_int(min_=0, max_=len(list_), msg=msg)
+        elem = list_[index]
         if remove:
             try:
-                iterable.pop(index)
+                list_.pop(index)
             except ValueError:
-                from qrogue.util.logger import Logger
-                Logger.instance().error(f"{iterable} doesn't contain {elem}", from_pycui=False)
+                Logger.instance().error(f"{list_} doesn't contain {elem}", show=False, from_pycui=False)
         return elem
 
-    def get_element_prioritized(self, iterable, priorities: List[float], msg: str = str(COUNTER)) -> Any:
-        if len(iterable) == 0:
+    def get_element_prioritized(self, list_: List[Any], priorities: List[float], msg: str = str(COUNTER)) -> Any:
+        if len(list_) == 0:
             return None
+        if len(list_) == 1:
+            return list_[0]
         if len(priorities) == 0:
-            return self.get_element(iterable, msg=msg)
+            return self.get_element(list_, msg=msg)
+        if len(priorities) > len(list_):
+            # crop priorities if too many values were given
+            priorities = priorities[:len(list_)]
         try:
             prio_sum = sum(priorities)
         except:
             Logger.instance().error("No valid priorities provided! Returning a random element to avoid crashing.",
-                                    from_pycui=False)
-            return self.get_element(iterable, remove=False, msg=msg)
+                                    show=False, from_pycui=False)
+            return self.get_element(list_, remove=False, msg=msg)
         # elements without a given priority will be less than the minimum given priority by the number of prioritized
         # elements divided by the number of all elements, e.g. [1, 2, 1], 4 elements -> 3/4
-        unknown_prio = min(priorities) * len(priorities) / len(iterable)
+        unknown_prio = min(priorities) * len(priorities) / len(list_)
 
         val = self.get(msg=msg)
         cur_val = 0.0
         index = 0
-        for elem in iterable:
+        for elem in list_:
             if index < len(priorities):
                 cur_val += priorities[index] / prio_sum
             else:
@@ -79,41 +90,16 @@ class MyRandom:
         Logger.instance().throw(ValueError("This line should not be reachable. Please report this error so it can be "
                                            "fixed as soon as possible!"))
 
+    def shuffle_list(self, list_: List[Any]) -> None:
+        """
+        Shuffles in place.
+        """
+        self.__random.shuffle(list_)
 
-class RandomManager(MyRandom):
-    __instance = None
 
+class RandomManager:
     @staticmethod
-    def create_new(seed: Optional[int] = None) -> MyRandom:
+    def create_new(seed: int) -> MyRandom:
         if seed is None:
-            seed = RandomManager.instance().get_seed(msg=f"RM.create_new{MyRandom.COUNTER}")
+            Logger.instance().throw(Exception("No seed was provided for RandomManager.create_new()!"))
         return MyRandom(seed)
-
-    @staticmethod
-    def instance() -> MyRandom:
-        if RandomManager.__instance is None:
-            Logger.instance().throw(Exception(ErrorConfig.singleton_no_init("RandomManager")))
-        return RandomManager.__instance
-
-    @staticmethod
-    def force_seed(new_seed: int) -> None:
-        if RandomManager.__instance is None:
-            RandomManager(new_seed)
-        else:
-            RandomManager.__instance = RandomManager.create_new(new_seed)
-            # PathConfig.write("random_debug.txt", f"RandomManager.init({new_seed})\n", append=True)
-
-    @staticmethod
-    def reset():
-        if TestConfig.is_active():
-            RandomManager.__instance = None
-        else:
-            raise TestConfig.StateException(ErrorConfig.singleton_reset("RandomManager"))
-
-    def __init__(self, seed: int):
-        if RandomManager.__instance is not None:
-            Logger.instance().throw(Exception(ErrorConfig.singleton("RandomManager")))
-        else:
-            super().__init__(seed)
-            RandomManager.__instance = self
-            # PathConfig.write("random_debug.txt", f"RandomManager.init({seed})\n", append=True)

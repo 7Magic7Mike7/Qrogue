@@ -1,12 +1,11 @@
 from abc import ABC
+from typing import Optional, Callable
 
 from qrogue.game.logic.collectibles import Collectible, CollectibleType
-from qrogue.util import ShopConfig, Logger
+from qrogue.util import Logger
 
 
 class Pickup(Collectible, ABC):
-    __DEFAULT_PRICE = 5 * ShopConfig.base_unit()
-
     def __init__(self, amount: int, type_: CollectibleType = CollectibleType.Pickup):
         super(Pickup, self).__init__(type_)
         if amount <= 0:
@@ -16,10 +15,6 @@ class Pickup(Collectible, ABC):
     @property
     def amount(self):
         return self._amount
-
-    def default_price(self) -> int:
-        # the higher the amount the less the additional price (based on harmonic numbers)
-        return int(sum([Pickup.__DEFAULT_PRICE / (i+1) for i in range(self._amount)]))
 
     def __str__(self):
         return self.to_string()
@@ -35,25 +30,11 @@ class Score(Pickup):
     def name(self) -> str:
         return "Score"
 
-    def description(self) -> str:
+    def description(self, check_unlocks: Optional[Callable[[str], bool]] = None) -> str:
         return "Score describes how well you performed in a level."
 
     def to_string(self) -> str:
         return f"Score #{self.amount}"
-
-
-class Coin(Pickup):
-    def __init__(self, amount: int = 1):
-        super().__init__(amount, type_=CollectibleType.Coin)
-
-    def name(self) -> str:
-        return "Coin"
-
-    def description(self) -> str:
-        return "Coins are used to buy Collectibles from the Shop"
-
-    def to_string(self):
-        return f"{self.amount}$"
 
 
 class Key(Pickup):
@@ -63,7 +44,7 @@ class Key(Pickup):
     def name(self) -> str:
         return "Key"
 
-    def description(self) -> str:
+    def description(self, check_unlocks: Optional[Callable[[str], bool]] = None) -> str:
         return "Keys are useful for opening locked doors."
 
     def to_string(self):
@@ -79,11 +60,34 @@ class Energy(Pickup):
     def name(self) -> str:
         return "Energy"
 
-    def description(self) -> str:
+    def description(self, check_unlocks: Optional[Callable[[str], bool]] = None) -> str:
         return "Gives back some energy to the Robot so it can stay longer on a mission."
 
     def to_string(self) -> str:
         return f"Energy ({self.amount})"
 
-    def default_price(self) -> int:
-        return 2 + int(self.amount / 7)
+
+class Qubit(Collectible):
+    __MIN_NUM = 1
+    __MAX_NUM = 3
+
+    def __init__(self, num: int = 1):
+        if self.__MIN_NUM <= num <= self.__MAX_NUM:
+            super().__init__(CollectibleType.Qubit)
+            self.__num = num
+        else:
+            raise ValueError(f"Error trying to add to many qubits: {num}! Only between {self.__MIN_NUM} and "
+                             f"{self.__MAX_NUM} allowed at once.")
+
+    @property
+    def additional_qubits(self) -> int:
+        return self.__num
+
+    def name(self) -> str:
+        return "Qubit"
+
+    def description(self, check_unlocks: Optional[Callable[[str], bool]] = None) -> str:
+        return "Qubits are the essence of any circuit you create."
+
+    def to_string(self) -> str:
+        return f"Qubit ({self.additional_qubits})"

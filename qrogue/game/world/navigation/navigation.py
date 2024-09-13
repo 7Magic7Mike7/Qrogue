@@ -1,4 +1,3 @@
-
 from enum import Enum
 from typing import List, Optional
 
@@ -75,6 +74,23 @@ class Direction(Enum):
 
 
 class Coordinate:
+    __PREFIX = "("
+    __SEPARATOR = "|"
+    __SUFFIX = ")"
+
+    @staticmethod
+    def from_string(coordinate: str) -> Optional["Coordinate"]:
+        if coordinate.startswith(Coordinate.__PREFIX):
+            coordinate = coordinate[len(Coordinate.__PREFIX):]
+        if coordinate.endswith(Coordinate.__SUFFIX):
+            coordinate = coordinate[:-len(Coordinate.__SUFFIX)]
+        if Coordinate.__SEPARATOR in coordinate:
+            parts = coordinate.split(Coordinate.__SEPARATOR)
+            if len(parts) == 2:
+                x, y = int(parts[0]), int(parts[1])
+                return Coordinate(x, y)
+        return None
+
     @staticmethod
     def distance(a: "Coordinate", b: "Coordinate") -> int:
         return abs(a.x - b.x) + abs(a.y - b.y)
@@ -103,7 +119,8 @@ class Coordinate:
         """
         return self.x + self.y * row_width
 
-    def get_neighbors(self, min_: Optional["Coordinate"] = None, max_: Optional["Coordinate"] = None) -> List["Coordinate"]:
+    def get_neighbors(self, min_: Optional["Coordinate"] = None, max_: Optional["Coordinate"] = None) \
+            -> List["Coordinate"]:
         neighbors = []
         for d in Direction.values():
             pos = self + d
@@ -139,7 +156,7 @@ class Coordinate:
         return 61 * self.x + 51 * self.y
 
     def __str__(self):
-        return f"({self.__x}|{self.__y})"
+        return f"{Coordinate.__PREFIX}{self.__x}{Coordinate.__SEPARATOR}{self.__y}{Coordinate.__SUFFIX}"
 
 
 def direction(c_from: Coordinate, c_to: Coordinate) -> Direction:

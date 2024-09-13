@@ -21,7 +21,7 @@ maxenergy = 100000 // it should not be possible to run out of energy in this lev
 | ..    ..    ..    ..    ..    ..    .. |
 | __ .. __ .. SR == aa == bb .. __ .. __ |
 | ..    ..    ..    11    ..    ..    .. |
-| __ .. __ .. __ .. cc 11 dd == ee .. __ |
+| __ .. __ .. __ .. cc 12 dd == ee .. __ |
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 [Custom Rooms]
@@ -101,6 +101,7 @@ m *doneMsg trigger *done
 
 [Hallways]
 11 (locked; ; ) trigger *sawLockedDoor
+12 (locked; ; )
 
 [StateVector Pools]
 custom

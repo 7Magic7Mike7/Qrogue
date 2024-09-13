@@ -1,5 +1,4 @@
-from collections import Iterator
-from typing import List, Optional
+from typing import Iterator, List, Optional
 
 import numpy as np
 
@@ -11,7 +10,7 @@ from qrogue.util.util_functions import center_string, align_string, complex2stri
 
 def _wrap_in_ket_notation(number: complex, qubit: int, num_of_qubits: int,
                           decimals: Optional[int] = None, space_per_value: Optional[int] = None, coloring: bool = False,
-                          correct_amplitude: bool = False, show_percentage: bool = False):
+                          correct_amplitude: bool = False, show_percentage: bool = False, skip_ket: bool = False):
     """
 
     :param number:
@@ -22,31 +21,41 @@ def _wrap_in_ket_notation(number: complex, qubit: int, num_of_qubits: int,
     :param coloring:
     :param correct_amplitude:
     :param show_percentage:
+    :param skip_ket:
     :return:
     """
     is_complex = number.real != 0 and number.imag != 0
     if decimals is None:
-        if is_complex: decimals = QuantumSimulationConfig.COMPLEX_DECIMALS
-        else: decimals = QuantumSimulationConfig.DECIMALS
+        if is_complex:
+            decimals = QuantumSimulationConfig.COMPLEX_DECIMALS
+        else:
+            decimals = QuantumSimulationConfig.DECIMALS
+
     if space_per_value is None:
-        if is_complex: space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_COMPLEX_NUMBER
-        elif number.imag != 0: space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER + 1   # add the extra "j"
-        else: space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER
+        if is_complex:
+            space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_COMPLEX_NUMBER
+        elif number.imag != 0:
+            space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER + 1  # add the extra "j"
+        else:
+            space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER
 
     value = f"{center_string(complex2string(number, decimals), space_per_value)}"
     if coloring:
         if correct_amplitude:
-            value = ColorConfig.colorize(ColorCode.CORRECT_AMPLITUDE, value)
+            value = ColorConfig.colorize(ColorCode.PUZZLE_CORRECT_AMPLITUDE, value)
         else:
-            value = ColorConfig.colorize(ColorCode.WRONG_AMPLITUDE, value)
-    if show_percentage:
-        # line_width is space + 1 because of the additional "%"
-        space = QuantumSimulationConfig.MAX_PERCENTAGE_SPACE
-        percentage = align_string(StateVector.complex_to_amplitude_percentage_string(number, space), space + 1,
-                                  left=False)
-        value += f"  ({percentage})"
+            value = ColorConfig.colorize(ColorCode.PUZZLE_WRONG_AMPLITUDE, value)
 
-    if GameplayConfig.get_option_value(Options.show_ket_notation, convert=True):
+    if show_percentage:
+        space = QuantumSimulationConfig.MAX_PERCENTAGE_SPACE
+        percentage = StateVector.complex_to_amplitude_percentage_string(number, space)
+        space += 1  # +1 because of the additional "%" we have to align
+        if percentage == "0%":
+            value += f"  {align_string('', space, left=False)}"  # show whitespace instead of redundant 0% amplitudes
+        else:
+            value += f" ~{align_string(percentage, space, left=False)}"
+
+    if GameplayConfig.get_option_value(Options.show_ket_notation, convert=True) and not skip_ket:
         return f"{generate_ket(qubit, num_of_qubits)}  {value}"
     else:
         return value
@@ -60,24 +69,24 @@ class StateVector:
     @staticmethod
     def complex_to_amplitude_percentage_string(val: complex,
                                                space: int = QuantumSimulationConfig.MAX_PERCENTAGE_SPACE) -> str:
-        amp = np.round(abs(val**2), QuantumSimulationConfig.DECIMALS)
+        amp = np.round(abs(val ** 2), QuantumSimulationConfig.DECIMALS)
         text = str(amp * 100)
         if text[-2:] == ".0":
-            text = text[:-2]        # remove the redundant ".0"
+            text = text[:-2]  # remove the redundant ".0"
         if len(text) > space:
-            text = text[:space]     # clamp to specified space
+            text = text[:space]  # clamp to specified space
         return text + "%"
 
     @staticmethod
     def create_zero_state_vector(num_of_qubits: int) -> "StateVector":
-        amplitudes = [1] + [0] * (2**num_of_qubits - 1)
+        amplitudes = [1] + [0] * (2 ** num_of_qubits - 1)
         return StateVector(amplitudes, num_of_used_gates=0)
 
     @staticmethod
     def create_basis_states(num_of_qubits: int) -> List["StateVector"]:
         states = []
-        for i in range(2**num_of_qubits):
-            amplitudes = [0] * 2**num_of_qubits
+        for i in range(2 ** num_of_qubits):
+            amplitudes = [0] * 2 ** num_of_qubits
             amplitudes[i] = 1
             states.append(StateVector(amplitudes, num_of_used_gates=0))
         return states
@@ -180,17 +189,20 @@ class StateVector:
 
     def get_diff(self, other: "StateVector") -> "StateVector":
         """
-        Calculates the difference of this and other, i.e. this - other, with basically normal vector subtraction rules.
+        Calculates the difference of this and other (i.e., this - other), with normal vector subtraction rules.
         To be more specific, the difference of every amplitude entry of this and other is calculated and then used to
         create a new StateVector.
         In the special case of this being smaller in size than other, this is first extended with 0s before the
-        difference is calculated the usual way.
+        difference is calculated the usual way. This ensures that the resulting StateVector has always the same size as
+        other.
+        Should other be smaller in size than this, an erroneous StateVector with all -1 amplitudes is returned instead
 
         :param other: the StateVector we want to know the difference of
-        :return: a new StateVector corresponding to this - other
+        :return: a new StateVector corresponding to this - other, with size equal to other
         """
-        assert self.size <= other.size, "Cannot calculate the difference between StateVectors of different size! " \
-                                        f"self = {self}, other = {other}"
+        Logger.instance().assertion(self.size <= other.size, "Cannot calculate the difference between StateVectors of "
+                                                             f"different sizes! self = {self}, other = {other}",
+                                    show_popup=True)
 
         if self.size == other.size:
             diff = [self.__amplitudes[i] - other.__amplitudes[i] for i in range(self.size)]
@@ -205,18 +217,24 @@ class StateVector:
                 diff[i] = self.__amplitudes[i] - other.__amplitudes[i]
             return StateVector(diff)
 
+        return StateVector([-1] * other.size)
+
     def wrap_in_qubit_conf(self, index: int, space_per_value: Optional[int] = None, coloring: bool = False,
-                           correct_amplitude: bool = False, show_percentage: bool = False) -> str:
+                           correct_amplitude: bool = False, show_percentage: bool = False, skip_ket: bool = False) \
+            -> str:
         # don't use default decimals since we don't want it to be dependent on individual entries but rather decide
         # based on whether the vector itself is complex or not
         decimals = QuantumSimulationConfig.COMPLEX_DECIMALS if self.is_complex else QuantumSimulationConfig.DECIMALS
         if space_per_value is None:
-            if self.is_complex: space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_COMPLEX_NUMBER
-            elif self.is_imag: space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER + 1   # add the "j"
-            else: space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER
+            if self.is_complex:
+                space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_COMPLEX_NUMBER
+            elif self.is_imag:
+                space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER + 1  # add the "j"
+            else:
+                space_per_value = QuantumSimulationConfig.MAX_SPACE_PER_NUMBER
 
         return _wrap_in_ket_notation(self.at(index), index, self.num_of_qubits, decimals, space_per_value, coloring,
-                                     correct_amplitude, show_percentage)
+                                     correct_amplitude, show_percentage, skip_ket)
 
     def to_string(self, space_per_value: Optional[int] = None) -> str:
         text = ""
@@ -225,7 +243,17 @@ class StateVector:
             text += "\n"
         return text
 
-    def __eq__(self, other) -> bool: # TODO currently not even in use!
+    def __hash__(self):
+        mult = 11
+        hash_sum = 0
+        for amplitude in self.__amplitudes:
+            hash_sum += hash(amplitude.imag) * mult
+            mult = mult * 2 + 1
+            hash_sum += hash(amplitude.real) * mult
+            mult = mult * 2 + 1
+        return hash_sum
+
+    def __eq__(self, other) -> bool:  # TODO currently not even in use!
         if type(other) is type(self):
             return self.__amplitudes == other.__amplitudes
         elif isinstance(other, list):
@@ -252,5 +280,3 @@ class StateVector:
 
     def __iter__(self) -> Iterator:
         return iter(self.__amplitudes)
-
-

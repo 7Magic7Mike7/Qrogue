@@ -1,7 +1,6 @@
-
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Callable, List
+from typing import List
 
 from qrogue.game.logic.actors import Controllable
 from qrogue.game.world.navigation import Direction
@@ -9,41 +8,41 @@ from qrogue.util import CheatConfig
 
 
 class TileCode(Enum):
-    Invalid = (-1, "§")    # when an error occurs, e.g. a tile at a non-existing position should be retrieved
-    Debug = (-2, "€")      # displays a digit for debugging
-    Void = (7, "_")        # tile outside the playable area
-    Floor = (0, " ")       # simple floor tile without special meaning
-    HallwayEntrance = (5, " ")     # depending on the hallway it refers to is either a Floor or Wall
-    FogOfWar = (3, "~")    # tile of a place we cannot see yet
+    Invalid = (-1, "§")         # when an error occurs, e.g. a tile at a non-existing position should be retrieved
+    Debug = (-2, "€")           # displays a digit for debugging
+    Void = (7, "_")             # tile outside the playable area
+    Floor = (0, " ")            # simple floor tile without special meaning
+    HallwayEntrance = (5, " ")  # depending on the hallway it refers to is either a Floor or Wall
+    FogOfWar = (3, "~")         # tile of a place we cannot see yet
 
-    Message = (6, ".")         # tile for displaying a popup message
+    Message = (6, ".")          # tile for displaying a popup message
     Goal = (61, "G")            # tile for the goal, i.e. end of a level
-    Trigger = (9, "T")         # tile that calls a function on walk, i.e. event tile
-    Teleport = (91, "t")       # special trigger for teleporting between maps
-    Decoration = (11, "d")     # simply displays a specified character
+    Trigger = (9, "T")          # tile that calls a function on walk, i.e. event tile
+    Teleport = (91, "t")        # special trigger for teleporting between maps
+    Decoration = (11, "d")      # simply displays a specified character
 
     Wall = (1, "#")
     Obstacle = (2, "o")
     Door = (4, "|")
 
     Controllable = (20, "C")
-    Npc = (25, "N")
+    # Npc = (25, "N")
     Enemy = (30, "E")
     Boss = (40, "B")
 
     Collectible = (50, "c")
     Riddler = (51, "?")
-    ShopKeeper = (52, "$")
+    # ShopKeeper = (52, "$")
     Energy = (53, "e")
     Challenger = (54, "!")
 
-    SpaceshipBlock = (70, "/")
-    SpaceshipWalk = (71, ".")
-    SpaceshipTrigger = (72, "T")
-    OuterSpace = (73, "*")
+    # SpaceshipBlock = (70, "/")
+    # SpaceshipWalk = (71, ".")
+    # SpaceshipTrigger = (72, "T")
+    # OuterSpace = (73, "*")
 
     CollectibleKey = (501, "k")
-    CollectibleCoin = (502, "€")
+    # CollectibleCoin = (502, "€")
     CollectibleEnergy = (503, "e")
     CollectibleScore = (504, "s")
     CollectibleGate = (520, "g")
@@ -75,7 +74,7 @@ class TileCode(Enum):
     def collectible_subtypes() -> List["TileCode"]:
         return [
             TileCode.Collectible,
-            TileCode.CollectibleKey, TileCode.CollectibleCoin, TileCode.CollectibleEnergy,
+            TileCode.CollectibleKey, TileCode.CollectibleEnergy,
             TileCode.CollectibleGate, TileCode.CollectibleQubit,
             TileCode.CollectibleScore,
         ]
@@ -291,7 +290,7 @@ class ControllableTile(Tile):
         return self.__controllable.get_img()
 
     def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
-        return True # todo check
+        return True  # todo check
 
     @property
     def controllable(self) -> Controllable:
@@ -299,26 +298,3 @@ class ControllableTile(Tile):
 
     def copy(self) -> "Tile":
         return ControllableTile(self.__controllable)
-
-
-class NpcTile(Tile):
-    def __init__(self, name: str, show_message_callback: Callable[[str, str], None],
-                 get_text_callback: Callable[[], str]):
-        super(NpcTile, self).__init__(TileCode.Npc)
-        self.__name = name
-        self.__show_message = show_message_callback
-        self.__get_text = get_text_callback
-
-    @property
-    def data(self) -> str:
-        return self.__name
-
-    def get_img(self):
-        return self.__name[0]
-
-    def is_walkable(self, direction: Direction, controllable: Controllable) -> bool:
-        self.__show_message(self.__name, self.__get_text())
-        return False
-
-    def copy(self) -> "Tile":
-        return NpcTile(self.__name, self.__show_message, self.__get_text)

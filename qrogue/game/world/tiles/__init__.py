@@ -1,16 +1,16 @@
 # exporting
-from .tiles import TileCode, Tile
-from .tiles import Invalid, Debug, Void, Floor, Wall, Obstacle, FogOfWar, Decoration, ControllableTile
-from .walk_trigger_tiles import WalkTriggerTile, Trigger, Teleport, Tunnel, Message, Riddler, ShopKeeper, Collectible, \
-    Energy, Challenger
-from .puzzle_tiles import Enemy, Boss
 from .door_tiles import DoorOpenState, DoorOneWayState, DoorEntanglementState, Door, HallwayEntrance
+from .puzzle_tiles import Enemy, Boss
+from .tiles import Invalid, Debug, Void, Floor, Wall, Obstacle, FogOfWar, Decoration, ControllableTile
+from .tiles import TileCode, Tile
+from .walk_trigger_tiles import Trigger, Teleport, Tunnel, Message, Challenger, Riddler, Collectible, Energy
+from .walk_trigger_tiles import WalkTriggerTile
 
 # importing
-# +util
-# +game (target_factory)
+# +game.target_factory
 # +logic
 # +logic.actors
 # +logic.actors.puzzles
 # +logic.collectibles
-# +navigation
+# +world.navigation
+# +util

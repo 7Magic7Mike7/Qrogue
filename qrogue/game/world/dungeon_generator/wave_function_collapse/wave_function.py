@@ -1,8 +1,6 @@
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Callable
 
-#from qrogue.game.world.map.rooms import AreaType
 from qrogue.util import MyRandom
-from qrogue.util.util_functions import enum_str
 
 
 class WaveFunction:
@@ -21,6 +19,9 @@ class WaveFunction:
         return self.__state
 
     def adapt_weights(self, type_weights: Dict[Optional[Any], int]):
+        """
+        type_weights is only read, never written
+        """
         if self.is_collapsed:
             return  # no need to adapt anything
 
@@ -34,11 +35,11 @@ class WaveFunction:
                 # e.g. increase weight by 20% = multiply by 1.2
                 self.__weights[key] = int(self.__weights[key] * (1 + norm_weight))
             else:
-                self.__weights[key] = 0     # non-existing key is like a 0 weight
+                self.__weights[key] = 0  # non-existing key is like a 0 weight
 
     def collapse(self, rand: MyRandom) -> Any:
         if len(self.__weights) == 0:
-            self.__state = self.__default_value   # collapse to default_value if nothing else is possible
+            self.__state = self.__default_value  # collapse to default_value if nothing else is possible
         if self.is_collapsed:
             return self.__state
 
@@ -51,13 +52,21 @@ class WaveFunction:
             if rand_val < val:
                 self.__state = key
                 return self.__state
-        return None     # this should not be possible to happen
+        from qrogue.util import Config
+        Config.check_reachability("WaveFunction.collapse()@impossible-collapse")
+        return None  # this should not be possible to happen
 
-    def force_value(self, value: Any) -> bool:
+    def force_value(self, value: Any, is_assignable: Optional[Callable[[Any, Any], bool]] = None) -> bool:
         assert not self.is_collapsed, f"Forcing an already collapsed WaveFunction to {value}!"
-        if type(value) in [type(key) for key in self.__weights.keys()]:
-            self.__state = value
-            return True
+
+        if is_assignable is None:
+            def is_assignable(key_, value_) -> bool:
+                return key_ == value_
+
+        for key in self.__weights.keys():
+            if is_assignable(key, value):
+                self.__state = key
+                return True
         return False
 
     def copy(self):

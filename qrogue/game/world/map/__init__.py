@@ -1,16 +1,14 @@
 # exporting
-from .rooms import Area, Hallway, Room, BossRoom, MetaRoom, RiddleRoom, ShopRoom, SpawnRoom, TreasureRoom, WildRoom
-from .map import MapType, MapMetaData, BaseMap, Map
-from .spaceship_map import SpaceshipMap
-from .world_map import WorldMap
-from .level_map import LevelMap
-from .expedition_map import ExpeditionMap
 from .callbacks import CallbackPack
+from .expedition_map import ExpeditionMap
+from .level_map import LessonMap
+from .map import MapType, MapMetaData, Map
+from .rooms import AreaType, Area, Hallway, Room
 
 # importing
-# +util
-# +logic
+# +logic (Message)
 # +logic.actors
 # +logic.collectibles
-# +navigation
-# +tiles
+# +world.navigation
+# +world.tiles
+# +util

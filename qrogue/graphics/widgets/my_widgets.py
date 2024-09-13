@@ -1,23 +1,23 @@
 import math
 from abc import ABC, abstractmethod
-from typing import List, Any, Callable, Tuple, Optional, Dict, Union
+from typing import List, Any, Callable, Tuple, Optional, Dict, Union, Iterator
 
 from py_cui import ColorRule
 from py_cui.widget_set import WidgetSet
 from py_cui.widgets import BlockLabel
 
-from qrogue.game.logic.base import StateVector, CircuitMatrix
 from qrogue.game.logic.actors import Robot
+from qrogue.game.logic.base import StateVector, CircuitMatrix
 from qrogue.game.logic.collectibles import Instruction
 from qrogue.game.world.map import Map
 from qrogue.game.world.navigation import Direction
-from qrogue.util import ColorConfig, Controls, Keys, Logger, Config, HudConfig, GameplayConfig, Options, ColorCode
-from qrogue.util.config import QuantumSimulationConfig, InstructionConfig
-from qrogue.util.util_functions import center_string, align_string, to_binary_string, int_to_fixed_len_str
-
-from qrogue.graphics import WidgetWrapper
+from qrogue.graphics.popups import Popup
 from qrogue.graphics.rendering import ColorRules
-from qrogue.graphics.widgets import Renderable
+from qrogue.graphics.widget_base import WidgetWrapper
+from qrogue.util import Controls, Keys, Logger, Options, Config, ColorConfig, HudConfig, GameplayConfig, \
+    QuantumSimulationConfig, ErrorConfig
+from qrogue.util.util_functions import align_string, int_to_fixed_len_str
+from .renderable import Renderable
 
 
 class MyBaseWidget(BlockLabel, WidgetWrapper):
@@ -59,12 +59,15 @@ class MyBaseWidget(BlockLabel, WidgetWrapper):
         return super(MyBaseWidget, self).get_title()
 
     def add_text_color_rule(self, regex: str, color: int, rule_type: str, match_type: str = 'line',
-                            region: List[int] = None, include_whitespace: bool = False, selected_color=None)\
+                            region: List[int] = None, include_whitespace: bool = False, selected_color=None) \
             -> None:
         if region is None:
             region = [0, 1]
         super(MyBaseWidget, self).add_text_color_rule(regex, color, rule_type, match_type, region, include_whitespace,
                                                       selected_color)
+
+    def reset_text_color_rules(self) -> None:
+        self._text_color_rules.clear()
 
     def activate_individual_coloring(self):
         regex = ColorConfig.REGEX_TEXT_HIGHLIGHT
@@ -104,8 +107,8 @@ class MyMultiWidget(WidgetWrapper):
         self.__pos = x, y
         self.__abs_pos = ax, ay
 
-        widths: Dict[int, int] = {}     # find out width of the longest row
-        heights: Dict[int, int] = {}    # and height of biggest column
+        widths: Dict[int, int] = {}  # find out width of the longest row
+        heights: Dict[int, int] = {}  # and height of biggest column
         abs_widths: Dict[int, int] = {}
         abs_heights: Dict[int, int] = {}
         for w in self.__widgets:
@@ -200,7 +203,7 @@ class MyMultiWidget(WidgetWrapper):
 
             new_column_span = None
             if width_diff is not None:
-                w_mul = width_diff * w_width / old_width    # try to keep the same widget_width / whole_width ratio
+                w_mul = width_diff * w_width / old_width  # try to keep the same widget_width / whole_width ratio
                 width_change = round(w_width * w_mul)
                 width_changes += width_change
                 if width_changes < width_diff:
@@ -250,6 +253,10 @@ class MyMultiWidget(WidgetWrapper):
 
         for w in self.__widgets:
             w.add_text_color_rule(regex, color, rule_type, match_type, region, include_whitespace, selected_color)
+
+    def reset_text_color_rules(self) -> None:
+        for w in self.__widgets:
+            w.reset_text_color_rules()
 
     def activate_individual_coloring(self):
         for w in self.__widgets:
@@ -301,14 +308,14 @@ class SimpleWidget(Widget):
         super().__init__(widget)
         self.__text = initial_text
 
-    def set_data(self, data) -> None:
+    def set_data(self, data: str) -> None:
         self.__text = str(data)
 
     def render(self) -> None:
         self.widget.set_title(self.__text)
 
-    def render_reset(self) -> None:
-        self.__text = ""
+    def render_reset(self, reset_text: bool = True) -> None:
+        if reset_text: self.__text = ""
         self.widget.set_title("")
 
     def __str__(self):
@@ -351,9 +358,15 @@ class HudWidget(Widget):
         self.__map_name = None
         self.__details = None
 
-    def update_render_duration(self, duration: float):
+    def update_render_duration(self, duration: float, force_render: bool = True):
+        """
+        Arguments:
+            duration: time needed to render the screen in microseconds
+            force_render: whether to immediately render or not
+        """
         if Config.debugging():
-            self.__render_duration = duration * 1000
+            self.__render_duration = duration / 1000  # show it in milliseconds
+            if force_render: self.render()
 
     def render(self) -> None:
         text = ""
@@ -366,8 +379,6 @@ class HudWidget(Widget):
                 text += f"Energy: {self.__robot.cur_energy} / {self.__robot.max_energy}   \t"
             if HudConfig.ShowKeys:
                 text += f"{self.__robot.key_count()} keys  \t"
-            if HudConfig.ShowCoins:
-                text += f"{self.__robot.backpack.coin_count}$  \t"
         if HudConfig.ShowFPS and self.__render_duration:
             text += f"\t\t{self.__render_duration:.2f} ms"
 
@@ -382,7 +393,7 @@ class HudWidget(Widget):
 
 
 class CircuitWidget(Widget):
-    class PlaceHolderData:
+    class _PlaceHolderData:
         def __init__(self, gate: Optional[Instruction], pos: int = -1, qubit: int = 0):
             self.gate = gate
             self.pos = pos
@@ -416,12 +427,15 @@ class CircuitWidget(Widget):
                 return True
             return False
 
+        def __iter__(self) -> Iterator[Union[Optional[Instruction], int, int]]:
+            return iter((self.gate, self.pos, self.qubit))
+
     def __init__(self, widget: WidgetWrapper, controls: Controls):
         super().__init__(widget)
         self.__robot: Optional[Robot] = None
         self.__input: Optional[StateVector] = None
         self.__target: Optional[StateVector] = None
-        self.__place_holder_data: Optional[CircuitWidget.PlaceHolderData] = None
+        self.__place_holder_data: Optional[CircuitWidget._PlaceHolderData] = None
 
         widget.add_key_command(controls.get_keys(Keys.SelectionUp), self.__move_up)
         widget.add_key_command(controls.get_keys(Keys.SelectionRight), self.__move_right)
@@ -430,33 +444,6 @@ class CircuitWidget(Widget):
 
         widget.activate_individual_coloring()
         ColorRules.apply_circuit_rules(widget)
-
-    def __circuit_input_value(self, qubit: int) -> str:
-        if self.__input is not None and self.__input.is_classical \
-                and self.__target is not None and self.__target.is_classical \
-                and self.__robot.state_vector.is_classical:     # robot.state_vector cannot be None
-            index = self.__input.to_value().index(1)    # find where the amplitude is 1
-            # get the respective qubit values but in lsb, so we can use $qubit directly as index
-            values = to_binary_string(index, self.__input.num_of_qubits, msb=False)
-            return f"= {values[qubit]} "
-        else:
-            return ""
-
-    def __circuit_output_value(self, qubit: int) -> str:
-        if self.__input is not None and self.__input.is_classical \
-                and self.__target is not None and self.__target.is_classical \
-                and self.__robot.state_vector.is_classical:     # robot.state_vector cannot be None
-            index = self.__robot.state_vector.to_value().index(1)    # find where the amplitude is 1
-            # get the respective qubit values but in lsb, so we can use $qubit directly as index
-            out_values = to_binary_string(index, self.__robot.state_vector.num_of_qubits, msb=False)
-            index = self.__target.to_value().index(1)
-            target_values = to_binary_string(index, self.__target.num_of_qubits, msb=False)
-            is_correct = out_values[qubit] == target_values[qubit]
-            equality = ColorConfig.colorize(ColorCode.CORRECT_AMPLITUDE if is_correct else ColorCode.WRONG_AMPLITUDE,
-                                            '=' + ('=' if is_correct else '/') + '=')
-            return f"= {out_values[qubit]}| {equality} <{target_values[qubit]}|"
-        else:
-            return "|"
 
     def __change_position(self, right: bool) -> bool:
         def go_right(position: int) -> Optional[int]:
@@ -532,7 +519,7 @@ class CircuitWidget(Widget):
             # todo
 
     def start_gate_placement(self, gate: Optional[Instruction], pos: int = -1, qubit: int = 0):
-        self.__place_holder_data = self.PlaceHolderData(gate, pos, qubit)
+        self.__place_holder_data = self._PlaceHolderData(gate, pos, qubit)
         if pos < 0 or self.__robot.circuit_space <= pos:
             # if we're currently not removing a gate and implicit removal is allowed we can definitely start at any
             # position
@@ -560,6 +547,12 @@ class CircuitWidget(Widget):
                     self.render()
                     return True, None
             else:
+                if self.__place_holder_data.gate.num_of_qubits > self.__robot.num_of_qubits:
+                    Popup.error(ErrorConfig.qubit_overflow(self.__place_holder_data.gate.num_of_qubits,
+                                                           self.__robot.num_of_qubits))
+                    # return value doesn't really matter here, but we chose "True" to not continue placement
+                    return True, None
+
                 if self.__place_holder_data.place():
                     self.render()
                     return False, self.__place_holder_data.gate
@@ -567,7 +560,7 @@ class CircuitWidget(Widget):
                     gate = self.__place_holder_data.gate
                     self.__place_holder_data = None
                     return True, gate
-                Logger.instance().error("Place_Gate() did not work correctly", from_pycui=False)
+                Logger.instance().error("Place_Gate() did not work correctly", show=False, from_pycui=False)
         return False, None
 
     def set_data(self, data: Tuple[Robot, Optional[Tuple[StateVector, StateVector]]]) -> None:
@@ -579,40 +572,13 @@ class CircuitWidget(Widget):
 
     def render(self) -> None:
         if self.__robot is not None:
-            entry = "-" * (3 + InstructionConfig.MAX_ABBREVIATION_LEN + 3)
-            rows = [[entry] * self.__robot.circuit_space for _ in range(self.__robot.num_of_qubits)]
-            for i in range(self.__robot.circuit_space):
-                inst = self.__robot.gate_used_at(i)
-                if inst:
-                    for q in inst.qargs_iter():
-                        inst_str = center_string(inst.abbreviation(q), InstructionConfig.MAX_ABBREVIATION_LEN)
-                        rows[q][i] = f"--{{{inst_str}}}--"
-
-            if self.__place_holder_data:
-                gate = self.__place_holder_data.gate
-                pos = self.__place_holder_data.pos
-                qubit = self.__place_holder_data.qubit
-                if gate is None:
-                    rows[qubit][pos] = "--/   /--"
-                else:
-                    for q in gate.qargs_iter():
-                        rows[q][pos] = f"--{{{gate.abbreviation(q)}}}--"
-                    rows[qubit][pos] = f"-- {gate.abbreviation(qubit)} --"
-
-            circ_str = " In "   # for some reason the whitespace in front is needed to center the text correctly
-            # place qubits from top to bottom, high to low index
-            for q in range(len(rows) - 1, -1, -1):
-                circ_str += f"| q{q} {self.__circuit_input_value(q)}>"
-                row = rows[q]
-                for i in range(len(row)):
-                    circ_str += row[i]
-                    if i < len(row) - 1:
-                        circ_str += "+"
-                circ_str += f"< q'{q} {self.__circuit_output_value(q)}"
-                if q == len(rows) - 1:
-                    circ_str += " Out"
-                circ_str += "\n"
-
+            gates: Dict[int, Instruction] = {}
+            for gate in self.__robot.instructions:
+                if gate.position is not None:
+                    gates[gate.position] = gate
+            circ_str = Instruction.circuit_to_string(self.__robot.num_of_qubits, self.__robot.circuit_space, gates,
+                                                     self.__place_holder_data,
+                                                     (self.__input, self.__robot.state_vector, self.__target))
             self.widget.set_title(circ_str)
 
     def render_reset(self) -> None:
@@ -642,9 +608,9 @@ class MapWidget(Widget):
         if self.__map is not None:
             rows = self.__map.row_strings()
             # add robot
-            x = self.__map.controllable_pos.x
-            y = self.__map.controllable_pos.y
-            rows[y] = rows[y][0:x] + self.__map.controllable_tile.get_img() + rows[y][x + 1:]
+            x = self.__map.robot_pos.x
+            y = self.__map.robot_pos.y
+            rows[y] = rows[y][0:x] + self.__map.robot_img + rows[y][x + 1:]
 
             self.widget.set_title("\n".join(rows))
 
@@ -673,6 +639,17 @@ class StateVectorWidget(Widget):
     def _headline(self) -> str:
         return f"~{self.__headline}~\n\n"
 
+    @property
+    def can_display_all_content(self) -> bool:
+        width, height = self.widget.get_abs_size()
+        content = self._stv_str_rep
+        if len(content) > 0:
+            lines = content.splitlines(keepends=False)
+            max_line_len = max([len(line) for line in lines])
+            return max_line_len <= width and len(lines) <= height
+        else:
+            return True
+
     def set_data(self, state_vector: StateVector) -> None:
         self._stv_str_rep = self._headline + state_vector.to_string()
 
@@ -698,12 +675,35 @@ class OutputStateVectorWidget(StateVectorWidget):
         widget.activate_individual_coloring()
 
     def set_data(self, state_vectors: Tuple[StateVector, StateVector], target_reached: bool = False) -> None:
+        """
+
+        Args:
+            state_vectors: Tuple of the output statevector to display and its diff to a target statevector to color the
+                            output correspondingly
+            target_reached: _no longer in use_
+
+        Returns: None
+
+        """
         output_stv, diff_stv = state_vectors
-        self._stv_str_rep = self._headline
-        for i in range(output_stv.size):
-            correct_amplitude = abs(diff_stv.at(i)) <= QuantumSimulationConfig.TOLERANCE
-            self._stv_str_rep += output_stv.wrap_in_qubit_conf(i, coloring=True, correct_amplitude=correct_amplitude)
-            self._stv_str_rep += "\n"
+
+        def wrap(skip_ket: bool):
+            return [
+                output_stv.wrap_in_qubit_conf(
+                    i, coloring=True,
+                    # check if diff is small enough
+                    correct_amplitude=abs(diff_stv.at(i)) <= QuantumSimulationConfig.TOLERANCE,
+                    skip_ket=skip_ket)
+                for i in range(output_stv.size)  # do it for every qubit combination
+            ]
+
+        lines = wrap(skip_ket=False)
+        # check if the content fits its widget
+        max_line_len = max([len(line) for line in lines])
+        width, _ = self.widget.get_abs_size()
+        if max_line_len > width: lines = wrap(skip_ket=True)  # shrink content by removing ket
+
+        self._stv_str_rep = self._headline + "\n".join(lines)
 
 
 class TargetStateVectorWidget(StateVectorWidget):
@@ -711,10 +711,31 @@ class TargetStateVectorWidget(StateVectorWidget):
         super().__init__(widget, headline)
 
     def set_data(self, state_vector: StateVector) -> None:
-        self._stv_str_rep = self._headline
-        for i in range(state_vector.size):
-            self._stv_str_rep += state_vector.wrap_in_qubit_conf(i, show_percentage=True)
-            self._stv_str_rep += "\n"
+        def wrap(skip_ket: bool):  # wrap values according to TargetStv specifics (show percentages)
+            return [
+                state_vector.wrap_in_qubit_conf(
+                    i, coloring=False, show_percentage=True,
+                    skip_ket=skip_ket)
+                for i in range(state_vector.size)  # do it for every qubit combination
+            ]
+
+        lines = wrap(skip_ket=False)
+        # check if the content fits its widget
+        max_line_len = max([len(line) for line in lines])
+        width, _ = self.widget.get_abs_size()
+
+        # "-2" is magic number found by trial and error that gives feasible results (perfect visual results are hard
+        # since it also depends on font and other spacings); possible explanation: coloring of ket needs 2 chars on the
+        # right end, meaning if they would be the only cut-off PyCUI could be smart enough to still color it
+        if max_line_len > width - 2:
+            lines = wrap(skip_ket=True)  # shrink content by removing ket
+            # add whitespace so headline is not in the center but more above the amplitudes for better visuals
+            split_index = self._headline.index("\n")
+            headline = self._headline[:split_index] + " " * QuantumSimulationConfig.MAX_PERCENTAGE_SPACE \
+                       + self._headline[split_index:]
+            self._stv_str_rep = headline + "\n".join(lines)
+        else:
+            self._stv_str_rep = self._headline + "\n".join(lines)
 
 
 class CircuitMatrixWidget(Widget):
@@ -723,6 +744,16 @@ class CircuitMatrixWidget(Widget):
         self.__matrix_str_rep = None
         ColorRules.apply_heading_rules(widget)
         ColorRules.apply_qubit_config_rules(widget)
+
+    @property
+    def can_display_all_content(self) -> bool:
+        width, height = self.widget.get_abs_size()
+        content = self.__matrix_str_rep
+        if len(content) > 0:
+            lines = content.splitlines(keepends=False)
+            max_line_len = max([len(line) for line in lines])
+            return max_line_len <= width and len(lines) <= height
+        return True
 
     def set_data(self, matrix: CircuitMatrix) -> None:
         self.__matrix_str_rep = f"~Circuit Matrix~\n"
@@ -755,7 +786,7 @@ class QubitInfoWidget(Widget):
         box_left = "|" + " " * 2
         box_right = " " * 2 + "|"
         if self.__left_aligned:
-            head_range = range(num_of_qubits-1, -1, -1)
+            head_range = range(num_of_qubits - 1, -1, -1)
         else:
             head_range = range(num_of_qubits)
 
@@ -765,12 +796,12 @@ class QubitInfoWidget(Widget):
         head = box_left[:-1] + "~" + head[1:-1] + "~" + box_right[2:]
 
         for i in range(2 ** num_of_qubits):
-            bin_num = bin(i)[2:]    # get rid of the '0b' at the beginning of the binary representation
+            bin_num = bin(i)[2:]  # get rid of the '0b' at the beginning of the binary representation
             # add 0s to the beginning (left) by justifying the text to the right
             bin_num = bin_num.rjust(num_of_qubits, '0')
             row = "   ".join(bin_num)  # separate the digits in the string with spaces
             if not self.__left_aligned:
-                row = row[::-1]     # [::-1] reverses the list so q0 is on the left
+                row = row[::-1]  # [::-1] reverses the list so q0 is on the left
             body += box_left + row + box_right
             body += "\n"
 
@@ -790,9 +821,16 @@ class SelectionWidget(Widget):
     __SEPARATOR = " " * len(__SELECTION_MARKER)
 
     @staticmethod
+    def cancel_obj() -> Any:
+        """
+        A selection object that can be used globally to indicate a "Cancel" choice
+        """
+        return "-cancel-"
+
+    @staticmethod
     def wrap_in_hotkey_str(options: List[str]) -> List[str]:
         if len(options) <= 1:
-            return options      # no explicit hotkeys if there are not multiple options
+            return options  # no explicit hotkeys if there are not multiple options
         wrapped_options = []
         for i, option in enumerate(options):
             wrapped_options.append(SelectionWidget._wrap_in_hotkey_str(option, i))
@@ -807,7 +845,18 @@ class SelectionWidget(Widget):
         return text.startswith(f"[{index}] ")
 
     def __init__(self, widget: WidgetWrapper, controls: Controls, columns: int = 1, is_second: bool = False,
-                 stay_selected: bool = False, on_key_press: Optional[Callable[[Keys], None]] = None):
+                 stay_selected: bool = False, add_cancel_key: bool = True,
+                 on_key_press: Optional[Callable[[Keys], None]] = None):
+        """
+        :param widget: the underlying widget
+        :param controls: used Controls for key mapping
+        :param columns: in how many columns the choices should be represented
+        :param is_second: whether this SelectionWidget has a first "main" SelectionWidget that controls its content
+        :param stay_selected: whether the selected choice should stay when focusing another widget or not
+        :param add_cancel_key: whether a cancel functionality should be added (only works if there is a cancel_obj!)
+        :param on_key_press: a method that is called after (i.e., the SelectionWidgets internal state already changed)
+            a selection-changing key or action is pressed
+        """
         super(SelectionWidget, self).__init__(widget)
         self.__columns = columns
         self.__is_second = is_second
@@ -815,11 +864,12 @@ class SelectionWidget(Widget):
 
         def okp(key: Keys):
             if on_key_press is not None: on_key_press(key)
+
         self.__on_key_press = okp
         self.__index = 0
         self.__choices: List[str] = []
         self.__choice_objects: List = []
-        self.__callbacks: List[Union[Callable[[], bool]], Callable[[int], bool]] = []
+        self.__callbacks: List[Union[Callable[[], Optional[bool]]], Callable[[int], Optional[bool]]] = []
         self.widget.add_text_color_rule(f"->", ColorConfig.SELECTION_COLOR, 'contains', match_type='regex')
 
         # init keys
@@ -827,6 +877,9 @@ class SelectionWidget(Widget):
         self.widget.add_key_command(controls.get_keys(Keys.SelectionRight), self._right)
         self.widget.add_key_command(controls.get_keys(Keys.SelectionDown), self._down)
         self.widget.add_key_command(controls.get_keys(Keys.SelectionLeft), self._left)
+
+        if add_cancel_key:
+            self.widget.add_key_command(controls.get_keys(Keys.Cancel), self.__jump_to_cancel, overwrite=False)
 
         # sadly cannot use a loop here because of how lambda expressions work the index would be the same for all calls
         # instead we use a list of indices to still be flexible without changing much code
@@ -893,18 +946,70 @@ class SelectionWidget(Widget):
             else:
                 self.__choices[index] = text
 
-    def set_data(self, data: "Tuple[Union[List[str], Tuple[List[str], List[Any]]], List[Callable]]") -> None:
+    def set_data(self, data: Union[
+        Tuple[List[str], List[Callable[[], Optional[bool]]]],
+        Tuple[List[str], List[Callable[[int], Optional[bool]]]],
+        Tuple[Tuple[List[str], List[Any]], List[Callable[[], Optional[bool]]]],
+        Tuple[Tuple[List[str], List[Any]], Callable[[int], Optional[bool]]],
+        List[Tuple[str, Callable[[], Optional[bool]]]],
+        List[Tuple[Tuple[str, Any], Callable[[], Optional[bool]]]],
+    ]) -> None:
+        """
+        Arguments:
+            data: selection text (optionally also selection objects) and corresponding action callback either as
+
+                1) Tuple: List of str (=texts), List of Callable() (=actions),
+                    E.g.: ([text1, text2], [action1(), action2()])
+
+                2) Tuple: List of str (=texts), List of Callable(index) (=action),
+                    E.g.: ([text1, text2], [action(i)])
+
+                3) Tuple: Tuple of (List of str (=texts), List of Any (=objects)), List of Callable() (=actions),
+                    E.g.: (([text1, text2], [obj1, obj2]), [action1, action2])
+
+                4) Tuple: Tuple of (List of str (=texts), List of Any (=objects)), Callable(index) (=action),
+                    E.g.: (([text1, text2], [obj1, obj2]), action(i))
+
+                5) List: Tuple of (str (=text), Callable() (=action)),
+                    E.g.: [(text1, action1), (text2, action2)]
+
+                6) List: Tuple of (Tuple of (str (=text), Any (=object)), Callable() (=action)),
+                    E.g.: [((text1, obj1), action1), ((text2, obj2), action2)]
+
+        """
         assert len(data) >= 1, "set_data() called with empty data!"
 
         self.render_reset()
-        self.__choices, self.__callbacks = data
+
+        if isinstance(data, list):
+            self.__choices = []
+            self.__callbacks = []
+            for elem in data:
+                if isinstance(elem[0], tuple):
+                    text, obj = elem[0]
+                    self.__choices.append(text)
+                    self.__choice_objects.append(obj)
+                else:
+                    self.__choices.append(elem[0])
+                self.__callbacks.append(elem[1])
+        else:
+            self.__choices, callbacks = data
+            if isinstance(callbacks, list):
+                self.__callbacks = callbacks
+            else:
+                self.__callbacks = [callbacks]
 
         if isinstance(self.__choices, tuple):
             self.__choices, self.__choice_objects = self.__choices
 
-        choice_length = max([len(choice) for choice in self.__choices])
-        for i in range(len(self.__choices)):
-            self.__choices[i] = self.__choices[i].ljust(choice_length)
+        if self.__columns > 1:
+            choice_length = max([len(choice) for choice in self.__choices])
+            for i in range(len(self.__choices)):
+                self.__choices[i] = self.__choices[i].ljust(choice_length)
+
+        for i, val in enumerate(self.__choices):
+            if val is None:
+                self.__choices[i] = "-Error: no text specified-"
 
     def render(self) -> None:
         rows = [""] * self.rows
@@ -921,7 +1026,7 @@ class SelectionWidget(Widget):
             else:
                 rows[cur_row] += SelectionWidget.__SEPARATOR
 
-        if len(rows) > 0:   # simple validity check since some selections are dynamically created during runtime
+        if len(rows) > 0:  # simple validity check since some selections are dynamically created during runtime
             max_row_len = max([len(row) for row in rows])
             aligned_rows = [align_string(row, max_row_len) for row in rows]
             self.widget.set_title("\n".join(aligned_rows))
@@ -929,6 +1034,9 @@ class SelectionWidget(Widget):
     def render_reset(self) -> None:
         self.widget.set_title("")
         self.__index = 0
+        # This content reset is needed because changes to other widgets can cause this to render, making the reset
+        # pointless if content is still set. Should this lead to any problems somewhere, a new flag-parameter can be
+        # added.
         if self.__is_second:
             self.__choices = []
             self.__choice_objects = []
@@ -956,8 +1064,6 @@ class SelectionWidget(Widget):
     def _up(self) -> None:
         if self.num_of_choices <= 1:
             return
-        # only call if the key press changes something (e.g. more than 1 choice)
-        self.__on_key_press(Keys.SelectionUp)
         if self.num_of_choices <= self.__columns or self.__columns == 1:
             self.__single_prev()
         else:
@@ -968,13 +1074,13 @@ class SelectionWidget(Widget):
                                    self.num_of_choices - 1)
             else:
                 self.__index -= self.__columns
+        # only call if the key press changes something (e.g. more than 1 choice)
+        self.__on_key_press(Keys.SelectionUp)
         self.render()
 
     def _right(self) -> None:
         if self.num_of_choices <= 1:
             return
-        # only call if the key press changes something (e.g. more than 1 choice)
-        self.__on_key_press(Keys.SelectionRight)
         if self.__columns == 1 or self.num_of_choices <= self.__columns:
             self.__single_next()
         else:
@@ -986,13 +1092,13 @@ class SelectionWidget(Widget):
                 self.__index -= (self.__columns - 1)
             else:
                 self.__index += 1
+        # only call if the key press changes something (e.g. more than 1 choice)
+        self.__on_key_press(Keys.SelectionRight)
         self.render()
 
     def _down(self) -> None:
         if self.num_of_choices <= 1:
             return
-        # only call if the key press changes something (e.g. more than 1 choice)
-        self.__on_key_press(Keys.SelectionDown)
         if self.num_of_choices <= self.__columns or self.__columns == 1:
             self.__single_next()
         else:
@@ -1001,13 +1107,13 @@ class SelectionWidget(Widget):
                 self.__index = self.__index % self.__columns
             else:
                 self.__index = min(self.__index + self.__columns, self.num_of_choices - 1)
+        # only call if the key press changes something (e.g. more than 1 choice)
+        self.__on_key_press(Keys.SelectionDown)
         self.render()
 
     def _left(self) -> None:
         if self.num_of_choices <= 1:
             return
-        # only call if the key press changes something (e.g. more than 1 choice)
-        self.__on_key_press(Keys.SelectionLeft)
         if self.__columns == 1 or self.num_of_choices <= self.__columns:
             self.__single_prev()
         else:
@@ -1019,23 +1125,35 @@ class SelectionWidget(Widget):
                 self.__index += self.__columns - 1
             else:
                 self.__index -= 1
+        # only call if the key press changes something (e.g. more than 1 choice)
+        self.__on_key_press(Keys.SelectionLeft)
         self.render()
 
+    def __jump_to_cancel(self):
+        # try to find cancel_obj to jump to its index
+        if len(self.__choice_objects) <= 0: return  # there is no cancel_obj
+
+        # go from back to front because usually cancel is one of the last choices
+        for i in range(self.num_of_choices, -1, -1):
+            if len(self.__choice_objects) <= i: continue    # still out of bounds
+            if self.__choice_objects[i] is SelectionWidget.cancel_obj():
+                # we found cancel_obj
+                self.__jump_to_index(i)
+
     def __jump_to_index(self, index: int):
-        self.__on_key_press(Keys.hotkeys()[index])      # todo implement more efficiently? On the other hand hotkeys are not that important maybe
         if index < 0:
             self.__index = 0
         elif self.num_of_choices <= index:
             self.__index = self.num_of_choices - 1
         else:
             self.__index = index
+        self.__on_key_press(Keys.hotkey(index))
         self.render()
 
     def use(self) -> bool:
         """
         :return: True if the focus should move, False if the focus should stay in this SelectionWidget
         """
-        self.__on_key_press(Keys.Action)
         # if only one callback is given, it needs the index as parameter
         if len(self.__callbacks) == 1 and self.num_of_choices > 1:
             ret = self.__callbacks[0](self.__index)
@@ -1044,10 +1162,9 @@ class SelectionWidget(Widget):
                 Logger.instance().throw(IndexError(f"Invalid index = {self.__index} for {self.__callbacks}. "
                                                    f"Text of choices: {self.__choices}"))
             ret = self.__callbacks[self.__index]()
-        if ret is None:     # move focus if nothing is returned
-            return True
-        else:
-            return ret
+        self.__on_key_press(Keys.Action)
+        # return True for None to also move focus if nothing is returned
+        return True if ret is None else ret
 
 
 class HistoricWrapperWidget:
@@ -1058,7 +1175,7 @@ class HistoricWrapperWidget:
 
         if render_widgets:
             for widget in widgets:
-                widget.render()     # update the visuals before potentially saving them
+                widget.render()  # update the visuals before potentially saving them
         if save_initial_state:
             self.save_state(rerender=True, force=True)
 
@@ -1098,18 +1215,19 @@ class HistoricWrapperWidget:
         if render: self.render()
 
     def travel(self, forth: bool, render: bool = True):
-        if forth:   self._forth(render)
-        else:       self._back(render)
+        if forth:
+            self._forth(render)
+        else:
+            self._back(render)
 
     def jump_to_present(self, render: bool = True):
         if self.is_in_past:
             self.__index = len(self.__history) - 1
             if render: self.render()
 
-    def clean_history(self) -> None:
-        if len(self.__history) > 0:
-            self.__history = [self.__history[-1]]  # only keep the latest element
-            self.__index = 0
+    def clear_history(self) -> None:
+        self.__history.clear()
+        self.__index = 0
 
     def render(self) -> None:
         if self._cur_data is not None:
@@ -1117,46 +1235,4 @@ class HistoricWrapperWidget:
                                                                f"{len(self._cur_data)} != {len(self.__widgets)}"
             for i, widget in enumerate(self.__widgets):
                 widget.widget.set_title(self._cur_data[i])
-                #widget.render()
-
-
-class HistoricProperty(Widget, ABC):
-    def __init__(self, widget: WidgetWrapper):
-        super().__init__(widget)
-        self.__history: List[str] = []
-        self.__index = -1
-
-    @property
-    def index(self) -> int:
-        return self.__index
-
-    @property
-    def _cur_data(self) -> Optional[str]:
-        if 0 <= self.__index < len(self.__history):
-            return self.__history[self.__index]
-        return None
-
-    def add_data(self, data: str, force: bool = False):
-        # if force is False then data is not saved if it is equal to the latest data
-        if force or len(self.__history) <= 0 or data != self.__history[-1]:
-            self.__history.append(data)
-            self.__index = len(self.__history) - 1  # index points to the last element
-
-    def back(self):
-        self.__index -= 1
-        self.__index = max(self.__index, 0)
-
-    def forth(self):
-        self.__index += 1
-        self.__index = min(self.__index, len(self.__history) - 1)
-
-    def clean_history(self) -> None:
-        self.__history = [self.__history[-1]]  # only keep the latest element
-        self.__index = 0
-
-    def render(self) -> None:
-        if self._cur_data is not None:
-            self.widget.set_title(self._cur_data)
-
-
-
+                # widget.render()

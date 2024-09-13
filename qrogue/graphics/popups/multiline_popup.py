@@ -4,15 +4,19 @@ from py_cui import ColorRule
 from py_cui.popups import Popup as PyCuiPopup
 from py_cui.ui import MenuImplementation
 
-from qrogue.util import ColorConfig as CC, Keys, Logger, PopupConfig, ColorConfig, ColorCode
+from qrogue.util import ColorConfig as CC, Keys, Logger, PopupConfig, ColorConfig, ColorCode, split_text, Config
 
 
 class MultilinePopup(PyCuiPopup, MenuImplementation):
-    __STATIC_PY_CUI_PADDING = 6     # based on PyCUI "padding" I think
+    __STATIC_PY_CUI_PADDING = 6  # based on PyCUI "padding" I think
     __QUESTION_SPACING = " " * 7
     __QUESTION_ARROW = "-->"
     __QUESTION_SELECTION = " " * (len(__QUESTION_SPACING) - (len(__QUESTION_ARROW) + 1)) + (__QUESTION_ARROW + " ")
     __BASE_DIMENSIONS = 11, 100
+
+    @staticmethod
+    def popup_width_to_content_width(popup_width: int, padding: int = 0) -> int:
+        return popup_width - MultilinePopup.__STATIC_PY_CUI_PADDING - 2 * padding
 
     @staticmethod
     def __get_color_rules():
@@ -24,72 +28,20 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
                       [0, 1], False, Logger.instance()),
         ]
 
-    @staticmethod
-    def __split_text(text: str, width: int, padding: int, logger) -> List[str]:
-        """
-
-        :param text: text to split into multiple lines
-        :param width: the maximum width of one line
-        :param padding: how much spaces we should place at the start and end of each line
-        :return: list of text parts with a maximum of #width characters
-        """
-        width -= padding * 2    # remove the space needed for padding
-        split_text = []
-        for paragraph in text.splitlines():
-            index = 0
-            prepend = None
-            while index + width < len(paragraph):
-                cur_part = paragraph[index:]
-                # check if the previous line ended with a color rule and prepend it
-                if prepend:
-                    prev_len = len(cur_part)
-                    cur_part = prepend + cur_part.lstrip()
-                    # we have to adapt the index since we potentially remove whitespace in front and therefore have
-                    # the possibility of a longer line which leads to a higher increment of the index and furthermore
-                    # to the potential loss of some characters in the beginning of the new_line
-                    # prepend also needs to be part of this adaption because it will be counted in character_removals
-                    index -= (len(cur_part) - prev_len)
-                    prepend = None
-                character_removals = CC.count_meta_characters(cur_part, width, logger)
-
-                last_whitespace = cur_part.rfind(" ", 1, width + character_removals)
-                if last_whitespace == -1:
-                    cur_width = width + character_removals
-                else:
-                    cur_width = last_whitespace + 1
-
-                next_line = cur_part[:cur_width].strip()
-                if len(next_line) > 0:
-                    # check if next_line ends with an un-terminated color rule
-                    last_highlight = next_line.rfind(CC.TEXT_HIGHLIGHT)
-                    if 0 <= last_highlight < len(next_line) - CC.HIGHLIGHT_WIDTH:
-                        # if so, terminate it and remember to continue it in the next line
-                        code_start = last_highlight + CC.HIGHLIGHT_WIDTH
-                        # TODO a highlighted number can potentially lead to problems here! (at least theoretically,
-                        # todo but somehow I couldn't produce a breaking example so I might be wrong)
-                        # todo also if we place an at-least-2-digits number directly after a highlight
-                        if CC.is_number(next_line[code_start:code_start + CC.CODE_WIDTH]):
-                            next_line += CC.TEXT_HIGHLIGHT
-                            prepend = next_line[last_highlight:code_start + CC.CODE_WIDTH]
-                    split_text.append(next_line)
-                index += cur_width
-
-            # The last line is appended as it is (maybe with additional color rule prepend from the previous line)
-            if prepend:
-                split_text.append(prepend + paragraph[index:].strip())
-            else:
-                split_text.append(paragraph[index:].rstrip())
-        return [" " * padding + line + " " * padding for line in split_text]
-
-    def __init__(self, root, title, text, color, renderer, logger, controls,
+    def __init__(self, root, title, text, color, renderer, logger: Logger, controls,
                  confirmation_callback: Callable[[int], None] = None, answers: Optional[List] = None,
                  pos: Optional[int] = None, dimensions: Optional[Tuple[int, int]] = None,
                  situational_callback: Optional[Tuple[Optional[Callable[[], None]], Optional[Callable[[], None]]]] =
-                 None):
+                 None, padding_x: Optional[int] = None):
+        """
+        :param dimensions: expected size of the popup's content. The popup itself will be a bit bigger.
+        """
         # custom_size needs to be initialized immediately because get_absolute_stop_pos() in init() accesses it
         # we would somehow get stuck in an endless loop if we would manually calculate dimensions, starts and stops
         #  before init() hence we use this workaround
         self.__custom_size = False
+
+        if padding_x is None: padding_x = PopupConfig.PADDING_X
 
         super().__init__(root, title, text, color, renderer, logger)
         self.__controls = controls
@@ -101,12 +53,19 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
 
         self.__custom_pos = pos
         self.__custom_size = True
-        self._height, self._width = MultilinePopup.__BASE_DIMENSIONS if dimensions is None else dimensions
+        if dimensions is None:
+            self._height, self._width = MultilinePopup.__BASE_DIMENSIONS
+        else:
+            # custom dimensions state the size of the content of the popup, so we add additional paddings
+            self._height = dimensions[0] + 2  # top and bottom row are extra
+            # inverse of popup_width_to_content_width():
+            self._width = dimensions[1] + MultilinePopup.__STATIC_PY_CUI_PADDING + 2 * padding_x
         self._start_x, self._start_y = self.get_absolute_start_pos()
         self._stop_x, self._stop_y = self._start_x + self._width, self._start_y + self._height
 
         def _dummy():
             pass
+
         self.__situational_callback1 = _dummy
         self.__situational_callback2 = _dummy
         if situational_callback is not None:
@@ -115,11 +74,13 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
             if sit2 is not None: self.__situational_callback2 = sit2
 
         self._top_view = 0
-        self.__lines = MultilinePopup.__split_text(text, self._width - MultilinePopup.__STATIC_PY_CUI_PADDING,
-                                                   PopupConfig.PADDING_X, logger)
+        self.__lines = split_text(text, self._width - MultilinePopup.__STATIC_PY_CUI_PADDING, padding_x,
+                                  lambda err: logger.error(err, show=False, from_pycui=False))
 
         self.__question_state = 0
         self._pageAlignment = " " * (self._width - MultilinePopup.__STATIC_PY_CUI_PADDING)
+
+        if Config.debugging(): self.set_title(self.get_title() + f" {self.get_absolute_dimensions()}")
 
     @property
     def _is_question(self) -> bool:
@@ -131,11 +92,11 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
 
         :return: number of rows inside the popup
         """
-        full_page_height = self._height - self._pady - 2    # subtract both title and end line
+        full_page_height = self._height - self._pady - 2  # subtract both title and end line
         if self._is_question:
-            full_page_height -= 2   # subtract the two lines needed for answer selection
+            full_page_height -= 2  # subtract the two lines needed for answer selection
         if len(self.__lines) > full_page_height:
-            return full_page_height - 1     # subtract the space we need for page indication
+            return full_page_height - 1  # subtract the space we need for page indication
         return full_page_height
 
     def __up(self):
@@ -231,26 +192,31 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
         self._renderer.unset_color_mode(self._color)
         self._renderer.reset_cursor(self)
 
-    def get_absolute_start_pos(self) -> Tuple[int,int]:
+    def get_absolute_start_pos(self) -> Tuple[int, int]:
         if self.__custom_size:
             cui_height, cui_width = self._root.get_absolute_size()
 
             # start relative to the middle
             start_x = int((cui_width - self._width) / 2)
             start_y = int((cui_height - self._height) / 2)
+
             # adapt start_x and start_y for custom positions
             if self.__custom_pos is not None:
-                res_x, res_y = PopupConfig.resolve_position(self.__custom_pos)
-                if res_x is not None:
-                    if res_x > 0:
-                        start_x = res_x
-                    elif res_x < 0:
-                        start_x = cui_width + res_x - self._width
-                if res_y is not None:
-                    if res_y > 0:
-                        start_y = res_y
-                    elif res_y < 0:
-                        start_y = cui_height + res_y - self._height
+                # reference position (left, right or center) and value
+                ref_x, val_x = PopupConfig.resolve_position_x(self.__custom_pos)
+                if ref_x is True:
+                    start_x = val_x
+                elif ref_x is False:
+                    start_x = (cui_width - self._width) - val_x
+                # else ref_x is None, indicating center, so we don't have to adjust start_x
+
+                ref_y, val_y = PopupConfig.resolve_position_y(self.__custom_pos)
+                if ref_y is True:
+                    start_y = val_y
+                elif ref_y is False:
+                    start_y = (cui_height - self._height) - val_y
+                # else ref_y is None, indicating center, so we don't have to adjust start_y
+
             return start_x, start_y
         else:
             return super(MultilinePopup, self).get_absolute_start_pos()
@@ -275,7 +241,7 @@ class MultilinePopup(PyCuiPopup, MenuImplementation):
             self.__confirmation_callback = None
 
         # reset position and size
-        self.__custom_pos = PopupConfig.default_pos()
+        self.__custom_pos = PopupConfig.default_position()
         self._height, self._width = MultilinePopup.__BASE_DIMENSIONS
         # recalculate start and stop to be correct after the reset above
         self._start_x, self._start_y = self.get_absolute_start_pos()

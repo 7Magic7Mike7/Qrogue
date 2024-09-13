@@ -1,22 +1,24 @@
 import unittest
+from typing import List, Tuple, Optional
 
 import test_util
+from qrogue.game.logic.actors.controllables.robot import RoboProperties
+from qrogue.game.logic.collectibles import instruction as gates
+from qrogue.game.world import tiles
 from qrogue.game.world.dungeon_generator import DungeonGenerator
 from qrogue.game.world.dungeon_generator.random_generator import RandomLayoutGenerator, ExpeditionGenerator
-from qrogue.game.world.map import Room
-from qrogue.game.world.map.rooms import Hallway
+from qrogue.game.world.dungeon_generator.wave_function_collapse import WFCManager
+from qrogue.game.world.map import Room, Hallway, CallbackPack, ExpeditionMap
 from qrogue.game.world.navigation import Direction, Coordinate
-from qrogue.game.world import tiles
-from qrogue.management.save_data import SaveData
-from qrogue.util import CheatConfig
+from qrogue.management import MapManager
+from qrogue.util import CheatConfig, StvDifficulty, MapConfig
 
 
 class LayoutGenTestCase(test_util.SingletonSetupTestCase):
     def test_single_seed(self):
         seed = 297
-        map_gen = RandomLayoutGenerator(seed, DungeonGenerator.WIDTH, DungeonGenerator.HEIGHT)
-        self.assertTrue(map_gen.generate(debug=False), "Failed to generate!")
-        self.assertTrue(map_gen.validate(), f"Invalid layout: {map_gen}")
+        map_gen = RandomLayoutGenerator(DungeonGenerator.WIDTH, DungeonGenerator.HEIGHT)
+        self.assertTrue(map_gen.generate(seed, validate=True, debug=False), f"Failed to generate: {map_gen}")
         self._print(map_gen)
 
     def test_layout(self):
@@ -24,26 +26,23 @@ class LayoutGenTestCase(test_util.SingletonSetupTestCase):
         # ~3:20 min for 0 to 100_000, succeeded
         start_seed = 50000
         end_seed = 50005
-        failing_seeds = []
+        failing_seeds: List[int] = []
         wrong_specials_seeds = []
 
         i = 0
         for seed in range(start_seed, end_seed):
             if i % 5000 == 0:
                 self._print(f"Run {i + 1}): seed = {seed}")
-            map_gen = RandomLayoutGenerator(seed, DungeonGenerator.WIDTH, DungeonGenerator.HEIGHT)
-            if not map_gen.generate(debug=False):
-                failing_seeds.append(map_gen)
-            self.assertTrue(map_gen.validate(), f"Invalid layout: {map_gen}")
+            map_gen = RandomLayoutGenerator(DungeonGenerator.WIDTH, DungeonGenerator.HEIGHT)
+            if not map_gen.generate(seed, validate=True, debug=False):
+                failing_seeds.append(seed)
+                self._print(f"Invalid layout: {map_gen}")
             i += 1
 
         if len(failing_seeds) > 0:
             self._print("Failing Seeds:")
-            seeds = []
-            for mg in failing_seeds:
-                seeds.append(mg.seed)
-            self._print(seeds)
-            self.assert_(False, "Layout for some seeds failed!")
+            self._print(failing_seeds)
+            self.assertGreater(len(failing_seeds), 0, "Layout for some seeds failed!")
 
         if len(wrong_specials_seeds) > 0:
             self._print("Wrong SpecialRooms in Seeds: ")
@@ -52,11 +51,23 @@ class LayoutGenTestCase(test_util.SingletonSetupTestCase):
 
 
 class LevelGenTestCase(test_util.SingletonSetupTestCase):
+    @staticmethod
+    def __create_expedition_generator() -> ExpeditionGenerator:
+        wfc_manager = WFCManager()
+        wfc_manager.load()
+        return ExpeditionGenerator(wfc_manager, lambda s: True, lambda s: None, lambda: None, lambda: [gates.HGate()],
+                                   CallbackPack.dummy())
+
     def test_single_seed(self):
         CheatConfig.use_cheat("Illuminati")
-        generator = ExpeditionGenerator(0, lambda s: True, lambda s: None, lambda s: None)
-        seed = 297
-        map_, success = generator.generate((SaveData.instance().get_robot(0), seed))
+        robo_props = test_util.DummyRoboProps()
+        diff_code = "1" * StvDifficulty.degrees_of_freedom()
+        difficulty = StvDifficulty.from_difficulty_code(diff_code)
+
+        generator = self.__create_expedition_generator()
+        map_seed = 297
+        puzzle_seed = 7
+        map_, success = generator.generate(map_seed, (robo_props, difficulty, puzzle_seed))
         self.assertTrue(success, "Failed to generate.")
         self._print(map_)
 
@@ -67,21 +78,26 @@ class LevelGenTestCase(test_util.SingletonSetupTestCase):
         end_seed = 5
         failing_seeds = []
 
-        generator = ExpeditionGenerator(0, lambda s: True, lambda s: None, lambda s: None)
-        for i, seed in enumerate(range(start_seed, end_seed)):
+        robo_props = test_util.DummyRoboProps()
+        diff_code = "1" * StvDifficulty.degrees_of_freedom()
+        difficulty = StvDifficulty.from_difficulty_code(diff_code)
+
+        generator = self.__create_expedition_generator()
+        puzzle_seed = 7
+        for i, map_seed in enumerate(range(start_seed, end_seed)):
             if i % 1000 == 0:
-                self._print(f"Run {i + 1}): seed = {seed}")
-            map_, success = generator.generate((SaveData.instance().get_robot(0), seed))
+                self._print(f"Run {i + 1}): map_seed = {map_seed}")
+            map_, success = generator.generate(map_seed, (robo_props, difficulty, puzzle_seed))
             if not success:
-                failing_seeds.append((generator, seed))
-                self._print(f"Failed for seed = {seed}")
+                failing_seeds.append((generator, map_seed))
+                self._print(f"Failed for map_seed = {map_seed}")
 
         if len(failing_seeds) > 0:
             self._print("Failing Seeds:", force=True)
             seeds = []
-            for mg, seed in failing_seeds:
+            for mg, map_seed in failing_seeds:
                 self._print(mg, force=True)
-                seeds.append(seed)
+                seeds.append(map_seed)
             self._print(seeds, force=True)
             self._print(force=True)
             self.assertTrue(False, "Some seeds failed!")
@@ -157,6 +173,68 @@ class LevelGenTestCase(test_util.SingletonSetupTestCase):
         visited.sort(key=lambda c: c.x + c.y * 10)
         print(f"Visited: {[str(elem) for elem in visited]}")
         """
+
+    def test_expedition_parameters(self):
+        prefix = MapConfig.expedition_map_prefix()
+        dc_sep = MapConfig.diff_code_separator()
+        ps_sep = MapConfig.puzzle_seed_separator()
+        expeditions = [
+            (f"{prefix}12345", None),   # only map_seed provided
+            (f"{prefix}12{ps_sep}12345", None),    # no difficulty, puzzle and map seed in name
+            (f"{prefix}2", 12345),  # difficulty in name, separate map seed
+            (f"{prefix}2{dc_sep}12", 12345),  # difficulty and puzzle seed in name, separate map seed
+            (f"{prefix}2{dc_sep}12{ps_sep}12345", None),    # everything in name
+        ]
+        expedition_progress = 1
+
+        expected_values: List[Tuple[str, int, Optional[int]]] = [
+            ("1", 12345, None),
+            ("1", 12345, 12),
+            ("2", 12345, None),
+            ("2", 12345, 12),
+            ("2", 12345, 12),
+        ]
+        for i, data in enumerate(expeditions):
+            map_name, map_seed = data
+            r_diff_code, r_map_seed, r_puzzle_seed = MapManager.parse_expedition_parameters(map_name, map_seed,
+                                                                                            expedition_progress)
+            e_diff_code, e_map_seed, e_puzzle_seed = expected_values[i]
+            self.assertEqual(e_diff_code, r_diff_code, f"Unexpected diff_code! @{i}")
+            self.assertEqual(e_map_seed, r_map_seed, f"Unexpected map_seed! @{i}")
+            self.assertEqual(e_puzzle_seed, r_puzzle_seed, f"Unexpected puzzle_seed! @{i}")
+
+    def test_robo_props(self):
+        generator = self.__create_expedition_generator()
+        difficulty = StvDifficulty.from_difficulty_code("2")
+
+        robo_props = RoboProperties(2, 5, [gates.XGate()])
+        _, success = generator.generate(map_seed=7, data=(robo_props, difficulty, 7))
+        self.assertFalse(success, "Failed to recognize illegal gates for the given difficulty")
+
+        robo_props = RoboProperties(2, 5, [gates.XGate(), gates.SGate(), gates.HGate(), gates.RYGate()])
+        _, success = generator.generate(map_seed=7, data=(robo_props, difficulty, 7))
+        self.assertTrue(success, "Failed to recognize legal gates for the given difficulty")
+
+    def test_random_gate_subset_selection(self):
+        difficulty = StvDifficulty.from_difficulty_code("2")
+        # this list of Instruction over-fulfills the criteria
+        available_gates = [gates.XGate(), gates.XGate(), gates.SGate(), gates.HGate(), gates.HGate(), gates.RYGate(),
+                           gates.RZGate()]
+        picked_gates = ExpeditionGenerator.get_random_gates(available_gates.copy(), difficulty, 7)
+        val_code, val_data = ExpeditionMap.validate_gates_for_difficulty(difficulty, picked_gates)
+        self.assertEqual(0, val_code, f"Failed to pick a valid subset: code={val_code}, data={val_data}")
+
+        # this list of Instructions exactly-fulfills the criteria
+        available_gates = [gates.SGate(), gates.SGate(), gates.HGate(), gates.RYGate()]
+        picked_gates = ExpeditionGenerator.get_random_gates(available_gates.copy(), difficulty, 7)
+        val_code, val_data = ExpeditionMap.validate_gates_for_difficulty(difficulty, picked_gates)
+        self.assertEqual(0, val_code, f"Failed to pick a valid subset: code={val_code}, data={val_data}")
+
+        # this list of Instructions exactly-fulfills the unique-criteria but has many dupes to choose from
+        available_gates = [gates.HGate(), gates.RYGate()] + [gates.SGate()] * 12
+        picked_gates = ExpeditionGenerator.get_random_gates(available_gates.copy(), difficulty, 7)
+        val_code, val_data = ExpeditionMap.validate_gates_for_difficulty(difficulty, picked_gates)
+        self.assertEqual(0, val_code, f"Failed to pick a valid subset: code={val_code}, data={val_data}")
 
 
 if __name__ == '__main__':

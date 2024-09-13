@@ -9,7 +9,7 @@ from qrogue.game.logic.actors import Robot, Riddle
 from qrogue.game.logic.collectibles import Instruction
 from qrogue.game.world.navigation import Coordinate, Direction
 from qrogue.game.world.tiles import Enemy as EnemyTile, Tile, Floor, Decoration, Teleport, FogOfWar, Void, Invalid, \
-    Door, Wall, HallwayEntrance, Riddler, ShopKeeper, Boss, Collectible, Message as MessageTile
+    Door, Wall, HallwayEntrance, Riddler, Challenger, Boss, Collectible, Message as MessageTile
 from qrogue.util import CommonQuestions, MapConfig, Logger, CheatConfig, RandomManager
 
 
@@ -22,7 +22,7 @@ class AreaType(Enum):
 
     SpawnRoom = 10
     WildRoom = 11       # contains mostly normal Enemies/Puzzles
-    ShopRoom = 12
+    # ShopRoom = 12
     RiddleRoom = 13     # room is built around its Riddle(s)
     GateRoom = 14       # room contains mainly a Gate and other Tiles to support it
     BossRoom = 15       # room contains a Boss-Puzzle and other supporting Tiles
@@ -34,12 +34,12 @@ class AreaType(Enum):
 
     @staticmethod
     def values(include_pseudo_areas: Optional[bool] = None, only_rooms: Optional[bool] = None) -> List["AreaType"]:
-        if include_pseudo_areas is None:
+        if include_pseudo_areas is None:  # todo: method is not used
             include_pseudo_areas = False
         if only_rooms is None:
             only_rooms = True
 
-        areas = [AreaType.SpawnRoom, AreaType.WildRoom, AreaType.ShopRoom, AreaType.RiddleRoom, AreaType.GateRoom,
+        areas = [AreaType.SpawnRoom, AreaType.WildRoom, AreaType.RiddleRoom, AreaType.GateRoom,
                  AreaType.BossRoom, AreaType.TreasureRoom]
         if not only_rooms:
             areas += [AreaType.Hallway]
@@ -52,7 +52,7 @@ class Area(ABC):
     __ID = 1
     __FOG = FogOfWar()
     __VOID = Void()
-    UNIT_WIDTH = MapConfig.room_width()     # todo change visibility of UNIT_WIDTH?
+    UNIT_WIDTH = MapConfig.room_width()  # todo change visibility of UNIT_WIDTH?
     UNIT_HEIGHT = MapConfig.room_height()
     MID_X = MapConfig.room_mid_x()
     MID_Y = MapConfig.room_mid_y()
@@ -180,7 +180,8 @@ class Hallway(Area):
             super(Hallway, self).__init__(AreaType.Hallway, [row])
         else:
             missing_half = int((Area.UNIT_HEIGHT - 3) / 2)
-            tiles: List[List[Tile]] = [[Void()]] * missing_half + [[Wall()], [door], [Wall()]] + [[Void()]] * missing_half
+            tiles: List[List[Tile]] = [[Void()]] * missing_half + [[Wall()], [door], [Wall()]] + [
+                [Void()]] * missing_half
             super(Hallway, self).__init__(AreaType.Hallway, tiles)
 
     @property
@@ -230,7 +231,6 @@ class Hallway(Area):
         elif r2id is None:
             Logger.instance().debug(f"#hw{self.id}: room1=#r{r1id} but room2 is None!", from_pycui=False)
 
-
     def get_row_str(self, row: int) -> str:
         if self.__hide:
             if self.__door.check_event():
@@ -264,8 +264,8 @@ class Hallway(Area):
 
 
 class Room(Area):
-    INNER_WIDTH = Area.UNIT_WIDTH - 2        # width inside the room, i.e. without walls and hallways
-    INNER_HEIGHT = Area.UNIT_HEIGHT - 2      # height inside the room, i.e. without walls and hallways
+    INNER_WIDTH = Area.UNIT_WIDTH - 2  # width inside the room, i.e. without walls and hallways
+    INNER_HEIGHT = Area.UNIT_HEIGHT - 2  # height inside the room, i.e. without walls and hallways
     INNER_MID_X = int(INNER_WIDTH / 2)
     INNER_MID_Y = int(INNER_HEIGHT / 2)
 
@@ -276,6 +276,13 @@ class Room(Area):
             tile_list[index] = tile
             return True
         return False
+
+    @staticmethod
+    def mid(inner: bool = True) -> Coordinate:
+        if inner:
+            return Coordinate(Room.INNER_MID_X, Room.INNER_MID_Y)
+        else:
+            return Coordinate(Area.MID_X, Area.MID_Y)
 
     @staticmethod
     def coordinate_to_index(pos: Union[Coordinate, Tuple[int, int]], in_room: bool = True) -> int:
@@ -378,12 +385,12 @@ class Room(Area):
             north_hallway.set_room(self, Direction.North)
 
         if east_hallway is not None and east_hallway.connects_horizontally():
-            tiles[Area.MID_Y][Area.UNIT_WIDTH-1] = HallwayEntrance(east_hallway.door)
+            tiles[Area.MID_Y][Area.UNIT_WIDTH - 1] = HallwayEntrance(east_hallway.door)
             self.__hallways[Direction.East] = east_hallway
             east_hallway.set_room(self, Direction.East)
 
         if south_hallway is not None and not south_hallway.connects_horizontally():
-            tiles[Area.UNIT_HEIGHT-1][Area.MID_X] = HallwayEntrance(south_hallway.door)
+            tiles[Area.UNIT_HEIGHT - 1][Area.MID_X] = HallwayEntrance(south_hallway.door)
             self.__hallways[Direction.South] = south_hallway
             south_hallway.set_room(self, Direction.South)
 
@@ -421,7 +428,8 @@ class Room(Area):
             return self.__hallways[direction]
         elif throw_error:
             dic = [(str(self.__hallways[k]) + "\n") for k in self.__hallways]
-            Logger.instance().error(f"Invalid hallway access for {self}:\n{direction} not in {dic}", from_pycui=False)
+            Logger.instance().error(f"Invalid hallway access for {self}:\n{direction} not in {dic}", show=False,
+                                    from_pycui=False)
         return None
 
     def make_visible(self):
@@ -495,10 +503,10 @@ class MetaRoom(CopyAbleRoom):
                 else:
                     dash_decoration = Decoration('-')
             else:
-                dash_decoration = Floor()   # ignore it for non-blocking since it might be placed in front of a hallway
+                dash_decoration = Floor()  # ignore it for non-blocking since it might be placed in front of a hallway
 
             type_decoration = Decoration(mtype)
-            num_decoration = Decoration(str(num)[0])        # todo handle double digits
+            num_decoration = Decoration(str(num)[0])  # todo handle double digits
 
             tile_list = Room.get_empty_room_tile_list()
             msg_tile = MessageTile(self.__message, -1)
@@ -640,13 +648,17 @@ class SpecialRoom(Room, ABC):
     # todo answering thoughts after some time: If they can have multiple entrances/exits Key placement gets much harder
     # todo we could not simply place keys in non-special rooms but would also have to check if 1st key is reachable from
     # todo SpawnRoom, 2nd key from SpawnRoom and one special room, ...
-    def __init__(self, type_: AreaType, hallway: Hallway, direction: Direction, tile_dic: Dict[Coordinate, Tile]):
+    def __init__(self, type_: AreaType, hallway: Hallway, direction: Direction, special_tile: Tile,
+                 tile_dic: Optional[Dict[Coordinate, Tile]] = None):
         """
 
         :param hallway:
         :param direction: the Direction to the Hallway based on the Room's perspective
+        :param special_tile: the tile this room is dedicated to, placed in the middle
         :param tile_dic:
         """
+        if tile_dic is None: tile_dic = {}
+        tile_dic[Room.mid()] = special_tile
         tile_list = Room.dic_to_tile_list(tile_dic)
         if Hallway.is_first(direction):
             if hallway.connects_horizontally():
@@ -661,7 +673,7 @@ class SpecialRoom(Room, ABC):
 
 
 class SpawnRoom(CopyAbleRoom):
-    def __init__(self, load_map_callback: Callable[[str, Optional[Coordinate]], None],
+    def __init__(self, leave_map_callback: Callable[[], None],
                  tile_dic: Dict[Coordinate, Tile] = None, north_hallway: Hallway = None, east_hallway: Hallway = None,
                  south_hallway: Hallway = None, west_hallway: Hallway = None, place_teleporter: bool = True):
         room_mid = Coordinate(Room.INNER_MID_X, Room.INNER_MID_Y)
@@ -676,7 +688,7 @@ class SpawnRoom(CopyAbleRoom):
         self.__tile_dic = tile_dic
         super(SpawnRoom, self).__init__(AreaType.SpawnRoom, Room.dic_to_tile_list(tile_dic), north_hallway,
                                         east_hallway, south_hallway, west_hallway)
-        self.__load_map = load_map_callback
+        self.__leave_map = leave_map_callback
         self.__is_done = None
 
     def abbreviation(self):
@@ -692,15 +704,15 @@ class SpawnRoom(CopyAbleRoom):
             else:
                 CommonQuestions.GoingBack.ask(self.__conditional_going_back)
         else:
-            Logger.instance().error("is_done_callback not set yet!", from_pycui=False)
+            Logger.instance().error("is_done_callback not set yet!", show=False, from_pycui=False)
 
     def __conditional_going_back(self, confirmed: int):
         if confirmed == 0:
-            self.__load_map(MapConfig.back_map_string(), None)
+            self.__leave_map()
 
     def copy(self, hw_dic: Dict[Direction, Hallway]) -> "CopyAbleRoom":
         # don't place a teleporter because it's already in tile_dic if it should be placed
-        return SpawnRoom(self.__load_map, self.__tile_dic, hw_dic[Direction.North], hw_dic[Direction.East],
+        return SpawnRoom(self.__leave_map, self.__tile_dic, hw_dic[Direction.North], hw_dic[Direction.East],
                          hw_dic[Direction.South], hw_dic[Direction.West], place_teleporter=False)
 
 
@@ -721,14 +733,16 @@ class WildRoom(BaseWildRoom):
 
     def __init__(self, factory: target_factory.EnemyFactory, chance: float = 0.6, north_hallway: Hallway = None,
                  east_hallway: Hallway = None, south_hallway: Hallway = None, west_hallway: Hallway = None):
+        from qrogue.util import Config
+        Config.check_reachability("WildRoom()")
         self.__dictionary = {1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [], 9: []}
-        rm = RandomManager.create_new()
+        rm = RandomManager.create_new(7)
 
         available_positions = []
         for y in range(Room.INNER_HEIGHT):
             available_positions += [Coordinate(x, y) for x in range(Room.INNER_WIDTH)]
         num_of_enemies = len(available_positions) * chance
-        if rm.get(msg="WR_enemyPlacementRounding") < 0.5:
+        if rm.get_bool(msg="WR_enemyPlacementRounding"):
             num_of_enemies = math.floor(num_of_enemies)
         else:
             num_of_enemies = math.ceil(num_of_enemies)
@@ -769,16 +783,21 @@ class DefinedWildRoom(BaseWildRoom):
 
 
 class TreasureRoom(SpecialRoom):
-    def __init__(self, treasure: Collectible, hallway: Hallway, direction: Direction,
+    def __init__(self, treasure: Union[Collectible, Instruction], hallway: Hallway, direction: Direction,
                  tile_dic: Dict[Coordinate, Tile] = None):
-        coordinate = Coordinate(Area.MID_X, Area.MID_Y)
-        if not tile_dic:
-            tile_dic = {}
-        tile_dic[coordinate] = treasure
         if isinstance(treasure, Instruction):
-            super().__init__(AreaType.GateRoom, hallway, direction, tile_dic)
+            super().__init__(AreaType.GateRoom, hallway, direction, Collectible(treasure, force_add=True), tile_dic)
         else:
-            super().__init__(AreaType.TreasureRoom, hallway, direction, tile_dic)
+            super().__init__(AreaType.TreasureRoom, hallway, direction, treasure, tile_dic)
+
+    def abbreviation(self) -> str:
+        return "TR"
+
+
+class ChallengeRoom(SpecialRoom):
+    def __init__(self, hallway: Hallway, direction: Direction, challenger: Challenger,
+                 tile_dic: Dict[Coordinate, Tile] = None):
+        super().__init__(AreaType.ChallengeRoom, hallway, direction, challenger, tile_dic)
 
     def abbreviation(self) -> str:
         return "TR"
@@ -787,27 +806,15 @@ class TreasureRoom(SpecialRoom):
 class RiddleRoom(SpecialRoom):
     def __init__(self, hallway: Hallway, direction: Direction, riddle: Riddle,
                  open_riddle_callback: Callable[[Robot, Riddle], None], tile_dic: Dict[Coordinate, Tile] = None):
-        super().__init__(AreaType.RiddleRoom, hallway, direction, tile_dic)
-        self._set_tile(Riddler(open_riddle_callback, riddle), Area.MID_X, Area.MID_Y)   # todo place in SpecialRoom?
+        super().__init__(AreaType.RiddleRoom, hallway, direction, Riddler(open_riddle_callback, riddle), tile_dic)
 
     def abbreviation(self):
         return "RR"
 
 
-class ShopRoom(SpecialRoom):
-    def __init__(self, hallway: Hallway, direction: Direction, inventory: "list of ShopItems",
-                 visit_shop_callback: "void(Robot, list of ShopItems)", tile_dic: "dic of Coordinate and Tile" = None):
-        super().__init__(AreaType.ShopRoom, hallway, direction, tile_dic)
-        self._set_tile(ShopKeeper(visit_shop_callback, inventory), Area.MID_X, Area.MID_Y)
-
-    def abbreviation(self):
-        return "$R"
-
-
 class BossRoom(SpecialRoom):
     def __init__(self, hallway: Hallway, direction: Direction, boss: Boss, tile_dic: Dict[Coordinate, Tile] = None):
-        super().__init__(AreaType.BossRoom, hallway, direction, tile_dic)
-        self._set_tile(boss, x=Area.MID_X, y=Area.MID_Y)
+        super().__init__(AreaType.BossRoom, hallway, direction, boss, tile_dic)
 
     def abbreviation(self) -> str:
         return "BR"

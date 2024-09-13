@@ -1,16 +1,10 @@
 # exporting
-from .pause import Pausing
-from .save_data import SaveData
-from .story import StoryNarration, TransitionText
 from .map_management import MapManager
 from .qrogue_pycui import QrogueCUI
+from .save_data import NewSaveData
 
 # importing
-# +util
-# +util.game_simulator
-# +util.key_logger
 # +game.logic.actors
-# +game.logic.actors.controllables
 # +game.world.dungeon_generator
 # +game.world.map
 # +game.world.navigation
@@ -18,3 +12,7 @@ from .qrogue_pycui import QrogueCUI
 # +graphics.rendering
 # +graphics.popups
 # +graphics.widgets
+# +util
+# +util.achievements
+# +util.game_simulator
+# +util.key_logger

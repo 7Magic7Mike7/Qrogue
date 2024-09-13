@@ -16,7 +16,7 @@ rooms : ROOMS room* ;
 room : ROOM_ID r_attributes ':' room_content ;
 r_attributes : '(' r_visibility r_type ')' ;  // visibile/in sight, type
 r_visibility : (VISIBLE_LITERAL | FOGGY_LITERAL)? ;
-r_type :    (SPAWN_LITERAL | BOSS_LITERAL | WILD_LITERAL | SHOP_LITERAL | RIDDLE_LITERAL | GATE_ROOM_LITERAL |
+r_type :    (SPAWN_LITERAL | BOSS_LITERAL | WILD_LITERAL | RIDDLE_LITERAL | GATE_ROOM_LITERAL |
             TREASURE_LITERAL | CHALLENGE_LITERAL | PAUSE_LITERAL | STORY_LITERAL) ;
 room_content : 'TODO: implement in importing grammar #override' ;    // must be implemented in importing grammar
 
@@ -45,7 +45,6 @@ LEVEL_LITERAL : 'Level' ;
 
 SPAWN_LITERAL : 'Spawn' ;
 WILD_LITERAL : 'Wild' ;
-SHOP_LITERAL : 'Shop' ;
 RIDDLE_LITERAL : 'Riddle' ;
 BOSS_LITERAL : 'Boss' ;
 GATE_ROOM_LITERAL : 'Gate' ;

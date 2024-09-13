@@ -1,6 +1,6 @@
-# Generated from D:/Workspaces/pycharm-workspace/Qrogue/qrogue/game/world/dungeon_generator\QrogueDungeon.g4 by ANTLR 4.12.0
+# Generated from D:/Workspaces/pycharm-workspace/Qrogue/qrogue/game/world/dungeon_generator/QrogueDungeon.g4 by ANTLR 4.13.1
 from antlr4 import *
-if __name__ is not None and "." in __name__:
+if "." in __name__:
     from .QrogueDungeonParser import QrogueDungeonParser
 else:
     from QrogueDungeonParser import QrogueDungeonParser
@@ -71,11 +71,6 @@ class QrogueDungeonVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by QrogueDungeonParser#energy_descriptor.
     def visitEnergy_descriptor(self, ctx:QrogueDungeonParser.Energy_descriptorContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by QrogueDungeonParser#shop_descriptor.
-    def visitShop_descriptor(self, ctx:QrogueDungeonParser.Shop_descriptorContext):
         return self.visitChildren(ctx)
 
 

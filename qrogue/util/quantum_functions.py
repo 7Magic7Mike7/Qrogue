@@ -1,6 +1,6 @@
-from typing import Optional, List
+from typing import List
 
-from qrogue.util.util_functions import to_binary_string, center_string, align_string, is_power_of_2
+from qrogue.util.util_functions import to_binary_string, is_power_of_2
 
 
 def generate_ket(qubit: int, num_of_qubits: int) -> str:
@@ -21,7 +21,7 @@ def generate_ket(qubit: int, num_of_qubits: int) -> str:
 
 def verify_stv_amplitudes(amplitudes: List[complex], tolerance: float):
     if is_power_of_2(len(amplitudes)):
-        amp_sum = sum([c.real**2 + c.imag**2 for c in amplitudes])
+        amp_sum = sum([c.real ** 2 + c.imag ** 2 for c in amplitudes])
         return 1 - tolerance <= amp_sum <= 1 + tolerance
     return False
 
@@ -31,7 +31,7 @@ def verify_circuit_matrix(matrix: List[List[complex]], tolerance: float) -> bool
     for row in matrix:
         row_sum = 0
         for i, val in enumerate(row):
-            res_val = abs(val)**2
+            res_val = abs(val) ** 2
             row_sum += res_val
             col_sum[i] += res_val
         if row_sum < 1 - tolerance or 1 + tolerance < row_sum:

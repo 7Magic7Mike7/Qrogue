@@ -4,30 +4,30 @@ from typing import Dict
 from qrogue.game.world.dungeon_generator.wave_function_collapse import WaveFunction
 from qrogue.game.world.dungeon_generator.wave_function_collapse.wfc_generator import WFCRoomGenerator, \
     WFCLayoutGenerator
-from qrogue.game.world.map.rooms import AreaType, Area
+from qrogue.game.world.map import AreaType, Area
 from qrogue.test import test_util
 from qrogue.util import MapConfig, RandomManager, TestConfig
-from qrogue.util.util_functions import enum_str
+from qrogue.util.util_functions import enum_string
 
 
 class WFCGeneratorTestCases(test_util.SingletonSetupTestCase):
     def test_layout_generator(self):
-        generator = WFCLayoutGenerator(7, [(level, True) for level in MapConfig.level_list()])
+        generator = WFCLayoutGenerator([(level, True) for level in MapConfig.level_list()])
         for i in range(7):
-            level = generator.generate()
+            level = generator.generate(7)
             text = ""
             for row in level:
                 for val in row:
-                    text += f"{enum_str(val)}  "
+                    text += f"{enum_string(val)}  "
                 text += "\n"
             self._print(text)
             self._print()
 
     def test_room_generator(self):
-        generator = WFCRoomGenerator(7, [(level, True) for level in MapConfig.level_list()],
-                                     room_type=AreaType.WildRoom)
+        generator = WFCRoomGenerator.from_level_files([(level, True) for level in MapConfig.level_list()],
+                                                      room_type=AreaType.WildRoom)
         for i in range(7):
-            room = generator.generate()
+            room = generator.generate(7)
 
             text = "#" * Area.UNIT_WIDTH + "\n"
             for row in room:
@@ -92,7 +92,7 @@ class WaveFunctionTestCase(test_util.SingletonSetupTestCase):
     def test_force_value(self):
         rm = RandomManager.create_new(TestConfig.test_seed())
 
-        wave = WaveFunction({1: 3, 2: 4})
+        wave = WaveFunction({1: 3, 2: 4, 7: 1})
         self.assertTrue(wave.force_value(7), "Failed to force integer value onto integer WaveFunction!")
 
         wave = WaveFunction({1: 3, 2: 4})

@@ -1,5 +1,3 @@
-
-
 class TestConfig:
     class StateException(Exception):
         def __init__(self, msg: str):
@@ -31,7 +29,7 @@ class TestConfig:
 
     @staticmethod
     def key_pause() -> float:
-        return 0.05     # time in seconds
+        return 0.05  # time in seconds
 
     @staticmethod
     def activate():

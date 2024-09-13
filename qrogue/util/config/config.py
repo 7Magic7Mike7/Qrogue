@@ -1,15 +1,18 @@
 import os
-from datetime import datetime
 
-import qiskit   # imported to check its version
+import qiskit  # imported to check its version
 
-from qrogue.util.config import CheatConfig, GameplayConfig, PathConfig, TestConfig
+from qrogue.util.util_functions import cur_datetime
+from .gameplay_config import CheatConfig
+from .options import OptionsManager
+from .path_config import PathConfig
+from .test_config import TestConfig
 
 
-class Config:   # todo make singleton and handle access to other configs?
+class Config:  # todo make singleton and handle access to other configs?
     __frame_count = 0
     MAX_SEED = 1000000
-    __VERSION = "v0.7.0.5"
+    __VERSION = "v0.8"
     __GAME_CONFIG = "qrogue_game.config"
     __GAMEPLAY_HEAD = "[Gameplay]\n"
     __DEBUG = False
@@ -19,6 +22,30 @@ class Config:   # todo make singleton and handle access to other configs?
     __SEED_HEAD = "Seed="
     __TIME_HEAD = "Time="
     __CONFIG_HEAD = "[Config]"
+
+    @staticmethod
+    def ascii_art() -> str:
+        return """
+
+
+           _______           
+          / _____ \          
+         | |     | |         
+         | |     | |         
+         | |     | |         
+         | |     | |         
+         | |_____| |         
+          \______\_\         
+
+ 
+  _ __ ___   __ _ _   _  ___  
+ | '__/ _ \ / _` | | | |/ _ \ 
+ | | | (_) | (_| | |_| |  __/ 
+ |_|  \___/ \__, |\__,_|\___| 
+             __/ |            
+            |___/             
+
+"""
 
     @staticmethod
     def HEADER() -> str:
@@ -38,7 +65,7 @@ class Config:   # todo make singleton and handle access to other configs?
 
     @staticmethod
     def examiner_name() -> str:
-        return "Examiner"   # for things the scientist says during the exam
+        return "Examiner"  # for things the scientist says during the exam
 
     @staticmethod
     def scientist_name() -> str:
@@ -46,11 +73,7 @@ class Config:   # todo make singleton and handle access to other configs?
 
     @staticmethod
     def system_name() -> str:
-        return "System"     # for things the robot's system tells us
-
-    @staticmethod
-    def player_name() -> str:
-        return "Mike"
+        return "System"  # for things the robot's system tells us
 
     @staticmethod
     def get_name(value: int) -> str:
@@ -60,22 +83,24 @@ class Config:   # todo make singleton and handle access to other configs?
             return Config.scientist_name()
         if value == 2:
             return Config.system_name()
-        if value == 3:
-            return Config.player_name()
 
-        return Config.system_name()     # default if nothing valid was specified
+        return Config.system_name()  # default if nothing valid was specified
 
     @staticmethod
     def version() -> str:
         return Config.__VERSION
 
     @staticmethod
+    def report_address() -> str:
+        return "qrogue.game@gmail.com"
+
+    @staticmethod
     def get_log_head(seed: int) -> str:
-        now_str = datetime.now().strftime("%d%m%Y_%H%M%S")
+        now_str = cur_datetime().strftime("%d%m%Y_%H%M%S")
         head = f"{Config.__HEADER}{Config.version()}\n"
         head += f"{Config.__SEED_HEAD}{seed}\n"
         head += f"{Config.__TIME_HEAD}{now_str}\n\n"
-        head += f"{Config.__CONFIG_HEAD}\n{GameplayConfig.to_file_text()}\n"
+        head += f"{Config.__CONFIG_HEAD}\n{OptionsManager.to_string()}\n"
         return head
 
     @staticmethod
@@ -125,7 +150,7 @@ class Config:   # todo make singleton and handle access to other configs?
         if not os.path.exists(path):
             text = ""
             text += Config.__GAMEPLAY_HEAD
-            text += GameplayConfig.to_file_text()
+            text += OptionsManager.to_string()
             with open(path, "x") as file:
                 file.write(text)
 
@@ -144,7 +169,7 @@ class Config:   # todo make singleton and handle access to other configs?
         try:
             content = PathConfig.read(Config.game_config_file(), in_user_path=True)
             gameplay_start = content.index(Config.__GAMEPLAY_HEAD) + len(Config.__GAMEPLAY_HEAD)
-            if GameplayConfig.from_log_text(content[gameplay_start:len(content)]):
+            if OptionsManager.from_text(content[gameplay_start:len(content)]):
                 return True
         except FileNotFoundError:
             raise FileNotFoundError("Could not load the game's config file!")
@@ -152,7 +177,7 @@ class Config:   # todo make singleton and handle access to other configs?
 
     @staticmethod
     def save_gameplay_config() -> bool:
-        text = f"{Config.__GAMEPLAY_HEAD}\n{GameplayConfig.to_file_text()}\n"
+        text = f"{Config.__GAMEPLAY_HEAD}\n{OptionsManager.to_string()}\n"
         PathConfig.write(Config.game_config_file(), text, in_user_path=True, may_exist=True, append=False)
         return True
 
@@ -177,4 +202,10 @@ class Config:   # todo make singleton and handle access to other configs?
         parts = qiskit.__qiskit_version__['qiskit'].split(".")
         major = int(parts[0])
         minor = int(parts[1])
-        return major >= 0 and minor >= 44   # >= 0.44.0
+        return major >= 0 and minor >= 44  # >= 0.44.0
+
+    @staticmethod
+    def check_reachability(source: str, raise_exception: bool = False):
+        print(f"\"{source}\" was reached.")
+        if raise_exception:
+            raise Exception(f"Faulty code at \"{source}\" was reached!")

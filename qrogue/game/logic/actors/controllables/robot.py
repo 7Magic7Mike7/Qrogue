@@ -3,24 +3,48 @@ Author: Artner Michael
 13.06.2021
 """
 from abc import ABC
-from typing import Tuple, List, Callable, Optional
+from typing import Tuple, List, Callable, Optional, Iterator, Union
 
 from qrogue.game.logic.actors.controllables import Controllable
 from qrogue.game.logic.actors.controllables.qubit import QubitSet, DummyQubitSet
 from qrogue.game.logic.base import StateVector, CircuitMatrix, QuantumSimulator, QuantumCircuit, UnitarySimulator
-from qrogue.game.logic.collectibles import Coin, Collectible, Consumable, Instruction, Key, MultiCollectible, \
-    Qubit, Energy, Score
-from qrogue.util import CheatConfig, Config, Logger, GameplayConfig, QuantumSimulationConfig, Options
+from qrogue.game.logic.collectibles import Collectible, Instruction, Key, MultiCollectible, \
+    Qubit, Energy, Score, InstructionManager
+from qrogue.util import CheatConfig, Config, Logger, GameplayConfig, QuantumSimulationConfig, Options, GateType, \
+    LevelInfo
 
 
 # from jkq import ddsim
+class RoboProperties:
+    @staticmethod
+    def from_difficulty_level(difficulty_level: int, gate_list: Optional[List[Instruction]] = None) -> "RoboProperties":
+        return RoboProperties(LevelInfo.get_default_num_of_qubits(difficulty_level),
+                              LevelInfo.get_default_circuit_space(difficulty_level), gate_list)
+
+    def __init__(self, num_of_qubits: int = 3, circuit_space: int = 5, gate_list: Optional[List[Instruction]] = None):
+        self.__num_of_qubits = num_of_qubits
+        self.__circuit_space = circuit_space
+        self.__gate_list = gate_list
+
+    @property
+    def num_of_qubits(self) -> int:
+        return self.__num_of_qubits
+
+    @property
+    def circuit_space(self) -> int:
+        return self.__circuit_space
+
+    @property
+    def instruction_list(self) -> Optional[List[Instruction]]:
+        if self.__gate_list is None: return None
+        return [gate.copy() for gate in self.__gate_list]
 
 
 class _Attributes:
     """
     A class that handles some attributes of a Robot.
     """
-
+    # todo: Overhaul whole class?
     __DEFAULT_SPACE = 5
     __DEFAULT_MAX_ENERGY = 100
     __MIN_INIT_ENERGY = 1  # during initialization neither max_energy nor cur_energy must be below this value
@@ -128,7 +152,7 @@ class _Attributes:
         :return: by how much current energy was actually decreased
         """
         if CheatConfig.got_inf_resources():
-            return 0    # no decrease in this case
+            return 0  # no decrease in this case
 
         self.__cur_energy -= amount
         if self.__cur_energy < 0:
@@ -138,15 +162,14 @@ class _Attributes:
         return amount
 
 
-class Backpack:
+class _Backpack:
     """
     Stores Instructions, Consumables and other Collectibles for a Robot to use.
     """
 
-    __CAPACITY: int = 5      # how many Instructions the Backpack can hold at once
-    __POUCH_SIZE: int = 5    # how many Consumables the Backpack can hold at once
+    __DEFAULT_CAPACITY: int = 5  # how many Instructions the Backpack can hold at once
 
-    def __init__(self, capacity: int = __CAPACITY, content: Optional[List[Instruction]] = None):
+    def __init__(self, capacity: Optional[int] = None, content: Optional[List[Instruction]] = None):
         """
         Backpack is a storage/management class for Collectibles.
 
@@ -154,7 +177,7 @@ class Backpack:
         :param content: list of initially stored Instructions
         """
         if capacity is None:
-            capacity = Backpack.__CAPACITY
+            capacity = _Backpack.__DEFAULT_CAPACITY
 
         self.__capacity: int = capacity
         if content:
@@ -163,17 +186,7 @@ class Backpack:
         else:
             self.__capacity = capacity
             self.__storage: List[Instruction] = []
-        self.__pouch_size: int = Backpack.__POUCH_SIZE
-        self.__pouch: List[Consumable] = []
-        self.__coin_count: int = 0
         self.__key_count: int = 0
-
-    def __iter__(self) -> "BackpackIterator":
-        """
-
-        :return: an Iterator over the stored Instructions
-        """
-        return BackpackIterator(self)
 
     @property
     def capacity(self) -> int:
@@ -192,32 +205,6 @@ class Backpack:
         return len(self.__storage)
 
     @property
-    def consumables_in_pouch(self) -> int:
-        """
-
-        :return: how many Consumables are currently stored
-        """
-        return len(self.__pouch)
-
-    @property
-    def num_of_available_items(self) -> int:
-        """
-
-        :return: number of items that are currently available to use (e.g. Consumables)
-        """
-        return self.consumables_in_pouch    # later we might add active item(s)?
-
-    @property
-    def coin_count(self) -> int:
-        """
-
-        :return: number of Coins we currently have
-        """
-        if CheatConfig.got_inf_resources():
-            return 999
-        return self.__coin_count
-
-    @property
     def key_count(self) -> int:
         """
 
@@ -226,42 +213,6 @@ class Backpack:
         if CheatConfig.got_inf_resources():
             return 999
         return self.__key_count
-
-    def can_afford(self, price: int) -> bool:
-        """
-        Checks if we have enough resources to afford a Collectible with the given price.
-
-        :param price: how many Coins the item costs
-        :return: whether we could afford a Collectible with this price or not
-        """
-        return self.coin_count >= price
-
-    def give_coin(self, amount: int) -> bool:
-        """
-        Adds the given amount of Coins. Fails if amount is less or equal to 0.
-
-        :param amount: how many Coins we want to add
-        :return: True if the given amount of Coins were handed out successfully, False otherwise
-        """
-        if amount > 0:
-            self.__coin_count += amount
-            return True
-        return False
-
-    def spend_coins(self, amount: int) -> bool:
-        """
-        Spends the given amount of Coins, i.e. decreases coin count by the given amount.
-
-        :param amount: how many Coins we want to spend
-        :return: True if we could successfully spend the amount of Coins, False if it failed (e.g. not enough Coins)
-        """
-        if CheatConfig.got_inf_resources():
-            return True
-
-        if self.can_afford(amount):
-            self.__coin_count -= amount
-            return True
-        return False
 
     def give_key(self, amount: int) -> bool:
         """
@@ -300,14 +251,15 @@ class Backpack:
             return self.__storage[index]
         return None
 
-    def add(self, instruction: Instruction) -> bool:
+    def add(self, instruction: Instruction, force: bool = False) -> bool:
         """
         Adds an Instruction to the backpack if possible (i.e. if there is still space left).
 
         :param instruction: the Instruction to add
+        :param force: whether we force instruction to be added, defaults to False
         :return: True if there is enough capacity left to store the Instruction, False otherwise
         """
-        if self.used_capacity < self.__capacity:
+        if self.used_capacity < self.__capacity or force:
             self.__storage.append(instruction)
             return True
         return False
@@ -324,56 +276,27 @@ class Backpack:
                 self.__storage.remove(instruction)
                 return True
         if Config.debugging():
-            Logger.instance().error("Reached a line in Backpack.remove() that I think should not be reachable "
-                                    "(although it has no game-consequences if I'm wrong).", from_pycui=False)
+            Logger.instance().error("Reached a line in Backpack.remove() that I think should not be reachable ("
+                                    "although it has no game-consequences if I'm wrong).", show=False, from_pycui=False)
         try:
             self.__storage.remove(instruction)
             return True
         except ValueError:
             return False
 
-    def pouch_iterator(self) -> __iter__:
+    def set_instructions(self, gate_list: List[Instruction]) -> bool:
         """
+        Clears the stored Instructions and stores copies of all Instructions in gate_list.
 
-        :return: an Iterator over the Consumables stored in this Backpack
+        :param gate_list: the instructions to store
+        :return: True if gates were stored correctly, False otherwise (e.g., more gates than $capacity were provided)
         """
-        return iter(self.__pouch)
-
-    def get_from_pouch(self, index: int) -> Optional[Consumable]:
-        """
-        Returns the Consumable at the provided index in the pouch if index is valid. Otherwise returns None.
-
-        :param index: index of the Consumable we want to get
-        :return: the Consumable at the given index or None
-        """
-        if 0 <= index < self.consumables_in_pouch:
-            return self.__pouch[index]
-        return None
-
-    def place_in_pouch(self, consumable: Consumable) -> bool:
-        """
-        Places a Consumable in the pouch if possible (i.e. there is still space left).
-
-        :param consumable: the Consumable we want to store in the pouch
-        :return: True if we could add the Consumable, False otherwise
-        """
-        if self.consumables_in_pouch < self.__pouch_size:
-            self.__pouch.append(consumable)
+        if 0 <= len(gate_list) < self.capacity:
+            self.__storage.clear()
+            for gate in gate_list:
+                self.__storage.append(gate.copy())
             return True
         return False
-
-    def remove_from_pouch(self, consumable: Consumable) -> bool:
-        """
-        Tries to remove a given Consumable from the pouch. Fails if it's not stored in the pouch.
-
-        :param consumable: the Consumable we want to remove
-        :return: True if consumable was removed successfully, False otherwise
-        """
-        try:
-            self.__pouch.remove(consumable)
-            return True
-        except ValueError:
-            return False
 
     def copy_gates(self) -> List[Instruction]:
         """
@@ -386,27 +309,17 @@ class Backpack:
             data.append(gate.copy())
         return data  # [gate.copy() for gate in self.__storage]
 
+    def instruction_iterator(self) -> Iterator[Instruction]:
+        """
 
-class BackpackIterator:
-    """
-    Allows us to easily iterate through all the Instructions in a backpack.
-    """
-
-    def __init__(self, backpack: Backpack):
-        self.__index: int = 0
-        self.__backpack: Backpack = backpack
-
-    def __next__(self) -> Instruction:
-        if self.__index < self.__backpack.used_capacity:
-            item = self.__backpack.get(self.__index)
-            self.__index += 1
-            return item
-        raise StopIteration
+        :return: an Iterator over the stored Instructions
+        """
+        return iter(self.__storage)
 
 
 class Robot(Controllable, ABC):
     @staticmethod
-    def __counts_to_bit_list(counts):       # todo can be deleted I think
+    def __counts_to_bit_list(counts):  # todo can be deleted I think
         counts = str(counts)
         counts = counts[1:len(counts) - 1]
         arr = counts.split(':')
@@ -420,7 +333,7 @@ class Robot(Controllable, ABC):
         list_.reverse()  # so that list_[i] corresponds to the measured value of qi
         return list_
 
-    def __init__(self, name: str, attributes: _Attributes, backpack: Backpack, game_over_callback: Callable[[], None]):
+    def __init__(self, name: str, attributes: _Attributes, backpack: _Backpack, game_over_callback: Callable[[], None]):
         """
 
         :param name: name of the Robot for identification and rendering
@@ -431,7 +344,7 @@ class Robot(Controllable, ABC):
         super().__init__(name)
         self.__score: int = 0
         self.__attributes: _Attributes = attributes
-        self.__backpack: Backpack = backpack
+        self.__backpack: _Backpack = backpack
         self.__game_over: Callable[[], None] = game_over_callback
         # initialize qubit stuff (rows)
         self.__simulator = QuantumSimulator()
@@ -443,11 +356,10 @@ class Robot(Controllable, ABC):
             self.__qubit_indices.append(i)
 
         # initialize gate stuff (columns)
-        self.__instruction_count: int = 0   # how many instructions are currently placed on the circuit
+        self.__instruction_count: int = 0  # how many instructions are currently placed on the circuit
         # initialize based on empty circuit
         self.__instructions: List[Optional[Instruction]] = [None] * attributes.circuit_space
         # initially there is no static gate (i.e., a gate that cannot be moved and was added by a puzzle)
-        self.__static_gate: Optional[Instruction] = None
 
         if False:
             # todo: for whatever reason this code is slower than calling below method which executes a simulation...
@@ -458,8 +370,22 @@ class Robot(Controllable, ABC):
             self.update_statevector(None, use_energy=False, check_for_game_over=False)
 
     @property
-    def backpack(self) -> Backpack:
-        return self.__backpack
+    def used_capacity(self) -> int:
+        """
+        :return: how many instructions are placed on the robot's circuit
+        """
+        return self.__backpack.used_capacity
+
+    @property
+    def capacity(self) -> int:
+        """
+        :return: how many instructions can be placed on the robot's circuit
+        """
+        return self.__backpack.capacity
+
+    @property
+    def instructions(self) -> Iterator[Instruction]:
+        return self.__backpack.instruction_iterator()
 
     @property
     def state_vector(self) -> StateVector:
@@ -514,18 +440,19 @@ class Robot(Controllable, ABC):
 
     def increase_score(self, amount: int):
         if amount < 0:
-            Logger.instance().error(f"Tried to increase score by a negative amount: {amount}!", from_pycui=False)
+            Logger.instance().error(f"Tried to increase score by a negative amount: {amount}!", show=False,
+                                    from_pycui=False)
             return
         self.__score += amount
 
     def reset_score(self):
         self.__score = 0
 
-    def key_count(self) -> int:     # cannot be a property since it is an abstractmethod in Controllable
-        return self.backpack.key_count
+    def key_count(self) -> int:  # cannot be a property since it is an abstractmethod in Controllable
+        return self.__backpack.key_count
 
     def use_key(self) -> bool:
-        return self.backpack.use_key()
+        return self.__backpack.use_key()
 
     def __update_circuit_space(self, new_circuit_space: int):
         old_instructions = self.__instructions.copy()
@@ -537,21 +464,6 @@ class Robot(Controllable, ABC):
         for i, inst in enumerate(old_instructions):
             if inst is not None and i < len(self.__instructions):
                 self.__instructions[i] = inst
-
-    def add_static_gate(self, gate: Instruction):
-        if self.__static_gate is None:
-            if gate is not None:
-                self.__static_gate = gate
-                # expand instructions and place static_gate in its middle
-                prev_circuit_space = self.circuit_space
-                self.__update_circuit_space(prev_circuit_space + 1 + prev_circuit_space)
-                self.__place_instruction(self.__static_gate, prev_circuit_space)
-        else:
-            Logger.instance().error("Static Gate was not reset!", show=False, from_pycui=False)
-
-    def reset_static_gate(self, prev_circuit_space: int):
-        self.__static_gate = None
-        self.__update_circuit_space(prev_circuit_space)
 
     def update_statevector(self, input_stv: StateVector, use_energy: bool = True, check_for_game_over: bool = True):
         """
@@ -566,23 +478,23 @@ class Robot(Controllable, ABC):
         if check_for_game_over and self.game_over_check():
             return
 
-        num_of_used_gates: int = 0      # cannot use len(instructions) since this contains None values
+        num_of_used_gates: int = 0  # cannot use len(instructions) since this contains None values
         circuit = QuantumCircuit.from_bit_num(self.num_of_qubits, self.num_of_qubits)
         for inst in self.__instructions:
             if inst is not None:
                 num_of_used_gates += 1
                 inst.append_to(circuit)
-        if self.__static_gate is not None:
-            self.__static_gate.append_to(circuit)
 
         amplitudes = self.__unitary_simulator.execute(circuit, decimals=QuantumSimulationConfig.DECIMALS)
         self.__circuit_matrix = CircuitMatrix(amplitudes, num_of_used_gates)
 
-        if input_stv is None:   # todo: input_stv might only be None if the circuit is empty (reset or initialized)
+        if input_stv is None:  # todo: input_stv might only be None if the circuit is empty (reset or initialized)
             amplitudes = self.__simulator.run(circuit, do_transpile=True)
             self.__stv = StateVector(amplitudes, num_of_used_gates=self.__instruction_count)
         else:
             self.__stv = self.__circuit_matrix.multiply(input_stv)
+            if self.__stv is None:
+                self.__stv = StateVector.create_zero_state_vector(self.num_of_qubits)
 
         if use_energy and GameplayConfig.get_option_value(Options.energy_mode):
             self.decrease_energy(amount=1)
@@ -597,8 +509,6 @@ class Robot(Controllable, ABC):
         """
         # todo check if we can extend the condition with "and instruction in self.__instructions"
         if instruction and instruction.is_used():
-            if instruction is self.__static_gate: return False  # player cannot remove the static gate
-
             self.__instructions[instruction.position] = None
             self.__instruction_count -= 1
             instruction.reset(skip_qargs=skip_qargs)
@@ -629,8 +539,6 @@ class Robot(Controllable, ABC):
         if instruction.is_used():
             Logger.instance().throw(RuntimeError("Illegal state: Instruction was not removed before placing!"))
             return False
-        if self.__static_gate is not None and position == self.__static_gate.position:
-            return False  # player cannot overwrite the static gate
 
         if 0 <= position < self.circuit_space:
             if self.__instructions[position]:
@@ -653,8 +561,6 @@ class Robot(Controllable, ABC):
         :return: True if we successfully (re)moved instruction, False otherwise
         """
         if instruction.is_used() and instruction.position != position:
-            if instruction is self.__static_gate: return False  # player cannot move the static gate
-
             if 0 <= position < self.circuit_space:
                 if self.__instructions[position]:
                     self.__remove_instruction(instruction, skip_qargs=True)
@@ -674,8 +580,8 @@ class Robot(Controllable, ABC):
         :param index: index of the Instruction in the backpack
         :return: the stored Instruction at the given index or None
         """
-        if 0 <= index < self.backpack.used_capacity:
-            return self.backpack.get(index)
+        if 0 <= index < self.__backpack.used_capacity:
+            return self.__backpack.get(index)
         return None
 
     def use_instruction(self, instruction: Instruction, position: int) -> bool:
@@ -714,34 +620,47 @@ class Robot(Controllable, ABC):
 
         :return: a List containing copies of all Instructions currently available to this Robot
         """
-        return self.backpack.copy_gates()
+        return self.__backpack.copy_gates()
 
-    def give_collectible(self, collectible: Collectible):
+    def set_available_instructions(self, gates: Union[List[Instruction], List[GateType]]) -> bool:
+        """
+        :param gates: either a list of GateType or Instruction that determines which Instructions are available
+        :return: True if gates were successfully set, False if an error occurred
+        """
+        if len(gates) > 0 and isinstance(gates[0], GateType):
+            gate_types: List[GateType] = gates
+            gates = [InstructionManager.from_type(gt) for gt in gate_types]
+        return self.__backpack.set_instructions(gates)
+
+    def give_collectible(self, collectible: Collectible, force: bool = False) -> bool:
         """
         Gives collectible to this Robot.
 
         :param collectible: the Collectible we want to give this Robot
-        :return: None
+        :param force: whether we force collectible to be added, defaults to False
+        :return: True if the collectible was given successfully, False otherwise
         """
         if isinstance(collectible, Score):
             self.__score += collectible.amount
-        elif isinstance(collectible, Coin):
-            self.backpack.give_coin(collectible.amount)
+            return True
         elif isinstance(collectible, Key):
-            self.backpack.give_key(collectible.amount)
+            return self.__backpack.give_key(collectible.amount)
         elif isinstance(collectible, Energy):
             self.__attributes.increase_energy(collectible.amount)
+            return True
         elif isinstance(collectible, Instruction):
-            self.backpack.add(collectible)
-        elif isinstance(collectible, Consumable):
-            self.backpack.place_in_pouch(collectible)
+            return self.__backpack.add(collectible, force)
         elif isinstance(collectible, Qubit):
             self.__attributes.add_qubits(collectible.additional_qubits)
+            return True
         elif isinstance(collectible, MultiCollectible):
+            success = True
             for c in collectible.iterator():
-                self.give_collectible(c)
+                success = success and self.give_collectible(c, force)
+            return success
         else:
-            Logger.instance().error(f"Received uncovered collectible: {collectible}", from_pycui=False)
+            Logger.instance().error(f"Received uncovered collectible: {collectible}", show=False, from_pycui=False)
+            return False
 
     def on_move(self):
         """
@@ -761,7 +680,7 @@ class Robot(Controllable, ABC):
         :param amount: by how much we want to reduce this Robot's energy, defaults to 1
         :return: the actual amount by how much current energy was decreased, whether this Robot is game over or not
         """
-        assert amount > 0   # todo maybe == 0 is also okay?
+        assert amount > 0  # todo maybe == 0 is also okay?
 
         if self.game_over_check():
             return amount, True
@@ -774,7 +693,7 @@ class Robot(Controllable, ABC):
         :param amount: by how much current energy was increased
         :return: by how much current energy was actually increased.
         """
-        assert amount > 0   # todo maybe == 0 is also okay?
+        assert amount > 0  # todo maybe == 0 is also okay?
         return self.__attributes.increase_energy(amount)
 
     def gate_used_at(self, position: int) -> Optional[Instruction]:
@@ -794,12 +713,17 @@ class Robot(Controllable, ABC):
 
 
 class BaseBot(Robot):
+    @staticmethod
+    def from_properties(properties: RoboProperties, game_over_callback: Callable[[], None]) -> "BaseBot":
+        return BaseBot(game_over_callback, num_of_qubits=properties.num_of_qubits,
+                       circuit_space=properties.circuit_space, gates=properties.instruction_list)
+
     def __init__(self, game_over_callback: Callable[[], None], num_of_qubits: int = 3,
                  gates: Optional[List[Instruction]] = None,
                  circuit_space: Optional[int] = None, backpack_space: Optional[int] = None,
                  max_energy: Optional[int] = None, start_energy: Optional[int] = None):
         attributes = _Attributes(DummyQubitSet(num_of_qubits), circuit_space, max_energy, start_energy)
-        backpack = Backpack(backpack_space, gates)
+        backpack = _Backpack(backpack_space, gates)
         super(BaseBot, self).__init__("BaseBot", attributes, backpack, game_over_callback)
 
     def get_img(self):
@@ -812,7 +736,7 @@ class BaseBot(Robot):
 class LukeBot(Robot):
     def __init__(self, game_over_callback: Callable[[], None], size: int = 2):
         attributes = _Attributes(DummyQubitSet(size))
-        backpack = Backpack(capacity=5)
+        backpack = _Backpack(capacity=5)
 
         # randomness is not allowed during Robot creation because it messes up the seed
         # add random gates and a HealthPotion
@@ -832,3 +756,16 @@ class LukeBot(Robot):
 
     def description(self) -> str:
         return "The loyal Robot you start with. A true all-rounder - take good care of it!"
+
+
+class FusionBot(Robot):
+    def __init__(self, num_of_qubits: int, gates: List[Instruction]):
+        attributes = _Attributes(DummyQubitSet(num_of_qubits), len(gates))
+        backpack = _Backpack(len(gates), gates)
+        super().__init__("FusionBot", attributes, backpack, lambda: None)
+
+    def get_img(self):
+        return "F"
+
+    def description(self) -> str:
+        return "A Robot used to fuse gates."

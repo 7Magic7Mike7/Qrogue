@@ -1,15 +1,19 @@
 from enum import Enum
-from typing import Optional, List
+from typing import Optional, List, Callable
 
-from qrogue.util.config import ColorConfig as CC
+from qrogue.util.config import ColorConfig as CC, InstructionConfig
+from .achievements import Unlocks
 
 
 class _HL:
+    indent = "  "
+
     # objects
     boss = CC.highlight_object("Boss")
+    boss_s = CC.highlight_object("Boss's")
+    bosses = CC.highlight_object("Bosses")
     circuit = CC.highlight_object("Circuit")
     circuit_matrix = CC.highlight_object("Circuit Matrix")
-    coins = CC.highlight_object("Coins")
     collec = CC.highlight_object("Collectibles")
     current_state = CC.highlight_object("Current State")
     door = CC.highlight_object("Door")
@@ -24,8 +28,10 @@ class _HL:
     key = CC.highlight_object("Key")
     keys = CC.highlight_object("Keys")
 
+    mini_boss = CC.highlight_object("MiniBoss")
     output_stv = CC.highlight_object("Output State Vector")
     puzzle = CC.highlight_object("Puzzle")
+    puzzle_s = CC.highlight_object("Puzzle's")
     puzzles = CC.highlight_object("Puzzles")
     quantum_circuit = CC.highlight_object("Quantum Circuit")
     quantum_gates = CC.highlight_object("Quantum Gates")
@@ -35,10 +41,9 @@ class _HL:
     qubit_s = CC.highlight_object("Qubit(s)")
     riddles = CC.highlight_object("Riddles")
     robot = CC.highlight_object("Robot")
-    shop = CC.highlight_object("Shop")
     special_rooms = CC.highlight_object("Special Rooms")
     state = CC.highlight_object("State")
-    #state_vectors = CC.highlight_object("StateVectors")
+    # state_vectors = CC.highlight_object("StateVectors")
     target_state = CC.highlight_object("Target State")
     target_stv = CC.highlight_object("Target State Vector")
 
@@ -58,7 +63,7 @@ class _HL:
     try_ = CC.highlight_action("try")
 
     # words
-    amplitude = CC.highlight_word("ammplitude")
+    amplitude = CC.highlight_word("amplitude")
     amplitude_1 = CC.highlight_word("amplitude of 1")
     arbitrary = CC.highlight_word("arbitrary")
     around = CC.highlight_word("around")
@@ -152,7 +157,7 @@ class _HL:
     # keys
     action_keys = CC.highlight_key("Space") + " or " + CC.highlight_key("Enter")
     cancel_keys = CC.highlight_key("Backspace") + " or " + CC.highlight_key("Shift+A") + " or " + \
-        CC.highlight_key("Shift+Left")
+                  CC.highlight_key("Shift+Left")
     help_keys = CC.highlight_key("H")
     navigation_keys = CC.highlight_key("WASD") + " or " + CC.highlight_key("Arrow Keys")
     pause_keys = CC.highlight_key("P") + " or " + CC.highlight_key("TAB")
@@ -160,33 +165,29 @@ class _HL:
     shutdown_keys = CC.highlight_key("CTRL+Q") + " followed by " + CC.highlight_key("Q")
 
     # tiles
-    door_tile = CC.highlight_tile("-")
-    level_decoration_tile = CC.highlight_tile("L")
-    level2_decoration_tile = CC.highlight_tile("L - 2")
-    msg_tile = CC.highlight_tile(".")
-    navigation_tile = CC.highlight_tile("N")
-    quickstart_tile = CC.highlight_tile("Q")
-    robb_tile = CC.highlight_tile("R")
-    teleport_tile = CC.highlight_tile("t")
+    tile_boss = CC.highlight_tile('B')
+    tile_enemy0 = CC.highlight_tile('0')
+    tile_mini_boss = CC.highlight_tile('!')
 
 
-class HelpText(Enum):
-    Controls = f"Move                  -   {_HL.navigation_keys}\n" \
-            f"Navigate menus        -   {_HL.navigation_keys}\n" \
-            f"Confirm               -   {_HL.action_keys}\n" \
-            f"Cancel/Back           -   {_HL.cancel_keys}\n" \
-            f"Scroll in message     -   {_HL.navigation_keys}\n" \
-            f"Close message         -   {_HL.action_keys}\n" \
-            f"Reopen last message   -   {_HL.help_keys}\n" \
-            f"Pause                 -   {_HL.pause_keys}\n" \
-            f"Selection shortcuts   -   {_HL.shortcuts}\n" \
-            "\n" \
-            f"[Should you ever get stuck try to open the pause menu with {_HL.pause_keys} and then select continue. " \
-            f"This way the game refocuses and renders again. In case this still doesn't help or doesn't even work you "\
-            f"can force-quit the game by pressing {_HL.shutdown_keys}. This will still save everything so it is the " \
-            "preferred option over simply closing the window!]"  # let's not mention ESC since it could lead to bugs
+class HelpText(Enum):  # todo: import Controls to replace static key-mentions with dynamic ones?
+    Controls = ("controls", "Controls",
+        f"Move                  -   {_HL.navigation_keys}\n" \
+        f"Navigate menus        -   {_HL.navigation_keys}\n" \
+        f"Confirm               -   {_HL.action_keys}\n" \
+        f"Cancel/Back           -   {_HL.cancel_keys}\n" \
+        f"Scroll in message     -   {_HL.navigation_keys}\n" \
+        f"Close message         -   {_HL.action_keys}\n" \
+        f"Reopen last message   -   {_HL.help_keys}\n" \
+        f"Pause                 -   {_HL.pause_keys}\n" \
+        f"Selection shortcuts   -   {_HL.shortcuts}\n" \
+        "\n" \
+        f"[Should you ever get stuck try to open the pause menu with {_HL.pause_keys} and then select continue. " \
+        f"This way the game refocuses and renders again. In case this still doesn't help or doesn't even work you " \
+        f"can force-quit the game by pressing {_HL.shutdown_keys}. This will still save everything so it is the " \
+        "preferred option over simply closing the window!]")  # let's not mention ESC since it could lead to bugs
 
-    Fight = \
+    Fight = ("fight", "Puzzles",
         f"Basically {_HL.quantum_computing} is just a lot of complex-valued {_HL.mat_vec_mul}:\n" \
         f"{_HL.circuit_matrix} * {_HL.input_stv} = {_HL.output_stv}\n" \
         f"Your goal is to make the latter {_HL.equal} to the {_HL.target_stv}. While the input and target state " \
@@ -196,9 +197,9 @@ class HelpText(Enum):
         f"Afterwards use {_HL.action_keys} to confirm the placement. This will update both {_HL.circuit_matrix} " \
         f"and {_HL.output_stv} accordingly. Green numbers in {_HL.output_stv} indicate correct and red incorrect " \
         f"values. Once the whole vector is green, {_HL.output_stv} and {_HL.target_stv} are equal and the " \
-        f"{_HL.puzzle} is solved."
+        f"{_HL.puzzle} is solved.")
 
-    Ket = \
+    Ket = ("ket", "Ket-Notation",
         f"The {_HL.ket1_symbol}-notation you can see {_HL.around} the {_HL.state_vectors} and {_HL.circuit_matrix} " \
         f"is called {_HL.ket_notation}. It describes to which {_HL.qubit_configuration} the values correspond to. For " \
         f"example {_HL.ket_symbol_stv01} at ~Target~ means that the target qubit's {_HL.zero_state} should have an " \
@@ -211,9 +212,9 @@ class HelpText(Enum):
         f"It implies that both {_HL.qubit_configurations} |00> and |01> have an amplitude of 0.707 and therefore " \
         f"correspond to a probability of abs(0.707)^2 = 0.5 = 50%. Since we write the most significant qubit first, " \
         f"this implies that q1=0 is always true and only q0's value comes down to a coin flip.\n" \
-        f"In general {_HL.ket_notation} looks like this: |qn...q1q0>, where n is the number of qubits - 1."
+        f"In general {_HL.ket_notation} looks like this: |qn...q1q0>, where n is the number of qubits - 1.")
 
-    ParallelGates = \
+    ParallelGates = ("parallelgates", "Gates in parallel",
         f"Single qubit {_HL.gates} (e.g., X Gate) correspond to {_HL.matrix_2x2} which describe how the {_HL.gate} " \
         f"{_HL.transforms} the two possible inputs (0 and 1). However, {_HL.circuit} with {_HL.two} {_HL.qubits} " \
         f"have {_HL.four} possible inputs (00, 01, 10 and 11) and therefore have to correspond to {_HL.matrix_4x4}. " \
@@ -237,9 +238,9 @@ class HelpText(Enum):
         f"The order is important as {CC.highlight_word('putting X into I')} results in a different matrix than " \
         f"{CC.highlight_word('putting I into X')}. But if you look at your {_HL.circuit} you can always go from " \
         f"{CC.highlight_word('top to bottom')}. Just use the {CC.highlight_word('top most')} {_HL.gate} as base and " \
-        f"{CC.highlight_word('put the lower')} one(s) into it."
+        f"{CC.highlight_word('put the lower')} one(s) into it.")
 
-    SerialGates = \
+    SerialGates = ("serialgates", "Gates in series",
         f"Applying two {_HL.gates} in series is as easy as {CC.highlight_word('multiplying')} two matrices.\n" \
         f"Let's consider an {_HL.gate_x} at q0 followed by a {_HL.gate_cx} at q0 (=control), q1 (=target). So we " \
         f"compute a {_HL.matrix_4x4} for the {_HL.gate_x} (see {_HL.kronecker} and then " \
@@ -258,9 +259,10 @@ class HelpText(Enum):
         f"to be {CC.highlight_word('multiplied')} from {CC.highlight_word('right to left')}. But in the " \
         f"{_HL.mat_vec_mul} the {_HL.input_stv} is on the right side while for the {_HL.circuit} the input is on the " \
         f"left. Therefore in both cases simply the gate/matrix {CC.highlight_word('closer')} to the input is " \
-        f"considered first."
+        f"considered first.")
 
-    Amplitudes = \
+    # todo: the split after "collapse to" seems to think that |00> refers to a color code, hence adding // without closing //?
+    Amplitudes = ("amplitudes", "Amplitudes",
         f"Let's consider the following {_HL.state_vector}:\n" \
         "|00>  0.707  \n" \
         "|01>  0.707  \n" \
@@ -276,152 +278,118 @@ class HelpText(Enum):
         f"{CC.highlight_word('squared absolute values')} of a {CC.highlight_object('Quantum StateVector')} also need " \
         f"to be 1.\n" \
         f"In general {_HL.quantum_state}s are described by {CC.highlight_word('complex values')} so unlike in the " \
-        f"example above it is very important to not forget to apply the absolute operator before squaring."
+        f"example above it is very important to not forget to apply the absolute operator before squaring.")
 
-    Riddle = \
+    Riddle = ("ridlle", "Riddles",
         f"{_HL.riddles} are very similar to {_HL.puzzles}, yet a bit different. They also shows you a " \
         f"{_HL.target_state} you need to {_HL.reach} to solve it but you {_HL.cannot} {_HL.try_} it " \
         f"{_HL.arbitrary} {_HL.often}. They have predefined {_HL.number_of_times} you can {_HL.edit} your " \
         f"{_HL.circuit} before they get {_HL.unstable}. Unstable {_HL.riddles} have a 50% chance to {_HL.vanish} " \
-        f"together with their {_HL.reward} whenever you update your {_HL.circuit}."
+        f"together with their {_HL.reward} whenever you update your {_HL.circuit}.")
 
-    Challenge = \
-        "TODO"
+    Challenge = ("challenge", "Minibosses",
+        f"A {_HL.mini_boss} is represented by {_HL.tile_mini_boss} and appears in every {CC.hw('expedition')} and some "
+        f"{CC.hw('lessons')}. It has certain properties that {CC.hw('distinguish')} it from a normal {_HL.enemy} or "
+        f"{_HL.boss}:\n"
+        f"{_HL.indent}1) It will give you a {CC.hw('new')} {_HL.gate} upon challenging it, which you will need to "
+        f"{CC.ha('solve')} its {_HL.puzzle}.\n"
+        f"{_HL.indent}2) It will only accept your solution if you used a {CC.hw('specified number')} of {_HL.gates}.\n"
+        f"{_HL.indent}3) You will {CC.hw('not')} be able to {_HL.flee} from it.\n"
+        f"{_HL.indent}4) While its {_HL.puzzle_s} {_HL.target_state} will be a {_HL.zero_state}, the {_HL.input_stv} "
+        f"will be {CC.hw('non-zero')}, so you have to kind of think backwards.\n")
 
-    Shop = \
-        f"In the {_HL.shop} you can exchange {_HL.coins} you got (e.g. from solving Puzzles) for various " \
-        f"{_HL.collec}. On the left side is a {_HL.list_} of everything you can {_HL.buy}. Navigate as usual with " \
-        f"{_HL.navigation_keys} and select something with {_HL.action_keys} to see more {_HL.details} on the right " \
-        f"side. There you can also buy it.\n" \
-        f"{_HL.leave} obviously makes you leave the {_HL.shop}. You can always {_HL.reenter} it later if you want!"
+    BossFight = ("boss", "Bosses",
+        f"A {_HL.boss} is represented by {_HL.tile_boss} and appears in every {CC.hw('expedition')} and some "
+        f"{CC.hw('lessons')}. It not only has a {CC.hw('harder')} {_HL.puzzle} than a normal {_HL.enemy} or "
+        f"{_HL.mini_boss}, but also additional properties:\n"
+        f"{_HL.indent}1) There is a {CC.hw('specified number')} of times you can {_HL.edit} your {_HL.circuit} to "
+        f"solve the {_HL.boss_s} {_HL.puzzle}. Should you fail to reach the {_HL.output_stv} before the number of "
+        f"remaining edits reaches 0, you lose and have to restart the {CC.hw('level')}. So we advise to not guess "
+        f"blindly but really think about your {CC.hw('circuit design')}.\n"
+        f"{_HL.indent}2) Harder {_HL.bosses} will have {CC.hw('randomized')} {_HL.input_stv}\n")
 
-    BossFight = \
-        f"Now it's getting {_HL.serious}! You are fighting against {_HL.bell}. For the {_HL.state} you need to reach " \
-        f"to defeat Bell your two {_HL.qubits} will always have to be the same: either {_HL.both0} or {_HL.both1}.\n" \
-        f"This is called {_HL.entanglement}.\n\n" \
-        "Good luck!"  # todo make more generic
-
-    Game = \
+    Game = ("game", "About the Game",
         f"QRogue is a game about {_HL.quantum_computing}. You will explore " \
         f"Levels and Expeditions and solve {_HL.puzzles} with the help of {_HL.quantum_gates} to reach even " \
-        f"farther places of the universe.\n"
+        f"farther places of the quniverse.\n")
 
-    Pause = \
+    Pause = ("pause", "Pause Menu",
         "In the Pause Menu you can do several things:\n" \
         f"{_HL.continue_} - Leave the Pause Menu and continue where you stopped.\n" \
-        f"{_HL.restart} - Restart the current level\n" \
-        f"{_HL.save} - Save your game. Remember that your progress is only saved level-wise." \
+        f"{_HL.restart} - Restart the current level.\n" \
+        f"{_HL.save} - Save your game. Remember that your progress is only saved level-wise.\n" \
         f"{_HL.help_} - If you ever feel stuck and don't remember how certain stuff in the game works open " \
         f"the manual and we will try to help you.\n" \
-        f"{_HL.options} - Configure some Options of the game, like font size or coloring.\n" \
-        f"{_HL.exit_} - Exit the current Level or Expedition .\n"
+        f"{_HL.options} - Configure some options of the game, like font size or coloring.\n" \
+        f"{_HL.exit_} - Exit the current level.")
 
-    Options = "7"
-    Welcome = Game + \
+    Options = ("options", "Options", "7")   # todo
+    Welcome = ("welcome", "Welcome",
+        Game[2] + \
         "\nBut before you can explore the universe you have to complete a trainings program.\n" \
         f"Now close this dialog by pressing {_HL.action_keys}. Select {_HL.start_journey} with " \
-        f"{_HL.navigation_keys} and confirm your selection with {_HL.action_keys} to begin!"
+        f"{_HL.navigation_keys} and confirm your selection with {_HL.action_keys} to begin!")
 
-    def __init__(self, text: str):
+    LevelSelection = ("levelselection", "Level Selection",
+        f"The {CC.hw('Level Selection Screen')} allows you to {CC.ha('revisit')} already completed {CC.hw('Lessons')} "
+        f"and go on {CC.hw('specific')} {CC.hw('Expeditions')}. Additionally, you can choose which {CC.ho('Gates')} "
+        f"you want to bring along "
+        f"for more {CC.hw('experimental freedom')}.\n"
+        f"{CC.hw('Beware')} that some {CC.hw('Lessons')} will need {CC.hw('certain')} {CC.ho('Gates')} to be completable. But unless you "
+        f"purposefully customize the gate selection, you don't have to worry about it. Finally, you can also specify a "
+        f"{CC.hw('seed')} to reduce the randomness of the selected {CC.hw('Level')}.")
+
+    Workbench = ("workbench", "Workbench",
+        f"The {CC.hw('Workbench Screen')} allows you to {CC.hw('customize')} your available {CC.ho('Gates')}. You can "
+        f"{CC.ha('fuse')} {CC.ho('Gates')} into a new {CC.ho('CombinedGate')} in exchange for {CC.ho('QuantumFusers')} "
+        f"or {CC.ha('decompose')} {CC.ho('Gates')} to receive more of said {CC.ho('QuantumFusers')}. Beware that both "
+        f"of these actions {CC.hw('destroy')} the original {CC.ho('Gates')}!\n"
+        f"For {CC.ha('fusing')}, you first select the {CC.ho('Gates')} you'd like to {CC.ha('fuse')}, and then place them "
+        f"however you want in a {CC.hw('Circuit')} - just like you do when solving a {CC.ho('Puzzle')}. The "
+        f"{CC.hw('Fusion')} will cost {CC.hw('1')} {CC.ho('QuantumFuser')} for every {CC.ho('Gate')} used. In the end, "
+        f"you can give your new {CC.ho('CombinedGate')} a name for easier recognition.\n"
+        f"The {CC.hw('naming rules')} are as follows:\n"
+        f"{_HL.indent}1) Use between {CC.hw(str(InstructionConfig.COMB_GATE_NAME_MIN_CHARACTERS))} and "
+        f"{CC.hw(str(InstructionConfig.COMB_GATE_NAME_MAX_CHARACTERS))} characters\n"
+        f"{_HL.indent}2) Only use {CC.hw('letters')} (i.e., no numbers, whitespaces or special characters)\n"
+        f"{_HL.indent}3) Must not equal the name of any {CC.hw('Base Gates')} (i.e., any non-CombinedGate in the game)\n"
+        f"Lastly, a {CC.ho('CombinedGate')} must {CC.hw('not contain')} any other {CC.ho('CombinedGate')}.")
+
+    def __init__(self, id_: str, name: str, text: str):
+        self.__id = id_
+        self.__name = name
         self.__text = text
+
+    @property
+    def id(self) -> str:
+        return self.__id
+
+    @property
+    def name(self) -> str:
+        return self.__name
 
     @property
     def text(self) -> str:
         return self.__text
 
 
-def get_filtered_help_texts() -> List[HelpText]:
-    return [
-        HelpText.Game,
-        HelpText.Controls,
-        HelpText.Pause,
-        HelpText.Fight, HelpText.Ket, HelpText.ParallelGates, HelpText.SerialGates, HelpText.Amplitudes,
-        #HelpText.Riddle, #HelpText.Challenge,
-    ]
+def get_filtered_help_texts(check_unlocks: Callable[[Unlocks], bool]) -> List[HelpText]:
+    texts = [HelpText.Game, HelpText.Controls]
+    if check_unlocks(Unlocks.ShowEquation):
+        texts += [HelpText.Fight, HelpText.Ket, HelpText.ParallelGates, HelpText.SerialGates, HelpText.Amplitudes]
+    if check_unlocks(Unlocks.MiniBoss):
+        texts.append(HelpText.Challenge)
+    if check_unlocks(Unlocks.Boss):
+        texts.append(HelpText.BossFight)
+    if check_unlocks(Unlocks.LevelSelection):
+        texts.append(HelpText.LevelSelection)
+    if check_unlocks(Unlocks.Workbench):
+        texts.append(HelpText.Workbench)
+    return texts
 
 
 def load_help_text(type_: str) -> Optional[str]:
     for key in HelpText:
-        if key.name.lower() == type_.lower():
+        if key.id.lower() == type_.lower():
             return key.text
     return None
-
-
-class StoryTextType(Enum):
-    Intro = 0
-    Exam = 1
-    MoonMission = 2
-    FirstExpedition = 4
-
-
-class StoryText:
-    __DIC = {
-        StoryTextType.Intro:
-            f"Hey Mike, the time has {_HL.finally_} come! Quick, join me over here!\n\n"
-            f"[Move to the blue {_HL.robb_tile} to {_HL.talk} with Robb]",
-        StoryTextType.Exam:
-            f"Alright, this will be the official and final {_HL.exam} before you can join the {_HL.moon_mission}. I "
-            "hope you're ready for it!\n"
-            "...\n"
-            "You look still a bit tired... but no worries, I will guide you through it step by step!\n"
-            f"Move onto the {_HL.quickstart_tile} on the bottom to start.",
-        StoryTextType.MoonMission:
-            "Great, you did it! Next stop: the Moon.\n"
-            f"Currently we are still orbiting earth, so please go over to the {_HL.navigation_panel} "
-            f"{_HL.navigation_tile} and set our new destination.",
-        StoryTextType.FirstExpedition:
-            f"Are you ready for your first adventure? Simply go to the {_HL.navigation_panel} {_HL.navigation_tile}. "
-            f"There you will be able to choose a destination for our {_HL.expedition}!\n\n"
-            f"[Currently there are no more story levels implemented yet. However, you can still play randomly "
-            f"generated expeditions to test your Quantum Computing skills!]",
-            #f"Nice, I think you sort of understand {_HL.entanglement} and {_HL.superposition} now.\n"
-            #"Currently there is no new mission I could assign you to. But if you want you can go on an "
-            #f"{_HL.expedition}. Just head back to the {_HL.navigation_panel} and go down.",
-    }
-
-    @staticmethod
-    def get(type: StoryTextType) -> str:
-        return StoryText.__DIC[type]
-
-    @staticmethod
-    def load(type: str) -> str:
-        for key in StoryText.__DIC.keys():
-            if key.name.lower() == type.lower():
-                return StoryText.__DIC[key]
-        return None
-
-
-class TutorialTextType(Enum):
-    # LockedDoorNoKey = 0
-    # LockedDoorKey = 1
-    Navigation = 2
-
-
-class TutorialText:
-    __DIC = {
-        # TutorialTextType.LockedDoorNoKey:
-        #    f"Hmm, the {_HL.door} is {_HL.locked}. Let's see if we can find a {_HL.key} somewhere.",
-        # TutorialTextType.LockedDoorKey:
-        #    f"Oh the {_HL.door} is {_HL.locked}. Luckily we've already found a {_HL.key} to open it!",
-        TutorialTextType.Navigation:
-            f"In the navigation view you can see rooms representing the different locations "
-            f"{_HL.level_decoration_tile} we can navigate to. E.g. at the top of the room to the right you can see "
-            f"{_HL.level2_decoration_tile} which represents our current destination: the {_HL.moon}. Aside from the "
-            f"number of the location each room also has a description of the location you can "
-            f"access by moving onto {_HL.msg_tile} as well as {_HL.teleport_tile} to actually travel there.\n"
-            f"Right now you are in the navigation hub where you can find a general description "
-            f"and {_HL.teleport_tile} will exit the navigation view.\n"
-            f"PS: Later we can also go back to earth to redo your exam - but right "
-            f"now there is an exciting moon mission and we don't want to waste any more time!"
-    }
-
-    @staticmethod
-    def get(type: TutorialTextType) -> str:
-        return TutorialText.__DIC[type]
-
-    @staticmethod
-    def load(type: str) -> str:
-        for key in TutorialText.__DIC.keys():
-            if key.name.lower() == type.lower():
-                return TutorialText.__DIC[key]
-        return None

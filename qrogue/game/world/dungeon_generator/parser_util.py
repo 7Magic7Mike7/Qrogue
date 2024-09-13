@@ -1,7 +1,5 @@
 from typing import Dict, Optional, Tuple
 
-from antlr4.error.ErrorListener import ErrorListener
-
 from qrogue.game.logic import Message
 from qrogue.game.world.map import Hallway
 from qrogue.game.world.navigation import Coordinate, Direction
@@ -24,7 +22,6 @@ ENERGY_TILE = "e"
 BOSS_TILE = "b"
 RIDDLER_TILE = "r"
 CHALLENGER_TILE = "!"
-SHOP_KEEPER_TILE = "$"
 FLOOR_TILE = " "
 
 
@@ -186,18 +183,3 @@ def parse_message_body(ctx, default_speaker: str) -> Tuple[str, bool, int, str]:
         msg += text_to_str(ctx, i) + "\n"
 
     return title, priority, position, msg
-
-
-class MyErrorListener(ErrorListener):
-    def syntaxError(self, recognizer, offendingSymbol, line, column, msg, e):
-        # print(f"Syntax Error: \"{offendingSymbol}\" at line {line}, column {column} - {msg}")
-        raise SyntaxError(msg)
-
-    def reportAmbiguity(self, recognizer, dfa, startIndex, stopIndex, exact, ambigAlts, configs):
-        Config.debug_print("Ambiguity")
-
-    def reportAttemptingFullContext(self, recognizer, dfa, startIndex, stopIndex, conflictingAlts, configs):
-        Config.debug_print("Attempting full context")
-
-    def reportContextSensitivity(self, recognizer, dfa, startIndex, stopIndex, prediction, configs):
-        Config.debug_print("Context sensitivity")

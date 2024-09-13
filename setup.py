@@ -36,22 +36,22 @@ setup(
 	],
 	package_data={"data": ["qrogue/data"]},
 	include_package_data=True,
-	version='0.7.0.5',
+	version='0.8',
 	license='MIT',  # Chose a license from here: https://help.github.com/articles/licensing-a-repository
 	description='QRogue is a modernized Quantum Computing take of the classical game Rogue.',
 	long_description=README,
 	long_description_content_type="text/markdown",
 	author='Michael Artner',
-	author_email='michael.artner@jku.at',
+	author_email='michael.artner@hotmail.de',
 	url='https://github.com/7Magic7Mike7/Qrogue',
-	download_url='https://github.com/7Magic7Mike7/Qrogue/releases/tag/0.7.0.5',  # link to Release on GitHub
+	download_url='https://github.com/7Magic7Mike7/Qrogue/releases/tag/0.8',  # link to Release on GitHub
 	keywords=['Quantum Computing', 'Gamification', 'Video Game', 'PyCUI'],
 	install_requires=[
 		'py-cui==0.1.4',
 		'numpy==1.22.3',
 		'qiskit==0.34.2',
 		'qiskit-aer==0.12.2',
-		'antlr4-python3-runtime==4.12',
+		'antlr4-python3-runtime==4.13.2',
 	],
 	classifiers=[
 		'Development Status :: 3 - Alpha',  # Chose either "3 - Alpha", "4 - Beta" or "5 - Production/Stable"
