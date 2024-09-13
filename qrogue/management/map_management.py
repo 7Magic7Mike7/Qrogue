@@ -102,13 +102,14 @@ class MapManager:
             return
 
         def fill():
-            robo_props = RoboProperties()   # todo: which property values to use?
+            # todo: how to handle difficulty?
+            difficulty = StvDifficulty.from_difficulty_code("1")
+            robo_props = RoboProperties.from_difficulty_level(difficulty.level)
             while len(self.__expedition_queue) < self.__queue_size:
-                # todo: how to handle difficulty?
-                difficulty = StvDifficulty.from_difficulty_code("1")
                 map_seed = self.__rm.get_seed("MapManager.fill()@map_seed")
                 puzzle_seed = self.__rm.get_seed("MapManager.fill()@puzzle_seed")
-                expedition, success = self.__expedition_generator.generate(map_seed, (robo_props, difficulty, puzzle_seed))
+                expedition, success = self.__expedition_generator.generate(map_seed,
+                                                                           (robo_props, difficulty, puzzle_seed))
                 if success:
                     self.__expedition_queue.append(expedition)
 
@@ -154,9 +155,9 @@ class MapManager:
         rand_map_seed = self.__rm.get_seed("MapManager.__load_expedition()@map_seed")
         rand_puzzle_seed = self.__rm.get_seed("MapManager.__load_expedition()@puzzle_seed")
 
-        robo_props = RoboProperties(num_of_qubits=3, circuit_space=5, gate_list=gate_list)  # todo: currently these are just default values
         if isinstance(difficulty, str):
             difficulty = StvDifficulty.from_difficulty_code(difficulty)
+        robo_props = RoboProperties.from_difficulty_level(difficulty.level, gate_list)
 
         if map_seed is None and self.__queue_size > 0:
             while len(self.__expedition_queue) <= 0:

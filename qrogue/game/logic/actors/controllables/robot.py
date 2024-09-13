@@ -10,11 +10,17 @@ from qrogue.game.logic.actors.controllables.qubit import QubitSet, DummyQubitSet
 from qrogue.game.logic.base import StateVector, CircuitMatrix, QuantumSimulator, QuantumCircuit, UnitarySimulator
 from qrogue.game.logic.collectibles import Collectible, Instruction, Key, MultiCollectible, \
     Qubit, Energy, Score, InstructionManager
-from qrogue.util import CheatConfig, Config, Logger, GameplayConfig, QuantumSimulationConfig, Options, GateType
+from qrogue.util import CheatConfig, Config, Logger, GameplayConfig, QuantumSimulationConfig, Options, GateType, \
+    LevelInfo
 
 
 # from jkq import ddsim
 class RoboProperties:
+    @staticmethod
+    def from_difficulty_level(difficulty_level: int, gate_list: Optional[List[Instruction]] = None) -> "RoboProperties":
+        return RoboProperties(LevelInfo.get_default_num_of_qubits(difficulty_level),
+                              LevelInfo.get_default_circuit_space(difficulty_level), gate_list)
+
     def __init__(self, num_of_qubits: int = 3, circuit_space: int = 5, gate_list: Optional[List[Instruction]] = None):
         self.__num_of_qubits = num_of_qubits
         self.__circuit_space = circuit_space

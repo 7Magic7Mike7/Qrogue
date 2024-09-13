@@ -261,6 +261,20 @@ class LevelInfo:
         return min(max(int(expedition_progress / 10), ExpeditionConfig.MIN_DIFFICULTY),
                    StvDifficulty.max_difficulty_level())
 
+    @staticmethod
+    def get_default_num_of_qubits(difficulty_level: int) -> int:
+        if difficulty_level <= 3:
+            return 2
+        return 3
+
+    @staticmethod
+    def get_default_circuit_space(difficulty_level: int) -> int:
+        if difficulty_level <= 3:
+            return 5
+        elif difficulty_level <= 4:
+            return 6
+        return 7
+
 
 class LevelData:
     def __init__(self, name: str, date_time: datetime, duration: int, score: int):
