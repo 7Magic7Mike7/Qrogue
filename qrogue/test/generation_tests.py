@@ -55,8 +55,8 @@ class LevelGenTestCase(test_util.SingletonSetupTestCase):
     def __create_expedition_generator() -> ExpeditionGenerator:
         wfc_manager = WFCManager()
         wfc_manager.load()
-        return ExpeditionGenerator(wfc_manager, lambda s: True, lambda s: None, lambda: None, lambda: [HGate()],
-                                        CallbackPack.dummy())
+        return ExpeditionGenerator(wfc_manager, lambda s: True, lambda s: None, lambda: None, lambda: [gates.HGate()],
+                                   CallbackPack.dummy())
 
     def test_single_seed(self):
         CheatConfig.use_cheat("Illuminati")
@@ -188,8 +188,8 @@ class LevelGenTestCase(test_util.SingletonSetupTestCase):
         expedition_progress = 1
 
         expected_values: List[Tuple[str, int, Optional[int]]] = [
-            ("0", 12345, None),
-            ("0", 12345, 12),
+            ("1", 12345, None),
+            ("1", 12345, 12),
             ("2", 12345, None),
             ("2", 12345, 12),
             ("2", 12345, 12),

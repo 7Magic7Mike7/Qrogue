@@ -257,11 +257,12 @@ class ChallengeFactory(PuzzleFactory):
 class BossFactory(PuzzleFactory):
     __LEVELED_REWARD_POOLS: Dict[int, List[Collectible]] = {
         0: [gates.XGate(), gates.CXGate(), gates.HGate()],
-        1: [gates.HGate(), gates.CXGate(), gates.SwapGate()],
-        2: [gates.HGate(), gates.SGate()],
-        3: [gates.SGate(), gates.YGate(), gates.ZGate()],
-        4: [gates.RYGate(), gates.RZGate()],
-        5: [gates.HGate()],
+        1: [gates.XGate(), gates.CXGate(), gates.HGate()],
+        2: [gates.HGate(), gates.CXGate(), gates.SwapGate()],
+        3: [gates.HGate(), gates.SGate()],
+        4: [gates.SGate(), gates.YGate(), gates.ZGate()],
+        5: [gates.RYGate(), gates.RZGate()],
+        6: [gates.HGate()],
     }
 
     @staticmethod
