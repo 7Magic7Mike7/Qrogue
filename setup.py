@@ -26,7 +26,6 @@ setup(
 		'qrogue.game.world.map',
 		'qrogue.game.world.dungeon_generator',
 		'qrogue.game.world.dungeon_generator.dungeon_parser',
-		'qrogue.game.world.dungeon_generator.world_parser',
 		'qrogue.game.world.dungeon_generator.wave_function_collapse',
 		'qrogue.graphics',
 		'qrogue.graphics.rendering',
