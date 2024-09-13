@@ -35,7 +35,7 @@ def analyze_puzzle_gen_speed(num_of_seeds: int = 100):
     gate_list = [gates.HGate(), gates.XGate(), gates.SGate(), gates.XGate(), gates.HGate()]
 
     diff_level = StvDifficulty.max_difficulty_level()
-    difficulty = StvDifficulty.from_difficulty_level(diff_level, num_of_qubits, circuit_space)
+    difficulty = StvDifficulty.from_difficulty_level(diff_level)
 
     times = [produce_puzzle(seed, num_of_qubits, circuit_space, difficulty, gate_list) for seed in range(num_of_seeds)]
 

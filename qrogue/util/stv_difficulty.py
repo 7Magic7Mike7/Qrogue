@@ -137,7 +137,7 @@ class StvDifficulty:
     """
 
     @staticmethod
-    def from_difficulty_code(code: str, num_of_qubits: int = 0, circuit_space: int = 0) -> "StvDifficulty":
+    def from_difficulty_code(code: str) -> "StvDifficulty":
         level_len = len(str(StvDifficulty.max_difficulty_level()))  # how many characters a single level code has
         if len(code) == level_len:
             code = code * StvDifficulty.degrees_of_freedom()   # extend code so every DiffType has the same level
@@ -152,7 +152,7 @@ class StvDifficulty:
         return StvDifficulty(values)
 
     @staticmethod
-    def from_difficulty_level(level: int, num_of_qubits: int = 0, circuit_space: int = 0) -> "StvDifficulty":
+    def from_difficulty_level(level: int) -> "StvDifficulty":
         assert StvDifficulty.min_difficulty_level() <= level <= StvDifficulty.max_difficulty_level(), "Invalid level: " \
             f"{StvDifficulty.min_difficulty_level()} <= {level} <= {StvDifficulty.max_difficulty_level()} is False!"
         return StvDifficulty.from_difficulty_code(str(level))

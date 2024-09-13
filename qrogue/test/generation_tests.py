@@ -62,7 +62,7 @@ class LevelGenTestCase(test_util.SingletonSetupTestCase):
         CheatConfig.use_cheat("Illuminati")
         robo_props = test_util.DummyRoboProps()
         diff_code = "1" * StvDifficulty.degrees_of_freedom()
-        difficulty = StvDifficulty.from_difficulty_code(diff_code, robo_props.num_of_qubits, robo_props.circuit_space)
+        difficulty = StvDifficulty.from_difficulty_code(diff_code)
 
         generator = self.__create_expedition_generator()
         map_seed = 297
@@ -80,7 +80,7 @@ class LevelGenTestCase(test_util.SingletonSetupTestCase):
 
         robo_props = test_util.DummyRoboProps()
         diff_code = "1" * StvDifficulty.degrees_of_freedom()
-        difficulty = StvDifficulty.from_difficulty_code(diff_code, robo_props.num_of_qubits, robo_props.circuit_space)
+        difficulty = StvDifficulty.from_difficulty_code(diff_code)
 
         generator = self.__create_expedition_generator()
         puzzle_seed = 7

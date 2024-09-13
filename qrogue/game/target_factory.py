@@ -235,7 +235,7 @@ class ChallengeFactory(PuzzleFactory):
 
     @staticmethod
     def from_difficulty_code(code: str, robot: Robot) -> "BossFactory":
-        difficulty = StvDifficulty.from_difficulty_code(code, robot.num_of_qubits, robot.circuit_space)
+        difficulty = StvDifficulty.from_difficulty_code(code)
         assert difficulty.level >= 0, f"Code \"{code}\" produced invalid level: {difficulty.level} >= 0 is False!"
         return BossFactory.from_robot(difficulty, robot)
 
@@ -291,14 +291,14 @@ class BossFactory(PuzzleFactory):
 
     @staticmethod
     def from_difficulty_code(code: str, robot: Robot, reward_pool: Optional[List[Collectible]] = None) -> "BossFactory":
-        difficulty = StvDifficulty.from_difficulty_code(code, robot.num_of_qubits, robot.circuit_space)
+        difficulty = StvDifficulty.from_difficulty_code(code)
         assert difficulty.level >= 0, f"Code \"{code}\" produced invalid level: {difficulty.level} >= 0 is False!"
         return BossFactory.from_robot(difficulty, robot, reward_pool)
 
     @staticmethod
     def from_difficulty_level(level: int, robot: Robot, reward_pool: Optional[List[Collectible]] = None) \
             -> "BossFactory":
-        difficulty = StvDifficulty.from_difficulty_level(level, robot.num_of_qubits, robot.circuit_space)
+        difficulty = StvDifficulty.from_difficulty_level(level)
         return BossFactory.from_robot(difficulty, robot, reward_pool)
 
     @staticmethod

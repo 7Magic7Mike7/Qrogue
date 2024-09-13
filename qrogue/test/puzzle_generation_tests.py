@@ -18,7 +18,7 @@ class ManuelPuzzleGenTestCase(test_util.SingletonSetupTestCase):
         available_gates = [gates.HGate(), gates.XGate(), gates.SGate(), gates.XGate(), gates.HGate()]
         available_gates = [gates.XGate(), gates.XGate(), gates.XGate()]
 
-        difficulty = StvDifficulty.from_difficulty_level(2, num_of_qubits, circuit_space)
+        difficulty = StvDifficulty.from_difficulty_level(2)
         difficulty = test_util.ExplicitStvDifficulty({
             DifficultyType.CircuitExuberance: len(available_gates) + 1
         }, num_of_qubits, circuit_space)

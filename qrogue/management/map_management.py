@@ -105,7 +105,7 @@ class MapManager:
             robo_props = RoboProperties()   # todo: which property values to use?
             while len(self.__expedition_queue) < self.__queue_size:
                 # todo: how to handle difficulty?
-                difficulty = StvDifficulty.from_difficulty_code("1", robo_props.num_of_qubits, robo_props.circuit_space)
+                difficulty = StvDifficulty.from_difficulty_code("1")
                 map_seed = self.__rm.get_seed("MapManager.fill()@map_seed")
                 puzzle_seed = self.__rm.get_seed("MapManager.fill()@puzzle_seed")
                 expedition, success = self.__expedition_generator.generate(map_seed, (robo_props, difficulty, puzzle_seed))
@@ -156,8 +156,8 @@ class MapManager:
 
         robo_props = RoboProperties(num_of_qubits=3, circuit_space=5, gate_list=gate_list)  # todo: currently these are just default values
         if isinstance(difficulty, str):
-            difficulty = StvDifficulty.from_difficulty_code(difficulty, robo_props.num_of_qubits,
-                                                            robo_props.circuit_space)
+            difficulty = StvDifficulty.from_difficulty_code(difficulty)
+
         if map_seed is None and self.__queue_size > 0:
             while len(self.__expedition_queue) <= 0:
                 time.sleep(Config.loading_refresh_time())
@@ -225,9 +225,7 @@ class MapManager:
             expedition_progress = int(self.__save_data.get_progress(Achievement.CompletedExpedition)[0])
             diff_code = str(LevelInfo.get_expedition_difficulty(expedition_progress))
 
-            robo_props = RoboProperties()
-            difficulty = StvDifficulty.from_difficulty_code(diff_code, robo_props.num_of_qubits,
-                                                            robo_props.circuit_space)
+            difficulty = StvDifficulty.from_difficulty_code(diff_code)
             self.__start_level_transition(self.__cur_map.name, ExpeditionMap.to_display_name(difficulty, rand_map_seed),
                                           lambda: self.__load_expedition(difficulty, rand_map_seed, rand_puzzle_seed))
         else:

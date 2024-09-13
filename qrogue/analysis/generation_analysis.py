@@ -81,7 +81,7 @@ def test_dungeon():
     robo_props = RoboProperties()
     wfc_manager = WFCManager()
     wfc_manager.load()
-    difficulty = StvDifficulty.from_difficulty_code("1", robo_props.num_of_qubits, robo_props.circuit_space)
+    difficulty = StvDifficulty.from_difficulty_code("1")
     generator = ExpeditionGenerator(wfc_manager, lambda s: True, lambda s: None, lambda: None,
                                     lambda: [XGate()], CallbackPack.dummy())
     puzzle_seed = 7
