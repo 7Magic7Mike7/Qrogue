@@ -63,5 +63,44 @@ class SaveDataOverhaulTests(test_util.SingletonSetupTestCase):
         self.assertTrue(save_data.check_unlocks(Unlocks.ShowEquation))
 
 
+class SaveEncodingTestCases(test_util.SingletonSetupTestCase):
+    class _TestSaveData(NewSaveData):
+        def test_encode(self) -> str:
+            return super()._encode(self.to_string(), force=True)
+
+        def test_decode(self) -> str:
+            return super()._decode(self.to_string())
+
+    def test_encoding(self):
+        new_save_data = "\n".join([
+            "Qrogue<",
+            "19d01m2024y 04:16:55",
+            "[INVENTORY]",
+            "QuantumFuser 0",
+            "[GATES]",
+            "X;H;CX",
+            "[LEVELS]",
+            "l0k0v0 @ 19d01m2024y 02:23:23 1234 seconds Score = 988",
+            "[UNLOCKS]",
+            "Continue @ 12d02m2034y 04:12:00",
+            "[ACHIEVEMENTS]",
+            "Racer @ 12d02m2034y 04:12:22 Score = 20 out of 100",
+            ">Qrogue",
+        ])
+        new_sd = NewSaveData(new_save_data)
+        enc_sd = self._TestSaveData(new_save_data)
+
+        # sanity check to make sure the test class behaves as expected
+        self.assertEqual(new_sd.to_string(), enc_sd.to_string())
+
+        # check if decoding results in the same save-state
+        enc_sd2 = self._TestSaveData(enc_sd.test_encode())
+        self.assertEqual(enc_sd.to_string(), enc_sd2.test_decode())
+
+        # check if encoding results in the same save-state
+        new_sd2 = NewSaveData(enc_sd.test_encode())
+        self.assertEqual(new_sd.to_string(), new_sd2.to_string())
+
+
 if __name__ == '__main__':
     unittest.main()
