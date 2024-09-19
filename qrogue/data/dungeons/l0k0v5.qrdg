@@ -80,7 +80,7 @@ dd (Wild):
 # _ o _ _ _ #
 # o _ _ _ _ #
 #############
-b *bossPuzzle score 1000 10
+b *imaginaryBoss score 1000 10
 
 kk (Wild):
 #############

@@ -86,6 +86,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
                 return boss.EntanglementBoss(reward, edits, num_of_qubits, entangled_qubits=qubits)
             if ref in ["antientangle", "antientanglement"]:
                 return boss.AntiEntangleBoss(reward, edits)
+            if ref in ["imaginary", "imaginaryboss"]:
+                return boss.ImaginaryBoss(reward, edits)
             return None
 
     @staticmethod
