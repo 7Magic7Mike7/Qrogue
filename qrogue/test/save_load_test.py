@@ -58,7 +58,7 @@ class SaveDataOverhaulTests(test_util.SingletonSetupTestCase):
         self.assertEqual(new_save_data, new_save.to_string())
 
     def test_unlocks(self):
-        save_data = NewSaveData()
+        save_data = NewSaveData(NewSaveData.empty_save_state())
         save_data.unlock(Unlocks.ShowEquation)
         self.assertTrue(save_data.check_unlocks(Unlocks.ShowEquation))
 
@@ -103,4 +103,5 @@ class SaveEncodingTestCases(test_util.SingletonSetupTestCase):
 
 
 if __name__ == '__main__':
+    # warnings regarding *Failed to set knowledge mode to "None"* can be ignored
     unittest.main()
