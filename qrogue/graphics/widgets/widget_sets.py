@@ -743,7 +743,7 @@ class ScreenCheckWidgetSet(MyWidgetSet):
                f"{ColorConfig.highlight_word('blue', True)} lower-case characters like " \
                f"{ColorConfig.highlight_tile('s', True)}, {ColorConfig.highlight_tile('k', True)}, " \
                f"{ColorConfig.highlight_tile('c', True)} or {ColorConfig.highlight_tile('g', True)}.\n" \
-               f"- Tiles containing {ColorConfig.highlight_object('Puzzles', True)} are meant to be " \
+               f"- Tiles containing {ColorConfig.highlight_object('Deqos', True)} are meant to be " \
                f"{ColorConfig.highlight_word('red', True)} and are {ColorConfig.highlight_tile('digits', True)}, " \
                f"{ColorConfig.highlight_tile('!', True)} and inverted " \
                f"{ColorConfig.highlight_tile('B', True)} for bosses.\n" \
