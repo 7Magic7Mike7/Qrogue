@@ -294,7 +294,7 @@ class PathConfig:
             file.write(text)
 
     @staticmethod
-    def delete(file_name):
-        path = PathConfig.user_data_path(file_name)  # data in base_path is static so we can only delete user data
+    def delete(path: str):
+        path = PathConfig.user_data_path(path)  # data in base_path is static so we can only delete user data
         if os.path.exists(path):
             os.remove(path)
