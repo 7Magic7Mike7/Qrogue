@@ -745,7 +745,7 @@ class ScreenCheckWidgetSet(MyWidgetSet):
                f"{ColorConfig.highlight_tile('c', True)} or {ColorConfig.highlight_tile('g', True)}.\n" \
                f"- Tiles containing {ColorConfig.highlight_object('Puzzles', True)} are meant to be " \
                f"{ColorConfig.highlight_word('red', True)} and are {ColorConfig.highlight_tile('digits', True)}, " \
-               f"{ColorConfig.highlight_tile('!', True)}, {ColorConfig.highlight_tile('?', True)} and inverted " \
+               f"{ColorConfig.highlight_tile('!', True)} and inverted " \
                f"{ColorConfig.highlight_tile('B', True)} for bosses.\n" \
                f"- The {ColorConfig.highlight_object('Goal', True)} " \
                f"{ColorConfig.highlight_tile('G', True)} of a level and the " \
