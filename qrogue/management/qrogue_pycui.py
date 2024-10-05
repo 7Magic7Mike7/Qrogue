@@ -23,7 +23,7 @@ from qrogue.graphics.widgets import Renderable, BossFightWidgetSet, ExploreWidge
     ScreenCheckWidgetSet, LevelSelectWidgetSet, FusionCircuitWidgetSet
 from qrogue.util import common_messages, CheatConfig, Config, GameplayConfig, UIConfig, HelpText, \
     Logger, PathConfig, Controls, Keys, RandomManager, PyCuiConfig, PopupConfig, PyCuiColors, Options, \
-    CommonInfos, MapConfig
+    CommonInfos, MapConfig, WordingConfig
 from qrogue.util.achievements import Achievement, Unlocks
 from qrogue.util.game_simulator import GameSimulator
 from qrogue.util.key_logger import KeyLogger, OverWorldKeyLogger, DummyKeyLogger
@@ -456,7 +456,7 @@ class QrogueCUI(PyCUI):
                     GameplayConfig.set_experienced_mode()
 
             ConfirmationPopup.ask("WELCOME TO QROGUE!", HelpText.Welcome.text, knowledge_question,
-                                  ["Quantum Newbie", "Quantum Experienced"])
+                                  [WordingConfig.QUANTUM_NEWBIE, WordingConfig.QUANTUM_EXPERIENCED])
 
         self.__render([self.__cur_widget_set])
 
