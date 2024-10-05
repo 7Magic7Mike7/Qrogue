@@ -292,7 +292,8 @@ class NewSaveData:
                 self.__has_unsaved_changes = False  # only change flag if it was a manual (i.e., no auto) save
             return True, CommonInfos.SavingSuccessful
 
-        except:
+        except Exception as ex:
+            Logger.instance().error(f"Exception occurred during saving: {ex}", False, False)
             return False, CommonInfos.SavingFailed
 
     def compare(self, other: "NewSaveData") -> Tuple[List[Instruction], List[str], List[Unlocks], List[Achievement]]:
