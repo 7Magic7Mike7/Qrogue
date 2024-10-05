@@ -403,8 +403,8 @@ class _SaveDataGenerator(SaveDataVisitor):
         self.__knowledge_mode = None
         self.__highest_knowledge_level = -1
 
-    def load(self, file_data) -> Tuple[datetime, Inventory, List[Instruction], List[LevelData],
-            List[Tuple[str, datetime]], List[Achievement]]:
+    def load(self, file_data: str) -> Tuple[datetime, Inventory, List[Instruction], List[LevelData],
+             List[Tuple[str, datetime]], List[Achievement]]:
         input_stream = InputStream(file_data)
         lexer = SaveDataLexer(input_stream)
         token_stream = CommonTokenStream(lexer)
