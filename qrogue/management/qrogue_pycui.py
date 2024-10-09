@@ -238,7 +238,7 @@ class QrogueCUI(PyCUI):
         self.__init_complete = False
         super().__init__(width, height)
         PyCuiConfig.set_get_dimensions_callback(self._get_absolute_grid_dimensions)
-        self.set_title(f"Qrogue {Config.version()}")
+        self.set_title(f"QRogue {Config.version()}")
         self.__controls = Controls(self._handle_key_presses)
         self.__rm = RandomManager.create_new(seed)
         self.__wfc_manager = WFCManager()
