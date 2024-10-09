@@ -513,3 +513,8 @@ class ExpeditionConfig:
     DEFAULT_QUEUE_SIZE = 0
     MIN_DIFFICULTY = 1          # minimum difficulty level used for Expeditions
     MIN_NUM_OF_GATES_GOAL = 3   # minimum number of gates we try to pick for non-custom expeditions
+
+
+class WordingConfig:
+    QUANTUM_NEWBIE = "Quantum Newbie"
+    QUANTUM_EXPERIENCED = "Quantum Experienced"

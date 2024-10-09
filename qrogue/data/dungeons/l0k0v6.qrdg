@@ -1,6 +1,7 @@
 Qrogue<
 Name = "Lesson 7: The last rotation"
-Description = Speaker "0" prio "The last lesson will mimic an //02Expedition// once again. However, since last lesson was small compared to real //02Expeditions//, this one will have a more realistic size. To make it less cumbersome, we will give you hints on where to go first. But remember that real //02Expeditions// will probably require more backtracking." "You can start by peeking into the top and bottom room before continuing to the left."
+Description = Speaker "0" prio "The //05last// //02Lesson// will mimic an //02Expedition// once again. However, since the previous lesson was //05small// compared to real //02Expeditions//, this one will have a more //05realistic size//. To make it less cumbersome, we will give you //05hints// on where to go first. But remember that real //02Expeditions// will probably require more //05backtracking//." "You can start by //03peeking// into the top and bottom room before continuing to the left."
+Closing = *doneMsg
 NO_TELEPORTER
 
 // Introduced Concepts:
@@ -39,7 +40,7 @@ aa (Wild):
 # 5 _ _ o o #
 # 4 _ 0 _ o #
 #############
-m 1 *forks
+m *forks
 
 bb (Wild):
 #############
@@ -189,15 +190,14 @@ default *none
 // speaker: 0 = Examiner, 1 = Scientist, 2 = System, 3 = Player
 default Speaker "0"
 
-*bossHint pos5 "Here you can peek into a room with a locked //02Door//. And what lies beyond locked Doors in //02Expeditions//?"
+*bossHint pos5 "Here you can peek into a room with a //05locked// //02Door//. And what lies beyond //05locked// //02Doors// in //02Expeditions//?"
 
-*keyHint pos1 "This room contains a //02Key//. Do you remember what lies beyond a locked //02Door// in //02Expeditions//?"
+*keyHint pos1 "This room contains a //02Key//. Do you remember what lies beyond a //05locked// //02Door// in //02Expeditions//?"
 
-*forks prio pos2 "A fork in the road is a pretty common sight in //02Expeditions//. Don't hesitate to go in one direction only to come back later if it didn't lead to a //02Key//, //02Miniboss// or //02Boss//. //02Expeditions// are never big enough to get lost."
+*forks pos1 "A fork in the road is a pretty //05common// sight in //02Expeditions//. Don't hesitate to go in one direction only to //05come back// later if it didn't lead to a //02Key//, //02Miniboss// or //02Boss//. //02Expeditions// are never big enough to get lost."
 
-*deadEnds pos5 "//02Expeditions// often have dead ends. You can use them to experiment on additonal //02Puzzles// or just ignore them. It's up to you - and that's the beauty of exploration."
+*deadEnds pos5 "//02Expeditions// often have //05dead ends//. You can use them to //03experiment// on additonal //02Puzzles// or just //05ignore// them. It's up to you - and that's the //05beauty of exploration//."
 
-
-*doneMsg prio "TODO You finally made it! Congratulations on successfully completing the //05'Mission Quniverse' Trainings Program//. Now you should be ready for the //05Examination Trial//."
+*doneMsg prio "You made it! //05Congratulations// on successfully completing the //05'Mission Quniverse' Trainings Program//. You are now ready to go on real //02Expeditions// and explore the //05Quniverse//!"
 
 >Qrogue

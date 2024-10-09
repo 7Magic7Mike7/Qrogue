@@ -86,6 +86,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
                 return boss.EntanglementBoss(reward, edits, num_of_qubits, entangled_qubits=qubits)
             if ref in ["antientangle", "antientanglement"]:
                 return boss.AntiEntangleBoss(reward, edits)
+            if ref in ["imaginary", "imaginaryboss"]:
+                return boss.ImaginaryBoss(reward, edits)
             return None
 
     @staticmethod
@@ -758,7 +760,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
 
         # don't specify reward to use the default one
         challenge = Challenge(self._next_target_id(), stv, min_gates, max_gates, input_=input_stv)
-        return tiles.Challenger(challenge, special_gate, self.__cbp.open_challenge, self.__show_message)
+        return tiles.Challenger(challenge, special_gate, self.__cbp.open_challenge,
+                                lambda title, msg: self.__show_message(title, msg, False, None))
 
     def visitEnergy_descriptor(self, ctx: QrogueDungeonParser.Energy_descriptorContext) -> tiles.Tile:
         amount = self.visit(ctx.integer())

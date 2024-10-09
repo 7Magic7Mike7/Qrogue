@@ -68,7 +68,7 @@ class MyPopupTests(unittest.TestCase):
             "character representation).",
             "- //12Pickups// are designed to be //15blue// lower-case characters like //11s//, //11k//, //11c// or "
             "//11g//.",
-            "- Tiles containing //12Puzzles// are meant to be //15red// and are //11digits//, //11!//, //11?// and "
+            "- Tiles containing //12Deqos// are meant to be //15red// and are //11digits//, //11!// and "
             "inverted //11B// for bosses.",
             "- The //12Goal// //11G// of a level and the //12Player Character// //11Q// are usually //15green//.",
             "- Level-shaping tiles like //11#// and //11o// are //15white// inverted",

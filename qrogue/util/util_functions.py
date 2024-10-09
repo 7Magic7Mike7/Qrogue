@@ -1,3 +1,4 @@
+import base64
 import datetime
 import enum
 import math
@@ -259,6 +260,27 @@ def num_to_letter(num: int, start_uppercase: bool = True) -> str:
 
     num = num % 26  # normalize to one of the 26 letters
     return chr(ord(start_char) + num)
+
+
+def simple_encode(key: str, clear: str) -> str:
+    enc = []
+    for i in range(len(clear)):
+        key_c = key[i % len(key)]
+        enc_c = chr((ord(clear[i]) + ord(key_c)) % 256)
+        enc.append(enc_c)
+    enc = base64.urlsafe_b64encode(bytearray("".join(enc), "utf-8"))
+    return enc.decode("utf-8")  # convert bytes back to str
+
+
+def simple_decode(key: str, enc: str) -> str:
+    dec = []
+    enc = base64.urlsafe_b64decode(enc)
+    enc = enc.decode("utf-8")   # convert bytes back to str
+    for i in range(len(enc)):
+        key_c = key[i % len(key)]
+        dec_c = chr((256 + ord(enc[i]) - ord(key_c)) % 256)
+        dec.append(dec_c)
+    return "".join(dec)
 
 
 def open_folder(path: str):

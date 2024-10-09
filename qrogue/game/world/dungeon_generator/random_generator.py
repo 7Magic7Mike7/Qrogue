@@ -713,9 +713,9 @@ class ExpeditionGenerator(DungeonGenerator):
         Data tuple consists of:
             - RoboProperties to determine the number of qubits, circuit space and available gates
             - StvDifficulty to determine the difficulty of generated puzzles
-            - puzzle seed to determine the randomness of generated puzzles
+            - puzzle seed to determine the randomness of generated puzzles (excluding boss)
 
-        :param map_seed: the seed used to create the layout of the ExpeditionMap
+        :param map_seed: the seed used to create the layout of the ExpeditionMap and boss puzzle
         :param data: a tuple describing puzzle generation
         :returns: the generated ExpeditionMap and True if generation was successful, None and False otherwise
         """
@@ -755,7 +755,7 @@ class ExpeditionGenerator(DungeonGenerator):
         main_gate: Instruction = gate_factory.produce(map_rm)
         assert main_gate is not None and isinstance(main_gate, Instruction), f"Invalid product of GateFactory: " \
                                                                              f"\"{main_gate}\"!"
-        dungeon_boss = boss_factory.produce(puzzle_rm, include_gates=[main_gate])
+        dungeon_boss = boss_factory.produce(map_rm, include_gates=[main_gate])
         dungeon_challenge = challenge_factory.produce(puzzle_rm, include_gates=[main_gate])
 
         #####################################################################################################

@@ -12,18 +12,31 @@ from qrogue.management.save_grammar.SaveDataVisitor import SaveDataVisitor
 from qrogue.util import Logger, CommonInfos, LevelInfo, LevelData, Config, PathConfig, FileTypes, ParserErrorListener, \
     GateType, GameplayConfig
 from qrogue.util.achievements import Achievement, Unlocks
-from qrogue.util.util_functions import cur_datetime, datetime2str
+from qrogue.util.util_functions import cur_datetime, datetime2str, simple_decode, simple_encode
 
 
 class NewSaveData:
     __instance = None
+    __ENCODING_KEY = "6l5f5BqbldikHYpqE240"
+
+    @staticmethod
+    def _encode(data: str, force: bool = False) -> str:
+        if not Config.debugging() or force:
+            data = simple_encode(NewSaveData.__ENCODING_KEY, data)
+        return data
+
+    @staticmethod
+    def _decode(data: str) -> str:
+        if data.startswith(_SaveDataGenerator.header()):
+            return data
+        return simple_decode(NewSaveData.__ENCODING_KEY, data)
 
     @staticmethod
     def load(path: str, in_user_path: bool = True) -> "NewSaveData":
         if not path.endswith(FileTypes.Save.value):
             path += FileTypes.Save.value
         try:
-            save_data = PathConfig.read(path, in_user_path)
+            save_data = NewSaveData._decode(PathConfig.read(path, in_user_path))
             return NewSaveData(save_data)
 
         except FileNotFoundError as ex:
@@ -83,6 +96,7 @@ class NewSaveData:
         self.__has_unsaved_changes = False
 
         if save_data is not None and len(save_data.strip()) > 0:
+            save_data = self._decode(save_data)
             generator = _SaveDataGenerator()
             self.__date_time, self.__inventory, gates, levels, unlocks, achievement_list = generator.load(save_data)
             self.__gates = gates.copy()
@@ -270,7 +284,7 @@ class NewSaveData:
 
         try:
             self.__date_time = cur_datetime()  # update datetime of the latest save (=now)
-            data = self.to_string()
+            data = self._encode(self.to_string())
             if is_auto_save:
                 PathConfig.write_auto_save(data)
             else:
@@ -278,7 +292,8 @@ class NewSaveData:
                 self.__has_unsaved_changes = False  # only change flag if it was a manual (i.e., no auto) save
             return True, CommonInfos.SavingSuccessful
 
-        except:
+        except Exception as ex:
+            Logger.instance().error(f"Exception occurred during saving: {ex}", False, False)
             return False, CommonInfos.SavingFailed
 
     def compare(self, other: "NewSaveData") -> Tuple[List[Instruction], List[str], List[Unlocks], List[Achievement]]:
@@ -388,8 +403,8 @@ class _SaveDataGenerator(SaveDataVisitor):
         self.__knowledge_mode = None
         self.__highest_knowledge_level = -1
 
-    def load(self, file_data) -> Tuple[datetime, Inventory, List[Instruction], List[LevelData],
-            List[Tuple[str, datetime]], List[Achievement]]:
+    def load(self, file_data: str) -> Tuple[datetime, Inventory, List[Instruction], List[LevelData],
+             List[Tuple[str, datetime]], List[Achievement]]:
         input_stream = InputStream(file_data)
         lexer = SaveDataLexer(input_stream)
         token_stream = CommonTokenStream(lexer)
