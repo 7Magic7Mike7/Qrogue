@@ -844,11 +844,14 @@ class ScreenCheckWidgetSet(MyWidgetSet):
                                                         "missing.")
             elif content_width > providable_width:
                 Popup.generic_info("Dimension Error",
-                                   f"Only {providable_width} characters available but {content_width} needed to "
-                                   f"correctly display the matrix of a 3-qubit circuit!\n"
+                                   f"Only {ColorConfig.highlight_word(str(providable_width))} "
+                                   f"{ColorConfig.highlight_word('characters available')} but "
+                                   f"{ColorConfig.highlight_word(str(content_width))} "
+                                   f"{ColorConfig.highlight_word('needed')} to correctly display the matrix of a "
+                                   f"3-qubit circuit!\n"
                                    f"You can either increase the size of your window, adapt font or press "
-                                   f"{controls.to_keyboard_string(Keys.MatrixPopup)} to view the whole matrix in a "
-                                   f"Popup.")
+                                   f"{ColorConfig.highlight_key(controls.to_keyboard_string(Keys.MatrixPopup))} to "
+                                   f"view the whole matrix in a Popup.")
             else:
                 Popup.generic_info("Dimension Fine", f"{providable_width} characters available and only {content_width}"
                                                      f" needed to display the matrix of a 3-qubit circuit")
