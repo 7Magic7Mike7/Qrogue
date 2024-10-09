@@ -37,7 +37,7 @@ setup(
 	include_package_data=True,
 	version='0.8',
 	license='MIT',  # Chose a license from here: https://help.github.com/articles/licensing-a-repository
-	description='QRogue is a modernized Quantum Computing take of the classical game Rogue.',
+	description='QRogue is an educational Quantum Computing puzzle game inspired by the classical game Rogue.',
 	long_description=README,
 	long_description_content_type="text/markdown",
 	author='Michael Artner',
