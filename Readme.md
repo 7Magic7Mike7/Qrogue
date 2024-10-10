@@ -42,8 +42,8 @@
 
 QRogue is an educational game about Quantum Computing, inspired in look and feel by the 1980s released classical game <a href="https://en.wikipedia.org/wiki/Rogue_%28video_game%29">Rogue</a>. You will play as a student who's dreaming about traveling the galaxy. As you hear about "Mission Quniverse", you immediately apply for its training program to be able to join this fascinating Quantum Computing powered universe exploration mission. In the lessons of the training program and later on during expeditions of Mission Quniverse you will come across a variety of quantum gates. Your Qubot - a robot you control to manipulate quantum circuits - will be able to use them to steadily increase its capabilities and even design small scale quantum algorithms at some point.
 
-But beware of ill-disposed Decoherers - or *Deqos* for short! They got their name from Decoherence, a phenomenon of the Quantum realm that describes how interactions with the environment can destroy a quantum state and turn it classical. And these Deqos will do their best to stand in your way. But luckily, they are in *Superposition* and your Qubot is equipped with a *Measurement* ability. This means, you can collapse their Quantum state to 0 or 1 by moving towards them. Depending on the result, they will either manifest and block your path until you solve their Quantum Puzzle, or vanish without a trace.
-Be ready to combine various Quantum Gates into all kinds of Quantum Circuits should you be challenged to solve a Puzzle. And some Deqos will be *entangled*, forming a group that collectively collapses to the same classical state upon Measurement. 
+But beware of ill-disposed Decoherers - or *Deqos* for short! They got their name from Decoherence, a phenomenon of the quantum realm that describes how interactions with the environment can destroy a quantum state and turn it classical. And these Deqos will do their best to stand in your way. But luckily, they are in *Superposition* and your Qubot is equipped with a *Measurement* ability. This means, you can collapse their quantum state to 0 or 1 by moving towards them. Depending on the result, they will either manifest and block your path until you solve their quantum puzzle, or vanish without a trace.
+Be ready to combine various quantum gates into all kinds of quantum circuits should you be challenged to solve a puzzle. And some Deqos will be *entangled*, forming a group that collectively collapses to the same classical state upon measurement. 
 
 ### Game World ###
 
@@ -333,7 +333,7 @@ Exit the current level and go back to the Main Menu.
 
 ## Mathematical background ##
 
-Quantum computations are the heart of _QRogue's_ puzzles. They boil down to matrix-vector multiplication, whereas states (e.g., input or output state) are described by vectors and operations (i.e. gates) by matrices. To get a glimpse of what this means we will describe the basics in the following sections.
+Quantum computations are the heart of _QRogue's_ puzzles. They boil down to matrix-vector multiplication, whereas states (e.g., input or output state) are described by vectors and operations (i.e., gates) by matrices. To get a glimpse of what this means, we will describe the basics in the following sections.
 
 
 ### Quantum Bits ###
@@ -375,7 +375,7 @@ The effect of applying this operation onto a single qubit $q_0$ can be calculate
 	=
 	\begin{pmatrix} \beta\\\alpha \end{pmatrix}.
 ```
-If $q_0$ is in a classical state (e.g., eihter $\alpha = 1$ or $\beta = 1$) we can easily see that this indeed corresponds to a _NOT_.
+If $q_0$ is in a classical state (e.g., either $\alpha = 1$ or $\beta = 1$) we can easily see that this indeed corresponds to a _NOT_.
 
 For a second example we consider the _Hadamard_ operation $H$ which is often used to create _superposition_:
 ```math
@@ -396,7 +396,7 @@ Now we assume our qubit $q_0$ is in the classical zero state ${|0>}$ (i.e., $\al
 	=
 	\frac{1}{\sqrt{2}}\begin{pmatrix} 1\\1\end{pmatrix}.
 ```
-As we can see ${q{'}_{0}}$ is now in _superposition_ and $\alpha = \beta = \frac{1}{\sqrt{2}}$.  
+As we can see, ${q{'}_{0}}$ is now in _superposition_ and $\alpha = \beta = \frac{1}{\sqrt{2}}$.  
 In _QRogue_ the last example would correspond to an _H Gate_ being placed on $q_0$ in our quantum circuit like this: <br>
 <p align="center">
 <img src="images/Circuit1_H0.png" alt="Circuit with 1 qubit q0 and Hadamard Gate H applied onto q0." style="height: 1.3em;
@@ -554,4 +554,4 @@ Which is also equivalent to:
 * <a href="https://www.cda.cit.tum.de/files/eda/2023_fdg2023_qrouge_teaching_quantum_computing_using_rogue-like_game_concept.pdf">Short Paper</a>  
 Presented at <a href="https://fdg2023.org/">FDG2023</a> conference 
 * <a href="https://pypi.org/project/qrogue/">PyPI</a>  
-Python packages for installation via pipQrogue v1.0 
+Python packages for installation via pip
