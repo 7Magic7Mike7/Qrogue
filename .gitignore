@@ -16,3 +16,7 @@ qrogue/test/installer/qrogue.config
 /qrogue/QrogueData/
 /misc_ignore/*
 /output/
+
+# personal scripts
+update_versioning.py
+exe_main.py
