@@ -128,8 +128,8 @@ default Speaker "0"
 
 *movingDone prio "Next: //03Move// through the //02Door//."
 
-*puzzle1 prio "The red //010// in the bottom left corner is a //02Trap//. It will challenge you to solve a //02Quantum Puzzle//."
-*puzzle2 prio "To succeed, you can //03add//, //03move// or //03remove// //02Quantum Gates// with your //02Qubot//. Currently you only have //05one// //02X Gate// to place."
+*puzzle1 prio "The red //010// in the bottom left corner is a //02Decoherer//, or //02Deqo// for short. It will challenge you to solve a //02Quantum Puzzle//."
+*puzzle2 prio "To //03solve// its //02Quantum Puzzle//, you can //03add//, //03move// or //03remove// //02Quantum Gates// with your //02Qubot//. Currently you only have //05one// //02X Gate// to place."
 *puzzle3 prio "No worries, for now we will stay in the //05Classical World// of 0s and 1s. Here, an //02X Gate// acts like a //05Not Gate//."
 *puzzle4 prio "Now //03step// onto the //010// and try your best."
 

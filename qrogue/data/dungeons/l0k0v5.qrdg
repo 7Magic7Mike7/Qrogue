@@ -162,13 +162,13 @@ default Speaker "0"
 
 *reset "Going forward, the //02Puzzles// will get more complex and are often not solvable with just one or two //02Gates//. To make your life easier, you are now able to //03reset// your //02Circuit// to //03remove// //05all// placed //02Gates//."
 
-*expStructure prio "But first things first: This lesson will also //05introduce// you to the //05structure// of //02Expeditions//. After you completed all lessons (spoiler: there is one more), we will send you to unknown planets of the //05Quniverse//, where you can collect new //02Gates// to //03experiment// with on these so-called //02Expeditions//." "Due to their quantum nature, //05no// one knows their //05exact layout// beforehand, but they will all contain a //02Miniboss// as well as an actual //02Boss//." "You'll find out more as you //03explore// this level!"
+*expStructure prio "But first things first: This lesson will also //05introduce// you to the //05structure// of //02Expeditions//. After you completed all lessons (spoiler: there is one more), we will send you to unknown planets of the //05Quniverse//, where you can collect new //02Gates// to //03experiment// with on these so-called //02Expeditions//." "Due to their quantum nature, //05no one// knows their //05exact layout// beforehand, but they will all contain a //02Miniboss// as well as an actual //02Boss//." "You'll find out more as you //03explore// this level!"
 
 *tutChallenge prio "So this //01!// is a //02Miniboss//." "Good luck challenging it!"
 
 *bossDoor prio pos5 "Beyond this //02Door// lies the //02Boss// chamber. Since it is //05locked//, you need to find a //02Key// in one of the other rooms. This will also //05always// be the case for //02Expeditions//. Additionally, you will need the //02Gate// //05given// to you //05by// the //02Miniboss//, so make sure to always //03challenge// it first!" when *foundKey then *bossDoorKey
 *bossDoorKey prio pos5 "Beyond this //02Door// lies the //02Boss// chamber. Since it is locked, you need to use the //02Key// you've already found in another room. This will also //05always// be the case for //02Expeditions//. Additionally, you will need the //02Gate// //05given// to you //05by// the //02Miniboss//, so make sure to always //03challenge// it first!"
 
-*doneMsg prio "Well done!" "If you feel ready, you can continue with the very //05last// //05Lesson//. Otherwise, we went ahead and unlocked //05Level Selection// in your main menu. So you can go back and revisit a previous //05Lesson// to beat your highscore. It's up to you."
+*doneMsg prio "Well done!" "If you feel ready, you can //03continue// with the very //05last lesson//. Otherwise, we went ahead and unlocked //05Level Selection// in your main menu. So you can go back and revisit a previous //05lesson// to //03beat// your //05highscore//. It's up to you."
 
 >Qrogue

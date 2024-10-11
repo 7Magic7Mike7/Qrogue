@@ -196,7 +196,7 @@ default Speaker "0"
 
 *forks pos1 "A fork in the road is a pretty //05common// sight in //02Expeditions//. Don't hesitate to go in one direction only to //05come back// later if it didn't lead to a //02Key//, //02Miniboss// or //02Boss//. //02Expeditions// are never big enough to get lost."
 
-*deadEnds pos5 "//02Expeditions// often have //05dead ends//. You can use them to //03experiment// on additonal //02Puzzles// or just //05ignore// them. It's up to you - and that's the //05beauty of exploration//."
+*deadEnds pos5 "//02Expeditions// often have //05dead ends//. You can use them to //03experiment// on additonal //02Puzzles// or just //03ignore// them. It's up to you - and that's the //05beauty of exploration//."
 
 *doneMsg prio "You made it! //05Congratulations// on successfully completing the //05'Mission Quniverse' Trainings Program//. You are now ready to go on real //02Expeditions// and explore the //05Quniverse//!"
 

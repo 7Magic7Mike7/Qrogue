@@ -18,7 +18,8 @@ class _HL:
     collec = CC.highlight_object("Collectibles")
     current_state = CC.highlight_object("Current State")
     door = CC.highlight_object("Door")
-    enemies = CC.highlight_object("Enemies")
+    enemy = CC.highlight_object("Deqo")
+    enemies = CC.highlight_object("Deqos")
     energy = CC.highlight_object("Energy")
     gates = CC.highlight_object("Gates")
     gate_i = CC.highlight_object("I Gate")
@@ -30,6 +31,7 @@ class _HL:
     keys = CC.highlight_object("Keys")
 
     mini_boss = CC.highlight_object("MiniBoss")
+    mini_bosses = CC.highlight_object("MiniBosses")
     output_stv = CC.highlight_object("Output State Vector")
     puzzle = CC.highlight_object("Puzzle")
     puzzle_s = CC.highlight_object("Puzzle's")
@@ -83,7 +85,6 @@ class _HL:
     display_details = CC.highlight_word("displays details")
     easier = CC.highlight_word("easier")
     edit_attempts = CC.highlight_word("edit attempts")
-    enemy = CC.highlight_object("Enemy")
     entanglement = CC.highlight_word("Entanglement")
     equal = CC.highlight_word("equal")
     exam = CC.highlight_word("Exam")
@@ -290,8 +291,8 @@ class HelpText(Enum):  # todo: import Controls to replace static key-mentions wi
 
     Challenge = ("challenge", "Minibosses",
         f"A {_HL.mini_boss} is represented by {_HL.tile_mini_boss} and appears in every {CC.hw('expedition')} and some "
-        f"{CC.hw('lessons')}. It has certain properties that {CC.hw('distinguish')} it from a normal {_HL.enemy} or "
-        f"{_HL.boss}:\n"
+        f"{CC.hw('lessons')}. It has certain properties that {CC.hw('distinguish')} it from normal {_HL.enemies} or "
+        f"{_HL.bosses}:\n"
         f"{_HL.indent}1) It will give you a {CC.hw('new')} {_HL.gate} upon challenging it, which you will need to "
         f"{CC.ha('solve')} its {_HL.puzzle}.\n"
         f"{_HL.indent}2) It will only accept your solution if you used a {CC.hw('specified number')} of {_HL.gates}.\n"
@@ -301,8 +302,8 @@ class HelpText(Enum):  # todo: import Controls to replace static key-mentions wi
 
     BossFight = ("boss", "Bosses",
         f"A {_HL.boss} is represented by {_HL.tile_boss} and appears in every {CC.hw('expedition')} and some "
-        f"{CC.hw('lessons')}. It not only has a {CC.hw('harder')} {_HL.puzzle} than a normal {_HL.enemy} or "
-        f"{_HL.mini_boss}, but also additional properties:\n"
+        f"{CC.hw('lessons')}. It not only has a {CC.hw('harder')} {_HL.puzzle} than normal {_HL.enemies} or "
+        f"{_HL.mini_bosses}, but also additional properties:\n"
         f"{_HL.indent}1) There is a {CC.hw('specified number')} of times you can {_HL.edit} your {_HL.circuit} to "
         f"solve the {_HL.boss_s} {_HL.puzzle}. Should you fail to reach the {_HL.output_stv} before the number of "
         f"remaining edits reaches 0, you lose and have to restart the {CC.hw('level')}. So we advise to not guess "
@@ -310,30 +311,29 @@ class HelpText(Enum):  # todo: import Controls to replace static key-mentions wi
         f"{_HL.indent}2) Harder {_HL.bosses} will have {CC.hw('randomized')} {_HL.input_stv}\n")
 
     Game = ("game", "About the Game",
-        f"QRogue is a game about {_HL.quantum_computing}. You will explore " \
+        f"QRogue is a game about {_HL.quantum_computing}. You will explore "
         f"{CC.hw('Lessons')} and {CC.hw('Expeditions')} and solve {_HL.puzzles} with the help of {_HL.quantum_gates} "
-        f"to reach even farther places of the quniverse.\n")
+        f"to reach even farther places of the Quniverse.\n")
 
     Pause = ("pause", "Pause Menu",
-        "In the Pause Menu you can do several things:\n" \
-        f"{_HL.continue_} - Leave the Pause Menu and continue where you stopped.\n" \
-        f"{_HL.restart} - Restart the current level.\n" \
-        f"{_HL.save} - Save your game. Remember that your progress is only saved level-wise.\n" \
-        f"{_HL.help_} - If you ever feel stuck and don't remember how certain stuff in the game works open " \
+        "In the Pause Menu you can do several things:\n"
+        f"{_HL.continue_} - Leave the Pause Menu and continue where you stopped.\n"
+        f"{_HL.restart} - Restart the current level.\n"
+        f"{_HL.save} - Save your game. Remember that your progress is only saved level-wise.\n"
+        f"{_HL.help_} - If you ever feel stuck and don't remember how certain stuff in the game works open "
         f"the manual and we will try to help you.\n" \
-        f"{_HL.options} - Configure some options of the game, like font size or coloring.\n" \
+        f"{_HL.options} - Configure some options of the game, like font size or coloring.\n"
         f"{_HL.exit_} - Exit the current level.")
 
     Options = ("options", "Options", "7")   # todo
     Welcome = ("welcome", "Welcome",
-        Game[2] + \
-        "\nBut before you can explore the universe you have to complete a trainings program.\n" \
-        f"Now {_HL.choose} your desired {CC.hw('difficulty')} with {_HL.navigation_keys} and {CC.ha('confirm')} with "
-        f"{_HL.action_keys}. {CC.hw(WordingConfig.QUANTUM_NEWBIE)} is the default mode, while "
-        f"{CC.hw(WordingConfig.QUANTUM_EXPERIENCED)} is less thorough with explanations and has slightly "
-        f"{CC.hw('harder')} {CC.ho('Puzzles')}. "
-        f"Now close this dialog by pressing {_HL.action_keys}. Select {_HL.start_journey} with " \
-        f"{_HL.navigation_keys} and confirm your selection with {_HL.action_keys} to begin!")
+        Game[2] +
+        "\nBut before you can explore the Quniverse you have to complete a training program.\n"
+        f"You can {_HL.select} your desired {CC.hw('difficulty')} with {_HL.navigation_keys} and {CC.ha('confirm')} "
+        f"with {_HL.action_keys}. {CC.hw(WordingConfig.QUANTUM_NEWBIE)} is the default mode that explains everything "
+        f"in full detail, while {CC.hw(WordingConfig.QUANTUM_EXPERIENCED)} is less thorough with explaining Quantum "
+        f"Computing concepts and has slightly {CC.hw('harder')} {CC.ho('Puzzles')}. "
+        f"We recommend to pick {CC.hw(WordingConfig.QUANTUM_NEWBIE)} if you are unsure.")
 
     LevelSelection = ("levelselection", "Level Selection",
         f"The {CC.hw('Level Selection Screen')} allows you to {CC.ha('revisit')} already completed {CC.hw('Lessons')} "
