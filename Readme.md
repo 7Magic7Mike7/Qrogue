@@ -17,9 +17,9 @@
   - Quantum Puzzles
 - Feedback
 - Installation
+  - Prerequisites
   - Dependencies
-  - Linux/macOS
-  - Windows
+  - Windows-build
   - Notes
 - Playing the Game
   - Terminal
@@ -84,42 +84,41 @@ Additionally, there is a description further down in the Section "Mathematical B
 ## Feedback ##
 We'd be very happy if you share any feedback with us, regardless whether you liked the game or not.
 Just send it via email to qrogue.game@gmail.com with the subject "QRogue Feedback". 
-It would also be nice if you could add your user-data folder ("qrogue/QrogueData", for standard installations it can be found in your virtual environment's packages) with the log files. Thanks!
+It would also be nice if you could add your user-data folder with the log files. You can find its destination by pressing "Tab" in the Main Menu. Thanks!
 
 
 ## Installation ##
 
-### Dependencies ###
-- py_cui 0.1.4
-- qiskit 0.34.2
-- numpy 1.20.3
-- antlr4-python3-runtime 4.10
+If installing QRogue with a package manager, we highly recommend doing so in a virtual environment. 
+With <a href="https://docs.conda.io/en/latest/">conda</a> you can use the following commands:  
+`conda create -n QRogue python=3.8`  
+`conda activate QRogue`  
 
-However, these dependencies are installed automatically if you install QRogue via pip.
+Installation is as simple as executing `pip install qrogue`.
 
-### Linux/macOS ###
+Afterwards, you can launch the game simply by executing `qrogue` in the Python environment you installed QRogue in.
 
-#### Prerequisites ####
+QRogue should work on most systems Python 3.8 and its dependencies can be installed successfully.
+
+### Prerequisites ###
 
 - Python 3.8
 - pip
+- conda (not necessary, but recommended)
 
-For Linux/macOS, you simply have to run 
-```bash
-pip install qrogue
-```
-to install QRogue in your current Python environment. 
+### Dependencies ###
 
-Afterwards you can launch the game simply by executing `qrogue` in the Python environment you installed QRogue in.
+- antlr4-python3-runtime 4.13.2
+- numpy 1.22.3
+- py_cui 0.1.4
+- qiskit 0.34.2
+- qiskit-aer 0.10.3
 
-### Windows ###
+However, these dependencies are installed automatically if you install QRogue via pip.
+
+### Windows-build ###
 
 Alternatively, you can download a Windows-build from <a href="https://github.com/7Magic7Mike7/Qrogue/releases">here</a> and simply launch qrogue.exe.
-
-#### Prerequisites ####
-
-Same as for Linux/macOS
-
 
 ### Notes ###
 
@@ -399,7 +398,7 @@ Now we assume our qubit $q_0$ is in the classical zero state ${|0>}$ (i.e., $\al
 As we can see, ${q{'}_{0}}$ is now in _superposition_ and $\alpha = \beta = \frac{1}{\sqrt{2}}$.  
 In _QRogue_ the last example would correspond to an _H Gate_ being placed on $q_0$ in our quantum circuit like this: <br>
 <p align="center">
-<img src="images/Circuit1_H0.png" alt="Circuit with 1 qubit q0 and Hadamard Gate H applied onto q0." style="height: 1.3em;
+<img src="./images/Circuit1_H0.png" alt="Circuit with 1 qubit q0 and Hadamard Gate H applied onto q0." style="height: 1.3em;
 	display: block; 
 	margin-left: auto; 
 	margin-right: auto;">
@@ -443,7 +442,7 @@ Again, these two operations can be applied onto the state ${|0>}$:
 
 This algorithm is equivalent to the following circuit in _QRogue_:  
 <p align="center">
-<img src="images/Circuit1_X0H0.png" alt="Circuit with 1 qubit q0 and X Gate and H Gate applied onto q0." style="height: 1.3em;
+<img src="./images/Circuit1_X0H0.png" alt="Circuit with 1 qubit q0 and X Gate and H Gate applied onto q0." style="height: 1.3em;
     display: block; 
     margin-left: auto; 
     margin-right: auto;">
@@ -500,7 +499,7 @@ Or alternatively ${q{'}_{in}} = \frac{1}{\sqrt{2}} ({|00>} + {|01>})$ where ${|0
 
 This algorithm is equivalent to the following circuit in _QRogue_:  
 <p align="center">
-<img src="images/Circuit2_H0.png" alt="Circuit with qubits q0, q1 and H Gate applied onto q0." style="height: 2.6em;
+<img src="./images/Circuit2_H0.png" alt="Circuit with qubits q0, q1 and H Gate applied onto q0." style="height: 2.6em;
     display: block; 
     margin-left: auto; 
     margin-right: auto;">
@@ -531,7 +530,7 @@ Just like we previously extended $H$ with $I$ to be able to apply it to a two qu
 ```
 Once again, this algorithm corresponds to the following circuit in _QRogue_:  
 <p align="center">
-<img src="images/Circuit2_H0X1_0.png" alt="Circuit with qubits q0, q1, H Gate applied onto q0 and X Gate applied onto q1." style="height: 2.6em;
+<img src="./images/Circuit2_H0X1_0.png" alt="Circuit with qubits q0, q1, H Gate applied onto q0 and X Gate applied onto q1." style="height: 2.6em;
     display: block; 
     margin-left: auto; 
     margin-right: auto;">
@@ -539,7 +538,7 @@ Once again, this algorithm corresponds to the following circuit in _QRogue_:
 
 Which is also equivalent to:  
 <p align="center">
-<img src="images/Circuit2_H0X1_1.png" alt="Circuit with qubits q0, q1, H Gate applied onto q0 and X Gate applied onto q1." style="height: 2.6em;
+<img src="./images/Circuit2_H0X1_1.png" alt="Circuit with qubits q0, q1, H Gate applied onto q0 and X Gate applied onto q1." style="height: 2.6em;
     display: block; 
     margin-left: auto; 
     margin-right: auto;">
