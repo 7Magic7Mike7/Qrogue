@@ -1,6 +1,6 @@
 Qrogue<
 Name = "Lesson 2: Flee & Control"
-Description = Speaker "0" "To have more possibilities and more exciting //02Puzzles// we will give you a //05new// //02Gate// in this lesson and also increase the number of //05slots// (i.e., columns) your //02Circuit// has and show you how to //03flee// from a //02Puzzle// should you get stuck."
+Description = Speaker "0" "To have more possibilities and more exciting //02Puzzles// we will give you a //05new// //02Gate// in this lesson, increase the number of //05slots// (i.e., columns) your //02Circuit// has and also show you how to //03flee// from a //02Puzzle// should you get stuck."
 
 NO_TELEPORTER
 SHOW_INDIVIDUAL_QUBITS
@@ -119,13 +119,13 @@ default *none
 // speaker: 0 = Examiner, 1 = Scientist, 2 = System, 3 = Player
 default Speaker "0"
 
-*tutOneWay prio pos1 "Some //02Doors// - like the one at the //05bottom// end of the room - open only from //05one side//. Seems like you need to //05find a different way// to //03access// the room behind it."
+*tutOneWay prio pos1 "Some //02Doors// - like the one at the //05bottom// of the room - open only from //05one side//. Seems like you need to //05find a different way// to //03access// the room behind it."
 
-*tutFlee prio pos1 "Sometimes you will find //02Puzzles// you //05cannot solve yet// (e.g., due to lacking a specific //02Gate//). In that case you can use your newly unlocked ability //03Flee//." "However, unsolved //02Puzzles// will still keep //05blocking// your way until you come back again and //03solve// them."
+*tutFlee prio pos1 "Sometimes you will find //02Puzzles// you //05cannot solve yet// (e.g., due to lacking a specific //02Gate//). In that case you can use your newly unlocked ability //03Flee//." "However, //02Deqos// with unsolved //02Puzzles// will keep //05blocking// your way until you come back and //03solve// them."
 
 *gateHelp prio "Pressing //04H// while you have selected a //02Gate// will open up its description." "Of course you can still //03access// your //05message history// by scrolling backwards with //04Q// and then //03traverse// it as before."
 
-*scoreInfo prio pos5 "The blue //01s// in this room is a //02Score// pickup. On the left side of your HUD you can see your current score. It is increased by //03solving// //02Puzzles// and pickups." "Don't worry about it too much though, you'll be able to revisit lessons later and try to beat your highscore!"
+*scoreInfo prio pos5 "The blue //01s// in this room is a //02Score// pickup. On the left side of your HUD you can see your current score. It is increased by pickups and //03solving// //02Puzzles//." "Don't worry about it too much though, you'll be able to revisit lessons later and try to beat your highscore!"
 
 *doneMsg "How do you like your new //02Gate//? It acts kind of //05classical// but it might have a surprise for you later."
 "Either way, now that you have some //05practice// with //02Puzzles//, let's talk about some //05theory// in the next lesson."

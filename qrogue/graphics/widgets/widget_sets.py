@@ -743,9 +743,9 @@ class ScreenCheckWidgetSet(MyWidgetSet):
                f"{ColorConfig.highlight_word('blue', True)} lower-case characters like " \
                f"{ColorConfig.highlight_tile('s', True)}, {ColorConfig.highlight_tile('k', True)}, " \
                f"{ColorConfig.highlight_tile('c', True)} or {ColorConfig.highlight_tile('g', True)}.\n" \
-               f"- Tiles containing {ColorConfig.highlight_object('Puzzles', True)} are meant to be " \
+               f"- Tiles containing {ColorConfig.highlight_object('Deqos', True)} are meant to be " \
                f"{ColorConfig.highlight_word('red', True)} and are {ColorConfig.highlight_tile('digits', True)}, " \
-               f"{ColorConfig.highlight_tile('!', True)}, {ColorConfig.highlight_tile('?', True)} and inverted " \
+               f"{ColorConfig.highlight_tile('!', True)} and inverted " \
                f"{ColorConfig.highlight_tile('B', True)} for bosses.\n" \
                f"- The {ColorConfig.highlight_object('Goal', True)} " \
                f"{ColorConfig.highlight_tile('G', True)} of a level and the " \
@@ -844,11 +844,14 @@ class ScreenCheckWidgetSet(MyWidgetSet):
                                                         "missing.")
             elif content_width > providable_width:
                 Popup.generic_info("Dimension Error",
-                                   f"Only {providable_width} characters available but {content_width} needed to "
-                                   f"correctly display the matrix of a 3-qubit circuit!\n"
+                                   f"Only {ColorConfig.highlight_word(str(providable_width))} "
+                                   f"{ColorConfig.highlight_word('characters available')} but "
+                                   f"{ColorConfig.highlight_word(str(content_width))} "
+                                   f"{ColorConfig.highlight_word('needed')} to correctly display the matrix of a "
+                                   f"3-qubit circuit!\n"
                                    f"You can either increase the size of your window, adapt font or press "
-                                   f"{controls.to_keyboard_string(Keys.MatrixPopup)} to view the whole matrix in a "
-                                   f"Popup.")
+                                   f"{ColorConfig.highlight_key(controls.to_keyboard_string(Keys.MatrixPopup))} to "
+                                   f"view the whole matrix in a Popup.")
             else:
                 Popup.generic_info("Dimension Fine", f"{providable_width} characters available and only {content_width}"
                                                      f" needed to display the matrix of a 3-qubit circuit")
@@ -2195,7 +2198,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         else:
             Logger.instance().assertion(isinstance(reward, Collectible), f"Reward is no Collectible: {reward}")
             self._choices.set_data(data=(
-                [f"Congratulations! Your reward: {ColorConfig.highlight_object(reward.to_string())}"],
+                [f"Congratulations! Your reward: {ColorConfig.highlight_object(reward.to_string(), invert=True)}"],
                 [give_reward_and_continue]
             ))
 
@@ -2369,7 +2372,7 @@ class BossFightWidgetSet(RiddleWidgetSet):
             Logger.instance().warn("No reward specified for Boss!", from_pycui=False)
             reward_text = ""
         else:
-            reward_text = f"Your reward: {ColorConfig.highlight_object(reward.to_string())}."
+            reward_text = f"Your reward: {ColorConfig.highlight_object(reward.to_string(), invert=True)}."
             if reward.type is CollectibleType.QuantumFuser:
                 # todo: currently the number of QuantumFusers is increased in NewSaveData.complete_expedition()
                 pass
@@ -2383,7 +2386,8 @@ class BossFightWidgetSet(RiddleWidgetSet):
             return False
 
         self._choices.set_data(data=(
-            [f"Congratulations, you solved the {ColorConfig.highlight_object('Boss Puzzle')}!\n" + reward_text],
+            [f"Congratulations, you {ColorConfig.highlight_action('solved', invert=True)} the "
+             f"{ColorConfig.highlight_object('Boss Puzzle', invert=True)}!\n" + reward_text],
             [callback]
         ))
 

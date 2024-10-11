@@ -85,10 +85,10 @@ class ValidationTests(unittest.TestCase):
 
         versioning_incorrect = False
 
-        # check for python 3.8 or 3.9
-        if sys.version_info.major != 3 or sys.version_info.minor not in [8, 9]:
-            print(f"Your Python version is {sys.version_info.major}.{sys.version_info.minor} but we only support 3.8 "
-                  f"and 3.9!")
+        # check for python 3.8, 3.9, 3.10
+        if sys.version_info.major != 3 or sys.version_info.minor not in [8, 9, 10]:
+            print(f"Your Python version is {sys.version_info.major}.{sys.version_info.minor} but we only support 3.8, "
+                  f"3.9 and 3.10!")
             versioning_incorrect = True
         else:
             print("Python version is fine.")

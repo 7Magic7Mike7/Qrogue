@@ -1,6 +1,6 @@
 Qrogue<
 Name = "Lesson 4: From Zero to Nine"
-Description = Speaker "0" prio "Back to practice: What if we tell you there are //05not only// //010//s?" "Until now //05everytime// you //03stepped// onto a digit a //02Puzzle// was presented to you. But what if that's just because the //010// represents a //050%// chance to //05skip// the //02Puzzle//?" "In this lesson we will finally dive into real //02Quantum Puzzles// to find the answer."
+Description = Speaker "0" prio "Back to practice: What if we tell you there are //05not only// //010// //02Deqos//?" "Until now //05everytime// you //03stepped// onto //02Deqos//, they presented a //02Puzzle// to you. But what if that's just because the //010// represents a //050%// chance to //05skip// the //02Puzzle//?" "In this lesson we will finally dive into real //02Quantum Puzzles// to find the answer."
 NO_TELEPORTER
 SHOW_INDIVIDUAL_QUBITS
 
@@ -121,7 +121,6 @@ gg (Wild):
 7 *allGates
 8 *allGates
 
-
 hh (Wild):
 #############
 # o o _ o o #
@@ -132,42 +131,6 @@ hh (Wild):
 #############
 m *doneMsg trigger *done
 
-
-xx (Wild):
-#############
-# 2 _ _ _ _ #
-# o 9 4 _ _ #
-# m 0 5 _ _ #
-# o 1 6 _ _ #
-# 8 _ _ _ _ #
-#############
-
-yy (Treasure):
-#############
-# o o o o o #
-# o o o o o #
-# o o o o o #
-# o o c o o #
-# o o 0 o o #
-#############
-c key 1
-0 *supH
-
-zz (Wild):
-#############
-# o _ c _ o #
-# o 0 0 0 o #
-# _ _ _ _ _ #
-# o 0 m 0 o #
-# o o _ o o #
-#############
-m 1 *firstQuantumPuzzles
-c key 1
-0 *supH0 input=*base00
-0 *supHX
-0 *supH0X1 input=*base00
-0 *supH1X0 input=*base00
-0 *supH1 input=*base00
 
 [Hallways]
 11 (locked; ; )
@@ -212,14 +175,14 @@ default Speaker "0"
 *remainingDigits prio "Of course we're talking about //05chances// here. So it is absolutely possible that, e.g., you manage to skip the //02Puzzle// of a //011// while having to solve one for a //019//. In //02Quantum Computing// we call the //05indeterministic// state causing this behaviour //02Superposition//."
 
 
-*tutCollapse prio pos5 "What is actually happening?" "By //03stepping// on a digit you //05collapse// its //05state//. This means it will either confront you with a //02Puzzle// or not. This can also be //05interpreted// as either //05collapsing to 1// (skipping the puzzle) or //05collapsing to 0// (having to solve the puzzle). And as already hinted //010//s have a //050%//, //015//s a //0550%// and //019//s a //0590%// chance to //05collapse to 1//." 
+*tutCollapse prio pos5 "What is actually happening?" "By //03stepping// on a //02Deqo// you //05collapse// its //05state//. This means it will either confront you with a //02Puzzle// or not. This can also be //05interpreted// as either //05collapsing to 0// (having to solve the puzzle) or //05collapsing to 1// (skipping the puzzle) . And as already hinted //010//s have a //050%//, //015//s a //0550%// and //019//s a //0590%// chance to //05collapse to 1//."
 "That's also why there is no //0110//. It wouldn't make sense to //05always skip// a //02Puzzle// (i.e., //05always collapse to 1//)."
 
-*tutCollapseQuantum pos5 "In //05Quantum Computing// we usually want such a //05collapse// to happen at the //05very end// of an algorithm to //05convert// the //05quantum information// the qubits hold into //05classical information// (0s and 1s). This is necessary to be able to //05work// with the result //05outside// of //05quantum computers//. However, in real quantum hardware a //05collapse// can also happen due to //05errors// or //05unwanted influence// from the outside. That's why usually quantum computers need //05powerful shielding//."
+*tutCollapseQuantum pos5 "In //05Quantum Computing// we usually want such a //05collapse// to happen at the //05very end// of an algorithm to //05convert// the //05quantum information// the qubits hold into //05classical information// (0s and 1s). This is necessary to be able to //05work// with the result //05outside// of //05quantum computers//. However, in real quantum hardware a //05collapse// can also happen due to //05unwanted influence// from the environment (called //05Decoherence//) or //05errors//. That's why usually quantum computers need //05powerful shielding//."
 
 *firstQuantumPuzzles prio "Now that you have some understanding of //02Superposition// we will try to mirror its behaviour to the //02Puzzles// themselves by //05leaving// the purely //05classical realm//."
 "Since they will be your first //02Quantum Puzzles//, we will keep it simple and all //02Puzzles// in this room will //05start// in the zero-state //05|00>//. However, this also means that you first need to //05find a new// //02Gate// that let's you //05transform// the classical zero-state into a quantum state."
-"Also, we can no longer show you the input and output values of the qubits in your circuit. //02Superposition// makes these values //05ambigious// so your only clues are described in the //05matrix-vector-multiplication//."
+"Also, we can no longer show you the input and output values of the qubits in your circuit. //02Superposition// makes these values //05ambigious// so your only clues are described in the //05matrix-vector multiplication//."
 
 *supHint0 prio pos5 "We can see that the //05Target StateVector// has an amplitude of 0.707 (rounded) for //05|00>// and //05|01>//. This means that both of these qubit configurations are //05equally likely// and occurr 50% of the time." 
 "By further deconstructing this, we notice that //05q1=0// is true for both cases and only //05q0 differs//." 

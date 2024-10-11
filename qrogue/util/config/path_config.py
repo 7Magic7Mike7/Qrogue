@@ -211,7 +211,13 @@ class PathConfig:
         if num_of_files >= PathConfig.__NUMBER_OF_SAVE_FILES:
             oldest_num = num - PathConfig.__NUMBER_OF_SAVE_FILES
             PathConfig.delete(PathConfig.__save_file_str(oldest_num))
-        PathConfig.write(PathConfig.__save_file_str(num), text, may_exist=False)
+
+        file_path = PathConfig.__save_file_str(num)
+        try:
+            PathConfig.write(file_path, text, may_exist=False)
+        except Exception as ex:
+            PathConfig.delete(file_path)    # delete the newly created file because it is corrupt
+            raise ex
 
     @staticmethod
     def write_auto_save(text: str):
@@ -294,7 +300,7 @@ class PathConfig:
             file.write(text)
 
     @staticmethod
-    def delete(file_name):
-        path = PathConfig.user_data_path(file_name)  # data in base_path is static so we can only delete user data
+    def delete(path: str):
+        path = PathConfig.user_data_path(path)  # data in base_path is static so we can only delete user data
         if os.path.exists(path):
             os.remove(path)

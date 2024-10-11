@@ -17,7 +17,9 @@ class PuzzleGenerator:
         :returns: True if gate was successfully prepared, False otherwise
         """
         gate_qubits = qubits.copy()
-        assert qubit in gate_qubits, f"Invalid arguments: qubit={qubit} not in qubits={qubits}!"
+        if qubit not in gate_qubits:
+            Logger.instance().assertion(False, f"Invalid arguments: qubit={qubit} not in qubits={qubits}!")
+            return False
         gate_qubits.remove(qubit)
 
         qubit_count[qubit] += 1
@@ -25,6 +27,9 @@ class PuzzleGenerator:
             qubits.remove(qubit)
 
         if gate.use_qubit(qubit):
+            # stop since we don't have more qubits to pick from (preparation failed, because gate still needs more)
+            if len(gate_qubits) <= 0: return False
+
             if len(qubits) <= 0:
                 Logger.instance().error(f"Not enough qubits provided to prepare gate {gate.name()}!", from_pycui=False)
                 return False
@@ -195,13 +200,13 @@ class PuzzleGenerator:
         each other out. It is still possible that, e.g., the gate placed third cancels the combination of the first and
         second gate.
         """
-        qubit_count = [0] * num_of_qubits
         qubits = list(range(num_of_qubits))
 
         # store which stvs we generated on the way to make sure we don't undo a previous gate (leading to virtually
         #  fewer gates used than tasked with) - starting with no gates applied, we're at the 0-state
         prev_stvs: Set[StateVector] = {StateVector.create_zero_state_vector(num_of_qubits)}
         circuits: List[List[Instruction]] = [[]]
+        qubit_counts: List[List[int]] = [[0] * num_of_qubits]   # stores the qubit_count for every circuit
 
         i, start_index = 0, 0
         while True:
@@ -211,13 +216,15 @@ class PuzzleGenerator:
             # try to add the currently selected gate on different qubits until the resulting stv is completely new
             for qu in cur_qubits:
                 cur_gate = selected_gates[i].copy()
-                if not PuzzleGenerator.__prepare_gate_at(rm, circuit_space, cur_gate, qubit_count, qubits, qu):
+                cur_qubit_count = qubit_counts[-1].copy()
+                if not PuzzleGenerator.__prepare_gate_at(rm, circuit_space, cur_gate, cur_qubit_count, qubits, qu):
                     continue    # failed to prepare the gate, so let's try with a different qubit
 
-                real_circuit = circuits[-1]
-                new_stv = Instruction.compute_stv(real_circuit.copy() + [cur_gate], num_of_qubits, inverse)
+                cur_circuit = circuits[-1]
+                new_stv = Instruction.compute_stv(cur_circuit.copy() + [cur_gate], num_of_qubits, inverse)
 
-                # check whether new_stv is indeed new or a repeat of a previous one (meaning the gate undid an operation)
+                # check whether new_stv is indeed new or a repeat of a previous one (meaning the gate undid an
+                # operation)
                 is_repeated = False
                 for prev_stv in prev_stvs:
                     if prev_stv.is_equal_to(new_stv, ignore_god_mode=True):
@@ -234,6 +241,13 @@ class PuzzleGenerator:
                         new_circuits.append(new_circuit)
                         prev_stvs.add(Instruction.compute_stv(new_circuit, num_of_qubits, inverse))
                     circuits += new_circuits
+
+                    new_qubit_counts = []
+                    for qc in qubit_counts:
+                        new_qc = qc.copy()
+                        for qc_qubit in cur_gate.qargs_iter(): new_qc[qc_qubit] += 1
+                        new_qubit_counts.append(new_qc)
+                    qubit_counts += new_qubit_counts
 
                     added_gate = True
                     break
@@ -265,10 +279,10 @@ class PuzzleGenerator:
     def __prepare_farsighted_circuit(rm: MyRandom, num_of_qubits: int, circuit_space: int,
                                      selected_gates: List[Instruction], inverse: bool = False) -> List[Instruction]:
         """
-        Prepares a list of gates (representing a circuit) such that gate cancels out any previously placed gates. This
-        way it is not ensured that all gates in selected_gates are in the circuit, but adding one of these remaining
-        gates to any qubit would result in a circuit that either produces the same StateVector or a StateVector closer
-        to the 0-state (i.e., undoing one of the previous gates).
+        Prepares a list of gates (representing a circuit) such that no gate cancels out any previously placed gates.
+        This way it is not ensured that all gates in selected_gates are in the circuit, but adding one of these
+        remaining gates to any qubit would result in a circuit that either produces the same StateVector or a
+        StateVector closer to the 0-state (i.e., undoing one of the previous gates).
         """
         # todo: a bad gate selection can lead to being unable to place enough gates - fix with additional parameters and
         #  selecting gates on the fly? (but we have to make sure that included_gates are used!)
