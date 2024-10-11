@@ -2,7 +2,7 @@ import unittest
 from typing import Dict, Any
 
 from qrogue.test.test_util import SingletonSetupTestCase
-from qrogue.util import GameplayConfig, Options, OptionsManager
+from qrogue.util import GameplayConfig, Options, OptionsManager, ScoreConfig
 
 
 class MyOptionsTest(SingletonSetupTestCase):
@@ -91,6 +91,20 @@ Auto reset history=1
             act_val = GameplayConfig.get_option_value(option, ignore_test_config=True)
             self.assertTrue(MyOptionsTest._are_options_values_equal(exp_val, act_val),
                             f"Non-equal value for Option={option.name}: expected \"{exp_val}\" but got \"{act_val}\"")
+
+
+class ScoreTest(unittest.TestCase):
+    def testTimeBonus(self):
+        score_bounds = 100, 1000, 10_000, 100_000
+        score_steps = 20, 100, 2000
+        dur_bounds = 20, 200, 400, 1000, 10_000
+        dur_steps = 5, 10, 20, 100
+        for i, sc_step in enumerate(score_steps):
+            for j, dur_step in enumerate(dur_steps):
+                for score in range(score_bounds[i], score_bounds[i+1], sc_step):
+                    for dur in range(dur_bounds[j], dur_bounds[j+1], dur_step):
+                        bonus = ScoreConfig.compute_time_bonus(score, dur)
+                        self.assertGreaterEqual(bonus, 0)
 
 
 if __name__ == '__main__':

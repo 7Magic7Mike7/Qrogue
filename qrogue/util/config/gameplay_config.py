@@ -404,7 +404,10 @@ class ScoreConfig:
 
     @staticmethod
     def compute_time_bonus(score: int, duration: int) -> int:
-        return int(score * (1.5 - 0.015 * duration ** 0.74))
+        # ratio is exactly 0.5 for a duration of 0s, and then slowly falls off
+        # 0 is reached only for an infinite duration
+        ratio = 0.5 * 1.2**(-duration / 100)
+        return max(int(score * ratio), 0)   # make sure to never return something smaller 0
 
 
 class QuantumSimulationConfig:
