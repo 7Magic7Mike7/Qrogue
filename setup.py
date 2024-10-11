@@ -35,7 +35,7 @@ setup(
 	],
 	package_data={"data": ["qrogue/data"]},
 	include_package_data=True,
-	version='0.8',
+	version='0.8.1',
 	license='MIT',  # Chose a license from here: https://help.github.com/articles/licensing-a-repository
 	description='QRogue is an educational Quantum Computing puzzle game inspired by the classical game Rogue.',
 	long_description=README,
@@ -43,17 +43,17 @@ setup(
 	author='Michael Artner',
 	author_email='michael.artner@hotmail.de',
 	url='https://github.com/7Magic7Mike7/Qrogue',
-	download_url='https://github.com/7Magic7Mike7/Qrogue/releases/tag/0.8',  # link to Release on GitHub
+	download_url='https://github.com/7Magic7Mike7/Qrogue/releases/tag/0.8.1',  # link to Release on GitHub
 	keywords=['Quantum Computing', 'Gamification', 'Video Game', 'PyCUI'],
 	install_requires=[
-		'py-cui==0.1.4',
-		'numpy==1.22.3',
-		'qiskit==0.34.2',
-		'qiskit-aer==0.12.2',
 		'antlr4-python3-runtime==4.13.2',
+		'numpy==1.22.3',
+		'py-cui==0.1.4',
+		'qiskit==0.34.2',
+		'qiskit-aer==0.10.3',
 	],
 	classifiers=[
-		'Development Status :: 3 - Alpha',  # Chose either "3 - Alpha", "4 - Beta" or "5 - Production/Stable"
+		'Development Status :: 3 - Beta',  # Chose either "3 - Alpha", "4 - Beta" or "5 - Production/Stable"
 		'Intended Audience :: Education',
 		'Intended Audience :: Science/Research',
 		'Topic :: Games/Entertainment :: Puzzle Games',
