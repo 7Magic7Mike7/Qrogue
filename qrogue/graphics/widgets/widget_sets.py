@@ -2198,7 +2198,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         else:
             Logger.instance().assertion(isinstance(reward, Collectible), f"Reward is no Collectible: {reward}")
             self._choices.set_data(data=(
-                [f"Congratulations! Your reward: {ColorConfig.highlight_object(reward.to_string())}"],
+                [f"Congratulations! Your reward: {ColorConfig.highlight_object(reward.to_string(), invert=True)}"],
                 [give_reward_and_continue]
             ))
 
@@ -2372,7 +2372,7 @@ class BossFightWidgetSet(RiddleWidgetSet):
             Logger.instance().warn("No reward specified for Boss!", from_pycui=False)
             reward_text = ""
         else:
-            reward_text = f"Your reward: {ColorConfig.highlight_object(reward.to_string())}."
+            reward_text = f"Your reward: {ColorConfig.highlight_object(reward.to_string(), invert=True)}."
             if reward.type is CollectibleType.QuantumFuser:
                 # todo: currently the number of QuantumFusers is increased in NewSaveData.complete_expedition()
                 pass
@@ -2386,7 +2386,8 @@ class BossFightWidgetSet(RiddleWidgetSet):
             return False
 
         self._choices.set_data(data=(
-            [f"Congratulations, you solved the {ColorConfig.highlight_object('Boss Puzzle')}!\n" + reward_text],
+            [f"Congratulations, you {ColorConfig.highlight_action('solved', invert=True)} the "
+             f"{ColorConfig.highlight_object('Boss Puzzle', invert=True)}!\n" + reward_text],
             [callback]
         ))
 
