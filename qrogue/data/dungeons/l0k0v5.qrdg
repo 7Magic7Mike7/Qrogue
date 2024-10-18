@@ -80,7 +80,7 @@ dd (Wild):
 # _ o _ _ _ #
 # o _ _ _ _ #
 #############
-b *imaginaryBoss score 1000 10
+b *imaginaryBoss score 1000 14
 
 kk (Wild):
 #############
@@ -169,6 +169,6 @@ default Speaker "0"
 *bossDoor prio pos5 "Beyond this //02Door// lies the //02Boss// chamber. Since it is //05locked//, you need to find a //02Key// in one of the other rooms. This will also //05always// be the case for //02Expeditions//. Additionally, you will need the //02Gate// //05given// to you //05by// the //02Miniboss//, so make sure to always //03challenge// it first!" when *foundKey then *bossDoorKey
 *bossDoorKey prio pos5 "Beyond this //02Door// lies the //02Boss// chamber. Since it is locked, you need to use the //02Key// you've already found in another room. This will also //05always// be the case for //02Expeditions//. Additionally, you will need the //02Gate// //05given// to you //05by// the //02Miniboss//, so make sure to always //03challenge// it first!"
 
-*doneMsg prio "Well done!" "If you feel ready, you can //03continue// with the very //05last lesson//. Otherwise, we went ahead and unlocked //05Level Selection// in your main menu. So you can go back and revisit a previous //05lesson// to //03beat// your //05highscore//. It's up to you."
+*doneMsg prio "Well done!" "If you feel ready, you can //03continue// with the very //05last lesson//. Otherwise, we went ahead and unlocked //05Level Selection// in your main menu. So you can go back and revisit a previous //05lesson// to //03beat// your //05high score//. It's up to you."
 
 >Qrogue

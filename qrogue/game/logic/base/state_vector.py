@@ -253,7 +253,7 @@ class StateVector:
             mult = mult * 2 + 1
         return hash_sum
 
-    def __eq__(self, other) -> bool:  # TODO currently not even in use!
+    def __eq__(self, other) -> bool:
         if type(other) is type(self):
             return self.__amplitudes == other.__amplitudes
         elif isinstance(other, list):

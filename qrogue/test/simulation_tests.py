@@ -94,7 +94,6 @@ class SimulationTestCase(test_util.SingletonSetupTestCase):
 
     def test_meta(self):
         simulations: List[SimulationTestCase._Simulation] = [
-            #SimulationTestCase._Simulation("fresh_l1-2"),
             #SimulationTestCase._Simulation("25032024_152548_meta716940"),
             #SimulationTestCase._Simulation("21032024_163055_meta248180"),
         ]

@@ -842,8 +842,7 @@ class ExpeditionGenerator(DungeonGenerator):
                             if neighbor in created_hallways and opposite in created_hallways[neighbor]:
                                 hallway = created_hallways[neighbor][opposite]
                             else:
-                                hallway = Hallway(hallways[
-                                                      neighbor])  # todo create door here and only check if it should be locked or not?
+                                hallway = Hallway(hallways[neighbor])  # todo create door here and only check if it should be locked or not?
                                 if neighbor in created_hallways:
                                     created_hallways[neighbor][opposite] = hallway
                                 else:

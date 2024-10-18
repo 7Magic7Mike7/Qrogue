@@ -609,7 +609,7 @@ def split_text(text: str, width: int, padding: int, handle_error: Callable[[str]
     :param width: the maximum width of one line
     :param padding: how much spaces we should place at the start and end of each line
     :param handle_error: to handle potential errors
-    :return: list of text parts with a maximum of #width characters, every text part is rstrip()-ed     # todo: test thoroughly
+    :return: list of text parts with a maximum of #width characters, every text part is rstrip()-ed
     """
     width -= padding * 2  # remove the space needed for padding
     lines = []
@@ -660,8 +660,8 @@ def split_text(text: str, width: int, padding: int, handle_error: Callable[[str]
                     # if so, terminate it and remember to continue it in the next line
                     code_start = last_highlight + ColorConfig.HIGHLIGHT_WIDTH
                     # TODO a highlighted number can potentially lead to problems here! (at least theoretically,
-                    # todo but somehow I couldn't produce a breaking example so I might be wrong)
-                    # todo also if we place an at-least-2-digits number directly after a highlight
+                    #  but somehow I couldn't produce a breaking example so I might be wrong)
+                    #  also if we place an at-least-2-digits number directly after a highlight
                     if ColorConfig.is_number(next_line[code_start:code_start + ColorConfig.CODE_WIDTH]):
                         next_line += ColorConfig.TEXT_HIGHLIGHT
                         prepend = next_line[last_highlight:code_start + ColorConfig.CODE_WIDTH]

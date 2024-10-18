@@ -331,7 +331,7 @@ class QrogueCUI(PyCUI):
 
         self.__training = TrainingsWidgetSet(self.__controls, self.__render, Logger.instance(), self,
                                              lambda b: None, self.__popup_history.show,
-                                             self.__save_data.check_unlocks)  # todo: update signature
+                                             self.__save_data.check_unlocks)
         self.__workbench = WorkbenchWidgetSet(Logger.instance(), self, self.__render, self.__controls,
                                                lambda: self.__save_data.num_quantum_fusers,
                                               self.__save_data.get_original_gates, self.__save_data.add_gate,

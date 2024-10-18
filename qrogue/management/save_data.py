@@ -168,7 +168,7 @@ class NewSaveData:
         level_data = self._complete_map(name, duration, date_time, score)
         self.add_to_achievement(Achievement.CompletedExpedition, difficulty_level)
         self.__gates.append(InstructionManager.from_type(gate_type))
-        self.__inventory.quantum_fuser += 1     # todo: will an expedition's Boss always give 1 QuantumFuser?
+        self.__inventory.quantum_fuser += 1     # todo: should an expedition's Boss always give 1 QuantumFuser?
         return level_data
 
     def unlock(self, unlock: Union[str, Unlocks], date_time: Optional[datetime] = None):

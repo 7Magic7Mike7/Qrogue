@@ -56,7 +56,7 @@ class LevelInfo:
         # other levels
     }
 
-    __LEVEL_START_GATES: Dict[str, List[GateType]] = {      # todo: parse from level file instead?
+    __LEVEL_START_GATES: Dict[str, List[GateType]] = {
         # newbie tutorials
         "l0k0v0": [GateType.XGate],
         "l0k0v1": [GateType.XGate],

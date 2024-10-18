@@ -135,7 +135,7 @@ class CommonQuestions(Enum):
             text += f"\n\nStats of best attempt:" \
                     f"Duration:    {prev_values[1]}\n" \
                     f"Total Score: {prev_values[0]}"
-        _CallbackHandler.ask(Config.system_name(), text, callback, ["Proceed", "Stay", "Back to Main Menu"])    # todo: does stay work?
+        _CallbackHandler.ask(Config.system_name(), text, callback, ["Proceed", "Stay", "Back to Main Menu"])
 
     def __init__(self, title: str, text: str, answers: Optional[List[str]] = None):
         self.__title = title

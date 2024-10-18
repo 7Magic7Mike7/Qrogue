@@ -69,7 +69,7 @@ c key 1 trigger *pickedUpKey
 m 1 *puzzle1
 m 1 *puzzle2
 m 1 *puzzle3
-m *puzzle4
+m 1 *puzzle4
 
 dd (Wild):
 #############
@@ -122,23 +122,20 @@ default Speaker "0"
 
 *keyFound prio "Great, you found a //02Key//. The //05number of keys// you hold is displayed in the //05HUD// on the //05top left//."
 
-*reopenMsgLog prio "By the way, should you ever forget what your //05current goal// is you can //03open// the message log with //04H// and //03scroll// through the current lesson's history with //04Q// and //04E//."
+*reopenMsgLog prio "By the way, should you ever forget what your //05current goal// is, you can //03open// the message log with //04H// and //03scroll// through the current lesson's history with //04Q// and //04E//."
 
 *movingDone prio "Next: //03Move// through the //02Door//."
 
-*puzzle1 prio "The red //010// in the bottom left corner is a //02Quantum Puzzle//. It will challenge you to reach a certain //02Quantum State//."
-*puzzle2 prio "For this you can //03add//, //03move// or //03remove// //02Quantum Gates//. Currently you only have //05one// //02X Gate// to place."
-*puzzle3 prio "For now we will stay in the //05Classical World// of 0s and 1s. There an //02X Gate// acts like a //05Not Gate//."
-*puzzle4 prio "Now //03step// onto the //010// and try your best." when *solvedPuzzle then *puzzleDone
-*puzzleDone prio "Now you can go and pick up the //02Key// //01k//." when *pickedUpKey then *keyPickedUp
-*keyPickedUp prio "Now you have a //02Key// to //03open// the next //02Door//."
+*puzzle1 prio "The red //010// in the bottom left corner is a //02Decoherer//, or //02Deqo// for short. It will challenge you to solve a //02Quantum Puzzle//."
+*puzzle2 prio "To //03solve// its //02Quantum Puzzle//, you can //03add//, //03move// or //03remove// //02Quantum Gates// with your //02Qubot//. Currently, you only have //05one// //02X Gate// to place."
+*puzzle3 prio "No worries, for now we will stay in the //05Classical World// of 0s and 1s. Here, an //02X Gate// acts like a //05Not Gate//."
+*puzzle4 prio "Now //03step// onto the //010// and try your best."
 
-*puzzleFight prio pos1 "In the //05middle// of the screen you can see your //02Quantum Circuit// which is currently //05empty//. On its //05left// you see the values of the //05input// (qu)bits. On the //05right// side you see the //05current// as well as //05expected output// values. The //02Puzzle// is solved if your //02Circuit// outputs the expected values."
-"At the //05bottom// you can select whether to //03place// or //03remove// a //02Gate// from your //02Circuit// via //04WASD// or //04Arrow Keys//. Confirming your selection with //04Enter// or //04Space// shows you a //05preview// in your //02Circuit// which you can update (i.e., where to place or remove a gate) and confirm again with the usual keys. After that your output will be //05recalculated// and updated accordingly."
-"Pressing //04H// while a //02Gate// is selected will show you a brief //05description// of what the //02Gate// does. Now try to solve your first //02Puzzle//!"
+*puzzleFight prio pos1 "In the //05middle// of the screen you can see your //02Quantum Circuit// which is currently //05empty//. On its //05left//, you see the values of the //05input// (qu)bits. On the //05right// side, you see the //05current// as well as //05expected output// values. The //02Puzzle// is solved if your //02Circuit// outputs the expected values."
+"At the //05bottom//, you can select whether to //03place// or //03remove// a //02Gate// from your //02Circuit// via //04WASD// or //04Arrow Keys//. Confirming your selection with //04Enter// or //04Space// shows you a //05preview// in your //02Circuit//, which you can update (i.e., where to place or remove a gate) and confirm again with the usual keys. After that, your output will be //05recalculated// and updated accordingly."
 
 *goal prio "The //05goal// in each level is to find... well, the //02Goal//. It is depicted as green //01G// and can often be found in the room farthest from your starting position."
-*optional "The two remaining //010//s are //05optional// //02Puzzles//. You can try to solve them if you want but it's //05not mandatory// to complete the level. You can also just continue to the next room." ""
+*optional "The two remaining //010//s are //05optional// //02Puzzles//. You can try to solve them if you want, but it's //05not mandatory// to complete the level. You can also just continue to the next room." ""
 "[Some messages - like this one - are not important to complete a level. Hence, they will not reappear in your message log to keep it clean and full of useful information.]"
 
 *doneMsg "Alright, you successfully //05finished// the //05first// lesson. Now onwards to the //05second// one."

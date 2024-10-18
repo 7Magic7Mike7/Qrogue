@@ -125,7 +125,7 @@ def start_game(from_console: bool = False, debugging: bool = False, test_level: 
     else:
         print(f"[Qrogue] Error #{return_code}:")
         if return_code == 1:
-            print("qrogue.config is invalid. Please check if the second line describes a valid path (the path "
+            print("qrogue_launch.config is invalid. Please check if the second line describes a valid path (the path "
                   "to your save files). Using special characters in the path could also cause this error so if the "
                   "path is valid please consider using another one without special characters.")
 
