@@ -1,6 +1,6 @@
 Qrogue<
 Name = "Lesson 7: The last rotation"
-Description = Speaker "0" prio "The //05last// //02Lesson// will mimic an //02Expedition// once again. However, since the previous lesson was //05small// compared to real //02Expeditions//, this one will have a more //05realistic size//. To make it less cumbersome, we will give you //05hints// on where to go first. But remember that real //02Expeditions// will probably require more //05backtracking//." "You can start by //03peeking// into the top and bottom room before continuing to the left."
+Description = Speaker "0" prio "The //05last// //02lesson// will mimic an //02Expedition// once again. However, since the previous lesson was //05small// compared to real //02Expeditions//, this one will have a more //05realistic size//. To make it less cumbersome, we will give you //05hints// on where to go first. But remember that real //02Expeditions// will probably require more //05backtracking//." "You can start by //03peeking// into the top and bottom room before continuing to the left."
 Closing = *doneMsg
 NO_TELEPORTER
 
@@ -178,12 +178,10 @@ custom
 
 // all "new" (i.e., requiring  Y Gates) stvs
 
-
 default *allj
 
 [Reward Pools]
 default *none
-
 
 [Messages]
 // highlight text by encapsulating it in "//02abcd//" where "abcd" is the text to highlight and "02" one of the available styles: 01 is for tiles, 02 is for game objects, 03 for actions, 04 for keys on the keyboard and 05 for other words
@@ -196,7 +194,7 @@ default Speaker "0"
 
 *forks pos1 "A fork in the road is a pretty //05common// sight in //02Expeditions//. Don't hesitate to go in one direction only to //05come back// later if it didn't lead to a //02Key//, //02Miniboss// or //02Boss//. //02Expeditions// are never big enough to get lost."
 
-*deadEnds pos5 "//02Expeditions// often have //05dead ends//. You can use them to //03experiment// on additonal //02Puzzles// or just //03ignore// them. It's up to you - and that's the //05beauty of exploration//."
+*deadEnds pos5 "//02Expeditions// often have //05dead ends//. You can use them to //03experiment// on additional //02Puzzles//, or just //03ignore// them. It's up to you - and that's the //05beauty of exploration//."
 
 *doneMsg prio "You made it! //05Congratulations// on successfully completing the //05'Mission Quniverse' Trainings Program//. You are now ready to go on real //02Expeditions// and explore the //05Quniverse//!"
 

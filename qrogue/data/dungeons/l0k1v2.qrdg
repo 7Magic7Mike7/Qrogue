@@ -108,35 +108,35 @@ default *none
 // speaker: 0 = Examiner, 1 = Scientist, 2 = System, 3 = Player
 default Speaker "0"
 
-*tutManual prio "The following //02Puzzles// will briefly show you how we display the underlying //05matrix-vector multiplication//, //02Ket-Notation//, parallel (//05kronecker product//) and serial (//05multiplication//) application of //02Gates//." "Should some description be too short you can check the //02Manual// in the //02Pause Menu// (open with //04Tab// or //04P//)."
+*tutManual prio "The following //02Puzzles// will briefly show you how we display the underlying //05matrix-vector multiplication//, //02Ket-Notation//, parallel (//05Kronecker product//) and serial (//05multiplication//) application of //02Gates//." "Should some description be too short, you can check the //02Manual// in the //02Pause Menu// (open with //04Tab// or //04P//)."
 
 *circuitEquation prio pos5 "Above your //02Circuit// you can see the aforementioned //05matrix-vector multiplication//." 
-"The values of the //05input// and //05output// qubits as well as their //05target// values are //05reflected// in the //05In//, //05Out// and //05Target State Vector//, respectively. The //05Circuit Matrix// to the left is //05calculated// based on which //02Gates// you place on which //02Qubits// in which //05order//. In our classical //02Puzzle// it describes whether a 0 as input should be //05transformed// to a 1 and vice versa."
+"The values of the //05input// and //05output// qubits as well as their //05target// values are //05reflected// in the //05In//, //05Out// and //05Target State Vector//, respectively. The //05Circuit Matrix// to the left is //05calculated// based on which //02Gates// you place on which //02Qubits// in which //05order//. In our classical //02Puzzle//, it describes whether a 0 as input should be //05transformed// to a 1 and vice versa."
 "Let's start with some very simple //02Puzzles// so you can get the hang of it. Just //05solve// them //05as// you did //05before// and see how this //05changes the equation//."
 
 *ketNotation prio pos5 "The new //05|??>//-notation you can see //05around// the //05vectors// and //05matrix// is called //02Ket-Notation//. We display the //05most significant// //02Qubit// first, meaning //05|01>// implies //05q1=0// and //05q0=1//." 
-"In general it looks like this: //05|qn...q1q0>//, where n is the number of qubits - 1."
+"In general, it looks like this: //05|qn...q1q0>//, where n is the number of qubits - 1."
 
-*kronProd1 prio pos5 "Because //05single qubit// //02Gates// like the //02X Gate// correspond to //052x2 matrices//, we need to use //05kronecker products// to extend them to 4x4 in our two //02Qubit// case."
-"For //02X Gate// on q0 and //02I Gate// on q1 we have to //05'put X into I'// like this:"
+*kronProd1 prio pos5 "Because //05single qubit// //02Gates// like the //02X Gate// correspond to //052x2 matrices//, we need to use //05Kronecker products// to extend them to 4x4 in our two //02Qubit// case."
+"For //02X Gate// on q0 and //02I Gate// on q1, we have to //05'put X into I'// like this:"
 "    |0>  |1>        |0> |1>"
 "|0> 1*X  0*X  =  |0> X   0 "
 "|1> 0*X  1*X     |1> 0   X "
 ""
-"And furthermore as we //05unpack// //02X// (i.e., replace 'X' with its matrix): "
+"And furthermore, as we //05unpack// //02X// (i.e., replace 'X' with its matrix): "
 "    |00> |01> |10> |11>"
 "|00>  0    1    0    0 "
 "|01>  1    0    0    0 "
 "|10>  0    0    0    1 "
 "|11>  0    0    1    0 "
 
-*kronProd2 prio pos5 "The //05order// of the //05kronecker product// is //05important// as //05putting X into I// results in a //05different// matrix than //05putting I into X//. But if you look at your //02Circuit// you can always go from //05top to bottom//. Just use the //05top most// //02Gate// (for our current case with two qubits this is the one applied to q1) as base and //05put the lower// one(s) (for two qubits the one at q0) into it." 
+*kronProd2 prio pos5 "The //05order// of the //05Kronecker product// is //05important// as //05putting X into I// results in a //05different// matrix than //05putting I into X//. But if you look at your //02Circuit// you can always go from //05top to bottom//. Just use the //05top most// //02Gate// (for our current case with two qubits this is the one applied to q1) as base and //05put the lower// one(s) (for two qubits the one at q0) into it." 
 "But don't worry, you //05don't have to reverse engineer// the matrices all the time. Feel free to //05experiment// to learn how to //03manipulate// the matrix based on how you need to //03transform// the input to reach the target."
 
-*multiply prio pos5 "Applying //02Gates// //05in series// is basic //05matrix-matrix multiplication//. The matrix of the leftmost //02Gate// (i.e., the one closest to //05In//) is hereby multiplied //05from the left// with the next one (i.e., matrix of the closest //02Gate// to its right)."
-"Again, in general the //05order// of multiplication matters. At first glance it may seem counter-intuitive that the //02Gates// are aligned from //05left to right// in the //02Circuit// but have to be //05multiplied// from //05right to left//. But if you take a second look at the //05equation above// your //02Circuit// you can see that the //05Input StateVector// is on the //05right// side of the matrix. So both the //02Circuit// and the //05calculation// simply consider the gate/matrix //05closer// to the input first."
+*multiply prio pos5 "Applying //02Gates// //05in series// is basic //05matrix-matrix multiplication//. The matrix of the leftmost //02Gate// (i.e., the one closest to //05In//) is hereby multiplied //05from the left// with the next one (i.e., the matrix of the closest //02Gate// to its right)."
+"Again, in general, the //05order// of multiplication matters. At first glance, it may seem counter-intuitive that the //02Gates// are aligned from //05left to right// in the //02Circuit// but have to be //05multiplied// from //05right to left//. But if you take a second look at the //05equation above// your //02Circuit//, you can see that the //05Input StateVector// is on the //05right// side of the matrix. So both the //02Circuit// and the //05calculation// simply consider the gate/matrix //05closer// to the input first."
 
-*puzzleHistory prio "Similar to how you can skim through your message history with //04Q// and //04E// while in a message, you can also //03traverse// the //05history// of the //05current// //02Puzzle// while trying to solve it. This allows you to //05see better// which values //05changed// in the //02Circuit Matrix// after editing and can also be useful later for more complex //02Puzzles// to check if you already tried a certain gate combination."
+*puzzleHistory prio "Similar to how you can skim through your message history with //04Q// and //04E// while in a message, you can also //03traverse// the //05history// of the //05current// //02Puzzle// while trying to solve it. This allows you to //05see better// which values //05changed// in the //02Circuit Matrix// after editing, and can also be useful later for more complex //02Puzzles// to check if you already tried a certain gate combination."
 
 *doneMsg "In this lesson we introduced you to the //05underlying math of Quantum Computing//. You don't have to remember everything we told you, you can always //05look things up// in the mentioned //02Manual//." 
 "Simply //05keep experimenting// and try solving the //02Puzzles// logically, i.e., analyze how //02In// needs to be transformed to //02Target// (e.g., negate a //02Qubit//). It's really just about getting a feeling for the //02Gates// and what they do."
