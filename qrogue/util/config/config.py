@@ -12,7 +12,7 @@ from .test_config import TestConfig
 class Config:
     __frame_count = 0
     MAX_SEED = 1000000
-    __VERSION = "v0.8.1"
+    __VERSION = "v1.0"
     __GAME_CONFIG = "qrogue_game.config"
     __GAMEPLAY_HEAD = "[Gameplay]\n"
     __DEBUG = False

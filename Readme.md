@@ -1,5 +1,5 @@
 
-# QRogue v0.8.1 #
+# QRogue v1.0 #
 
 <p align="center">
 <img src="./images/Qrogue_banner.png" alt="QRogue Logo" class="qrogue-img-center" style="
