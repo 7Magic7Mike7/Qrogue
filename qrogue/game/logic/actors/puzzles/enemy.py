@@ -32,9 +32,8 @@ class Enemy(Target):
         """
         Check if we are allowed to flee or not.
 
-        :return: True if fleeing was a success, False otherwise
+        :return: True if fleeing was a success, False otherwise (currently not possible)
         """
-        # todo potentially update docstring? because now we always return True
         return True  # self.__rm.get(msg="Enemy.flee_check()") < PuzzleConfig.calculate_flee_chance(self.__id)
 
     def __str__(self):

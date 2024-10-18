@@ -422,7 +422,6 @@ class LevelSelectWidgetSet(MyWidgetSet):
             ("Set Seed", self.__set_seed),
             ("Start Playing", self.__play_level),
             ("Back to Menu", switch_to_menu_callback),
-            # todo: add "Set Difficulty" for more fine-grained difficulty settings and open popup if player tries to open it for a level
         ])
         self.__choices.widget.add_key_command(controls.get_keys(Keys.Help),
                                               lambda: Popup.show_help(HelpText.LevelSelection))
@@ -878,7 +877,6 @@ class ScreenCheckWidgetSet(MyWidgetSet):
         self.__select_widget.widget.add_key_command(controls.get_keys(Keys.MatrixPopup), matrix_popup)
 
     def __setup_widgets(self):
-        # todo: show both 3-qubit and 2-qubit puzzles?
         # prepare puzzle
         # robot doesn't need a real game_over callback for screen checks, hence we can use an empty lambda
         robot = BaseBot(game_over_callback=lambda: None, num_of_qubits=3, gates=[])
@@ -1860,7 +1858,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
         choices = self.add_block_label('Choices', posy, 0, row_span=UIConfig.WINDOW_HEIGHT - posy,
                                        column_span=UIConfig.WINDOW_WIDTH, center=True)
         choices.toggle_border()
-        choices.activate_individual_coloring()  # TODO: current reward highlight version is not satisfying
+        choices.activate_individual_coloring()
         self._choices = SelectionWidget(choices, controls, columns=self.__DETAILS_COLUMNS, is_second=False,
                                         on_key_press=jump_to_present)
 
@@ -1991,7 +1989,8 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
                 self.__circuit.widget.reposition(row=UIConfig.HUD_HEIGHT + row_span + 2)
 
             elif num_of_qubits == 4:
-                # todo problem with 4 qubits: out has not enough space, hence, its coloring doesn't work
+                # problem with 4 qubits: out has not enough space, hence, its coloring doesn't work
+                Config.check_reachability("ReachTargetWidgetSet._reposition_widgets()@4qubits")
                 self.__circuit.widget.reposition(row=UIConfig.HUD_HEIGHT + row_span)
                 self._choices.widget.reposition(row=UIConfig.WINDOW_HEIGHT - 1, row_span=1)
             else:
@@ -2141,7 +2140,7 @@ class ReachTargetWidgetSet(MyWidgetSet, ABC):
             return True  # focus circuit
 
     def __reset_circuit(self) -> bool:
-        # todo: currently this does not decrease edits (for riddles), but maybe it should?
+        # currently, this does not decrease edits (for riddles)
         for pos in range(self._robot.circuit_space):
             self.__circuit.start_gate_placement(None, pos)
             self.__circuit.place_gate()     # placing "None" removes the gate placed at pos
@@ -2374,7 +2373,7 @@ class BossFightWidgetSet(RiddleWidgetSet):
         else:
             reward_text = f"Your reward: {ColorConfig.highlight_object(reward.to_string(), invert=True)}."
             if reward.type is CollectibleType.QuantumFuser:
-                # todo: currently the number of QuantumFusers is increased in NewSaveData.complete_expedition()
+                # currently the number of QuantumFusers is increased in NewSaveData.complete_expedition()
                 pass
             else:
                 Config.check_reachability("BossFightWidgetSet._prepare_reward_message()")

@@ -52,7 +52,7 @@ class Area(ABC):
     __ID = 1
     __FOG = FogOfWar()
     __VOID = Void()
-    UNIT_WIDTH = MapConfig.room_width()  # todo change visibility of UNIT_WIDTH?
+    UNIT_WIDTH = MapConfig.room_width()
     UNIT_HEIGHT = MapConfig.room_height()
     MID_X = MapConfig.room_mid_x()
     MID_Y = MapConfig.room_mid_y()
@@ -506,7 +506,7 @@ class MetaRoom(CopyAbleRoom):
                 dash_decoration = Floor()  # ignore it for non-blocking since it might be placed in front of a hallway
 
             type_decoration = Decoration(mtype)
-            num_decoration = Decoration(str(num)[0])  # todo handle double digits
+            num_decoration = Decoration(str(num)[0])
 
             tile_list = Room.get_empty_room_tile_list()
             msg_tile = MessageTile(self.__message, -1)
@@ -644,10 +644,10 @@ class EmptyRoom(CopyAbleRoom):
 
 class SpecialRoom(Room, ABC):
     # todo check if it should still apply that SpecialRooms can only have one Hallway - adapt Astar in LayoutGenerator
-    # todo if that changes!
-    # todo answering thoughts after some time: If they can have multiple entrances/exits Key placement gets much harder
-    # todo we could not simply place keys in non-special rooms but would also have to check if 1st key is reachable from
-    # todo SpawnRoom, 2nd key from SpawnRoom and one special room, ...
+    #  if that changes!
+    #  answering thoughts after some time: If they can have multiple entrances/exits Key placement gets much harder
+    #  we could not simply place keys in non-special rooms but would also have to check if 1st key is reachable from
+    #  SpawnRoom, 2nd key from SpawnRoom and one special room, ...
     def __init__(self, type_: AreaType, hallway: Hallway, direction: Direction, special_tile: Tile,
                  tile_dic: Optional[Dict[Coordinate, Tile]] = None):
         """

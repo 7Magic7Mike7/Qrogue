@@ -7,7 +7,7 @@ from qrogue.util.controls import Controls, Keys
 
 class KeyLogger:
     __BUFFER_SIZE = 1024
-    __MIN_KEYSTROKES_FOR_FLUSH = 20  # minimum number of keystrokes to log      # todo: make value an Option?
+    __MIN_KEYSTROKES_FOR_FLUSH = 20  # minimum number of keystrokes to log
 
     @staticmethod
     def get_error_marker() -> str:

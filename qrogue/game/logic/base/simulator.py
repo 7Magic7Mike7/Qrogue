@@ -58,7 +58,7 @@ class QuantumSimulator:
             # We only do 1 shot since we don't need any measurement but the StateVector
             job = self.__simulator.run(circuit, shots=1)
 
-        return job.result().get_statevector()  # todo maybe pass circuit as experiment?
+        return job.result().get_statevector()
 
 
 class UnitarySimulator:

@@ -20,7 +20,7 @@ class Unlocks(enum.Enum):
     PuzzleFlee = (51, "PuzzleFlee")  # unlocked in Level 1
 
     # level unlocks
-    ProceedChoice = (90, "ProceedChoice")   # unlocked after all Tutorial levels (right before Exam)    # todo: should be available as soon as Level Selection is available
+    ProceedChoice = (90, "ProceedChoice")  # unlocked after all Tutorial levels (right before Exam)
     LevelSelection = (91, "LevelSelection")
     Workbench = (92, "Workbench")
     Expeditions = (93, "Expeditions")

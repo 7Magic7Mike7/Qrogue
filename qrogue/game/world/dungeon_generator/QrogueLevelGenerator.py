@@ -115,7 +115,6 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
     @staticmethod
     def __tile_code_to_str(tile_code: tiles.TileCode) -> Optional[str]:
         if tile_code is tiles.TileCode.Enemy:
-            # todo print warning?
             return "0"
         elif tile_code is tiles.TileCode.Collectible:
             return parser_util.COLLECTIBLE_TILE
@@ -881,7 +880,7 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         if self.__cur_room_id:
             room_id = self.__cur_room_id
         else:
-            raise NotImplementedError()  # todo better check
+            Logger.instance().throw(NotImplementedError()) # todo better check
 
         def get_entangled_tiles(id_: int) -> List[tiles.Enemy]:
             if room_id in self.__enemy_groups_by_room:
@@ -960,8 +959,8 @@ class QrogueLevelGenerator(DungeonGenerator, QrogueDungeonVisitor):
         elif ctx.message_descriptor():
             tile = self.visit(ctx.message_descriptor())
         else:
-            self._warning("Invalid tile_descriptor! It is neither enemy, collectible, trigger or energy. "
-                          "Returning tiles.Invalid() as consequence.")  # todo: fix message (doesn't list all valid possibilities)
+            self._warning("Invalid tile_descriptor! It is neither trigger, enemy, boss, collectible, energy, riddle, "
+                          "challenge or message. Returning tiles.Invalid() as consequence.")
             return tiles.Invalid()
 
         if isinstance(tile, tiles.WalkTriggerTile):

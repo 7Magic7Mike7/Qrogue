@@ -16,7 +16,7 @@ class CollectibleFactory:
         self.__order_index = -1
 
     @property
-    def pool_copy(self) -> List[Collectible]:  # todo make protected instead of public?
+    def _pool_copy(self) -> List[Collectible]:
         return self.__pool.copy()
 
     def __produce(self, rm: Optional[MyRandom], remove: bool = False) -> Optional[Collectible]:
@@ -54,7 +54,7 @@ class CollectibleFactory:
             return []
 
         if unique_elements:
-            temp = self.pool_copy
+            temp = self._pool_copy
             elements = []
             while len(elements) < num_of_elements:
                 elem = self.__produce(rm, remove=True)
@@ -76,7 +76,7 @@ class OrderedCollectibleFactory(CollectibleFactory):
 
     @staticmethod
     def from_factory(factory: CollectibleFactory):
-        return OrderedCollectibleFactory(factory.pool_copy)
+        return OrderedCollectibleFactory(factory._pool_copy)
 
     def __init__(self, pool: List[Collectible]):
         super().__init__(pool)

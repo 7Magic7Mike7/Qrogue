@@ -64,7 +64,6 @@ class GameSimulator:
             config = str(self.__cur_chunk[start:end], GameSimulator.__ENCODING)
             OptionsManager.from_text(config)
 
-            # todo: use constants instead of these strings
             start = self.__cur_chunk.index(bytes(self.__SAVE_DATA_START, GameSimulator.__ENCODING), end)
             if start < 0:
                 self.__save_state = None
@@ -124,7 +123,7 @@ class GameSimulator:
             if key is Keys.ErrorMarker:
                 self.__marker_counter += 1
                 if self.__marker_counter >= 3:  # todo fix magic number
-                    pass  # todo parse error
+                    Config.check_reachability("GameSimulator.__next_key()@marker_counter>>")
                 return -1
             else:
                 self.__marker_counter = 0

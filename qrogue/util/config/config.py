@@ -9,7 +9,7 @@ from .path_config import PathConfig
 from .test_config import TestConfig
 
 
-class Config:  # todo make singleton and handle access to other configs?
+class Config:
     __frame_count = 0
     MAX_SEED = 1000000
     __VERSION = "v0.8.1"

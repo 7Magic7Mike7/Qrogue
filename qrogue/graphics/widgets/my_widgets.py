@@ -760,8 +760,6 @@ class CircuitMatrixWidget(Widget):
         if matrix.num_of_qubits > 3:
             self.__matrix_str_rep += "\n" * int(0.5 * matrix.size - 1)
             self.__matrix_str_rep += "Matrix is too big to be displayed!\n"
-            # self.__matrix_str_rep += "But you can have a look at it by opening:\n"
-            # self.__matrix_str_rep += " \"TODO\""        # todo create html file of current matrix?
         else:
             self.__matrix_str_rep += matrix.to_string()
 

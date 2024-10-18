@@ -325,7 +325,6 @@ class HelpText(Enum):  # todo: import Controls to replace static key-mentions wi
         f"{_HL.options} - Configure some options of the game, like font size or coloring.\n"
         f"{_HL.exit_} - Exit the current level.")
 
-    Options = ("options", "Options", "7")   # todo
     Welcome = ("welcome", "Welcome",
         Game[2] +
         "\nBut before you can explore the Quniverse you have to complete a training program.\n"

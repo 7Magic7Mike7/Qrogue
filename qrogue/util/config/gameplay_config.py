@@ -364,9 +364,8 @@ class ScoreConfig:
         bonus_factor = ScoreConfig._BONUS_FACTOR
         penalty_factor = ScoreConfig._PENALTY_FACTOR
 
-        # expected_gates is also the expected number of checks since you cannot have less checks than gates
-        # todo: above is False if we implement combining gates! But good combinations would be rewarded, so it should
-        #  be fine
+        # expected_gates is also the expected number of checks since you cannot have fewer checks than gates
+        # (the above could be False for CombinedGates! But good combinations would be rewarded, so it should be fine)
         if used_gates < expected_gates:
             used_exp_val = ScoreConfig._f_bonus(used_gates / expected_gates, bonus_factor)
             # shrink penalty if we used fewer gates

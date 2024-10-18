@@ -172,7 +172,7 @@ custom
 *entanglementJ [ *entJ, *entMinusJ, *entAntiJ, *entAntiJ2 ]
 
 *stvChallenge [ {num_qubits=2: [gX, gS, gS, gS] @q1} ]	// needs to be inverse!
-*bossPuzzle [ *entJ ]	// todo
+*bossPuzzle [ *entJ ]
 
 *allj [ *basej, *supHS, *entanglementJ ]	// all that include a j
 
