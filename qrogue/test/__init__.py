@@ -16,5 +16,4 @@ from .wfc_tests import WFCGeneratorTestCases, WaveFunctionTestCase
 # - simulation_tests.py (needs to simulate a terminal)
 # - transition_tests.py (needs to simulate a terminal)
 # - state_vector_tests.py
-# - parser_test.py
 # - selection_tests.py
