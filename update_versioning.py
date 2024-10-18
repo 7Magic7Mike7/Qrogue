@@ -1,10 +1,8 @@
 import os
 import sys
 
-new_version = sys.argv[1]
 
-
-def validate_version():
+def validate_version(new_version: str):
     if "." not in new_version:
         return False
 
@@ -19,13 +17,13 @@ def validate_version():
     return parts[len(parts) - 1][0].isdigit()
 
 
-def update():
-    __update_readme()
-    __update_setup()
-    __update_config()
+def update(new_version: str):
+    __update_readme(new_version)
+    __update_setup(new_version)
+    __update_config(new_version)
 
 
-def __update_readme():
+def __update_readme(new_version: str):
     readme = os.path.join(".", "Readme.md")
 
     # update version occurrence in headline
@@ -41,7 +39,7 @@ def __update_readme():
         file.write(data)
 
 
-def __update_setup():
+def __update_setup(new_version: str):
     setup = os.path.join(".", "setup.py")
 
     with open(setup, 'r') as file:
@@ -63,7 +61,7 @@ def __update_setup():
         file.write(data)
 
 
-def __update_config():
+def __update_config(new_version: str):
     config = os.path.join("qrogue", "util", "config", "config.py")
 
     with open(config, 'r') as file:
@@ -79,8 +77,9 @@ def __update_config():
 
 
 if __name__ == "__main__":
-    if validate_version():
-        update()
+    new_version_ = sys.argv[1]
+    if validate_version(new_version_):
+        update(new_version_)
         print("Successfully updated the version.")
     else:
         print("ERROR! Specified version has wrong format.")
